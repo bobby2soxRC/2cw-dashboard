@@ -41,7 +41,7 @@ if not API_KEY:
     )
 
 # Switch BASE_URL to production when ready
-BASE_URL = os.environ.get("KSS_BASE_URL", "https://api.kssdata.com/api/v1")
+BASE_URL = os.environ.get("KSS_BASE_URL", "https://api.test.kssdata.com/api/v1")
 
 SUPPLIER_IDS = [62, 63, 74]          # Howie Roll, Soma Rosa, Mendo
 SUPPLIER_STR = ",".join(str(s) for s in SUPPLIER_IDS)
