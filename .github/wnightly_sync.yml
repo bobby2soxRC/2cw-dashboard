@@ -1,0 +1,38 @@
+name: KSS Nightly Sync
+
+on:
+  schedule:
+    - cron: '0 8 * * *'  # Runs daily at 8:00 AM UTC (1:00 AM PT)
+  workflow_dispatch:       # Allows manual trigger from Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run KSS sync
+        env:
+          KSS_API_KEY: ${{ secrets.KSS_API_KEY }}
+        run: python scripts/kss_sync.py
+
+      - name: Commit and push data files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/*.json
+          git diff --staged --quiet || git commit -m "Nightly KSS data sync"
+          git push
