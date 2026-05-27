@@ -29,6 +29,9 @@ jobs:
           KSS_API_KEY: ${{ secrets.KSS_API_KEY }}
         run: python scripts/kss_sync.py
 
+      - name: Run transform
+        run: python scripts/kss_transform.py
+
       - name: Commit and push data files
         run: |
           git config user.name "github-actions[bot]"
