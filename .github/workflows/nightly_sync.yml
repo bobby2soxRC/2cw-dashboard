@@ -27,6 +27,7 @@ jobs:
       - name: Run KSS sync
         env:
           KSS_API_KEY: ${{ secrets.KSS_API_KEY }}
+          KSS_BASE_URL: ${{ secrets.KSS_BASE_URL }}
         run: python scripts/kss_sync.py
 
       - name: Run transform
