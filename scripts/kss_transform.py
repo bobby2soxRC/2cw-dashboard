@@ -87,9 +87,9 @@ DATAV_URL = (
 # PATHS
 # ─────────────────────────────────────────────────────────────────────────────
 # Repo root is one level up from scripts/
-   _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-   DATA_DIR   = os.path.join(_REPO_ROOT, "data")
-   CONFIG_DIR = os.path.join(_REPO_ROOT, "config")
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR   = os.path.join(_REPO_ROOT, "data")
+CONFIG_DIR = os.path.join(_REPO_ROOT, "config")
 
 def load_json(filename):
     path = os.path.join(DATA_DIR, filename)
