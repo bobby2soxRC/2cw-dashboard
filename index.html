@@ -19,7 +19,6 @@
       --text:      #e8eaf0;
       --muted:     #5a6070;
       --subtext:   #9aa0b0;
-      --error:     #e05555;
     }
 
     html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow-x: hidden; }
@@ -40,7 +39,6 @@
     .orb-gold  { width: 600px; height: 600px; background: var(--gold);  top: -200px; left: -200px; }
     .orb-green { width: 500px; height: 500px; background: var(--green); bottom: -150px; right: -150px; }
 
-    /* ── LAYOUT ── */
     .hub {
       position: relative; z-index: 1;
       min-height: 100vh;
@@ -63,23 +61,20 @@
       font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--muted);
     }
 
-    /* ── CARD GRID ── */
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; width: 100%; max-width: 760px; }
 
-    /* ── PORTAL CARD ── */
     .portal {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 16px;
       padding: 32px;
-      overflow: hidden;
       animation: fadeUp 0.5s ease both;
       transition: border-color 0.3s, box-shadow 0.3s;
     }
     .portal.kss { animation-delay: 0.1s; }
     .portal.tcw { animation-delay: 0.2s; }
-    .portal.kss.active { border-color: var(--gold); box-shadow: 0 0 40px rgba(212,168,67,0.12); }
-    .portal.tcw.active { border-color: var(--green); box-shadow: 0 0 40px rgba(61,184,122,0.12); }
+    .portal.kss:hover { border-color: var(--gold); box-shadow: 0 0 40px rgba(212,168,67,0.12); }
+    .portal.tcw:hover { border-color: var(--green); box-shadow: 0 0 40px rgba(61,184,122,0.12); }
 
     .accent-dot {
       width: 9px; height: 9px; border-radius: 50%; margin-bottom: 18px;
@@ -98,61 +93,43 @@
     .portal-title {
       font-family: 'Bebas Neue', sans-serif;
       font-size: 34px; letter-spacing: 0.04em; line-height: 1;
-      margin-bottom: 24px;
+      margin-bottom: 12px;
     }
 
-    /* ── PIN DISPLAY ── */
-    .pin-display {
-      display: flex; gap: 10px; justify-content: center;
-      margin-bottom: 20px;
+    .portal-desc {
+      font-size: 13px; color: var(--subtext); line-height: 1.6;
+      margin-bottom: 28px;
     }
-    .pin-dot {
-      width: 14px; height: 14px; border-radius: 50%;
-      border: 2px solid var(--muted);
-      background: transparent;
-      transition: background 0.15s, border-color 0.15s;
-    }
-    .pin-dot.filled { border-color: transparent; }
-    .kss .pin-dot.filled { background: var(--gold); }
-    .tcw .pin-dot.filled { background: var(--green); }
 
-    /* ── KEYPAD ── */
-    .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-
-    .key {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 14px 0;
+    .enter-btn {
+      display: block; width: 100%;
+      padding: 15px 0;
+      border-radius: 10px;
+      border: 1px solid;
       font-family: 'DM Mono', monospace;
-      font-size: 16px;
-      color: var(--text);
+      font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;
+      text-align: center; text-decoration: none;
       cursor: pointer;
-      text-align: center;
-      user-select: none;
-      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+      transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
     }
-    .key:active { transform: scale(0.94); }
-    .kss .key:hover { background: rgba(212,168,67,0.1); border-color: var(--gold-dim); }
-    .tcw .key:hover { background: rgba(61,184,122,0.1); border-color: var(--green-dim); }
-
-    .key.del { font-size: 13px; color: var(--muted); }
-
-    /* ── STATUS MESSAGE ── */
-    .status {
-      text-align: center;
-      margin-top: 14px;
-      font-family: 'DM Mono', monospace;
-      font-size: 11px;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      height: 16px;
-      transition: color 0.2s;
+    .enter-btn:active { transform: scale(0.97); }
+    .kss .enter-btn {
+      color: var(--gold); border-color: var(--gold-dim);
+      background: rgba(212,168,67,0.06);
     }
-    .status.error { color: var(--error); animation: shake 0.3s ease; }
-    .status.ok { color: var(--green); }
+    .kss .enter-btn:hover {
+      background: rgba(212,168,67,0.14);
+      box-shadow: 0 0 24px rgba(212,168,67,0.15);
+    }
+    .tcw .enter-btn {
+      color: var(--green); border-color: var(--green-dim);
+      background: rgba(61,184,122,0.06);
+    }
+    .tcw .enter-btn:hover {
+      background: rgba(61,184,122,0.14);
+      box-shadow: 0 0 24px rgba(61,184,122,0.15);
+    }
 
-    /* ── FOOTER ── */
     .footer {
       margin-top: 52px;
       font-family: 'DM Mono', monospace; font-size: 10px;
@@ -160,7 +137,6 @@
       animation: fadeUp 0.5s 0.35s ease both;
     }
 
-    /* ── ANIMATIONS ── */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(18px); }
       to   { opacity: 1; transform: translateY(0); }
@@ -168,11 +144,6 @@
     @keyframes pulse {
       0%, 100% { opacity: 1; transform: scale(1); }
       50%       { opacity: 0.45; transform: scale(0.82); }
-    }
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      25%       { transform: translateX(-6px); }
-      75%       { transform: translateX(6px); }
     }
   </style>
 </head>
@@ -191,55 +162,21 @@
   <div class="grid">
 
     <!-- KSS -->
-    <div class="portal kss" id="kss-portal">
+    <div class="portal kss">
       <div class="accent-dot"></div>
       <div class="portal-label">Territory Portal</div>
       <div class="portal-title">KSS Leaderboard</div>
-      <div class="pin-display" id="kss-dots">
-        <div class="pin-dot"></div><div class="pin-dot"></div>
-        <div class="pin-dot"></div><div class="pin-dot"></div>
-      </div>
-      <div class="keypad" id="kss-pad">
-        <div class="key" onclick="press('kss',1)">1</div>
-        <div class="key" onclick="press('kss',2)">2</div>
-        <div class="key" onclick="press('kss',3)">3</div>
-        <div class="key" onclick="press('kss',4)">4</div>
-        <div class="key" onclick="press('kss',5)">5</div>
-        <div class="key" onclick="press('kss',6)">6</div>
-        <div class="key" onclick="press('kss',7)">7</div>
-        <div class="key" onclick="press('kss',8)">8</div>
-        <div class="key" onclick="press('kss',9)">9</div>
-        <div class="key del" onclick="del('kss')">⌫</div>
-        <div class="key" onclick="press('kss',0)">0</div>
-        <div class="key" style="opacity:0.2; pointer-events:none;"></div>
-      </div>
-      <div class="status" id="kss-status"></div>
+      <div class="portal-desc">Territory manager performance, account coverage, and upsell intelligence for KSS reps.</div>
+      <a class="enter-btn" href="/kss_dashboard.html">Enter Portal &rarr;</a>
     </div>
 
     <!-- 2CW -->
-    <div class="portal tcw" id="tcw-portal">
+    <div class="portal tcw">
       <div class="accent-dot"></div>
       <div class="portal-label">Internal Portal</div>
       <div class="portal-title">2CW Operations</div>
-      <div class="pin-display" id="tcw-dots">
-        <div class="pin-dot"></div><div class="pin-dot"></div>
-        <div class="pin-dot"></div><div class="pin-dot"></div>
-      </div>
-      <div class="keypad" id="tcw-pad">
-        <div class="key" onclick="press('tcw',1)">1</div>
-        <div class="key" onclick="press('tcw',2)">2</div>
-        <div class="key" onclick="press('tcw',3)">3</div>
-        <div class="key" onclick="press('tcw',4)">4</div>
-        <div class="key" onclick="press('tcw',5)">5</div>
-        <div class="key" onclick="press('tcw',6)">6</div>
-        <div class="key" onclick="press('tcw',7)">7</div>
-        <div class="key" onclick="press('tcw',8)">8</div>
-        <div class="key" onclick="press('tcw',9)">9</div>
-        <div class="key del" onclick="del('tcw')">⌫</div>
-        <div class="key" onclick="press('tcw',0)">0</div>
-        <div class="key" style="opacity:0.2; pointer-events:none;"></div>
-      </div>
-      <div class="status" id="tcw-status"></div>
+      <div class="portal-desc">Internal sales intelligence, account status, and rep performance for 2CW team.</div>
+      <a class="enter-btn" href="/twocw_dashboard.html">Enter Portal &rarr;</a>
     </div>
 
   </div>
@@ -247,53 +184,6 @@
   <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution</footer>
 
 </main>
-
-<script>
-  const state = { kss: '', tcw: '' };
-  const pins  = { kss: '4200', tcw: '2351' };
-  const dests = { kss: '/kss_dashboard.html', tcw: '/twocw_dashboard.html' };
-
-  function updateDots(id) {
-    const dots = document.querySelectorAll(`#${id}-dots .pin-dot`);
-    dots.forEach((d, i) => d.classList.toggle('filled', i < state[id].length));
-  }
-
-  function setStatus(id, msg, type) {
-    const el = document.getElementById(`${id}-status`);
-    el.textContent = msg;
-    el.className = 'status ' + (type || '');
-  }
-
-  function press(id, digit) {
-    if (state[id].length >= 4) return;
-    state[id] += digit;
-    updateDots(id);
-    document.getElementById(`${id}-portal`).classList.add('active');
-    if (state[id].length === 4) check(id);
-  }
-
-  function del(id) {
-    state[id] = state[id].slice(0, -1);
-    updateDots(id);
-    setStatus(id, '');
-    if (state[id].length === 0) document.getElementById(`${id}-portal`).classList.remove('active');
-  }
-
-  function check(id) {
-    if (state[id] === pins[id]) {
-      setStatus(id, 'Access Granted', 'ok');
-      setTimeout(() => { window.location.href = dests[id]; }, 500);
-    } else {
-      setStatus(id, 'Incorrect PIN', 'error');
-      setTimeout(() => {
-        state[id] = '';
-        updateDots(id);
-        setStatus(id, '');
-        document.getElementById(`${id}-portal`).classList.remove('active');
-      }, 1000);
-    }
-  }
-</script>
 
 </body>
 </html>
