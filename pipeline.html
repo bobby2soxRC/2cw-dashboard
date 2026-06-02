@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>2CW Pipeline</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0B0D10;--bg2:#111418;--bg3:#181C21;--bg4:#1F242B;
+      --border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.11);
+      --text:#EAE6DC;--text2:#9B9790;--text3:#575450;
+      --green:#5BBF7E;--green2:rgba(91,191,126,.12);
+      --blue:#5A9FD4;--blue2:rgba(90,159,212,.12);
+      --gold:#D4A843;--gold2:rgba(212,168,67,.12);
+      --orange:#E8904A;--orange2:rgba(232,144,74,.12);
+      --purple:#9B7FD4;--purple2:rgba(155,127,212,.12);
+      --red:#D95B5B;--red2:rgba(217,91,91,.12);
+      --teal:#3CB8C4;--teal2:rgba(60,184,196,.12);
+      --font:'Barlow',sans-serif;--font-c:'Barlow Condensed',sans-serif;--r:6px;
+    }
+    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh}
+    .hdr{height:50px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 22px;gap:14px;position:sticky;top:0;z-index:100}
+    .hdr-back{font-family:var(--font-c);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);text-decoration:none;transition:color .15s}
+    .hdr-back:hover{color:var(--text2)}
+    .hdr-div{width:1px;height:18px;background:var(--border2)}
+    .hdr-brand{font-family:var(--font-c);font-size:15px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--green)}
+    .hdr-sub{font-family:var(--font-c);font-size:11px;color:var(--text3)}
+    .hdr-date{margin-left:auto;font-family:var(--font-c);font-size:11px;color:var(--text3)}
+    .wrap{padding:20px 22px;max-width:1600px}
+
+    /* Stage order bar */
+    .stages-bar{display:flex;gap:4px;margin-bottom:20px;overflow-x:auto;padding-bottom:4px}
+    .stage-pill{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;font-family:var(--font-c);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;border:1px solid;cursor:pointer;transition:all .15s}
+    .stage-pill.active{opacity:1}.stage-pill:not(.active){opacity:.45}
+    .stage-pill .sc{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800}
+
+    /* Kanban board */
+    .board{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;align-items:start}
+    .lane{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+    .lane-hd{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+    .lane-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .lane-name{font-family:var(--font-c);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+    .lane-cnt{margin-left:auto;font-family:var(--font-c);font-size:11px;padding:2px 7px;border-radius:10px}
+    .lane-body{padding:10px}
+    .card{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:10px 12px;margin-bottom:8px;border-left:3px solid}
+    .card:last-child{margin-bottom:0}
+    .card-strain{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;line-height:1.3}
+    .card-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:5px}
+    .brand-tag{font-family:var(--font-c);font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px}
+    .brand-SRF{background:rgba(91,191,126,.15);color:var(--green)}
+    .brand-HWR{background:var(--blue2);color:var(--blue)}
+    .brand-Mendo{background:var(--purple2);color:var(--purple)}
+    .brand-other{background:var(--bg4);color:var(--text3)}
+    .dom-tag{font-family:var(--font-c);font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px}
+    .dom-Indica{background:var(--purple2);color:var(--purple)}
+    .dom-Sativa{background:var(--gold2);color:var(--gold)}
+    .dom-Hybrid{background:var(--green2);color:var(--green)}
+    .card-rows{display:flex;gap:10px;flex-wrap:wrap}
+    .card-stat{font-family:var(--font-c);font-size:11px;color:var(--text3)}
+    .card-stat span{color:var(--text2);font-weight:600}
+    .card-coa{font-family:var(--font-c);font-size:10px;color:var(--text3);margin-top:5px}
+    .card-coa span{color:var(--teal)}
+    .empty-lane{padding:18px;text-align:center;font-family:var(--font-c);font-size:11px;color:var(--text3)}
+
+    /* Summary KPIs */
+    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:18px}
+    .kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;position:relative;overflow:hidden}
+    .kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+    .kpi.green::after{background:var(--green)}.kpi.blue::after{background:var(--blue)}
+    .kpi.gold::after{background:var(--gold)}.kpi.orange::after{background:var(--orange)}
+    .kpi.purple::after{background:var(--purple)}.kpi.red::after{background:var(--red)}
+    .kpi-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+    .kpi-val{font-family:var(--font-c);font-size:22px;font-weight:700;color:var(--text);line-height:1}
+    .kpi-sub{font-size:10px;color:var(--text3);margin-top:2px}
+
+    .sec{font-family:var(--font-c);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:8px;margin:18px 0 12px}
+    .sec::after{content:'';flex:1;height:1px;background:var(--border)}
+
+    /* Hold section */
+    .hold-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-bottom:18px}
+    .hold-card{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--text3);border-radius:var(--r);padding:10px 12px;opacity:.7}
+    .hold-strain{font-size:12px;font-weight:600;color:var(--text2)}
+    .hold-meta{font-family:var(--font-c);font-size:10px;color:var(--text3);margin-top:3px;display:flex;gap:6px;flex-wrap:wrap}
+
+    .loading{display:flex;align-items:center;justify-content:center;height:300px;font-family:var(--font-c);font-size:13px;color:var(--text3);letter-spacing:.1em}
+    .error-msg{background:var(--red2);border:1px solid var(--red);border-radius:var(--r);padding:14px 18px;font-family:var(--font-c);font-size:12px;color:var(--red);margin:20px 0}
+  </style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="/twocw_hub.html">← Hub</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand">2CW Pipeline</div>
+  <div class="hdr-div"></div>
+  <div class="hdr-sub">Production Status Board</div>
+  <div class="hdr-date" id="ref-date"></div>
+</header>
+
+<div class="wrap" id="app">
+  <div class="loading" id="loading">Loading production data...</div>
+</div>
+
+<script>
+const PIPELINE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRvESIeFsq4JPqtTYgn-lhQriQWxhrMq_LdNbAhUJLmsQC4WKkXV7TCU_IulJce0xzmd3xLKZE8ipDU/pub?gid=0&single=true&output=csv';
+
+// Stage config
+const STAGES = [
+  {key:'Scheduled',      label:'Scheduled',         color:'var(--text3)',  bg:'rgba(87,84,80,.15)'},
+  {key:'Ready for COA',  label:'Ready for COA',     color:'var(--orange)', bg:'var(--orange2)'},
+  {key:'Ready for Packaging', label:'Ready for Pkg',color:'var(--blue)',   bg:'var(--blue2)'},
+  {key:'Ready for ATS',  label:'Ready for ATS',     color:'var(--gold)',   bg:'var(--gold2)'},
+  {key:'For Stickering', label:'For Stickering',    color:'var(--green)',  bg:'var(--green2)'},
+];
+const HOLD_STAGES = ['On hold','Need To complete'];
+
+function brandKey(b){
+  if(!b)return 'other';
+  if(b.includes('Soma'))return 'SRF';
+  if(b.includes('Howie'))return 'HWR';
+  if(b.includes('Mendo'))return 'Mendo';
+  return 'other';
+}
+
+function parseCSV(text){
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h=>h.trim());
+  return lines.slice(1).map(line=>{
+    const vals=[]; let cur='',inQ=false;
+    for(let i=0;i<line.length;i++){
+      if(line[i]==='"'){inQ=!inQ;}
+      else if(line[i]===','&&!inQ){vals.push(cur.trim());cur='';}
+      else cur+=line[i];
+    }
+    vals.push(cur.trim());
+    const row={};
+    headers.forEach((h,i)=>row[h]=vals[i]||'');
+    return row;
+  });
+}
+
+function render(rows){
+  const pipeline = rows.filter(r=>r['Status']&&!['Complete',''].includes(r['Status'].trim()));
+  const active   = pipeline.filter(r=>!HOLD_STAGES.includes(r['Status'].trim()));
+  const onHold   = pipeline.filter(r=>HOLD_STAGES.includes(r['Status'].trim()));
+
+  // Total units in active pipeline
+  const totalUnits = active.reduce((s,r)=>{
+    const u = parseInt((r['Units produced']||'').replace(/,/g,''))||0;
+    return s+u;
+  },0);
+
+  const byBrand = {};
+  active.forEach(r=>{const b=brandKey(r['Brand']);byBrand[b]=(byBrand[b]||0)+1;});
+
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="kpis">
+      <div class="kpi green"><div class="kpi-lbl">Active Batches</div><div class="kpi-val">${active.length}</div><div class="kpi-sub">In production pipeline</div></div>
+      <div class="kpi blue"><div class="kpi-lbl">Units Pending</div><div class="kpi-val">${totalUnits>0?totalUnits.toLocaleString():'—'}</div><div class="kpi-sub">Across active batches</div></div>
+      <div class="kpi gold"><div class="kpi-lbl">SRF Batches</div><div class="kpi-val">${byBrand['SRF']||0}</div><div class="kpi-sub">Soma Rosa Farms</div></div>
+      <div class="kpi orange"><div class="kpi-lbl">HWR Batches</div><div class="kpi-val">${byBrand['HWR']||0}</div><div class="kpi-sub">Howie Roll</div></div>
+      <div class="kpi purple"><div class="kpi-lbl">Mendo Batches</div><div class="kpi-val">${byBrand['Mendo']||0}</div><div class="kpi-sub">Mendo</div></div>
+      <div class="kpi red"><div class="kpi-lbl">On Hold</div><div class="kpi-val">${onHold.length}</div><div class="kpi-sub">Paused / incomplete</div></div>
+    </div>
+
+    <div class="sec">Active Pipeline</div>
+    <div class="board" id="board"></div>
+    ${onHold.length?`<div class="sec">On Hold &amp; Incomplete</div><div class="hold-grid" id="hold"></div>`:''}
+  `;
+
+  // Build lanes
+  const board = document.getElementById('board');
+  STAGES.forEach(stage=>{
+    const items = active.filter(r=>r['Status'].trim()===stage.key);
+    // Group by COA# (one card per COA group)
+    const grouped={};
+    items.forEach(r=>{
+      const k=r['COA#']||r['Strain']||Math.random();
+      if(!grouped[k])grouped[k]=[];
+      grouped[k].push(r);
+    });
+
+    const lane=document.createElement('div');
+    lane.className='lane';
+    const groups=Object.values(grouped);
+    lane.innerHTML=`<div class="lane-hd">
+      <div class="lane-dot" style="background:${stage.color}"></div>
+      <div class="lane-name" style="color:${stage.color}">${stage.label}</div>
+      <div class="lane-cnt" style="background:${stage.bg};color:${stage.color}">${groups.length}</div>
+    </div>
+    <div class="lane-body">
+      ${groups.length?groups.map(grp=>{
+        const first=grp[0];
+        const bk=brandKey(first['Brand']);
+        const strain=(first['Strain']||'').trim()||'(Unnamed)';
+        const dom=(first['Dominance']||'').trim();
+        const units=grp.reduce((s,r)=>s+(parseInt((r['Units produced']||'').replace(/,/g,''))||0),0);
+        const packs=grp.map(r=>r['Pack Size '].trim()).filter(Boolean).join(' · ');
+        const coa=(first['COA Date']||'').trim();
+        return `<div class="card" style="border-left-color:${stage.color}">
+          <div class="card-strain">${strain}</div>
+          <div class="card-meta">
+            <span class="brand-tag brand-${bk}">${bk==='other'?(first['Brand']||'—'):bk}</span>
+            ${dom?`<span class="dom-tag dom-${dom}">${dom}</span>`:''}
+          </div>
+          <div class="card-rows">
+            ${packs?`<div class="card-stat">Pack: <span>${packs}</span></div>`:''}
+            ${units?`<div class="card-stat">Units: <span>${units.toLocaleString()}</span></div>`:''}
+          </div>
+          ${coa?`<div class="card-coa">COA: <span>${coa}</span></div>`:''}
+        </div>`;
+      }).join(''):`<div class="empty-lane">No batches in this stage</div>`}
+    </div>`;
+    board.appendChild(lane);
+  });
+
+  // Hold section
+  if(onHold.length){
+    const hold=document.getElementById('hold');
+    if(hold){
+      hold.innerHTML=onHold.map(r=>{
+        const bk=brandKey(r['Brand']);
+        return `<div class="hold-card">
+          <div class="hold-strain">${(r['Strain']||'').trim()||'(Unnamed)'}</div>
+          <div class="hold-meta">
+            <span class="brand-tag brand-${bk}">${bk==='other'?(r['Brand']||'—'):bk}</span>
+            <span>${r['Status'].trim()}</span>
+            ${(r['COA Date']||'').trim()?`<span>COA: ${r['COA Date'].trim()}</span>`:''}
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  document.getElementById('ref-date').textContent = 'As of ' + new Date().toLocaleDateString();
+}
+
+// Load data
+async function loadData(){
+  try {
+    const resp = await fetch(PIPELINE_URL);
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const text = await resp.text();
+    const rows = parseCSV(text);
+    render(rows);
+  } catch(e) {
+    document.getElementById('app').innerHTML =
+      `<div class="error-msg">Failed to load production data: ${e.message}<br>Check the pipeline URL is published and accessible.</div>`;
+    console.error(e);
+  }
+}
+loadData();
+</script>
+</body>
+</html>
