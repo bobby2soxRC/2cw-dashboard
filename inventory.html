@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2CW — Inventory & Production</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #181c26;
+    --surface2: #1e2333;
+    --border: #2a2f42;
+    --text: #e8eaf0;
+    --muted: #7b8099;
+    --accent: #00c9a7;
+    --accent2: #7c6af7;
+    --srf: #00c9a7;
+    --hwr: #f7a26a;
+    --mendo: #a78bfa;
+    --red: #f05c5c;
+    --yellow: #f5c518;
+    --green: #4ade80;
+    --font: 'Inter', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.5; }
+
+  /* NAV */
+  .nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; gap: 0; height: 52px; position: sticky; top: 0; z-index: 100; flex-wrap: wrap; }
+  .nav-brand { font-weight: 700; font-size: 15px; letter-spacing: .04em; color: var(--text); margin-right: 32px; }
+  .nav-brand span { color: var(--accent); }
+  .nav-tab { padding: 0 16px; height: 52px; display: flex; align-items: center; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; white-space: nowrap; }
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+  .nav-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .refresh-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); font-size: 12px; padding: 5px 12px; border-radius: 6px; cursor: pointer; }
+  .refresh-btn:hover { color: var(--text); border-color: var(--accent); }
+  .ref-date { font-size: 11px; color: var(--muted); }
+
+  /* PAGES */
+  .page { display: none; padding: 24px; max-width: 1400px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  /* LOADING */
+  .loading { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; padding: 40px 24px; }
+  .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error-msg { background: rgba(240,92,92,.1); border: 1px solid rgba(240,92,92,.3); border-radius: 8px; padding: 14px 18px; color: var(--red); font-size: 13px; margin: 24px; }
+
+  /* PAGE HEADER */
+  .page-header { margin-bottom: 16px; }
+  .page-title { font-size: 22px; font-weight: 700; letter-spacing: -.01em; }
+  .page-sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  /* TARGET DAYS SLIDER */
+  .target-bar { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .target-bar-label { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+  .target-slider-wrap { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 200px; }
+  .target-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 2px; background: var(--border); outline: none; cursor: pointer; }
+  .target-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 2px solid var(--bg); box-shadow: 0 0 0 1px var(--accent); }
+  .target-slider::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 2px solid var(--bg); }
+  .target-val { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--accent); min-width: 52px; }
+  .target-val span { font-size: 12px; color: var(--muted); font-weight: 400; }
+  .target-tiers { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .tier-pill { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600; white-space: nowrap; }
+  .tier-low  { background: rgba(240,92,92,.15);  color: var(--red);    }
+  .tier-ok   { background: rgba(74,222,128,.12); color: var(--green);  }
+  .tier-high { background: rgba(245,197,24,.12); color: var(--yellow); }
+
+  /* STAT CARDS */
+  .stat-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .stat-label { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .stat-val { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stat-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .stat-card.srf { border-top: 2px solid var(--srf); }
+  .stat-card.hwr { border-top: 2px solid var(--hwr); }
+  .stat-card.mendo { border-top: 2px solid var(--mendo); }
+
+  /* TABLES */
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 24px; }
+  .table-head { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .table-title { font-weight: 600; font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 10px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+  .num { font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 12px; }
+
+  /* DAYS BAR */
+  .days-bar { display: flex; align-items: center; gap: 8px; }
+  .days-bar-track { height: 6px; border-radius: 3px; background: var(--border); flex: 1; max-width: 80px; }
+  .days-bar-fill { height: 6px; border-radius: 3px; }
+  .days-num { font-family: var(--mono); font-size: 12px; min-width: 44px; }
+
+  /* BADGES */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .badge-srf { background: rgba(0,201,167,.15); color: var(--srf); }
+  .badge-hwr { background: rgba(247,162,106,.15); color: var(--hwr); }
+  .badge-mendo { background: rgba(167,139,250,.15); color: var(--mendo); }
+  .badge-ok { background: rgba(74,222,128,.12); color: var(--green); }
+  .badge-warn { background: rgba(245,197,24,.12); color: var(--yellow); }
+  .badge-danger { background: rgba(240,92,92,.12); color: var(--red); }
+  .badge-hold { background: rgba(123,128,153,.12); color: var(--muted); }
+  .badge-info { background: rgba(124,106,247,.12); color: var(--accent2); }
+
+  /* KANBAN */
+  .kanban-scroll { overflow-x: auto; margin-bottom: 24px; }
+  .kanban { display: grid; grid-template-columns: repeat(6, minmax(170px, 1fr)); gap: 12px; min-width: 1060px; }
+  .kanban-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+  .kanban-col-head { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  .kanban-col-title { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .kanban-count { font-size: 20px; font-weight: 700; margin-top: 2px; }
+  .kanban-cards { padding: 8px; display: flex; flex-direction: column; gap: 6px; max-height: 420px; overflow-y: auto; }
+  .kanban-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; }
+  .kanban-card-brand { font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; margin-bottom: 2px; }
+  .kanban-card-strain { font-size: 12px; font-weight: 500; line-height: 1.3; }
+  .kanban-card-meta { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .kanban-card.srf .kanban-card-brand { color: var(--srf); }
+  .kanban-card.hwr .kanban-card-brand { color: var(--hwr); }
+  .kanban-card.mendo .kanban-card-brand { color: var(--mendo); }
+  .kanban-card.unassigned .kanban-card-brand { color: var(--accent2); }
+  .kanban-col.scheduled .kanban-col-head { border-top: 2px solid #7c6af7; border-radius: 10px 10px 0 0; }
+  .kanban-col.sent-coa .kanban-col-head { border-top: 2px solid #60a5fa; border-radius: 10px 10px 0 0; }
+  .kanban-col.ready-ats .kanban-col-head { border-top: 2px solid #f5c518; border-radius: 10px 10px 0 0; }
+  .kanban-col.ready-pkg .kanban-col-head { border-top: 2px solid #f7a26a; border-radius: 10px 10px 0 0; }
+  .kanban-col.stickering .kanban-col-head { border-top: 2px solid #00c9a7; border-radius: 10px 10px 0 0; }
+  .kanban-col.hold .kanban-col-head { border-top: 2px solid #4a5568; border-radius: 10px 10px 0 0; }
+
+  /* RECOMMENDATIONS */
+  .rec-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; margin-bottom: 12px; }
+  .rec-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+  .rec-strain { font-size: 15px; font-weight: 700; }
+  .rec-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .rec-splits { display: flex; gap: 10px; flex-wrap: wrap; }
+  .rec-split { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; min-width: 100px; }
+  .rec-split-pack { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .rec-split-lbs { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .rec-split-units { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .rec-note { font-size: 11px; color: var(--yellow); margin-top: 10px; padding: 6px 10px; background: rgba(245,197,24,.08); border-radius: 4px; }
+
+  /* SECTION TITLE */
+  .section-title { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; margin-top: 28px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+  /* URGENCY GRID */
+  .urgency-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+
+  /* COLORS */
+  .urgent { color: var(--red); }
+  .warning { color: var(--yellow); }
+  .healthy { color: var(--green); }
+  .text-srf { color: var(--srf); }
+  .text-hwr { color: var(--hwr); }
+  .text-mendo { color: var(--mendo); }
+
+  /* EMPTY STATE */
+  .empty { color: var(--muted); font-size: 13px; padding: 16px 0; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">2CW <span>Inventory</span></div>
+  <div class="nav-tab active" onclick="showPage('overview',this)">All Inventory</div>
+  <div class="nav-tab" onclick="showPage('pipeline',this)">Production Pipeline</div>
+  <div class="nav-tab" onclick="showPage('srf',this)">Soma Rosa Farms</div>
+  <div class="nav-tab" onclick="showPage('hwr',this)">Howie Roll</div>
+  <div class="nav-tab" onclick="showPage('mendo',this)">Mendo</div>
+  <div class="nav-right">
+    <span class="ref-date" id="ref-date">Loading…</span>
+    <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+  </div>
+</nav>
+
+<div id="global-loading" class="loading"><div class="spinner"></div>Loading live inventory from GitHub…</div>
+<div id="global-error" class="error-msg" style="display:none"></div>
+
+<!-- ==================== OVERVIEW ==================== -->
+<div id="page-overview" class="page" style="display:none">
+  <div class="page-header">
+    <div class="page-title">All Inventory</div>
+    <div class="page-sub" id="overview-sub">NedCo snapshot — all brands combined</div>
+  </div>
+  <div class="target-bar">
+    <div class="target-bar-label">Target Days of Supply</div>
+    <div class="target-slider-wrap">
+      <input type="range" class="target-slider" id="slider-overview" min="15" max="120" value="60" step="5" oninput="onSlider('overview',this.value)">
+      <div class="target-val" id="tval-overview">60 <span>days</span></div>
+    </div>
+    <div class="target-tiers" id="ttiers-overview"></div>
+  </div>
+  <div class="stat-row" id="overview-stats"></div>
+  <div class="table-wrap">
+    <div class="table-head">
+      <div class="table-title">Inventory by Pack Size</div>
+      <div style="font-size:12px;color:var(--muted)">Sorted by units on hand ↓</div>
+    </div>
+    <table><thead><tr>
+      <th>Brand</th><th>Category</th><th>SKU</th><th>Pack</th>
+      <th>Units</th><th>Past 30</th><th>Days of Supply</th><th>Status</th>
+    </tr></thead><tbody id="overview-table"></tbody></table>
+  </div>
+  <div class="section-title">Urgency Summary</div>
+  <div class="urgency-grid" id="urgency-summary"></div>
+</div>
+
+<!-- ==================== PIPELINE ==================== -->
+<div id="page-pipeline" class="page" style="display:none">
+  <div class="page-header">
+    <div class="page-title">Production Pipeline</div>
+    <div class="page-sub">Active batches across all stages</div>
+  </div>
+  <div class="stat-row" id="pipeline-stats"></div>
+  <div class="kanban-scroll"><div class="kanban" id="kanban-board"></div></div>
+  <div class="section-title">⚠ Unassigned Pack Sizes — Recommendations</div>
+  <p style="color:var(--muted);font-size:13px;margin-bottom:16px;" id="rec-context"></p>
+  <div id="rec-cards"></div>
+</div>
+
+<!-- ==================== SRF ==================== -->
+<div id="page-srf" class="page" style="display:none">
+  <div class="page-header">
+    <div class="page-title text-srf">Soma Rosa Farms</div>
+    <div class="page-sub" id="srf-sub"></div>
+  </div>
+  <div class="target-bar">
+    <div class="target-bar-label">Target Days of Supply</div>
+    <div class="target-slider-wrap">
+      <input type="range" class="target-slider" id="slider-srf" min="15" max="120" value="60" step="5" oninput="onSlider('srf',this.value)">
+      <div class="target-val" id="tval-srf">60 <span>days</span></div>
+    </div>
+    <div class="target-tiers" id="ttiers-srf"></div>
+  </div>
+  <div class="stat-row" id="srf-stats"></div>
+  <div class="table-wrap">
+    <div class="table-head"><div class="table-title">SRF Inventory by Pack Size</div></div>
+    <table><thead><tr><th>Category</th><th>SKU</th><th>Pack</th><th>Units</th><th>Past 30</th><th>Days of Supply</th><th>Status</th></tr></thead>
+    <tbody id="srf-table"></tbody></table>
+  </div>
+  <div class="section-title">Active Production — Soma Rosa Farms</div>
+  <div id="srf-pipeline"></div>
+  <div class="section-title">Pack Split Recommendations — SRF Unassigned</div>
+  <div id="srf-recs"></div>
+</div>
+
+<!-- ==================== HWR ==================== -->
+<div id="page-hwr" class="page" style="display:none">
+  <div class="page-header">
+    <div class="page-title text-hwr">Howie Roll</div>
+    <div class="page-sub" id="hwr-sub"></div>
+  </div>
+  <div class="target-bar">
+    <div class="target-bar-label">Target Days of Supply</div>
+    <div class="target-slider-wrap">
+      <input type="range" class="target-slider" id="slider-hwr" min="15" max="120" value="60" step="5" oninput="onSlider('hwr',this.value)">
+      <div class="target-val" id="tval-hwr">60 <span>days</span></div>
+    </div>
+    <div class="target-tiers" id="ttiers-hwr"></div>
+  </div>
+  <div class="stat-row" id="hwr-stats"></div>
+  <div class="table-wrap">
+    <div class="table-head"><div class="table-title">HWR Inventory by Pack Size</div></div>
+    <table><thead><tr><th>Category</th><th>SKU</th><th>Pack</th><th>Units</th><th>Past 30</th><th>Days of Supply</th><th>Status</th></tr></thead>
+    <tbody id="hwr-table"></tbody></table>
+  </div>
+  <div class="section-title">Active Production — Howie Roll</div>
+  <div id="hwr-pipeline"></div>
+  <div class="section-title">Pack Split Recommendations — HWR Unassigned</div>
+  <div id="hwr-recs"></div>
+</div>
+
+<!-- ==================== MENDO ==================== -->
+<div id="page-mendo" class="page" style="display:none">
+  <div class="page-header">
+    <div class="page-title text-mendo">Mendo</div>
+    <div class="page-sub" id="mendo-sub"></div>
+  </div>
+  <div class="target-bar">
+    <div class="target-bar-label">Target Days of Supply</div>
+    <div class="target-slider-wrap">
+      <input type="range" class="target-slider" id="slider-mendo" min="15" max="120" value="60" step="5" oninput="onSlider('mendo',this.value)">
+      <div class="target-val" id="tval-mendo">60 <span>days</span></div>
+    </div>
+    <div class="target-tiers" id="ttiers-mendo"></div>
+  </div>
+  <div class="stat-row" id="mendo-stats"></div>
+  <div class="table-wrap" id="mendo-inv-wrap" style="display:none">
+    <div class="table-head"><div class="table-title">Mendo Inventory by Pack Size</div></div>
+    <table><thead><tr><th>Category</th><th>SKU</th><th>Pack</th><th>Units</th><th>Past 30</th><th>Days of Supply</th><th>Status</th></tr></thead>
+    <tbody id="mendo-table"></tbody></table>
+  </div>
+  <div id="mendo-no-inv" style="display:none;color:var(--muted);font-size:13px;margin-bottom:24px;"></div>
+  <div class="section-title">Active Production — Mendo</div>
+  <div id="mendo-pipeline"></div>
+  <div class="section-title">Unassigned Brand — On Hold</div>
+  <div id="unassigned-pipeline"></div>
+</div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const INVENTORY_URL = 'https://raw.githubusercontent.com/bobby2soxRC/2cw-dashboard/main/data/inventory_data.json';
+
+// ─── TARGET DAYS STATE ────────────────────────────────────────────────────────
+// Each page gets its own independent target. All default to 60 days.
+const TARGET = { overview: 60, srf: 60, hwr: 60, mendo: 60 };
+
+// Thresholds relative to target:
+//   Low  = < target
+//   OK   = target to target × 1.5
+//   High = > target × 1.5
+function thresholds(t) {
+  return { low: t, high: Math.round(t * 1.5) };
+}
+
+function daysColor(d, t) {
+  if (d == null) return '#7b8099';
+  const th = thresholds(t);
+  if (d < th.low - 0.5)  return '#f05c5c';
+  if (d < th.high)       return '#4ade80';
+  return '#f5c518';
+}
+function daysClass(d, t) {
+  if (d == null) return '';
+  const th = thresholds(t);
+  if (d < th.low - 0.5)  return 'urgent';
+  if (d < th.high)       return 'healthy';
+  return 'warning';
+}
+function urgencyBadge(d, t) {
+  if (d == null) return '<span class="badge badge-hold">No data</span>';
+  const th = thresholds(t);
+  if (d < th.low - 0.5)  return '<span class="badge badge-danger">Low</span>';
+  if (d < th.high)       return '<span class="badge badge-ok">OK</span>';
+  return '<span class="badge badge-warn">High</span>';
+}
+function daysBar(d, t) {
+  if (d == null) return '<span style="color:var(--muted);font-size:12px">—</span>';
+  const max = thresholds(t).high * 1.5;
+  const pct = Math.min(d / max * 100, 100);
+  return `<div class="days-bar"><div class="days-bar-track"><div class="days-bar-fill" style="width:${pct}%;background:${daysColor(d,t)}"></div></div><span class="days-num ${daysClass(d,t)}">${d.toFixed(0)}d</span></div>`;
+}
+
+// ─── SLIDER HANDLER ───────────────────────────────────────────────────────────
+function onSlider(page, val) {
+  TARGET[page] = parseInt(val);
+  document.getElementById('tval-' + page).innerHTML = `${val} <span>days</span>`;
+  updateTierPills(page);
+  rerenderPage(page);
+}
+
+function updateTierPills(page) {
+  const t = TARGET[page];
+  const th = thresholds(t);
+  document.getElementById('ttiers-' + page).innerHTML = `
+    <div class="tier-pill tier-low">Low &lt;${th.low}d</div>
+    <div class="tier-pill tier-ok">OK ${th.low}–${th.high}d</div>
+    <div class="tier-pill tier-high">High &gt;${th.high}d</div>
+  `;
+}
+
+function rerenderPage(page) {
+  if (!invData) return;
+  const pgs = [...(invData.product_groups || [])].sort((a,b) => b.inventory - a.inventory);
+  if (page === 'overview') {
+    refreshOverviewTable(pgs);
+    refreshUrgencySummary(pgs);
+  } else if (page === 'srf') {
+    refreshBrandTable('srf-table', 'Soma Rosa Farms', pgs, 'srf');
+    refreshBrandStats('srf-stats', 'Soma Rosa Farms', pgs, 'srf');
+  } else if (page === 'hwr') {
+    refreshBrandTable('hwr-table', 'Howie Roll', pgs, 'hwr');
+    refreshBrandStats('hwr-stats', 'Howie Roll', pgs, 'hwr');
+  } else if (page === 'mendo') {
+    refreshBrandTable('mendo-table', 'Mendo', pgs, 'mendo');
+    refreshBrandStats('mendo-stats', 'Mendo', pgs, 'mendo');
+  }
+}
+
+// ─── PRODUCTION DATA (static from CSV) ───────────────────────────────────────
+const pipeline = [
+  {status:"Scheduled",brand:"Soma Rosa Farms",strain:"(TBD)",pack:"",lbs:21,dominance:""},
+  {status:"Scheduled",brand:"Soma Rosa Farms",strain:"(TBD)",pack:"",lbs:28,dominance:""},
+  {status:"Scheduled",brand:"Soma Rosa Farms",strain:"(TBD)",pack:"",lbs:23.3,dominance:"Indica"},
+  {status:"Scheduled",brand:"Soma Rosa Farms",strain:"Nameless",pack:"",lbs:20.58,dominance:""},
+  {status:"Scheduled",brand:"Soma Rosa Farms",strain:".5g 28pk – Blue Dream",pack:"14g",lbs:350,dominance:""},
+  {status:"Scheduled",brand:"Soma Rosa Farms",strain:".5g 28pk – Emerald Runtz",pack:"14g",lbs:350,dominance:""},
+  {status:"Scheduled",brand:"Soma Rosa Farms",strain:".5g 28pk – Yahemi",pack:"14g",lbs:350,dominance:""},
+  {status:"Sent to COA",brand:"Soma Rosa Farms",strain:"Blue Dream",pack:"28g",lbs:25,dominance:"Sativa"},
+  {status:"Sent to COA",brand:"Soma Rosa Farms",strain:"Blue Dream",pack:"3.5g",lbs:8.56,dominance:"Sativa"},
+  {status:"Sent to COA",brand:"Soma Rosa Farms",strain:"LA Kush Cake",pack:"",lbs:34,dominance:"Indica"},
+  {status:"Sent to COA",brand:"Soma Rosa Farms",strain:"LA Kush Cake",pack:"",lbs:34,dominance:"Indica"},
+  {status:"Ready for ATS",brand:"Soma Rosa Farms",strain:"Super Runtz Preroll",pack:"14g",lbs:null,dominance:"Hybrid"},
+  {status:"Ready for ATS",brand:"Soma Rosa Farms",strain:"Blueberry Night Runtz",pack:"14g",lbs:15,dominance:"Indica"},
+  {status:"Ready for ATS",brand:"Soma Rosa Farms",strain:"Runtz (White Runtz)",pack:"28g",lbs:14,dominance:"Hybrid"},
+  {status:"Ready for ATS",brand:"Soma Rosa Farms",strain:"Blue Dream x Purple Punch",pack:"28g",lbs:22,dominance:"Sativa"},
+  {status:"Ready for ATS",brand:"Soma Rosa Farms",strain:"Blue Dream x Purple Punch",pack:"3.5g",lbs:9.48,dominance:"Sativa"},
+  {status:"Ready for ATS",brand:"Soma Rosa Farms",strain:"Pink Runtz",pack:"3.5g",lbs:10,dominance:"Hybrid"},
+  {status:"Ready for ATS",brand:"Soma Rosa Farms",strain:"(High Society)",pack:"28g",lbs:9,dominance:"Hybrid"},
+  {status:"Ready for ATS",brand:"Soma Rosa Farms",strain:"(High Society)",pack:"28g",lbs:3.77,dominance:"Hybrid"},
+  {status:"Ready for ATS",brand:"Howie Roll",strain:"Blue Dream x Purple Punch",pack:"3.5g",lbs:1.97,dominance:"Sativa"},
+  {status:"Ready for ATS",brand:"Howie Roll",strain:"Live Resin – Rainbow Drizzle",pack:"1g",lbs:null,dominance:"Hybrid"},
+  {status:"Ready for ATS",brand:"Howie Roll",strain:"Live Resin – Pixie Dust",pack:"1g",lbs:null,dominance:"Sativa"},
+  {status:"Ready for ATS",brand:"Howie Roll",strain:"Live Resin – Buddha's Hand",pack:"1g",lbs:null,dominance:"Sativa"},
+  {status:"Ready for ATS",brand:"Howie Roll",strain:"Live Resin – Sangria",pack:"1g",lbs:null,dominance:"Indica"},
+  {status:"Ready for Packaging",brand:"Soma Rosa Farms",strain:"Pave",pack:"28g",lbs:13,dominance:"Indica"},
+  {status:"Ready for Packaging",brand:"Soma Rosa Farms",strain:"Pave",pack:"3.5g",lbs:6.92,dominance:"Indica"},
+  {status:"Ready for Packaging",brand:"Soma Rosa Farms",strain:"Pink Runtz",pack:"",lbs:23,dominance:"Hybrid"},
+  {status:"Ready for Packaging",brand:"Howie Roll",strain:"Pave",pack:"",lbs:19,dominance:"Indica"},
+  {status:"Ready for Packaging",brand:"Howie Roll",strain:"Pave",pack:"",lbs:19,dominance:"Indica"},
+  {status:"Ready for Packaging",brand:"Howie Roll",strain:"Banana Cake",pack:"14g",lbs:10,dominance:"Indica"},
+  {status:"Ready for Packaging",brand:"Unassigned",strain:"Cherry Lemonade",pack:"",lbs:25,dominance:"Sativa"},
+  {status:"For Stickering",brand:"Mendo",strain:"Chem Z",pack:"1g",lbs:null,dominance:"Hybrid"},
+  {status:"For Stickering",brand:"Mendo",strain:"Cherries",pack:"1g",lbs:null,dominance:"Sativa"},
+  {status:"For Stickering",brand:"Mendo",strain:"Orange Juice",pack:"1g",lbs:null,dominance:"Sativa"},
+  {status:"For Stickering",brand:"Mendo",strain:"Gasmask",pack:"1g",lbs:null,dominance:""},
+  {status:"For Stickering",brand:"Soma Rosa Farms",strain:"Georgia Cream",pack:"28g",lbs:6,dominance:"Hybrid"},
+  {status:"For Stickering",brand:"Howie Roll",strain:"Banana Cake",pack:"3.5g",lbs:6,dominance:"Indica"},
+  {status:"For Stickering",brand:"Howie Roll",strain:"Live Resin – Purple Velvet",pack:"1g",lbs:null,dominance:"Indica"},
+  {status:"On hold",brand:"Soma Rosa Farms",strain:"The Sauce (D8)",pack:"",lbs:6,dominance:""},
+  {status:"On hold",brand:"Soma Rosa Farms",strain:"Yahemi (D8)",pack:"1g",lbs:5,dominance:"Sativa"},
+  {status:"On hold",brand:"Soma Rosa Farms",strain:"Gelato Gush Mints",pack:"1g",lbs:5,dominance:"Hybrid"},
+  {status:"On hold",brand:"Soma Rosa Farms",strain:"Orange Mimosa",pack:"",lbs:33,dominance:"Sativa"},
+  {status:"On hold",brand:"Soma Rosa Farms",strain:"Lemon Cherry Gelato",pack:"",lbs:48,dominance:"Indica"},
+  {status:"On hold",brand:"Soma Rosa Farms",strain:"Cherry Lemonade",pack:"28g",lbs:25,dominance:"Sativa"},
+  {status:"On hold",brand:"Soma Rosa Farms",strain:"Cherry Lemonade",pack:"14g",lbs:15,dominance:"Sativa"},
+  {status:"On hold",brand:"Soma Rosa Farms",strain:"Cherry Lemonade",pack:"3.5g",lbs:10,dominance:"Sativa"},
+  {status:"On hold",brand:"Soma Rosa Farms",strain:"Pixie Dust",pack:"14g",lbs:12,dominance:"Indica"},
+  {status:"On hold",brand:"Soma Rosa Farms",strain:"Almond Mochi",pack:"",lbs:50,dominance:"Hybrid"},
+  {status:"On hold",brand:"Soma Rosa Farms",strain:"Obama Runtz",pack:"3.5g",lbs:19,dominance:"Hybrid"},
+  {status:"On hold",brand:"Soma Rosa Farms",strain:"Permanent Marker",pack:"",lbs:5,dominance:"Hybrid"},
+  {status:"On hold",brand:"Soma Rosa Farms",strain:"Pave",pack:"",lbs:20,dominance:""},
+  {status:"On hold",brand:"Soma Rosa Farms",strain:"1g Preroll – Glitter Bomb",pack:"1g",lbs:null,dominance:"Indica"},
+  {status:"On hold",brand:"Soma Rosa Farms",strain:"28pk – Glitter Bomb",pack:"14g",lbs:11,dominance:"Indica"},
+  {status:"On hold",brand:"Soma Rosa Farms",strain:"Hash Burger",pack:"28g",lbs:13,dominance:"Sativa"},
+  {status:"On hold",brand:"Soma Rosa Farms",strain:"Blueberry Muffins",pack:"28g",lbs:50,dominance:"Indica"},
+  {status:"On hold",brand:"Howie Roll",strain:"Blue Dream",pack:"",lbs:12,dominance:""},
+  {status:"On hold",brand:"Howie Roll",strain:"Grape Jelly",pack:"",lbs:24,dominance:"Indica"},
+  {status:"On hold",brand:"Howie Roll",strain:"Cherry Icee",pack:"3.5g",lbs:476,dominance:"Indica"},
+  {status:"On hold",brand:"Howie Roll",strain:"Blueberry Jam",pack:"3.5g",lbs:17,dominance:"Indica"},
+  {status:"On hold",brand:"Howie Roll",strain:"Collins Ave",pack:"",lbs:28,dominance:"Indica"},
+  {status:"On hold",brand:"Howie Roll",strain:"Gelato 41",pack:"14g",lbs:8,dominance:"Hybrid"},
+  {status:"On hold",brand:"Unassigned",strain:"Lemon Cream",pack:"",lbs:50,dominance:"Sativa"},
+  {status:"On hold",brand:"Unassigned",strain:"Tropicana Cherry",pack:"",lbs:50,dominance:"Sativa"},
+  {status:"On hold",brand:"Unassigned",strain:"Candy Runtz",pack:"",lbs:21,dominance:"Indica"},
+];
+
+const STATIC_RECS = [
+  {brand:"Soma Rosa Farms",strain:"LA Kush Cake",lbs:34,dominance:"Indica",status:"Sent to COA",
+   note:"Two identical rows — likely the same 34 lb batch entered twice. Confirm with Ned before cutting two separate runs.",
+   splits:[{pack:"28g",lbs:17,units:272},{pack:"3.5g",lbs:11.9,units:1523},{pack:"14g",lbs:5.1,units:163}]},
+  {brand:"Soma Rosa Farms",strain:"Pink Runtz",lbs:23,dominance:"Hybrid",status:"Ready for Packaging",
+   splits:[{pack:"28g",lbs:11.5,units:184},{pack:"3.5g",lbs:8.05,units:1030},{pack:"14g",lbs:3.45,units:110}]},
+  {brand:"Soma Rosa Farms",strain:"Orange Mimosa",lbs:33,dominance:"Sativa",status:"On hold",
+   splits:[{pack:"28g",lbs:16.5,units:264},{pack:"3.5g",lbs:11.55,units:1478},{pack:"14g",lbs:4.95,units:158}]},
+  {brand:"Soma Rosa Farms",strain:"Lemon Cherry Gelato",lbs:48,dominance:"Indica",status:"On hold",
+   splits:[{pack:"28g",lbs:24,units:384},{pack:"3.5g",lbs:16.8,units:2150},{pack:"14g",lbs:7.2,units:230}]},
+  {brand:"Soma Rosa Farms",strain:"Almond Mochi",lbs:50,dominance:"Hybrid",status:"On hold",
+   note:"50 lb batch — consider a test split before committing the full batch.",
+   splits:[{pack:"28g",lbs:25,units:400},{pack:"3.5g",lbs:17.5,units:2240},{pack:"14g",lbs:7.5,units:240}]},
+  {brand:"Soma Rosa Farms",strain:"Permanent Marker",lbs:5,dominance:"Hybrid",status:"On hold",
+   note:"Only 5 lbs — too small to split. Recommend 3.5g only (640 units).",
+   splits:[{pack:"3.5g",lbs:5,units:640}]},
+  {brand:"Soma Rosa Farms",strain:"Pave",lbs:20,dominance:"Unknown",status:"On hold",
+   note:"Dominance unknown — assign type before finalizing ASKU.",
+   splits:[{pack:"28g",lbs:10,units:160},{pack:"3.5g",lbs:7,units:896},{pack:"14g",lbs:3,units:96}]},
+  {brand:"Soma Rosa Farms",strain:"Nameless",lbs:20.58,dominance:"Unknown",status:"Scheduled",
+   note:"Strain name and dominance unset — both needed before COA submission.",
+   splits:[{pack:"28g",lbs:10.3,units:165},{pack:"3.5g",lbs:7.2,units:922},{pack:"14g",lbs:3.08,units:99}]},
+  {brand:"Howie Roll",strain:"Pave (×2 batches)",lbs:19,dominance:"Indica",status:"Ready for Packaging",
+   note:"Two separate 19 lb batches, both ready for packaging. Recommend splitting each identically.",
+   splits:[{pack:"3.5g",lbs:12.35,units:1581},{pack:"14g",lbs:6.65,units:213}]},
+  {brand:"Howie Roll",strain:"Blue Dream",lbs:12,dominance:"Unknown",status:"On hold",
+   splits:[{pack:"3.5g",lbs:7.8,units:998},{pack:"14g",lbs:4.2,units:134}]},
+  {brand:"Howie Roll",strain:"Grape Jelly",lbs:24,dominance:"Indica",status:"On hold",
+   splits:[{pack:"3.5g",lbs:15.6,units:1997},{pack:"14g",lbs:8.4,units:269}]},
+  {brand:"Howie Roll",strain:"Collins Ave",lbs:28,dominance:"Indica",status:"On hold",
+   splits:[{pack:"3.5g",lbs:18.2,units:2330},{pack:"14g",lbs:9.8,units:314}]},
+];
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function fmtNum(v) { return v == null ? '—' : v.toLocaleString(); }
+function brandBadge(b) {
+  if (b==='Soma Rosa Farms') return '<span class="badge badge-srf">SRF</span>';
+  if (b==='Howie Roll') return '<span class="badge badge-hwr">HWR</span>';
+  if (b==='Mendo') return '<span class="badge badge-mendo">MENDO</span>';
+  return '<span class="badge badge-info">—</span>';
+}
+function statusBadge(s) {
+  const m = {'Scheduled':'badge-info','Sent to COA':'badge-info','Ready for ATS':'badge-warn',
+    'Ready for Packaging':'badge-warn','For Stickering':'badge-ok','On hold':'badge-hold','Need To complete':'badge-danger'};
+  return `<span class="badge ${m[s]||'badge-hold'}">${s}</span>`;
+}
+function brandClass(b) {
+  if (b==='Soma Rosa Farms') return 'srf';
+  if (b==='Howie Roll') return 'hwr';
+  if (b==='Mendo') return 'mendo';
+  return 'unassigned';
+}
+function brandShort(b) {
+  if (b==='Soma Rosa Farms') return 'SRF';
+  if (b==='Howie Roll') return 'HWR';
+  if (b==='Mendo') return 'MENDO';
+  return '⚠ Unassigned';
+}
+
+// ─── DATA LOAD ───────────────────────────────────────────────────────────────
+let invData = null;
+
+async function loadData() {
+  document.getElementById('global-loading').style.display = 'flex';
+  document.getElementById('global-error').style.display = 'none';
+  ['overview','pipeline','srf','hwr','mendo'].forEach(id => {
+    document.getElementById('page-'+id).style.display = 'none';
+  });
+  try {
+    const res = await fetch(INVENTORY_URL + '?t=' + Date.now());
+    if (!res.ok) throw new Error(`HTTP ${res.status} — ${res.statusText}`);
+    const json = await res.json();
+    invData = json;
+    document.getElementById('ref-date').textContent = 'Updated: ' + (json.ref_date || 'unknown');
+    buildAll(json.product_groups || []);
+    document.getElementById('global-loading').style.display = 'none';
+    document.getElementById('page-overview').style.display = 'block';
+    document.getElementById('page-overview').classList.add('active');
+  } catch (err) {
+    document.getElementById('global-loading').style.display = 'none';
+    const errEl = document.getElementById('global-error');
+    errEl.style.display = 'block';
+    errEl.innerHTML = `<strong>Could not load inventory data.</strong><br>${err.message}<br><br>
+      <span style="color:var(--muted)">Expected: <code style="font-size:11px">${INVENTORY_URL}</code></span>`;
+  }
+}
+
+// ─── BUILD ALL ────────────────────────────────────────────────────────────────
+function buildAll(pgs) {
+  const sorted = [...pgs].sort((a,b) => b.inventory - a.inventory);
+  // Init all slider tier pills
+  ['overview','srf','hwr','mendo'].forEach(p => updateTierPills(p));
+  buildOverview(sorted);
+  buildPipeline(sorted);
+  buildBrandPage('srf', 'Soma Rosa Farms', sorted);
+  buildBrandPage('hwr', 'Howie Roll', sorted);
+  buildMendo(sorted);
+}
+
+// ─── OVERVIEW ────────────────────────────────────────────────────────────────
+function buildOverview(pgs) {
+  const t = TARGET.overview;
+  const totalUnits = pgs.reduce((s,r)=>s+r.inventory,0);
+  const srfUnits   = pgs.filter(r=>r.brand==='Soma Rosa Farms').reduce((s,r)=>s+r.inventory,0);
+  const hwrUnits   = pgs.filter(r=>r.brand==='Howie Roll').reduce((s,r)=>s+r.inventory,0);
+  const mendoUnits = pgs.filter(r=>r.brand==='Mendo').reduce((s,r)=>s+r.inventory,0);
+
+  document.getElementById('overview-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total Units</div><div class="stat-val">${fmtNum(totalUnits)}</div><div class="stat-sub">All brands</div></div>
+    <div class="stat-card srf"><div class="stat-label">Soma Rosa</div><div class="stat-val text-srf">${fmtNum(srfUnits)}</div><div class="stat-sub">${totalUnits?Math.round(srfUnits/totalUnits*100):0}% of total</div></div>
+    <div class="stat-card hwr"><div class="stat-label">Howie Roll</div><div class="stat-val text-hwr">${fmtNum(hwrUnits)}</div><div class="stat-sub">${totalUnits?Math.round(hwrUnits/totalUnits*100):0}% of total</div></div>
+    <div class="stat-card mendo"><div class="stat-label">Mendo</div><div class="stat-val text-mendo">${mendoUnits?fmtNum(mendoUnits):'—'}</div><div class="stat-sub">${mendoUnits?'units on hand':'No inventory yet'}</div></div>
+    <div class="stat-card"><div class="stat-label">Active SKUs</div><div class="stat-val">${pgs.filter(r=>r.inventory>0).length}</div><div class="stat-sub">With units on hand</div></div>
+  `;
+  document.getElementById('overview-sub').textContent = `NedCo snapshot — ${pgs.length} product groups across all brands`;
+  refreshOverviewTable(pgs);
+  refreshUrgencySummary(pgs);
+}
+
+function refreshOverviewTable(pgs) {
+  const t = TARGET.overview;
+  const tb = document.getElementById('overview-table');
+  tb.innerHTML = '';
+  pgs.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${brandBadge(r.brand)} ${r.brand}</td><td>${r.category}</td><td>${r.subcategory}</td>
+      <td class="num">${r.weight_unit}</td><td class="num">${fmtNum(r.inventory)}</td>
+      <td class="num">${fmtNum(r.past_30)}</td><td>${daysBar(r.days_of_supply,t)}</td><td>${urgencyBadge(r.days_of_supply,t)}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function refreshUrgencySummary(pgs) {
+  const t = TARGET.overview;
+  const th = thresholds(t);
+  const danger = pgs.filter(r=>r.inventory>0&&r.days_of_supply!=null&&r.days_of_supply<th.low-0.5);
+  const ok     = pgs.filter(r=>r.inventory>0&&r.days_of_supply!=null&&r.days_of_supply>=th.low-0.5&&r.days_of_supply<th.high);
+  const high   = pgs.filter(r=>r.inventory>0&&r.days_of_supply!=null&&r.days_of_supply>=th.high);
+
+  const urgencyHtml = (title, varcolor, items, cls) => `
+    <div class="table-wrap">
+      <div class="table-head" style="border-top:2px solid ${varcolor};border-radius:10px 10px 0 0">
+        <div class="table-title ${cls}">${title} (${items.length})</div>
+      </div>
+      <table><thead><tr><th>Brand</th><th>SKU / Pack</th><th>Days</th></tr></thead><tbody>
+        ${items.length ? items.map(r=>`<tr><td>${brandBadge(r.brand)}</td><td>${r.subcategory} ${r.weight_unit}</td><td class="${cls} num">${r.days_of_supply!=null?r.days_of_supply.toFixed(0)+'d':'—'}</td></tr>`).join('') : '<tr><td colspan="3" style="color:var(--muted);font-size:12px">None</td></tr>'}
+      </tbody></table>
+    </div>`;
+
+  document.getElementById('urgency-summary').innerHTML =
+    urgencyHtml(`🔴 Low &lt;${th.low}d`, 'var(--red)', danger, 'urgent') +
+    urgencyHtml(`✅ OK ${th.low}–${th.high}d`, 'var(--green)', ok, 'healthy') +
+    urgencyHtml(`⚠ High &gt;${th.high}d`, 'var(--yellow)', high, 'warning');
+}
+
+// ─── PIPELINE ────────────────────────────────────────────────────────────────
+function buildPipeline(pgs) {
+  const stages = ['Scheduled','Sent to COA','Ready for ATS','Ready for Packaging','For Stickering','On hold'];
+  const counts = {};
+  stages.forEach(s => counts[s] = pipeline.filter(p=>p.status===s).length);
+
+  document.getElementById('pipeline-stats').innerHTML = stages.map(s =>
+    `<div class="stat-card"><div class="stat-label">${s}</div><div class="stat-val">${counts[s]}</div></div>`
+  ).join('');
+
+  const stageDefs = [
+    {key:'Scheduled',cls:'scheduled',label:'Scheduled'},
+    {key:'Sent to COA',cls:'sent-coa',label:'Sent to COA'},
+    {key:'Ready for ATS',cls:'ready-ats',label:'Ready for ATS'},
+    {key:'Ready for Packaging',cls:'ready-pkg',label:'Ready for Pkg'},
+    {key:'For Stickering',cls:'stickering',label:'For Stickering'},
+    {key:'On hold',cls:'hold',label:'On Hold'},
+  ];
+  const board = document.getElementById('kanban-board');
+  board.innerHTML = '';
+  stageDefs.forEach(s => {
+    const items = pipeline.filter(p=>p.status===s.key);
+    const col = document.createElement('div');
+    col.className = `kanban-col ${s.cls}`;
+    col.innerHTML = `<div class="kanban-col-head"><div class="kanban-col-title">${s.label}</div><div class="kanban-count">${items.length}</div></div>
+      <div class="kanban-cards">${items.map(p=>`
+        <div class="kanban-card ${brandClass(p.brand)}">
+          <div class="kanban-card-brand">${brandShort(p.brand)}</div>
+          <div class="kanban-card-strain">${p.strain}</div>
+          <div class="kanban-card-meta">${p.pack||'<span style="color:var(--red)">No pack assigned</span>'} ${p.lbs!=null?'· '+p.lbs+'lb':''}</div>
+        </div>`).join('')}</div>`;
+    board.appendChild(col);
+  });
+
+  const srfDos = {}, hwrDos = {};
+  pgs.filter(r=>r.brand==='Soma Rosa Farms').forEach(r => srfDos[r.weight_unit] = r.days_of_supply);
+  pgs.filter(r=>r.brand==='Howie Roll').forEach(r => hwrDos[r.weight_unit] = r.days_of_supply);
+  const ctxParts = [];
+  if (srfDos['28g']) ctxParts.push(`SRF 28g (${srfDos['28g'].toFixed(0)}d)`);
+  if (srfDos['3.5g']) ctxParts.push(`SRF 3.5g (${srfDos['3.5g'].toFixed(0)}d)`);
+  if (hwrDos['3.5g']) ctxParts.push(`HWR 3.5g (${hwrDos['3.5g'].toFixed(0)}d)`);
+  document.getElementById('rec-context').innerHTML =
+    `Splits below front-load formats with the lowest days of supply. ` +
+    (ctxParts.length ? `Current shortest supply: <strong style="color:var(--text)">${ctxParts.join(', ')}</strong>.` : '');
+
+  buildRecCards('rec-cards', null);
+}
+
+// ─── BRAND PAGE ──────────────────────────────────────────────────────────────
+function buildBrandPage(id, brand, pgs) {
+  const brandPgs = pgs.filter(r=>r.brand===brand);
+  const totalUnits = brandPgs.reduce((s,r)=>s+r.inventory, 0);
+  const skuCount = brandPgs.filter(r=>r.inventory>0).length;
+  document.getElementById(id+'-sub').textContent =
+    `${fmtNum(totalUnits)} total units · ${skuCount} active SKU${skuCount!==1?'s':''}`;
+  refreshBrandStats(id+'-stats', brand, pgs, id);
+  refreshBrandTable(id+'-table', brand, pgs, id);
+  buildBrandPipeline(id+'-pipeline', brand);
+  buildRecCards(id+'-recs', brand);
+}
+
+function refreshBrandStats(statsId, brand, pgs, pageKey) {
+  const t = TARGET[pageKey];
+  const brandPgs = pgs.filter(r=>r.brand===brand);
+  const el = document.getElementById(statsId);
+  el.innerHTML = brandPgs.map(r => {
+    const d = r.days_of_supply;
+    const dc = d != null ? daysClass(d, t) : '';
+    const icon = d == null ? '' : d < thresholds(t).low ? ' 🔴' : d > thresholds(t).high ? ' ⚠' : '';
+    const sub = d != null
+      ? `<div class="stat-sub ${dc}">${d.toFixed(0)}d supply${icon}</div>`
+      : `<div class="stat-sub" style="color:var(--muted)">No velocity data</div>`;
+    return `<div class="stat-card ${pageKey}"><div class="stat-label">${r.subcategory} ${r.weight_unit}</div>
+      <div class="stat-val">${fmtNum(r.inventory)}</div>${sub}</div>`;
+  }).join('') || `<div class="stat-card ${pageKey}"><div class="stat-label">Inventory</div><div class="stat-val">—</div><div class="stat-sub">No data yet</div></div>`;
+}
+
+function refreshBrandTable(tbId, brand, pgs, pageKey) {
+  const t = TARGET[pageKey];
+  const tb = document.getElementById(tbId);
+  tb.innerHTML = '';
+  const brandPgs = pgs.filter(r=>r.brand===brand);
+  if (!brandPgs.length) {
+    tb.innerHTML = '<tr><td colspan="7" class="empty">No inventory data for this brand.</td></tr>';
+    return;
+  }
+  brandPgs.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.category}</td><td>${r.subcategory}</td><td class="num">${r.weight_unit}</td>
+      <td class="num">${fmtNum(r.inventory)}</td><td class="num">${fmtNum(r.past_30)}</td>
+      <td>${daysBar(r.days_of_supply,t)}</td><td>${urgencyBadge(r.days_of_supply,t)}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+// ─── MENDO ───────────────────────────────────────────────────────────────────
+function buildMendo(pgs) {
+  const mendoPgs = pgs.filter(r=>r.brand==='Mendo');
+  const totalUnits = mendoPgs.reduce((s,r)=>s+r.inventory, 0);
+  const mendoPipeline = pipeline.filter(p=>p.brand==='Mendo');
+
+  document.getElementById('mendo-sub').textContent =
+    totalUnits > 0
+      ? `${fmtNum(totalUnits)} units on hand · ${mendoPipeline.length} items in production`
+      : `No NedCo inventory yet · ${mendoPipeline.length} items in production pipeline`;
+
+  refreshBrandStats('mendo-stats', 'Mendo', pgs, 'mendo');
+
+  if (totalUnits > 0) {
+    document.getElementById('mendo-inv-wrap').style.display = 'block';
+    refreshBrandTable('mendo-table', 'Mendo', pgs, 'mendo');
+  } else {
+    document.getElementById('mendo-no-inv').style.display = 'block';
+    document.getElementById('mendo-no-inv').textContent =
+      'Mendo has no units currently in NedCo. The SKUs in stickering will appear here once transferred into the distribution system.';
+  }
+
+  buildBrandPipeline('mendo-pipeline', 'Mendo');
+
+  const unassigned = pipeline.filter(p=>p.brand==='Unassigned');
+  const uEl = document.getElementById('unassigned-pipeline');
+  uEl.innerHTML = unassigned.length ? `<div class="table-wrap"><table>
+    <thead><tr><th>Status</th><th>Strain</th><th>Pack</th><th>Lbs</th><th>Type</th></tr></thead>
+    <tbody>${unassigned.map(p=>`<tr>
+      <td>${statusBadge(p.status)}</td><td>${p.strain}</td>
+      <td>${p.pack||'<span style="color:var(--red)">Unassigned</span>'}</td>
+      <td class="num">${p.lbs!=null?p.lbs+'lb':'—'}</td><td>${p.dominance||'—'}</td>
+    </tr>`).join('')}</tbody></table></div>` : '<p class="empty">No unassigned-brand batches on hold.</p>';
+}
+
+// ─── BRAND PIPELINE TABLE ────────────────────────────────────────────────────
+function buildBrandPipeline(containerId, brand) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const items = pipeline.filter(p=>p.brand===brand);
+  if (!items.length) { el.innerHTML = '<p class="empty">No active pipeline items.</p>'; return; }
+  el.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Status</th><th>Strain</th><th>Pack</th><th>Lbs</th><th>Type</th></tr></thead>
+    <tbody>${items.map(p=>`<tr>
+      <td>${statusBadge(p.status)}</td><td>${p.strain}</td>
+      <td>${p.pack||'<span style="color:var(--red)">Unassigned</span>'}</td>
+      <td class="num">${p.lbs!=null?p.lbs+'lb':'—'}</td><td>${p.dominance||'—'}</td>
+    </tr>`).join('')}</tbody></table></div>`;
+}
+
+// ─── REC CARDS ───────────────────────────────────────────────────────────────
+function buildRecCards(containerId, brandFilter) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const items = brandFilter ? STATIC_RECS.filter(r=>r.brand===brandFilter) : STATIC_RECS;
+  if (!items.length) { el.innerHTML = '<p class="empty">No unassigned pack sizes for this brand.</p>'; return; }
+  el.innerHTML = '';
+  items.forEach(item => {
+    const bc = brandClass(item.brand);
+    const col = bc==='srf'?'var(--srf)':bc==='hwr'?'var(--hwr)':'var(--mendo)';
+    el.innerHTML += `<div class="rec-card">
+      <div class="rec-header"><div>
+        <div class="rec-strain">${item.strain}</div>
+        <div class="rec-meta">${brandBadge(item.brand)} · ${item.lbs} lbs · ${item.dominance||'Type TBD'} · ${statusBadge(item.status)}</div>
+      </div></div>
+      <div class="rec-splits">${item.splits.map(s=>`
+        <div class="rec-split">
+          <div class="rec-split-pack">${s.pack}</div>
+          <div class="rec-split-lbs" style="color:${col}">${s.lbs} lbs</div>
+          <div class="rec-split-units">≈ ${s.units.toLocaleString()} units</div>
+        </div>`).join('')}</div>
+      ${item.note?`<div class="rec-note">⚡ ${item.note}</div>`:''}
+    </div>`;
+  });
+}
+
+// ─── NAV ─────────────────────────────────────────────────────────────────────
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p=>{ p.style.display='none'; p.classList.remove('active'); });
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).style.display = 'block';
+  document.getElementById('page-'+id).classList.add('active');
+  if (el) el.classList.add('active');
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>
