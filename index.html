@@ -158,6 +158,14 @@ const CARD_DEFS = [
     title: 'Inventory & Production',
     desc: 'Current inventory levels, days of supply, and production planning recommendations by product group.',
     href: '/inventory.html'
+  },
+  {
+    key: 'sales',
+    color: 'green',
+    label: 'Sales',
+    title: 'Sales Dashboard',
+    desc: 'Monthly revenue by brand, MTD pacing and trajectory, product mix, and 12-month trend analysis.',
+    href: '/sales.html'
   }
   // Commission card is handled separately below
 ];
@@ -259,6 +267,7 @@ async function doLogin(){
   }
 
   currentUser = user;
+  sessionStorage.setItem('2cw_pin', pin);
   buildHub(user);
 }
 
@@ -335,6 +344,7 @@ function makeCommCard(title, href, idx){
 // ── LOGOUT ───────────────────────────────────────────────
 function doLogout(){
   currentUser = null;
+  sessionStorage.removeItem('2cw_pin');
   document.getElementById('pin-input').value = '';
   for(let i = 0; i < 4; i++) document.getElementById('dot'+i).classList.remove('filled');
   document.getElementById('login-err').style.display = 'none';

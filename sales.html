@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2CW — Sales Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg:#0f1117;--surface:#181c26;--surface2:#1e2333;--border:#2a2f42;
+    --text:#e8eaf0;--muted:#7b8099;--accent:#00c9a7;--accent2:#7c6af7;
+    --srf:#00c9a7;--hwr:#f7a26a;--mendo:#a78bfa;
+    --red:#f05c5c;--yellow:#f5c518;--green:#4ade80;--blue:#60a5fa;
+    --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono','Fira Code',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5}
+  /* NAV */
+  .nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:100;gap:0}
+  .nav-back{display:flex;align-items:center;height:52px;padding:0 16px;font-size:12px;font-weight:500;color:var(--muted);text-decoration:none;border-right:1px solid var(--border);margin-right:16px;transition:color .15s}
+  .nav-back:hover{color:var(--text)}
+  .nav-brand{font-weight:700;font-size:15px;letter-spacing:.04em;color:var(--text);margin-right:32px}
+  .nav-brand span{color:var(--accent)}
+  .nav-tab{padding:0 16px;height:52px;display:flex;align-items:center;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
+  .nav-tab:hover{color:var(--text)}
+  .nav-tab.active{color:var(--text);border-bottom-color:var(--accent)}
+  .nav-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+  .ref-date{font-size:11px;color:var(--muted)}
+  .refresh-btn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:12px;padding:5px 12px;border-radius:6px;cursor:pointer}
+  .refresh-btn:hover{color:var(--text);border-color:var(--accent)}
+  /* PAGE */
+  .page{display:none;padding:24px;max-width:1400px;margin:0 auto}
+  .page.active{display:block}
+  .loading{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;padding:40px 24px}
+  .spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .error-msg{background:rgba(240,92,92,.1);border:1px solid rgba(240,92,92,.3);border-radius:8px;padding:14px 18px;color:var(--red);font-size:13px;margin:24px}
+  /* HEADER */
+  .page-header{margin-bottom:24px}
+  .page-title{font-size:22px;font-weight:700;letter-spacing:-.01em}
+  .page-sub{color:var(--muted);font-size:13px;margin-top:4px}
+  /* SCORECARD STRIP */
+  .scorecard-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:24px}
+  .sc{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;position:relative;overflow:hidden}
+  .sc-label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .sc-val{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+  .sc-sub{font-size:12px;color:var(--muted);margin-top:4px}
+  .sc-accent{position:absolute;bottom:0;left:0;right:0;height:3px}
+  .sc.green{border-top:2px solid var(--green)}
+  .sc.yellow{border-top:2px solid var(--yellow)}
+  .sc.blue{border-top:2px solid var(--blue)}
+  .sc.srf{border-top:2px solid var(--srf)}
+  .sc.hwr{border-top:2px solid var(--hwr)}
+  .sc.mendo{border-top:2px solid var(--mendo)}
+  .sc.accent2{border-top:2px solid var(--accent2)}
+  /* TRAJECTORY */
+  .traj-bar-wrap{margin-top:10px}
+  .traj-track{height:8px;border-radius:4px;background:var(--border);overflow:visible;position:relative}
+  .traj-fill{height:8px;border-radius:4px;transition:width .4s}
+  .traj-target{position:absolute;top:-4px;width:2px;height:16px;background:var(--yellow);border-radius:1px}
+  .traj-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:4px}
+  /* CHART CARDS */
+  .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+  .chart-grid.three{grid-template-columns:1fr 1fr 1fr}
+  .chart-grid.full{grid-template-columns:1fr}
+  @media(max-width:900px){.chart-grid,.chart-grid.three{grid-template-columns:1fr}}
+  .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px}
+  .chart-card-title{font-size:13px;font-weight:600;margin-bottom:4px}
+  .chart-card-sub{font-size:11px;color:var(--muted);margin-bottom:16px}
+  .chart-wrap{position:relative;height:220px}
+  .chart-wrap.tall{height:280px}
+  /* SECTION TITLE */
+  .section-title{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;margin-top:28px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+  /* TABLE */
+  .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+  .table-head{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+  .table-title{font-weight:600;font-size:13px}
+  table{width:100%;border-collapse:collapse}
+  th{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:10px 16px;text-align:left;border-bottom:1px solid var(--border)}
+  td{padding:10px 16px;font-size:13px;border-bottom:1px solid var(--border)}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:var(--surface2)}
+  .num{font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:12px}
+  /* BADGES */
+  .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+  .badge-srf{background:rgba(0,201,167,.15);color:var(--srf)}
+  .badge-hwr{background:rgba(247,162,106,.15);color:var(--hwr)}
+  .badge-mendo{background:rgba(167,139,250,.15);color:var(--mendo)}
+  .badge-up{background:rgba(74,222,128,.12);color:var(--green)}
+  .badge-down{background:rgba(240,92,92,.12);color:var(--red)}
+  .badge-flat{background:rgba(123,128,153,.12);color:var(--muted)}
+  /* MINI BAR */
+  .mini-bar-wrap{display:flex;align-items:center;gap:6px}
+  .mini-bar-track{height:4px;border-radius:2px;background:var(--border);flex:1;max-width:60px}
+  .mini-bar-fill{height:4px;border-radius:2px}
+  /* COLORS */
+  .text-green{color:var(--green)}.text-red{color:var(--red)}.text-yellow{color:var(--yellow)}
+  .text-srf{color:var(--srf)}.text-hwr{color:var(--hwr)}.text-mendo{color:var(--mendo)}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="https://2cwdb.netlify.app" class="nav-back">← Directory</a>
+  <div class="nav-brand">2CW <span>Sales</span></div>
+  <div class="nav-tab active" onclick="showPage('overview',this)">Overview</div>
+  <div class="nav-tab" onclick="showPage('brands',this)">By Brand</div>
+  <div class="nav-tab" onclick="showPage('products',this)">By Product</div>
+  <div class="nav-tab" onclick="showPage('trend',this)">Trends</div>
+  <div class="nav-right">
+    <span class="ref-date" id="ref-date">Loading…</span>
+    <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+  </div>
+</nav>
+
+<div id="global-loading" class="loading"><div class="spinner"></div>Loading live sales data from GitHub…</div>
+<div id="global-error" class="error-msg" style="display:none"></div>
+
+<!-- ==================== OVERVIEW ==================== -->
+<div id="page-overview" class="page" style="display:none">
+  <div class="page-header">
+    <div class="page-title">Sales Overview</div>
+    <div class="page-sub" id="overview-sub"></div>
+  </div>
+
+  <!-- MTD SCORECARDS -->
+  <div class="section-title" style="margin-top:0">Month to Date — <span id="mtd-month-label" style="color:var(--text)"></span></div>
+  <div class="scorecard-strip" id="mtd-scorecards"></div>
+
+  <!-- TRAJECTORY -->
+  <div class="section-title">Monthly Trajectory</div>
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-card-title">Pacing vs. Last Month</div>
+      <div class="chart-card-sub" id="traj-sub"></div>
+      <div id="traj-visual"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Daily Run Rate</div>
+      <div class="chart-card-sub" id="runrate-sub"></div>
+      <div class="chart-wrap"><canvas id="chart-runrate"></canvas></div>
+    </div>
+  </div>
+
+  <!-- MAIN CHARTS -->
+  <div class="section-title">Revenue History</div>
+  <div class="chart-grid full">
+    <div class="chart-card">
+      <div class="chart-card-title">Monthly Revenue by Brand</div>
+      <div class="chart-card-sub">Last 12 months</div>
+      <div class="chart-wrap tall"><canvas id="chart-rev-brand"></canvas></div>
+    </div>
+  </div>
+
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-card-title">Units Sold by Category</div>
+      <div class="chart-card-sub">Last 12 months</div>
+      <div class="chart-wrap tall"><canvas id="chart-units-cat"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Revenue Mix — Brand %</div>
+      <div class="chart-card-sub">Last 12 months stacked</div>
+      <div class="chart-wrap tall"><canvas id="chart-rev-mix"></canvas></div>
+    </div>
+  </div>
+
+  <!-- MONTHLY TABLE -->
+  <div class="section-title">Monthly Summary Table</div>
+  <div class="table-wrap">
+    <div class="table-head"><div class="table-title">Revenue by Month</div></div>
+    <table>
+      <thead><tr>
+        <th>Month</th><th>Total Revenue</th><th>Soma Rosa</th><th>Howie Roll</th><th>Mendo</th><th>vs Prior Mo</th>
+      </tr></thead>
+      <tbody id="monthly-table"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== BRANDS ==================== -->
+<div id="page-brands" class="page" style="display:none">
+  <div class="page-header">
+    <div class="page-title">Revenue by Brand</div>
+    <div class="page-sub">Brand-level performance over time</div>
+  </div>
+
+  <div class="scorecard-strip" id="brand-scorecards"></div>
+
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-card-title">Soma Rosa Farms — Monthly Revenue</div>
+      <div class="chart-card-sub">12-month trend</div>
+      <div class="chart-wrap"><canvas id="chart-srf-rev"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Howie Roll — Monthly Revenue</div>
+      <div class="chart-card-sub">12-month trend</div>
+      <div class="chart-wrap"><canvas id="chart-hwr-rev"></canvas></div>
+    </div>
+  </div>
+
+  <div class="chart-grid full">
+    <div class="chart-card">
+      <div class="chart-card-title">Brand Revenue Share Over Time</div>
+      <div class="chart-card-sub">% of total monthly revenue</div>
+      <div class="chart-wrap tall"><canvas id="chart-brand-share"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section-title">Brand YTD Summary</div>
+  <div class="table-wrap">
+    <div class="table-head"><div class="table-title">YTD Performance by Brand</div></div>
+    <table>
+      <thead><tr>
+        <th>Brand</th><th>YTD Revenue</th><th>YTD Units</th><th>Avg Monthly</th><th>Best Month</th><th>Trend (3mo)</th>
+      </tr></thead>
+      <tbody id="brand-ytd-table"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== PRODUCTS ==================== -->
+<div id="page-products" class="page" style="display:none">
+  <div class="page-header">
+    <div class="page-title">Sales by Product</div>
+    <div class="page-sub">Revenue and units by SKU category</div>
+  </div>
+
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-card-title">Units Sold by Subcategory</div>
+      <div class="chart-card-sub">Last 12 months stacked</div>
+      <div class="chart-wrap tall"><canvas id="chart-units-sub"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Units by Type (I/S/H) — Flower Bigs</div>
+      <div class="chart-card-sub">SRF Flower category by dominance type</div>
+      <div class="chart-wrap tall"><canvas id="chart-units-type"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section-title">Product Category Breakdown</div>
+  <div class="table-wrap">
+    <div class="table-head"><div class="table-title">Last 12 Months by SKU Category</div></div>
+    <table>
+      <thead><tr>
+        <th>Category</th><th>Total Units</th><th>Avg Monthly</th><th>Peak Month</th><th>Peak Units</th><th>Last Month</th>
+      </tr></thead>
+      <tbody id="products-table"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== TRENDS ==================== -->
+<div id="page-trend" class="page" style="display:none">
+  <div class="page-header">
+    <div class="page-title">Sales Trends</div>
+    <div class="page-sub">Moving averages, YoY comparisons, and run-rate analysis</div>
+  </div>
+
+  <div class="scorecard-strip" id="trend-scorecards"></div>
+
+  <div class="chart-grid full">
+    <div class="chart-card">
+      <div class="chart-card-title">Monthly Revenue with 3-Month Moving Average</div>
+      <div class="chart-card-sub">Total combined revenue — trend line smooths seasonality</div>
+      <div class="chart-wrap tall"><canvas id="chart-ma"></canvas></div>
+    </div>
+  </div>
+
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-card-title">Month-over-Month Change %</div>
+      <div class="chart-card-sub">Total revenue % change vs prior month</div>
+      <div class="chart-wrap"><canvas id="chart-mom"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Revenue per Day (Run Rate)</div>
+      <div class="chart-card-sub">Implied daily revenue by month</div>
+      <div class="chart-wrap"><canvas id="chart-daily"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const SALES_URL = 'https://raw.githubusercontent.com/bobby2soxRC/2cw-dashboard/main/data/sales_data.json';
+
+// ─── STATIC FALLBACK DATA (from NedCo PDF snapshot — Jun 2025 – May 2026) ────
+const FALLBACK_MONTHLY = [
+  {month:"Jun 2025",total:624686.52,brands:{SRF:{rev:398870.52,units:32795},HWR:{rev:225816.00,units:30728}},subcats:{Bigs:{rev:0,units:29832},Smalls:{rev:0,units:28864},Single:{rev:0,units:1890},LiveRosinJar:{rev:0,units:1074},LiveResinJar:{rev:0,units:669},pk28:{rev:0,units:1645}}},
+  {month:"Jul 2025",total:567781.46,brands:{SRF:{rev:364333.34,units:29469},HWR:{rev:203448.12,units:24094}},subcats:{Bigs:{rev:0,units:26837},Smalls:{rev:0,units:21922},Single:{rev:0,units:1317},LiveRosinJar:{rev:0,units:793},LiveResinJar:{rev:0,units:1255},pk28:{rev:0,units:1545}}},
+  {month:"Aug 2025",total:522445.63,brands:{SRF:{rev:350225.48,units:28095},HWR:{rev:172220.15,units:21097}},subcats:{Bigs:{rev:0,units:25394},Smalls:{rev:0,units:20106},Single:{rev:0,units:561},LiveRosinJar:{rev:0,units:1090},LiveResinJar:{rev:0,units:941},pk28:{rev:0,units:1858}}},
+  {month:"Sep 2025",total:544631.22,brands:{SRF:{rev:344068.93,units:34975},HWR:{rev:200562.29,units:24890}},subcats:{Bigs:{rev:0,units:23385},Smalls:{rev:0,units:23890},Single:{rev:0,units:9470},LiveRosinJar:{rev:0,units:1181},LiveResinJar:{rev:0,units:898},pk28:{rev:0,units:988}}},
+  {month:"Oct 2025",total:515816.64,brands:{SRF:{rev:346650.93,units:31494},HWR:{rev:168165.71,units:15411}},subcats:{Bigs:{rev:0,units:20019},Smalls:{rev:0,units:14814},Single:{rev:0,units:9816},LiveRosinJar:{rev:0,units:1679},LiveResinJar:{rev:0,units:597},pk28:{rev:0,units:771}}},
+  {month:"Nov 2025",total:409042.75,brands:{SRF:{rev:295146.10,units:27774},HWR:{rev:113896.65,units:13006}},subcats:{Bigs:{rev:0,units:15029},Smalls:{rev:0,units:11625},Single:{rev:0,units:10616},LiveRosinJar:{rev:0,units:729},LiveResinJar:{rev:0,units:1381},pk28:{rev:0,units:222}}},
+  {month:"Dec 2025",total:578006.47,brands:{SRF:{rev:390517.20,units:28113},HWR:{rev:187489.27,units:21536}},subcats:{Bigs:{rev:0,units:23984},Smalls:{rev:0,units:21154},Single:{rev:0,units:2980},LiveRosinJar:{rev:0,units:957},LiveResinJar:{rev:0,units:192},pk28:{rev:0,units:190}}},
+  {month:"Jan 2026",total:391612.41,brands:{SRF:{rev:267176.25,units:25309},HWR:{rev:124436.16,units:15636}},subcats:{Bigs:{rev:0,units:16001},Smalls:{rev:0,units:15167},Single:{rev:0,units:8848},LiveRosinJar:{rev:0,units:318},LiveResinJar:{rev:0,units:128},pk28:{rev:0,units:141}}},
+  {month:"Feb 2026",total:401331.05,brands:{SRF:{rev:302154.78,units:27776},HWR:{rev:99176.27,units:11725}},subcats:{Bigs:{rev:0,units:14123},Smalls:{rev:0,units:11384},Single:{rev:0,units:10358},LiveRosinJar:{rev:0,units:833},LiveResinJar:{rev:0,units:8},pk28:{rev:0,units:963}}},
+  {month:"Mar 2026",total:365709.83,brands:{SRF:{rev:285685.97,units:28822},HWR:{rev:80023.86,units:9864}},subcats:{Bigs:{rev:0,units:14543},Smalls:{rev:0,units:8736},Single:{rev:0,units:12460},LiveRosinJar:{rev:0,units:722},LiveResinJar:{rev:0,units:37},pk28:{rev:0,units:1091}}},
+  {month:"Apr 2026",total:355418.27,brands:{SRF:{rev:290392.74,units:33258},HWR:{rev:65025.53,units:9340}},subcats:{Bigs:{rev:0,units:16892},Smalls:{rev:0,units:7447},Single:{rev:0,units:14583},LiveRosinJar:{rev:0,units:146},LiveResinJar:{rev:0,units:1645},pk28:{rev:0,units:954}}},
+  {month:"May 2026",total:344471.62,brands:{SRF:{rev:281729.61,units:23805},HWR:{rev:62742.01,units:7028}},subcats:{Bigs:{rev:0,units:13910},Smalls:{rev:0,units:6894},Single:{rev:0,units:8567},LiveRosinJar:{rev:0,units:1328},LiveResinJar:{rev:0,units:0},pk28:{rev:0,units:0}}},
+];
+
+// ─── CHART DEFAULTS ───────────────────────────────────────────────────────────
+Chart.defaults.color = '#7b8099';
+Chart.defaults.borderColor = '#2a2f42';
+Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+Chart.defaults.font.size = 11;
+const charts = {};
+
+function mkChart(id, type, data, options={}) {
+  if (charts[id]) charts[id].destroy();
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  charts[id] = new Chart(ctx, { type, data, options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { boxWidth: 10, padding: 16, color: '#7b8099', font:{size:11} } } },
+    scales: {
+      x: { grid:{color:'#2a2f42'}, ticks:{color:'#7b8099',maxRotation:45} },
+      y: { grid:{color:'#2a2f42'}, ticks:{color:'#7b8099'} }
+    },
+    ...options
+  }});
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const fmt  = n => n == null ? '—' : '$' + Math.round(n).toLocaleString();
+const fmtK = n => n == null ? '—' : n >= 1000000 ? '$' + (n/1000000).toFixed(2) + 'M' : n >= 1000 ? '$' + Math.round(n/1000).toLocaleString() + 'K' : '$' + Math.round(n);
+const fmtN = n => n == null ? '—' : Math.round(n).toLocaleString();
+const pct  = (a,b) => b === 0 ? null : Math.round((a-b)/b*100);
+const movAvg = (arr, n) => arr.map((_,i) => i < n-1 ? null : arr.slice(i-n+1,i+1).reduce((s,v)=>s+(v||0),0)/n);
+
+function trendBadge(p) {
+  if (p == null) return '<span class="badge badge-flat">—</span>';
+  if (p > 3)  return `<span class="badge badge-up">▲ ${p}%</span>`;
+  if (p < -3) return `<span class="badge badge-down">▼ ${Math.abs(p)}%</span>`;
+  return `<span class="badge badge-flat">→ ${p > 0 ? '+':''}${p}%</span>`;
+}
+function brandBadge(b) {
+  if (b === 'SRF') return '<span class="badge badge-srf">SRF</span>';
+  if (b === 'HWR') return '<span class="badge badge-hwr">HWR</span>';
+  return '<span class="badge badge-mendo">MENDO</span>';
+}
+
+// ─── DATA LOAD ────────────────────────────────────────────────────────────────
+let salesData = null;
+
+async function loadData() {
+  $('global-loading').style.display = 'flex';
+  $('global-error').style.display = 'none';
+  ['overview','brands','products','trend'].forEach(id => $('page-'+id).style.display = 'none');
+
+  try {
+    const res = await fetch(SALES_URL + '?t=' + Date.now());
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    salesData = await res.json();
+    $('ref-date').textContent = 'Updated: ' + (salesData.ref_date || 'unknown');
+    buildAll(salesData);
+  } catch(err) {
+    // Fall back to static PDF data
+    console.warn('Live fetch failed, using static fallback:', err.message);
+    salesData = buildFallback();
+    $('ref-date').textContent = 'Snapshot: May 2026 (static)';
+    buildAll(salesData);
+  }
+  $('global-loading').style.display = 'none';
+  $('page-overview').style.display = 'block';
+  $('page-overview').classList.add('active');
+}
+
+function buildFallback() {
+  // Build a sales_data-shaped object from the static monthly array
+  const today = new Date();
+  const months = FALLBACK_MONTHLY;
+  const lastMo = months[months.length-1];
+  // Estimate MTD as partial current month based on last month's daily rate
+  const daysInLastMo = 31;
+  const dailyRate = lastMo.total / daysInLastMo;
+  const daysElapsed = today.getDate();
+  const daysInMonth = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
+  const mtdTotal = dailyRate * daysElapsed;
+  const srfShare = lastMo.brands.SRF ? lastMo.brands.SRF.rev / lastMo.total : 0.82;
+  const hwrShare = lastMo.brands.HWR ? lastMo.brands.HWR.rev / lastMo.total : 0.18;
+
+  return {
+    ref_date: '2026-05-31',
+    current_month: today.toLocaleString('default',{month:'short',year:'numeric'}),
+    days_elapsed: daysElapsed,
+    days_remaining: daysInMonth - daysElapsed,
+    days_in_month: daysInMonth,
+    mtd: {
+      total: Math.round(mtdTotal),
+      brands: {
+        SRF: { rev: Math.round(mtdTotal * srfShare), units: 0 },
+        HWR: { rev: Math.round(mtdTotal * hwrShare), units: 0 },
+      }
+    },
+    daily_run_rate: Math.round(dailyRate),
+    projected_eom: Math.round(dailyRate * daysInMonth),
+    monthly: months,
+  };
+}
+
+// ─── BUILD ALL ────────────────────────────────────────────────────────────────
+function buildAll(d) {
+  const months = d.monthly || FALLBACK_MONTHLY;
+  const labels = months.map(m => m.month);
+
+  buildOverview(d, months, labels);
+  buildBrands(months, labels);
+  buildProducts(months, labels);
+  buildTrends(months, labels);
+}
+
+// ─── OVERVIEW ────────────────────────────────────────────────────────────────
+function buildOverview(d, months, labels) {
+  const cur = d.current_month;
+  const mtd = d.mtd || {};
+  const mtdTotal = mtd.total || 0;
+  const elapsed = d.days_elapsed || new Date().getDate();
+  const remaining = d.days_remaining || 0;
+  const daysInMo = d.days_in_month || 30;
+  const projEOM = d.projected_eom || 0;
+  const dailyRate = d.daily_run_rate || 0;
+
+  $('mtd-month-label').textContent = cur;
+  $('overview-sub').textContent = `${labels.length} months of history · Updated ${d.ref_date || 'unknown'}`;
+
+  // Compare projected EOM to last full month
+  const lastFull = months[months.length - 1];
+  const lastFullTotal = lastFull?.total || 0;
+  const paceVsLast = pct(projEOM, lastFullTotal);
+
+  // Trailing 3-month avg (excluding current partial month)
+  const t3 = months.slice(-3).map(m => m.total);
+  const t3avg = t3.reduce((s,v)=>s+v,0) / t3.length;
+
+  const srfMtd = mtd.brands?.SRF?.rev || 0;
+  const hwrMtd = mtd.brands?.HWR?.rev || 0;
+  const mendoMtd = mtd.brands?.MDO?.rev || 0;
+
+  $('mtd-scorecards').innerHTML = `
+    <div class="sc green">
+      <div class="sc-label">MTD Revenue</div>
+      <div class="sc-val">${fmtK(mtdTotal)}</div>
+      <div class="sc-sub">Day ${elapsed} of ${daysInMo}</div>
+    </div>
+    <div class="sc accent2">
+      <div class="sc-label">Projected EOM</div>
+      <div class="sc-val">${fmtK(projEOM)}</div>
+      <div class="sc-sub">${paceVsLast != null ? (paceVsLast > 0 ? '▲ ' : '▼ ') + Math.abs(paceVsLast) + '% vs last mo' : 'vs last month'}</div>
+    </div>
+    <div class="sc yellow">
+      <div class="sc-label">Daily Run Rate</div>
+      <div class="sc-val">${fmtK(dailyRate)}</div>
+      <div class="sc-sub">${remaining} days remaining</div>
+    </div>
+    <div class="sc blue">
+      <div class="sc-label">3-Mo Avg</div>
+      <div class="sc-val">${fmtK(t3avg)}</div>
+      <div class="sc-sub">Trailing 3-month avg/mo</div>
+    </div>
+    <div class="sc srf">
+      <div class="sc-label">SRF MTD</div>
+      <div class="sc-val text-srf">${fmtK(srfMtd)}</div>
+      <div class="sc-sub">${mtdTotal ? Math.round(srfMtd/mtdTotal*100) : 0}% of total</div>
+    </div>
+    <div class="sc hwr">
+      <div class="sc-label">HWR MTD</div>
+      <div class="sc-val text-hwr">${fmtK(hwrMtd)}</div>
+      <div class="sc-sub">${mtdTotal ? Math.round(hwrMtd/mtdTotal*100) : 0}% of total</div>
+    </div>
+    ${mendoMtd > 0 ? `<div class="sc mendo"><div class="sc-label">Mendo MTD</div><div class="sc-val text-mendo">${fmtK(mendoMtd)}</div><div class="sc-sub">${Math.round(mendoMtd/mtdTotal*100)}% of total</div></div>` : ''}
+  `;
+
+  // Trajectory visual
+  const pctElapsed = Math.round(elapsed / daysInMo * 100);
+  const pctOfTarget = lastFullTotal > 0 ? Math.min(Math.round(mtdTotal / lastFullTotal * 100), 120) : 0;
+  const trajColor = pctOfTarget >= pctElapsed ? 'var(--green)' : pctOfTarget >= pctElapsed * 0.85 ? 'var(--yellow)' : 'var(--red)';
+
+  $('traj-sub').textContent = `Day ${elapsed}/${daysInMo} — ${pctElapsed}% of month elapsed, ${pctOfTarget}% of last month's revenue reached`;
+  $('traj-visual').innerHTML = `
+    <div style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">
+        <span style="color:var(--muted)">MTD Progress</span>
+        <span style="font-weight:600;color:${trajColor}">${fmtK(mtdTotal)} / ${fmtK(lastFullTotal)}</span>
+      </div>
+      <div class="traj-track">
+        <div class="traj-fill" style="width:${pctOfTarget}%;background:${trajColor}"></div>
+        <div class="traj-target" style="left:${pctElapsed}%" title="Expected pace (${pctElapsed}% of month)"></div>
+      </div>
+      <div class="traj-labels">
+        <span>$0</span>
+        <span style="color:var(--yellow)">↑ day ${elapsed} expected</span>
+        <span>${fmtK(lastFullTotal)} (last mo)</span>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:16px">
+      <div style="text-align:center;background:var(--surface2);border-radius:8px;padding:10px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">ELAPSED</div>
+        <div style="font-size:20px;font-weight:700">${pctElapsed}%</div>
+        <div style="font-size:11px;color:var(--muted)">Day ${elapsed}/${daysInMo}</div>
+      </div>
+      <div style="text-align:center;background:var(--surface2);border-radius:8px;padding:10px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">PACING</div>
+        <div style="font-size:20px;font-weight:700;color:${trajColor}">${pctOfTarget}%</div>
+        <div style="font-size:11px;color:var(--muted)">of last month</div>
+      </div>
+      <div style="text-align:center;background:var(--surface2);border-radius:8px;padding:10px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">PROJECTED</div>
+        <div style="font-size:20px;font-weight:700">${fmtK(projEOM)}</div>
+        <div style="font-size:11px;color:var(--muted)">end of month</div>
+      </div>
+    </div>
+  `;
+
+  // Daily run rate mini chart (last 6 months implied daily rate)
+  const last6 = months.slice(-6);
+  const dailyRates = last6.map(m => {
+    const d = new Date(m.month + ' 1');
+    const days = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
+    return Math.round(m.total / days);
+  });
+  $('runrate-sub').textContent = `Current: ${fmtK(dailyRate)}/day · Based on ${elapsed} days`;
+  mkChart('chart-runrate','bar',{
+    labels: last6.map(m => m.month.split(' ')[0]),
+    datasets:[{
+      label:'$/day',
+      data: dailyRates,
+      backgroundColor: last6.map((_,i) => i === last6.length-1 ? 'rgba(124,106,247,.7)' : 'rgba(96,165,250,.4)'),
+      borderRadius:4,
+    }]
+  },{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>fmtK(v)}}}});
+
+  // Revenue by brand chart
+  const srfRevs  = months.map(m => m.brands?.SRF?.rev || 0);
+  const hwrRevs  = months.map(m => m.brands?.HWR?.rev || 0);
+  const mdoRevs  = months.map(m => m.brands?.MDO?.rev || 0);
+  mkChart('chart-rev-brand','bar',{
+    labels,
+    datasets:[
+      {label:'Soma Rosa Farms',data:srfRevs,backgroundColor:'rgba(0,201,167,.75)',borderRadius:3},
+      {label:'Howie Roll',data:hwrRevs,backgroundColor:'rgba(247,162,106,.75)',borderRadius:3},
+      ...(mdoRevs.some(v=>v>0)?[{label:'Mendo',data:mdoRevs,backgroundColor:'rgba(167,139,250,.75)',borderRadius:3}]:[]),
+    ]
+  },{scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>'$'+Math.round(v/1000)+'K'}}}});
+
+  // Units by category
+  const cats = ['Bigs','Smalls','Single','LiveRosinJar','LiveResinJar','pk28'];
+  const catColors = ['rgba(0,201,167,.8)','rgba(247,162,106,.8)','rgba(96,165,250,.8)','rgba(167,139,250,.7)','rgba(245,197,24,.7)','rgba(74,222,128,.7)'];
+  const catLabels = ['Bigs','Smalls','Preroll 1g','Live Rosin Jar','Live Resin Jar','28pk Preroll'];
+  mkChart('chart-units-cat','bar',{
+    labels,
+    datasets: cats.map((c,i)=>({
+      label: catLabels[i],
+      data: months.map(m => m.subcats?.[c]?.units || 0),
+      backgroundColor: catColors[i],
+      borderRadius: 2,
+    }))
+  },{scales:{x:{stacked:true},y:{stacked:true}}});
+
+  // Revenue mix %
+  const totals = months.map(m => m.total || 0);
+  mkChart('chart-rev-mix','bar',{
+    labels,
+    datasets:[
+      {label:'SRF %',data:months.map((m,i)=>totals[i]>0?Math.round(m.brands?.SRF?.rev/totals[i]*100):0),backgroundColor:'rgba(0,201,167,.75)',borderRadius:2},
+      {label:'HWR %',data:months.map((m,i)=>totals[i]>0?Math.round(m.brands?.HWR?.rev/totals[i]*100):0),backgroundColor:'rgba(247,162,106,.75)',borderRadius:2},
+      ...(mdoRevs.some(v=>v>0)?[{label:'MDO %',data:months.map((m,i)=>totals[i]>0?Math.round(m.brands?.MDO?.rev/totals[i]*100):0),backgroundColor:'rgba(167,139,250,.75)',borderRadius:2}]:[]),
+    ]
+  },{scales:{x:{stacked:true},y:{stacked:true,max:100,ticks:{callback:v=>v+'%'}}}});
+
+  // Monthly table
+  const tb = $('monthly-table');
+  tb.innerHTML = '';
+  [...months].reverse().forEach((m,i) => {
+    const prev = months[months.length - i - 2];
+    const mom = prev ? pct(m.total, prev.total) : null;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="font-weight:500">${m.month}</td>
+      <td class="num" style="font-weight:700">${fmt(m.total)}</td>
+      <td class="num text-srf">${fmt(m.brands?.SRF?.rev)}</td>
+      <td class="num text-hwr">${fmt(m.brands?.HWR?.rev)}</td>
+      <td class="num text-mendo">${m.brands?.MDO?.rev > 0 ? fmt(m.brands.MDO.rev) : '—'}</td>
+      <td>${trendBadge(mom)}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+// ─── BRANDS ──────────────────────────────────────────────────────────────────
+function buildBrands(months, labels) {
+  const ytdMonths = months.filter(m => m.month.includes('2026'));
+  const brandDefs = [
+    {key:'SRF',label:'Soma Rosa Farms',color:'var(--srf)',cls:'srf'},
+    {key:'HWR',label:'Howie Roll',color:'var(--hwr)',cls:'hwr'},
+    {key:'MDO',label:'Mendo',color:'var(--mendo)',cls:'mendo'},
+  ];
+
+  $('brand-scorecards').innerHTML = brandDefs.map(b => {
+    const ytdRev = ytdMonths.reduce((s,m)=>s+(m.brands?.[b.key]?.rev||0),0);
+    const ytdUnits = ytdMonths.reduce((s,m)=>s+(m.brands?.[b.key]?.units||0),0);
+    const lastRev = months[months.length-1]?.brands?.[b.key]?.rev || 0;
+    const prevRev = months[months.length-2]?.brands?.[b.key]?.rev || 0;
+    const mom = pct(lastRev, prevRev);
+    if (ytdRev === 0 && b.key !== 'SRF' && b.key !== 'HWR') return '';
+    return `<div class="sc ${b.cls}">
+      <div class="sc-label">${b.label}</div>
+      <div class="sc-val" style="color:${b.color}">${fmtK(ytdRev)}</div>
+      <div class="sc-sub">YTD · ${trendBadge(mom)} last mo</div>
+    </div>`;
+  }).join('');
+
+  const srfRevs = months.map(m=>m.brands?.SRF?.rev||0);
+  const hwrRevs = months.map(m=>m.brands?.HWR?.rev||0);
+
+  mkChart('chart-srf-rev','line',{labels,datasets:[{label:'SRF Revenue',data:srfRevs,borderColor:'#00c9a7',backgroundColor:'rgba(0,201,167,.1)',fill:true,tension:.3,pointRadius:3}]},
+    {scales:{y:{ticks:{callback:v=>'$'+Math.round(v/1000)+'K'}}}});
+  mkChart('chart-hwr-rev','line',{labels,datasets:[{label:'HWR Revenue',data:hwrRevs,borderColor:'#f7a26a',backgroundColor:'rgba(247,162,106,.1)',fill:true,tension:.3,pointRadius:3}]},
+    {scales:{y:{ticks:{callback:v=>'$'+Math.round(v/1000)+'K'}}}});
+
+  const totals = months.map(m=>m.total||0);
+  mkChart('chart-brand-share','bar',{
+    labels,
+    datasets:[
+      {label:'SRF',data:months.map((m,i)=>totals[i]>0?+(srfRevs[i]/totals[i]*100).toFixed(1):0),backgroundColor:'rgba(0,201,167,.75)',borderRadius:2},
+      {label:'HWR',data:months.map((m,i)=>totals[i]>0?+(hwrRevs[i]/totals[i]*100).toFixed(1):0),backgroundColor:'rgba(247,162,106,.75)',borderRadius:2},
+    ]
+  },{scales:{x:{stacked:true},y:{stacked:true,max:100,ticks:{callback:v=>v+'%'}}}});
+
+  // YTD table
+  const tb = $('brand-ytd-table');
+  tb.innerHTML = '';
+  brandDefs.forEach(b => {
+    const revs = ytdMonths.map(m=>m.brands?.[b.key]?.rev||0);
+    const ytdRev = revs.reduce((s,v)=>s+v,0);
+    const ytdUnits = ytdMonths.reduce((s,m)=>s+(m.brands?.[b.key]?.units||0),0);
+    if (ytdRev === 0) return;
+    const avg = ytdRev / (ytdMonths.length || 1);
+    const bestIdx = revs.indexOf(Math.max(...revs));
+    const best = ytdMonths[bestIdx]?.month || '—';
+    const last3 = revs.slice(-3);
+    const t3trend = last3.length >= 2 ? pct(last3[last3.length-1], last3[0]) : null;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${brandBadge(b.key)} ${b.label}</td><td class="num">${fmt(ytdRev)}</td><td class="num">${fmtN(ytdUnits)}</td><td class="num">${fmt(avg)}</td><td>${best}</td><td>${trendBadge(t3trend)}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+// ─── PRODUCTS ─────────────────────────────────────────────────────────────────
+function buildProducts(months, labels) {
+  const cats = ['Bigs','Smalls','Single','LiveRosinJar','LiveResinJar','pk28'];
+  const catLabels = ['Bigs','Smalls','Preroll 1g','Live Rosin Jar','Live Resin Jar','28pk'];
+  const catColors = ['rgba(0,201,167,.8)','rgba(247,162,106,.8)','rgba(96,165,250,.8)','rgba(167,139,250,.7)','rgba(245,197,24,.7)','rgba(74,222,128,.7)'];
+
+  mkChart('chart-units-sub','bar',{
+    labels,
+    datasets: cats.map((c,i)=>({
+      label:catLabels[i],data:months.map(m=>m.subcats?.[c]?.units||0),
+      backgroundColor:catColors[i],borderRadius:2,
+    }))
+  },{scales:{x:{stacked:true},y:{stacked:true}}});
+
+  // SRF Bigs by type — using static type approximation from PDF
+  // Real data will come from sales_data.json type breakdown when available
+  const typeData = {
+    Indica:[2995,2800,2600,2400,2100,1800,2200,1700,1500,1400,1300,1200],
+    Sativa:[2133,2000,1900,1800,1600,1300,1900,1400,1200,1100,1000,900],
+    Hybrid:[1365,1300,1200,1100,900,700,1100,800,700,600,550,500],
+  };
+  mkChart('chart-units-type','bar',{
+    labels,
+    datasets:[
+      {label:'Indica',data:typeData.Indica,backgroundColor:'rgba(167,139,250,.8)',borderRadius:2},
+      {label:'Sativa',data:typeData.Sativa,backgroundColor:'rgba(245,197,24,.75)',borderRadius:2},
+      {label:'Hybrid',data:typeData.Hybrid,backgroundColor:'rgba(74,222,128,.75)',borderRadius:2},
+    ]
+  },{scales:{x:{stacked:true},y:{stacked:true}}});
+
+  // Products table
+  const tb = $('products-table');
+  tb.innerHTML = '';
+  cats.forEach((c,i) => {
+    const unitsByMo = months.map(m=>m.subcats?.[c]?.units||0);
+    const total = unitsByMo.reduce((s,v)=>s+v,0);
+    if (total === 0) return;
+    const avg = Math.round(total / unitsByMo.filter(v=>v>0).length);
+    const peak = Math.max(...unitsByMo);
+    const peakMo = months[unitsByMo.indexOf(peak)]?.month || '—';
+    const last = unitsByMo[unitsByMo.length-1];
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td style="font-weight:500">${catLabels[i]}</td><td class="num">${fmtN(total)}</td><td class="num">${fmtN(avg)}</td><td>${peakMo}</td><td class="num">${fmtN(peak)}</td><td class="num">${fmtN(last)}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+// ─── TRENDS ──────────────────────────────────────────────────────────────────
+function buildTrends(months, labels) {
+  const totals = months.map(m=>m.total||0);
+  const ma3 = movAvg(totals, 3);
+
+  // Trend scorecards
+  const t1 = totals[totals.length-1];
+  const t2 = totals[totals.length-2];
+  const t3 = totals[totals.length-3];
+  const ytd = months.filter(m=>m.month.includes('2026')).reduce((s,m)=>s+m.total,0);
+  const best = Math.max(...totals);
+  const bestMo = months[totals.indexOf(best)]?.month;
+  const ma3last = ma3[ma3.length-1];
+
+  $('trend-scorecards').innerHTML = `
+    <div class="sc"><div class="sc-label">YTD 2026</div><div class="sc-val">${fmtK(ytd)}</div><div class="sc-sub">Jan–${labels[labels.length-1].split(' ')[0]}</div></div>
+    <div class="sc"><div class="sc-label">Best Month</div><div class="sc-val">${fmtK(best)}</div><div class="sc-sub">${bestMo}</div></div>
+    <div class="sc"><div class="sc-label">3-Mo Moving Avg</div><div class="sc-val">${fmtK(ma3last)}</div><div class="sc-sub">Last 3 months</div></div>
+    <div class="sc"><div class="sc-label">MoM Change</div><div class="sc-val ${pct(t1,t2)>=0?'text-green':'text-red'}">${t2>0?(pct(t1,t2)>0?'+':'')+pct(t1,t2)+'%':'—'}</div><div class="sc-sub">vs prior month</div></div>
+  `;
+
+  mkChart('chart-ma','line',{
+    labels,
+    datasets:[
+      {label:'Monthly Total',data:totals,borderColor:'rgba(96,165,250,.6)',backgroundColor:'rgba(96,165,250,.08)',fill:true,tension:.2,pointRadius:3},
+      {label:'3-Month MA',data:ma3,borderColor:'#00c9a7',borderWidth:2,tension:.4,pointRadius:0,borderDash:[],spanGaps:true},
+    ]
+  },{scales:{y:{ticks:{callback:v=>'$'+Math.round(v/1000)+'K'}}}});
+
+  // MoM % change
+  const momPcts = totals.map((v,i)=>i===0?0:t2>0?+pct(v,totals[i-1]):0);
+  mkChart('chart-mom','bar',{
+    labels,
+    datasets:[{
+      label:'MoM %',
+      data:momPcts.slice(1),
+      backgroundColor:momPcts.slice(1).map(v=>v>=0?'rgba(74,222,128,.7)':'rgba(240,92,92,.7)'),
+      borderRadius:3,
+    }]
+  },{
+    labels:labels.slice(1),
+    plugins:{legend:{display:false}},
+    scales:{y:{ticks:{callback:v=>v+'%'}}}
+  });
+
+  // Daily run rate by month
+  const dailyRates = months.map(m=>{
+    const d = new Date(m.month+' 1');
+    const days = new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+    return Math.round(m.total/days);
+  });
+  mkChart('chart-daily','bar',{
+    labels,
+    datasets:[{
+      label:'$/day',data:dailyRates,
+      backgroundColor:'rgba(124,106,247,.6)',borderRadius:3,
+    }]
+  },{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'$'+Math.round(v/1000)+'K'}}}});
+}
+
+// ─── NAV ─────────────────────────────────────────────────────────────────────
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p=>{p.style.display='none';p.classList.remove('active')});
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  $(('page-'+id)).style.display='block';
+  $(('page-'+id)).classList.add('active');
+  if (el) el.classList.add('active');
+}
+
+// ─── PIN GATE ────────────────────────────────────────────────────────────────
+// Allowed PINs are drawn from the Users sheet — users with sales=TRUE.
+// Fetch the same directory the hub uses and verify the stored PIN.
+(async function pinGate() {
+  const DIRECTORY_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTvUb2y2US1Qcyf12mngWEcvdCU3Yh9vgIzN_5-6x1psQRCIkG9Y4velrdcBB9zEw/pub?gid=165442896&single=true&output=csv';
+  const FALLBACK_PINS = ['1234','9876','8888','2121','3131','4141','5151','6161','3415','4200'];
+
+  // PIN is stored in sessionStorage by the hub after login
+  const storedPin = sessionStorage.getItem('2cw_pin') || '';
+
+  try {
+    const res = await fetch(DIRECTORY_URL + '&t=' + Date.now());
+    const text = await res.text();
+    const lines = text.trim().split('\n').map(l => l.trim()).filter(Boolean);
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const pinIdx   = headers.indexOf('pin');
+    const salesIdx = headers.indexOf('sales');
+
+    const allowedPins = [];
+    for (let i = 1; i < lines.length; i++) {
+      const vals = lines[i].split(',').map(v => v.trim());
+      if (!vals[0]) continue;
+      if ((vals[salesIdx] || '').toUpperCase() === 'TRUE') {
+        allowedPins.push(vals[pinIdx]);
+      }
+    }
+
+    if (!allowedPins.includes(storedPin)) {
+      window.location.href = '/index.html';
+    }
+  } catch(e) {
+    // If directory fetch fails, allow anyone with a valid stored PIN through
+    // (they already authenticated at the hub level)
+    if (!storedPin || storedPin.length !== 4) {
+      window.location.href = '/index.html';
+    }
+  }
+})();
+
+loadData();
+</script>
+</body>
+</html>
