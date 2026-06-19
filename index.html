@@ -270,7 +270,7 @@ async function doLogin(){
   }
 
   // Find matching user
-  const user = directory.find(u => u.pin === pin);
+  const user = directory.find(u => String(u.pin).padStart(4,'0') === String(pin).padStart(4,'0'));
   if(!user){
     err.style.display = 'block';
     err.textContent = 'Incorrect PIN. Please try again.';
@@ -375,7 +375,7 @@ window.addEventListener('load', async () => {
   if(savedPin){
     if(!directory) directory = await loadDirectory();
     if(directory){
-      const user = directory.find(u => u.pin === savedPin);
+      const user = directory.find(u => String(u.pin).padStart(4,'0') === String(savedPin).padStart(4,'0'));
       if(user){
         buildHub(user);
         return;
