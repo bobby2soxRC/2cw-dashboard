@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>2CW Pipeline</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0B0D10;--bg2:#111418;--bg3:#181C21;--bg4:#1F242B;
+      --border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.11);
+      --text:#EAE6DC;--text2:#9B9790;--text3:#575450;
+      --green:#5BBF7E;--green2:rgba(91,191,126,.12);
+      --blue:#5A9FD4;--blue2:rgba(90,159,212,.12);
+      --gold:#D4A843;--gold2:rgba(212,168,67,.12);
+      --orange:#E8904A;--orange2:rgba(232,144,74,.12);
+      --purple:#9B7FD4;--purple2:rgba(155,127,212,.12);
+      --red:#D95B5B;--red2:rgba(217,91,91,.12);
+      --teal:#3CB8C4;--teal2:rgba(60,184,196,.12);
+      --font:'Barlow',sans-serif;--font-c:'Barlow Condensed',sans-serif;--r:6px;
+    }
+    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh}
+
+    /* Header */
+    .hdr{height:50px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 22px;gap:14px;position:sticky;top:0;z-index:100}
+    .hdr-back{font-family:var(--font-c);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);text-decoration:none;transition:color .15s}
+    .hdr-back:hover{color:var(--text2)}
+    .hdr-div{width:1px;height:18px;background:var(--border2)}
+    .hdr-brand{font-family:var(--font-c);font-size:15px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--green)}
+    .hdr-sub{font-family:var(--font-c);font-size:11px;color:var(--text3)}
+    .hdr-date{margin-left:auto;font-family:var(--font-c);font-size:11px;color:var(--text3)}
+
+    /* Tab nav */
+    .tab-nav{display:flex;gap:2px;padding:0 22px;background:var(--bg2);border-bottom:1px solid var(--border)}
+    .tab-btn{font-family:var(--font-c);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:10px 16px;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none}
+    .tab-btn:hover{color:var(--text2)}
+    .tab-btn.active{color:var(--green);border-bottom-color:var(--green)}
+
+    .wrap{padding:20px 22px;max-width:1600px}
+
+    /* Flow stepper */
+    .flow{display:flex;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:20px;overflow-x:auto}
+    .flow-step{display:flex;align-items:center;gap:6px;flex-shrink:0}
+    .flow-num{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-c);font-size:9px;font-weight:800;border:1px solid;flex-shrink:0}
+    .flow-lbl{font-family:var(--font-c);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+    .flow-cnt{font-family:var(--font-c);font-size:10px;padding:1px 5px;border-radius:8px;margin-left:2px}
+    .flow-arr{font-size:11px;color:var(--text3);margin:0 8px;flex-shrink:0}
+
+    /* KPIs */
+    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:18px}
+    .kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;position:relative;overflow:hidden}
+    .kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+    .kpi.green::after{background:var(--green)}.kpi.blue::after{background:var(--blue)}
+    .kpi.gold::after{background:var(--gold)}.kpi.orange::after{background:var(--orange)}
+    .kpi.purple::after{background:var(--purple)}.kpi.red::after{background:var(--red)}
+    .kpi-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+    .kpi-val{font-family:var(--font-c);font-size:22px;font-weight:700;color:var(--text);line-height:1}
+    .kpi-sub{font-size:10px;color:var(--text3);margin-top:2px}
+
+    /* Section header */
+    .sec{font-family:var(--font-c);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:8px;margin:18px 0 12px}
+    .sec::after{content:'';flex:1;height:1px;background:var(--border)}
+
+    /* Kanban board */
+    .board{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;align-items:start}
+    .lane{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+    .lane-hd{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+    .lane-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .lane-name{font-family:var(--font-c);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+    .lane-cnt{margin-left:auto;font-family:var(--font-c);font-size:11px;padding:2px 7px;border-radius:10px}
+    .lane-body{padding:10px}
+    .card{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:10px 12px;margin-bottom:8px;border-left:3px solid}
+    .card:last-child{margin-bottom:0}
+    .card-strain{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;line-height:1.3}
+    .card-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:5px}
+    .brand-tag{font-family:var(--font-c);font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px}
+    .brand-SRF{background:rgba(91,191,126,.15);color:var(--green)}
+    .brand-HWR{background:var(--blue2);color:var(--blue)}
+    .brand-Mendo{background:var(--purple2);color:var(--purple)}
+    .brand-other{background:var(--bg4);color:var(--text3)}
+    .dom-tag{font-family:var(--font-c);font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px}
+    .dom-Indica{background:var(--purple2);color:var(--purple)}
+    .dom-Sativa{background:var(--gold2);color:var(--gold)}
+    .dom-Hybrid{background:var(--green2);color:var(--green)}
+    .card-rows{display:flex;gap:10px;flex-wrap:wrap}
+    .card-stat{font-family:var(--font-c);font-size:11px;color:var(--text3)}
+    .card-stat span{color:var(--text2);font-weight:600}
+    .card-coa{font-family:var(--font-c);font-size:10px;color:var(--text3);margin-top:5px}
+    .card-coa span{color:var(--teal)}
+    .empty-lane{padding:18px;text-align:center;font-family:var(--font-c);font-size:11px;color:var(--text3)}
+
+    /* ── Product View ── */
+    .pv-brand-section{margin-bottom:28px}
+    .pv-brand-hd{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+    .pv-brand-name{font-family:var(--font-c);font-size:14px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+    .pv-brand-count{font-family:var(--font-c);font-size:11px;color:var(--text3);padding:2px 8px;background:var(--bg3);border-radius:10px;border:1px solid var(--border)}
+
+    .pv-product-row{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;overflow:hidden}
+    .pv-product-row.dos-low{border-left:3px solid var(--red)}
+    .pv-product-row.dos-ok{border-left:3px solid var(--green)}
+    .pv-product-row.dos-high{border-left:3px solid var(--gold)}
+    .pv-product-row.dos-none{border-left:3px solid var(--text3)}
+
+    .pv-product-inner{display:grid;grid-template-columns:220px 1fr;gap:0;min-height:64px}
+
+    /* Left: product identity + DOS */
+    .pv-left{padding:12px 14px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;gap:4px;min-width:0}
+    .pv-prod-name{font-family:var(--font-c);font-size:13px;font-weight:700;color:var(--text);letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .pv-prod-meta{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+    .pv-dos-row{display:flex;align-items:center;gap:8px;margin-top:4px}
+    .pv-dos-val{font-family:var(--font-c);font-size:18px;font-weight:700;line-height:1}
+    .pv-dos-val.dos-low{color:var(--red)}
+    .pv-dos-val.dos-ok{color:var(--green)}
+    .pv-dos-val.dos-high{color:var(--gold)}
+    .pv-dos-val.dos-none{color:var(--text3)}
+    .pv-dos-lbl{font-family:var(--font-c);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
+    .pv-inv{font-family:var(--font-c);font-size:10px;color:var(--text3)}
+    .pv-inv span{color:var(--text2)}
+
+    /* DOS bar */
+    .pv-dos-bar-wrap{height:3px;background:var(--bg4);border-radius:2px;margin-top:5px;width:100%;max-width:160px}
+    .pv-dos-bar{height:100%;border-radius:2px;transition:width .3s}
+
+    /* Right: pipeline batches */
+    .pv-right{padding:10px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:64px}
+    .pv-no-batches{font-family:var(--font-c);font-size:11px;color:var(--text3);font-style:italic}
+    .pv-batch{display:flex;align-items:center;gap:0;border:1px solid var(--border);border-radius:5px;overflow:hidden;flex-shrink:0}
+    .pv-batch-stage{font-family:var(--font-c);font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 7px;white-space:nowrap}
+    .pv-batch-info{padding:4px 8px;background:var(--bg3);display:flex;flex-direction:column;gap:1px}
+    .pv-batch-strain{font-size:11px;font-weight:600;color:var(--text);white-space:nowrap}
+    .pv-batch-units{font-family:var(--font-c);font-size:10px;color:var(--text3)}
+    .pv-batch-units span{color:var(--text2)}
+
+    /* Brand filter pills */
+    .brand-filters{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+    .brand-filter-btn{font-family:var(--font-c);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;transition:all .15s}
+    .brand-filter-btn:hover{color:var(--text2);border-color:var(--border2)}
+    .brand-filter-btn.active{color:var(--text);border-color:var(--text2);background:var(--bg3)}
+    .brand-filter-btn.srf.active{color:var(--green);border-color:var(--green);background:var(--green2)}
+    .brand-filter-btn.hwr.active{color:var(--blue);border-color:var(--blue);background:var(--blue2)}
+    .brand-filter-btn.mendo.active{color:var(--purple);border-color:var(--purple);background:var(--purple2)}
+
+    .loading{display:flex;align-items:center;justify-content:center;height:300px;font-family:var(--font-c);font-size:13px;color:var(--text3);letter-spacing:.1em}
+    .error-msg{background:var(--red2);border:1px solid var(--red);border-radius:var(--r);padding:14px 18px;font-family:var(--font-c);font-size:12px;color:var(--red);margin:20px 0}
+
+    /* Incoming Inventory Table */
+    .incoming-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:20px}
+    .incoming-table{width:100%;border-collapse:collapse;font-family:var(--font-c);font-size:12px}
+    .incoming-table thead th{
+      padding:9px 12px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.1em;
+      text-transform:uppercase;color:var(--text3);background:var(--bg3);border-bottom:1px solid var(--border);
+      white-space:nowrap;cursor:pointer;user-select:none;transition:color .15s;position:relative
+    }
+    .incoming-table thead th:hover{color:var(--text2)}
+    .incoming-table thead th.sort-asc::after{content:' ▲';font-size:8px;color:var(--green)}
+    .incoming-table thead th.sort-desc::after{content:' ▼';font-size:8px;color:var(--green)}
+    .incoming-table thead th.th-num{text-align:center}
+    .incoming-table tbody tr{border-bottom:1px solid var(--border);transition:background .12s}
+    .incoming-table tbody tr:last-child{border-bottom:none}
+    .incoming-table tbody tr:hover{background:var(--bg3)}
+    .incoming-table td{padding:9px 12px;color:var(--text2);vertical-align:middle}
+    .incoming-table td.date-cell{font-weight:700;color:var(--teal);white-space:nowrap}
+    .incoming-table td.num-cell{text-align:center;color:var(--text)}
+    .incoming-table td.flavor-cell{color:var(--text);font-weight:500}
+    .no-incoming{padding:20px;text-align:center;font-family:var(--font-c);font-size:11px;color:var(--text3)}
+
+    @media(max-width:680px){
+      .pv-product-inner{grid-template-columns:1fr}
+      .pv-left{border-right:none;border-bottom:1px solid var(--border)}
+    }
+  </style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="/index.html">← Hub</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand">2CW Pipeline</div>
+  <div class="hdr-div"></div>
+  <div class="hdr-sub">Production Status Board</div>
+  <div class="hdr-date" id="ref-date"></div>
+</header>
+
+<nav class="tab-nav">
+  <button class="tab-btn active" onclick="showTab('pipeline')" id="tab-pipeline">Pipeline Board</button>
+  <button class="tab-btn" onclick="showTab('products')" id="tab-products">By Product</button>
+</nav>
+
+<div class="wrap" id="app">
+  <div class="loading">Loading production data...</div>
+</div>
+
+<script>
+const PIPELINE_URL  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRvESIeFsq4JPqtTYgn-lhQriQWxhrMq_LdNbAhUJLmsQC4WKkXV7TCU_IulJce0xzmd3xLKZE8ipDU/pub?gid=0&single=true&output=csv';
+const INVENTORY_URL = 'https://raw.githubusercontent.com/bobby2soxRC/2cw-dashboard/main/data/inventory_data.json';
+const DATAV_URL     = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR0XoiLhCKQE_koaz4nFxjHREx22PZbwpZFlDG97vYl6ifdTFSdXTRK0ttsPMQNQCMKsTRIN0Mw0x3Z/pub?gid=344846192&single=true&output=csv';
+const DOS_TARGET    = 60; // days — matches inventory dashboard default
+
+// Stage config — ordered to match production flow
+const STAGES = [
+  {key:'Scheduled',           label:'Scheduled',          color:'var(--text2)',  bg:'rgba(155,151,144,.12)'},
+  {key:'Sent to COA',         label:'Sent to COA',        color:'var(--orange)', bg:'var(--orange2)'},
+  {key:'Ready for Packaging', label:'Ready for Packaging',color:'var(--blue)',   bg:'var(--blue2)'},
+  {key:'For Stickering',      label:'For Stickering',     color:'var(--purple)', bg:'var(--purple2)'},
+  {key:'Ready for ATS',       label:'Ready for ATS',      color:'var(--green)',  bg:'var(--green2)'},
+];
+const HOLD_STAGES = ['On hold','On Hold','Need To complete'];
+
+let _activeTab = 'pipeline';
+let _pipelineRows = [];
+let _inventoryData = {};
+let _flavorMap = {}; // F-ID → display Flavor name, loaded from DATAV
+let _incomingSort = {col:'Est Sales Ready Date', dir:'asc'};
+
+// ── Incoming Inventory Table ───────────────────────────────────────────────
+
+function parseDate(str){
+  if(!str||!str.trim()) return null;
+  const d = new Date(str.trim());
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function formatDate(str){
+  const d = parseDate(str);
+  if(!d) return '—';
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+
+function renderIncomingTable(rows){
+  // Debug: log what we're working with
+  const datedAll = rows.filter(r=>(r['Est Sales Ready Date']||r['EST SALES READY DATE']||'').trim());
+  console.log('[Incoming] Total rows with Est Sales Ready Date:', datedAll.length);
+  datedAll.forEach(r=>{
+    const asku     = (r['ASKU']||r['Asku']||r['asku']||'').trim();
+    const strain   = (r['Strain']||r['STRAIN']||'').trim();
+    const packSize = (r['PACK SIZE']||r['Pack Size']||'').trim();
+    const date     = (r['Est Sales Ready Date']||r['EST SALES READY DATE']||'').trim();
+    const key      = (asku || (strain + '|' + packSize)) + '|' + date;
+    console.log('[Incoming] dated row:', r['ASKU']||r['Asku']||'(no ASKU)', '| strain:', strain, '| date:', date, '| FLAVOR:', r['FLAVOR'], '| TYPE:', r['TYPE'], '| Pack Size:', packSize, '| dedup key:', key);
+  });
+  console.log('[Incoming] _flavorMap keys:', Object.keys(_flavorMap).length, Object.keys(_flavorMap).slice(0,5));
+
+  const incoming = rows.filter(r=>{
+    const strain = (r['Strain']||r['STRAIN']||'').trim();
+    const dateStr = (r['Est Sales Ready Date']||r['EST SALES READY DATE']||'').trim();
+    return strain && dateStr;
+  });
+
+  const seen = new Set();
+  const deduped = [];
+  incoming.forEach(r=>{
+    // ASKU may not be in the published range — fall back to Strain+PackSize+Date
+    const asku     = (r['ASKU']||r['Asku']||r['asku']||'').trim();
+    const strain   = (r['Strain']||r['STRAIN']||'').trim();
+    const packSize = (r['PACK SIZE']||r['Pack Size']||'').trim();
+    const date     = (r['Est Sales Ready Date']||r['EST SALES READY DATE']||'').trim();
+    const key      = (asku || (strain + '|' + packSize)) + '|' + date;
+    if(!seen.has(key)){ seen.add(key); deduped.push(r); }
+  });
+
+  const col = _incomingSort.col;
+  const dir = _incomingSort.dir === 'asc' ? 1 : -1;
+  deduped.sort((a,b)=>{
+    let av = _incomingSortVal(a, col), bv = _incomingSortVal(b, col);
+    if(col==='Est Sales Ready Date'){
+      const da=parseDate(av), db=parseDate(bv);
+      if(!da && !db) return 0;
+      if(!da) return 1; if(!db) return -1;
+      return dir*(da-db);
+    }
+    if(col==='Start Weight Lbs'||col==='Target Units'){
+      return dir*((parseFloat(av)||0) - (parseFloat(bv)||0));
+    }
+    return dir*av.toString().localeCompare(bv.toString());
+  });
+
+  const cols = [
+    {key:'Est Sales Ready Date', label:'Est. Sales Ready Date'},
+    {key:'Brand',                label:'Brand'},
+    {key:'Categoy',              label:'Category'},
+    {key:'Subcategory',          label:'Subcategory'},
+    {key:'_packSize',            label:'Wt / Unit'},
+    {key:'TYPE',                 label:'Type'},
+    {key:'_flavor',              label:'Flavor'},
+    {key:'Start Weight Lbs',     label:'Start Wt (lbs)',  num:true},
+    {key:'Target Units',         label:'Target Units',     num:true},
+  ];
+
+  const thHtml = cols.map(c=>{
+    const active = _incomingSort.col===c.key;
+    const cls = [active?(_incomingSort.dir==='asc'?'sort-asc':'sort-desc'):'', c.num?'th-num':''].join(' ').trim();
+    return `<th class="${cls}" onclick="sortIncoming('${c.key}')">${c.label}</th>`;
+  }).join('');
+
+  const tbHtml = deduped.length ? deduped.map(r=>{
+    const bk = brandKey(r['Brand']||r['BRAND']);
+    const targetUnits = (r['Target Units']||r['TARGET UNITS']||'') ? parseInt((r['Target Units']||r['TARGET UNITS']||'').toString().replace(/,/g,'')) : null;
+    const startWt = (r['Start Weight Lbs']||r['START WEIGHT LBS']||'') ? parseFloat(r['Start Weight Lbs']||r['START WEIGHT LBS']||'') : null;
+    // FLAVOR col (F-ID code) — may be absent if published range doesn't include DATAV columns
+    const flavorId = (r['FLAVOR']||r['Flavor']||'').trim();
+    const flavor   = (flavorId && _flavorMap[flavorId]) ? _flavorMap[flavorId] : (flavorId || '—');
+    // TYPE: try TYPE col first, then derive from Dominance
+    const typeRaw  = (r['TYPE']||r['Type']||'').trim();
+    const domRaw   = (r['Dominance']||r['DOMINANCE']||'').trim();
+    const typeCode = typeRaw || (domRaw==='Indica'?'I':domRaw==='Sativa'?'S':domRaw==='Hybrid'?'H':'');
+    const typeMap  = {I:'Indica',S:'Sativa',H:'Hybrid'};
+    const typeLabel = typeMap[typeCode] || typeCode || '—';
+    const typeClass = typeCode==='I'?'dom-Indica':typeCode==='S'?'dom-Sativa':typeCode==='H'?'dom-Hybrid':'';
+    const category = (r['Categoy']||r['CATEGOY']||r['Category']||r['CATEGORY']||'').trim();
+    const subcategory = (r['Subcategory']||r['SUBCATEGORY']||'').trim();
+    // Pack Size: trim() on headers removes trailing space, so key is 'Pack Size' not 'Pack Size '
+    const packSize = (r['PACK SIZE']||r['Pack Size']||'').trim();
+    return `<tr>
+      <td class="date-cell">${formatDate(r['Est Sales Ready Date']||r['EST SALES READY DATE'])}</td>
+      <td><span class="brand-tag brand-${bk}">${r['Brand']||r['BRAND']||'—'}</span></td>
+      <td>${category||'—'}</td>
+      <td>${subcategory||'—'}</td>
+      <td>${packSize||'—'}</td>
+      <td>${typeLabel?`<span class="dom-tag ${typeClass}">${typeLabel}</span>`:''}</td>
+      <td class="flavor-cell">${flavor}</td>
+      <td class="num-cell">${startWt!=null ? startWt.toLocaleString() : '—'}</td>
+      <td class="num-cell">${targetUnits!=null ? targetUnits.toLocaleString() : '—'}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="9" class="no-incoming">No batches with an estimated sales ready date</td></tr>`;
+
+  return `<div class="incoming-wrap">
+    <table class="incoming-table">
+      <thead><tr>${thHtml}</tr></thead>
+      <tbody>${tbHtml}</tbody>
+    </table>
+  </div>`;
+}
+
+function sortIncoming(col){
+  if(_incomingSort.col===col){
+    _incomingSort.dir = _incomingSort.dir==='asc'?'desc':'asc';
+  } else {
+    _incomingSort = {col, dir:'asc'};
+  }
+  renderPipeline(_pipelineRows);
+}
+
+function _incomingSortVal(r, col){
+  if(col==='_packSize') return (r['PACK SIZE']||r['Pack Size']||'').trim();
+  if(col==='_flavor')   return (r['FLAVOR']||'').trim();
+  return r[col]||r[col.toUpperCase()]||'';
+}
+
+// ── Utilities ──────────────────────────────────────────────────────────────
+
+function brandKey(b){
+  if(!b) return 'other';
+  if(b.includes('Soma'))  return 'SRF';
+  if(b.includes('Howie')) return 'HWR';
+  if(b.includes('Mendo')) return 'Mendo';
+  return 'other';
+}
+
+function bskuFromAsku(asku){
+  if(!asku) return null;
+  const clean = asku.trim().toUpperCase();
+  if(clean.length < 9) return null;
+  return clean.substring(0,9);
+}
+
+// Try every plausible SKU column name from the sheet
+function getAskuFromRow(r){
+  return r['ASKU'] || r['Asku'] || r['asku'] || r['ASku'] ||
+         r['SKU']  || r['Sku']  || r['sku']  ||
+         r['TSKU'] || r['Tsku'] || r['tsku'] || '';
+}
+
+function dosClass(dos){
+  if(dos == null) return 'dos-none';
+  const low = DOS_TARGET, high = DOS_TARGET * 1.5;
+  if(dos < low - 0.5) return 'dos-low';
+  if(dos < high)      return 'dos-ok';
+  return 'dos-high';
+}
+
+function dosBarColor(cls){
+  if(cls==='dos-low')  return 'var(--red)';
+  if(cls==='dos-ok')   return 'var(--green)';
+  if(cls==='dos-high') return 'var(--gold)';
+  return 'var(--text3)';
+}
+
+function dosBarPct(dos){
+  if(dos == null) return 0;
+  return Math.min(100, Math.round((dos / (DOS_TARGET * 2)) * 100));
+}
+
+function stageColor(key){
+  const s = STAGES.find(x=>x.key===key);
+  return s ? s.color : 'var(--text3)';
+}
+function stageBg(key){
+  const s = STAGES.find(x=>x.key===key);
+  return s ? s.bg : 'rgba(87,84,80,.12)';
+}
+
+function parseCSV(text){
+  const lines = text.replace(/\r/g,'').trim().split('\n');
+  if(lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h=>h.trim());
+  const rows = [];
+  for(let li=1; li<lines.length; li++){
+    const line = lines[li];
+    if(!line.trim()) continue;
+    const vals=[]; let cur='',inQ=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch==='"'){ inQ=!inQ; }
+      else if(ch===','&&!inQ){ vals.push(cur.trim()); cur=''; }
+      else cur+=ch;
+    }
+    vals.push(cur.trim());
+    const row={};
+    headers.forEach((h,i)=>{ row[h] = (vals[i]!==undefined ? vals[i] : ''); });
+    // Also store uppercase keys so lookups work regardless of sheet export casing
+    headers.forEach((h,i)=>{ row[h.toUpperCase()] = (vals[i]!==undefined ? vals[i] : ''); });
+    if(row['Status'] !== undefined || row['STATUS'] !== undefined) rows.push(row);
+  }
+  return rows;
+}
+
+// ── Tab switching ──────────────────────────────────────────────────────────
+
+function showTab(tab){
+  _activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  if(tab==='pipeline') renderPipeline(_pipelineRows);
+  else renderProducts(_pipelineRows, _inventoryData);
+}
+
+// ── Pipeline Board (Tab 1) ─────────────────────────────────────────────────
+
+function renderPipeline(rows){
+  // Filter: exclude rows with no strain value
+  const withStrain = rows.filter(r=>(r['Strain']||r['STRAIN']||'').trim());
+  const pipeline = withStrain.filter(r=>r['Status']&&!['Complete',''].includes(r['Status'].trim()));
+  const active   = pipeline.filter(r=>!HOLD_STAGES.includes(r['Status'].trim()));
+  const onHold   = pipeline.filter(r=>HOLD_STAGES.includes(r['Status'].trim()));
+
+  const totalUnits = active.reduce((s,r)=>s+(parseInt((r['Units produced']||'').replace(/,/g,''))||0),0);
+  const byBrand = {};
+  active.forEach(r=>{const b=brandKey(r['Brand']);byBrand[b]=(byBrand[b]||0)+1;});
+
+  const stageCounts = {};
+  STAGES.forEach(s=>{ stageCounts[s.key] = active.filter(r=>r['Status'].trim()===s.key).length; });
+
+  const flowHtml = STAGES.map((s,i)=>{
+    const cnt = stageCounts[s.key];
+    const isActive = cnt > 0;
+    return `${i>0?'<span class="flow-arr">›</span>':''}
+    <div class="flow-step" style="opacity:${isActive?1:.35}">
+      <div class="flow-num" style="border-color:${s.color};color:${s.color};background:${isActive?s.bg:'transparent'}">${i+1}</div>
+      <span class="flow-lbl" style="color:${isActive?s.color:'var(--text3)'}">${s.label}</span>
+      ${cnt>0?`<span class="flow-cnt" style="background:${s.bg};color:${s.color}">${cnt}</span>`:''}
+    </div>`;
+  }).join('');
+
+  document.getElementById('app').innerHTML = `
+    <div class="kpis">
+      <div class="kpi green"><div class="kpi-lbl">Active Batches</div><div class="kpi-val">${active.length}</div><div class="kpi-sub">In production pipeline</div></div>
+      <div class="kpi blue"><div class="kpi-lbl">Units Pending</div><div class="kpi-val">${totalUnits>0?totalUnits.toLocaleString():'—'}</div><div class="kpi-sub">Across active batches</div></div>
+      <div class="kpi gold"><div class="kpi-lbl">SRF Batches</div><div class="kpi-val">${byBrand['SRF']||0}</div><div class="kpi-sub">Soma Rosa Farms</div></div>
+      <div class="kpi orange"><div class="kpi-lbl">HWR Batches</div><div class="kpi-val">${byBrand['HWR']||0}</div><div class="kpi-sub">Howie Roll</div></div>
+      <div class="kpi purple"><div class="kpi-lbl">Mendo Batches</div><div class="kpi-val">${byBrand['Mendo']||0}</div><div class="kpi-sub">Mendo</div></div>
+      <div class="kpi red"><div class="kpi-lbl">On Hold</div><div class="kpi-val">${onHold.length}</div><div class="kpi-sub">${onHold.length===1?'1 batch paused':onHold.length+' batches paused'}</div></div>
+    </div>
+    <div class="sec">Incoming Inventory</div>
+    ${renderIncomingTable(rows)}
+    <div class="sec">Production Pipeline</div>
+    <div class="flow">${flowHtml}</div>
+    <div class="board" id="board"></div>
+  `;
+
+  const board = document.getElementById('board');
+  STAGES.forEach(stage=>{
+    const items = active.filter(r=>r['Status'].trim()===stage.key);
+    const grouped={};
+    items.forEach(r=>{
+      const k=r['COA#']||r['Strain']||Math.random();
+      if(!grouped[k])grouped[k]=[];
+      grouped[k].push(r);
+    });
+    const groups=Object.values(grouped);
+    const lane=document.createElement('div');
+    lane.className='lane';
+    lane.innerHTML=`<div class="lane-hd">
+      <div class="lane-dot" style="background:${stage.color}"></div>
+      <div class="lane-name" style="color:${stage.color}">${stage.label}</div>
+      <div class="lane-cnt" style="background:${stage.bg};color:${stage.color}">${groups.length}</div>
+    </div>
+    <div class="lane-body">
+      ${groups.length?groups.map(grp=>{
+        const first=grp[0];
+        const bk=brandKey(first['Brand']);
+        const strain=(first['Strain']||'').trim()||'(Unnamed)';
+        const dom=(first['Dominance']||'').trim();
+        const units=grp.reduce((s,r)=>s+(parseInt((r['Units produced']||'').replace(/,/g,''))||0),0);
+        const packs=grp.map(r=>(r['Pack Size ']||r['Pack Size']||'').trim()).filter(Boolean).join(' · ');
+        const coa=(first['COA Date']||'').trim();
+        return `<div class="card" style="border-left-color:${stage.color}">
+          <div class="card-strain">${strain}</div>
+          <div class="card-meta">
+            <span class="brand-tag brand-${bk}">${bk==='other'?(first['Brand']||'—'):bk}</span>
+            ${dom?`<span class="dom-tag dom-${dom}">${dom}`+`</span>`:''}
+          </div>
+          <div class="card-rows">
+            ${packs?`<div class="card-stat">Pack: <span>${packs}</span></div>`:''}
+            ${units?`<div class="card-stat">Units: <span>${units.toLocaleString()}</span></div>`:''}
+          </div>
+          ${coa?`<div class="card-coa">COA: <span>${coa}</span></div>`:''}
+        </div>`;
+      }).join(''):`<div class="empty-lane">No batches in this stage</div>`}
+    </div>`;
+    board.appendChild(lane);
+  });
+}
+
+// ── Product View (Tab 2) ───────────────────────────────────────────────────
+
+let _pvBrandFilter = 'all';
+
+function renderProducts(rows, invData){
+  const pipeline = rows.filter(r=>r['Status']&&!['Complete',''].includes(r['Status'].trim()));
+  const active   = pipeline.filter(r=>!HOLD_STAGES.includes(r['Status'].trim()));
+
+  // Build BSKU → pipeline batches map
+  const bskuBatches = {};
+  active.forEach(r=>{
+    const bsku = bskuFromAsku(getAskuFromRow(r));
+    if(!bsku) return;
+    if(!bskuBatches[bsku]) bskuBatches[bsku] = [];
+    bskuBatches[bsku].push(r);
+  });
+
+  // Group inventory products by brand
+  const byBrand = {};
+  (invData.product_groups||[]).forEach(pg=>{
+    const b = brandKey(pg.brand);
+    if(!byBrand[b]) byBrand[b]=[];
+    byBrand[b].push(pg);
+  });
+
+  const brandOrder = ['SRF','HWR','Mendo'];
+  const brandLabels = {SRF:'Soma Rosa Farms', HWR:'Howie Roll', Mendo:'Mendo'};
+  const brandColors = {SRF:'var(--green)', HWR:'var(--blue)', Mendo:'var(--purple)'};
+
+  // Filter
+  const activeBrands = brandOrder.filter(b=>byBrand[b]);
+
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="brand-filters">
+      <button class="brand-filter-btn ${_pvBrandFilter==='all'?'active':''}" onclick="pvFilter('all')">All Brands</button>
+      ${activeBrands.map(b=>`<button class="brand-filter-btn ${b.toLowerCase()} ${_pvBrandFilter===b?'active':''}" onclick="pvFilter('${b}')">${brandLabels[b]}</button>`).join('')}
+    </div>
+    <div id="pv-body"></div>
+  `;
+
+  _renderPvBody(byBrand, brandOrder, brandLabels, brandColors, bskuBatches);
+}
+
+function pvFilter(brand){
+  _pvBrandFilter = brand;
+  document.querySelectorAll('.brand-filter-btn').forEach(b=>{
+    b.classList.remove('active');
+    if(b.textContent.trim()==='All Brands' && brand==='all') b.classList.add('active');
+    if(b.getAttribute('onclick')===`pvFilter('${brand}')`) b.classList.add('active');
+  });
+  const byBrand={};
+  (_inventoryData.product_groups||[]).forEach(pg=>{
+    const b=brandKey(pg.brand);
+    if(!byBrand[b])byBrand[b]=[];
+    byBrand[b].push(pg);
+  });
+  const pipeline = _pipelineRows.filter(r=>r['Status']&&!['Complete',''].includes(r['Status'].trim()));
+  const active   = pipeline.filter(r=>!HOLD_STAGES.includes(r['Status'].trim()));
+  const bskuBatches={};
+  active.forEach(r=>{
+    const bsku=bskuFromAsku(getAskuFromRow(r));
+    if(!bsku)return;
+    if(!bskuBatches[bsku])bskuBatches[bsku]=[];
+    bskuBatches[bsku].push(r);
+  });
+  _renderPvBody(byBrand,['SRF','HWR','Mendo'],
+    {SRF:'Soma Rosa Farms',HWR:'Howie Roll',Mendo:'Mendo'},
+    {SRF:'var(--green)',HWR:'var(--blue)',Mendo:'var(--purple)'},
+    bskuBatches);
+}
+
+function _renderPvBody(byBrand, brandOrder, brandLabels, brandColors, bskuBatches){
+  const body = document.getElementById('pv-body');
+  if(!body) return;
+  const brandsToShow = _pvBrandFilter==='all' ? brandOrder.filter(b=>byBrand[b]) : [_pvBrandFilter].filter(b=>byBrand[b]);
+
+  body.innerHTML = brandsToShow.map(bk=>{
+    const products = byBrand[bk]||[];
+    // Sort by DOS ascending (nulls last) so urgent products rise to top
+    products.sort((a,b)=>{
+      if(a.days_of_supply==null && b.days_of_supply==null) return 0;
+      if(a.days_of_supply==null) return 1;
+      if(b.days_of_supply==null) return -1;
+      return a.days_of_supply - b.days_of_supply;
+    });
+
+    const rows = products.map(pg=>{
+      const dc   = dosClass(pg.days_of_supply);
+      const dos  = pg.days_of_supply;
+      const dosDisplay = dos!=null ? Math.round(dos)+'d' : '—';
+      const batches = bskuBatches[pg.bsku] || [];
+
+      // Sort batches by stage order
+      const stageOrder = STAGES.map(s=>s.key);
+      batches.sort((a,b)=>stageOrder.indexOf(a['Status'].trim())-stageOrder.indexOf(b['Status'].trim()));
+
+      const batchesHtml = batches.length
+        ? batches.map(r=>{
+            const stage  = (r['Status']||'').trim();
+            const sc     = stageColor(stage);
+            const sb     = stageBg(stage);
+            const strain = (r['Strain']||'').trim()||'(Unnamed)';
+            const units  = parseInt((r['Units produced']||'').replace(/,/g,''))||0;
+            const pack   = (r['Pack Size ']||r['Pack Size']||'').trim();
+            return `<div class="pv-batch">
+              <div class="pv-batch-stage" style="background:${sb};color:${sc}">${stage}</div>
+              <div class="pv-batch-info">
+                <div class="pv-batch-strain">${strain}${pack?` · ${pack}`:''}</div>
+                <div class="pv-batch-units">${units?`<span>${units.toLocaleString()}</span> units`:'Units TBD'}</div>
+              </div>
+            </div>`;
+          }).join('')
+        : `<div class="pv-no-batches">No batches in pipeline</div>`;
+
+      return `<div class="pv-product-row ${dc}">
+        <div class="pv-product-inner">
+          <div class="pv-left">
+            <div class="pv-prod-name">${pg.pg}</div>
+            <div class="pv-prod-meta">
+              <span class="brand-tag brand-${bk}">${bk}</span>
+              <span style="font-family:var(--font-c);font-size:10px;color:var(--text3)">${pg.category}${pg.weight_unit?' · '+pg.weight_unit:''}</span>
+            </div>
+            <div class="pv-dos-row">
+              <div class="pv-dos-val ${dc}">${dosDisplay}</div>
+              <div>
+                <div class="pv-dos-lbl">days of supply</div>
+                <div class="pv-inv">Inv: <span>${(pg.inventory||0).toLocaleString()}</span> units</div>
+              </div>
+            </div>
+            <div class="pv-dos-bar-wrap">
+              <div class="pv-dos-bar" style="width:${dosBarPct(dos)}%;background:${dosBarColor(dc)}"></div>
+            </div>
+          </div>
+          <div class="pv-right">${batchesHtml}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div class="pv-brand-section">
+      <div class="pv-brand-hd">
+        <div class="pv-brand-name" style="color:${brandColors[bk]}">${brandLabels[bk]}</div>
+        <div class="pv-brand-count">${products.length} products</div>
+      </div>
+      ${rows}
+    </div>`;
+  }).join('');
+}
+
+// ── Data loading ───────────────────────────────────────────────────────────
+
+async function loadData(){
+  try {
+    const [pipelineResp, inventoryResp, datavResp] = await Promise.all([
+      fetch(PIPELINE_URL),
+      fetch(INVENTORY_URL + '?t=' + Date.now()),
+      fetch(DATAV_URL).catch(()=>null)   // non-fatal if DATAV unavailable
+    ]);
+    if(!pipelineResp.ok) throw new Error('Pipeline fetch failed: HTTP '+pipelineResp.status);
+    if(!inventoryResp.ok) throw new Error('Inventory fetch failed: HTTP '+inventoryResp.status);
+
+    // Build flavor lookup map from DATAV: F-ID → FLAVOR display name
+    if(datavResp && datavResp.ok){
+      const datavText = await datavResp.text();
+      // Use a simple parser — DATAV has no Status column so parseCSV would drop all rows
+      const dvLines = datavText.replace(/\r/g,'').trim().split('\n');
+      if(dvLines.length > 1){
+        const dvHeaders = dvLines[0].split(',').map(h=>h.trim());
+        const fIdx   = dvHeaders.findIndex(h=>h==='FLAVOR'||h==='Flavor');
+        const fidIdx = dvHeaders.findIndex(h=>h==='F-ID'||h==='f-id'||h==='F_ID');
+        if(fIdx>=0 && fidIdx>=0){
+          dvLines.slice(1).forEach(line=>{
+            if(!line.trim()) return;
+            const vals = line.split(',').map(v=>v.trim());
+            const fid  = vals[fidIdx]||'';
+            const fname= vals[fIdx]||'';
+            if(fid && fname) _flavorMap[fid] = fname;
+          });
+        }
+      }
+      console.log('[DATAV] Flavor map loaded:', Object.keys(_flavorMap).length, 'entries');
+    } else {
+      console.warn('[DATAV] Fetch failed or unavailable');
+    }
+
+    const csvText = await pipelineResp.text();
+    _pipelineRows = parseCSV(csvText);
+    if(_pipelineRows.length) console.log('[Pipeline] Columns:', Object.keys(_pipelineRows[0]).join(', '));
+    _inventoryData = await inventoryResp.json();
+
+    renderPipeline(_pipelineRows);
+    document.getElementById('ref-date').textContent = 'As of ' + new Date().toLocaleDateString();
+  } catch(e) {
+    document.getElementById('app').innerHTML =
+      `<div class="error-msg">Failed to load data: ${e.message}</div>`;
+    console.error(e);
+  }
+}
+loadData();
+</script>
+</body>
+</html>
