@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2CW — Executive Dashboard</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"
+  onerror="this.onerror=null;var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';document.head.appendChild(s);"></script>
+<style>
+  :root {
+    --bg:#0f1117;--surface:#181c26;--surface2:#1e2333;--border:#2a2f42;
+    --text:#e8eaf0;--muted:#7b8099;--accent:#00c9a7;--accent2:#7c6af7;
+    --srf:#00c9a7;--hwr:#f7a26a;--mendo:#a78bfa;
+    --red:#f05c5c;--yellow:#f5c518;--green:#4ade80;--blue:#60a5fa;
+    --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono','Fira Code',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5}
+
+  /* NAV */
+  .nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:100;gap:0}
+  .nav-back{display:flex;align-items:center;height:52px;padding:0 16px;font-size:12px;font-weight:500;color:var(--muted);text-decoration:none;border-right:1px solid var(--border);margin-right:16px;transition:color .15s}
+  .nav-back:hover{color:var(--text)}
+  .nav-brand{font-weight:700;font-size:15px;letter-spacing:.04em;color:var(--text);margin-right:32px}
+  .nav-brand span{color:var(--accent)}
+  .nav-tab{padding:0 16px;height:52px;display:flex;align-items:center;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
+  .nav-tab:hover{color:var(--text)}
+  .nav-tab.active{color:var(--text);border-bottom-color:var(--accent)}
+  .nav-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+  .ref-date{font-size:11px;color:var(--muted)}
+  .refresh-btn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:12px;padding:5px 12px;border-radius:6px;cursor:pointer}
+  .refresh-btn:hover{color:var(--text);border-color:var(--accent)}
+
+  /* PAGE */
+  .page{display:none;padding:24px;max-width:1400px;margin:0 auto}
+  .page.active{display:block}
+  .loading{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;padding:40px 24px}
+  .spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .error-msg{background:rgba(240,92,92,.1);border:1px solid rgba(240,92,92,.3);border-radius:8px;padding:14px 18px;color:var(--red);font-size:13px;margin:24px}
+
+  .page-header{margin-bottom:24px}
+  .page-title{font-size:22px;font-weight:700;letter-spacing:-.01em}
+  .page-sub{color:var(--muted);font-size:13px;margin-top:4px}
+
+  /* SCORECARDS */
+  .scorecard-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:24px}
+  .sc{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;position:relative;overflow:hidden}
+  .sc-label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .sc-val{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+  .sc-sub{font-size:12px;color:var(--muted);margin-top:4px}
+  .sc.green{border-top:2px solid var(--green)}
+  .sc.yellow{border-top:2px solid var(--yellow)}
+  .sc.blue{border-top:2px solid var(--blue)}
+  .sc.srf{border-top:2px solid var(--srf)}
+  .sc.hwr{border-top:2px solid var(--hwr)}
+  .sc.mendo{border-top:2px solid var(--mendo)}
+  .sc.accent2{border-top:2px solid var(--accent2)}
+  .text-srf{color:var(--srf)}.text-hwr{color:var(--hwr)}.text-mendo{color:var(--mendo)}
+
+  /* TRAJECTORY */
+  .traj-track{height:8px;border-radius:4px;background:var(--border);overflow:visible;position:relative}
+  .traj-fill{height:8px;border-radius:4px;transition:width .4s}
+  .traj-target{position:absolute;top:-4px;width:2px;height:16px;background:var(--yellow);border-radius:1px}
+  .traj-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:4px}
+
+  /* CHART CARDS */
+  .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+  .chart-grid.full{grid-template-columns:1fr}
+  @media(max-width:900px){.chart-grid{grid-template-columns:1fr}}
+  .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px}
+  .chart-card-title{font-size:13px;font-weight:600;margin-bottom:4px}
+  .chart-card-sub{font-size:11px;color:var(--muted);margin-bottom:16px}
+  .chart-wrap{position:relative;height:220px}
+  .chart-wrap.tall{height:280px}
+
+  .section-title{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;margin-top:28px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+
+  /* TARGET DOS SLIDER */
+  .target-bar{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+  .target-bar-label{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+  .target-slider-wrap{display:flex;align-items:center;gap:12px;flex:1;min-width:200px}
+  .target-slider{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;background:var(--border);outline:none;cursor:pointer}
+  .target-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 0 1px var(--accent)}
+  .target-slider::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg)}
+  .target-val{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--accent);white-space:nowrap}
+  .target-val span{font-size:11px;color:var(--muted);font-weight:400}
+  .target-tiers{display:flex;gap:8px;flex-wrap:wrap}
+  .tier-pill{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .tier-low{background:rgba(240,92,92,.12);color:var(--red)}
+  .tier-ok{background:rgba(74,222,128,.12);color:var(--green)}
+  .tier-high{background:rgba(245,197,24,.12);color:var(--yellow)}
+
+  /* TABLE */
+  .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+  .table-head{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .table-title{font-weight:600;font-size:13px}
+  .table-meta{font-size:11px;color:var(--muted)}
+  table{width:100%;border-collapse:collapse}
+  th{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+  td{padding:10px 16px;font-size:13px;border-bottom:1px solid var(--border);white-space:nowrap}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:var(--surface2)}
+  .num{font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:12px}
+  .table-scroll{overflow-x:auto}
+
+  /* BADGES */
+  .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+  .badge-srf{background:rgba(0,201,167,.15);color:var(--srf)}
+  .badge-hwr{background:rgba(247,162,106,.15);color:var(--hwr)}
+  .badge-mendo{background:rgba(167,139,250,.15);color:var(--mendo)}
+  .badge-ok{background:rgba(74,222,128,.12);color:var(--green)}
+  .badge-warn{background:rgba(245,197,24,.12);color:var(--yellow)}
+  .badge-danger{background:rgba(240,92,92,.12);color:var(--red)}
+  .badge-hold{background:rgba(123,128,153,.12);color:var(--muted)}
+  .badge-info{background:rgba(124,106,247,.12);color:var(--accent2)}
+
+  /* DAYS BAR */
+  .days-bar{display:flex;align-items:center;gap:8px}
+  .days-bar-track{height:6px;border-radius:3px;background:var(--border);flex:1;max-width:80px}
+  .days-bar-fill{height:6px;border-radius:3px}
+  .days-num{font-family:var(--mono);font-size:12px;min-width:32px;text-align:right}
+  .urgent{color:var(--red)}.healthy{color:var(--green)}.warning{color:var(--yellow)}
+
+  /* LEADERBOARD */
+  .lb-hint{font-size:11px;color:var(--muted)}
+  .rnk{width:26px;height:26px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:800;font-size:12px}
+  .rnk.r1{background:rgba(245,197,24,.18);color:var(--yellow)}
+  .rnk.r2{background:rgba(232,232,240,.14);color:#cfd2dd}
+  .rnk.r3{background:rgba(247,162,106,.16);color:var(--hwr)}
+  .rnk.rn{background:var(--surface2);color:var(--muted)}
+  .rep-name{font-weight:600;color:var(--text)}
+  .score-wrap{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+  .score-track{height:6px;width:50px;border-radius:3px;background:var(--border)}
+  .score-fill{height:6px;border-radius:3px}
+  .score-num{font-family:var(--mono);font-size:13px;font-weight:700;min-width:24px;text-align:right}
+  .grow{color:var(--green)}.shrink{color:var(--red)}.flat{color:var(--muted)}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="https://2cwdb.netlify.app" class="nav-back">← Directory</a>
+  <div class="nav-brand">2CW <span>Executive</span></div>
+  <div class="nav-tab active" onclick="showPage('sales',this)">Sales</div>
+  <div class="nav-tab" onclick="showPage('inventory',this)">Inventory</div>
+  <div class="nav-tab" onclick="showPage('leaderboard',this)">Leaderboard</div>
+  <div class="nav-right">
+    <span class="ref-date" id="ref-date">Loading…</span>
+    <button class="refresh-btn" onclick="loadAll()">↻ Refresh</button>
+  </div>
+</nav>
+
+<div id="global-loading" class="loading"><div class="spinner"></div>Loading live data from GitHub…</div>
+<div id="global-error" class="error-msg" style="display:none"></div>
+
+<!-- ==================== TAB 1: SALES ==================== -->
+<div id="page-sales" class="page">
+  <div class="page-header">
+    <div class="page-title">Sales Overview</div>
+    <div class="page-sub" id="sales-sub"></div>
+  </div>
+
+  <div class="section-title" style="margin-top:0">Month to Date — <span id="mtd-month-label" style="color:var(--text)"></span></div>
+  <div class="scorecard-strip" id="mtd-scorecards"></div>
+
+  <div class="section-title">Monthly Trajectory</div>
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-card-title">Pacing vs. Last Month</div>
+      <div class="chart-card-sub" id="traj-sub"></div>
+      <div id="traj-visual"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Daily Run Rate</div>
+      <div class="chart-card-sub" id="runrate-sub"></div>
+      <div class="chart-wrap"><canvas id="chart-runrate"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section-title">Revenue History</div>
+  <div class="chart-grid full">
+    <div class="chart-card">
+      <div class="chart-card-title">Monthly Revenue by Brand</div>
+      <div class="chart-card-sub">Last 12 months</div>
+      <div class="chart-wrap tall"><canvas id="chart-rev-brand"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TAB 2: INVENTORY ==================== -->
+<div id="page-inventory" class="page">
+  <div class="page-header">
+    <div class="page-title">Inventory by Pack Size</div>
+    <div class="page-sub" id="inv-sub"></div>
+  </div>
+
+  <div class="target-bar">
+    <div class="target-bar-label">Target Days of Supply</div>
+    <div class="target-slider-wrap">
+      <input type="range" class="target-slider" id="slider-inv" min="15" max="120" value="60" step="5" oninput="onInvSlider(this.value)">
+      <div class="target-val" id="tval-inv">60 <span>days</span></div>
+    </div>
+    <div class="target-tiers" id="ttiers-inv"></div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-head">
+      <div class="table-title">All Brands — Sorted by Days of Supply (lowest first)</div>
+      <div class="table-meta" id="inv-asof"></div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr>
+          <th>Brand</th><th>Category</th><th>SKU</th><th>Pack</th>
+          <th>Units</th><th>Past 30</th><th>Days of Supply</th>
+          <th>Units Needed</th><th>Lbs Needed</th><th>Status</th>
+        </tr></thead>
+        <tbody id="inv-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TAB 3: LEADERBOARD ==================== -->
+<div id="page-leaderboard" class="page">
+  <div class="page-header">
+    <div class="page-title">Rep Leaderboards</div>
+    <div class="page-sub">Composite score — Revenue 35% · Growth 25% · Coverage 20% · Active 12% · Growing 8%</div>
+  </div>
+
+  <div class="section-title" style="margin-top:0">Top 5 — KSS Reps</div>
+  <div class="table-wrap">
+    <div class="table-head"><div class="table-title">KSS Rep Rankings</div><div class="lb-hint" id="kss-asof"></div></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr>
+          <th>Rank</th><th>Rep</th><th class="num">Revenue</th><th class="num">Growth %</th>
+          <th class="num">Active</th><th class="num">Priority</th><th class="num">At Risk</th>
+          <th class="num">Lost</th><th class="num">Sampled</th><th class="num">Score</th>
+        </tr></thead>
+        <tbody id="kss-lb-table"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section-title">All 2CW Reps</div>
+  <div class="table-wrap">
+    <div class="table-head"><div class="table-title">2CW Rep Rankings</div><div class="lb-hint" id="twocw-asof"></div></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr>
+          <th>Rank</th><th>Rep</th><th class="num">Revenue</th><th class="num">Growth %</th>
+          <th class="num">Active</th><th class="num">Priority</th><th class="num">At Risk</th>
+          <th class="num">Lost</th><th class="num">Sampled</th><th class="num">Score</th>
+        </tr></thead>
+        <tbody id="twocw-lb-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ────────────────────────────────────────────────────────────────
+const BASE = 'https://raw.githubusercontent.com/bobby2soxRC/2cw-dashboard/main/data/';
+const SALES_URL  = BASE + 'sales_data.json';
+const INV_URL    = BASE + 'inventory_data.json';
+const KSS_URL    = BASE + 'kss_dashboard.json';
+const TWOCW_URL  = BASE + 'twocw_dashboard.json';
+
+// ─── HELPERS ───────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const fmt  = n => n == null ? '—' : '$' + Math.round(n).toLocaleString();
+const fmtK = n => n == null ? '—' : n >= 1000000 ? '$' + (n/1000000).toFixed(2) + 'M' : n >= 1000 ? '$' + Math.round(n/1000).toLocaleString() + 'K' : '$' + Math.round(n);
+const fmtNum = n => n == null ? '—' : Math.round(n).toLocaleString();
+const pct  = (a,b) => b === 0 ? null : Math.round((a-b)/b*100);
+
+function parseMonthStr(s) {
+  if (!s) return null;
+  const MO = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+  const parts = s.trim().split(/\s+/);
+  const m = MO[parts[0]];
+  const y = parseInt(parts[1], 10);
+  if (m === undefined || isNaN(y)) return null;
+  return new Date(y, m, 1);
+}
+function isCompletedMonth(monthStr, currentMonthStr) {
+  if (!currentMonthStr) return true;
+  const a = parseMonthStr(monthStr);
+  const b = parseMonthStr(currentMonthStr);
+  if (!a || !b) return true;
+  return a < b;
+}
+function brandBadge(b) {
+  if (b === 'Soma Rosa Farms' || b === 'SRF' || b === 'Som') return '<span class="badge badge-srf">SRF</span>';
+  if (b === 'Howie Roll' || b === 'HWR' || b === 'How') return '<span class="badge badge-hwr">HWR</span>';
+  if (b === 'Mendo' || b === 'MDO' || b === 'Men') return '<span class="badge badge-mendo">MENDO</span>';
+  return '<span class="badge badge-info">—</span>';
+}
+
+Chart.defaults.color = '#7b8099';
+Chart.defaults.borderColor = '#2a2f42';
+Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+Chart.defaults.font.size = 11;
+const charts = {};
+function mkChart(id, type, data, options={}) {
+  if (charts[id]) charts[id].destroy();
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  charts[id] = new Chart(ctx, { type, data, options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { boxWidth: 10, padding: 16, color: '#7b8099', font:{size:11} } } },
+    scales: {
+      x: { grid:{color:'#2a2f42'}, ticks:{color:'#7b8099',maxRotation:45} },
+      y: { grid:{color:'#2a2f42'}, ticks:{color:'#7b8099'} }
+    },
+    ...options
+  }});
+}
+
+// ─── NAV ───────────────────────────────────────────────────────────────────
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p=>{p.style.display='none';p.classList.remove('active')});
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  $('page-'+id).style.display='block';
+  $('page-'+id).classList.add('active');
+  if (el) el.classList.add('active');
+}
+
+// ─── LOAD ALL ──────────────────────────────────────────────────────────────
+let salesData = null, invData = null, kssData = null, twocwData = null;
+
+async function loadAll() {
+  $('global-loading').style.display = 'flex';
+  $('global-error').style.display = 'none';
+
+  try {
+    const [salesRes, invRes, kssRes, twocwRes] = await Promise.all([
+      fetch(SALES_URL + '?t=' + Date.now()),
+      fetch(INV_URL + '?t=' + Date.now()),
+      fetch(KSS_URL + '?t=' + Date.now()),
+      fetch(TWOCW_URL + '?t=' + Date.now()),
+    ]);
+    if (!salesRes.ok) throw new Error('sales_data.json: HTTP ' + salesRes.status);
+    if (!invRes.ok)   throw new Error('inventory_data.json: HTTP ' + invRes.status);
+    if (!kssRes.ok)   throw new Error('kss_dashboard.json: HTTP ' + kssRes.status);
+    if (!twocwRes.ok) throw new Error('twocw_dashboard.json: HTTP ' + twocwRes.status);
+
+    salesData = normalizeSalesData(await salesRes.json());
+    invData   = await invRes.json();
+    kssData   = await kssRes.json();
+    twocwData = await twocwRes.json();
+
+    $('ref-date').textContent = 'Updated: ' + (salesData.ref_date || invData.ref_date || 'unknown');
+
+    buildSales(salesData);
+    buildInventory(invData);
+    buildLeaderboards(kssData, twocwData);
+  } catch (err) {
+    console.error('Data load failed:', err);
+    $('global-error').textContent = 'Failed to load live data: ' + err.message;
+    $('global-error').style.display = 'block';
+  }
+  $('global-loading').style.display = 'none';
+  $('page-sales').style.display = 'block';
+  $('page-sales').classList.add('active');
+}
+
+function normalizeSalesData(d) {
+  const BRAND_MAP = { 'Som':'SRF','How':'HWR','Men':'MDO','SRF':'SRF','HWR':'HWR','MDO':'MDO' };
+  function remapBrands(brands) {
+    if (!brands) return {};
+    const out = {};
+    for (const [k, v] of Object.entries(brands)) {
+      const key = BRAND_MAP[k] || k;
+      if (out[key]) {
+        out[key].rev   = (out[key].rev   || 0) + (v.rev   || 0);
+        out[key].units = (out[key].units || 0) + (v.units || 0);
+      } else {
+        out[key] = { rev: v.rev || 0, units: v.units || 0 };
+      }
+    }
+    return out;
+  }
+  if (Array.isArray(d.monthly)) {
+    d.monthly = d.monthly.map(m => ({ ...m, brands: remapBrands(m.brands) }));
+  }
+  if (d.mtd) d.mtd = { ...d.mtd, brands: remapBrands(d.mtd.brands) };
+  return d;
+}
+
+// ─── TAB 1: SALES ──────────────────────────────────────────────────────────
+function buildSales(d) {
+  const months = d.monthly || [];
+  const labels = months.map(m => m.month);
+  const cur = d.current_month;
+  const mtd = d.mtd || {};
+  const mtdTotal = mtd.total || 0;
+  const elapsed = d.days_elapsed || new Date().getDate();
+  const remaining = d.days_remaining || 0;
+  const daysInMo = d.days_in_month || 30;
+  const projEOM = d.projected_eom || 0;
+  const dailyRate = d.daily_run_rate || 0;
+
+  $('mtd-month-label').textContent = cur;
+  $('sales-sub').textContent = `${labels.length} months of history · Updated ${d.ref_date || 'unknown'}`;
+
+  const completedMonths = months.filter(m => isCompletedMonth(m.month, cur));
+  const lastFull = completedMonths[completedMonths.length - 1] || months[months.length - 1];
+  const lastFullTotal = lastFull?.total || 0;
+  const paceVsLast = pct(projEOM, lastFullTotal);
+
+  const t3 = completedMonths.slice(-3).map(m => m.total);
+  const t3avg = t3.length ? t3.reduce((s,v)=>s+v,0) / t3.length : 0;
+
+  const srfMtd = mtd.brands?.SRF?.rev || 0;
+  const hwrMtd = mtd.brands?.HWR?.rev || 0;
+  const mendoMtd = mtd.brands?.MDO?.rev || 0;
+
+  $('mtd-scorecards').innerHTML = `
+    <div class="sc green">
+      <div class="sc-label">MTD Revenue</div>
+      <div class="sc-val">${fmtK(mtdTotal)}</div>
+      <div class="sc-sub">Day ${elapsed} of ${daysInMo}</div>
+    </div>
+    <div class="sc accent2">
+      <div class="sc-label">Projected EOM</div>
+      <div class="sc-val">${fmtK(projEOM)}</div>
+      <div class="sc-sub">${paceVsLast != null ? (paceVsLast > 0 ? '▲ ' : '▼ ') + Math.abs(paceVsLast) + '% vs last mo' : 'vs last month'}</div>
+    </div>
+    <div class="sc yellow">
+      <div class="sc-label">Daily Run Rate</div>
+      <div class="sc-val">${fmtK(dailyRate)}</div>
+      <div class="sc-sub">${remaining} days remaining</div>
+    </div>
+    <div class="sc blue">
+      <div class="sc-label">3-Mo Avg</div>
+      <div class="sc-val">${fmtK(t3avg)}</div>
+      <div class="sc-sub">Trailing 3-month avg/mo</div>
+    </div>
+    <div class="sc srf">
+      <div class="sc-label">SRF MTD</div>
+      <div class="sc-val text-srf">${fmtK(srfMtd)}</div>
+      <div class="sc-sub">${mtdTotal ? Math.round(srfMtd/mtdTotal*100) : 0}% of total</div>
+    </div>
+    <div class="sc hwr">
+      <div class="sc-label">HWR MTD</div>
+      <div class="sc-val text-hwr">${fmtK(hwrMtd)}</div>
+      <div class="sc-sub">${mtdTotal ? Math.round(hwrMtd/mtdTotal*100) : 0}% of total</div>
+    </div>
+    ${mendoMtd > 0 ? `<div class="sc mendo"><div class="sc-label">Mendo MTD</div><div class="sc-val text-mendo">${fmtK(mendoMtd)}</div><div class="sc-sub">${Math.round(mendoMtd/mtdTotal*100)}% of total</div></div>` : ''}
+  `;
+
+  const pctElapsed = Math.round(elapsed / daysInMo * 100);
+  const pctOfTarget = lastFullTotal > 0 ? Math.min(Math.round(mtdTotal / lastFullTotal * 100), 120) : 0;
+  const trajColor = pctOfTarget >= pctElapsed ? 'var(--green)' : pctOfTarget >= pctElapsed * 0.85 ? 'var(--yellow)' : 'var(--red)';
+
+  $('traj-sub').textContent = `Day ${elapsed}/${daysInMo} — ${pctElapsed}% of month elapsed, ${pctOfTarget}% of last month's revenue reached`;
+  $('traj-visual').innerHTML = `
+    <div style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">
+        <span style="color:var(--muted)">MTD Progress</span>
+        <span style="font-weight:600;color:${trajColor}">${fmtK(mtdTotal)} / ${fmtK(lastFullTotal)}</span>
+      </div>
+      <div class="traj-track">
+        <div class="traj-fill" style="width:${Math.min(pctOfTarget,100)}%;background:${trajColor}"></div>
+        <div class="traj-target" style="left:${pctElapsed}%" title="Expected pace (${pctElapsed}% of month)"></div>
+      </div>
+      <div class="traj-labels">
+        <span>$0</span>
+        <span style="color:var(--yellow)">↑ day ${elapsed} expected</span>
+        <span>${fmtK(lastFullTotal)} (last mo)</span>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:16px">
+      <div style="text-align:center;background:var(--surface2);border-radius:8px;padding:10px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">ELAPSED</div>
+        <div style="font-size:20px;font-weight:700">${pctElapsed}%</div>
+        <div style="font-size:11px;color:var(--muted)">Day ${elapsed}/${daysInMo}</div>
+      </div>
+      <div style="text-align:center;background:var(--surface2);border-radius:8px;padding:10px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">PACING</div>
+        <div style="font-size:20px;font-weight:700;color:${trajColor}">${pctOfTarget}%</div>
+        <div style="font-size:11px;color:var(--muted)">of last month</div>
+      </div>
+      <div style="text-align:center;background:var(--surface2);border-radius:8px;padding:10px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">PROJECTED</div>
+        <div style="font-size:20px;font-weight:700">${fmtK(projEOM)}</div>
+        <div style="font-size:11px;color:var(--muted)">end of month</div>
+      </div>
+    </div>
+  `;
+
+  const last6 = completedMonths.slice(-6);
+  const dailyRates = last6.map(m => {
+    const dt = new Date(m.month + ' 1');
+    const days = new Date(dt.getFullYear(), dt.getMonth()+1, 0).getDate();
+    return Math.round(m.total / days);
+  });
+  $('runrate-sub').textContent = `Current: ${fmtK(dailyRate)}/day · Based on ${elapsed} days`;
+  mkChart('chart-runrate','bar',{
+    labels: last6.map(m => m.month.split(' ')[0]),
+    datasets:[{
+      label:'$/day', data: dailyRates,
+      backgroundColor: last6.map((_,i) => i === last6.length-1 ? 'rgba(124,106,247,.7)' : 'rgba(96,165,250,.4)'),
+      borderRadius:4,
+    }]
+  },{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>fmtK(v)}}}});
+
+  const srfRevs  = months.map(m => m.brands?.SRF?.rev || 0);
+  const hwrRevs  = months.map(m => m.brands?.HWR?.rev || 0);
+  const mdoRevs  = months.map(m => m.brands?.MDO?.rev || 0);
+  const hasMdo   = mdoRevs.some(v => v > 0);
+
+  mkChart('chart-rev-brand','bar',{
+    labels,
+    datasets:[
+      {label:'Soma Rosa Farms', data:srfRevs, backgroundColor:'rgba(0,201,167,.75)',  borderRadius:3},
+      {label:'Howie Roll',      data:hwrRevs, backgroundColor:'rgba(247,162,106,.75)', borderRadius:3},
+      ...(hasMdo ? [{label:'Mendo', data:mdoRevs, backgroundColor:'rgba(167,139,250,.75)', borderRadius:3}] : []),
+    ]
+  },{
+    plugins:{legend:{position:'top'}},
+    scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>fmtK(v)}}}
+  });
+}
+
+// ─── TAB 2: INVENTORY ──────────────────────────────────────────────────────
+const TARGET_DOS = { val: 60 };
+
+function thresholds(t) { return { low: t, high: Math.round(t * 1.5) }; }
+function daysColor(d, t) {
+  if (d == null) return '#7b8099';
+  const th = thresholds(t);
+  if (d < th.low - 0.5) return '#f05c5c';
+  if (d < th.high) return '#4ade80';
+  return '#f5c518';
+}
+function daysClass(d, t) {
+  if (d == null) return '';
+  const th = thresholds(t);
+  if (d < th.low - 0.5) return 'urgent';
+  if (d < th.high) return 'healthy';
+  return 'warning';
+}
+function urgencyBadge(d, t) {
+  if (d == null) return '<span class="badge badge-hold">No data</span>';
+  const th = thresholds(t);
+  if (d < th.low - 0.5) return '<span class="badge badge-danger">Low</span>';
+  if (d < th.high) return '<span class="badge badge-ok">OK</span>';
+  return '<span class="badge badge-warn">High</span>';
+}
+function daysBar(d, t) {
+  if (d == null) return '<span style="color:var(--muted);font-size:12px">—</span>';
+  const max = thresholds(t).high * 1.5;
+  const p = Math.min(d / max * 100, 100);
+  return `<div class="days-bar"><div class="days-bar-track"><div class="days-bar-fill" style="width:${p}%;background:${daysColor(d,t)}"></div></div><span class="days-num ${daysClass(d,t)}">${d.toFixed(0)}d</span></div>`;
+}
+function updateTierPills() {
+  const t = TARGET_DOS.val;
+  const th = thresholds(t);
+  $('ttiers-inv').innerHTML = `
+    <div class="tier-pill tier-low">Low &lt;${th.low}d</div>
+    <div class="tier-pill tier-ok">OK ${th.low}–${th.high}d</div>
+    <div class="tier-pill tier-high">High &gt;${th.high}d</div>
+  `;
+}
+// Units needed to reach target DOS, using past-30 velocity (BSKU/product-group grain)
+function unitsNeeded(row, targetDos) {
+  const velocity = (row.past_30 || 0) / 30;
+  if (velocity <= 0) return null;
+  const needed = Math.max(0, velocity * targetDos - row.inventory);
+  return Math.ceil(needed);
+}
+// Simple units → lbs conversion using each pack size's units_per_pound (no yield adjustment)
+function lbsNeeded(units, unitsPerPound) {
+  if (units == null || !unitsPerPound) return null;
+  return units / unitsPerPound;
+}
+function unitsNeededBadge(n) {
+  if (n == null) return '<span style="color:var(--muted);font-size:12px">—</span>';
+  if (n === 0)   return '<span style="color:var(--green);font-family:var(--mono);font-size:12px">Stocked</span>';
+  return `<span style="color:var(--accent2);font-family:var(--mono);font-size:12px">+${fmtNum(n)}</span>`;
+}
+function lbsNeededBadge(lbs) {
+  if (lbs == null) return '<span style="color:var(--muted);font-size:12px">—</span>';
+  if (lbs === 0)    return '<span style="color:var(--green);font-family:var(--mono);font-size:12px">—</span>';
+  return `<span style="color:var(--accent2);font-family:var(--mono);font-size:12px">${lbs.toFixed(1)} lb</span>`;
+}
+
+function buildInventory(d) {
+  $('inv-sub').textContent = `Sorted by days of supply — lowest first · Updated ${d.ref_date || 'unknown'}`;
+  $('inv-asof').textContent = 'As of ' + (d.ref_date || 'unknown');
+  updateTierPills();
+  renderInventoryTable();
+}
+function onInvSlider(val) {
+  TARGET_DOS.val = parseInt(val);
+  $('tval-inv').innerHTML = `${val} <span>days</span>`;
+  updateTierPills();
+  renderInventoryTable();
+}
+function renderInventoryTable() {
+  if (!invData) return;
+  const t = TARGET_DOS.val;
+  const rows = (invData.product_groups || []).filter(r => r.inventory > 0 || (r.past_30 || 0) > 0);
+  const sorted = [...rows].sort((a, b) => {
+    const da = a.days_of_supply == null ? Infinity : a.days_of_supply;
+    const db = b.days_of_supply == null ? Infinity : b.days_of_supply;
+    return da - db;
+  });
+  const tb = $('inv-table');
+  tb.innerHTML = '';
+  sorted.forEach(r => {
+    const needed = unitsNeeded(r, t);
+    const lbs = lbsNeeded(needed, r.units_per_pound);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${brandBadge(r.brand)} ${r.brand}</td>
+      <td>${r.category}</td>
+      <td>${r.subcategory}</td>
+      <td class="num">${r.weight_unit}</td>
+      <td class="num">${fmtNum(r.inventory)}</td>
+      <td class="num">${fmtNum(r.past_30)}</td>
+      <td>${daysBar(r.days_of_supply, t)}</td>
+      <td class="num">${unitsNeededBadge(needed)}</td>
+      <td class="num">${lbsNeededBadge(lbs)}</td>
+      <td>${urgencyBadge(r.days_of_supply, t)}</td>
+    `;
+    tb.appendChild(tr);
+  });
+}
+
+// ─── TAB 3: LEADERBOARDS ───────────────────────────────────────────────────
+function rankBadge(rank) {
+  const cls = rank === 1 ? 'r1' : rank === 2 ? 'r2' : rank === 3 ? 'r3' : 'rn';
+  const label = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '#' + rank;
+  return `<span class="rnk ${cls}">${label}</span>`;
+}
+function growthBadge(p) {
+  if (p == null) return '<span class="flat">—</span>';
+  if (p > 3)  return `<span class="grow">▲ ${p.toFixed(1)}%</span>`;
+  if (p < -3) return `<span class="shrink">▼ ${Math.abs(p).toFixed(1)}%</span>`;
+  return `<span class="flat">→ ${p > 0 ? '+' : ''}${p.toFixed(1)}%</span>`;
+}
+function scoreColor(s) {
+  return s >= 70 ? 'var(--green)' : s >= 45 ? 'var(--accent)' : s >= 25 ? 'var(--hwr)' : 'var(--red)';
+}
+function repRow(r) {
+  const sc = r.composite_score || 0;
+  const col = scoreColor(sc);
+  return `<tr>
+    <td>${rankBadge(r.rank)}</td>
+    <td class="rep-name">${r.rep}</td>
+    <td class="num">${fmtK(r.total_rev)}</td>
+    <td class="num">${growthBadge(r.rev_growth)}</td>
+    <td class="num">${fmtNum(r.active)}</td>
+    <td class="num">${fmtNum(r.priority)}</td>
+    <td class="num">${fmtNum(r.at_risk)}</td>
+    <td class="num">${fmtNum(r.lost)}</td>
+    <td class="num">${fmtNum(r.n_sampled)}</td>
+    <td class="num"><div class="score-wrap"><div class="score-track"><div class="score-fill" style="width:${sc}%;background:${col}"></div></div><span class="score-num" style="color:${col}">${sc.toFixed(0)}</span></div></td>
+  </tr>`;
+}
+function buildLeaderboards(kss, twocw) {
+  const kssReps = [...(kss.kss || [])].sort((a,b) => a.rank - b.rank).slice(0, 5);
+  $('kss-asof').textContent = 'As of ' + (kss.ref_date || 'unknown');
+  $('kss-lb-table').innerHTML = kssReps.map(repRow).join('');
+
+  const twocwReps = [...(twocw.twocw || [])].sort((a,b) => a.rank - b.rank);
+  $('twocw-asof').textContent = 'As of ' + (twocw.ref_date || 'unknown');
+  $('twocw-lb-table').innerHTML = twocwReps.map(repRow).join('');
+}
+
+// ─── PIN GATE ──────────────────────────────────────────────────────────────
+// Mirrors the pattern used by the other dashboards. Add an "exec" column
+// (TRUE/FALSE) to the Users directory sheet to control who can reach this
+// page; falls back to allowing any already-authenticated PIN through if the
+// directory can't be reached or the column doesn't exist yet.
+(async function pinGate() {
+  const DIRECTORY_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTvUb2y2US1Qcyf12mngWEcvdCU3Yh9vgIzN_5-6x1psQRCIkG9Y4velrdcBB9zEw/pub?gid=165442896&single=true&output=csv';
+  const storedPin = sessionStorage.getItem('2cw_pin') || '';
+
+  if (!storedPin || storedPin.length !== 4) {
+    window.location.href = '/index.html';
+    return;
+  }
+  try {
+    const res = await fetch(DIRECTORY_URL + '&t=' + Date.now());
+    const text = await res.text();
+    const lines = text.trim().split('\n').map(l => l.trim()).filter(Boolean);
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const pinIdx  = headers.indexOf('pin');
+    const execIdx = headers.indexOf('executive');
+
+    if (execIdx === -1) return; // column not set up yet — allow any authenticated PIN through
+
+    const allowedPins = [];
+    for (let i = 1; i < lines.length; i++) {
+      const vals = lines[i].split(',').map(v => v.trim());
+      if (!vals[0]) continue;
+      if ((vals[execIdx] || '').toUpperCase() === 'TRUE') allowedPins.push(vals[pinIdx]);
+    }
+    if (!allowedPins.includes(storedPin)) window.location.href = '/index.html';
+  } catch (e) {
+    // directory unreachable — already authenticated at the hub, let them through
+  }
+})();
+
+loadAll();
+</script>
+</body>
+</html>
