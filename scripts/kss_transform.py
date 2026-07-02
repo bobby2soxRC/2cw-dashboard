@@ -145,7 +145,9 @@ PG_LABELS = {
     "MDO010101": "MDO Flower 1g",
     "MDO010102": "MDO Flower 8th",
     "MDO010104": "MDO Flower 14g",
+    "MDO050101": "MDO Indoor Flower 1g",
     "MDO050102": "MDO Indoor Flower 8th",
+    "MDO050104": "MDO Indoor Flower 14g",
     "MDO040601": "MDO Live Resin AIO",
     "MDO021107": "MDO Preroll 10pk",
 }
@@ -166,12 +168,14 @@ _FALLBACK_PG_TABLE = [
     ("HWR Live Resin Jar",    "HWR030401", "Howie Roll",      "Concentrate", "Live Resin Jar", "1g"  ),
     ("HWR Live Resin AIO",    "HWR040601", "Howie Roll",      "Vape",        "Live Resin AIO", "1g"  ),
     # Mendo — 6 BSKUs confirmed from NedCo inventory
-    ("MDO Flower 1g",         "MDO010101", "Mendo", "Flower",         "Bigs",           "1g"  ),
-    ("MDO Flower 8th",        "MDO010102", "Mendo", "Flower",         "Bigs",           "3.5g"),
-    ("MDO Flower 14g",        "MDO010104", "Mendo", "Flower",         "Bigs",           "14g" ),
-    ("MDO Indoor Flower 8th", "MDO050102", "Mendo", "Indoor Flower",  "Bigs",           "3.5g"),
-    ("MDO Live Resin AIO",    "MDO040601", "Mendo", "Vape",           "Live Resin AIO", "1g"  ),
-    ("MDO Preroll 10pk",      "MDO021107", "Mendo", "Preroll",        "10pk",           "5g"  ),
+    ("MDO Flower 1g",          "MDO010101", "Mendo", "Flower",         "Bigs",           "1g"  ),
+    ("MDO Flower 8th",         "MDO010102", "Mendo", "Flower",         "Bigs",           "3.5g"),
+    ("MDO Flower 14g",         "MDO010104", "Mendo", "Flower",         "Bigs",           "14g" ),
+    ("MDO Indoor Flower 1g",   "MDO050101", "Mendo", "Indoor Flower",  "Bigs",           "1g"  ),
+    ("MDO Indoor Flower 8th",  "MDO050102", "Mendo", "Indoor Flower",  "Bigs",           "3.5g"),
+    ("MDO Indoor Flower 14g",  "MDO050104", "Mendo", "Indoor Flower",  "Bigs",           "14g" ),
+    ("MDO Live Resin AIO",     "MDO040601", "Mendo", "Vape",           "Live Resin AIO", "1g"  ),
+    ("MDO Preroll 10pk",       "MDO021107", "Mendo", "Preroll",        "10pk",           "5g"  ),
 ]
 
 _FALLBACK_UPP = {
@@ -337,13 +341,15 @@ _NAME_RULES = [
     (r"\bmendo\b.*(?:preroll|pre-roll)",
         "Mendo", "Preroll", "10pk", "5g"),
 
-    # Mendo Flower (plain — 1g, 3.5g, 14g). KSS product names have historically
-    # (mistakenly) included "Indoor" for these — there's no real indoor-grown
-    # tier yet, so all current Mendo flower is treated as plain Flower here.
+    # Mendo Flower (1g, 3.5g, 14g). All current Mendo flower is grown indoors —
+    # KSS product names inconsistently include "Indoor", so every current
+    # Mendo flower product is treated as Indoor Flower here regardless of
+    # whether the name says "Indoor". Update this once a genuine non-indoor
+    # (outdoor/greenhouse) Mendo flower line launches with its own naming.
     # e.g. "Mendo Flower 14g Hybrid Georgia Pie"
-    #      "Mendo Indoor Flower 3.5g Indica Hard Candy"  ← same "Flower" group
+    #      "Mendo Indoor Flower 3.5g Indica Hard Candy"  ← same group
     (r"\bmendo\b.*flower",
-        "Mendo", "Flower", "Bigs", None),
+        "Mendo", "Indoor Flower", "Bigs", None),
 ]
 
 _SIZE_PAT = re.compile(r"\b(\d+(?:\.\d+)?)\s*g\b", re.IGNORECASE)

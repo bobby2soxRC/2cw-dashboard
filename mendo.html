@@ -406,7 +406,9 @@ const BSKU_TO_PG = {
   'MDO020906': 'Mendo Preroll 10-Pack',
   'MDO021107': 'Mendo Preroll 10-Pack',
   'MDO040601': 'Mendo AIO Live Resin 1g',
+  'MDO050101': 'Mendo Indoor Flower 1g',
   'MDO050102': 'Mendo Indoor Flower 8th',
+  'MDO050104': 'Mendo Indoor Flower Half Oz',
 };
 
 // Units per pound by pack size (from production sheet image)
@@ -510,10 +512,10 @@ function parsePipelineCSV(text) {
 
 let PIPELINE = []; // populated in loadAll()
 
-const MDO_PGS = ['MDO Flower 1g','MDO Flower 8th','MDO Flower 14g','MDO Indoor Flower 8th','MDO Live Resin AIO','MDO Preroll 10pk'];
+const MDO_PGS = ['MDO Indoor Flower 1g','MDO Indoor Flower 8th','MDO Indoor Flower 14g','MDO Live Resin AIO','MDO Preroll 10pk'];
 const PG_COLORS = {
-  'MDO Flower 1g':'#a78bfa','MDO Flower 8th':'#8b5cf6','MDO Flower 14g':'#7c3aed',
-  'MDO Indoor Flower 8th':'#c4b5fd','MDO Live Resin AIO':'#e879f9','MDO Preroll 10pk':'#818cf8'
+  'MDO Indoor Flower 1g':'#a78bfa','MDO Indoor Flower 8th':'#8b5cf6','MDO Indoor Flower 14g':'#7c3aed',
+  'MDO Live Resin AIO':'#e879f9','MDO Preroll 10pk':'#818cf8'
 };
 const STATUS_LBL = {active:'Active',priority:'Priority',at_risk:'At Risk',lost:'Lost',sample:'Sampled',prospect:'Prospect'};
 const REAL = new Set(['active','priority','at_risk','lost']);
@@ -756,8 +758,8 @@ function renderAcctTable(){
 function buildMtdBar(){
   if(!monthlyData) return;
 
-  const MDO_BSKUS    = ['MDO010101','MDO010102','MDO010104','MDO050102','MDO040601','MDO021107'];
-  const MDO_SUBCATS  = ['MDO Flower 1g','MDO Flower 8th','MDO Flower 14g','MDO Indoor Flower 8th','MDO Live Resin AIO','MDO Preroll 10pk'];
+  const MDO_BSKUS    = ['MDO050101','MDO050102','MDO050104','MDO040601','MDO021107'];
+  const MDO_SUBCATS  = ['MDO Indoor Flower 1g','MDO Indoor Flower 8th','MDO Indoor Flower 14g','MDO Live Resin AIO','MDO Preroll 10pk'];
 
   // MTD from bskus
   const mtdBskus    = (monthlyData.mtd||{}).bskus || {};
@@ -827,12 +829,11 @@ function buildMtdBar(){
 function buildMonthlyCharts(){
   if(!monthlyData||!monthlyData.monthly) return;
 
-  const MDO_SUBCATS = ['MDO Flower 1g','MDO Flower 8th','MDO Flower 14g','MDO Indoor Flower 8th','MDO Live Resin AIO','MDO Preroll 10pk'];
+  const MDO_SUBCATS = ['MDO Indoor Flower 1g','MDO Indoor Flower 8th','MDO Indoor Flower 14g','MDO Live Resin AIO','MDO Preroll 10pk'];
   const PG_CHART_COLORS = {
-    'MDO Flower 1g':      {bg:'rgba(124,58,237,.75)',  border:'#7c3aed'},
-    'MDO Flower 8th':     {bg:'rgba(139,92,246,.75)',  border:'#8b5cf6'},
-    'MDO Flower 14g':     {bg:'rgba(167,139,250,.75)', border:'#a78bfa'},
-    'MDO Indoor Flower 8th':{bg:'rgba(196,181,253,.75)',border:'#c4b5fd'},
+    'MDO Indoor Flower 1g': {bg:'rgba(124,58,237,.75)',  border:'#7c3aed'},
+    'MDO Indoor Flower 8th':{bg:'rgba(139,92,246,.75)',  border:'#8b5cf6'},
+    'MDO Indoor Flower 14g':{bg:'rgba(167,139,250,.75)', border:'#a78bfa'},
     'MDO Live Resin AIO': {bg:'rgba(232,121,249,.75)', border:'#e879f9'},
     'MDO Preroll 10pk':   {bg:'rgba(129,140,248,.75)', border:'#818cf8'},
   };
@@ -1070,7 +1071,7 @@ function rerenderInventory(){
   `;
 
   // Inventory table — row per BSKU, click to expand TSKU flavor detail + charts
-  const ORDER = ['MDO010101','MDO010102','MDO010104','MDO050102','MDO040601','MDO021107'];
+  const ORDER = ['MDO050101','MDO050102','MDO050104','MDO040601','MDO021107'];
   const sortedPgs = [...pgs].sort((a,b)=>(ORDER.indexOf(a.bsku)-ORDER.indexOf(b.bsku)));
   let rowsHtml = '';
   sortedPgs.forEach(r=>{
@@ -1101,8 +1102,8 @@ function buildLocTable(){
     byBsku[r.bsku].rows.push(r);
   });
 
-  const PG_NAMES={'MDO010101':'Flower 1g','MDO010102':'Flower 8th','MDO010104':'Flower 14g','MDO050102':'Indoor Flower 8th','MDO040601':'Live Resin AIO','MDO021107':'Preroll 10-Pack'};
-  const ORDER=['MDO010101','MDO010102','MDO010104','MDO050102','MDO040601','MDO021107'];
+  const PG_NAMES={'MDO050101':'Indoor Flower 1g','MDO050102':'Indoor Flower 8th','MDO050104':'Indoor Flower 14g','MDO040601':'Live Resin AIO','MDO021107':'Preroll 10-Pack'};
+  const ORDER=['MDO050101','MDO050102','MDO050104','MDO040601','MDO021107'];
   const sorted=ORDER.filter(b=>byBsku[b]);
 
   if(!sorted.length){el.innerHTML='<div style="padding:20px;color:var(--text3);font-size:13px">No Mendo inventory with location data.</div>';return;}
