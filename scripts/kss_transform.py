@@ -326,11 +326,6 @@ _NAME_RULES = [
         "Soma Rosa Farms", "Flower", "Bigs", None),
 
     # ── Mendo ─────────────────────────────────────────────────────────────────
-    # Mendo Indoor Flower 3.5g  (distinct premium tier — must come before plain Flower)
-    # e.g. "Mendo Indoor Flower 3.5g Indica Animal Mints"
-    (r"\bmendo\b.*indoor\s+flower",
-        "Mendo", "Indoor Flower", "Bigs", None),
-
     # Mendo Vape AIO
     # e.g. "Mendo Live Resin AIO 1g Indica Chem Z"
     (r"\bmendo\b.*(?:all-in-one|aio|live resin.*(?:cart|vape))",
@@ -342,9 +337,11 @@ _NAME_RULES = [
     (r"\bmendo\b.*(?:preroll|pre-roll)",
         "Mendo", "Preroll", "10pk", "5g"),
 
-    # Mendo Flower (plain — 1g, 3.5g, 14g)
-    # e.g. "Mendo Indoor Flower 3.5g Indica Hard Candy"  ← already caught above
-    #      "Mendo Flower 14g Hybrid Georgia Pie"
+    # Mendo Flower (plain — 1g, 3.5g, 14g). KSS product names have historically
+    # (mistakenly) included "Indoor" for these — there's no real indoor-grown
+    # tier yet, so all current Mendo flower is treated as plain Flower here.
+    # e.g. "Mendo Flower 14g Hybrid Georgia Pie"
+    #      "Mendo Indoor Flower 3.5g Indica Hard Candy"  ← same "Flower" group
     (r"\bmendo\b.*flower",
         "Mendo", "Flower", "Bigs", None),
 ]
