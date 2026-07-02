@@ -1189,7 +1189,7 @@ def transform():
         })
 
     # ── Per-ASKU (flavor × type × warehouse) inventory rows ──────────────────
-    # LocationID 1 = Van Nuys, 2 = Alameda
+    # LocationID 1 = Van Nuys, 3 = Alameda
     print("Building ASKU-level inventory...")
 
     asku_inv_vn = defaultdict(int)
@@ -1203,7 +1203,7 @@ def transform():
             continue
         if loc == "1":
             asku_inv_vn[sku_id] += qty
-        elif loc == "2":
+        elif loc == "3":
             asku_inv_al[sku_id] += qty
 
     asku_past30 = defaultdict(int)
