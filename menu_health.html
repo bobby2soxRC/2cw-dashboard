@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>2CW — Menu Health</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0f1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="2CW Ops">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"
+  onerror="this.onerror=null;var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';document.head.appendChild(s);"></script>
+<style>
+  :root {
+    --bg:#0f1117;--surface:#181c26;--surface2:#1e2333;--border:#2a2f42;
+    --text:#e8eaf0;--muted:#7b8099;--accent:#00c9a7;--accent2:#7c6af7;
+    --srf:#00c9a7;--hwr:#f7a26a;--mendo:#a78bfa;
+    --red:#f05c5c;--yellow:#f5c518;--green:#4ade80;--blue:#60a5fa;
+    --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono','Fira Code',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5}
+
+  /* NAV */
+  .nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;padding-top:env(safe-area-inset-top);display:flex;align-items:center;height:calc(52px + env(safe-area-inset-top));position:sticky;top:0;z-index:100;gap:0}
+  .nav-back{display:flex;align-items:center;height:52px;padding:0 16px;font-size:12px;font-weight:500;color:var(--muted);text-decoration:none;border-right:1px solid var(--border);margin-right:16px;transition:color .15s}
+  .nav-back:hover{color:var(--text)}
+  .nav-brand{font-weight:700;font-size:15px;letter-spacing:.04em;color:var(--text);margin-right:32px}
+  .nav-brand span{color:var(--accent)}
+  .nav-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+  .ref-date{font-size:11px;color:var(--muted)}
+  .refresh-btn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:12px;padding:5px 12px;border-radius:6px;cursor:pointer}
+  .refresh-btn:hover{color:var(--text);border-color:var(--accent)}
+
+  /* PAGE */
+  .page{padding:24px;max-width:1400px;margin:0 auto}
+  .loading{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;padding:40px 24px}
+  .spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .error-msg{background:rgba(240,92,92,.1);border:1px solid rgba(240,92,92,.3);border-radius:8px;padding:14px 18px;color:var(--red);font-size:13px;margin:24px}
+
+  .page-header{margin-bottom:24px}
+  .page-title{font-size:22px;font-weight:700;letter-spacing:-.01em}
+  .page-sub{color:var(--muted);font-size:13px;margin-top:4px}
+  .section-title{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;margin-top:28px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+
+  /* CHART CARD */
+  .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px}
+  .chart-card-title{font-size:13px;font-weight:600;margin-bottom:4px}
+  .chart-card-sub{font-size:11px;color:var(--muted);margin-bottom:16px}
+  .chart-wrap{position:relative;height:240px}
+
+  /* GAUGES */
+  .gauge-row{display:flex;gap:16px;flex-wrap:wrap;align-items:stretch;margin-bottom:24px}
+  .gauge-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px 12px;text-align:center;flex:1;min-width:150px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
+  .gauge-card.primary{min-width:220px}
+  .gauge-card-label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .gauge-note{font-size:10px;color:var(--muted);margin-top:4px}
+
+  /* HIERARCHY TREE */
+  .mh-tree{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+  .mh-row{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border)}
+  .mh-row:last-child{border-bottom:none}
+  .mh-row.level-bsku{padding-left:40px;background:rgba(255,255,255,.02)}
+  .mh-row.level-tsku{padding-left:64px;background:rgba(255,255,255,.04)}
+  .mh-toggle{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);cursor:pointer;flex-shrink:0;transition:all .15s}
+  .mh-toggle:hover{border-color:var(--accent)}
+  .mh-toggle.on{background:var(--accent);border-color:var(--accent)}
+  .mh-expand{width:16px;text-align:center;color:var(--muted);cursor:pointer;font-size:11px;user-select:none;flex-shrink:0}
+  .mh-expand.leaf{visibility:hidden;cursor:default}
+  .mh-name{flex:1;font-size:13px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mh-row.inactive .mh-name{color:var(--muted);text-decoration:line-through}
+  .mh-sub{font-size:11px;color:var(--muted);margin-left:8px;font-weight:400;text-decoration:none!important}
+  .mh-mini-gauges{display:flex;gap:14px;align-items:flex-end;flex-shrink:0}
+  .mh-mini-gauge{text-align:center}
+  .mh-mini-gauge-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:-4px}
+  .mh-children{display:none}
+  .mh-children.open{display:block}
+
+  @media(max-width:900px){
+    .mh-row{flex-wrap:wrap}
+    .mh-mini-gauges{width:100%;justify-content:flex-start;margin-top:6px}
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="https://2cwdb.netlify.app" class="nav-back">← Directory</a>
+  <div class="nav-brand">2CW <span>Menu Health</span></div>
+  <div class="nav-right">
+    <span class="ref-date" id="ref-date">Loading…</span>
+    <button class="refresh-btn" onclick="loadAll()">↻ Refresh</button>
+  </div>
+</nav>
+
+<div id="global-loading" class="loading"><div class="spinner"></div>Loading live data from GitHub…</div>
+<div id="global-error" class="error-msg" style="display:none"></div>
+
+<div id="page-menu-health" class="page" style="display:none">
+  <div class="page-header">
+    <div class="page-title">Menu Health</div>
+    <div class="page-sub" id="mh-sub">Mix, Freshness, and Volume scored bottom-up from on-hand inventory — T-SKU → B-SKU → Brand → Total. Click a dot to include/exclude a Brand or B-SKU from the totals below.</div>
+  </div>
+
+  <div class="gauge-row">
+    <div class="gauge-card primary">
+      <div class="gauge-card-label">Total Menu Health</div>
+      <div id="gauge-total-overall"></div>
+    </div>
+    <div class="gauge-card">
+      <div class="gauge-card-label">Mix</div>
+      <div id="gauge-total-mix"></div>
+    </div>
+    <div class="gauge-card">
+      <div class="gauge-card-label">Freshness</div>
+      <div id="gauge-total-freshness"></div>
+      <div class="gauge-note">No age-of-inventory data yet</div>
+    </div>
+    <div class="gauge-card">
+      <div class="gauge-card-label">Volume</div>
+      <div id="gauge-total-volume"></div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:0">Menu Health Over Time</div>
+  <div class="chart-card">
+    <div class="chart-card-title">Total / Mix / Volume</div>
+    <div class="chart-card-sub" id="trend-sub">Recorded nightly</div>
+    <div class="chart-wrap"><canvas id="chart-trend"></canvas></div>
+  </div>
+
+  <div class="section-title">Brands → B-SKUs → T-SKUs</div>
+  <div class="mh-tree" id="mh-tree"></div>
+</div>
+
+<script>
+// ─── CONFIG ────────────────────────────────────────────────────────────────
+const BASE = 'https://raw.githubusercontent.com/bobby2soxRC/2cw-dashboard/main/data/';
+const MENU_URL    = BASE + 'menu_health.json';
+const HISTORY_URL = BASE + 'menu_health_history.json';
+
+const $ = id => document.getElementById(id);
+const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+const esc  = s => String(s).replace(/'/g, "\\'");
+
+// ─── GAUGE (SVG speedometer, red <60% / yellow 60-80% / green >80%) ────────
+function polarToCartesian(cx, cy, r, angleDeg) {
+  const a = angleDeg * Math.PI / 180;
+  return { x: cx + r * Math.cos(a), y: cy - r * Math.sin(a) };
+}
+function arcPath(cx, cy, r, startAngle, endAngle) {
+  const start = polarToCartesian(cx, cy, r, startAngle);
+  const end   = polarToCartesian(cx, cy, r, endAngle);
+  const largeArc = Math.abs(startAngle - endAngle) > 180 ? 1 : 0;
+  return `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} A ${r} ${r} 0 ${largeArc} 1 ${end.x.toFixed(2)} ${end.y.toFixed(2)}`;
+}
+function scoreColorVar(s) {
+  if (s == null) return 'var(--muted)';
+  return s >= 80 ? 'var(--green)' : s >= 60 ? 'var(--yellow)' : 'var(--red)';
+}
+function gaugeSVG(score, opts = {}) {
+  const size = opts.size || 120;
+  const cx = size / 2, cy = size / 2 - 2, r = size / 2 - 16;
+  const angle = s => 180 - s * 1.8;
+  const bands = [
+    { from: 0,  to: 60,  color: 'var(--red)'    },
+    { from: 60, to: 80,  color: 'var(--yellow)' },
+    { from: 80, to: 100, color: 'var(--green)'  },
+  ];
+  const tracks = bands.map(b =>
+    `<path d="${arcPath(cx, cy, r, angle(b.from), angle(b.to))}" stroke="${b.color}" stroke-width="9" fill="none" stroke-linecap="butt" opacity="${score == null ? 0.25 : 0.9}"/>`
+  ).join('');
+  let needle = '', label = 'No data', color = 'var(--muted)';
+  if (score != null) {
+    const clamped = Math.max(0, Math.min(100, score));
+    const tip = polarToCartesian(cx, cy, r - 8, angle(clamped));
+    needle = `<line x1="${cx}" y1="${cy}" x2="${tip.x.toFixed(2)}" y2="${tip.y.toFixed(2)}" stroke="var(--text)" stroke-width="3" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="4.5" fill="var(--text)"/>`;
+    color = scoreColorVar(score);
+    label = Math.round(score) + '%';
+  }
+  const h = size / 2 + 22;
+  return `<svg viewBox="0 0 ${size} ${h}" width="${size}" height="${h}">
+    ${tracks}${needle}
+    <text x="${cx}" y="${size / 2 + 16}" text-anchor="middle" font-size="14" font-weight="700" fill="${color}">${label}</text>
+  </svg>`;
+}
+function miniGaugesInner(mix, freshness, volume, overall, big) {
+  const g = (label, s) => `<div class="mh-mini-gauge">${gaugeSVG(s, { size: big ? 88 : 66 })}<div class="mh-mini-gauge-label">${label}</div></div>`;
+  return g('Mix', mix) + g('Fresh', freshness) + g('Vol', volume) + g('All', overall);
+}
+
+// ─── ROLLUP MATH (mirrors scripts/menu_health_score.py weighted_avg) ───────
+function weightedAvg(items, valueKey, weightKey) {
+  let tw = 0, tv = 0;
+  items.forEach(it => {
+    const v = it[valueKey], w = it[weightKey];
+    if (v == null || !w) return;
+    tw += w; tv += v * w;
+  });
+  return tw > 0 ? tv / tw : null;
+}
+
+let menuData = null;
+const activeMap = {}; // bsku -> bool, seeded from default_active, toggled by legend clicks
+
+function brandActiveBskus(brand) {
+  return brand.bskus.filter(s => activeMap[s.bsku]);
+}
+function brandIsActive(brand) {
+  return brandActiveBskus(brand).length > 0;
+}
+function computeTotal() {
+  const liveBrands = menuData.brands.map(b => {
+    const active = brandActiveBskus(b);
+    return {
+      inventory_units: active.reduce((s, x) => s + x.inventory_units, 0),
+      mix: weightedAvg(active, 'mix', 'inventory_units'),
+      volume: weightedAvg(active, 'volume', 'inventory_units'),
+      overall: weightedAvg(active, 'overall', 'inventory_units'),
+    };
+  }).filter(b => b.overall != null);
+  return {
+    mix: weightedAvg(liveBrands, 'mix', 'inventory_units'),
+    volume: weightedAvg(liveBrands, 'volume', 'inventory_units'),
+    overall: weightedAvg(liveBrands, 'overall', 'inventory_units'),
+  };
+}
+function renderTotal() {
+  const total = computeTotal();
+  $('gauge-total-overall').innerHTML = gaugeSVG(total.overall, { size: 190 });
+  $('gauge-total-mix').innerHTML = gaugeSVG(total.mix, { size: 110 });
+  $('gauge-total-freshness').innerHTML = gaugeSVG(null, { size: 110 });
+  $('gauge-total-volume').innerHTML = gaugeSVG(total.volume, { size: 110 });
+}
+function updateBrand(brandName) {
+  const b = menuData.brands.find(x => x.brand === brandName);
+  const active = brandIsActive(b);
+  const activeBskus = brandActiveBskus(b);
+  const live = {
+    mix: weightedAvg(activeBskus, 'mix', 'inventory_units'),
+    volume: weightedAvg(activeBskus, 'volume', 'inventory_units'),
+    overall: weightedAvg(activeBskus, 'overall', 'inventory_units'),
+  };
+  const s = slug(brandName);
+  $('gauges-brand-' + s).innerHTML = miniGaugesInner(live.mix, null, live.volume, live.overall, true);
+  $('dot-brand-' + s).classList.toggle('on', active);
+  $('row-brand-' + s).classList.toggle('inactive', !active);
+}
+function toggleBrand(brandName) {
+  const b = menuData.brands.find(x => x.brand === brandName);
+  const nowActive = !brandIsActive(b);
+  b.bskus.forEach(s => {
+    activeMap[s.bsku] = nowActive;
+    $('dot-bsku-' + s.bsku).classList.toggle('on', nowActive);
+    $('row-bsku-' + s.bsku).classList.toggle('inactive', !nowActive);
+  });
+  updateBrand(brandName);
+  renderTotal();
+}
+function toggleBsku(bsku, brandName) {
+  activeMap[bsku] = !activeMap[bsku];
+  $('dot-bsku-' + bsku).classList.toggle('on', activeMap[bsku]);
+  $('row-bsku-' + bsku).classList.toggle('inactive', !activeMap[bsku]);
+  updateBrand(brandName);
+  renderTotal();
+}
+function toggleChildren(id, el) {
+  const box = $(id);
+  box.classList.toggle('open');
+  el.textContent = box.classList.contains('open') ? '▾' : '▸';
+}
+
+// ─── TREE RENDER (built once; toggles/expand mutate in place) ──────────────
+function fmtFrac(n, goal) {
+  return goal != null ? `${n}/${goal} flavors` : `${n} flavors`;
+}
+function tskuRowHTML(t) {
+  return `<div class="mh-row level-tsku">
+    <div class="mh-toggle" style="visibility:hidden"></div>
+    <div class="mh-expand leaf"></div>
+    <div class="mh-name">${t.type || 'Unclassified'}<span class="mh-sub"> — ${fmtFrac(t.flavor_count, t.flavor_goal)}</span></div>
+    <div class="mh-mini-gauges"><div class="mh-mini-gauge">${gaugeSVG(t.mix, { size: 66 })}<div class="mh-mini-gauge-label">Mix</div></div></div>
+  </div>`;
+}
+function bskuRowHTML(s, brandName) {
+  const active = activeMap[s.bsku];
+  const cid = 'children-bsku-' + s.bsku;
+  const hasKids = s.tskus.length > 0;
+  return `<div class="mh-row level-bsku ${active ? '' : 'inactive'}" id="row-bsku-${s.bsku}">
+    <div class="mh-toggle ${active ? 'on' : ''}" id="dot-bsku-${s.bsku}" onclick="toggleBsku('${s.bsku}','${esc(brandName)}')"></div>
+    <div class="mh-expand ${hasKids ? '' : 'leaf'}" onclick="toggleChildren('${cid}', this)">▸</div>
+    <div class="mh-name">${s.bsku_concat || s.bsku}<span class="mh-sub"> — ${fmtFrac(s.flavor_count, s.flavor_goal)} · ${s.wos != null ? s.wos + ' WOS' : 'no sales data'}</span></div>
+    <div class="mh-mini-gauges">${miniGaugesInner(s.mix, s.freshness, s.volume, s.overall)}</div>
+  </div>
+  <div class="mh-children" id="${cid}">${s.tskus.map(tskuRowHTML).join('')}</div>`;
+}
+function brandRowHTML(b) {
+  const sSlug = slug(b.brand);
+  const active = brandIsActive(b);
+  const cid = 'children-brand-' + sSlug;
+  return `<div class="mh-row" id="row-brand-${sSlug}">
+    <div class="mh-toggle ${active ? 'on' : ''}" id="dot-brand-${sSlug}" onclick="toggleBrand('${esc(b.brand)}')"></div>
+    <div class="mh-expand" onclick="toggleChildren('${cid}', this)">▸</div>
+    <div class="mh-name">${b.brand}<span class="mh-sub"> — ${b.bskus.length} B-SKUs</span></div>
+    <div class="mh-mini-gauges" id="gauges-brand-${sSlug}">${miniGaugesInner(b.mix, b.freshness, b.volume, b.overall, true)}</div>
+  </div>
+  <div class="mh-children" id="${cid}">${b.bskus.map(s => bskuRowHTML(s, b.brand)).join('')}</div>`;
+}
+function renderTree() {
+  $('mh-tree').innerHTML = menuData.brands.map(brandRowHTML).join('');
+}
+
+// ─── TREND CHART ────────────────────────────────────────────────────────────
+Chart.defaults.color = '#7b8099';
+Chart.defaults.borderColor = '#2a2f42';
+Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+Chart.defaults.font.size = 11;
+let trendChart = null;
+function renderTrend(history) {
+  const ctx = $('chart-trend');
+  if (trendChart) trendChart.destroy();
+  trendChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: history.map(h => h.date),
+      datasets: [
+        { label: 'Total', data: history.map(h => h.total_overall), borderColor: '#e8eaf0', backgroundColor: 'transparent', tension: .25 },
+        { label: 'Mix', data: history.map(h => h.total_mix), borderColor: '#7c6af7', backgroundColor: 'transparent', tension: .25 },
+        { label: 'Volume', data: history.map(h => h.total_volume), borderColor: '#60a5fa', backgroundColor: 'transparent', tension: .25 },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { boxWidth: 10, padding: 16, color: '#7b8099', font: { size: 11 } } } },
+      scales: {
+        x: { grid: { color: '#2a2f42' }, ticks: { color: '#7b8099', maxRotation: 45 } },
+        y: { min: 0, max: 100, grid: { color: '#2a2f42' }, ticks: { color: '#7b8099' } },
+      },
+    },
+  });
+}
+
+// ─── LOAD ──────────────────────────────────────────────────────────────────
+async function loadAll() {
+  $('global-loading').style.display = 'flex';
+  $('global-error').style.display = 'none';
+  $('page-menu-health').style.display = 'none';
+
+  try {
+    const [menuRes, histRes] = await Promise.all([
+      fetch(MENU_URL + '?t=' + Date.now()),
+      fetch(HISTORY_URL + '?t=' + Date.now()),
+    ]);
+    if (!menuRes.ok) throw new Error('menu_health.json: HTTP ' + menuRes.status);
+    if (!histRes.ok) throw new Error('menu_health_history.json: HTTP ' + histRes.status);
+
+    menuData = await menuRes.json();
+    const history = await histRes.json();
+
+    menuData.brands.forEach(b => b.bskus.forEach(s => { activeMap[s.bsku] = s.default_active; }));
+
+    $('ref-date').textContent = 'Updated: ' + (menuData.ref_date || 'unknown');
+    $('mh-sub').textContent = `Mix, Freshness, and Volume scored bottom-up from on-hand inventory — T-SKU → B-SKU → Brand → Total. As of ${menuData.ref_date || 'unknown'}. Click a dot to include/exclude a Brand or B-SKU from the totals.`;
+
+    renderTotal();
+    renderTree();
+    renderTrend(history);
+  } catch (err) {
+    console.error('Data load failed:', err);
+    $('global-error').textContent = 'Failed to load live data: ' + err.message;
+    $('global-error').style.display = 'block';
+  }
+  $('global-loading').style.display = 'none';
+  $('page-menu-health').style.display = 'block';
+}
+
+// ─── PIN GATE ──────────────────────────────────────────────────────────────
+// Mirrors the pattern used by the other dashboards. Add a "Menu Health" column
+// (TRUE/FALSE) to the Users directory sheet to control who can reach this
+// page; falls back to allowing any already-authenticated PIN through if the
+// directory can't be reached or the column doesn't exist yet.
+(async function pinGate() {
+  const DIRECTORY_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTvUb2y2US1Qcyf12mngWEcvdCU3Yh9vgIzN_5-6x1psQRCIkG9Y4velrdcBB9zEw/pub?gid=165442896&single=true&output=csv';
+  const storedPin = sessionStorage.getItem('2cw_pin') || '';
+
+  if (!storedPin || storedPin.length !== 4) {
+    window.location.href = '/index.html';
+    return;
+  }
+  try {
+    const res = await fetch(DIRECTORY_URL + '&t=' + Date.now());
+    const text = await res.text();
+    const lines = text.trim().split('\n').map(l => l.trim()).filter(Boolean);
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const pinIdx = headers.indexOf('pin');
+    const mhIdx  = headers.indexOf('menu health');
+
+    if (mhIdx === -1) return; // column not set up yet — allow any authenticated PIN through
+
+    const allowedPins = [];
+    for (let i = 1; i < lines.length; i++) {
+      const vals = lines[i].split(',').map(v => v.trim());
+      if (!vals[0]) continue;
+      if ((vals[mhIdx] || '').toUpperCase() === 'TRUE') allowedPins.push(vals[pinIdx]);
+    }
+    if (!allowedPins.includes(storedPin)) window.location.href = '/index.html';
+  } catch (e) {
+    // directory unreachable — already authenticated at the hub, let them through
+  }
+})();
+
+loadAll();
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js').catch(err=>console.warn(err));
+  });
+}
+</script>
+</body>
+</html>

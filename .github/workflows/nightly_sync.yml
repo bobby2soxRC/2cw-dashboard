@@ -33,6 +33,9 @@ jobs:
       - name: Run transform
         run: python scripts/kss_transform.py
 
+      - name: Score menu health
+        run: python scripts/menu_health_score.py
+
       - name: Commit and push data files
         run: |
           git config user.name "github-actions[bot]"
