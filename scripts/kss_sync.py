@@ -58,21 +58,50 @@ SESSION = requests.Session()
 SESSION.headers.update({"x-api-key": API_KEY})
 
 
+# Transient-failure retries (server errors, connection drops). Rate limiting
+# (429) is handled separately below and retries indefinitely, since it's
+# expected to clear on its own.
+SERVER_ERROR_RETRY_BACKOFF_SECONDS = [10, 30, 60]
+
+
 def fetch_page(endpoint, params):
     url = f"{BASE_URL}/{endpoint}"
-    resp = SESSION.get(url, params=params, timeout=30)
+    server_error_attempts = 0
 
-    if resp.status_code == 429:
-        print("    Rate limited — waiting 60 seconds...")
-        time.sleep(60)
-        return fetch_page(endpoint, params)
+    while True:
+        try:
+            resp = SESSION.get(url, params=params, timeout=30)
+        except requests.exceptions.RequestException as e:
+            if server_error_attempts < len(SERVER_ERROR_RETRY_BACKOFF_SECONDS):
+                wait = SERVER_ERROR_RETRY_BACKOFF_SECONDS[server_error_attempts]
+                server_error_attempts += 1
+                print(f"    Connection error ({e}) — retrying in {wait}s...")
+                time.sleep(wait)
+                continue
+            raise RuntimeError(f"Connection error on {endpoint}: {e}")
 
-    if resp.status_code != 200:
-        raise RuntimeError(
-            f"API error {resp.status_code} on {endpoint}: {resp.text[:200]}"
-        )
+        if resp.status_code == 429:
+            print("    Rate limited — waiting 60 seconds...")
+            time.sleep(60)
+            continue
 
-    return resp.json()
+        if resp.status_code >= 500:
+            if server_error_attempts < len(SERVER_ERROR_RETRY_BACKOFF_SECONDS):
+                wait = SERVER_ERROR_RETRY_BACKOFF_SECONDS[server_error_attempts]
+                server_error_attempts += 1
+                print(f"    Server error {resp.status_code} on {endpoint} — retrying in {wait}s...")
+                time.sleep(wait)
+                continue
+            raise RuntimeError(
+                f"API error {resp.status_code} on {endpoint}: {resp.text[:200]}"
+            )
+
+        if resp.status_code != 200:
+            raise RuntimeError(
+                f"API error {resp.status_code} on {endpoint}: {resp.text[:200]}"
+            )
+
+        return resp.json()
 
 
 def fetch_all(endpoint, params=None, label=""):
