@@ -2,9 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>2CW Operations Portal</title>
   <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0c0d0f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="2CW Ops">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -42,11 +48,13 @@
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       padding: 48px 24px;
+      padding-top: calc(48px + env(safe-area-inset-top));
+      padding-bottom: calc(48px + env(safe-area-inset-bottom));
     }
 
     /* back link */
     .back {
-      position: fixed; top: 24px; left: 24px;
+      position: fixed; top: calc(24px + env(safe-area-inset-top)); left: 24px;
       display: flex; align-items: center; gap: 8px;
       font-family: 'DM Mono', monospace; font-size: 11px;
       letter-spacing: 0.2em; text-transform: uppercase;
@@ -176,5 +184,12 @@
 
 </main>
 
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js').catch(err=>console.warn(err));
+  });
+}
+</script>
 </body>
 </html>

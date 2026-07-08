@@ -2,9 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>2CW Operations Hub</title>
   <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0c0d0f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="2CW Ops">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -25,7 +31,7 @@
     .orb2{width:500px;height:500px;background:var(--blue);bottom:-150px;left:-150px}
 
     /* ── LOGIN ── */
-    #login-screen{position:relative;z-index:1;min-height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;padding:2rem}
+    #login-screen{position:relative;z-index:1;min-height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;padding:2rem;padding-top:calc(2rem + env(safe-area-inset-top));padding-bottom:calc(2rem + env(safe-area-inset-bottom))}
     .login-logo{font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin-bottom:2.5rem;text-align:center}
     .login-wordmark{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,5vw,56px);letter-spacing:.06em;line-height:1;background:linear-gradient(135deg,#fff 30%,var(--muted) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center;margin-bottom:.4rem}
     .login-sub{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);text-align:center;margin-bottom:2.5rem}
@@ -44,9 +50,9 @@
     .login-err{color:var(--red);font-size:.82rem;margin-top:.75rem;text-align:center;display:none;font-family:'DM Mono',monospace}
 
     /* ── HUB ── */
-    #hub-screen{display:none;position:relative;z-index:1;min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px}
+    #hub-screen{display:none;position:relative;z-index:1;min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:calc(48px + env(safe-area-inset-top)) 24px 48px}
     #hub-screen.visible{display:flex}
-    .hub-topbar{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:.75rem 1.5rem;background:rgba(12,13,15,.8);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+    .hub-topbar{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:calc(.75rem + env(safe-area-inset-top)) 1.5rem .75rem;background:rgba(12,13,15,.8);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
     .hub-user{display:flex;align-items:center;gap:.6rem;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;color:var(--subtext)}
     .user-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
     .logout-btn{font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;background:transparent;border:1px solid var(--border);color:var(--muted);padding:.3rem .75rem;border-radius:6px;cursor:pointer;transition:all .2s}
@@ -396,6 +402,13 @@ window.addEventListener('load', async () => {
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('pin-input').focus();
 });
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js').catch(err=>console.warn(err));
+  });
+}
 </script>
 </body>
 </html>

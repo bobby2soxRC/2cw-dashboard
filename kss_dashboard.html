@@ -2,9 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0, viewport-fit=cover">
 <title>KSS Sales Intelligence</title>
 <link rel="icon" type="image/png" href="/favicon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0B0D10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="2CW Ops">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -24,7 +30,7 @@
   --font:'Barlow',sans-serif;--font-c:'Barlow Condensed',sans-serif;--r:6px;
 }
 body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
-#pin{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+#pin{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
 .pin-logo{font-family:var(--font-c);font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--text3)}
 .pin-title{font-family:var(--font-c);font-size:38px;font-weight:800;color:var(--text);line-height:1;text-align:center}
 .pin-title span{color:var(--accent)}
@@ -37,7 +43,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
 .pin-err{color:var(--red);font-family:var(--font-c);font-size:12px;height:16px;letter-spacing:.05em}
 @keyframes shake{0%,100%{transform:translateX(0)}25%,75%{transform:translateX(-7px)}50%{transform:translateX(7px)}}
 .shake{animation:shake .35s ease}
-.hdr{height:50px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 22px;gap:14px;position:sticky;top:0;z-index:100}
+.hdr{height:calc(50px + env(safe-area-inset-top));background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 22px;padding-top:env(safe-area-inset-top);gap:14px;position:sticky;top:0;z-index:100}
 .hdr-brand{font-family:var(--font-c);font-size:15px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
 .hdr-div{width:1px;height:18px;background:var(--border2)}
 .hdr-stats{display:flex;gap:14px;align-items:center;margin-left:auto;flex-wrap:wrap}
@@ -535,6 +541,13 @@ function openDp(key){
   ge('ov').classList.add('on');setTimeout(()=>ge('dp').classList.add('on'),10);
 }
 function closeDp(){ge('dp').classList.remove('on');ge('ov').classList.remove('on');}
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js').catch(err=>console.warn(err));
+  });
+}
 </script>
 </body>
 </html>

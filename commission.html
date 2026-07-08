@@ -2,9 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>2CW Commission Calculator</title>
 <link rel="icon" type="image/png" href="/favicon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0b0b0b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="2CW Ops">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
@@ -20,7 +26,7 @@
 body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
 
 /* ── LOGIN ── */
-#login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem}
+#login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;padding-top:calc(2rem + env(safe-area-inset-top));padding-bottom:calc(2rem + env(safe-area-inset-bottom))}
 .login-logo{font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--dim);margin-bottom:3rem}
 .login-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:3rem;width:100%;max-width:420px}
 .login-title{font-size:1.6rem;font-weight:700;margin-bottom:.3rem}
@@ -38,7 +44,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 
 /* ── SHELL ── */
 #app{display:none}
-.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200}
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:1rem 2rem;padding-top:calc(1rem + env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200}
 .header-left{display:flex;align-items:center;gap:1.5rem}
 .dir-back{font-size:.72rem;color:var(--dim);text-decoration:none;letter-spacing:.05em;padding:.3rem .6rem;border:1px solid var(--border);border-radius:6px;transition:all .15s}
 .dir-back:hover{color:var(--green);border-color:var(--green)}
@@ -238,6 +244,7 @@ input[type=checkbox]{width:17px;height:17px;cursor:pointer;accent-color:var(--gr
 .rep-pill.rep-inside.rep-sales{background:rgba(107,114,128,.12);color:#6b7280}
 
 .chip-mtd{border-style:dashed!important;}
+#data-date-bar{padding-top:calc(.4rem + env(safe-area-inset-top))!important}
 </style>
 </head>
 <body>
@@ -663,7 +670,7 @@ function doLogout(){
   for(let i=0;i<4;i++) document.getElementById('dot'+i).classList.remove('filled');
   document.getElementById('rpt-indicator').classList.remove('show');
   // If we came from hub via URL param, go back to hub on logout
-  if(URL_REP) window.location.href='/twocw_hub.html';
+  if(URL_REP) window.location.href='/index.html';
 }
 
 // ── TABS ──────────────────────────────────────────────────
@@ -1233,6 +1240,13 @@ function panelInvAll(include){
 
 function closePanel(){document.getElementById('modal-overlay').classList.remove('open');}
 function overlayClick(e){if(e.target===document.getElementById('modal-overlay'))closePanel();}
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js').catch(err=>console.warn(err));
+  });
+}
 </script>
 </body>
 </html>

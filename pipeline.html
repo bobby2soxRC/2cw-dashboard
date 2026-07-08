@@ -2,9 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>2CW Pipeline</title>
   <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0B0D10">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="2CW Ops">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet"/>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
@@ -24,7 +30,7 @@
     body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh}
 
     /* Header */
-    .hdr{height:50px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 22px;gap:14px;position:sticky;top:0;z-index:100}
+    .hdr{height:calc(50px + env(safe-area-inset-top));background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 22px;padding-top:env(safe-area-inset-top);gap:14px;position:sticky;top:0;z-index:100}
     .hdr-back{font-family:var(--font-c);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);text-decoration:none;transition:color .15s}
     .hdr-back:hover{color:var(--text2)}
     .hdr-div{width:1px;height:18px;background:var(--border2)}
@@ -727,6 +733,13 @@ async function loadData(){
   }
 }
 loadData();
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js').catch(err=>console.warn(err));
+  });
+}
 </script>
 </body>
 </html>
