@@ -202,6 +202,8 @@
     <div class="page-sub" id="inv-sub"></div>
   </div>
 
+  <div class="scorecard-strip" id="wholesale-scorecards"></div>
+
   <div class="target-bar">
     <div class="target-bar-label">Target Days of Supply</div>
     <div class="target-slider-wrap">
@@ -598,8 +600,34 @@ function lbsNeededBadge(lbs) {
 function buildInventory(d) {
   $('inv-sub').textContent = `Sorted by days of supply — lowest first · Updated ${d.ref_date || 'unknown'}`;
   $('inv-asof').textContent = 'As of ' + (d.ref_date || 'unknown');
+  renderWholesaleValue(d);
   updateTierPills();
   renderInventoryTable();
+}
+function renderWholesaleValue(d) {
+  const wv = d.wholesale_value || {};
+  $('wholesale-scorecards').innerHTML = `
+    <div class="sc srf">
+      <div class="sc-label">Wholesale Value — Soma Rosa</div>
+      <div class="sc-val text-srf">${fmtK(wv.soma_rosa)}</div>
+      <div class="sc-sub">On-hand inventory</div>
+    </div>
+    <div class="sc hwr">
+      <div class="sc-label">Wholesale Value — Howie Roll</div>
+      <div class="sc-val text-hwr">${fmtK(wv.howie_roll)}</div>
+      <div class="sc-sub">On-hand inventory</div>
+    </div>
+    <div class="sc mendo">
+      <div class="sc-label">Wholesale Value — Mendo</div>
+      <div class="sc-val text-mendo">${fmtK(wv.mendo)}</div>
+      <div class="sc-sub">On-hand inventory</div>
+    </div>
+    <div class="sc accent2">
+      <div class="sc-label">Total Wholesale Value</div>
+      <div class="sc-val">${fmtK(wv.total)}</div>
+      <div class="sc-sub">On-hand inventory</div>
+    </div>
+  `;
 }
 function onInvSlider(val) {
   TARGET_DOS.val = parseInt(val);

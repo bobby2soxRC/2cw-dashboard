@@ -1258,6 +1258,57 @@ def transform():
 
     print(f"  ASKU rows: {len(asku_data)}, TSKU rates: {len(tsku_daily_rates)}")
 
+    # ── Wholesale value of on-hand inventory, by brand ───────────────────────
+    # available units (current on-hand, sellable) x most-recent FullPrice
+    # seen for that SKU in the transaction history. Credits/returns excluded,
+    # same rule as sales_rows above.
+    print("Computing wholesale inventory value...")
+    latest_full_price = {}   # sku_id -> (TimeCreated, FullPrice)
+    for txn in txn_raw:
+        sku_id = str(txn.get("ProductID") or "")
+        if not sku_id:
+            continue
+        price = txn.get("FullPrice")
+        if price is None:
+            continue
+        inv_id    = str(txn.get("InvoiceID") or "")
+        subtotal  = float(txn.get("ExtPrice") or 0)
+        inv_meta  = invoice_index.get(inv_id, {})
+        is_credit = inv_meta.get("status") == 4 or subtotal < 0
+        if is_credit:
+            continue
+        t   = txn.get("TimeCreated") or ""
+        cur = latest_full_price.get(sku_id)
+        if not cur or t > cur[0]:
+            latest_full_price[sku_id] = (t, float(price))
+
+    avail_by_sku = defaultdict(int)
+    for row in inventory_raw:
+        sku_id = str(row.get("ProductID") or "")
+        qty    = int(float(row.get("AvailableUnits") or 0))
+        if sku_id:
+            avail_by_sku[sku_id] += qty
+
+    wholesale_value_by_brand = {"Soma Rosa Farms": 0.0, "Howie Roll": 0.0, "Mendo": 0.0}
+    for sku_id, qty in avail_by_sku.items():
+        if qty <= 0:
+            continue
+        brand = product_catalog.get(sku_id, {}).get("brand", "")
+        if brand not in wholesale_value_by_brand:
+            continue
+        price_info = latest_full_price.get(sku_id)
+        if not price_info:
+            continue
+        wholesale_value_by_brand[brand] += qty * price_info[1]
+
+    wholesale_value = {
+        "soma_rosa":  round(wholesale_value_by_brand["Soma Rosa Farms"], 2),
+        "howie_roll": round(wholesale_value_by_brand["Howie Roll"], 2),
+        "mendo":      round(wholesale_value_by_brand["Mendo"], 2),
+    }
+    wholesale_value["total"] = round(sum(wholesale_value.values()), 2)
+    print(f"  Wholesale value: {wholesale_value}")
+
     # ── Rep card builder ──────────────────────────────────────────────────────
 
     def build_rep_card(rep_name: str, my_accts: list) -> dict:
@@ -1547,6 +1598,7 @@ def transform():
         "product_groups":   inv_pg_data,
         "asku_data":        asku_data,
         "tsku_daily_rates": tsku_daily_rates,
+        "wholesale_value":  wholesale_value,
     }
 
     save_json("kss_dashboard.json",    kss_dashboard)
