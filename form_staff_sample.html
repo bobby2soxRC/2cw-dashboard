@@ -4,6 +4,15 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>Staff Sample — Field Forms</title>
+  <script>
+    // Bounce anyone without an active session or this form's access flag.
+    (function(){
+      var access = JSON.parse(sessionStorage.getItem('2cw_form_access') || '{}');
+      if (!sessionStorage.getItem('2cw_pin') || !access.staff_sample) {
+        window.location.replace('/field_forms.html');
+      }
+    })();
+  </script>
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#0c0d0f">

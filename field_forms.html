@@ -50,6 +50,7 @@
     .card-desc{font-size:13px;color:var(--subtext);line-height:1.6}
 
     .footer{margin-top:44px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
+    .empty-msg{text-align:center;color:var(--subtext);font-size:.9rem;padding:24px 0}
   </style>
 </head>
 <body>
@@ -63,33 +64,56 @@
     <div class="wordmark">Field Forms</div>
     <div class="tagline">Soma Rosa Field Team</div>
   </div>
-  <div class="grid">
-    <a class="card green" href="/form_budtender_training.html">
+  <div class="grid" id="grid">
+    <a class="card green" data-form="budtender_training" href="/form_budtender_training.html">
       <div class="card-dot"></div>
       <div class="card-label">Training</div>
       <div class="card-title">Budtender Training</div>
       <div class="card-desc">Log a training session — how many budtenders, whether samples went out, and any questions you couldn't answer.</div>
     </a>
-    <a class="card blue" href="/form_buyer_meeting.html">
+    <a class="card blue" data-form="buyer_meeting" href="/form_buyer_meeting.html">
       <div class="card-dot"></div>
       <div class="card-label">Sales</div>
       <div class="card-title">Buyer Meeting</div>
       <div class="card-desc">Log a meeting with a buyer — format, who you met, what was discussed, and next steps.</div>
     </a>
-    <a class="card gold" href="/form_staff_sample.html">
+    <a class="card gold" data-form="staff_sample" href="/form_staff_sample.html">
       <div class="card-dot"></div>
       <div class="card-label">Samples</div>
       <div class="card-title">Staff Sample</div>
       <div class="card-desc">Log a staff sample drop — what products and how many samples went out.</div>
     </a>
-    <a class="card purple" href="/form_store_visit.html">
+    <a class="card purple" data-form="store_visit" href="/form_store_visit.html">
       <div class="card-dot"></div>
       <div class="card-label">Merchandising</div>
       <div class="card-title">Store Visit</div>
       <div class="card-desc">Log a store visit — inventory check, shelf photo, signage photo, and swag dropped.</div>
     </a>
   </div>
+  <div class="empty-msg" id="empty-msg" style="display:none">You don't have any field forms assigned yet. Contact your manager if you think this is wrong.</div>
   <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution</footer>
 </main>
+
+<script>
+// Requires an active hub session — bounce back to login if there isn't one.
+if (!sessionStorage.getItem('2cw_pin')) {
+  window.location.href = '/index.html';
+}
+
+// Only show the forms this user has been granted access to (set at hub login).
+const access = JSON.parse(sessionStorage.getItem('2cw_form_access') || '{}');
+const cards = document.querySelectorAll('#grid .card');
+let visibleCount = 0;
+cards.forEach(card => {
+  if (access[card.dataset.form]) {
+    visibleCount++;
+  } else {
+    card.remove();
+  }
+});
+if (visibleCount === 0) {
+  document.getElementById('empty-msg').style.display = 'block';
+}
+</script>
 </body>
 </html>

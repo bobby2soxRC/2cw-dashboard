@@ -316,12 +316,32 @@ async function doLogin(){
 }
 
 // ── BUILD HUB ────────────────────────────────────────────
+// Sheet column (lowercased) -> form key, matches data/form_submissions/<key>.json
+const FORM_ACCESS_COLS = {
+  budtender_training: 'budtender training form',
+  buyer_meeting: 'buyer meeting form',
+  staff_sample: 'staff sample form',
+  store_visit: 'merchandising form'
+};
+
 function buildHub(user){
   const userName = user.user || 'User';
 
   // Top bar label
   document.getElementById('user-label').textContent = userName;
   sessionStorage.setItem('2cw_user_name', userName);
+
+  // Granular per-form access, read by field_forms.html and each form page.
+  // The 'field_forms' hub card itself is gated on having access to at least one.
+  const formAccess = {};
+  let anyFormAccess = false;
+  Object.entries(FORM_ACCESS_COLS).forEach(([formKey, col]) => {
+    const allowed = (user[col] || '').toUpperCase() === 'TRUE';
+    formAccess[formKey] = allowed;
+    if (allowed) anyFormAccess = true;
+  });
+  sessionStorage.setItem('2cw_form_access', JSON.stringify(formAccess));
+  user.field_forms = anyFormAccess ? 'TRUE' : 'FALSE';
 
   // Build cards
   const grid = document.getElementById('card-grid');
@@ -399,6 +419,7 @@ function doLogout(){
   currentUser = null;
   sessionStorage.removeItem('2cw_pin');
   sessionStorage.removeItem('2cw_user_name');
+  sessionStorage.removeItem('2cw_form_access');
   document.getElementById('pin-input').value = '';
   for(let i = 0; i < 4; i++) document.getElementById('dot'+i).classList.remove('filled');
   document.getElementById('login-err').style.display = 'none';
