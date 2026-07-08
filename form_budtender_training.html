@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Budtender Training — Field Forms</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0c0d0f">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0c0d0f;--surface:#13151a;--border:#1e2129;
+      --green:#3db87a;--red:#ef5350;
+      --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;
+      --accent:var(--green);--accent2:rgba(61,184,122,.12);
+    }
+    html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif}
+    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:48px 48px;opacity:.35;pointer-events:none;z-index:0}
+
+    .hdr{height:calc(50px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 22px;padding-top:env(safe-area-inset-top);gap:14px;position:sticky;top:0;z-index:10}
+    .hdr-back{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--subtext);text-decoration:none;transition:color .15s}
+    .hdr-back:hover{color:var(--text)}
+    .hdr-div{width:1px;height:18px;background:var(--border)}
+    .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+
+    main{position:relative;z-index:1;padding:40px 20px 80px;max-width:560px;margin:0 auto}
+    .header{text-align:center;margin-bottom:32px}
+    .wordmark{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,5vw,44px);letter-spacing:.05em;line-height:1;color:var(--text)}
+    .tagline{margin-top:8px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted)}
+
+    .panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px}
+    .field{margin-bottom:22px}
+    .field:last-of-type{margin-bottom:0}
+    .form-label{display:block;font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem}
+    .form-hint{font-size:.75rem;color:var(--subtext);margin-top:.4rem}
+    .form-input,.form-textarea,.form-select{width:100%;background:#0c0d0f;border:1px solid var(--border);color:var(--text);padding:.75rem .9rem;border-radius:10px;font-size:.95rem;font-family:inherit;outline:none;transition:border-color .2s}
+    .form-input:focus,.form-textarea:focus,.form-select:focus{border-color:var(--accent)}
+    .form-textarea{resize:vertical;min-height:90px}
+
+    .radio-group{display:flex;gap:10px}
+    .radio-opt{flex:1;text-align:center;padding:.75rem .5rem;border:1px solid var(--border);border-radius:10px;cursor:pointer;font-family:'DM Mono',monospace;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--subtext);transition:all .15s;user-select:none}
+    .radio-opt.selected{border-color:var(--accent);color:var(--accent);background:var(--accent2)}
+
+    .photo-field{border:1px dashed var(--border);border-radius:10px;padding:16px;text-align:center}
+    .photo-btn{display:inline-block;background:#0c0d0f;border:1px solid var(--border);color:var(--text);padding:.6rem 1.1rem;border-radius:8px;font-family:'DM Mono',monospace;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;cursor:pointer}
+    .photo-btn:hover{border-color:var(--accent)}
+    .photo-preview{margin-top:12px;max-width:100%;max-height:220px;border-radius:8px;display:none}
+    .photo-status{margin-top:8px;font-family:'DM Mono',monospace;font-size:.7rem;color:var(--accent);display:none}
+
+    .submit-btn{width:100%;padding:.9rem;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:1rem;font-weight:700;font-family:inherit;cursor:pointer;transition:opacity .2s;margin-top:8px}
+    .submit-btn:hover{opacity:.88}
+    .submit-btn:disabled{opacity:.5;cursor:not-allowed}
+
+    .banner{margin-top:16px;padding:.85rem 1rem;border-radius:10px;font-size:.85rem;display:none;font-family:'DM Mono',monospace}
+    .banner.success{display:block;background:var(--accent2);color:var(--accent);border:1px solid var(--accent)}
+    .banner.error{display:block;background:rgba(239,83,80,.12);color:var(--red);border:1px solid var(--red)}
+  </style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="/field_forms.html">← Field Forms</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand">Budtender Training</div>
+</header>
+<main>
+  <div class="header">
+    <div class="wordmark">Budtender Training</div>
+    <div class="tagline">Soma Rosa Field Team</div>
+  </div>
+
+  <form class="panel" id="form">
+    <div class="field">
+      <label class="form-label">Rep Name</label>
+      <input class="form-input" type="text" id="rep" required>
+    </div>
+    <div class="field">
+      <label class="form-label">Store / Account</label>
+      <input class="form-input" type="text" id="store" list="store-list" required>
+      <datalist id="store-list"></datalist>
+    </div>
+    <div class="field">
+      <label class="form-label">Date</label>
+      <input class="form-input" type="date" id="date" required>
+    </div>
+
+    <div class="field">
+      <label class="form-label">Total Number of Budtenders Trained</label>
+      <input class="form-input" type="number" id="num_trained" min="0" step="1" required>
+    </div>
+
+    <div class="field">
+      <label class="form-label">Did You Also Give Out Samples?</label>
+      <div class="radio-group" id="gave_samples" data-field="gave_samples">
+        <div class="radio-opt" data-value="Yes">Yes</div>
+        <div class="radio-opt" data-value="No">No</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="form-label">Photo of Your Training Setup</label>
+      <div class="photo-field">
+        <label class="photo-btn">Add Photo<input type="file" accept="image/*" capture="environment" id="photo_setup" style="display:none"></label>
+        <div class="photo-status" id="photo_setup_status">✓ Photo attached</div>
+        <img class="photo-preview" id="photo_setup_preview">
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="form-label">Questions Staff Asked That You Couldn't Answer</label>
+      <textarea class="form-textarea" id="unanswered" placeholder="If any — include the question(s) here. Leave blank if none."></textarea>
+      <div class="form-hint">Optional — only if staff asked something you couldn't answer.</div>
+    </div>
+
+    <button class="submit-btn" type="submit" id="submit-btn">Submit</button>
+    <div class="banner" id="banner"></div>
+  </form>
+</main>
+
+<script src="/forms_common.js"></script>
+<script>
+initCommonFields({ repInputId: 'rep', storeInputId: 'store', storeListId: 'store-list', dateInputId: 'date' });
+
+let photoSetup = null;
+document.getElementById('photo_setup').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const { dataUrl } = await compressImage(file);
+  photoSetup = dataUrl;
+  document.getElementById('photo_setup_status').style.display = 'block';
+  const preview = document.getElementById('photo_setup_preview');
+  preview.src = dataUrl;
+  preview.style.display = 'block';
+});
+
+document.querySelectorAll('.radio-group').forEach(group => {
+  group.querySelectorAll('.radio-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      group.querySelectorAll('.radio-opt').forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+      group.dataset.selected = opt.dataset.value;
+    });
+  });
+});
+
+document.getElementById('form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const banner = document.getElementById('banner');
+  banner.className = 'banner';
+  banner.textContent = '';
+
+  const gaveSamples = document.getElementById('gave_samples').dataset.selected;
+  if (!gaveSamples) {
+    banner.className = 'banner error';
+    banner.textContent = 'Please select whether you gave out samples.';
+    return;
+  }
+  if (!photoSetup) {
+    banner.className = 'banner error';
+    banner.textContent = 'Please add a photo of your training setup.';
+    return;
+  }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+
+  const fields = {
+    repName: document.getElementById('rep').value.trim(),
+    storeAccount: document.getElementById('store').value.trim(),
+    visitDate: document.getElementById('date').value,
+    numTrained: Number(document.getElementById('num_trained').value),
+    gaveSamples,
+    trainingPhoto: { dataUrl: photoSetup },
+    unansweredQuestions: document.getElementById('unanswered').value.trim()
+  };
+
+  const result = await submitForm('budtender_training', fields);
+  btn.disabled = false;
+  btn.textContent = 'Submit';
+
+  if (result.ok) {
+    banner.className = 'banner success';
+    banner.textContent = '✓ Submitted — thank you!';
+    document.getElementById('num_trained').value = '';
+    document.getElementById('unanswered').value = '';
+    document.querySelectorAll('.radio-opt.selected').forEach(o => o.classList.remove('selected'));
+    document.getElementById('gave_samples').dataset.selected = '';
+    photoSetup = null;
+    document.getElementById('photo_setup_status').style.display = 'none';
+    document.getElementById('photo_setup_preview').style.display = 'none';
+    document.getElementById('photo_setup').value = '';
+  } else {
+    banner.className = 'banner error';
+    banner.textContent = result.error || 'Something went wrong — please try again.';
+  }
+});
+</script>
+</body>
+</html>

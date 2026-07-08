@@ -194,6 +194,14 @@ const CARD_DEFS = [
     title: 'Executive Dashboard',
     desc: 'High-level sales pacing, inventory health, and rep leaderboards — the one-page view for leadership.',
     href: '/executive.html'
+  },
+  {
+    key: 'field_forms',
+    color: 'gold',
+    label: 'Field Team',
+    title: 'Field Forms',
+    desc: 'Log budtender trainings, buyer meetings, staff samples, and store visits from the field.',
+    href: '/field_forms.html'
   }
   // Commission card is handled separately below
 ];
@@ -313,6 +321,7 @@ function buildHub(user){
 
   // Top bar label
   document.getElementById('user-label').textContent = userName;
+  sessionStorage.setItem('2cw_user_name', userName);
 
   // Build cards
   const grid = document.getElementById('card-grid');
@@ -389,6 +398,7 @@ function makeCommCard(title, href, idx){
 function doLogout(){
   currentUser = null;
   sessionStorage.removeItem('2cw_pin');
+  sessionStorage.removeItem('2cw_user_name');
   document.getElementById('pin-input').value = '';
   for(let i = 0; i < 4; i++) document.getElementById('dot'+i).classList.remove('filled');
   document.getElementById('login-err').style.display = 'none';
