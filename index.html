@@ -222,6 +222,12 @@ const CARD_ORDER_OVERRIDES = {
   'ned': ['executive', 'sales', 'inventory', 'twocw_dashboard', 'kss_dashboard', 'pipeline', 'mendo']
 };
 
+// Card keys whose sheet column name doesn't match the key verbatim (e.g. has
+// spaces). Card keys not listed here are looked up as-is.
+const CARD_SHEET_COLS = {
+  menu_health: 'menu health'
+};
+
 // Commission columns in the sheet
 const COMMISSION_COLS = ['commission niki','commission billy','commission john','commission jonathan','commission mac','commission emily'];
 const COMMISSION_REP_MAP = {
@@ -365,7 +371,8 @@ function buildHub(user){
       })
     : CARD_DEFS;
   orderedDefs.forEach(def => {
-    const val = (user[def.key] || '').toUpperCase();
+    const col = CARD_SHEET_COLS[def.key] || def.key;
+    const val = (user[col] || '').toUpperCase();
     if(val !== 'TRUE') return;
     grid.appendChild(makeCard(def, cardIdx++));
   });
