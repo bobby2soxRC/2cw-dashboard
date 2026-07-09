@@ -50,6 +50,12 @@ SUPPLIER_STR = ",".join(str(s) for s in SUPPLIER_IDS)
 INVOICE_HISTORY_DAYS = 365
 OUTPUT_DIR = Path("data")
 
+# Pause between successive API calls (pagination pages, invoiceTransactions
+# batches). Bumped from 0.25s after repeated stalls mid-sync that looked like
+# a short-window (per-second/minute) rate limit on KSS's side, tripped by the
+# invoiceTransactions loop's ~90 back-to-back requests.
+REQUEST_PACE_SECONDS = 1.0
+
 STATUS_VERIFIED = 7
 STATUS_RETURNED = 4
 
@@ -131,7 +137,7 @@ def fetch_all(endpoint, params=None, label="", max_429_retries=None):
             break
 
         params["Page"] += 1
-        time.sleep(0.25)
+        time.sleep(REQUEST_PACE_SECONDS)
 
     return all_records
 
@@ -238,7 +244,7 @@ def sync_invoice_transactions(invoices):
             "InvoiceIDs": ",".join(str(x) for x in batch),
         })
         all_trans.extend(trans)
-        time.sleep(0.25)
+        time.sleep(REQUEST_PACE_SECONDS)
 
     our_trans = [t for t in all_trans if t.get("SupplierID") in SUPPLIER_IDS]
     save("invoice_transactions.json", our_trans)
