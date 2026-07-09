@@ -144,6 +144,11 @@ tbody td{padding:.62rem 1rem;vertical-align:middle}
 .badge-shared{display:inline-block;padding:.1rem .42rem;border-radius:20px;background:var(--blue-dim);color:var(--blue);font-size:.66rem;font-weight:700;margin-left:.3rem}
 .comm-val{font-family:'DM Mono',monospace;color:var(--green);font-weight:500}
 .comm-new{color:var(--gold)}
+.chg-toggle{display:inline-flex;background:var(--bg3);border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.chg-toggle button{padding:.22rem .5rem;font-family:inherit;font-size:.62rem;font-weight:700;letter-spacing:.03em;background:transparent;border:none;color:var(--dimmer);cursor:pointer;transition:all .15s}
+.chg-toggle button:hover{color:var(--text)}
+.chg-toggle button.active.on-std{background:var(--bg2);color:var(--text)}
+.chg-toggle button.active.on-new{background:var(--gold-dim);color:var(--gold)}
 .comm-dash{font-family:'DM Mono',monospace;color:var(--dimmer)}
 .rate-tag{font-size:.7rem;color:var(--dim)}
 .rate-new{font-size:.7rem;color:var(--gold);font-weight:700}
@@ -372,6 +377,7 @@ input[type=checkbox]{width:17px;height:17px;cursor:pointer;accent-color:var(--gr
             <th>Status</th>
             <th class="tr">Period Revenue</th>
             <th class="tr">Rate</th>
+            <th class="tc">Change</th>
             <th class="tr">Commission</th>
           </tr>
         </thead>
@@ -476,6 +482,7 @@ let reportGenerated=false;
 let adminRepFilter=null; // null = all reps
 let customStart=null, customEnd=null; // for custom date range mode
 let excludedInvoices=new Set(); // invoices manually excluded from commission
+let ndOverride=new Map(); // key: account|rep|mode|periodId -> forced true/false new-door status (session only)
 
 // ── HELPERS ──────────────────────────────────────────────
 
@@ -535,6 +542,20 @@ function getVol(r){
 function isNew(r){
   if(mode==='custom') return false; // custom range doesn't track new-door status
   return r[period.newKey]||false;
+}
+function periodKey(){return mode+'|'+(period?period.id:'');}
+function effectiveNd(r){
+  if(mode==='custom') return false; // no override in custom mode — matches isNew's behavior
+  const k=r.account+'|'+r.rep+'|'+periodKey();
+  return ndOverride.has(k)?ndOverride.get(k):isNew(r);
+}
+function setNd(a,rp,val){
+  const k=a+'|'+rp+'|'+periodKey();
+  const row=repData.find(x=>x.account===a&&x.rep===rp);
+  if(!row) return;
+  if(val===isNew(row)) ndOverride.delete(k); // matches auto-detected value — no override needed
+  else ndOverride.set(k,val);
+  renderTable();
 }
 function calcCommForRep(vol,nd,r){
   if(vol<=0)return 0;
@@ -754,7 +775,7 @@ function selPeriod(id){
 // ── TABLE ─────────────────────────────────────────────────
 function renderTable(){
   const q=document.getElementById('acct-search').value.toLowerCase();
-  let rows=repData.map(r=>({...r,vol:getVol(r),nd:isNew(r)}))
+  let rows=repData.map(r=>({...r,vol:getVol(r),nd:effectiveNd(r)}))
     .map(r=>({...r,comm:isAdmin()?calcCommForRep(r.vol,r.nd,r.rep):calcComm(r.vol,r.nd)}));
   if(activeOnly) rows=rows.filter(r=>r.vol>0);
   if(isAdmin()&&adminRepFilter!==null) rows=rows.filter(r=>r.rep===adminRepFilter||(adminRepFilter==='mac_billy'&&r.rep==='mac_billy'));
@@ -797,6 +818,12 @@ function renderTable(){
     const rateStr=r.nd&&effectiveNew
       ?`<span class="rate-new">${(effectiveNew*100).toFixed(0)}% NEW</span>`
       :`<span class="rate-tag">${(effectiveBase*100).toFixed(1)}%</span>`;
+    const changeStr=acctNewRate&&mode!=='custom'
+      ?`<div class="chg-toggle">
+          <button class="${!r.nd?'active on-std':''}" onclick="setNd('${esc(r.account)}','${esc(r.rep)}',false)">STD</button>
+          <button class="${r.nd?'active on-new':''}" onclick="setNd('${esc(r.account)}','${esc(r.rep)}',true)">NEW</button>
+        </div>`
+      :`<span class="kss-dim">—</span>`;
     const repCell=isAdmin()?`<td><span class="rep-pill rep-${r.rep}">${REP_LABELS[r.rep]||r.rep||'—'}</span></td>`:'';
     return `<tr class="${on?'row-checked':''}">
       <td class="tc"><div class="cb-wrap"><input type="checkbox" ${on?'checked':''} onchange="toggle('${esc(r.account)}','${esc(r.rep)}')"></div></td>
@@ -806,6 +833,7 @@ function renderTable(){
       <td>${r.nd?'<span class="badge-new">NEW DOOR</span>':'<span class="kss-dim">Existing</span>'}</td>
       <td class="tr">${volStr}</td>
       <td class="tr">${rateStr}</td>
+      <td class="tc">${changeStr}</td>
       <td class="tr">${commStr}</td>
     </tr>`;
   }).join('');
@@ -870,7 +898,7 @@ function generateReport(){
   // Gather selected rows
   const rows=repData
     .filter(r=>checked.has(r.account+'|'+r.rep))
-    .map(r=>({...r,vol:getVol(r),nd:isNew(r)}))
+    .map(r=>({...r,vol:getVol(r),nd:effectiveNd(r)}))
     .map(r=>({...r,comm:adminMode?calcCommForRep(r.vol,r.nd,r.rep):calcComm(r.vol,r.nd)}))
     .sort((a,b)=>{
       if(adminMode){
