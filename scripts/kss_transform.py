@@ -1181,14 +1181,6 @@ def transform():
     # tend to only have Manufacture/Pack).
     print("Computing batch aging (Freshness)...")
 
-    def _parse_date(v):
-        if not v:
-            return None
-        try:
-            return datetime.fromisoformat(str(v)[:10]).date()
-        except ValueError:
-            return None
-
     age_weighted_sum = defaultdict(float)
     age_weight_total = defaultdict(float)
     for row in batches_raw:
