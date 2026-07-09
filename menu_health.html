@@ -118,7 +118,7 @@
     <div class="gauge-card">
       <div class="gauge-card-label">Freshness</div>
       <div id="gauge-total-freshness"></div>
-      <div class="gauge-note">No age-of-inventory data yet</div>
+      <div class="gauge-note" id="gauge-total-freshness-note"></div>
     </div>
     <div class="gauge-card">
       <div class="gauge-card-label">Volume</div>
@@ -219,12 +219,14 @@ function computeTotal() {
     return {
       inventory_units: active.reduce((s, x) => s + x.inventory_units, 0),
       mix: weightedAvg(active, 'mix', 'inventory_units'),
+      freshness: weightedAvg(active, 'freshness', 'inventory_units'),
       volume: weightedAvg(active, 'volume', 'inventory_units'),
       overall: weightedAvg(active, 'overall', 'inventory_units'),
     };
   }).filter(b => b.overall != null);
   return {
     mix: weightedAvg(liveBrands, 'mix', 'inventory_units'),
+    freshness: weightedAvg(liveBrands, 'freshness', 'inventory_units'),
     volume: weightedAvg(liveBrands, 'volume', 'inventory_units'),
     overall: weightedAvg(liveBrands, 'overall', 'inventory_units'),
   };
@@ -233,7 +235,8 @@ function renderTotal() {
   const total = computeTotal();
   $('gauge-total-overall').innerHTML = gaugeSVG(total.overall, { size: 190 });
   $('gauge-total-mix').innerHTML = gaugeSVG(total.mix, { size: 110 });
-  $('gauge-total-freshness').innerHTML = gaugeSVG(null, { size: 110 });
+  $('gauge-total-freshness').innerHTML = gaugeSVG(total.freshness, { size: 110 });
+  $('gauge-total-freshness-note').textContent = total.freshness == null ? 'No age-of-inventory data yet' : '';
   $('gauge-total-volume').innerHTML = gaugeSVG(total.volume, { size: 110 });
 }
 function updateBrand(brandName) {
@@ -242,11 +245,12 @@ function updateBrand(brandName) {
   const activeBskus = brandActiveBskus(b);
   const live = {
     mix: weightedAvg(activeBskus, 'mix', 'inventory_units'),
+    freshness: weightedAvg(activeBskus, 'freshness', 'inventory_units'),
     volume: weightedAvg(activeBskus, 'volume', 'inventory_units'),
     overall: weightedAvg(activeBskus, 'overall', 'inventory_units'),
   };
   const s = slug(brandName);
-  $('gauges-brand-' + s).innerHTML = miniGaugesInner(live.mix, null, live.volume, live.overall, true);
+  $('gauges-brand-' + s).innerHTML = miniGaugesInner(live.mix, live.freshness, live.volume, live.overall, true);
   $('dot-brand-' + s).classList.toggle('on', active);
   $('row-brand-' + s).classList.toggle('inactive', !active);
 }
