@@ -65,9 +65,13 @@ SESSION.headers.update({"x-api-key": API_KEY})
 SERVER_ERROR_RETRY_BACKOFF_SECONDS = [10, 30, 60]
 
 
-def fetch_page(endpoint, params):
+def fetch_page(endpoint, params, max_429_retries=None):
+    """max_429_retries=None retries 429s forever (default, existing behavior).
+    Pass a number to give up and raise after that many 60s waits — for
+    endpoints whose rate-limit/volume behavior isn't proven out yet."""
     url = f"{BASE_URL}/{endpoint}"
     server_error_attempts = 0
+    rate_limit_attempts = 0
 
     while True:
         try:
@@ -82,7 +86,12 @@ def fetch_page(endpoint, params):
             raise RuntimeError(f"Connection error on {endpoint}: {e}")
 
         if resp.status_code == 429:
-            print("    Rate limited — waiting 60 seconds...")
+            if max_429_retries is not None and rate_limit_attempts >= max_429_retries:
+                raise RuntimeError(
+                    f"Rate limited on {endpoint} after {rate_limit_attempts} retries, giving up"
+                )
+            rate_limit_attempts += 1
+            print(f"    Rate limited — waiting 60 seconds... (attempt {rate_limit_attempts})")
             time.sleep(60)
             continue
 
@@ -105,7 +114,7 @@ def fetch_page(endpoint, params):
         return resp.json()
 
 
-def fetch_all(endpoint, params=None, label=""):
+def fetch_all(endpoint, params=None, label="", max_429_retries=None):
     params = dict(params or {})
     params["PageSize"] = 500
     params["Page"]     = 1
@@ -113,10 +122,10 @@ def fetch_all(endpoint, params=None, label=""):
 
     while True:
         print(f"    Page {params['Page']}...", end=" ", flush=True)
-        data      = fetch_page(endpoint, params)
+        data      = fetch_page(endpoint, params, max_429_retries=max_429_retries)
         page_data = data.get("Data", [])
         all_records.extend(page_data)
-        print(f"{len(page_data)} records")
+        print(f"{len(page_data)} records (running total: {len(all_records)})")
 
         if len(page_data) < params["PageSize"]:
             break
@@ -170,14 +179,16 @@ def sync_inventory():
 
 def sync_inventory_batches():
     print("\n[4/7] Inventory Batches")
-    # New endpoint as of 2026-07 — not yet load-bearing for any dashboard, so
-    # a failure here (e.g. not yet enabled on this key) must not take down
-    # the rest of the sync.
+    # New endpoint as of 2026-07 — not yet load-bearing for any dashboard, and
+    # its real-world page volume / rate-limit behavior isn't proven out yet,
+    # so cap 429 retries (5 x 60s = 5 min) instead of the unlimited retry the
+    # other endpoints use, and fail into an empty list rather than risk
+    # hanging the whole sync for hours.
     try:
         batches = fetch_all("inventory/batches", {
             "SupplierIDs": SUPPLIER_STR,
             "States":      "CA",
-        })
+        }, max_429_retries=5)
     except RuntimeError as e:
         print(f"  [WARN] Inventory Batches fetch failed, continuing without it: {e}")
         batches = []
