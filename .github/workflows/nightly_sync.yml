@@ -5,6 +5,12 @@ on:
     - cron: '0 8 * * *'  # Runs daily at 8:00 AM UTC (1:00 AM PT)
   workflow_dispatch:       # Allows manual trigger from Actions tab
 
+# Only one sync at a time — queue rather than run overlapping copies, which
+# was racing on the final push (checkout diverging from main mid-run).
+concurrency:
+  group: kss-nightly-sync
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -43,4 +49,5 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/*.json
           git diff --staged --quiet || git commit -m "Nightly KSS data sync"
+          git pull --rebase origin main
           git push
