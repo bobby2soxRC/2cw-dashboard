@@ -11,6 +11,7 @@ Output:
     data/customers.json
     data/products.json
     data/inventory.json
+    data/inventory_batches.json
     data/sales_reps.json
     data/invoices.json
     data/invoice_transactions.json
@@ -158,7 +159,7 @@ def sync_products():
 
 
 def sync_inventory():
-    print("\n[3/6] Inventory")
+    print("\n[3/7] Inventory")
     inventory = fetch_all("inventory", {
         "SupplierIDs": SUPPLIER_STR,
         "States":      "CA",
@@ -167,8 +168,25 @@ def sync_inventory():
     return inventory
 
 
+def sync_inventory_batches():
+    print("\n[4/7] Inventory Batches")
+    # New endpoint as of 2026-07 — not yet load-bearing for any dashboard, so
+    # a failure here (e.g. not yet enabled on this key) must not take down
+    # the rest of the sync.
+    try:
+        batches = fetch_all("inventory/batches", {
+            "SupplierIDs": SUPPLIER_STR,
+            "States":      "CA",
+        })
+    except RuntimeError as e:
+        print(f"  [WARN] Inventory Batches fetch failed, continuing without it: {e}")
+        batches = []
+    save("inventory_batches.json", batches)
+    return batches
+
+
 def sync_sales_reps():
-    print("\n[4/6] Sales Reps")
+    print("\n[5/7] Sales Reps")
     reps = fetch_all("salesReps", {
         "SupplierIDs": SUPPLIER_STR,
     })
@@ -177,7 +195,7 @@ def sync_sales_reps():
 
 
 def sync_invoices():
-    print("\n[5/6] Invoices")
+    print("\n[6/7] Invoices")
     start_date = (datetime.now() - timedelta(days=INVOICE_HISTORY_DAYS)).strftime("%Y-%m-%d")
     invoices = fetch_all("invoices", {
         "States":    "CA",
@@ -189,7 +207,7 @@ def sync_invoices():
 
 
 def sync_invoice_transactions(invoices):
-    print("\n[6/6] Invoice Transactions")
+    print("\n[7/7] Invoice Transactions")
     invoice_ids = [inv["InvoiceID"] for inv in invoices]
 
     if not invoice_ids:
@@ -233,6 +251,7 @@ def main():
         customers    = sync_customers()
         products     = sync_products()
         inventory    = sync_inventory()
+        batches      = sync_inventory_batches()
         reps         = sync_sales_reps()
         invoices     = sync_invoices()
         transactions = sync_invoice_transactions(invoices)
@@ -250,6 +269,7 @@ def main():
             "customers":            len(customers),
             "products":             len(products),
             "inventory_records":    len(inventory),
+            "inventory_batches":    len(batches),
             "sales_reps":           len(reps),
             "invoices_total":       len(invoices),
             "invoices_verified":    len(verified_invoices),
@@ -268,6 +288,7 @@ def main():
     print(f"  Customers   : {len(customers)}")
     print(f"  Products    : {len(products)}")
     print(f"  Inventory   : {len(inventory)}")
+    print(f"  Inv Batches : {len(batches)}")
     print(f"  Sales Reps  : {len(reps)}")
     print(f"  Invoices    : {len(invoices)} total  "
           f"({len(verified_invoices)} verified, {len(credit_invoices)} credits)")

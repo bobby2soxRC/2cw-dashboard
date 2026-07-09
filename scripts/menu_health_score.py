@@ -20,14 +20,21 @@ Category weights out of 100: Freshness 33 (Aging Inventory by B-SKU), Mix 25
 (Number of Flavors by B-SKU) + Mix 9 (Number of Flavors by T-SKU), Volume 33
 (WOS by B-SKU Avg).
 
-Freshness has no data source yet (no batch/receive-date field anywhere in the
-KSS sync — only forward-looking days-of-supply). It is left out of every
-rollup below and reported as null; Mix/Volume renormalize to fill 100% so
-adding Freshness later is a drop-in, not a rewrite.
+Freshness = Aging Inventory by B-SKU, from the KSS batch inventory sync
+(data/inventory_batches.json → kss_transform.py's avg_age_days, a per-B-SKU
+inventory-weighted average of days since PackDate/ManufactureDate/HarvestDate,
+whichever is populated). FRESHNESS_TABLE below is transcribed verbatim from
+the "NedCo - 13-Scoring System" sheet. If a B-SKU has no batch date data
+(e.g. sync hasn't populated it yet), freshness is null for that node and
+Mix/Volume renormalize to fill 100%, same as every other missing component.
 
 Mix targets come from a published sheet with one row per B-SKU:
   ASKU Count Goal = target total distinct flavors for the whole B-SKU
   TSKU Count Goal = target distinct flavors per type-variant (I/S/H)
+  Low Inventory Cut-Off = per-B-SKU unit threshold; a flavor with on-hand
+    units below this is excluded from the Mix flavor count (it doesn't
+    count as "carried" for Mix purposes) but still counts fully toward
+    Volume and Freshness.
 (ASKU Count Goal == 3 x TSKU Count Goal everywhere both are set.)
 
 MIX_TABLE maps signed "% deviation from flavor-count target" -> score, where
@@ -60,9 +67,9 @@ MIX_TARGETS_URL = (
 
 MIX_WEIGHT_BSKU = 25
 MIX_WEIGHT_TSKU = 9
+MIX_WEIGHT_TOTAL = MIX_WEIGHT_BSKU + MIX_WEIGHT_TSKU
+FRESHNESS_WEIGHT = 33
 VOLUME_WEIGHT = 33
-# Freshness (Aging Inventory by B-SKUs, weight 33) intentionally excluded —
-# see module docstring.
 
 MIX_TABLE = [
     (-100, 0), (-90, 10), (-80, 20), (-70, 30), (-60, 40), (-50, 50),
@@ -74,6 +81,11 @@ VOLUME_TABLE = [
     (0, 0), (1, 25), (2, 50), (3, 60), (4, 80), (5, 90), (6, 100),
     (8, 100), (9, 100), (10, 100), (11, 90), (12, 80), (14, 60),
     (16, 50), (18, 30), (20, 15), (22, 5),
+]
+# Age in days -> score. Transcribed from "NedCo - 13-Scoring System".
+FRESHNESS_TABLE = [
+    (-21, 100), (0, 100), (30, 90), (60, 80), (90, 70), (120, 60),
+    (150, 50), (210, 30), (300, 0),
 ]
 
 
@@ -136,6 +148,7 @@ def fetch_mix_targets():
             "asku_goal": to_int(r.get("ASKU Count Goal")),
             "tsku_goal": to_int(r.get("TSKU Count Goal")),
             "status": (r.get("STATUS") or "").strip(),
+            "low_inv_cutoff": to_int(r.get("Low Inventory Cut-Off")),
         }
     return targets
 
@@ -145,6 +158,27 @@ def mix_score(actual, goal):
         return None
     deviation_pct = (actual - goal) / goal * 100
     return round(interp(MIX_TABLE, deviation_pct), 1)
+
+
+def freshness_score(age_days):
+    if age_days is None:
+        return None
+    return round(interp(FRESHNESS_TABLE, age_days), 1)
+
+
+def combine_weighted(components):
+    """[(value, weight), ...] -> weighted avg over non-None values.
+
+    Missing components simply drop out of the denominator, so e.g. Mix +
+    Volume alone renormalize to fill 100% when Freshness is unavailable.
+    """
+    total_w, total_v = 0.0, 0.0
+    for v, w in components:
+        if v is None or not w:
+            continue
+        total_w += w
+        total_v += v * w
+    return round(total_v / total_w, 1) if total_w > 0 else None
 
 
 def weighted_avg(items, value_key, weight_key):
@@ -176,20 +210,28 @@ def score():
     )
 
     # ── Distinct in-stock flavor counts, by T-SKU and by B-SKU ────────────────
+    # A flavor below its B-SKU's Low Inventory Cut-Off still keeps the T-SKU/
+    # B-SKU node alive (it has real inventory, so Volume/Freshness are
+    # unaffected) but is left out of flavors_by_* so it doesn't count toward
+    # the Mix flavor count.
     flavors_by_tsku = defaultdict(set)
     flavors_by_bsku = defaultdict(set)
     tsku_type = {}
     tsku_bsku = {}
     for row in asku_data:
-        if (row.get("inv_total") or 0) <= 0:
+        inv_total = row.get("inv_total") or 0
+        if inv_total <= 0:
             continue
         bsku, tsku, flavor = row.get("bsku"), row.get("tsku"), row.get("flavor")
         if not bsku or not tsku or not flavor:
             continue
-        flavors_by_bsku[bsku].add(flavor)
-        flavors_by_tsku[tsku].add(flavor)
         tsku_type[tsku] = row.get("type", "")
         tsku_bsku[tsku] = bsku
+        cutoff = (targets.get(bsku) or {}).get("low_inv_cutoff")
+        if cutoff and inv_total < cutoff:
+            continue
+        flavors_by_bsku[bsku].add(flavor)
+        flavors_by_tsku[tsku].add(flavor)
 
     # ── T-SKU nodes: Mix only (no Volume/Freshness data at this grain) ────────
     tskus_by_bsku = defaultdict(list)
@@ -230,10 +272,13 @@ def score():
         wos = dos / 7 if dos is not None else None
         volume = round(interp(VOLUME_TABLE, wos), 1) if wos is not None else None
 
-        if mix is not None and volume is not None:
-            overall = round((34 * mix + VOLUME_WEIGHT * volume) / (34 + VOLUME_WEIGHT), 1)
-        else:
-            overall = mix if mix is not None else volume
+        freshness = freshness_score(pg.get("avg_age_days"))
+
+        overall = combine_weighted([
+            (mix, MIX_WEIGHT_TOTAL),
+            (freshness, FRESHNESS_WEIGHT),
+            (volume, VOLUME_WEIGHT),
+        ])
 
         status = tgt.get("status", "")
         default_active = status not in ("Discontinued", "Inactive")
@@ -250,7 +295,7 @@ def score():
             "flavor_goal": asku_goal,
             "wos": round(wos, 1) if wos is not None else None,
             "mix": mix,
-            "freshness": None,
+            "freshness": freshness,
             "volume": volume,
             "overall": overall,
             "status": status,
@@ -270,7 +315,7 @@ def score():
             "brand": brand,
             "inventory_units": sum(b["inventory_units"] for b in bskus),
             "mix": weighted_avg(active, "mix", "inventory_units"),
-            "freshness": None,
+            "freshness": weighted_avg(active, "freshness", "inventory_units"),
             "volume": weighted_avg(active, "volume", "inventory_units"),
             "overall": weighted_avg(active, "overall", "inventory_units"),
             "bskus": sorted(bskus, key=lambda b: b["bsku"]),
@@ -281,7 +326,7 @@ def score():
     active_brands = [b for b in brand_nodes if b["overall"] is not None]
     total = {
         "mix": weighted_avg(active_brands, "mix", "inventory_units"),
-        "freshness": None,
+        "freshness": weighted_avg(active_brands, "freshness", "inventory_units"),
         "volume": weighted_avg(active_brands, "volume", "inventory_units"),
         "overall": weighted_avg(active_brands, "overall", "inventory_units"),
     }

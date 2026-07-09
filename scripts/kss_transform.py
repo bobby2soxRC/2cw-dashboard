@@ -7,6 +7,7 @@ INPUT  (from data/*.json written by kss_sync.py)
 -------
   data/products.json
   data/inventory.json
+  data/inventory_batches.json
   data/customers.json
   data/sales_reps.json
   data/invoices.json
@@ -889,6 +890,7 @@ def transform():
     # ── Load raw API data ────────────────────────────────────────────────────
     products_raw    = load_json("products.json")
     inventory_raw   = load_json("inventory.json")
+    batches_raw     = load_json("inventory_batches.json")
     customers_raw   = load_json("customers.json")
     sales_reps_raw  = load_json("sales_reps.json")
     invoices_raw    = load_json("invoices.json")
@@ -1170,6 +1172,51 @@ def transform():
         acct_records.append(rec)
         acct_by_cid[cid] = rec
 
+    # ── Batch-level freshness (Aging Inventory by B-SKU) ──────────────────────
+    # KSS /inventory/batches (added 2026-07): ProductID, InventoryUnits,
+    # BatchCode, HarvestDate, ManufactureDate, PackDate, ExpirationDate, ...
+    # "Days Old" per the NedCo scoring sheet = days since the batch was
+    # finished/packaged; falls back across whichever date field is populated
+    # for that product's category (flower has Harvest/Pack, concentrate/vape
+    # tend to only have Manufacture/Pack).
+    print("Computing batch aging (Freshness)...")
+
+    def _parse_date(v):
+        if not v:
+            return None
+        try:
+            return datetime.fromisoformat(str(v)[:10]).date()
+        except ValueError:
+            return None
+
+    age_weighted_sum = defaultdict(float)
+    age_weight_total = defaultdict(float)
+    for row in batches_raw:
+        sku_id = str(row.get("ProductID") or "")
+        bsku   = product_catalog.get(sku_id, {}).get("bsku", "")
+        if not bsku:
+            continue
+        units = float(row.get("InventoryUnits") or 0)
+        if units <= 0:
+            continue
+        batch_date = (
+            _parse_date(row.get("PackDate"))
+            or _parse_date(row.get("ManufactureDate"))
+            or _parse_date(row.get("HarvestDate"))
+        )
+        if not batch_date:
+            continue
+        age_days = (today_dt - batch_date).days
+        age_weighted_sum[bsku] += age_days * units
+        age_weight_total[bsku] += units
+
+    avg_age_by_bsku = {
+        bsku: round(age_weighted_sum[bsku] / age_weight_total[bsku], 1)
+        for bsku in age_weight_total
+        if age_weight_total[bsku] > 0
+    }
+    print(f"  Batch rows: {len(batches_raw)}, B-SKUs with age data: {len(avg_age_by_bsku)}")
+
     # ── Product group aggregates (for inventory section) ─────────────────────
     print("Computing product group aggregates...")
     inv_pg_data = []
@@ -1189,6 +1236,7 @@ def transform():
             "inventory":       inv,
             "past_30":         past30,
             "days_of_supply":  dos,
+            "avg_age_days":    avg_age_by_bsku.get(bsku),
         })
 
     # ── Per-ASKU (flavor × type × warehouse) inventory rows ──────────────────
