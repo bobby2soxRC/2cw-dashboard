@@ -295,6 +295,9 @@ input[type=checkbox]{width:17px;height:17px;cursor:pointer;accent-color:var(--gr
       Step 2 — Commission Report
       <span class="tab-indicator" id="rpt-indicator">✓</span>
     </button>
+    <button class="tab-btn" onclick="showTab('saved',this)">
+      Saved Reports
+    </button>
   </div>
 
   <!-- ══ CALCULATOR TAB ══ -->
@@ -411,6 +414,7 @@ input[type=checkbox]{width:17px;height:17px;cursor:pointer;accent-color:var(--gr
           </div>
           <div class="rpt-actions">
             <button class="tbtn" onclick="showTab('calculator',document.querySelector('.tab-btn'))">← Edit Selections</button>
+            <button class="tbtn accent" id="save-report-btn" onclick="saveCurrentReport()" disabled>💾 Save Report</button>
             <button class="tbtn accent" onclick="window.print()">⇣ Print</button>
           </div>
         </div>
@@ -436,6 +440,45 @@ input[type=checkbox]{width:17px;height:17px;cursor:pointer;accent-color:var(--gr
           <tbody id="rpt-tbody"></tbody>
         </table>
       </div>
+    </div>
+  </div>
+
+  <!-- ══ SAVED REPORTS TAB ══ -->
+  <div id="tab-saved" class="tab-content">
+    <div class="report-wrap">
+      <div class="rpt-header">
+        <div>
+          <div class="rpt-title">Saved Reports</div>
+          <div class="rpt-subtitle" id="saved-subtitle">Reports you've saved for later.</div>
+        </div>
+        <div class="rpt-actions">
+          <button class="tbtn" onclick="loadSavedReports()">↻ Refresh</button>
+        </div>
+      </div>
+
+      <div id="saved-loading" class="rpt-empty hidden">
+        <div class="rpt-empty-sub">Loading saved reports…</div>
+      </div>
+
+      <div id="saved-empty" class="rpt-empty hidden">
+        <div class="rpt-empty-icon">🗂️</div>
+        <div class="rpt-empty-title">No saved reports yet</div>
+        <div class="rpt-empty-sub">Generate a report in Step 2, then click <strong>Save Report</strong> to keep it here for later.</div>
+      </div>
+
+      <table class="rpt-table hidden" id="saved-reports-list-wrap">
+        <thead>
+          <tr>
+            <th id="saved-th-rep" style="display:none">Rep</th>
+            <th>Period</th>
+            <th>Saved</th>
+            <th class="tr">Revenue</th>
+            <th class="tr">Commission</th>
+            <th class="tc">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="saved-reports-list"></tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -684,6 +727,7 @@ function activateRep(r){
 
 function doLogout(){
   rep=null;repData=[];checked=new Set();activeOnly=false;reportGenerated=false;
+  currentReportData=null;currentReportSavedId=null;savedReportsCache=[];
   sessionStorage.removeItem('2cw_rep');
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('app').style.display='none';
@@ -700,6 +744,7 @@ function showTab(name,btn){
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('tab-'+name).classList.add('active');
+  if(name==='saved') loadSavedReports();
 }
 
 // ── PERIODS ───────────────────────────────────────────────
@@ -889,13 +934,73 @@ function updateGenBar(sel){
 }
 
 // ── GENERATE REPORT ───────────────────────────────────────
-function generateReport(){
-  if(!checked.size)return;
+const REPORTS_ENDPOINT='/.netlify/functions/commission-reports';
+let currentReportData=null, currentReportSavedId=null, savedReportsCache=[];
 
+// Structured invoice list for an account under the current mode/period — reused
+// both for live rendering and for what gets persisted to a saved report.
+function collectInvoices(acct){
+  const moKey=period.mo;
+  const bwKey=mode==='biweekly'?(period.bwKey||'').replace(/^\d{4}-/,''):null;
+
+  if(mode==='custom'){
+    if(!customStart||!customEnd) return [];
+    const s=new Date(customStart+'T00:00:00'), e=new Date(customEnd+'T00:00:00');
+    const lines=[];
+    for(const moOrders of Object.values(OD.m[acct]||{})){
+      for(const o of moOrders){
+        if(excludedInvoices.has(o.i)) continue;
+        const p=o.d.split('/');
+        const dt=new Date(+p[2],+p[0]-1,+p[1]);
+        if(dt>=s&&dt<=e){
+          const total=o.t.reduce((s,i)=>s+i[1],0);
+          lines.push({inv:o.i,date:o.d,total,dt});
+        }
+      }
+    }
+    lines.sort((a,b)=>a.dt-b.dt);
+    return lines.map(({inv,date,total})=>({inv,date,total}));
+  }
+
+  const src=mode==='monthly'?(INV_LISTS.m[acct]||{}):(INV_LISTS.bw[acct]||{});
+  const key=mode==='monthly'?moKey:bwKey;
+  const invs=(key&&src[key])||[];
+  if(!invs.length) return [];
+
+  const odOrders=(OD.m[acct]||{})[moKey]||[];
+  const odMap={};
+  for(const o of odOrders){
+    const total=o.t.reduce((s,i)=>s+i[1],0);
+    odMap[o.i]={d:o.d,total};
+  }
+
+  const bwRanges=getBwRanges();
+  const range=bwKey?bwRanges[bwKey]:null;
+
+  return invs.map(inv=>{
+    const info=odMap[inv];
+    if(!info) return {inv,date:'',total:0};
+    if(range){
+      const parts=info.d.split('/');
+      const m=parseInt(parts[0]),day=parseInt(parts[1]);
+      if(!(m===range[0]&&day>=range[1]&&day<=range[2])) return null;
+    }
+    return {inv,date:info.d,total:info.total};
+  }).filter(Boolean);
+}
+
+function invHTML(list){
+  if(!list||!list.length) return '<span class="kss-dim">—</span>';
+  return list.map(l=>'<span class="inv-line"><span class="inv-num">'+l.inv+'</span>'
+    +(l.date?' <span class="inv-meta">('+l.date+', '+fmt(l.total)+')</span>':'')+'</span>').join('');
+}
+
+// Builds a plain-data snapshot of the current selection — no DOM, no HTML —
+// so it can be rendered live and/or persisted to the server unchanged.
+function gatherReportData(){
   const nm={billy:'Billy',mac:'Mac',john:'John',jonathan:'Jonathan',emily:'Emily',niki:'Niki (Admin)'};
   const adminMode=isAdmin();
 
-  // Gather selected rows
   const rows=repData
     .filter(r=>checked.has(r.account+'|'+r.rep))
     .map(r=>({...r,vol:getVol(r),nd:effectiveNd(r)}))
@@ -916,138 +1021,107 @@ function generateReport(){
   const ndRows=rows.filter(r=>r.nd&&r.vol>0);
   const ndComm=ndRows.reduce((s,r)=>s+r.comm,0);
   const baseComm=totalComm-ndComm;
+  const withRev=rows.filter(r=>r.vol>0);
   const zeroRev=rows.filter(r=>r.vol===0);
 
-  // Header
-  document.getElementById('rpt-title').textContent=(adminMode?'All Reps — Commission Report':nm[rep]+' — Commission Report');
-  document.getElementById('rpt-subtitle').textContent='Pay Period: '+period.hint+' · Generated '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+(adminMode?' · Admin View':'');
+  const rowsOut=withRev.map(r=>{
+    const acctBase=adminMode?(BASE[r.rep]||.015):baseRate;
+    const acctNew=adminMode?(NEW_DOOR[r.rep]||null):newRate;
+    const isNewRate=!!(r.nd&&acctNew);
+    return {
+      account:r.account, rep:r.rep, repLabel:REP_LABELS[r.rep]||r.rep||'—',
+      kss_rep:r.kss_rep||'', shared:!!r.shared, nd:!!r.nd,
+      vol:r.vol, comm:r.comm, rate:isNewRate?acctNew:acctBase, isNewRate,
+      invoices:collectInvoices(r.account)
+    };
+  });
+  const zeroRevRows=zeroRev.map(r=>({
+    account:r.account, rep:r.rep, repLabel:REP_LABELS[r.rep]||r.rep||'—',
+    kss_rep:r.kss_rep||'', shared:!!r.shared
+  }));
 
-  // Note
-  const noteEl=document.getElementById('rpt-note');
-  const zeroNote=zeroRev.length?` · ${zeroRev.length} selected account${zeroRev.length!==1?'s':''} had $0 revenue this period.`:'';
-  const selCount=rows.length;
-  noteEl.textContent=`${rows.filter(r=>r.vol>0).length} of ${selCount} selected accounts had revenue this period.${zeroNote}`;
+  const generatedAt=new Date();
+  return {
+    meta:{
+      rep, adminMode,
+      title:adminMode?'All Reps — Commission Report':nm[rep]+' — Commission Report',
+      subtitle:'Pay Period: '+period.hint+' · Generated '+generatedAt.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+(adminMode?' · Admin View':''),
+      note:`${withRev.length} of ${rows.length} selected accounts had revenue this period.`+(zeroRev.length?` · ${zeroRev.length} selected account${zeroRev.length!==1?'s':''} had $0 revenue this period.`:''),
+      mode, periodId:period.id, periodLabel:period.hint,
+      generatedAt:generatedAt.toISOString()
+    },
+    totals:{
+      accountsWorked:withRev.length, selectedCount:rows.length,
+      totalRev, newDoors:ndRows.length, baseComm, ndComm, totalComm,
+      hasNewRate:!!newRate
+    },
+    rows:rowsOut, zeroRevRows
+  };
+}
 
-  // KPIs
+// Renders a gathered (or saved) report into the Report tab. `interactive`
+// controls whether account/volume cells drill into the live order panel —
+// only safe when the report matches the currently-loaded live state.
+function renderReportFromData(data,opts){
+  opts=opts||{};
+  const interactive=opts.interactive!==false;
+  const {meta,totals,rows}=data;
+  const zeroRevRows=data.zeroRevRows||[];
+  const adminMode=meta.adminMode;
+
+  document.getElementById('rpt-title').textContent=meta.title;
+  document.getElementById('rpt-subtitle').textContent=meta.subtitle;
+  document.getElementById('rpt-note').textContent=meta.note;
+
   document.getElementById('rpt-kpis').innerHTML=`
-    <div class="rk"><div class="rk-label">Accounts Worked</div><div class="rk-value blue">${rows.filter(r=>r.vol>0).length}</div></div>
-    <div class="rk"><div class="rk-label">Total Revenue</div><div class="rk-value green">${fmt(totalRev)}</div></div>
-    <div class="rk"><div class="rk-label">New Doors</div><div class="rk-value gold">${ndRows.length}</div></div>
-    <div class="rk"><div class="rk-label">Base Commission</div><div class="rk-value green">${fmt(baseComm)}</div></div>
-    ${newRate?`<div class="rk"><div class="rk-label">New Door Bonus</div><div class="rk-value gold">${fmt(ndComm)}</div></div>`:''}
-    <div class="rk" style="border-color:rgba(74,222,128,.3);background:var(--green-dim2)"><div class="rk-label">Total Commission</div><div class="rk-value green" style="font-size:1.6rem">${fmt(totalComm)}</div></div>
+    <div class="rk"><div class="rk-label">Accounts Worked</div><div class="rk-value blue">${totals.accountsWorked}</div></div>
+    <div class="rk"><div class="rk-label">Total Revenue</div><div class="rk-value green">${fmt(totals.totalRev)}</div></div>
+    <div class="rk"><div class="rk-label">New Doors</div><div class="rk-value gold">${totals.newDoors}</div></div>
+    <div class="rk"><div class="rk-label">Base Commission</div><div class="rk-value green">${fmt(totals.baseComm)}</div></div>
+    ${totals.hasNewRate?`<div class="rk"><div class="rk-label">New Door Bonus</div><div class="rk-value gold">${fmt(totals.ndComm)}</div></div>`:''}
+    <div class="rk" style="border-color:rgba(74,222,128,.3);background:var(--green-dim2)"><div class="rk-label">Total Commission</div><div class="rk-value green" style="font-size:1.6rem">${fmt(totals.totalComm)}</div></div>
   `;
 
-  document.getElementById('rpt-section-hdr').textContent=`Selected Accounts (${rows.length}) · ${period.hint}`;
-  // Show/hide rep column in report
+  document.getElementById('rpt-section-hdr').textContent=`Selected Accounts (${totals.selectedCount}) · ${meta.periodLabel}`;
   const rptRepTh=document.getElementById('rpt-th-rep');
   if(rptRepTh) rptRepTh.style.display=adminMode?'':'none';
   const rptColSpan=adminMode?5:4;
-  const totalColSpanStr=`colspan="${rptColSpan}"`;
 
-  // Table — split: has revenue / zero revenue
-  const withRev=rows.filter(r=>r.vol>0);
-  const noRev=rows.filter(r=>r.vol===0);
-
-  // Invoice list helper
-  function getInvList(acct){
-    const moKey=period.mo;
-    const bwKey=mode==='biweekly'?(period.bwKey||'').replace(/^\d{4}-/,''):null;
-
-    // Custom mode: pull invoices from OD filtered by date range
-    if(mode==='custom'){
-      if(!customStart||!customEnd) return '<span class="kss-dim">—</span>';
-      const s=new Date(customStart+'T00:00:00'), e=new Date(customEnd+'T00:00:00');
-      const lines=[];
-      for(const moOrders of Object.values(OD.m[acct]||{})){
-        for(const o of moOrders){
-          if(excludedInvoices.has(o.i)) continue;
-          const p=o.d.split('/');
-          const dt=new Date(+p[2],+p[0]-1,+p[1]);
-          if(dt>=s&&dt<=e){
-            const total=o.t.reduce((s,i)=>s+i[1],0);
-            lines.push({inv:o.i,d:o.d,total,dt});
-          }
-        }
-      }
-      lines.sort((a,b)=>a.dt-b.dt);
-      if(!lines.length) return '<span class="kss-dim">—</span>';
-      return lines.map(l=>'<span class="inv-line"><span class="inv-num">'+l.inv+'</span>'
-        +' <span class="inv-meta">('+l.d+', '+fmt(l.total)+')</span></span>').join('');
-    }
-
-    // Monthly / biweekly: use INV_LISTS
-    const src=mode==='monthly'?(INV_LISTS.m[acct]||{}):(INV_LISTS.bw[acct]||{});
-    const key=mode==='monthly'?moKey:bwKey;
-    const invs=(key&&src[key])||[];
-    if(!invs.length)return '<span class="kss-dim">—</span>';
-
-    // Build invoice→{date,total} lookup from OD
-    const odOrders=(OD.m[acct]||{})[moKey]||[];
-    const odMap={};
-    for(const o of odOrders){
-      const total=o.t.reduce((s,i)=>s+i[1],0);
-      odMap[o.i]={d:o.d,total};
-    }
-
-    // For biweekly, filter by date range
-    const bwRanges=getBwRanges();
-    const range=bwKey?bwRanges[bwKey]:null;
-
-    const lines=invs.map(inv=>{
-      const info=odMap[inv];
-      if(!info) return '<span class="inv-line"><span class="inv-num">'+inv+'</span></span>';
-      if(range){
-        const parts=info.d.split('/');
-        const m=parseInt(parts[0]),day=parseInt(parts[1]);
-        if(!(m===range[0]&&day>=range[1]&&day<=range[2])) return null;
-      }
-      return '<span class="inv-line">'
-        +'<span class="inv-num">'+inv+'</span>'
-        +' <span class="inv-meta">('+info.d+', '+fmt(info.total)+')</span>'
-        +'</span>';
-    }).filter(Boolean);
-
-    if(!lines.length)return '<span class="kss-dim">—</span>';
-    return lines.join('');
-  }
-
-  let tbody=withRev.map(r=>{
-    const rateStr=r.nd&&newRate
-      ?`<span style="color:var(--gold);font-size:.75rem;font-weight:700">${(newRate*100).toFixed(0)}% NEW</span>`
-      :`<span style="color:var(--dim);font-size:.75rem">${(baseRate*100).toFixed(1)}%</span>`;
-    const rptRepCell=adminMode?`<td><span class="rep-pill rep-${r.rep}">${REP_LABELS[r.rep]||r.rep||'—'}</span></td>`:'';
-    const acctBase=adminMode?(BASE[r.rep]||.015):(BASE[rep]||.015);
-    const acctNew=adminMode?(NEW_DOOR[r.rep]||null):newRate;
-    const rptRateStr=r.nd&&acctNew
-      ?`<span style="color:var(--gold);font-size:.75rem;font-weight:700">${(acctNew*100).toFixed(0)}% NEW</span>`
-      :`<span style="color:var(--dim);font-size:.75rem">${(acctBase*100).toFixed(1)}%</span>`;
+  let tbody=rows.map(r=>{
+    const rateStr=r.isNewRate
+      ?`<span style="color:var(--gold);font-size:.75rem;font-weight:700">${(r.rate*100).toFixed(0)}% NEW</span>`
+      :`<span style="color:var(--dim);font-size:.75rem">${(r.rate*100).toFixed(1)}%</span>`;
+    const rptRepCell=adminMode?`<td><span class="rep-pill rep-${r.rep}">${r.repLabel}</span></td>`:'';
+    const acctCell=interactive
+      ?`<span class="acct-link" onclick="openPanelForReport('${esc(r.account)}')">${r.account}</span>`
+      :r.account;
+    const volCell=interactive
+      ?`<span class="vol-link" onclick="openPanelForReport('${esc(r.account)}')">${fmt(r.vol)}</span>`
+      :fmt(r.vol);
     return `<tr>
-      <td><span class="acct-link" onclick="openPanelForReport('${esc(r.account)}')">${r.account}</span>${r.shared?'<span class="badge-shared">SHARED</span>':''}</td>
+      <td>${acctCell}${r.shared?'<span class="badge-shared">SHARED</span>':''}</td>
       ${rptRepCell}
       <td class="kss-dim">${r.kss_rep||'—'}</td>
       <td>${r.nd?'<span class="badge-new">NEW DOOR</span>':'<span class="kss-dim">Existing</span>'}</td>
-      <td>${getInvList(r.account)}</td>
-      <td class="tr"><span class="vol-link" onclick="openPanelForReport('${esc(r.account)}')">${fmt(r.vol)}</span></td>
-      <td class="tr">${rptRateStr}</td>
-      <td class="tr"><span class="comm-val ${r.nd&&acctNew?'comm-new':''}">${fmt(r.comm)}</span></td>
+      <td>${invHTML(r.invoices)}</td>
+      <td class="tr">${volCell}</td>
+      <td class="tr">${rateStr}</td>
+      <td class="tr"><span class="comm-val ${r.isNewRate?'comm-new':''}">${fmt(r.comm)}</span></td>
     </tr>`;
   }).join('');
 
-  // Total row
   tbody+=`<tr class="rpt-total-row">
-    <td ${totalColSpanStr} style="padding:.7rem 1rem">TOTAL</td>
-    <td class="tr" style="padding:.7rem 1rem;font-family:'DM Mono',monospace">${fmt(totalRev)}</td>
+    <td colspan="${rptColSpan}" style="padding:.7rem 1rem">TOTAL</td>
+    <td class="tr" style="padding:.7rem 1rem;font-family:'DM Mono',monospace">${fmt(totals.totalRev)}</td>
     <td></td>
-    <td class="tr" style="padding:.7rem 1rem;font-family:'DM Mono',monospace;color:var(--green)">${fmt(totalComm)}</td>
+    <td class="tr" style="padding:.7rem 1rem;font-family:'DM Mono',monospace;color:var(--green)">${fmt(totals.totalComm)}</td>
   </tr>`;
 
-  // Zero-revenue section
-  if(noRev.length){
+  if(zeroRevRows.length){
     const zeroColSpan=adminMode?8:7;
-    tbody+=`<tr><td colspan="${zeroColSpan}" style="padding:.75rem 1rem;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--dimmer);background:var(--bg3);border-top:2px solid var(--border2)">Selected — No Revenue This Period (${noRev.length})</td></tr>`;
-    tbody+=noRev.map(r=>{
-      const zeroRepCell=adminMode?`<td><span class="rep-pill rep-${r.rep}">${REP_LABELS[r.rep]||r.rep||'—'}</span></td>`:'';
+    tbody+=`<tr><td colspan="${zeroColSpan}" style="padding:.75rem 1rem;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--dimmer);background:var(--bg3);border-top:2px solid var(--border2)">Selected — No Revenue This Period (${zeroRevRows.length})</td></tr>`;
+    tbody+=zeroRevRows.map(r=>{
+      const zeroRepCell=adminMode?`<td><span class="rep-pill rep-${r.rep}">${r.repLabel}</span></td>`:'';
       return `<tr style="opacity:.5">
         <td>${r.account}${r.shared?'<span class="badge-shared">SHARED</span>':''}</td>
         ${zeroRepCell}
@@ -1060,16 +1134,134 @@ function generateReport(){
   }
 
   document.getElementById('rpt-tbody').innerHTML=tbody;
-
-  // Show report
   document.getElementById('rpt-empty').classList.add('hidden');
   document.getElementById('rpt-content').classList.remove('hidden');
+}
+
+function generateReport(){
+  if(!checked.size)return;
+  currentReportData=gatherReportData();
+  currentReportSavedId=null;
+  renderReportFromData(currentReportData,{interactive:true});
   document.getElementById('rpt-indicator').classList.add('show');
   reportGenerated=true;
+  updateSaveBtnState();
 
-  // Auto-navigate to report tab
   const tabs=document.querySelectorAll('.tab-btn');
   showTab('report',tabs[1]);
+}
+
+// ── SAVE / LOAD / DELETE SAVED REPORTS ─────────────────────
+function updateSaveBtnState(){
+  const btn=document.getElementById('save-report-btn');
+  if(!btn) return;
+  if(currentReportSavedId){ btn.textContent='✓ Saved'; btn.disabled=true; }
+  else { btn.textContent='💾 Save Report'; btn.disabled=!currentReportData; }
+}
+
+async function saveCurrentReport(){
+  if(!currentReportData) return;
+  const btn=document.getElementById('save-report-btn');
+  btn.disabled=true; btn.textContent='Saving…';
+  try{
+    const res=await fetch(REPORTS_ENDPOINT,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'save',rep,report:currentReportData})
+    });
+    const j=await res.json();
+    if(!res.ok||!j.ok) throw new Error(j.error||('HTTP '+res.status));
+    currentReportSavedId=j.id;
+    updateSaveBtnState();
+  }catch(err){
+    console.error('Save report failed:',err);
+    alert('Could not save report: '+err.message);
+    updateSaveBtnState();
+  }
+}
+
+function loadSavedReports(){
+  const wrap=document.getElementById('saved-reports-list-wrap');
+  const emptyEl=document.getElementById('saved-empty');
+  const loadingEl=document.getElementById('saved-loading');
+  wrap.classList.add('hidden'); emptyEl.classList.add('hidden');
+  loadingEl.classList.remove('hidden');
+  loadingEl.querySelector('.rpt-empty-sub').textContent='Loading saved reports…';
+
+  const repTh=document.getElementById('saved-th-rep');
+  if(repTh) repTh.style.display=isAdmin()?'':'none';
+
+  fetch(REPORTS_ENDPOINT+'?t='+Date.now())
+    .then(r=>r.json())
+    .then(j=>{
+      if(!j.ok) throw new Error(j.error||'Failed to load');
+      savedReportsCache=(j.reports||[]).filter(r=>isAdmin()||r.rep===rep);
+      savedReportsCache.sort((a,b)=>new Date(b.savedAt)-new Date(a.savedAt));
+      renderSavedReportsList();
+    })
+    .catch(err=>{
+      loadingEl.querySelector('.rpt-empty-sub').textContent='Failed to load saved reports: '+err.message;
+    });
+}
+
+function renderSavedReportsList(){
+  const wrap=document.getElementById('saved-reports-list-wrap');
+  const emptyEl=document.getElementById('saved-empty');
+  const loadingEl=document.getElementById('saved-loading');
+  loadingEl.classList.add('hidden');
+  if(!savedReportsCache.length){ emptyEl.classList.remove('hidden'); wrap.classList.add('hidden'); return; }
+  emptyEl.classList.add('hidden'); wrap.classList.remove('hidden');
+
+  document.getElementById('saved-reports-list').innerHTML=savedReportsCache.map(r=>{
+    const savedDt=new Date(r.savedAt);
+    const dtStr=savedDt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' '+savedDt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    const repCell=isAdmin()?`<td><span class="rep-pill rep-${r.rep}">${REP_LABELS[r.rep]||r.rep}</span></td>`:'';
+    const totals=r.totals||{};
+    return `<tr>
+      ${repCell}
+      <td>${(r.meta&&r.meta.periodLabel)||'—'}</td>
+      <td class="kss-dim">${dtStr}</td>
+      <td class="tr">${fmt(totals.totalRev)}</td>
+      <td class="tr"><span class="comm-val">${fmt(totals.totalComm)}</span></td>
+      <td class="tc">
+        <button class="tbtn" onclick="viewSavedReport('${r.id}')">View</button>
+        <button class="tbtn" style="border-color:var(--red);color:var(--red)" onclick="deleteSavedReport('${r.id}')">Delete</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function viewSavedReport(id){
+  const r=savedReportsCache.find(x=>x.id===id);
+  if(!r) return;
+  currentReportData=r;
+  currentReportSavedId=r.id;
+  renderReportFromData(r,{interactive:false});
+  document.getElementById('rpt-indicator').classList.add('show');
+  reportGenerated=true;
+  updateSaveBtnState();
+  const tabs=document.querySelectorAll('.tab-btn');
+  showTab('report',tabs[1]);
+}
+
+async function deleteSavedReport(id){
+  const r=savedReportsCache.find(x=>x.id===id);
+  if(!r) return;
+  if(!confirm('Delete this saved report ('+((r.meta&&r.meta.periodLabel)||'')+')? This cannot be undone.')) return;
+  try{
+    const res=await fetch(REPORTS_ENDPOINT,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'delete',rep,id})
+    });
+    const j=await res.json();
+    if(!res.ok||!j.ok) throw new Error(j.error||('HTTP '+res.status));
+    savedReportsCache=savedReportsCache.filter(x=>x.id!==id);
+    renderSavedReportsList();
+    if(currentReportSavedId===id){ currentReportData=null; currentReportSavedId=null; updateSaveBtnState(); }
+  }catch(err){
+    alert('Could not delete report: '+err.message);
+  }
 }
 
 // ── ORDER DETAIL PANEL ────────────────────────────────────
