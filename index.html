@@ -55,8 +55,36 @@
     .hub-topbar{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:calc(.75rem + env(safe-area-inset-top)) 1.5rem .75rem;background:rgba(12,13,15,.8);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
     .hub-user{display:flex;align-items:center;gap:.6rem;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;color:var(--subtext)}
     .user-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
+    .hub-topbar-actions{display:flex;align-items:center;gap:.6rem}
     .logout-btn{font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;background:transparent;border:1px solid var(--border);color:var(--muted);padding:.3rem .75rem;border-radius:6px;cursor:pointer;transition:all .2s}
     .logout-btn:hover{border-color:var(--red);color:var(--red)}
+    #customize-btn.active{border-color:var(--green);color:var(--green)}
+
+    /* ── CUSTOMIZE MODE ── */
+    .customize-toolbar{width:100%;max-width:960px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;flex-wrap:wrap;gap:10px}
+    .customize-hint{font-size:.78rem;color:var(--subtext);max-width:520px;line-height:1.5}
+    .customize-actions{display:flex;gap:.5rem;flex-shrink:0}
+    .customize-actions button{font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;padding:.45rem .9rem;border-radius:8px;cursor:pointer;border:1px solid var(--border);transition:all .15s}
+    .btn-save{background:var(--green);color:#000;border-color:var(--green);font-weight:700}
+    .btn-save:hover{opacity:.88}
+    .btn-cancel{background:transparent;color:var(--subtext)}
+    .btn-cancel:hover{border-color:var(--muted);color:var(--text)}
+    .btn-reset{background:transparent;color:var(--gold);border-color:rgba(212,168,67,.3)}
+    .btn-reset:hover{border-color:var(--gold)}
+    .card.customizing{cursor:default}
+    .card.customizing:hover{transform:none;box-shadow:none}
+    .card-ctrl-bar{display:flex;gap:.4rem;margin-bottom:14px}
+    .card-ctrl-bar button{font-family:'DM Mono',monospace;font-size:11px;background:rgba(255,255,255,.05);border:1px solid var(--border2);color:var(--subtext);width:28px;height:28px;border-radius:6px;cursor:pointer;transition:all .15s}
+    .card-ctrl-bar button:hover:not(:disabled){border-color:var(--text);color:var(--text)}
+    .card-ctrl-bar button:disabled{opacity:.25;cursor:not-allowed}
+    .card-ctrl-bar button.hide-btn{margin-left:auto}
+    .card-ctrl-bar button.hide-btn:hover{border-color:var(--red);color:var(--red)}
+    .hidden-panel{width:100%;max-width:960px;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)}
+    .hidden-panel-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+    .hidden-chip-row{display:flex;flex-wrap:wrap;gap:8px}
+    .hidden-chip{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:.4rem .5rem .4rem 1rem;font-size:.8rem;color:var(--subtext)}
+    .hidden-chip button{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase;background:var(--green2);border:1px solid rgba(61,184,122,.3);color:var(--green);padding:.3rem .65rem;border-radius:14px;cursor:pointer}
+    .hidden-chip button:hover{opacity:.85}
     .header{text-align:center;margin-bottom:48px;margin-top:32px;animation:fadeUp .5s ease both}
     .wordmark{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,5vw,64px);letter-spacing:.06em;line-height:1;background:linear-gradient(135deg,#fff 30%,var(--muted) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
     .tagline{margin-top:8px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted)}
@@ -87,6 +115,7 @@
 
     /* loading state */
     .loading-msg{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);text-align:center;margin-top:1rem}
+    .hidden{display:none!important}
   </style>
 </head>
 <body>
@@ -121,13 +150,32 @@
 <div id="hub-screen">
   <div class="hub-topbar">
     <div class="hub-user"><div class="user-dot"></div><span id="user-label">—</span></div>
-    <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+    <div class="hub-topbar-actions">
+      <button class="logout-btn" id="customize-btn" onclick="toggleCustomize()">Customize</button>
+      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+    </div>
   </div>
   <div class="header">
     <div class="wordmark">2CW Operations</div>
     <div class="tagline">Internal Dashboard Suite</div>
   </div>
+
+  <div class="customize-toolbar hidden" id="customize-toolbar">
+    <div class="customize-hint">Drag nothing — use ▲▼ to reorder, 🙈 to hide. Changes only apply to dashboards you already have access to.</div>
+    <div class="customize-actions">
+      <button class="btn-reset" onclick="resetCustomize()">Reset to Default</button>
+      <button class="btn-cancel" onclick="cancelCustomize()">Cancel</button>
+      <button class="btn-save" onclick="saveCustomize()" id="customize-save-btn">Save</button>
+    </div>
+  </div>
+
   <div class="grid" id="card-grid"></div>
+
+  <div class="hidden-panel hidden" id="hidden-panel">
+    <div class="hidden-panel-label">Hidden — click to restore</div>
+    <div class="hidden-chip-row" id="hidden-chip-row"></div>
+  </div>
+
   <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution</footer>
 </div>
 
@@ -243,6 +291,39 @@ const COMMISSION_REP_MAP = {
 let directory = null; // loaded from CSV
 let currentUser = null;
 
+// ── DASHBOARD CUSTOMIZATION (hide/reorder, per user, server-synced) ──────
+const PREFS_ENDPOINT = '/.netlify/functions/dashboard-prefs';
+// hubState holds everything needed to re-render the grid without re-fetching:
+// { userName, defaultOrder: [key,...], defsByKey: {key: cardDef}, savedPrefs: {hidden:[],order:[]} }
+let hubState = null;
+let customizeMode = false;
+let draftHidden = []; // working copy while customizeMode is on
+let draftOrder = [];
+
+async function loadPrefs(userName){
+  try{
+    const res = await fetch(PREFS_ENDPOINT + '?user=' + encodeURIComponent(userName) + '&t=' + Date.now());
+    const j = await res.json();
+    if(j.ok && j.prefs) return { hidden: j.prefs.hidden||[], order: j.prefs.order||[] };
+  }catch(e){
+    console.warn('Could not load dashboard prefs, using defaults', e);
+  }
+  return { hidden: [], order: [] };
+}
+
+// Applies hidden/order on top of the default (access-filtered, admin-override)
+// key sequence. Cards not in `order` keep their relative default position,
+// appended after the ones that are.
+function computeEffectiveOrder(defaultOrder, hidden, order){
+  const hiddenSet = new Set(hidden||[]);
+  const visibleDefault = defaultOrder.filter(k => !hiddenSet.has(k));
+  if(!order || !order.length) return visibleDefault;
+  const orderSet = new Set(order);
+  const known = order.filter(k => visibleDefault.includes(k));
+  const extra = visibleDefault.filter(k => !orderSet.has(k));
+  return [...known, ...extra];
+}
+
 // ── PIN INPUT DOTS ────────────────────────────────────────
 document.getElementById('pin-input').addEventListener('input', function(){
   const v = this.value;
@@ -326,7 +407,7 @@ async function doLogin(){
 
   currentUser = user;
   sessionStorage.setItem('2cw_pin', pin);
-  buildHub(user);
+  await buildHub(user);
 }
 
 // ── BUILD HUB ────────────────────────────────────────────
@@ -338,7 +419,7 @@ const FORM_ACCESS_COLS = {
   store_visit: 'merchandising form'
 };
 
-function buildHub(user){
+async function buildHub(user){
   const userName = user.user || 'User';
 
   // Top bar label
@@ -357,12 +438,7 @@ function buildHub(user){
   sessionStorage.setItem('2cw_form_access', JSON.stringify(formAccess));
   user.field_forms = anyFormAccess ? 'TRUE' : 'FALSE';
 
-  // Build cards
-  const grid = document.getElementById('card-grid');
-  grid.innerHTML = '';
-  let cardIdx = 0;
-
-  // Standard cards (with per-user order override applied, if any)
+  // Standard cards this user is authorized for (per-user order override applied, if any)
   const orderOverride = CARD_ORDER_OVERRIDES[userName.trim().toLowerCase()];
   const orderedDefs = orderOverride
     ? [...CARD_DEFS].sort((a,b) => {
@@ -370,28 +446,96 @@ function buildHub(user){
         return (ai===-1 ? 999 : ai) - (bi===-1 ? 999 : bi);
       })
     : CARD_DEFS;
+
+  const defsByKey = {};
+  const defaultOrder = [];
   orderedDefs.forEach(def => {
     const col = CARD_SHEET_COLS[def.key] || def.key;
-    const val = (user[col] || '').toUpperCase();
-    if(val !== 'TRUE') return;
-    grid.appendChild(makeCard(def, cardIdx++));
+    if((user[col] || '').toUpperCase() !== 'TRUE') return;
+    defsByKey[def.key] = def;
+    defaultOrder.push(def.key);
   });
 
-  // Commission card logic
+  // Commission card — dynamic title/href depending on single-rep vs admin access
   const commTrue = COMMISSION_COLS.filter(col => (user[col] || '').toUpperCase() === 'TRUE');
   if(commTrue.length === 1){
-    // Single rep — "My Commissions"
     const repKey = COMMISSION_REP_MAP[commTrue[0]];
-    grid.appendChild(makeCommCard('My Commissions', `/commission.html?rep=${repKey}`, cardIdx++));
+    defsByKey.commission = commCardDef('My Commissions', `/commission.html?rep=${repKey}`);
+    defaultOrder.push('commission');
   } else if(commTrue.length > 1){
-    // Multi/admin — "Commissions" — pass ?rep=niki to bypass PIN screen (full admin view)
-    grid.appendChild(makeCommCard('Commissions', '/commission.html?rep=niki', cardIdx++));
+    defsByKey.commission = commCardDef('Commissions', '/commission.html?rep=niki');
+    defaultOrder.push('commission');
   }
+
+  const savedPrefs = await loadPrefs(userName);
+  hubState = { userName, defaultOrder, defsByKey, savedPrefs };
+  customizeMode = false;
+  renderGrid();
 
   // Show hub
   document.getElementById('login-screen').style.display = 'none';
   const hub = document.getElementById('hub-screen');
   hub.classList.add('visible');
+}
+
+function commCardDef(title, href){
+  return {
+    key: 'commission', color: 'purple', label: 'Finance', title, href,
+    desc: title === 'My Commissions'
+      ? 'Your commission report — select the accounts you worked to generate your pay period summary.'
+      : 'Commission reports for all reps. Select rep and period to generate full summary.'
+  };
+}
+
+// ── GRID RENDERING (normal + customize mode) ──────────────
+function renderGrid(){
+  const grid = document.getElementById('card-grid');
+  const toolbar = document.getElementById('customize-toolbar');
+  const hiddenPanel = document.getElementById('hidden-panel');
+  const customizeBtn = document.getElementById('customize-btn');
+  grid.innerHTML = '';
+
+  if(!hubState){ return; }
+
+  customizeBtn.classList.toggle('active', customizeMode);
+  customizeBtn.textContent = customizeMode ? 'Editing…' : 'Customize';
+
+  if(!customizeMode){
+    toolbar.classList.add('hidden');
+    hiddenPanel.classList.add('hidden');
+    const keys = computeEffectiveOrder(hubState.defaultOrder, hubState.savedPrefs.hidden, hubState.savedPrefs.order);
+    keys.forEach((key, idx) => {
+      const def = hubState.defsByKey[key];
+      if(!def) return; // access to this card may have been revoked since prefs were saved
+      grid.appendChild(makeCard(def, idx));
+    });
+    return;
+  }
+
+  // Customize mode: show all authorized cards, hidden ones excluded from the
+  // grid but listed below for restoring. Reorder/hide only ever touches keys
+  // in hubState.defaultOrder — a user can't reference a card they don't have.
+  toolbar.classList.remove('hidden');
+  const visibleKeys = computeEffectiveOrder(hubState.defaultOrder, draftHidden, draftOrder);
+  visibleKeys.forEach((key, idx) => {
+    const def = hubState.defsByKey[key];
+    if(!def) return;
+    grid.appendChild(makeCustomizeCard(def, idx, idx===0, idx===visibleKeys.length-1));
+  });
+
+  const hiddenKeys = hubState.defaultOrder.filter(k => draftHidden.includes(k));
+  const chipRow = document.getElementById('hidden-chip-row');
+  if(hiddenKeys.length){
+    hiddenPanel.classList.remove('hidden');
+    chipRow.innerHTML = hiddenKeys.map(k => {
+      const def = hubState.defsByKey[k];
+      if(!def) return '';
+      return `<div class="hidden-chip"><span>${def.title}</span><button onclick="showCard('${k}')">Show</button></div>`;
+    }).join('');
+  } else {
+    hiddenPanel.classList.add('hidden');
+    chipRow.innerHTML = '';
+  }
 }
 
 function makeCard(def, idx){
@@ -411,27 +555,96 @@ function makeCard(def, idx){
   return a;
 }
 
-function makeCommCard(title, href, idx){
-  const delays = ['.08s','.16s','.24s','.32s','.40s','.48s'];
-  const a = document.createElement('a');
-  a.className = 'card purple';
-  a.href = href;
-  a.style.animationDelay = delays[idx] || '.08s';
-  a.innerHTML = `
-    <div class="card-dot"></div>
-    <div class="card-label">Finance</div>
-    <div class="card-title">${title}</div>
-    <div class="card-desc">${title === 'My Commissions'
-      ? 'Your commission report — select the accounts you worked to generate your pay period summary.'
-      : 'Commission reports for all reps. Select rep and period to generate full summary.'}</div>
-    <span class="card-badge badge-open">● Live</span>
+function makeCustomizeCard(def, idx, isFirst, isLast){
+  const div = document.createElement('div');
+  div.className = `card customizing ${def.color}`;
+  div.innerHTML = `
+    <div class="card-ctrl-bar">
+      <button ${isFirst?'disabled':''} onclick="moveCard('${def.key}',-1)" title="Move up">▲</button>
+      <button ${isLast?'disabled':''} onclick="moveCard('${def.key}',1)" title="Move down">▼</button>
+      <button class="hide-btn" onclick="hideCard('${def.key}')" title="Hide">🙈</button>
+    </div>
+    <div class="card-label">${def.label}</div>
+    <div class="card-title">${def.title}</div>
+    <div class="card-desc">${def.desc}</div>
   `;
-  return a;
+  return div;
+}
+
+// ── CUSTOMIZE MODE CONTROLS ────────────────────────────────
+function toggleCustomize(){
+  if(!hubState) return;
+  if(customizeMode){
+    cancelCustomize();
+    return;
+  }
+  customizeMode = true;
+  draftHidden = [...hubState.savedPrefs.hidden];
+  draftOrder = computeEffectiveOrder(hubState.defaultOrder, draftHidden, hubState.savedPrefs.order);
+  renderGrid();
+}
+
+function cancelCustomize(){
+  customizeMode = false;
+  draftHidden = [];
+  draftOrder = [];
+  renderGrid();
+}
+
+function resetCustomize(){
+  if(!customizeMode) return;
+  draftHidden = [];
+  draftOrder = [...hubState.defaultOrder];
+  renderGrid();
+}
+
+function moveCard(key, dir){
+  const keys = computeEffectiveOrder(hubState.defaultOrder, draftHidden, draftOrder);
+  const i = keys.indexOf(key);
+  const j = i + dir;
+  if(i===-1 || j<0 || j>=keys.length) return;
+  [keys[i], keys[j]] = [keys[j], keys[i]];
+  draftOrder = keys;
+  renderGrid();
+}
+
+function hideCard(key){
+  if(!draftHidden.includes(key)) draftHidden.push(key);
+  renderGrid();
+}
+
+function showCard(key){
+  draftHidden = draftHidden.filter(k => k !== key);
+  renderGrid();
+}
+
+async function saveCustomize(){
+  const btn = document.getElementById('customize-save-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try{
+    const res = await fetch(PREFS_ENDPOINT, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ user: hubState.userName, hidden: draftHidden, order: draftOrder })
+    });
+    const j = await res.json();
+    if(!res.ok || !j.ok) throw new Error(j.error || ('HTTP '+res.status));
+    hubState.savedPrefs = { hidden: draftHidden, order: draftOrder };
+    customizeMode = false;
+    draftHidden = []; draftOrder = [];
+    renderGrid();
+  }catch(err){
+    alert('Could not save your dashboard layout: ' + err.message);
+    btn.disabled = false; btn.textContent = 'Save';
+  }
 }
 
 // ── LOGOUT ───────────────────────────────────────────────
 function doLogout(){
   currentUser = null;
+  hubState = null;
+  customizeMode = false;
+  draftHidden = []; draftOrder = [];
   sessionStorage.removeItem('2cw_pin');
   sessionStorage.removeItem('2cw_user_name');
   sessionStorage.removeItem('2cw_form_access');
@@ -439,6 +652,8 @@ function doLogout(){
   for(let i = 0; i < 4; i++) document.getElementById('dot'+i).classList.remove('filled');
   document.getElementById('login-err').style.display = 'none';
   document.getElementById('card-grid').innerHTML = '';
+  document.getElementById('customize-toolbar').classList.add('hidden');
+  document.getElementById('hidden-panel').classList.add('hidden');
   document.getElementById('hub-screen').classList.remove('visible');
   document.getElementById('login-screen').style.display = 'flex';
   setTimeout(() => document.getElementById('pin-input').focus(), 100);
@@ -452,7 +667,7 @@ window.addEventListener('load', async () => {
     if(directory){
       const user = directory.find(u => String(u.pin).padStart(4,'0') === String(savedPin).padStart(4,'0'));
       if(user){
-        buildHub(user);
+        await buildHub(user);
         return;
       }
     }
