@@ -383,6 +383,22 @@ function getAskuFromRow(r){
          r['TSKU'] || r['Tsku'] || r['tsku'] || '';
 }
 
+// A batch of flower is COA'd once but packed into multiple pack sizes (BSKUs)
+// under the same Batch #, and each pack size can land in KSS on a different
+// day — so "already in KSS" is tracked per (bsku, Batch #), not by Batch # alone.
+function getBatchNumFromRow(r){
+  return (r['Batch #']||r['BATCH #']||r['Batch#']||r['BATCH#']||'').trim();
+}
+
+function isReceivedInKSS(row){
+  const batchNum = getBatchNumFromRow(row).toUpperCase();
+  if(!batchNum) return false;
+  const bsku = bskuFromAsku(getAskuFromRow(row));
+  if(!bsku) return false;
+  const codes = (_inventoryData.kss_batches||{})[bsku];
+  return !!(codes && codes.includes(batchNum));
+}
+
 function dosClass(dos){
   if(dos == null) return 'dos-none';
   const low = DOS_TARGET, high = DOS_TARGET * 1.5;
@@ -450,9 +466,11 @@ function showTab(tab){
 // ── Pipeline Board (Tab 1) ─────────────────────────────────────────────────
 
 function renderPipeline(rows){
-  // Filter: exclude rows with no strain value
+  // Filter: exclude rows with no strain value, and rows whose batch has
+  // already landed in KSS inventory for that pack size
   const withStrain = rows.filter(r=>(r['Strain']||r['STRAIN']||'').trim());
-  const pipeline = withStrain.filter(r=>r['Status']&&!['Complete',''].includes(r['Status'].trim()));
+  const notInKSS = withStrain.filter(r=>!isReceivedInKSS(r));
+  const pipeline = notInKSS.filter(r=>r['Status']&&!['Complete',''].includes(r['Status'].trim()));
   const active   = pipeline.filter(r=>!HOLD_STAGES.includes(r['Status'].trim()));
   const onHold   = pipeline.filter(r=>HOLD_STAGES.includes(r['Status'].trim()));
 
@@ -484,7 +502,7 @@ function renderPipeline(rows){
       <div class="kpi red"><div class="kpi-lbl">On Hold</div><div class="kpi-val">${onHold.length}</div><div class="kpi-sub">${onHold.length===1?'1 batch paused':onHold.length+' batches paused'}</div></div>
     </div>
     <div class="sec">Incoming Inventory</div>
-    ${renderIncomingTable(rows)}
+    ${renderIncomingTable(notInKSS)}
     <div class="sec">Production Pipeline</div>
     <div class="flow">${flowHtml}</div>
     <div class="board" id="board"></div>
@@ -539,7 +557,7 @@ function renderPipeline(rows){
 let _pvBrandFilter = 'all';
 
 function renderProducts(rows, invData){
-  const pipeline = rows.filter(r=>r['Status']&&!['Complete',''].includes(r['Status'].trim()));
+  const pipeline = rows.filter(r=>r['Status']&&!['Complete',''].includes(r['Status'].trim()) && !isReceivedInKSS(r));
   const active   = pipeline.filter(r=>!HOLD_STAGES.includes(r['Status'].trim()));
 
   // Build BSKU → pipeline batches map
@@ -591,7 +609,7 @@ function pvFilter(brand){
     if(!byBrand[b])byBrand[b]=[];
     byBrand[b].push(pg);
   });
-  const pipeline = _pipelineRows.filter(r=>r['Status']&&!['Complete',''].includes(r['Status'].trim()));
+  const pipeline = _pipelineRows.filter(r=>r['Status']&&!['Complete',''].includes(r['Status'].trim()) && !isReceivedInKSS(r));
   const active   = pipeline.filter(r=>!HOLD_STAGES.includes(r['Status'].trim()));
   const bskuBatches={};
   active.forEach(r=>{

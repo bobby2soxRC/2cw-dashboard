@@ -1209,6 +1209,23 @@ def transform():
     }
     print(f"  Batch rows: {len(batches_raw)}, B-SKUs with age data: {len(avg_age_by_bsku)}")
 
+    # ── KSS batch-presence set (Pipeline dashboard: hide once received) ──────
+    # A batch of flower is COA'd once but packed into multiple pack sizes
+    # (BSKUs) under the same Batch #, and each pack size can be sent in to
+    # KSS on a different day. So "has this batch landed in KSS" is tracked
+    # per (bsku, BatchCode) pair, not just by BatchCode alone — a Soma Rosa
+    # Oz can still be pending in the pipeline after the matching 8ths batch
+    # has already shown up in KSS inventory.
+    kss_batches_by_bsku = defaultdict(set)
+    for row in batches_raw:
+        sku_id     = str(row.get("ProductID") or "")
+        bsku       = product_catalog.get(sku_id, {}).get("bsku", "")
+        batch_code = (row.get("BatchCode") or "").strip().upper()
+        if bsku and batch_code:
+            kss_batches_by_bsku[bsku].add(batch_code)
+    kss_batches = {bsku: sorted(codes) for bsku, codes in kss_batches_by_bsku.items()}
+    print(f"  B-SKUs with KSS batch history: {len(kss_batches)}")
+
     # ── Product group aggregates (for inventory section) ─────────────────────
     print("Computing product group aggregates...")
     inv_pg_data = []
@@ -1639,6 +1656,7 @@ def transform():
         "asku_data":        asku_data,
         "tsku_daily_rates": tsku_daily_rates,
         "wholesale_value":  wholesale_value,
+        "kss_batches":      kss_batches,
     }
 
     save_json("kss_dashboard.json",    kss_dashboard)
