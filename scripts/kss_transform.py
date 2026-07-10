@@ -1216,6 +1216,14 @@ def transform():
     # per (bsku, BatchCode) pair, not just by BatchCode alone — a Soma Rosa
     # Oz can still be pending in the pipeline after the matching 8ths batch
     # has already shown up in KSS inventory.
+    #
+    # Two sources, unioned:
+    #  - inventory_batches.json (KSS /inventory/batches, added 2026-07) — has
+    #    no history before that date, so a batch that fully sold through
+    #    earlier would never appear here.
+    #  - invoice_transactions.json line items also carry BatchCode and go
+    #    back further, so a batch that's already been invoiced counts as
+    #    "landed in KSS" even if the batches endpoint never captured it.
     kss_batches_by_bsku = defaultdict(set)
     for row in batches_raw:
         sku_id     = str(row.get("ProductID") or "")
@@ -1223,8 +1231,14 @@ def transform():
         batch_code = (row.get("BatchCode") or "").strip().upper()
         if bsku and batch_code:
             kss_batches_by_bsku[bsku].add(batch_code)
+    for txn in txn_raw:
+        sku_id     = str(txn.get("ProductID") or "")
+        bsku       = product_catalog.get(sku_id, {}).get("bsku", "")
+        batch_code = (txn.get("BatchCode") or "").strip().upper()
+        if bsku and batch_code:
+            kss_batches_by_bsku[bsku].add(batch_code)
     kss_batches = {bsku: sorted(codes) for bsku, codes in kss_batches_by_bsku.items()}
-    print(f"  B-SKUs with KSS batch history: {len(kss_batches)}")
+    print(f"  B-SKUs with KSS batch history (inventory ∪ sales): {len(kss_batches)}")
 
     # ── Product group aggregates (for inventory section) ─────────────────────
     print("Computing product group aggregates...")
