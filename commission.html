@@ -508,7 +508,7 @@ input[type=checkbox]{width:17px;height:17px;cursor:pointer;accent-color:var(--gr
 <script>
 // ── DATA (loaded from commission_data.json) ─────────────────────────────
 const PINS={billy:'2121',mac:'5151',john:'3131',jonathan:'4141',emily:'6161',niki:'8888'};
-const BASE={billy:.015,mac:.015,john:.015,jonathan:.01,emily:.015,'mac_billy':.015};
+const BASE={billy:.015,mac:.015,john:.015,jonathan:.01,emily:.10,'mac_billy':.015};
 const isAdmin=()=>rep==='niki';
 const REP_LABELS={billy:'Billy',mac:'Mac',john:'John',jonathan:'Jonathan',emily:'Emily','mac_billy':'Billy/Mac','mac/billy':'Billy/Mac','inside sales':'Inside Sales',na:'N/A','':'—'};
 const NEW_DOOR={billy:.03,john:.03};
@@ -705,12 +705,12 @@ function activateRep(r){
   rep=r;
   sessionStorage.setItem('2cw_rep', r); // persist across navigation within session
   const seen=new Set(); repData=[];
-  if(rep==='niki'){
+  if(rep==='niki'||rep==='emily'){
     MONTHLY_DATA.forEach(d=>{
       const k=d.account+'|'+d.rep;
       if(!seen.has(k)){seen.add(k);repData.push({...d,shared:false});}
     });
-    document.getElementById('rep-badge').textContent='Admin — All Accounts';
+    document.getElementById('rep-badge').textContent=rep==='niki'?'Admin — All Accounts':'Emily — All Accounts';
   } else {
     MONTHLY_DATA.forEach(d=>{
       const mine=d.rep===rep, shared=(d.rep==='mac_billy')&&(rep==='mac'||rep==='billy');
