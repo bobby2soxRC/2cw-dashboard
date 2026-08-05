@@ -251,6 +251,7 @@ input[type=checkbox]{width:17px;height:17px;cursor:pointer;accent-color:var(--gr
 .chip-mtd{border-style:dashed!important;}
 #data-date-bar{padding-top:calc(.4rem + env(safe-area-inset-top))!important}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -415,6 +416,7 @@ input[type=checkbox]{width:17px;height:17px;cursor:pointer;accent-color:var(--gr
           <div class="rpt-actions">
             <button class="tbtn" onclick="showTab('calculator',document.querySelector('.tab-btn'))">← Edit Selections</button>
             <button class="tbtn accent" id="save-report-btn" onclick="saveCurrentReport()" disabled>💾 Save Report</button>
+            <button class="tbtn" onclick="exportReportExcel()">⇩ Export Excel</button>
             <button class="tbtn accent" onclick="window.print()">⇣ Print</button>
           </div>
         </div>
@@ -1151,6 +1153,93 @@ function generateReport(){
   showTab('report',tabs[1]);
 }
 
+// ── EXPORT TO EXCEL ─────────────────────────────────────────
+// Accepts either a saved-report id (string) to export a row from the Saved
+// Reports list, or nothing to export whatever's currently rendered in the
+// Report tab (currentReportData).
+function exportReportExcel(savedId){
+  let data=currentReportData;
+  if(typeof savedId==='string'){
+    data=savedReportsCache.find(r=>r.id===savedId);
+  }
+  if(!data){ alert('No report to export yet — generate or open a report first.'); return; }
+  if(typeof XLSX==='undefined'){ alert('Excel export library failed to load. Check your connection and try again.'); return; }
+
+  const {meta,totals,rows}=data;
+  const zeroRevRows=data.zeroRevRows||[];
+  const adminMode=meta.adminMode;
+
+  const invoicesStr=inv=>(inv&&inv.length)
+    ?inv.map(l=>l.inv+(l.date?' ('+l.date+', '+fmt(l.total)+')':'')).join('; ')
+    :'—';
+
+  const header=['Account'];
+  if(adminMode) header.push('2CW Rep');
+  header.push('KSS Rep','Type','Invoice(s)','Revenue','Rate','Commission');
+
+  const aoa=[
+    [meta.title],
+    [meta.subtitle],
+    [meta.note],
+    [],
+    header
+  ];
+
+  for(const r of rows){
+    const row=[r.account+(r.shared?' (SHARED)':'')];
+    if(adminMode) row.push(r.repLabel);
+    row.push(
+      r.kss_rep||'—',
+      r.nd?'NEW DOOR':'Existing',
+      invoicesStr(r.invoices),
+      r.vol,
+      r.rate,
+      r.comm
+    );
+    aoa.push(row);
+  }
+
+  const totalRow=['TOTAL'];
+  if(adminMode) totalRow.push('');
+  totalRow.push('','','',totals.totalRev,'',totals.totalComm);
+  aoa.push(totalRow);
+
+  if(zeroRevRows.length){
+    aoa.push([]);
+    aoa.push(['Selected — No Revenue This Period ('+zeroRevRows.length+')']);
+    for(const r of zeroRevRows){
+      const row=[r.account+(r.shared?' (SHARED)':'')];
+      if(adminMode) row.push(r.repLabel);
+      row.push(r.kss_rep||'—','—','—',0,'',0);
+      aoa.push(row);
+    }
+  }
+
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  const numCols=header.length;
+  ws['!cols']=header.map((h,i)=>({wch:i===0?26:(h==='Invoice(s)'?40:14)}));
+  const revColIdx=header.indexOf('Revenue');
+  const rateColIdx=header.indexOf('Rate');
+  const commColIdx=header.indexOf('Commission');
+  const dataStartRow=5; // 0-indexed row after header (row 5 = first data row, 1-indexed in sheet terms it's row 6)
+  for(let i=0;i<rows.length;i++){
+    const r=dataStartRow+i;
+    [revColIdx,commColIdx].forEach(c=>{
+      const cell=ws[XLSX.utils.encode_cell({r,c})];
+      if(cell) cell.z='$#,##0.00';
+    });
+    const rateCell=ws[XLSX.utils.encode_cell({r,c:rateColIdx})];
+    if(rateCell) rateCell.z='0.0%';
+  }
+
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Commission Report');
+
+  const safe=s=>String(s||'').replace(/[^a-z0-9]+/gi,'_').replace(/^_+|_+$/g,'');
+  const filename=`Commission_Report_${safe(meta.title)}_${safe(meta.periodLabel)}.xlsx`;
+  XLSX.writeFile(wb,filename);
+}
+
 // ── SAVE / LOAD / DELETE SAVED REPORTS ─────────────────────
 function updateSaveBtnState(){
   const btn=document.getElementById('save-report-btn');
@@ -1225,6 +1314,7 @@ function renderSavedReportsList(){
       <td class="tr"><span class="comm-val">${fmt(totals.totalComm)}</span></td>
       <td class="tc">
         <button class="tbtn" onclick="viewSavedReport('${r.id}')">View</button>
+        <button class="tbtn" onclick="exportReportExcel('${r.id}')">⇩ Excel</button>
         <button class="tbtn" style="border-color:var(--red);color:var(--red)" onclick="deleteSavedReport('${r.id}')">Delete</button>
       </td>
     </tr>`;

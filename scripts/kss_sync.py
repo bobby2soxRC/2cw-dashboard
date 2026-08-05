@@ -142,6 +142,26 @@ def fetch_all(endpoint, params=None, label="", max_429_retries=None):
     return all_records
 
 
+def dedupe_by(records, key_field):
+    """Drop repeat records sharing a key_field value, keeping the first seen.
+    KSS's paginated list endpoints have been observed to return the same
+    record on two adjacent pages (likely a page-boundary shift when new rows
+    are written mid-fetch), which otherwise double-counts revenue downstream."""
+    seen = set()
+    out = []
+    dupes = 0
+    for r in records:
+        key = r.get(key_field)
+        if key in seen:
+            dupes += 1
+            continue
+        seen.add(key)
+        out.append(r)
+    if dupes:
+        print(f"    [dedupe] Dropped {dupes} duplicate record(s) by {key_field}")
+    return out
+
+
 def save(filename, data):
     OUTPUT_DIR.mkdir(exist_ok=True)
     path = OUTPUT_DIR / filename
@@ -219,6 +239,7 @@ def sync_invoices():
         "Statuses":  "1,2,3,4,5,7",
         "StartDate": start_date,
     })
+    invoices = dedupe_by(invoices, "InvoiceID")
     save("invoices.json", invoices)
     return invoices
 
@@ -247,6 +268,7 @@ def sync_invoice_transactions(invoices):
         time.sleep(REQUEST_PACE_SECONDS)
 
     our_trans = [t for t in all_trans if t.get("SupplierID") in SUPPLIER_IDS]
+    our_trans = dedupe_by(our_trans, "InvoiceTransID")
     save("invoice_transactions.json", our_trans)
     return our_trans
 

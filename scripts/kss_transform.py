@@ -117,6 +117,25 @@ def save_json(filename, data):
         json.dump(data, f, indent=2, default=str)
     print(f"  [OK] Wrote {filename} ({len(data) if isinstance(data, list) else 'dict'})")
 
+def dedupe_by(records, key_field):
+    """Drop repeat records sharing a key_field value, keeping the first seen.
+    Defensive backstop here (kss_sync.py also dedupes at fetch time) in case
+    data/*.json on disk predates that fix or a future source reintroduces dupes —
+    undetected duplicates double-count revenue in commission_data.json."""
+    seen = set()
+    out = []
+    dupes = 0
+    for r in records:
+        key = r.get(key_field)
+        if key in seen:
+            dupes += 1
+            continue
+        seen.add(key)
+        out.append(r)
+    if dupes:
+        print(f"  [dedupe] Dropped {dupes} duplicate record(s) in {key_field}")
+    return out
+
 # ─────────────────────────────────────────────────────────────────────────────
 # PRODUCT GROUP TAXONOMY
 # Loaded at runtime from DATAV Google Sheet; hardcoded fallback if fetch fails.
@@ -893,8 +912,8 @@ def transform():
     batches_raw     = load_json("inventory_batches.json")
     customers_raw   = load_json("customers.json")
     sales_reps_raw  = load_json("sales_reps.json")
-    invoices_raw    = load_json("invoices.json")
-    txn_raw         = load_json("invoice_transactions.json")
+    invoices_raw    = dedupe_by(load_json("invoices.json"), "InvoiceID")
+    txn_raw         = dedupe_by(load_json("invoice_transactions.json"), "InvoiceTransID")
     rep_assignments = load_rep_assignments()
 
     # ── Build rep name map AND customer→KSS rep from sales_reps.Customers ────
