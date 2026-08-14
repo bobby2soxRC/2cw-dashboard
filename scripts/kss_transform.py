@@ -85,14 +85,22 @@ import csv
 import io
 import urllib.request
 from datetime import datetime, date, timedelta
-from collections import defaultdict
+from collections import defaultdict, Counter
 
-# Published DATAV Google Sheet — single source of truth for BSKU taxonomy.
+# Published DATAV Google Sheet — single source of truth for BSKU taxonomy,
+# list pricing, and BSKU status (Active/Discontinued/Inactive).
 # Update this URL if the sheet is republished.
+# NOTE: this used to point at a 2PACX key whose default-published tab had
+# drifted off the BSKU table entirely (it was serving a Menu Health scoring
+# tab instead) — fetch_datav() was silently failing over to the hardcoded
+# fallback table below on every nightly run. Repointed 2026-08 at the
+# MASTER-2CW Dashboard sheet's "DATAV" tab (gid=177248387), which carries the
+# same BSKU/Brand/Category/Subcategory/Weight-Unit columns plus List Price
+# Each / CASE COUNT / STATUS.
 DATAV_URL = (
     "https://docs.google.com/spreadsheets/d/e/"
-    "2PACX-1vR0XoiLhCKQE_koaz4nFxjHREx22PZbwpZFlDG97vYl6ifdTFSdXTRK0ttsPMQNQCMKsTRIN0Mw0x3Z"
-    "/pub?output=csv"
+    "2PACX-1vTvUb2y2US1Qcyf12mngWEcvdCU3Yh9vgIzN_5-6x1psQRCIkG9Y4velrdcBB9zEw"
+    "/pub?gid=177248387&single=true&output=csv"
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -209,6 +217,13 @@ UPP_BY_WU  = dict(_FALLBACK_UPP)   # weight_unit → units per pound of flower
 BSKU_LOOKUP = {}                    # (brand, cat, sub, wu) → (pg, bsku)
 BSKU_CONCAT = {}                    # bsku → "Brand-Cat-Sub-WU" string
 
+# List pricing / status, keyed by BSKU — populated by fetch_datav() from the
+# same DATAV sheet's "List Price Each" and "STATUS" columns. No fallback: if
+# the sheet fetch fails, the menu just renders without prices rather than
+# risk showing stale numbers.
+PRICE_BY_BSKU  = {}   # bsku → float (list price per unit)
+STATUS_BY_BSKU = {}   # bsku → "Active" / "Discontinued" / "Inactive" / ""
+
 def _rebuild_lookups():
     """Rebuild BSKU_LOOKUP and BSKU_CONCAT from current PG_TABLE."""
     BSKU_LOOKUP.clear()
@@ -223,10 +238,11 @@ _rebuild_lookups()   # initialize from fallback at import time
 def fetch_datav() -> bool:
     """
     Fetch product taxonomy from the published DATAV Google Sheet.
-    Updates PG_TABLE, BSKU_LOOKUP, BSKU_CONCAT, and UPP_BY_WU in place.
+    Updates PG_TABLE, BSKU_LOOKUP, BSKU_CONCAT, UPP_BY_WU, PRICE_BY_BSKU, and
+    STATUS_BY_BSKU in place.
     Returns True on success, False if fetch fails (fallback stays active).
     """
-    global PG_TABLE, UPP_BY_WU
+    global PG_TABLE, UPP_BY_WU, PRICE_BY_BSKU, STATUS_BY_BSKU
     try:
         print("  Fetching DATAV from Google Sheets...", end=" ")
         req = urllib.request.Request(
@@ -249,7 +265,9 @@ def fetch_datav() -> bool:
                     pass
 
         # BSKU table — right-side columns of DATAV
-        new_pg_table = []
+        new_pg_table  = []
+        new_price     = {}
+        new_status    = {}
         for r in rows:
             bsku  = (r.get("BSKU") or "").strip()
             brand = (r.get("Brand") or "").strip()
@@ -261,19 +279,31 @@ def fetch_datav() -> bool:
             pg = PG_LABELS.get(bsku) or f"{bsku[:3]} {sub} {wu}"
             new_pg_table.append((pg, bsku, brand, cat, sub, wu))
 
+            price_raw = (r.get("List Price Each") or "").strip()
+            if price_raw:
+                try:
+                    new_price[bsku] = float(price_raw.replace("$", "").replace(",", ""))
+                except ValueError:
+                    pass
+            new_status[bsku] = (r.get("STATUS") or "").strip()
+
         if not new_pg_table:
             raise ValueError("DATAV returned 0 BSKU rows")
 
-        PG_TABLE  = new_pg_table
-        UPP_BY_WU = upp if upp else _FALLBACK_UPP
+        PG_TABLE       = new_pg_table
+        UPP_BY_WU      = upp if upp else _FALLBACK_UPP
+        PRICE_BY_BSKU  = new_price
+        STATUS_BY_BSKU = new_status
         _rebuild_lookups()
-        print(f"{len(PG_TABLE)} BSKUs loaded.")
+        print(f"{len(PG_TABLE)} BSKUs loaded ({len(new_price)} with list price).")
         return True
 
     except Exception as exc:
         print(f"\n  [WARN] DATAV fetch failed: {exc} — using hardcoded fallback.")
-        PG_TABLE  = list(_FALLBACK_PG_TABLE)
-        UPP_BY_WU = dict(_FALLBACK_UPP)
+        PG_TABLE       = list(_FALLBACK_PG_TABLE)
+        UPP_BY_WU      = dict(_FALLBACK_UPP)
+        PRICE_BY_BSKU  = {}
+        STATUS_BY_BSKU = {}
         _rebuild_lookups()
         return False
 
@@ -402,8 +432,18 @@ def parse_product_name(name: str) -> dict:
 
     brand = cat = sub = wu = None
 
-    # Strip case-count suffixes like "16ct", "28pk" at end for flavor parsing
-    clean = re.sub(r"\s+\d+(?:ct|pk)\s*$", "", name, flags=re.IGNORECASE)
+    # Strip trailing case-count / pack-count / restated-weight / dedup-id
+    # tokens for flavor parsing — KSS names sometimes stack more than one,
+    # e.g. "... Tropicana Cherry 16ct_2" or "... Hash Burger 10pk 5.0g", so
+    # strip one trailing token at a time until none match.
+    clean = name
+    for _ in range(3):
+        stripped = re.sub(
+            r"\s+\d+(?:\.\d+)?\s*(?:ct|pk|g)(?:_\d+)?\s*$", "", clean, flags=re.IGNORECASE
+        )
+        if stripped == clean:
+            break
+        clean = stripped
     # Strip "xT" qualifier
     clean = re.sub(r"\bxT\b", "", clean).strip()
 
@@ -461,6 +501,211 @@ def parse_product_name(name: str) -> dict:
         "tsku":         tsku,
         "pg":           pg,
         "bsku_concat":  bsku_concat,
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LIVE MENU  (data/menu.json)
+#
+# Built entirely from current KSS inventory — no manual entry. A strain shows
+# up on the menu at a warehouse the moment inventory.json shows units there
+# and drops off the moment it doesn't; THC% comes from the batch actually
+# sitting in that warehouse right now; list pricing comes from the DATAV
+# sheet's "List Price Each" column. menu.html just renders this file as-is.
+#
+# LocationID → warehouse, confirmed against inventory.html's existing
+# Van Nuys / Alameda split (see comment in kss_transform's sibling usage).
+# ─────────────────────────────────────────────────────────────────────────────
+
+LOCATION_LABELS = {
+    1: {"key": "socal",  "label": "SoCal",  "sublabel": "Van Nuys"},
+    3: {"key": "norcal", "label": "NorCal", "sublabel": "Alameda"},
+}
+
+# (category, subcategory) → menu section title. Anything not listed here
+# falls back to "{subcategory} {category}" so a brand-new BSKU still shows up
+# under a reasonable label instead of silently vanishing from the menu.
+_SECTION_TITLES = {
+    ("Flower", "Smalls"):              "Premium Smalls",
+    ("Flower", "Bigs"):                "Flower",
+    ("Indoor Flower", "Bigs"):         "Indoor Flower",
+    ("Preroll", "Single"):             "Pre-Rolls — Single 1g",
+    ("Preroll", "28pk"):               "Pre-Roll Party Packs — 28ct",
+    ("Preroll", "6pk"):                "Pre-Rolls — 6-Pack",
+    ("Preroll", "10pk"):               "Pre-Roll 10-Pack",
+    ("Preroll", "Multipack"):          "Pre-Roll Multipack",
+    ("Concentrate", "Live Resin Jar"): "Live Resin Sauce",
+    ("Concentrate", "Live Rosin Jar"): "Live Rosin",
+    ("Vape", "Live Resin AIO"):        "All-In-One Vape",
+}
+
+_WEIGHT_LABELS = {"1g": "1G", "3.5g": "1/8", "14g": "14G", "28g": "28G", "5g": "5G"}
+_WEIGHT_ORDER  = {"1g": 0, "3.5g": 1, "5g": 2, "14g": 3, "28g": 4}
+_TYPE_ORDER    = {"Sativa": 0, "Hybrid": 1, "Indica": 2}
+_INACTIVE_STATUSES = {"discontinued", "inactive"}
+
+
+def _thc_from_batch(batch: dict | None) -> float | None:
+    if not batch:
+        return None
+    try:
+        return round(float(batch.get("THCPotency") or 0), 2)
+    except (TypeError, ValueError):
+        return None
+
+
+def _thc_from_product(product: dict) -> float | None:
+    m = re.search(r"([\d.]+)\s*%", (product or {}).get("PotencyTHC") or "")
+    return round(float(m.group(1)), 2) if m else None
+
+
+def build_menu(product_catalog: dict, products_raw: list, inventory_raw: list,
+                batches_raw: list, today: str) -> dict:
+    products_by_id = {str(p["ProductID"]): p for p in products_raw if p.get("ProductID")}
+
+    # Best batch per (ProductID, LocationID): most units on hand right now,
+    # tie-broken by most recently packed — the lot a budtender pulling from
+    # that warehouse today would actually hand over.
+    best_batch = {}
+    for b in batches_raw:
+        pid = str(b.get("ProductID") or "")
+        loc_id = b.get("LocationID")
+        if not pid or loc_id not in LOCATION_LABELS:
+            continue
+        key = (pid, loc_id)
+        units = float(b.get("InventoryUnits") or 0)
+        pack_date = b.get("PackDate") or ""
+        cur = best_batch.get(key)
+        if cur is None or units > cur[0] or (units == cur[0] and pack_date > cur[1]):
+            best_batch[key] = (units, pack_date, b)
+
+    # Case pack size per BSKU — case format is a packaging attribute, not a
+    # strain-level one, so it should be uniform per BSKU. Mode guards against
+    # the rare data-entry outlier in an individual product record.
+    case_units_votes = defaultdict(Counter)
+    for p in products_raw:
+        pid = str(p.get("ProductID") or "")
+        cat = product_catalog.get(pid)
+        if not cat or not cat.get("bsku"):
+            continue
+        cases = p.get("WholesaleUnitsPerCase")
+        if cases:
+            try:
+                case_units_votes[cat["bsku"]][int(cases)] += 1
+            except (TypeError, ValueError):
+                pass
+    case_units_by_bsku = {
+        bsku: counts.most_common(1)[0][0] for bsku, counts in case_units_votes.items()
+    }
+
+    # sections[(brand,cat,sub)][(strain,type)][loc_key][weight_unit] = {thc, avail, bsku}
+    sections = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
+
+    skipped = 0
+    for row in inventory_raw:
+        avail = float(row.get("AvailableUnits") or 0)
+        if avail <= 0:
+            continue
+        loc = LOCATION_LABELS.get(row.get("LocationID"))
+        if not loc:
+            continue
+        pid = str(row.get("ProductID") or "")
+        cat = product_catalog.get(pid)
+        if not cat or not cat.get("bsku"):
+            skipped += 1
+            continue
+        bsku = cat["bsku"]
+        if STATUS_BY_BSKU.get(bsku, "").strip().lower() in _INACTIVE_STATUSES:
+            continue
+
+        p = products_by_id.get(pid, {})
+        strain = (p.get("StrainName") or cat.get("flavor") or "").strip()
+        if not strain:
+            continue
+        type_ = p.get("Blend") or cat.get("type") or "Hybrid"
+
+        batch_entry = best_batch.get((pid, row.get("LocationID")))
+        thc = _thc_from_batch(batch_entry[2]) if batch_entry else None
+        if thc is None:
+            thc = _thc_from_product(p)
+
+        sec_key = (cat["brand"], cat["category"], cat["subcategory"])
+        wu = cat["weight_unit"]
+        slot = sections[sec_key][(strain, type_)][loc["key"]]
+        prior = slot.get(wu)
+        if prior is None or avail > prior["avail"]:
+            slot[wu] = {"thc": thc, "avail": avail, "bsku": bsku}
+
+    if skipped:
+        print(f"  [menu] Skipped {skipped} in-stock row(s) with unrecognized product names")
+
+    # ── flatten into locations/sections/groups/products for menu.html ───────
+    out_sections = []
+    for (brand, category, subcategory), rows_by_key in sections.items():
+        pricing_by_wu = {}   # weight_unit → bsku (first one seen for this section)
+        products_out  = []
+
+        for (strain, type_), by_loc in rows_by_key.items():
+            # Collapse to a (thc, sizes) signature per location so an
+            # identical batch on both sides merges into one row tagged with
+            # both warehouses, instead of two near-duplicate rows.
+            sig_map = defaultdict(list)
+            for loc_key, sizes in by_loc.items():
+                if not sizes:
+                    continue
+                dom_wu, dom = max(sizes.items(), key=lambda kv: kv[1]["avail"])
+                size_list = tuple(sorted(sizes.keys(), key=lambda w: _WEIGHT_ORDER.get(w, 99)))
+                for wu in size_list:
+                    if wu not in pricing_by_wu:
+                        pricing_by_wu[wu] = sizes[wu]["bsku"]
+                sig_map[(dom["thc"], size_list)].append(loc_key)
+            for (thc, size_list), locs in sig_map.items():
+                products_out.append({
+                    "strain": strain,
+                    "type": type_,
+                    "thc": f"{thc:.2f}%" if thc is not None else "—",
+                    "sizes": [_WEIGHT_LABELS.get(w, w) for w in size_list],
+                    "locations": sorted(locs),
+                })
+
+        if not products_out:
+            continue
+
+        by_type = defaultdict(list)
+        for prod in products_out:
+            by_type[prod.pop("type")].append(prod)
+        groups = [
+            {"type": t, "products": sorted(by_type[t], key=lambda r: r["strain"])}
+            for t in sorted(by_type.keys(), key=lambda t: _TYPE_ORDER.get(t, 99))
+        ]
+
+        pricing = []
+        for wu, bsku in sorted(pricing_by_wu.items(), key=lambda kv: _WEIGHT_ORDER.get(kv[0], 99)):
+            unit_price = PRICE_BY_BSKU.get(bsku)
+            if unit_price is None:
+                continue
+            entry = {"tier": _WEIGHT_LABELS.get(wu, wu), "unit": f"${unit_price:,.2f}/unit"}
+            case_units = case_units_by_bsku.get(bsku)
+            if case_units:
+                entry["case"] = f"${unit_price * case_units:,.2f}/case ({case_units} units)"
+            pricing.append(entry)
+
+        title = _SECTION_TITLES.get((category, subcategory), f"{subcategory} {category}".strip())
+        out_sections.append({
+            "brand": brand,
+            "brandColor": "howie" if brand == "Howie Roll" else ("soma" if brand == "Soma Rosa Farms" else "mendo"),
+            "title": title,
+            "pricing": pricing,
+            "groups": groups,
+        })
+
+    out_sections.sort(key=lambda s: (s["brand"], s["title"]))
+
+    return {
+        "updated": today,
+        "locations": {loc["key"]: {"label": loc["label"], "sublabel": loc["sublabel"]}
+                       for loc in LOCATION_LABELS.values()},
+        "sections": out_sections,
     }
 
 
@@ -646,7 +891,7 @@ def _commission_periods(today_dt: date) -> tuple:
             "label":   mo.strftime("%b %Y") + (" MTD" if is_partial else ""),
             "volKey":  f"vol_{mo_id}",
             "newKey":  f"new_in_{mo_id}",
-            "hint":    mo.strftime("%B %Y") + (f" — MTD thru {today_dt.strftime('%-d')}" if is_partial else ""),
+            "hint":    mo.strftime("%B %Y") + (f" — MTD thru {today_dt.day}" if is_partial else ""),
             "mo":      mo_id,
             "partial": is_partial,
             "_date":   mo,
@@ -965,6 +1210,12 @@ def transform():
             sku_data["bsku"] = BSKU_REMAP[raw_bsku]
             sku_data["pg"]   = PG_LABELS.get(BSKU_REMAP[raw_bsku], sku_data.get("pg", ""))
 
+    # ── Build live customer-facing menu (data/menu.json) ─────────────────────
+    print("Building menu...")
+    menu_data = build_menu(product_catalog, products_raw, inventory_raw, batches_raw, today)
+    save_json("menu.json", menu_data)
+    print(f"  Menu sections: {len(menu_data['sections'])}")
+
     # ── Build inventory map: bsku → total units on hand ─────────────────────
     # KSS API: inventory[n].ProductID, .AvailableUnits
     print("Building inventory snapshot...")
@@ -1257,7 +1508,7 @@ def transform():
         if bsku and batch_code:
             kss_batches_by_bsku[bsku].add(batch_code)
     kss_batches = {bsku: sorted(codes) for bsku, codes in kss_batches_by_bsku.items()}
-    print(f"  B-SKUs with KSS batch history (inventory ∪ sales): {len(kss_batches)}")
+    print(f"  B-SKUs with KSS batch history (inventory + sales): {len(kss_batches)}")
 
     # ── Product group aggregates (for inventory section) ─────────────────────
     print("Computing product group aggregates...")
@@ -1707,8 +1958,10 @@ def transform():
     print(f"  KSS reps:         {len(kss_cards)}")
     print(f"  2CW reps:         {len(twocw_cards)}")
     print(f"  Commission accts: {len(commission_data.get('monthly_data', []))}")
+    print(f"  Menu sections:    {len(menu_data['sections'])}")
     print(f"  Output files:     kss_dashboard.json, twocw_dashboard.json,")
-    print(f"                    inventory_data.json, commission_data.json, sales_data.json")
+    print(f"                    inventory_data.json, commission_data.json, sales_data.json,")
+    print(f"                    menu.json")
 
 
 if __name__ == "__main__":

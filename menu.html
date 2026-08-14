@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>2CW — Menu</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0f1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="2CW Ops">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<style>
+  :root {
+    --bg:#0f1117;--surface:#181c26;--surface2:#1e2333;--border:#2a2f42;
+    --text:#e8eaf0;--muted:#7b8099;--accent:#00c9a7;--accent2:#7c6af7;
+    --srf:#00c9a7;--hwr:#f7a26a;--mendo:#a78bfa;
+    --red:#f05c5c;--yellow:#f5c518;--green:#4ade80;--blue:#60a5fa;
+    --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono','Fira Code',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+  /* NAV */
+  .nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;padding-top:env(safe-area-inset-top);display:flex;align-items:center;height:calc(52px + env(safe-area-inset-top));position:sticky;top:0;z-index:100;gap:0}
+  .nav-back{display:flex;align-items:center;height:52px;padding:0 16px;font-size:12px;font-weight:500;color:var(--muted);text-decoration:none;border-right:1px solid var(--border);margin-right:16px;transition:color .15s}
+  .nav-back:hover{color:var(--text)}
+  .nav-brand{font-weight:700;font-size:15px;letter-spacing:.04em;color:var(--text);margin-right:32px}
+  .nav-brand span{color:var(--accent)}
+  .nav-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+  .ref-date{font-size:11px;color:var(--muted)}
+  .refresh-btn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:12px;padding:5px 12px;border-radius:6px;cursor:pointer}
+  .refresh-btn:hover{color:var(--text);border-color:var(--accent)}
+
+  /* PAGE */
+  .page{padding:24px;max-width:1200px;margin:0 auto}
+  .loading{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;padding:40px 24px}
+  .spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .error-msg{background:rgba(240,92,92,.1);border:1px solid rgba(240,92,92,.3);border-radius:8px;padding:14px 18px;color:var(--red);font-size:13px;margin:24px}
+
+  .page-header{margin-bottom:20px}
+  .page-title{font-size:22px;font-weight:700;letter-spacing:-.01em}
+  .page-sub{color:var(--muted);font-size:13px;margin-top:4px}
+
+  /* LOCATION TOGGLE */
+  .loc-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:22px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+  .loc-bar-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-right:4px}
+  .loc-chip{display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);cursor:pointer;transition:all .15s;user-select:none}
+  .loc-chip .dot{width:8px;height:8px;border-radius:50%;background:var(--muted);transition:background .15s}
+  .loc-chip .name{font-weight:700;font-size:13px}
+  .loc-chip .sub{font-size:11px;color:var(--muted)}
+  .loc-chip.on{border-color:var(--accent);background:rgba(0,201,167,.1)}
+  .loc-chip.on .dot{background:var(--accent);box-shadow:0 0 6px var(--accent)}
+  .loc-empty-note{font-size:12px;color:var(--yellow);margin-left:auto}
+
+  /* SECTION CARD */
+  .sec-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--border);border-radius:10px;margin-bottom:18px;overflow:hidden}
+  .sec-card.brand-howie{border-left-color:var(--hwr)}
+  .sec-card.brand-soma{border-left-color:var(--srf)}
+  .sec-card.brand-mendo{border-left-color:var(--mendo)}
+  .sec-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:16px 20px;border-bottom:1px solid var(--border)}
+  .sec-brand{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px}
+  .brand-howie .sec-brand{color:var(--hwr)}
+  .brand-soma .sec-brand{color:var(--srf)}
+  .brand-mendo .sec-brand{color:var(--mendo)}
+  .sec-title{font-size:16px;font-weight:700}
+  .sec-pricing{display:flex;gap:8px;flex-wrap:wrap}
+  .price-chip{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:11px;white-space:nowrap}
+  .price-chip .tier{font-weight:700;color:var(--text);display:block}
+  .price-chip .amt{color:var(--muted)}
+
+  .sec-body{padding:6px 20px 16px}
+  .grp{margin-top:14px}
+  .grp-title{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .grp-dot{width:8px;height:8px;border-radius:50%}
+  .type-sativa{background:#8bc76a}
+  .type-indica{background:#b98bf0}
+  .type-hybrid{background:#5ec8e0}
+  .type-all{background:var(--muted)}
+
+  table.menu-tbl{width:100%;border-collapse:collapse;font-size:13px}
+  table.menu-tbl th{text-align:left;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:5px 8px;border-bottom:1px solid var(--border)}
+  table.menu-tbl td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.04)}
+  table.menu-tbl tr:last-child td{border-bottom:none}
+  .strain-name{font-weight:600}
+  .strain-sub{font-size:10px;color:var(--muted);margin-left:6px;font-weight:400}
+  .thc-val{font-family:var(--mono);color:var(--text)}
+  .size-chips{display:flex;gap:4px;flex-wrap:wrap}
+  .size-chip{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:10px;font-family:var(--mono);color:var(--muted)}
+  .loc-badges{display:flex;gap:4px}
+  .loc-badge{font-size:9px;font-weight:700;letter-spacing:.04em;padding:2px 6px;border-radius:10px;border:1px solid var(--border);color:var(--muted)}
+  .loc-badge.active{color:var(--bg);border-color:transparent}
+  .loc-badge.norcal.active{background:#8bc76a}
+  .loc-badge.socal.active{background:#5ec8e0}
+
+  .empty-note{color:var(--muted);font-size:12px;padding:20px;text-align:center}
+
+  @media(max-width:640px){
+    .page{padding:14px}
+    .sec-head{flex-direction:column}
+    table.menu-tbl th:nth-child(3),table.menu-tbl td:nth-child(3){display:none}
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/index.html" class="nav-back">← Hub</a>
+  <div class="nav-brand">2CW <span>Menu</span></div>
+  <div class="nav-right">
+    <span class="ref-date" id="ref-date">Loading…</span>
+    <button class="refresh-btn" onclick="loadAll()">↻ Refresh</button>
+  </div>
+</nav>
+
+<div id="global-loading" class="loading"><div class="spinner"></div>Loading menu…</div>
+<div id="global-error" class="error-msg" style="display:none"></div>
+
+<div id="page-menu" class="page" style="display:none">
+  <div class="page-header">
+    <div class="page-title">Current Menu</div>
+    <div class="page-sub">What's on the truck this week, by warehouse. Turn on one location or both — accounts that pull from both warehouses can see the full combined list.</div>
+  </div>
+
+  <div class="loc-bar" id="loc-bar"></div>
+
+  <div id="sections"></div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// selected locations, persisted per browser
+let selectedLocations = JSON.parse(localStorage.getItem('2cw_menu_locations') || '["norcal","socal"]');
+
+let MENU = null;
+
+async function loadAll(){
+  $('global-loading').style.display = 'flex';
+  $('global-error').style.display = 'none';
+  $('page-menu').style.display = 'none';
+  try {
+    const res = await fetch('/data/menu.json?t=' + Date.now());
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    MENU = await res.json();
+    render();
+    $('global-loading').style.display = 'none';
+    $('page-menu').style.display = 'block';
+  } catch(err) {
+    $('global-loading').style.display = 'none';
+    $('global-error').style.display = 'block';
+    $('global-error').textContent = 'Could not load menu data: ' + err.message;
+  }
+}
+
+function render(){
+  $('ref-date').textContent = 'Updated ' + MENU.updated;
+  renderLocBar();
+  renderSections();
+}
+
+function toggleLocation(key){
+  const i = selectedLocations.indexOf(key);
+  if(i === -1) selectedLocations.push(key);
+  else selectedLocations.splice(i, 1);
+  localStorage.setItem('2cw_menu_locations', JSON.stringify(selectedLocations));
+  renderLocBar();
+  renderSections();
+}
+
+function renderLocBar(){
+  const bar = $('loc-bar');
+  const keys = Object.keys(MENU.locations);
+  let html = '<span class="loc-bar-label">Warehouse</span>';
+  keys.forEach(key => {
+    const loc = MENU.locations[key];
+    const on = selectedLocations.includes(key);
+    html += `<div class="loc-chip ${on ? 'on' : ''}" onclick="toggleLocation('${key}')">
+      <div class="dot"></div>
+      <div><span class="name">${loc.label}</span> <span class="sub">· ${loc.sublabel}</span></div>
+    </div>`;
+  });
+  if(selectedLocations.length === 0){
+    html += '<div class="loc-empty-note">Select a warehouse to see menu items</div>';
+  }
+  bar.innerHTML = html;
+}
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderSections(){
+  const wrap = $('sections');
+  if(selectedLocations.length === 0){
+    wrap.innerHTML = '<div class="empty-note">No warehouse selected — turn on NorCal, SoCal, or both above.</div>';
+    return;
+  }
+
+  let html = '';
+  MENU.sections.forEach(sec => {
+    const groupsHtml = sec.groups.map(grp => {
+      const rows = grp.products.filter(p => p.locations.some(l => selectedLocations.includes(l)));
+      if(!rows.length) return '';
+      const rowsHtml = rows.map(p => {
+        const sizeChips = p.sizes.map(s => `<span class="size-chip">${esc(s)}</span>`).join('');
+        const badges = selectedLocations.map(lkey => {
+          const active = p.locations.includes(lkey);
+          return `<span class="loc-badge ${lkey} ${active ? 'active' : ''}">${lkey === 'norcal' ? 'NC' : 'SC'}</span>`;
+        }).join('');
+        const subtype = p.subtype ? `<span class="strain-sub">${esc(p.subtype)}</span>` : '';
+        return `<tr>
+          <td><span class="strain-name">${esc(p.strain)}</span>${subtype}</td>
+          <td class="thc-val">${esc(p.thc)}</td>
+          <td><div class="size-chips">${sizeChips}</div></td>
+          <td><div class="loc-badges">${badges}</div></td>
+        </tr>`;
+      }).join('');
+      const typeClass = 'type-' + grp.type.toLowerCase();
+      const showHeading = grp.type !== 'All';
+      return `<div class="grp">
+        ${showHeading ? `<div class="grp-title"><span class="grp-dot ${typeClass}"></span>${esc(grp.type)}</div>` : ''}
+        <table class="menu-tbl">
+          <thead><tr><th>Strain</th><th>THC%</th><th>Size</th><th>Warehouse</th></tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>`;
+    }).join('');
+
+    if(!groupsHtml.trim()) return; // nothing available for selected locations
+
+    const pricingHtml = sec.pricing.map(p => `<div class="price-chip"><span class="tier">${esc(p.tier)}</span><span class="amt">${esc(p.unit)} · ${esc(p.case)}</span></div>`).join('');
+    const brandClass = 'brand-' + (sec.brandColor || 'howie');
+
+    html += `<div class="sec-card ${brandClass}">
+      <div class="sec-head">
+        <div>
+          <div class="sec-brand">${esc(sec.brand)}</div>
+          <div class="sec-title">${esc(sec.title)}</div>
+        </div>
+        <div class="sec-pricing">${pricingHtml}</div>
+      </div>
+      <div class="sec-body">${groupsHtml}</div>
+    </div>`;
+  });
+
+  if(!html.trim()){
+    html = '<div class="empty-note">Nothing on the menu for this warehouse selection right now.</div>';
+  }
+
+  wrap.innerHTML = html;
+}
+
+loadAll();
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js').catch(err=>console.warn(err));
+  });
+}
+</script>
+</body>
+</html>
