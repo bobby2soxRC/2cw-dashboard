@@ -561,6 +561,15 @@ def _thc_from_product(product: dict) -> float | None:
 
 def build_menu(product_catalog: dict, products_raw: list, inventory_raw: list,
                 batches_raw: list, today: str) -> dict:
+    """
+    Wholesale-menu shape, one "card" per (brand, category, subcategory,
+    weight_unit) — i.e. per package format, since that's the level pricing
+    and case-count are actually uniform at (a strain doesn't change what an
+    eighth of it costs). Each card carries a flat, type-grouped strain list;
+    each strain carries its own THC% and a cases-on-hand number per
+    warehouse, so the front end can filter by min-cases-in-stock without
+    another round trip.
+    """
     products_by_id = {str(p["ProductID"]): p for p in products_raw if p.get("ProductID")}
 
     # Best batch per (ProductID, LocationID): most units on hand right now,
@@ -598,8 +607,8 @@ def build_menu(product_catalog: dict, products_raw: list, inventory_raw: list,
         bsku: counts.most_common(1)[0][0] for bsku, counts in case_units_votes.items()
     }
 
-    # sections[(brand,cat,sub)][(strain,type)][loc_key][weight_unit] = {thc, avail, bsku}
-    sections = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
+    # cards[(brand,cat,sub,wu)][(strain,type)][loc_key] = {thc, avail, bsku}
+    cards = defaultdict(lambda: defaultdict(dict))
 
     skipped = 0
     for row in inventory_raw:
@@ -629,83 +638,78 @@ def build_menu(product_catalog: dict, products_raw: list, inventory_raw: list,
         if thc is None:
             thc = _thc_from_product(p)
 
-        sec_key = (cat["brand"], cat["category"], cat["subcategory"])
-        wu = cat["weight_unit"]
-        slot = sections[sec_key][(strain, type_)][loc["key"]]
-        prior = slot.get(wu)
+        card_key = (cat["brand"], cat["category"], cat["subcategory"], cat["weight_unit"])
+        slot = cards[card_key][(strain, type_)]
+        prior = slot.get(loc["key"])
         if prior is None or avail > prior["avail"]:
-            slot[wu] = {"thc": thc, "avail": avail, "bsku": bsku}
+            slot[loc["key"]] = {"thc": thc, "avail": avail, "bsku": bsku}
 
     if skipped:
         print(f"  [menu] Skipped {skipped} in-stock row(s) with unrecognized product names")
 
-    # ── flatten into locations/sections/groups/products for menu.html ───────
-    out_sections = []
-    for (brand, category, subcategory), rows_by_key in sections.items():
-        pricing_by_wu = {}   # weight_unit → bsku (first one seen for this section)
-        products_out  = []
-
+    # ── flatten into brands/cards/groups/strains for menu.html ──────────────
+    by_brand = defaultdict(list)
+    for (brand, category, subcategory, wu), rows_by_key in cards.items():
+        bsku_for_pricing = None
+        by_type = defaultdict(list)
         for (strain, type_), by_loc in rows_by_key.items():
-            # Collapse to a (thc, sizes) signature per location so an
-            # identical batch on both sides merges into one row tagged with
-            # both warehouses, instead of two near-duplicate rows.
-            sig_map = defaultdict(list)
-            for loc_key, sizes in by_loc.items():
-                if not sizes:
-                    continue
-                dom_wu, dom = max(sizes.items(), key=lambda kv: kv[1]["avail"])
-                size_list = tuple(sorted(sizes.keys(), key=lambda w: _WEIGHT_ORDER.get(w, 99)))
-                for wu in size_list:
-                    if wu not in pricing_by_wu:
-                        pricing_by_wu[wu] = sizes[wu]["bsku"]
-                sig_map[(dom["thc"], size_list)].append(loc_key)
-            for (thc, size_list), locs in sig_map.items():
-                products_out.append({
-                    "strain": strain,
-                    "type": type_,
-                    "thc": f"{thc:.2f}%" if thc is not None else "—",
-                    "sizes": [_WEIGHT_LABELS.get(w, w) for w in size_list],
-                    "locations": sorted(locs),
-                })
+            if not by_loc:
+                continue
+            bsku_for_pricing = bsku_for_pricing or next(iter(by_loc.values()))["bsku"]
+            # representative THC = whichever location is holding the most stock
+            dom_loc, dom = max(by_loc.items(), key=lambda kv: kv[1]["avail"])
+            cases = {}
+            for lk in LOCATION_LABELS.values():
+                entry = by_loc.get(lk["key"])
+                case_units = case_units_by_bsku.get(entry["bsku"]) if entry else None
+                cases[lk["key"]] = round(entry["avail"] / case_units, 2) if entry and case_units else 0.0
+            by_type[type_].append({
+                "strain": strain,
+                "thc": f"{dom['thc']:.2f}%" if dom["thc"] is not None else "—",
+                "cases": cases,
+            })
 
-        if not products_out:
+        if not by_type:
             continue
 
-        by_type = defaultdict(list)
-        for prod in products_out:
-            by_type[prod.pop("type")].append(prod)
         groups = [
-            {"type": t, "products": sorted(by_type[t], key=lambda r: r["strain"])}
+            {"type": t, "strains": sorted(by_type[t], key=lambda r: r["strain"])}
             for t in sorted(by_type.keys(), key=lambda t: _TYPE_ORDER.get(t, 99))
         ]
 
-        pricing = []
-        for wu, bsku in sorted(pricing_by_wu.items(), key=lambda kv: _WEIGHT_ORDER.get(kv[0], 99)):
-            unit_price = PRICE_BY_BSKU.get(bsku)
-            if unit_price is None:
-                continue
-            entry = {"tier": _WEIGHT_LABELS.get(wu, wu), "unit": f"${unit_price:,.2f}/unit"}
-            case_units = case_units_by_bsku.get(bsku)
-            if case_units:
-                entry["case"] = f"${unit_price * case_units:,.2f}/case ({case_units} units)"
-            pricing.append(entry)
+        unit_price  = PRICE_BY_BSKU.get(bsku_for_pricing)
+        case_units  = case_units_by_bsku.get(bsku_for_pricing)
+        base_title  = _SECTION_TITLES.get((category, subcategory), f"{subcategory} {category}".strip())
+        size_label  = _WEIGHT_LABELS.get(wu, wu)
 
-        title = _SECTION_TITLES.get((category, subcategory), f"{subcategory} {category}".strip())
-        out_sections.append({
-            "brand": brand,
-            "brandColor": "howie" if brand == "Howie Roll" else ("soma" if brand == "Soma Rosa Farms" else "mendo"),
-            "title": title,
-            "pricing": pricing,
+        by_brand[brand].append({
+            "title": base_title,
+            "size": size_label,
+            "unitPrice": round(unit_price, 2) if unit_price is not None else None,
+            "caseUnits": case_units,
+            "casePrice": round(unit_price * case_units, 2) if unit_price is not None and case_units else None,
             "groups": groups,
         })
 
-    out_sections.sort(key=lambda s: (s["brand"], s["title"]))
+    brand_color = lambda b: "howie" if b == "Howie Roll" else ("soma" if b == "Soma Rosa Farms" else "mendo")
+    out_brands = []
+    for brand, brand_cards in by_brand.items():
+        # de-dupe title when a category spans >1 weight tier, e.g. two
+        # "Premium Smalls" cards (1/8 and 14G) get disambiguated by size.
+        title_counts = Counter(c["title"] for c in brand_cards)
+        for c in brand_cards:
+            if title_counts[c["title"]] > 1:
+                c["title"] = f"{c['title']} ({c['size']})"
+        brand_cards.sort(key=lambda c: (c["title"], _WEIGHT_ORDER.get(c["size"], 99)))
+        out_brands.append({"brand": brand, "brandColor": brand_color(brand), "cards": brand_cards})
+
+    out_brands.sort(key=lambda b: b["brand"])
 
     return {
         "updated": today,
         "locations": {loc["key"]: {"label": loc["label"], "sublabel": loc["sublabel"]}
                        for loc in LOCATION_LABELS.values()},
-        "sections": out_sections,
+        "brands": out_brands,
     }
 
 
@@ -1214,7 +1218,8 @@ def transform():
     print("Building menu...")
     menu_data = build_menu(product_catalog, products_raw, inventory_raw, batches_raw, today)
     save_json("menu.json", menu_data)
-    print(f"  Menu sections: {len(menu_data['sections'])}")
+    menu_card_count = sum(len(b["cards"]) for b in menu_data["brands"])
+    print(f"  Menu: {len(menu_data['brands'])} brands, {menu_card_count} cards")
 
     # ── Build inventory map: bsku → total units on hand ─────────────────────
     # KSS API: inventory[n].ProductID, .AvailableUnits
@@ -1958,7 +1963,7 @@ def transform():
     print(f"  KSS reps:         {len(kss_cards)}")
     print(f"  2CW reps:         {len(twocw_cards)}")
     print(f"  Commission accts: {len(commission_data.get('monthly_data', []))}")
-    print(f"  Menu sections:    {len(menu_data['sections'])}")
+    print(f"  Menu cards:       {menu_card_count} across {len(menu_data['brands'])} brands")
     print(f"  Output files:     kss_dashboard.json, twocw_dashboard.json,")
     print(f"                    inventory_data.json, commission_data.json, sales_data.json,")
     print(f"                    menu.json")

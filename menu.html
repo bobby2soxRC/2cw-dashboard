@@ -3,104 +3,130 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>2CW — Menu</title>
+<title>2CW — Wholesale Menu</title>
 <link rel="icon" type="image/png" href="/favicon.png">
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#0f1117">
+<meta name="theme-color" content="#0c0d0f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="2CW Ops">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg:#0f1117;--surface:#181c26;--surface2:#1e2333;--border:#2a2f42;
-    --text:#e8eaf0;--muted:#7b8099;--accent:#00c9a7;--accent2:#7c6af7;
-    --srf:#00c9a7;--hwr:#f7a26a;--mendo:#a78bfa;
-    --red:#f05c5c;--yellow:#f5c518;--green:#4ade80;--blue:#60a5fa;
-    --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono','Fira Code',monospace;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0c0d0f;color:#e8eaf0;font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.5}
 
-  /* NAV */
-  .nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;padding-top:env(safe-area-inset-top);display:flex;align-items:center;height:calc(52px + env(safe-area-inset-top));position:sticky;top:0;z-index:100;gap:0}
-  .nav-back{display:flex;align-items:center;height:52px;padding:0 16px;font-size:12px;font-weight:500;color:var(--muted);text-decoration:none;border-right:1px solid var(--border);margin-right:16px;transition:color .15s}
-  .nav-back:hover{color:var(--text)}
-  .nav-brand{font-weight:700;font-size:15px;letter-spacing:.04em;color:var(--text);margin-right:32px}
-  .nav-brand span{color:var(--accent)}
-  .nav-right{margin-left:auto;display:flex;align-items:center;gap:12px}
-  .ref-date{font-size:11px;color:var(--muted)}
-  .refresh-btn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:12px;padding:5px 12px;border-radius:6px;cursor:pointer}
-  .refresh-btn:hover{color:var(--text);border-color:var(--accent)}
+  /* ── APP CHROME (not printed) ── */
+  .nav{background:#181c26;border-bottom:1px solid #2a2f42;padding:0 20px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:100;gap:14px;flex-wrap:wrap}
+  .nav-back{display:flex;align-items:center;height:52px;padding:0 14px;font-size:12px;font-weight:500;color:#7b8099;text-decoration:none;border-right:1px solid #2a2f42;transition:color .15s;flex-shrink:0}
+  .nav-back:hover{color:#e8eaf0}
+  .nav-brand{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.04em;color:#e8eaf0;flex-shrink:0}
+  .nav-brand span{color:#00c9a7}
+  .toolbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:8px 0;flex:1}
+  .tb-group{display:flex;align-items:center;gap:8px}
+  .tb-label{font-family:'DM Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#7b8099}
+  .loc-chip{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:16px;border:1.5px solid #2a2f42;background:#1e2333;cursor:pointer;transition:all .15s;user-select:none;font-size:12px;font-weight:600}
+  .loc-chip .dot{width:6px;height:6px;border-radius:50%;background:#5a6070}
+  .loc-chip.on{border-color:#00c9a7;background:rgba(0,201,167,.12);color:#fff}
+  .loc-chip.on .dot{background:#00c9a7;box-shadow:0 0 5px #00c9a7}
+  .slider-input{width:90px;accent-color:#00c9a7}
+  .slider-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:#00c9a7;min-width:14px;text-align:center}
+  .tb-btn{background:#1e2333;color:#e8eaf0;border:1px solid #2a2f42;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600}
+  .tb-btn:hover{border-color:#00c9a7;color:#00c9a7}
+  .tb-btn:disabled{opacity:.5;cursor:default}
+  .tb-btn.primary{background:#00c9a7;color:#04120e;border-color:#00c9a7;font-weight:700;margin-left:auto}
+  .tb-btn.primary:hover{opacity:.88;color:#04120e}
+  .updated-note{font-family:'DM Mono',monospace;font-size:10px;color:#5a6070;margin-left:auto}
 
-  /* PAGE */
-  .page{padding:24px;max-width:1200px;margin:0 auto}
-  .loading{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;padding:40px 24px}
-  .spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+  .loading{display:flex;align-items:center;gap:10px;color:#7b8099;font-size:13px;padding:60px 24px;justify-content:center}
+  .spinner{width:18px;height:18px;border:2px solid #2a2f42;border-top-color:#00c9a7;border-radius:50%;animation:spin .7s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .error-msg{background:rgba(240,92,92,.1);border:1px solid rgba(240,92,92,.3);border-radius:8px;padding:14px 18px;color:var(--red);font-size:13px;margin:24px}
+  .error-msg{background:rgba(240,92,92,.1);border:1px solid rgba(240,92,92,.3);border-radius:8px;padding:14px 18px;color:#f05c5c;font-size:13px;margin:24px}
 
-  .page-header{margin-bottom:20px}
-  .page-title{font-size:22px;font-weight:700;letter-spacing:-.01em}
-  .page-sub{color:var(--muted);font-size:13px;margin-top:4px}
+  .page-outer{padding:28px 20px 60px;max-width:1180px;margin:0 auto}
 
-  /* LOCATION TOGGLE */
-  .loc-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:22px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
-  .loc-bar-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-right:4px}
-  .loc-chip{display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);cursor:pointer;transition:all .15s;user-select:none}
-  .loc-chip .dot{width:8px;height:8px;border-radius:50%;background:var(--muted);transition:background .15s}
-  .loc-chip .name{font-weight:700;font-size:13px}
-  .loc-chip .sub{font-size:11px;color:var(--muted)}
-  .loc-chip.on{border-color:var(--accent);background:rgba(0,201,167,.1)}
-  .loc-chip.on .dot{background:var(--accent);box-shadow:0 0 6px var(--accent)}
-  .loc-empty-note{font-size:12px;color:var(--yellow);margin-left:auto}
+  /* ── PRINTABLE MENU PAGE ── */
+  #menuPage{background:#fff;color:#14201b;border-radius:10px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.45);font-family:'DM Sans',sans-serif}
 
-  /* SECTION CARD */
-  .sec-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--border);border-radius:10px;margin-bottom:18px;overflow:hidden}
-  .sec-card.brand-howie{border-left-color:var(--hwr)}
-  .sec-card.brand-soma{border-left-color:var(--srf)}
-  .sec-card.brand-mendo{border-left-color:var(--mendo)}
-  .sec-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:16px 20px;border-bottom:1px solid var(--border)}
-  .sec-brand{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px}
-  .brand-howie .sec-brand{color:var(--hwr)}
-  .brand-soma .sec-brand{color:var(--srf)}
-  .brand-mendo .sec-brand{color:var(--mendo)}
-  .sec-title{font-size:16px;font-weight:700}
-  .sec-pricing{display:flex;gap:8px;flex-wrap:wrap}
-  .price-chip{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:11px;white-space:nowrap}
-  .price-chip .tier{font-weight:700;color:var(--text);display:block}
-  .price-chip .amt{color:var(--muted)}
+  .wm-header{display:flex;align-items:center;gap:28px;background:linear-gradient(135deg,#0f2a22 0%,#123a2e 55%,#0d4a3d 100%);color:#fff;padding:26px 40px}
+  .wm-hdr-word{font-family:'Bebas Neue',sans-serif;font-size:50px;letter-spacing:.05em;line-height:1}
+  .wm-hdr-word span{color:#4de8c4}
+  .wm-hdr-mid{flex:1}
+  .wm-hdr-sub{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.35em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:4px}
+  .wm-hdr-main{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:.05em;color:#fff}
+  .wm-hdr-detail{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.15em;color:rgba(255,255,255,.55);margin-top:6px}
+  .wm-hdr-right{text-align:right;font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,.5);line-height:1.8}
+  .wm-brand-logos{display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px}
+  .wm-blogo-chip{background:#fff;border-radius:7px;padding:5px 9px;display:flex;align-items:center;justify-content:center;height:34px}
+  .wm-blogo-chip img{max-height:24px;max-width:78px;object-fit:contain;display:block}
 
-  .sec-body{padding:6px 20px 16px}
-  .grp{margin-top:14px}
-  .grp-title{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
-  .grp-dot{width:8px;height:8px;border-radius:50%}
-  .type-sativa{background:#8bc76a}
-  .type-indica{background:#b98bf0}
-  .type-hybrid{background:#5ec8e0}
-  .type-all{background:var(--muted)}
+  /* brand zone */
+  .wm-brand-bar{padding:14px 40px;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.08em;color:#fff;display:flex;align-items:center;gap:14px;background-size:cover;background-position:center}
+  .wm-brand-bar .wm-brand-tag{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.2em;font-weight:700;background:rgba(255,255,255,.18);padding:3px 9px;border-radius:12px}
+  .wm-brand-howie{background-image:linear-gradient(100deg,rgba(140,50,9,.90),rgba(140,50,9,.78)),url(/img/menu/howie_roll_pouches.jpg);background-position:center 35%}
+  .wm-brand-soma{background-image:linear-gradient(100deg,rgba(10,85,75,.90),rgba(10,85,75,.78)),url(/img/menu/soma_rosa_tube.jpg);background-position:center 15%}
+  .wm-brand-mendo{background-image:linear-gradient(100deg,rgba(53,64,36,.90),rgba(53,64,36,.78)),url(/img/menu/mendo_cans.jpg);background-position:center}
 
-  table.menu-tbl{width:100%;border-collapse:collapse;font-size:13px}
-  table.menu-tbl th{text-align:left;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:5px 8px;border-bottom:1px solid var(--border)}
-  table.menu-tbl td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.04)}
-  table.menu-tbl tr:last-child td{border-bottom:none}
-  .strain-name{font-weight:600}
-  .strain-sub{font-size:10px;color:var(--muted);margin-left:6px;font-weight:400}
-  .thc-val{font-family:var(--mono);color:var(--text)}
-  .size-chips{display:flex;gap:4px;flex-wrap:wrap}
-  .size-chip{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:10px;font-family:var(--mono);color:var(--muted)}
-  .loc-badges{display:flex;gap:4px}
-  .loc-badge{font-size:9px;font-weight:700;letter-spacing:.04em;padding:2px 6px;border-radius:10px;border:1px solid var(--border);color:var(--muted)}
-  .loc-badge.active{color:var(--bg);border-color:transparent}
-  .loc-badge.norcal.active{background:#8bc76a}
-  .loc-badge.socal.active{background:#5ec8e0}
+  .wm-grid{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid #eee}
+  .wm-card{padding:16px 18px;border-right:1px solid #eee;border-top:1px solid #eee;display:flex;flex-direction:column}
+  .wm-card:nth-child(3n){border-right:none}
+  .wm-howie .wm-card-accent{background:#b5410c}
+  .wm-soma .wm-card-accent{background:#0d6e61}
+  .wm-mendo .wm-card-accent{background:#495c2a}
+  .wm-card-img{height:110px;margin:-16px -18px 10px;background-size:cover;background-position:center;border-bottom:1px solid #eee}
+  .wm-card-accent{height:3px;border-radius:2px;margin-bottom:10px}
+  .wm-card-title{font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:.03em;color:#14201b;margin-bottom:8px}
+  .wm-specs{border-top:1px solid #eee;border-bottom:1px solid #eee;margin-bottom:8px}
+  .wm-spec{display:flex;justify-content:space-between;font-size:10px;padding:3px 0;color:#777}
+  .wm-spec b{color:#14201b;font-weight:700}
+  .wm-case-price{display:flex;justify-content:space-between;align-items:center;color:#fff;font-family:'DM Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.08em;padding:6px 10px;border-radius:4px;margin-bottom:10px}
+  .wm-howie .wm-case-price{background:#b5410c}
+  .wm-soma .wm-case-price{background:#0d6e61}
+  .wm-mendo .wm-case-price{background:#495c2a}
+  .wm-case-price span{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:.02em}
+  .wm-flavors-hdr{font-family:'DM Mono',monospace;font-size:8.5px;font-weight:700;letter-spacing:.18em;color:#999;margin-bottom:6px}
+  .wm-flavors{flex:1}
+  .wm-fgroup{margin-bottom:6px}
+  .wm-type-badge{display:inline-block;font-family:'DM Mono',monospace;font-size:8px;font-weight:700;letter-spacing:.1em;color:#fff;border-radius:3px;padding:1.5px 6px;margin-bottom:3px}
+  .t-sativa{background:#d4500a}
+  .t-indica{background:#5b2182}
+  .t-hybrid{background:#1a6b45}
+  .wm-flist{list-style:none;padding:0}
+  .wm-flist li{font-size:10.5px;color:#333;padding:1.5px 0;display:flex;align-items:baseline;gap:5px}
+  .wm-fname{flex:1}
+  .wm-fthc{font-family:'DM Mono',monospace;font-size:9px;color:#999}
+  .wm-floc{display:flex;gap:2px}
+  .wm-loc-dot{font-family:'DM Mono',monospace;font-size:7px;font-weight:700;color:#fff;border-radius:3px;padding:0 3px;letter-spacing:.02em}
+  .wm-loc-dot.norcal{background:#4a90a4}
+  .wm-loc-dot.socal{background:#c0752a}
 
-  .empty-note{color:var(--muted);font-size:12px;padding:20px;text-align:center}
+  .wm-footer{display:flex;justify-content:space-between;align-items:center;padding:16px 40px;background:#f7f7f5;border-top:2px solid #14201b;flex-wrap:wrap;gap:10px}
+  .wm-footer-tag{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.03em;color:#14201b}
+  .wm-footer-sub{font-family:'DM Mono',monospace;font-size:9px;color:#999;margin-top:2px}
+  .wm-key{display:flex;gap:14px;align-items:center;font-family:'DM Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.05em}
+  .wm-key span::before{content:'●';margin-right:4px}
+  .wm-key .k-sativa{color:#d4500a}
+  .wm-key .k-indica{color:#5b2182}
+  .wm-key .k-hybrid{color:#1a6b45}
 
+  @media(max-width:900px){
+    .wm-grid{grid-template-columns:repeat(2,1fr)}
+    .wm-card:nth-child(3n){border-right:1px solid #eee}
+    .wm-card:nth-child(2n){border-right:none}
+  }
   @media(max-width:640px){
-    .page{padding:14px}
-    .sec-head{flex-direction:column}
-    table.menu-tbl th:nth-child(3),table.menu-tbl td:nth-child(3){display:none}
+    .wm-header{flex-direction:column;align-items:flex-start;gap:10px;padding:20px 22px}
+    .wm-hdr-right{text-align:left}
+    .wm-grid{grid-template-columns:1fr}
+    .wm-card{border-right:none!important}
+    .wm-brand-bar,.wm-footer{padding-left:22px;padding-right:22px}
+  }
+
+  @media print{
+    body{background:#fff}
+    .nav,.loading,.error-msg{display:none!important}
+    .page-outer{padding:0;max-width:100%}
+    #menuPage{border-radius:0;box-shadow:none}
   }
 </style>
 </head>
@@ -109,146 +135,237 @@
 <nav class="nav">
   <a href="/index.html" class="nav-back">← Hub</a>
   <div class="nav-brand">2CW <span>Menu</span></div>
-  <div class="nav-right">
-    <span class="ref-date" id="ref-date">Loading…</span>
-    <button class="refresh-btn" onclick="loadAll()">↻ Refresh</button>
+  <div class="toolbar">
+    <div class="tb-group">
+      <span class="tb-label">Warehouse</span>
+      <div id="loc-chips" style="display:flex;gap:6px"></div>
+    </div>
+    <div class="tb-group">
+      <span class="tb-label">Min Cases</span>
+      <input type="range" min="0" max="10" step="1" value="1" id="minSlider" class="slider-input">
+      <span class="slider-val" id="minVal">1</span>
+    </div>
+    <button class="tb-btn" id="refreshBtn" onclick="loadAll()">↻ Refresh</button>
+    <span class="updated-note" id="updated-note"></span>
+    <button class="tb-btn primary" id="pdfBtn" onclick="publishPDF()">📄 Publish PDF</button>
   </div>
 </nav>
 
 <div id="global-loading" class="loading"><div class="spinner"></div>Loading menu…</div>
 <div id="global-error" class="error-msg" style="display:none"></div>
 
-<div id="page-menu" class="page" style="display:none">
-  <div class="page-header">
-    <div class="page-title">Current Menu</div>
-    <div class="page-sub">What's on the truck this week, by warehouse. Turn on one location or both — accounts that pull from both warehouses can see the full combined list.</div>
-  </div>
-
-  <div class="loc-bar" id="loc-bar"></div>
-
-  <div id="sections"></div>
+<div class="page-outer" id="page-outer" style="display:none">
+  <div id="menuPage"></div>
 </div>
 
 <script>
 const $ = id => document.getElementById(id);
-
-// selected locations, persisted per browser
-let selectedLocations = JSON.parse(localStorage.getItem('2cw_menu_locations') || '["norcal","socal"]');
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
 let MENU = null;
+let selectedLocations = JSON.parse(localStorage.getItem('2cw_menu_locations') || '["norcal","socal"]');
+let minCases = +(localStorage.getItem('2cw_menu_mincases') ?? '1');
 
 async function loadAll(){
   $('global-loading').style.display = 'flex';
   $('global-error').style.display = 'none';
-  $('page-menu').style.display = 'none';
-  try {
+  $('page-outer').style.display = 'none';
+  try{
     const res = await fetch('/data/menu.json?t=' + Date.now());
     if(!res.ok) throw new Error('HTTP ' + res.status);
     MENU = await res.json();
+    initControls();
     render();
     $('global-loading').style.display = 'none';
-    $('page-menu').style.display = 'block';
-  } catch(err) {
+    $('page-outer').style.display = 'block';
+  }catch(err){
     $('global-loading').style.display = 'none';
     $('global-error').style.display = 'block';
     $('global-error').textContent = 'Could not load menu data: ' + err.message;
   }
 }
 
-function render(){
-  $('ref-date').textContent = 'Updated ' + MENU.updated;
-  renderLocBar();
-  renderSections();
+function initControls(){
+  $('updated-note').textContent = 'Updated ' + MENU.updated;
+  $('minSlider').value = minCases;
+  $('minVal').textContent = minCases;
+  $('minSlider').oninput = function(){
+    minCases = +this.value;
+    $('minVal').textContent = this.value;
+    localStorage.setItem('2cw_menu_mincases', String(minCases));
+    render();
+  };
+  renderLocChips();
 }
 
-function toggleLocation(key){
-  const i = selectedLocations.indexOf(key);
-  if(i === -1) selectedLocations.push(key);
-  else selectedLocations.splice(i, 1);
-  localStorage.setItem('2cw_menu_locations', JSON.stringify(selectedLocations));
-  renderLocBar();
-  renderSections();
-}
-
-function renderLocBar(){
-  const bar = $('loc-bar');
+function renderLocChips(){
+  const wrap = $('loc-chips');
   const keys = Object.keys(MENU.locations);
-  let html = '<span class="loc-bar-label">Warehouse</span>';
-  keys.forEach(key => {
+  wrap.innerHTML = keys.map(key => {
     const loc = MENU.locations[key];
     const on = selectedLocations.includes(key);
-    html += `<div class="loc-chip ${on ? 'on' : ''}" onclick="toggleLocation('${key}')">
-      <div class="dot"></div>
-      <div><span class="name">${loc.label}</span> <span class="sub">· ${loc.sublabel}</span></div>
-    </div>`;
-  });
-  if(selectedLocations.length === 0){
-    html += '<div class="loc-empty-note">Select a warehouse to see menu items</div>';
-  }
-  bar.innerHTML = html;
+    return `<div class="loc-chip ${on?'on':''}" onclick="toggleLoc('${key}')"><div class="dot"></div>${esc(loc.label)}</div>`;
+  }).join('');
 }
 
-function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function toggleLoc(key){
+  const i = selectedLocations.indexOf(key);
+  if(i === -1) selectedLocations.push(key); else selectedLocations.splice(i,1);
+  localStorage.setItem('2cw_menu_locations', JSON.stringify(selectedLocations));
+  renderLocChips();
+  render();
+}
 
-function renderSections(){
-  const wrap = $('sections');
-  if(selectedLocations.length === 0){
-    wrap.innerHTML = '<div class="empty-note">No warehouse selected — turn on NorCal, SoCal, or both above.</div>';
+function totalCases(strain){
+  return selectedLocations.reduce((sum, loc) => sum + (strain.cases[loc] || 0), 0);
+}
+
+function render(){
+  const page = $('menuPage');
+  if(!MENU || !selectedLocations.length){
+    page.innerHTML = `<div style="padding:60px;text-align:center;color:#999;font-family:'DM Mono',monospace;font-size:12px">Select at least one warehouse above to see the menu.</div>`;
     return;
   }
 
-  let html = '';
-  MENU.sections.forEach(sec => {
-    const groupsHtml = sec.groups.map(grp => {
-      const rows = grp.products.filter(p => p.locations.some(l => selectedLocations.includes(l)));
-      if(!rows.length) return '';
-      const rowsHtml = rows.map(p => {
-        const sizeChips = p.sizes.map(s => `<span class="size-chip">${esc(s)}</span>`).join('');
-        const badges = selectedLocations.map(lkey => {
-          const active = p.locations.includes(lkey);
-          return `<span class="loc-badge ${lkey} ${active ? 'active' : ''}">${lkey === 'norcal' ? 'NC' : 'SC'}</span>`;
-        }).join('');
-        const subtype = p.subtype ? `<span class="strain-sub">${esc(p.subtype)}</span>` : '';
-        return `<tr>
-          <td><span class="strain-name">${esc(p.strain)}</span>${subtype}</td>
-          <td class="thc-val">${esc(p.thc)}</td>
-          <td><div class="size-chips">${sizeChips}</div></td>
-          <td><div class="loc-badges">${badges}</div></td>
-        </tr>`;
-      }).join('');
-      const typeClass = 'type-' + grp.type.toLowerCase();
-      const showHeading = grp.type !== 'All';
-      return `<div class="grp">
-        ${showHeading ? `<div class="grp-title"><span class="grp-dot ${typeClass}"></span>${esc(grp.type)}</div>` : ''}
-        <table class="menu-tbl">
-          <thead><tr><th>Strain</th><th>THC%</th><th>Size</th><th>Warehouse</th></tr></thead>
-          <tbody>${rowsHtml}</tbody>
-        </table>
-      </div>`;
-    }).join('');
+  const brandZones = MENU.brands.map(brand => renderBrandZone(brand)).join('');
 
-    if(!groupsHtml.trim()) return; // nothing available for selected locations
-
-    const pricingHtml = sec.pricing.map(p => `<div class="price-chip"><span class="tier">${esc(p.tier)}</span><span class="amt">${esc(p.unit)} · ${esc(p.case)}</span></div>`).join('');
-    const brandClass = 'brand-' + (sec.brandColor || 'howie');
-
-    html += `<div class="sec-card ${brandClass}">
-      <div class="sec-head">
-        <div>
-          <div class="sec-brand">${esc(sec.brand)}</div>
-          <div class="sec-title">${esc(sec.title)}</div>
-        </div>
-        <div class="sec-pricing">${pricingHtml}</div>
+  page.innerHTML = `
+    <div class="wm-header">
+      <div class="wm-hdr-word">2<span>CW</span></div>
+      <div class="wm-hdr-mid">
+        <div class="wm-hdr-sub">Wholesale Menu</div>
+        <div class="wm-hdr-main">${esc(monthYear())}</div>
+        <div class="wm-hdr-detail">HOWIE ROLL &nbsp;•&nbsp; SOMA ROSA FARMS &nbsp;•&nbsp; MENDO &nbsp;•&nbsp; CALIFORNIA</div>
       </div>
-      <div class="sec-body">${groupsHtml}</div>
-    </div>`;
-  });
+      <div class="wm-hdr-right">
+        <div class="wm-brand-logos">
+          <div class="wm-blogo-chip"><img src="/img/menu/howie_roll_logo.png" alt="Howie Roll"></div>
+          <div class="wm-blogo-chip"><img src="/img/menu/soma_rosa_logo.png" alt="Soma Rosa Farms"></div>
+          <div class="wm-blogo-chip"><img src="/img/menu/mendo_logo.png" alt="Mendo"></div>
+        </div>
+        NORCAL · ALAMEDA<br>SOCAL · VAN NUYS
+      </div>
+    </div>
+    ${brandZones}
+    <div class="wm-footer">
+      <div>
+        <div class="wm-footer-tag">2CW Enterprises</div>
+        <div class="wm-footer-sub">Confidential — Not For Distribution · Updated ${esc(MENU.updated)}</div>
+      </div>
+      <div class="wm-key">
+        <span class="k-hybrid">HYBRID</span>
+        <span class="k-indica">INDICA</span>
+        <span class="k-sativa">SATIVA</span>
+      </div>
+    </div>
+  `;
+}
 
-  if(!html.trim()){
-    html = '<div class="empty-note">Nothing on the menu for this warehouse selection right now.</div>';
+function monthYear(){
+  return new Date().toLocaleDateString('en-US', {month:'long', year:'numeric'}).toUpperCase();
+}
+
+function renderBrandZone(brand){
+  const cls = 'wm-' + brand.brandColor;         // wm-howie / wm-soma / wm-mendo
+  const barCls = 'wm-brand-' + brand.brandColor; // wm-brand-howie / wm-brand-soma / wm-brand-mendo
+  const cards = brand.cards.map(card => renderCard(card, cls, brand.brand)).filter(Boolean).join('');
+  if(!cards){
+    return `<div class="wm-brand-bar ${barCls}">${esc(brand.brand)} <span class="wm-brand-tag">0 ITEMS AT MIN CASES</span></div>`;
+  }
+  return `<div class="wm-brand-bar ${barCls}">${esc(brand.brand)}</div>
+    <div class="wm-grid ${cls}">${cards}</div>`;
+}
+
+// Real product photos, matched to the one card each actually depicts.
+// Cards without a match just keep the plain colored accent bar.
+const CARD_IMAGES = {
+  'All-In-One Vape|Howie Roll': '/img/menu/howie_roll_vape.jpg',
+  'Pre-Roll Party Packs — 28ct|Soma Rosa Farms': '/img/menu/soma_rosa_jar.jpg',
+};
+
+function renderCard(card, cls, brandName){
+  const groupsHtml = card.groups.map(g => {
+    const strains = g.strains.filter(s => totalCases(s) >= minCases);
+    if(!strains.length) return '';
+    const items = strains.map(s => {
+      const locBadges = selectedLocations
+        .filter(l => (s.cases[l]||0) > 0)
+        .map(l => `<span class="wm-loc-dot ${l}">${l==='norcal'?'NC':'SC'}</span>`).join('');
+      return `<li><span class="wm-fname">${esc(s.strain)}</span><span class="wm-fthc">${esc(s.thc)}</span><span class="wm-floc">${locBadges}</span></li>`;
+    }).join('');
+    const typeClass = 't-' + g.type.toLowerCase();
+    return `<div class="wm-fgroup">
+      <span class="wm-type-badge ${typeClass}">${esc(g.type.toUpperCase())}</span>
+      <ul class="wm-flist">${items}</ul>
+    </div>`;
+  }).join('');
+
+  if(!groupsHtml.trim()) return '';
+
+  const unitPrice = card.unitPrice != null ? `$${card.unitPrice.toFixed(2)}` : '—';
+  const casePrice = card.casePrice != null ? `$${card.casePrice.toFixed(2)}` : '—';
+  const imgUrl = CARD_IMAGES[card.title + '|' + brandName];
+  const imgHtml = imgUrl ? `<div class="wm-card-img" style="background-image:url('${imgUrl}')"></div>` : '';
+
+  return `<div class="wm-card ${cls}">
+    ${imgHtml}
+    <div class="wm-card-accent"></div>
+    <div class="wm-card-title">${esc(card.title.toUpperCase())}</div>
+    <div class="wm-specs">
+      <div class="wm-spec"><span>SIZE</span><b>${esc(card.size)}</b></div>
+      <div class="wm-spec"><span>WHOLESALE</span><b>${unitPrice}/unit</b></div>
+      <div class="wm-spec"><span>CASE QTY</span><b>${card.caseUnits ?? '—'}</b></div>
+    </div>
+    <div class="wm-case-price">CASE PRICE <span>${casePrice}</span></div>
+    <div class="wm-flavors-hdr">AVAILABLE FLAVORS</div>
+    <div class="wm-flavors">${groupsHtml}</div>
+  </div>`;
+}
+
+// ─── PDF PUBLISH ────────────────────────────────────────────
+function publishPDF(){
+  const btn = $('pdfBtn');
+  btn.textContent = '⏳ Preparing…';
+  btn.disabled = true;
+
+  try{
+    const el = $('menuPage');
+    const styles = [...document.styleSheets].map(ss => {
+      try{ return [...ss.cssRules].map(r => r.cssText).join('\n'); }catch(e){ return ''; }
+    }).join('\n');
+
+    const contentW = el.offsetWidth;
+    const contentH = el.scrollHeight + 40;
+    const printWin = window.open('', '_blank', 'width=1100,height=900');
+    if(!printWin){
+      alert('Pop-up blocked — allow pop-ups for this site and click Publish PDF again.');
+      btn.textContent = '📄 Publish PDF';
+      btn.disabled = false;
+      return;
+    }
+    printWin.document.write(
+      '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+      '<base href="' + window.location.origin + '/">' +
+      '<title>2CW Wholesale Menu — ' + monthYear() + '</title>' +
+      '<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">' +
+      '<style>' + styles +
+      '*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}' +
+      'body{background:#fff;margin:0;padding:0}' +
+      '@page{size:' + contentW + 'px ' + contentH + 'px;margin:0}' +
+      '#menuPage{box-shadow:none!important;border-radius:0!important;width:' + contentW + 'px}' +
+      '*{page-break-inside:avoid!important;break-inside:avoid!important}' +
+      '</style></head><body>' +
+      el.outerHTML +
+      '<scr' + 'ipt>window.onload=function(){setTimeout(function(){window.print();},400)}</' + 'script>' +
+      '</body></html>'
+    );
+    printWin.document.close();
+  }catch(err){
+    alert('PDF failed: ' + err.message);
   }
 
-  wrap.innerHTML = html;
+  btn.textContent = '📄 Publish PDF';
+  btn.disabled = false;
 }
 
 loadAll();

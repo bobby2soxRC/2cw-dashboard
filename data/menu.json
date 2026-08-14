@@ -10,681 +10,557 @@
       "sublabel": "Alameda"
     }
   },
-  "sections": [
+  "brands": [
     {
       "brand": "Howie Roll",
       "brandColor": "howie",
-      "title": "All-In-One Vape",
-      "pricing": [
+      "cards": [
         {
-          "tier": "1G",
-          "unit": "$13.00/unit",
-          "case": "$130.00/case (10 units)"
-        }
-      ],
-      "groups": [
-        {
-          "type": "Indica",
-          "products": [
+          "title": "All-In-One Vape",
+          "size": "1G",
+          "unitPrice": 13.0,
+          "caseUnits": 10,
+          "casePrice": 130.0,
+          "groups": [
             {
-              "strain": "Tallymon Bananas",
-              "thc": "68.02%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "socal"
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "brand": "Howie Roll",
-      "brandColor": "howie",
-      "title": "Live Resin Sauce",
-      "pricing": [
-        {
-          "tier": "1G",
-          "unit": "$10.00/unit",
-          "case": "$80.00/case (8 units)"
-        }
-      ],
-      "groups": [
-        {
-          "type": "Sativa",
-          "products": [
-            {
-              "strain": "Buddha's Hand",
-              "thc": "73.07%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Pixie Dust",
-              "thc": "76.22%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
+              "type": "Indica",
+              "strains": [
+                {
+                  "strain": "Tallymon Bananas",
+                  "thc": "68.02%",
+                  "cases": {
+                    "socal": 0.5,
+                    "norcal": 0.0
+                  }
+                }
               ]
             }
           ]
         },
         {
-          "type": "Hybrid",
-          "products": [
+          "title": "Live Resin Sauce",
+          "size": "1G",
+          "unitPrice": 10.0,
+          "caseUnits": 8,
+          "casePrice": 80.0,
+          "groups": [
             {
-              "strain": "Rainbow Drizzle",
-              "thc": "73.11%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
+              "type": "Sativa",
+              "strains": [
+                {
+                  "strain": "Buddha's Hand",
+                  "thc": "73.07%",
+                  "cases": {
+                    "socal": 29.0,
+                    "norcal": 16.25
+                  }
+                },
+                {
+                  "strain": "Pixie Dust",
+                  "thc": "76.22%",
+                  "cases": {
+                    "socal": 27.0,
+                    "norcal": 12.38
+                  }
+                }
+              ]
+            },
+            {
+              "type": "Hybrid",
+              "strains": [
+                {
+                  "strain": "Rainbow Drizzle",
+                  "thc": "73.11%",
+                  "cases": {
+                    "socal": 39.0,
+                    "norcal": 15.0
+                  }
+                }
+              ]
+            },
+            {
+              "type": "Indica",
+              "strains": [
+                {
+                  "strain": "Purple Velvet",
+                  "thc": "75.89%",
+                  "cases": {
+                    "socal": 47.0,
+                    "norcal": 25.25
+                  }
+                },
+                {
+                  "strain": "Sangria",
+                  "thc": "76.18%",
+                  "cases": {
+                    "socal": 33.0,
+                    "norcal": 21.0
+                  }
+                }
               ]
             }
           ]
         },
         {
-          "type": "Indica",
-          "products": [
+          "title": "Premium Smalls (1/8)",
+          "size": "1/8",
+          "unitPrice": 5.5,
+          "caseUnits": 32,
+          "casePrice": 176.0,
+          "groups": [
             {
-              "strain": "Purple Velvet",
-              "thc": "75.89%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
+              "type": "Sativa",
+              "strains": [
+                {
+                  "strain": "Banana Punch",
+                  "thc": "29.61%",
+                  "cases": {
+                    "socal": 0.28,
+                    "norcal": 12.0
+                  }
+                },
+                {
+                  "strain": "Blue Dream",
+                  "thc": "25.56%",
+                  "cases": {
+                    "socal": 2.22,
+                    "norcal": 2.5
+                  }
+                },
+                {
+                  "strain": "Blue Dream x Purple Punch",
+                  "thc": "31.00%",
+                  "cases": {
+                    "socal": 0.03,
+                    "norcal": 0.59
+                  }
+                },
+                {
+                  "strain": "Lemon Bean",
+                  "thc": "23.85%",
+                  "cases": {
+                    "socal": 7.0,
+                    "norcal": 0.31
+                  }
+                },
+                {
+                  "strain": "Lemon Snow Leopard",
+                  "thc": "25.11%",
+                  "cases": {
+                    "socal": 0.44,
+                    "norcal": 0.53
+                  }
+                },
+                {
+                  "strain": "Lemon Thai x OG Kush",
+                  "thc": "26.03%",
+                  "cases": {
+                    "socal": 0.03,
+                    "norcal": 0.19
+                  }
+                },
+                {
+                  "strain": "Permanent Certz",
+                  "thc": "33.54%",
+                  "cases": {
+                    "socal": 0.09,
+                    "norcal": 0.28
+                  }
+                },
+                {
+                  "strain": "Tropicana Cherry",
+                  "thc": "25.98%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.47
+                  }
+                },
+                {
+                  "strain": "West Mac",
+                  "thc": "29.23%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.56
+                  }
+                },
+                {
+                  "strain": "Ze Chem",
+                  "thc": "27.76%",
+                  "cases": {
+                    "socal": 0.97,
+                    "norcal": 0.5
+                  }
+                }
               ]
             },
             {
-              "strain": "Sangria",
-              "thc": "76.18%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "brand": "Howie Roll",
-      "brandColor": "howie",
-      "title": "Premium Smalls",
-      "pricing": [
-        {
-          "tier": "1/8",
-          "unit": "$5.50/unit",
-          "case": "$176.00/case (32 units)"
-        },
-        {
-          "tier": "14G",
-          "unit": "$20.00/unit",
-          "case": "$160.00/case (8 units)"
-        }
-      ],
-      "groups": [
-        {
-          "type": "Sativa",
-          "products": [
-            {
-              "strain": "Banana Punch",
-              "thc": "29.09%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Banana Punch",
-              "thc": "29.61%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Blue Dream",
-              "thc": "25.56%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Blue Dream x Purple Punch",
-              "thc": "31.00%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
+              "type": "Hybrid",
+              "strains": [
+                {
+                  "strain": "Gelato 41",
+                  "thc": "27.40%",
+                  "cases": {
+                    "socal": 0.03,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "Georgia Cream",
+                  "thc": "26.76%",
+                  "cases": {
+                    "socal": 0.19,
+                    "norcal": 0.94
+                  }
+                },
+                {
+                  "strain": "Grape Gas",
+                  "thc": "30.88%",
+                  "cases": {
+                    "socal": 6.5,
+                    "norcal": 9.5
+                  }
+                },
+                {
+                  "strain": "Modified Mintz",
+                  "thc": "25.22%",
+                  "cases": {
+                    "socal": 0.09,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "Pink Certz",
+                  "thc": "28.60%",
+                  "cases": {
+                    "socal": 3.16,
+                    "norcal": 3.0
+                  }
+                },
+                {
+                  "strain": "Pink Runtz",
+                  "thc": "27.81%",
+                  "cases": {
+                    "socal": 1.5,
+                    "norcal": 1.09
+                  }
+                },
+                {
+                  "strain": "SFV x Donny Burger",
+                  "thc": "30.07%",
+                  "cases": {
+                    "socal": 0.06,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "White Runtz",
+                  "thc": "26.88%",
+                  "cases": {
+                    "socal": 0.84,
+                    "norcal": 1.59
+                  }
+                }
               ]
             },
             {
-              "strain": "Blueberry Runtz",
-              "thc": "30.09%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Lavender Jack",
-              "thc": "32.19%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Lemon Bean",
-              "thc": "23.85%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Lemon Bean",
-              "thc": "27.11%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Lemon Snow Leopard",
-              "thc": "26.30%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Lemon Snow Leopard",
-              "thc": "25.11%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Lemon Thai x OG Kush",
-              "thc": "26.03%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Lemon Thai x OG Kush",
-              "thc": "26.03%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Permanent Certz",
-              "thc": "33.54%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Permanent Certz",
-              "thc": "33.54%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Tropicana Cherry",
-              "thc": "25.98%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "West Mac",
-              "thc": "29.23%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Ze Chem",
-              "thc": "27.76%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "Hybrid",
-          "products": [
-            {
-              "strain": "Gelato 41",
-              "thc": "27.40%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Georgia Cream",
-              "thc": "26.76%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Grape Gas",
-              "thc": "30.88%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Gumdropz",
-              "thc": "24.38%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Gush Mintz",
-              "thc": "32.54%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Hawaiian Rain",
-              "thc": "31.01%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Lemon Shnniz",
-              "thc": "29.11%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Modified Mintz",
-              "thc": "25.22%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Pink Certz",
-              "thc": "28.60%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Pink Runtz",
-              "thc": "27.81%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Rainbow Drizzle",
-              "thc": "28.00%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "SFV x Donny Burger",
-              "thc": "30.07%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Super Runtz",
-              "thc": "30.49%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "White Runtz",
-              "thc": "26.88%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
+              "type": "Indica",
+              "strains": [
+                {
+                  "strain": "Banana Cake",
+                  "thc": "32.27%",
+                  "cases": {
+                    "socal": 10.0,
+                    "norcal": 14.5
+                  }
+                },
+                {
+                  "strain": "Blue Runtz",
+                  "thc": "27.37%",
+                  "cases": {
+                    "socal": 13.0,
+                    "norcal": 12.0
+                  }
+                },
+                {
+                  "strain": "Esencia OG",
+                  "thc": "24.83%",
+                  "cases": {
+                    "socal": 0.41,
+                    "norcal": 0.41
+                  }
+                },
+                {
+                  "strain": "Grape Junky",
+                  "thc": "25.74%",
+                  "cases": {
+                    "socal": 5.5,
+                    "norcal": 1.0
+                  }
+                },
+                {
+                  "strain": "Gush Mints",
+                  "thc": "32.54%",
+                  "cases": {
+                    "socal": 0.16,
+                    "norcal": 0.03
+                  }
+                },
+                {
+                  "strain": "LA Kush Cake",
+                  "thc": "29.27%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.47
+                  }
+                },
+                {
+                  "strain": "OG Kush Back",
+                  "thc": "29.27%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.47
+                  }
+                },
+                {
+                  "strain": "Original Glue",
+                  "thc": "30.86%",
+                  "cases": {
+                    "socal": 0.59,
+                    "norcal": 0.5
+                  }
+                },
+                {
+                  "strain": "Pack Mule",
+                  "thc": "31.29%",
+                  "cases": {
+                    "socal": 4.0,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "Pave",
+                  "thc": "28.41%",
+                  "cases": {
+                    "socal": 29.0,
+                    "norcal": 2.5
+                  }
+                },
+                {
+                  "strain": "Super Glue",
+                  "thc": "27.99%",
+                  "cases": {
+                    "socal": 0.25,
+                    "norcal": 0.47
+                  }
+                },
+                {
+                  "strain": "Wedding Cake",
+                  "thc": "26.87%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.47
+                  }
+                }
               ]
             }
           ]
         },
         {
-          "type": "Indica",
-          "products": [
+          "title": "Premium Smalls (14G)",
+          "size": "14G",
+          "unitPrice": 20.0,
+          "caseUnits": 8,
+          "casePrice": 160.0,
+          "groups": [
             {
-              "strain": "Banana Cake",
-              "thc": "32.27%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
+              "type": "Sativa",
+              "strains": [
+                {
+                  "strain": "Banana Punch",
+                  "thc": "29.09%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.38
+                  }
+                },
+                {
+                  "strain": "Blueberry Runtz",
+                  "thc": "30.09%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.62
+                  }
+                },
+                {
+                  "strain": "Lavender Jack",
+                  "thc": "32.19%",
+                  "cases": {
+                    "socal": 7.0,
+                    "norcal": 10.0
+                  }
+                },
+                {
+                  "strain": "Lemon Bean",
+                  "thc": "23.85%",
+                  "cases": {
+                    "socal": 16.0,
+                    "norcal": 11.0
+                  }
+                },
+                {
+                  "strain": "Lemon Thai x OG Kush",
+                  "thc": "26.03%",
+                  "cases": {
+                    "socal": 0.5,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "Permanent Certz",
+                  "thc": "33.54%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 1.75
+                  }
+                },
+                {
+                  "strain": "West Mac",
+                  "thc": "29.23%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.88
+                  }
+                }
               ]
             },
             {
-              "strain": "Blue Runtz",
-              "thc": "27.37%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
+              "type": "Hybrid",
+              "strains": [
+                {
+                  "strain": "Gumdropz",
+                  "thc": "24.38%",
+                  "cases": {
+                    "socal": 3.88,
+                    "norcal": 3.88
+                  }
+                },
+                {
+                  "strain": "Gush Mintz",
+                  "thc": "32.54%",
+                  "cases": {
+                    "socal": 0.5,
+                    "norcal": 1.88
+                  }
+                },
+                {
+                  "strain": "Hawaiian Rain",
+                  "thc": "31.01%",
+                  "cases": {
+                    "socal": 1.12,
+                    "norcal": 0.25
+                  }
+                },
+                {
+                  "strain": "Lemon Shnniz",
+                  "thc": "29.11%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.88
+                  }
+                },
+                {
+                  "strain": "Rainbow Drizzle",
+                  "thc": "28.00%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 3.12
+                  }
+                },
+                {
+                  "strain": "Super Runtz",
+                  "thc": "30.49%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.88
+                  }
+                }
               ]
             },
             {
-              "strain": "Blueberry",
-              "thc": "26.35%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Esencia OG",
-              "thc": "24.83%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Esencia OG",
-              "thc": "24.83%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Grape Junky",
-              "thc": "25.74%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Grape Junky",
-              "thc": "26.06%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Gush Mints",
-              "thc": "32.54%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Ice Cream Cake",
-              "thc": "26.77%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "LA Kush Cake",
-              "thc": "29.27%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "LA Kush Cake",
-              "thc": "29.27%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "OG Kush Back",
-              "thc": "29.27%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Obama Runtz",
-              "thc": "30.14%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Original Glue",
-              "thc": "30.86%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Pack Mule",
-              "thc": "31.29%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Pave",
-              "thc": "28.41%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Super Glue",
-              "thc": "31.06%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Super Glue",
-              "thc": "27.99%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Wedding Cake",
-              "thc": "26.87%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal"
+              "type": "Indica",
+              "strains": [
+                {
+                  "strain": "Blue Runtz",
+                  "thc": "27.37%",
+                  "cases": {
+                    "socal": 18.0,
+                    "norcal": 20.0
+                  }
+                },
+                {
+                  "strain": "Blueberry",
+                  "thc": "26.35%",
+                  "cases": {
+                    "socal": 0.62,
+                    "norcal": 0.75
+                  }
+                },
+                {
+                  "strain": "Esencia OG",
+                  "thc": "24.83%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 2.0
+                  }
+                },
+                {
+                  "strain": "Grape Junky",
+                  "thc": "26.06%",
+                  "cases": {
+                    "socal": 0.88,
+                    "norcal": 4.88
+                  }
+                },
+                {
+                  "strain": "Ice Cream Cake",
+                  "thc": "26.77%",
+                  "cases": {
+                    "socal": 1.75,
+                    "norcal": 1.0
+                  }
+                },
+                {
+                  "strain": "LA Kush Cake",
+                  "thc": "27.73%",
+                  "cases": {
+                    "socal": 0.62,
+                    "norcal": 1.25
+                  }
+                },
+                {
+                  "strain": "Obama Runtz",
+                  "thc": "30.14%",
+                  "cases": {
+                    "socal": 0.75,
+                    "norcal": 20.0
+                  }
+                },
+                {
+                  "strain": "Pave",
+                  "thc": "28.41%",
+                  "cases": {
+                    "socal": 19.0,
+                    "norcal": 14.0
+                  }
+                },
+                {
+                  "strain": "Super Glue",
+                  "thc": "31.06%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.5
+                  }
+                }
               ]
             }
           ]
@@ -694,429 +570,390 @@
     {
       "brand": "Mendo",
       "brandColor": "mendo",
-      "title": "All-In-One Vape",
-      "pricing": [
+      "cards": [
         {
-          "tier": "1G",
-          "unit": "$16.00/unit",
-          "case": "$160.00/case (10 units)"
-        }
-      ],
-      "groups": [
-        {
-          "type": "Sativa",
-          "products": [
+          "title": "All-In-One Vape",
+          "size": "1G",
+          "unitPrice": 16.0,
+          "caseUnits": 10,
+          "casePrice": 160.0,
+          "groups": [
             {
-              "strain": "Banana Cream Cake",
-              "thc": "70.42%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal"
+              "type": "Sativa",
+              "strains": [
+                {
+                  "strain": "Banana Cream Cake",
+                  "thc": "70.42%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 1.0
+                  }
+                },
+                {
+                  "strain": "Blue Dream",
+                  "thc": "69.03%",
+                  "cases": {
+                    "socal": 29.0,
+                    "norcal": 25.0
+                  }
+                },
+                {
+                  "strain": "Lemon Drop",
+                  "thc": "73.42%",
+                  "cases": {
+                    "socal": 11.0,
+                    "norcal": 12.0
+                  }
+                }
               ]
             },
             {
-              "strain": "Blue Dream",
-              "thc": "69.03%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
+              "type": "Hybrid",
+              "strains": [
+                {
+                  "strain": "Blue Panther",
+                  "thc": "67.25%",
+                  "cases": {
+                    "socal": 17.0,
+                    "norcal": 22.0
+                  }
+                },
+                {
+                  "strain": "Lemon Cherry Gelato",
+                  "thc": "69.43%",
+                  "cases": {
+                    "socal": 28.0,
+                    "norcal": 26.0
+                  }
+                }
               ]
             },
             {
-              "strain": "Lemon Drop",
-              "thc": "73.42%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
+              "type": "Indica",
+              "strains": [
+                {
+                  "strain": "Black Cherry OG",
+                  "thc": "68.11%",
+                  "cases": {
+                    "socal": 25.0,
+                    "norcal": 27.0
+                  }
+                },
+                {
+                  "strain": "Original Glue",
+                  "thc": "75.16%",
+                  "cases": {
+                    "socal": 2.0,
+                    "norcal": 1.0
+                  }
+                },
+                {
+                  "strain": "Watermelon Moonshine",
+                  "thc": "70.69%",
+                  "cases": {
+                    "socal": 30.0,
+                    "norcal": 22.0
+                  }
+                },
+                {
+                  "strain": "Zangria",
+                  "thc": "65.58%",
+                  "cases": {
+                    "socal": 21.0,
+                    "norcal": 25.0
+                  }
+                }
               ]
             }
           ]
         },
         {
-          "type": "Hybrid",
-          "products": [
+          "title": "Indoor Flower (1/8)",
+          "size": "1/8",
+          "unitPrice": 18.0,
+          "caseUnits": 16,
+          "casePrice": 288.0,
+          "groups": [
             {
-              "strain": "Blue Panther",
-              "thc": "67.25%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
+              "type": "Sativa",
+              "strains": [
+                {
+                  "strain": "Lemon Bean",
+                  "thc": "25.36%",
+                  "cases": {
+                    "socal": 0.19,
+                    "norcal": 0.0
+                  }
+                }
               ]
             },
             {
-              "strain": "Lemon Cherry Gelato",
-              "thc": "69.43%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
+              "type": "Hybrid",
+              "strains": [
+                {
+                  "strain": "El Chivo",
+                  "thc": "29.76%",
+                  "cases": {
+                    "socal": 9.0,
+                    "norcal": 6.0
+                  }
+                },
+                {
+                  "strain": "Purple OG",
+                  "thc": "25.64%",
+                  "cases": {
+                    "socal": 2.0,
+                    "norcal": 4.0
+                  }
+                },
+                {
+                  "strain": "Red Eye",
+                  "thc": "27.76%",
+                  "cases": {
+                    "socal": 1.0,
+                    "norcal": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "type": "Indica",
+              "strains": [
+                {
+                  "strain": "Sour Animal Cookies",
+                  "thc": "28.89%",
+                  "cases": {
+                    "socal": 10.0,
+                    "norcal": 5.0
+                  }
+                },
+                {
+                  "strain": "Sugar Kush",
+                  "thc": "30.66%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 1.0
+                  }
+                }
               ]
             }
           ]
         },
         {
-          "type": "Indica",
-          "products": [
+          "title": "Indoor Flower (14G)",
+          "size": "14G",
+          "unitPrice": 30.0,
+          "caseUnits": 8,
+          "casePrice": 240.0,
+          "groups": [
             {
-              "strain": "Black Cherry OG",
-              "thc": "68.11%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
+              "type": "Hybrid",
+              "strains": [
+                {
+                  "strain": "Georgia Pie",
+                  "thc": "28.43%",
+                  "cases": {
+                    "socal": 1.0,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "Jealousy",
+                  "thc": "26.56%",
+                  "cases": {
+                    "socal": 2.0,
+                    "norcal": 1.0
+                  }
+                }
               ]
             },
             {
-              "strain": "Original Glue",
-              "thc": "75.16%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Watermelon Moonshine",
-              "thc": "70.69%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Zangria",
-              "thc": "65.58%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "brand": "Mendo",
-      "brandColor": "mendo",
-      "title": "Indoor Flower",
-      "pricing": [
-        {
-          "tier": "1G",
-          "unit": "$6.00/unit",
-          "case": "$60.00/case (10 units)"
-        },
-        {
-          "tier": "1/8",
-          "unit": "$18.00/unit",
-          "case": "$288.00/case (16 units)"
-        },
-        {
-          "tier": "14G",
-          "unit": "$30.00/unit",
-          "case": "$240.00/case (8 units)"
-        }
-      ],
-      "groups": [
-        {
-          "type": "Sativa",
-          "products": [
-            {
-              "strain": "Lemon Bean",
-              "thc": "25.36%",
-              "sizes": [
-                "1G",
-                "1/8"
-              ],
-              "locations": [
-                "socal"
+              "type": "Indica",
+              "strains": [
+                {
+                  "strain": "Blackberry Certz",
+                  "thc": "25.82%",
+                  "cases": {
+                    "socal": 3.0,
+                    "norcal": 1.0
+                  }
+                },
+                {
+                  "strain": "Gmo Cookiez",
+                  "thc": "30.71%",
+                  "cases": {
+                    "socal": 1.0,
+                    "norcal": 2.0
+                  }
+                }
               ]
             }
           ]
         },
         {
-          "type": "Hybrid",
-          "products": [
+          "title": "Indoor Flower (1G)",
+          "size": "1G",
+          "unitPrice": 6.0,
+          "caseUnits": 10,
+          "casePrice": 60.0,
+          "groups": [
             {
-              "strain": "El Chivo",
-              "thc": "29.76%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
+              "type": "Sativa",
+              "strains": [
+                {
+                  "strain": "Lemon Bean",
+                  "thc": "25.36%",
+                  "cases": {
+                    "socal": 0.1,
+                    "norcal": 0.0
+                  }
+                }
               ]
             },
             {
-              "strain": "Georgia Pie",
-              "thc": "28.43%",
-              "sizes": [
-                "1G",
-                "14G"
-              ],
-              "locations": [
-                "socal"
+              "type": "Hybrid",
+              "strains": [
+                {
+                  "strain": "Georgia Pie",
+                  "thc": "28.43%",
+                  "cases": {
+                    "socal": 0.5,
+                    "norcal": 0.2
+                  }
+                },
+                {
+                  "strain": "Jealousy",
+                  "thc": "26.56%",
+                  "cases": {
+                    "socal": 0.3,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "Red Eye",
+                  "thc": "27.76%",
+                  "cases": {
+                    "socal": 1.0,
+                    "norcal": 0.1
+                  }
+                }
               ]
             },
             {
-              "strain": "Georgia Pie",
-              "thc": "28.43%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Jealousy",
-              "thc": "26.56%",
-              "sizes": [
-                "1G",
-                "14G"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Jealousy",
-              "thc": "26.56%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Purple OG",
-              "thc": "25.64%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Red Eye",
-              "thc": "27.76%",
-              "sizes": [
-                "1G",
-                "1/8"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Red Eye",
-              "thc": "27.76%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal"
+              "type": "Indica",
+              "strains": [
+                {
+                  "strain": "Blackberry Certz",
+                  "thc": "25.82%",
+                  "cases": {
+                    "socal": 0.1,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "Gmo Cookiez",
+                  "thc": "30.71%",
+                  "cases": {
+                    "socal": 0.2,
+                    "norcal": 0.3
+                  }
+                },
+                {
+                  "strain": "King Louis OG",
+                  "thc": "29.63%",
+                  "cases": {
+                    "socal": 0.2,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "Sour Animal Cookies",
+                  "thc": "28.89%",
+                  "cases": {
+                    "socal": 4.0,
+                    "norcal": 2.0
+                  }
+                },
+                {
+                  "strain": "Sugar Kush",
+                  "thc": "30.66%",
+                  "cases": {
+                    "socal": 3.0,
+                    "norcal": 1.0
+                  }
+                }
               ]
             }
           ]
         },
         {
-          "type": "Indica",
-          "products": [
+          "title": "Pre-Roll 10-Pack",
+          "size": "5G",
+          "unitPrice": 16.0,
+          "caseUnits": 10,
+          "casePrice": 160.0,
+          "groups": [
             {
-              "strain": "Blackberry Certz",
-              "thc": "25.82%",
-              "sizes": [
-                "1G",
-                "14G"
-              ],
-              "locations": [
-                "socal"
+              "type": "Sativa",
+              "strains": [
+                {
+                  "strain": "Apricot Jelly",
+                  "thc": "24.33%",
+                  "cases": {
+                    "socal": 3.0,
+                    "norcal": 5.0
+                  }
+                },
+                {
+                  "strain": "Tropicana Cherry",
+                  "thc": "22.74%",
+                  "cases": {
+                    "socal": 14.0,
+                    "norcal": 12.0
+                  }
+                }
               ]
             },
             {
-              "strain": "Blackberry Certz",
-              "thc": "25.82%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal"
+              "type": "Hybrid",
+              "strains": [
+                {
+                  "strain": "Day Dream",
+                  "thc": "24.07%",
+                  "cases": {
+                    "socal": 13.0,
+                    "norcal": 7.0
+                  }
+                },
+                {
+                  "strain": "Hash Burger",
+                  "thc": "32.13%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.8
+                  }
+                }
               ]
             },
             {
-              "strain": "Gmo Cookiez",
-              "thc": "30.71%",
-              "sizes": [
-                "1G",
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "King Louis OG",
-              "thc": "29.63%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Sour Animal Cookies",
-              "thc": "28.89%",
-              "sizes": [
-                "1G",
-                "1/8"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Sugar Kush",
-              "thc": "30.66%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Sugar Kush",
-              "thc": "30.66%",
-              "sizes": [
-                "1G",
-                "1/8"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "brand": "Mendo",
-      "brandColor": "mendo",
-      "title": "Pre-Roll 10-Pack",
-      "pricing": [
-        {
-          "tier": "5G",
-          "unit": "$16.00/unit",
-          "case": "$160.00/case (10 units)"
-        }
-      ],
-      "groups": [
-        {
-          "type": "Sativa",
-          "products": [
-            {
-              "strain": "Apricot Jelly",
-              "thc": "24.33%",
-              "sizes": [
-                "5G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Tropicana Cherry",
-              "thc": "22.74%",
-              "sizes": [
-                "5G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "Hybrid",
-          "products": [
-            {
-              "strain": "Day Dream",
-              "thc": "24.07%",
-              "sizes": [
-                "5G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Hash Burger",
-              "thc": "32.13%",
-              "sizes": [
-                "5G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "Indica",
-          "products": [
-            {
-              "strain": "Granddaddy Z",
-              "thc": "24.33%",
-              "sizes": [
-                "5G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Zkittlez",
-              "thc": "25.07%",
-              "sizes": [
-                "5G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
+              "type": "Indica",
+              "strains": [
+                {
+                  "strain": "Granddaddy Z",
+                  "thc": "24.33%",
+                  "cases": {
+                    "socal": 7.0,
+                    "norcal": 2.0
+                  }
+                },
+                {
+                  "strain": "Zkittlez",
+                  "thc": "25.07%",
+                  "cases": {
+                    "socal": 23.0,
+                    "norcal": 18.0
+                  }
+                }
               ]
             }
           ]
@@ -1126,1200 +963,1126 @@
     {
       "brand": "Soma Rosa Farms",
       "brandColor": "soma",
-      "title": "Flower",
-      "pricing": [
+      "cards": [
         {
-          "tier": "1/8",
-          "unit": "$7.50/unit",
-          "case": "$120.00/case (16 units)"
-        },
-        {
-          "tier": "14G",
-          "unit": "$28.00/unit",
-          "case": "$280.00/case (10 units)"
-        },
-        {
-          "tier": "28G",
-          "unit": "$50.00/unit",
-          "case": "$400.00/case (8 units)"
-        }
-      ],
-      "groups": [
-        {
-          "type": "Sativa",
-          "products": [
+          "title": "Flower (1/8)",
+          "size": "1/8",
+          "unitPrice": 7.5,
+          "caseUnits": 16,
+          "casePrice": 120.0,
+          "groups": [
             {
-              "strain": "Banana Punch",
-              "thc": "29.61%",
-              "sizes": [
-                "1/8",
-                "14G",
-                "28G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
+              "type": "Sativa",
+              "strains": [
+                {
+                  "strain": "Banana Punch",
+                  "thc": "29.61%",
+                  "cases": {
+                    "socal": 8.0,
+                    "norcal": 0.38
+                  }
+                },
+                {
+                  "strain": "Blue Dream",
+                  "thc": "25.56%",
+                  "cases": {
+                    "socal": 10.0,
+                    "norcal": 10.0
+                  }
+                },
+                {
+                  "strain": "Blue Dream x Purple Punch",
+                  "thc": "31.00%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.88
+                  }
+                },
+                {
+                  "strain": "Blueberry Runtz",
+                  "thc": "31.30%",
+                  "cases": {
+                    "socal": 0.06,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "Buddha's Hand",
+                  "thc": "29.98%",
+                  "cases": {
+                    "socal": 0.25,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "Lavender Jack",
+                  "thc": "32.19%",
+                  "cases": {
+                    "socal": 17.0,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "Lemon Bean",
+                  "thc": "23.85%",
+                  "cases": {
+                    "socal": 0.06,
+                    "norcal": 1.0
+                  }
+                },
+                {
+                  "strain": "Lemon Snow Leopard",
+                  "thc": "25.11%",
+                  "cases": {
+                    "socal": 0.81,
+                    "norcal": 9.0
+                  }
+                },
+                {
+                  "strain": "Permanent Certz",
+                  "thc": "26.56%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.12
+                  }
+                },
+                {
+                  "strain": "Ze Chem",
+                  "thc": "27.76%",
+                  "cases": {
+                    "socal": 0.31,
+                    "norcal": 0.0
+                  }
+                }
               ]
             },
             {
-              "strain": "Blue Dream",
-              "thc": "25.56%",
-              "sizes": [
-                "1/8",
-                "14G",
-                "28G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
+              "type": "Hybrid",
+              "strains": [
+                {
+                  "strain": "Berry Drip",
+                  "thc": "27.43%",
+                  "cases": {
+                    "socal": 0.38,
+                    "norcal": 0.38
+                  }
+                },
+                {
+                  "strain": "Double Lantern",
+                  "thc": "32.31%",
+                  "cases": {
+                    "socal": 0.62,
+                    "norcal": 0.75
+                  }
+                },
+                {
+                  "strain": "Georgia Cream",
+                  "thc": "26.76%",
+                  "cases": {
+                    "socal": 0.19,
+                    "norcal": 1.0
+                  }
+                },
+                {
+                  "strain": "Grape Gas",
+                  "thc": "30.88%",
+                  "cases": {
+                    "socal": 15.0,
+                    "norcal": 1.88
+                  }
+                },
+                {
+                  "strain": "High Society",
+                  "thc": "29.40%",
+                  "cases": {
+                    "socal": 0.25,
+                    "norcal": 0.5
+                  }
+                },
+                {
+                  "strain": "Honey Route",
+                  "thc": "23.74%",
+                  "cases": {
+                    "socal": 25.0,
+                    "norcal": 21.0
+                  }
+                },
+                {
+                  "strain": "Permanent Marker",
+                  "thc": "34.01%",
+                  "cases": {
+                    "socal": 0.31,
+                    "norcal": 11.0
+                  }
+                },
+                {
+                  "strain": "Pink Certz",
+                  "thc": "28.60%",
+                  "cases": {
+                    "socal": 10.0,
+                    "norcal": 23.0
+                  }
+                },
+                {
+                  "strain": "Pink Runtz",
+                  "thc": "27.81%",
+                  "cases": {
+                    "socal": 23.0,
+                    "norcal": 22.0
+                  }
+                },
+                {
+                  "strain": "Rainbow Guava",
+                  "thc": "30.67%",
+                  "cases": {
+                    "socal": 0.19,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "SFV x Donny Burger",
+                  "thc": "30.07%",
+                  "cases": {
+                    "socal": 0.06,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "White Runtz",
+                  "thc": "26.88%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 1.0
+                  }
+                }
               ]
             },
             {
-              "strain": "Blue Dream x Purple Punch",
-              "thc": "31.00%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Blueberry Runtz",
-              "thc": "31.30%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Blueberry Runtz",
-              "thc": "31.30%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Buddha's Hand",
-              "thc": "29.98%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Illemonati",
-              "thc": "24.45%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Lavender Jack",
-              "thc": "32.19%",
-              "sizes": [
-                "1/8",
-                "14G",
-                "28G"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Lavender Jack",
-              "thc": "32.19%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Lemon Bean",
-              "thc": "23.85%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Lemon Snow Leopard",
-              "thc": "25.11%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Madd Fruit",
-              "thc": "26.94%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Orange Creamsicle",
-              "thc": "28.84%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Permanent Certz",
-              "thc": "26.56%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Pluot",
-              "thc": "26.44%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Sour Cookies",
-              "thc": "30.23%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Toronja",
-              "thc": "31.78%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Ze Chem",
-              "thc": "27.76%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "socal"
+              "type": "Indica",
+              "strains": [
+                {
+                  "strain": "Banana Foam Cake",
+                  "thc": "27.76%",
+                  "cases": {
+                    "socal": 0.06,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "Blackberry Kush",
+                  "thc": "26.61%",
+                  "cases": {
+                    "socal": 0.06,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "Blackberry Moonshine",
+                  "thc": "29.76%",
+                  "cases": {
+                    "socal": 0.19,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "Blue Runtz",
+                  "thc": "28.71%",
+                  "cases": {
+                    "socal": 0.25,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "Blueberry Night Runtz",
+                  "thc": "24.12%",
+                  "cases": {
+                    "socal": 0.12,
+                    "norcal": 1.0
+                  }
+                },
+                {
+                  "strain": "Cherry Icee",
+                  "thc": "33.98%",
+                  "cases": {
+                    "socal": 0.56,
+                    "norcal": 0.38
+                  }
+                },
+                {
+                  "strain": "Glitter Bomb",
+                  "thc": "31.76%",
+                  "cases": {
+                    "socal": 4.0,
+                    "norcal": 12.0
+                  }
+                },
+                {
+                  "strain": "Ice Cream Cake",
+                  "thc": "34.38%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 1.56
+                  }
+                },
+                {
+                  "strain": "LA Kush Cake",
+                  "thc": "27.71%",
+                  "cases": {
+                    "socal": 12.0,
+                    "norcal": 7.0
+                  }
+                },
+                {
+                  "strain": "Lemon Cherry Gelato",
+                  "thc": "30.04%",
+                  "cases": {
+                    "socal": 11.0,
+                    "norcal": 16.0
+                  }
+                },
+                {
+                  "strain": "Lemon Pie",
+                  "thc": "30.17%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.06
+                  }
+                },
+                {
+                  "strain": "OG Kush",
+                  "thc": "28.12%",
+                  "cases": {
+                    "socal": 11.0,
+                    "norcal": 13.0
+                  }
+                },
+                {
+                  "strain": "Obama Runtz",
+                  "thc": "30.14%",
+                  "cases": {
+                    "socal": 9.0,
+                    "norcal": 1.0
+                  }
+                },
+                {
+                  "strain": "Original Glue",
+                  "thc": "30.86%",
+                  "cases": {
+                    "socal": 1.0,
+                    "norcal": 1.31
+                  }
+                },
+                {
+                  "strain": "Pack Mule",
+                  "thc": "31.29%",
+                  "cases": {
+                    "socal": 22.0,
+                    "norcal": 2.0
+                  }
+                },
+                {
+                  "strain": "Pave",
+                  "thc": "25.60%",
+                  "cases": {
+                    "socal": 0.81,
+                    "norcal": 16.0
+                  }
+                },
+                {
+                  "strain": "Platinum Cake",
+                  "thc": "33.08%",
+                  "cases": {
+                    "socal": 0.75,
+                    "norcal": 0.69
+                  }
+                },
+                {
+                  "strain": "Skunk Gas",
+                  "thc": "26.01%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.88
+                  }
+                }
               ]
             }
           ]
         },
         {
-          "type": "Hybrid",
-          "products": [
+          "title": "Flower (14G)",
+          "size": "14G",
+          "unitPrice": 28.0,
+          "caseUnits": 10,
+          "casePrice": 280.0,
+          "groups": [
             {
-              "strain": "Berry Drip",
-              "thc": "27.43%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
+              "type": "Sativa",
+              "strains": [
+                {
+                  "strain": "Banana Punch",
+                  "thc": "29.61%",
+                  "cases": {
+                    "socal": 4.0,
+                    "norcal": 8.0
+                  }
+                },
+                {
+                  "strain": "Blue Dream",
+                  "thc": "25.56%",
+                  "cases": {
+                    "socal": 3.0,
+                    "norcal": 14.0
+                  }
+                },
+                {
+                  "strain": "Blueberry Runtz",
+                  "thc": "31.30%",
+                  "cases": {
+                    "socal": 0.4,
+                    "norcal": 0.1
+                  }
+                },
+                {
+                  "strain": "Illemonati",
+                  "thc": "24.45%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 1.0
+                  }
+                },
+                {
+                  "strain": "Lavender Jack",
+                  "thc": "32.19%",
+                  "cases": {
+                    "socal": 7.0,
+                    "norcal": 6.0
+                  }
+                },
+                {
+                  "strain": "Madd Fruit",
+                  "thc": "26.94%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 1.0
+                  }
+                },
+                {
+                  "strain": "Orange Creamsicle",
+                  "thc": "28.84%",
+                  "cases": {
+                    "socal": 0.3,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "Pluot",
+                  "thc": "26.44%",
+                  "cases": {
+                    "socal": 0.2,
+                    "norcal": 0.1
+                  }
+                },
+                {
+                  "strain": "Sour Cookies",
+                  "thc": "30.23%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.7
+                  }
+                },
+                {
+                  "strain": "Toronja",
+                  "thc": "31.78%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.8
+                  }
+                }
               ]
             },
             {
-              "strain": "Cheetah Piss x LCG",
-              "thc": "27.03%",
-              "sizes": [
-                "28G"
-              ],
-              "locations": [
-                "norcal"
+              "type": "Hybrid",
+              "strains": [
+                {
+                  "strain": "Double Lantern",
+                  "thc": "32.31%",
+                  "cases": {
+                    "socal": 1.4,
+                    "norcal": 0.9
+                  }
+                },
+                {
+                  "strain": "Grape Gas",
+                  "thc": "30.88%",
+                  "cases": {
+                    "socal": 2.0,
+                    "norcal": 6.0
+                  }
+                },
+                {
+                  "strain": "Honey Route",
+                  "thc": "23.74%",
+                  "cases": {
+                    "socal": 10.0,
+                    "norcal": 21.0
+                  }
+                },
+                {
+                  "strain": "Hyrbid Berry Drip",
+                  "thc": "27.43%",
+                  "cases": {
+                    "socal": 0.5,
+                    "norcal": 0.2
+                  }
+                },
+                {
+                  "strain": "Hyrbid Government Oasis",
+                  "thc": "30.65%",
+                  "cases": {
+                    "socal": 0.1,
+                    "norcal": 0.1
+                  }
+                },
+                {
+                  "strain": "Hyrbid Grapes & Cream",
+                  "thc": "29.04%",
+                  "cases": {
+                    "socal": 0.9,
+                    "norcal": 0.6
+                  }
+                },
+                {
+                  "strain": "Hyrbrid Super Runtz",
+                  "thc": "26.09%",
+                  "cases": {
+                    "socal": 0.2,
+                    "norcal": 0.5
+                  }
+                },
+                {
+                  "strain": "Ice Cream Man",
+                  "thc": "25.37%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.1
+                  }
+                },
+                {
+                  "strain": "Pink Certz",
+                  "thc": "28.60%",
+                  "cases": {
+                    "socal": 2.0,
+                    "norcal": 6.0
+                  }
+                },
+                {
+                  "strain": "Rainbow Guava",
+                  "thc": "30.17%",
+                  "cases": {
+                    "socal": 0.6,
+                    "norcal": 0.5
+                  }
+                },
+                {
+                  "strain": "White Runtz",
+                  "thc": "26.88%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 3.0
+                  }
+                }
               ]
             },
             {
-              "strain": "Double Lantern",
-              "thc": "32.31%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Gas Shnniz",
-              "thc": "27.93%",
-              "sizes": [
-                "28G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Georgia Cream",
-              "thc": "26.76%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Grape Gas",
-              "thc": "30.88%",
-              "sizes": [
-                "1/8",
-                "14G",
-                "28G"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Grape Gas",
-              "thc": "30.88%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "High Society",
-              "thc": "29.40%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Honey Route",
-              "thc": "23.74%",
-              "sizes": [
-                "1/8",
-                "14G",
-                "28G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Hyrbid Berry Drip",
-              "thc": "27.43%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Hyrbid Government Oasis",
-              "thc": "30.65%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Hyrbid Grapes & Cream",
-              "thc": "29.04%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Hyrbrid Super Runtz",
-              "thc": "26.09%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Ice Cream Man",
-              "thc": "25.37%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Permanent Marker",
-              "thc": "34.01%",
-              "sizes": [
-                "1/8",
-                "28G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Pink Certz",
-              "thc": "28.60%",
-              "sizes": [
-                "1/8",
-                "14G",
-                "28G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Pink Runtz",
-              "thc": "27.81%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Pink Runtz",
-              "thc": "27.81%",
-              "sizes": [
-                "1/8",
-                "28G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Rainbow Guava",
-              "thc": "30.17%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Rainbow Guava",
-              "thc": "30.17%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "SFV x Donny Burger",
-              "thc": "30.07%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "White Runtz",
-              "thc": "26.88%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "Indica",
-          "products": [
-            {
-              "strain": "Banana Foam Cake",
-              "thc": "27.76%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Banana Foam Cake",
-              "thc": "27.76%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Blackberry Kush",
-              "thc": "26.61%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Blackberry Kush",
-              "thc": "26.61%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Blackberry Moonshine",
-              "thc": "29.76%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Blue Runtz",
-              "thc": "28.71%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Blueberry Cookiez",
-              "thc": "31.16%",
-              "sizes": [
-                "28G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Blueberry Night Runtz",
-              "thc": "24.12%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Bubba Diagonal X Gush Mintz",
-              "thc": "33.22%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Cherry Icee",
-              "thc": "33.98%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Doc 15 x Pave",
-              "thc": "28.91%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Glitter Bomb",
-              "thc": "31.76%",
-              "sizes": [
-                "1/8",
-                "14G",
-                "28G"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Glitter Bomb",
-              "thc": "31.76%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Grape Junky",
-              "thc": "25.74%",
-              "sizes": [
-                "28G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Ice Cream Cake",
-              "thc": "34.38%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "LA Kush Cake",
-              "thc": "27.71%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Lemon Cherry Gelato",
-              "thc": "30.04%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Lemon Pie",
-              "thc": "30.67%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "OG Kush",
-              "thc": "28.12%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Obama Runtz",
-              "thc": "30.14%",
-              "sizes": [
-                "1/8",
-                "14G",
-                "28G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Original Glue",
-              "thc": "30.86%",
-              "sizes": [
-                "1/8",
-                "28G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Pack Mule",
-              "thc": "31.29%",
-              "sizes": [
-                "1/8",
-                "14G",
-                "28G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Pave",
-              "thc": "27.67%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Pave",
-              "thc": "25.60%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Platinum Cake",
-              "thc": "33.08%",
-              "sizes": [
-                "1/8",
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Skunk Gas",
-              "thc": "26.01%",
-              "sizes": [
-                "1/8"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Wedding Cake",
-              "thc": "29.15%",
-              "sizes": [
-                "28G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "brand": "Soma Rosa Farms",
-      "brandColor": "soma",
-      "title": "Live Rosin",
-      "pricing": [
-        {
-          "tier": "1G",
-          "unit": "$16.00/unit",
-          "case": "$128.00/case (8 units)"
-        }
-      ],
-      "groups": [
-        {
-          "type": "Hybrid",
-          "products": [
-            {
-              "strain": "Lemon Royale",
-              "thc": "57.31%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
+              "type": "Indica",
+              "strains": [
+                {
+                  "strain": "Banana Foam Cake",
+                  "thc": "27.76%",
+                  "cases": {
+                    "socal": 0.4,
+                    "norcal": 0.7
+                  }
+                },
+                {
+                  "strain": "Blackberry Kush",
+                  "thc": "26.61%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.5
+                  }
+                },
+                {
+                  "strain": "Blackberry Moonshine",
+                  "thc": "29.76%",
+                  "cases": {
+                    "socal": 0.1,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "Blueberry Night Runtz",
+                  "thc": "24.12%",
+                  "cases": {
+                    "socal": 13.0,
+                    "norcal": 15.0
+                  }
+                },
+                {
+                  "strain": "Bubba Diagonal X Gush Mintz",
+                  "thc": "33.22%",
+                  "cases": {
+                    "socal": 0.3,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "Cherry Icee",
+                  "thc": "33.98%",
+                  "cases": {
+                    "socal": 0.5,
+                    "norcal": 1.0
+                  }
+                },
+                {
+                  "strain": "Doc 15 x Pave",
+                  "thc": "28.91%",
+                  "cases": {
+                    "socal": 0.1,
+                    "norcal": 0.7
+                  }
+                },
+                {
+                  "strain": "Glitter Bomb",
+                  "thc": "26.49%",
+                  "cases": {
+                    "socal": 1.0,
+                    "norcal": 12.0
+                  }
+                },
+                {
+                  "strain": "Lemon Pie",
+                  "thc": "30.67%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.6
+                  }
+                },
+                {
+                  "strain": "OG Kush",
+                  "thc": "28.12%",
+                  "cases": {
+                    "socal": 0.3,
+                    "norcal": 0.4
+                  }
+                },
+                {
+                  "strain": "Obama Runtz",
+                  "thc": "30.14%",
+                  "cases": {
+                    "socal": 9.0,
+                    "norcal": 6.0
+                  }
+                },
+                {
+                  "strain": "Pack Mule",
+                  "thc": "31.29%",
+                  "cases": {
+                    "socal": 4.0,
+                    "norcal": 14.0
+                  }
+                },
+                {
+                  "strain": "Pave",
+                  "thc": "27.67%",
+                  "cases": {
+                    "socal": 2.0,
+                    "norcal": 0.9
+                  }
+                },
+                {
+                  "strain": "Platinum Cake",
+                  "thc": "35.38%",
+                  "cases": {
+                    "socal": 0.1,
+                    "norcal": 0.7
+                  }
+                }
               ]
             }
           ]
         },
         {
-          "type": "Indica",
-          "products": [
+          "title": "Flower (28G)",
+          "size": "28G",
+          "unitPrice": 50.0,
+          "caseUnits": 8,
+          "casePrice": 400.0,
+          "groups": [
             {
-              "strain": "Berry Pie",
-              "thc": "58.48%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal"
+              "type": "Sativa",
+              "strains": [
+                {
+                  "strain": "Banana Punch",
+                  "thc": "29.61%",
+                  "cases": {
+                    "socal": 9.0,
+                    "norcal": 4.0
+                  }
+                },
+                {
+                  "strain": "Blue Dream",
+                  "thc": "25.56%",
+                  "cases": {
+                    "socal": 4.0,
+                    "norcal": 8.0
+                  }
+                },
+                {
+                  "strain": "Lavender Jack",
+                  "thc": "32.19%",
+                  "cases": {
+                    "socal": 1.0,
+                    "norcal": 0.0
+                  }
+                }
               ]
             },
             {
-              "strain": "Lemon OG",
-              "thc": "59.55%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "brand": "Soma Rosa Farms",
-      "brandColor": "soma",
-      "title": "Pre-Roll Party Packs \u2014 28ct",
-      "pricing": [
-        {
-          "tier": "14G",
-          "unit": "$25.00/unit",
-          "case": "$200.00/case (8 units)"
-        }
-      ],
-      "groups": [
-        {
-          "type": "Sativa",
-          "products": [
-            {
-              "strain": "Blue Dream",
-              "thc": "24.65%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Chem Dawg",
-              "thc": "26.71%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Chem Dawg x OOG",
-              "thc": "28.16%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
+              "type": "Hybrid",
+              "strains": [
+                {
+                  "strain": "Cheetah Piss x LCG",
+                  "thc": "27.03%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.12
+                  }
+                },
+                {
+                  "strain": "Gas Shnniz",
+                  "thc": "27.93%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.88
+                  }
+                },
+                {
+                  "strain": "Grape Gas",
+                  "thc": "30.88%",
+                  "cases": {
+                    "socal": 1.0,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "Honey Route",
+                  "thc": "23.74%",
+                  "cases": {
+                    "socal": 5.0,
+                    "norcal": 5.0
+                  }
+                },
+                {
+                  "strain": "Permanent Marker",
+                  "thc": "34.01%",
+                  "cases": {
+                    "socal": 2.75,
+                    "norcal": 3.0
+                  }
+                },
+                {
+                  "strain": "Pink Certz",
+                  "thc": "28.60%",
+                  "cases": {
+                    "socal": 17.0,
+                    "norcal": 0.25
+                  }
+                },
+                {
+                  "strain": "Pink Runtz",
+                  "thc": "27.81%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 1.0
+                  }
+                }
               ]
             },
             {
-              "strain": "Tropicana Cherry",
-              "thc": "27.20%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Yahemi",
-              "thc": "20.36%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "Hybrid",
-          "products": [
-            {
-              "strain": "Bubba Diagonal x Gush Mintz",
-              "thc": "22.24%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Emerald Runtz",
-              "thc": "26.19%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Gelato 41",
-              "thc": "27.23%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "Indica",
-          "products": [
-            {
-              "strain": "LA Kush Cake",
-              "thc": "31.35%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Lemon Cherry Gelato",
-              "thc": "24.60%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Original Glue",
-              "thc": "32.16%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Pave",
-              "thc": "31.46%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Sharpie",
-              "thc": "23.72%",
-              "sizes": [
-                "14G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "brand": "Soma Rosa Farms",
-      "brandColor": "soma",
-      "title": "Pre-Rolls \u2014 Single 1g",
-      "pricing": [
-        {
-          "tier": "1G",
-          "unit": "$2.00/unit",
-          "case": "$56.00/case (28 units)"
-        }
-      ],
-      "groups": [
-        {
-          "type": "Sativa",
-          "products": [
-            {
-              "strain": "Amethyst",
-              "thc": "26.75%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Blueberry Jam",
-              "thc": "24.55%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Blueberry Runtz",
-              "thc": "29.22%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Illemonati",
-              "thc": "30.52%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Lime Juice",
-              "thc": "25.83%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "The Soap",
-              "thc": "27.38%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Tropicana Cherry",
-              "thc": "22.19%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "socal"
+              "type": "Indica",
+              "strains": [
+                {
+                  "strain": "Blueberry Cookiez",
+                  "thc": "31.16%",
+                  "cases": {
+                    "socal": 6.0,
+                    "norcal": 7.0
+                  }
+                },
+                {
+                  "strain": "Glitter Bomb",
+                  "thc": "31.76%",
+                  "cases": {
+                    "socal": 0.25,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "Grape Junky",
+                  "thc": "25.74%",
+                  "cases": {
+                    "socal": 9.0,
+                    "norcal": 13.0
+                  }
+                },
+                {
+                  "strain": "Obama Runtz",
+                  "thc": "30.14%",
+                  "cases": {
+                    "socal": 14.0,
+                    "norcal": 11.0
+                  }
+                },
+                {
+                  "strain": "Original Glue",
+                  "thc": "30.86%",
+                  "cases": {
+                    "socal": 5.0,
+                    "norcal": 1.0
+                  }
+                },
+                {
+                  "strain": "Pack Mule",
+                  "thc": "31.29%",
+                  "cases": {
+                    "socal": 12.0,
+                    "norcal": 10.0
+                  }
+                },
+                {
+                  "strain": "Wedding Cake",
+                  "thc": "29.15%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.62
+                  }
+                }
               ]
             }
           ]
         },
         {
-          "type": "Hybrid",
-          "products": [
+          "title": "Live Rosin",
+          "size": "1G",
+          "unitPrice": 16.0,
+          "caseUnits": 8,
+          "casePrice": 128.0,
+          "groups": [
             {
-              "strain": "Jealousy x Kush Mintz",
-              "thc": "22.78%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "socal"
+              "type": "Hybrid",
+              "strains": [
+                {
+                  "strain": "Lemon Royale",
+                  "thc": "57.31%",
+                  "cases": {
+                    "socal": 26.0,
+                    "norcal": 36.0
+                  }
+                }
               ]
             },
             {
-              "strain": "Pink Certz",
-              "thc": "26.22%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "socal"
-              ]
-            },
-            {
-              "strain": "Pink Certz",
-              "thc": "26.25%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "Rainbow Sherbert",
-              "thc": "24.86%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Runtz",
-              "thc": "25.39%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
-              ]
-            },
-            {
-              "strain": "Strawberry Banana",
-              "thc": "28.89%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal"
-              ]
-            },
-            {
-              "strain": "White Runtz",
-              "thc": "28.79%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
+              "type": "Indica",
+              "strains": [
+                {
+                  "strain": "Berry Pie",
+                  "thc": "58.48%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 4.0
+                  }
+                },
+                {
+                  "strain": "Lemon OG",
+                  "thc": "59.55%",
+                  "cases": {
+                    "socal": 11.0,
+                    "norcal": 18.0
+                  }
+                }
               ]
             }
           ]
         },
         {
-          "type": "Indica",
-          "products": [
+          "title": "Pre-Roll Party Packs \u2014 28ct",
+          "size": "14G",
+          "unitPrice": 25.0,
+          "caseUnits": 8,
+          "casePrice": 200.0,
+          "groups": [
             {
-              "strain": "Black Maple",
-              "thc": "22.67%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "socal"
+              "type": "Sativa",
+              "strains": [
+                {
+                  "strain": "Blue Dream",
+                  "thc": "24.65%",
+                  "cases": {
+                    "socal": 0.38,
+                    "norcal": 0.62
+                  }
+                },
+                {
+                  "strain": "Chem Dawg",
+                  "thc": "26.71%",
+                  "cases": {
+                    "socal": 0.5,
+                    "norcal": 0.75
+                  }
+                },
+                {
+                  "strain": "Chem Dawg x OOG",
+                  "thc": "28.16%",
+                  "cases": {
+                    "socal": 11.0,
+                    "norcal": 6.0
+                  }
+                },
+                {
+                  "strain": "Tropicana Cherry",
+                  "thc": "27.20%",
+                  "cases": {
+                    "socal": 0.38,
+                    "norcal": 0.88
+                  }
+                },
+                {
+                  "strain": "Yahemi",
+                  "thc": "20.36%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.88
+                  }
+                }
               ]
             },
             {
-              "strain": "Black Maple",
-              "thc": "22.40%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal"
+              "type": "Hybrid",
+              "strains": [
+                {
+                  "strain": "Bubba Diagonal x Gush Mintz",
+                  "thc": "22.24%",
+                  "cases": {
+                    "socal": 4.0,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "Emerald Runtz",
+                  "thc": "26.19%",
+                  "cases": {
+                    "socal": 0.62,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "Gelato 41",
+                  "thc": "27.23%",
+                  "cases": {
+                    "socal": 0.25,
+                    "norcal": 0.62
+                  }
+                }
               ]
             },
             {
-              "strain": "Lemon Cherry Gelato",
-              "thc": "28.96%",
-              "sizes": [
-                "1G"
-              ],
-              "locations": [
-                "norcal",
-                "socal"
+              "type": "Indica",
+              "strains": [
+                {
+                  "strain": "LA Kush Cake",
+                  "thc": "31.35%",
+                  "cases": {
+                    "socal": 0.75,
+                    "norcal": 0.38
+                  }
+                },
+                {
+                  "strain": "Lemon Cherry Gelato",
+                  "thc": "24.60%",
+                  "cases": {
+                    "socal": 10.0,
+                    "norcal": 5.0
+                  }
+                },
+                {
+                  "strain": "Original Glue",
+                  "thc": "32.16%",
+                  "cases": {
+                    "socal": 0.12,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "Pave",
+                  "thc": "31.46%",
+                  "cases": {
+                    "socal": 18.0,
+                    "norcal": 20.0
+                  }
+                },
+                {
+                  "strain": "Sharpie",
+                  "thc": "23.72%",
+                  "cases": {
+                    "socal": 19.0,
+                    "norcal": 22.0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Pre-Rolls \u2014 Single 1g",
+          "size": "1G",
+          "unitPrice": 2.0,
+          "caseUnits": 28,
+          "casePrice": 56.0,
+          "groups": [
+            {
+              "type": "Sativa",
+              "strains": [
+                {
+                  "strain": "Amethyst",
+                  "thc": "26.75%",
+                  "cases": {
+                    "socal": 58.0,
+                    "norcal": 53.0
+                  }
+                },
+                {
+                  "strain": "Blueberry Jam",
+                  "thc": "24.55%",
+                  "cases": {
+                    "socal": 0.43,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "Blueberry Runtz",
+                  "thc": "29.22%",
+                  "cases": {
+                    "socal": 0.04,
+                    "norcal": 0.04
+                  }
+                },
+                {
+                  "strain": "Illemonati",
+                  "thc": "30.52%",
+                  "cases": {
+                    "socal": 0.18,
+                    "norcal": 8.0
+                  }
+                },
+                {
+                  "strain": "Lime Juice",
+                  "thc": "25.83%",
+                  "cases": {
+                    "socal": 0.57,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "The Soap",
+                  "thc": "27.38%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.57
+                  }
+                },
+                {
+                  "strain": "Tropicana Cherry",
+                  "thc": "22.19%",
+                  "cases": {
+                    "socal": 0.04,
+                    "norcal": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "type": "Hybrid",
+              "strains": [
+                {
+                  "strain": "Jealousy x Kush Mintz",
+                  "thc": "22.78%",
+                  "cases": {
+                    "socal": 0.07,
+                    "norcal": 0.0
+                  }
+                },
+                {
+                  "strain": "Pink Certz",
+                  "thc": "26.25%",
+                  "cases": {
+                    "socal": 0.07,
+                    "norcal": 0.43
+                  }
+                },
+                {
+                  "strain": "Rainbow Sherbert",
+                  "thc": "24.86%",
+                  "cases": {
+                    "socal": 0.36,
+                    "norcal": 0.04
+                  }
+                },
+                {
+                  "strain": "Runtz",
+                  "thc": "25.39%",
+                  "cases": {
+                    "socal": 7.0,
+                    "norcal": 15.0
+                  }
+                },
+                {
+                  "strain": "Strawberry Banana",
+                  "thc": "28.89%",
+                  "cases": {
+                    "socal": 0.0,
+                    "norcal": 0.96
+                  }
+                },
+                {
+                  "strain": "White Runtz",
+                  "thc": "28.79%",
+                  "cases": {
+                    "socal": 12.0,
+                    "norcal": 22.0
+                  }
+                }
+              ]
+            },
+            {
+              "type": "Indica",
+              "strains": [
+                {
+                  "strain": "Black Maple",
+                  "thc": "22.67%",
+                  "cases": {
+                    "socal": 0.57,
+                    "norcal": 0.43
+                  }
+                },
+                {
+                  "strain": "Lemon Cherry Gelato",
+                  "thc": "28.96%",
+                  "cases": {
+                    "socal": 0.75,
+                    "norcal": 1.11
+                  }
+                }
               ]
             }
           ]
