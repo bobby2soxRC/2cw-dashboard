@@ -258,6 +258,15 @@ const CARD_DEFS = [
     title: 'Menu Health',
     desc: 'Mix, freshness, and volume scores rolled up from T-SKU to B-SKU to Brand — with a trend over time.',
     href: '/menu_health.html'
+  },
+  {
+    key: 'brand_assets',
+    color: 'blue',
+    label: 'Marketing',
+    title: 'Brand Assets',
+    desc: 'Logos, photography, and brand guidelines for 2CW and partner brands — shared Drive folder.',
+    href: 'https://drive.google.com/drive/folders/1pb3zbrnUVXp1tBou8yIFSBFGON32df4T',
+    external: true
   }
   // Commission card is handled separately below
 ];
@@ -273,7 +282,8 @@ const CARD_ORDER_OVERRIDES = {
 // Card keys whose sheet column name doesn't match the key verbatim (e.g. has
 // spaces). Card keys not listed here are looked up as-is.
 const CARD_SHEET_COLS = {
-  menu_health: 'menu health'
+  menu_health: 'menu health',
+  brand_assets: 'brand assets'
 };
 
 // Commission columns in the sheet
@@ -544,6 +554,7 @@ function makeCard(def, idx){
   const a = document.createElement('a');
   a.className = `card ${def.color}`;
   a.href = def.href;
+  if(def.external){ a.target = '_blank'; a.rel = 'noopener'; }
   a.style.animationDelay = delays[idx] || '.08s';
   a.innerHTML = `
     <div class="card-dot"></div>
