@@ -559,6 +559,21 @@ def _thc_from_product(product: dict) -> float | None:
     return round(float(m.group(1)), 2) if m else None
 
 
+def _age_from_batch(batch: dict | None, today_dt) -> int | None:
+    """Days since the batch was finished/packaged — same PackDate ▸
+    ManufactureDate ▸ HarvestDate fallback used for the Freshness score."""
+    if not batch:
+        return None
+    batch_date = (
+        _parse_date(batch.get("PackDate"))
+        or _parse_date(batch.get("ManufactureDate"))
+        or _parse_date(batch.get("HarvestDate"))
+    )
+    if not batch_date:
+        return None
+    return (today_dt - batch_date).days
+
+
 def build_menu(product_catalog: dict, products_raw: list, inventory_raw: list,
                 batches_raw: list, today: str) -> dict:
     """
@@ -571,6 +586,7 @@ def build_menu(product_catalog: dict, products_raw: list, inventory_raw: list,
     another round trip.
     """
     products_by_id = {str(p["ProductID"]): p for p in products_raw if p.get("ProductID")}
+    today_dt = date.today()
 
     # Best batch per (ProductID, LocationID): most units on hand right now,
     # tie-broken by most recently packed — the lot a budtender pulling from
@@ -637,12 +653,13 @@ def build_menu(product_catalog: dict, products_raw: list, inventory_raw: list,
         thc = _thc_from_batch(batch_entry[2]) if batch_entry else None
         if thc is None:
             thc = _thc_from_product(p)
+        age_days = _age_from_batch(batch_entry[2], today_dt) if batch_entry else None
 
         card_key = (cat["brand"], cat["category"], cat["subcategory"], cat["weight_unit"])
         slot = cards[card_key][(strain, type_)]
         prior = slot.get(loc["key"])
         if prior is None or avail > prior["avail"]:
-            slot[loc["key"]] = {"thc": thc, "avail": avail, "bsku": bsku}
+            slot[loc["key"]] = {"thc": thc, "avail": avail, "bsku": bsku, "age": age_days}
 
     if skipped:
         print(f"  [menu] Skipped {skipped} in-stock row(s) with unrecognized product names")
@@ -666,6 +683,7 @@ def build_menu(product_catalog: dict, products_raw: list, inventory_raw: list,
             by_type[type_].append({
                 "strain": strain,
                 "thc": f"{dom['thc']:.2f}%" if dom["thc"] is not None else "—",
+                "daysOld": dom.get("age"),
                 "cases": cases,
             })
 

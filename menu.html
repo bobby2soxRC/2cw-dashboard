@@ -142,8 +142,18 @@
     </div>
     <div class="tb-group">
       <span class="tb-label">Min Cases</span>
-      <input type="range" min="0" max="10" step="1" value="1" id="minSlider" class="slider-input">
+      <input type="range" min="0" max="20" step="1" value="1" id="minSlider" class="slider-input">
       <span class="slider-val" id="minVal">1</span>
+    </div>
+    <div class="tb-group">
+      <span class="tb-label">Days Old — Min</span>
+      <input type="range" min="0" max="180" step="1" value="0" id="minAgeSlider" class="slider-input">
+      <span class="slider-val" id="minAgeVal">0</span>
+    </div>
+    <div class="tb-group">
+      <span class="tb-label">Days Old — Max</span>
+      <input type="range" min="0" max="180" step="1" value="180" id="maxAgeSlider" class="slider-input">
+      <span class="slider-val" id="maxAgeVal">180</span>
     </div>
     <button class="tb-btn" id="refreshBtn" onclick="loadAll()">↻ Refresh</button>
     <span class="updated-note" id="updated-note"></span>
@@ -165,6 +175,8 @@ const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>
 let MENU = null;
 let selectedLocations = JSON.parse(localStorage.getItem('2cw_menu_locations') || '["norcal","socal"]');
 let minCases = +(localStorage.getItem('2cw_menu_mincases') ?? '1');
+let minAgeDays = +(localStorage.getItem('2cw_menu_minage') ?? '0');
+let maxAgeDays = +(localStorage.getItem('2cw_menu_maxage') ?? '180');
 
 async function loadAll(){
   $('global-loading').style.display = 'flex';
@@ -195,6 +207,37 @@ function initControls(){
     localStorage.setItem('2cw_menu_mincases', String(minCases));
     render();
   };
+
+  $('minAgeSlider').value = minAgeDays;
+  $('minAgeVal').textContent = minAgeDays;
+  $('minAgeSlider').oninput = function(){
+    minAgeDays = +this.value;
+    if(minAgeDays > maxAgeDays){
+      maxAgeDays = minAgeDays;
+      $('maxAgeSlider').value = maxAgeDays;
+      $('maxAgeVal').textContent = maxAgeDays;
+      localStorage.setItem('2cw_menu_maxage', String(maxAgeDays));
+    }
+    $('minAgeVal').textContent = this.value;
+    localStorage.setItem('2cw_menu_minage', String(minAgeDays));
+    render();
+  };
+
+  $('maxAgeSlider').value = maxAgeDays;
+  $('maxAgeVal').textContent = maxAgeDays;
+  $('maxAgeSlider').oninput = function(){
+    maxAgeDays = +this.value;
+    if(maxAgeDays < minAgeDays){
+      minAgeDays = maxAgeDays;
+      $('minAgeSlider').value = minAgeDays;
+      $('minAgeVal').textContent = minAgeDays;
+      localStorage.setItem('2cw_menu_minage', String(minAgeDays));
+    }
+    $('maxAgeVal').textContent = this.value;
+    localStorage.setItem('2cw_menu_maxage', String(maxAgeDays));
+    render();
+  };
+
   renderLocChips();
 }
 
@@ -269,11 +312,15 @@ function renderBrandZone(brand){
   const cls = 'wm-' + brand.brandColor;         // wm-howie / wm-soma / wm-mendo
   const barCls = 'wm-brand-' + brand.brandColor; // wm-brand-howie / wm-brand-soma / wm-brand-mendo
   const cards = brand.cards.map(card => renderCard(card, cls, brand.brand)).filter(Boolean).join('');
-  if(!cards){
-    return `<div class="wm-brand-bar ${barCls}">${esc(brand.brand)} <span class="wm-brand-tag">0 ITEMS AT MIN CASES</span></div>`;
-  }
+  if(!cards) return ''; // no inventory available for this brand under current filters — hide the section entirely
   return `<div class="wm-brand-bar ${barCls}">${esc(brand.brand)}</div>
     <div class="wm-grid ${cls}">${cards}</div>`;
+}
+
+function strainMatchesFilters(strain){
+  if(totalCases(strain) < minCases) return false;
+  if(strain.daysOld != null && (strain.daysOld < minAgeDays || strain.daysOld > maxAgeDays)) return false;
+  return true;
 }
 
 // Real product photos, matched to the one card each actually depicts.
@@ -285,7 +332,7 @@ const CARD_IMAGES = {
 
 function renderCard(card, cls, brandName){
   const groupsHtml = card.groups.map(g => {
-    const strains = g.strains.filter(s => totalCases(s) >= minCases);
+    const strains = g.strains.filter(strainMatchesFilters);
     if(!strains.length) return '';
     const items = strains.map(s => {
       const locBadges = selectedLocations
