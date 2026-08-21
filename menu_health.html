@@ -377,6 +377,9 @@ function renderTree() {
 function fmtInt(n) {
   return n == null ? '—' : Math.round(n).toLocaleString();
 }
+function fmtDos(wos) {
+  return wos == null ? '—' : Math.round(wos * 7);
+}
 function actionName(r) {
   return `${r.bsku_concat || r.bsku}<span class="type"> — ${r.type || 'Unclassified'}</span>`;
 }
@@ -394,7 +397,7 @@ function prodItemHTML(r, rank) {
         <div class="action-stat">On hand <b>${fmtInt(r.current_units)}</b></div>
         <div class="action-stat">Target (60d) <b>${fmtInt(r.target_units)}</b></div>
         <div class="action-stat hl">Produce <b>+${fmtInt(r.qty_to_produce)}</b></div>
-        <div class="action-stat">WOS <b>${r.wos_now != null ? r.wos_now : '—'}</b><span class="action-arrow">→</span><b>${r.wos_after != null ? r.wos_after : '—'}</b></div>
+        <div class="action-stat">DOS <b>${fmtDos(r.wos_now)}</b><span class="action-arrow">→</span><b>${fmtDos(r.wos_after)}</b></div>
         ${freshBit}
       </div>
     </div>
@@ -436,7 +439,7 @@ function salesItemHTML(r, rank) {
         <div class="action-stat">On hand <b>${fmtInt(r.current_units)}</b></div>
         <div class="action-stat">60-day need <b>${fmtInt(r.target_units)}</b></div>
         <div class="action-stat hl">Push <b>${fmtInt(r.excess_units)}</b> units</div>
-        <div class="action-stat">WOS <b>${r.wos_now != null ? r.wos_now : '—'}</b></div>
+        <div class="action-stat">DOS <b>${fmtDos(r.wos_now)}</b></div>
         ${ageBit}${freshBit}
       </div>
     </div>
