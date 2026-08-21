@@ -192,6 +192,168 @@ def weighted_avg(items, value_key, weight_key):
     return round(total_v / total_w, 1) if total_w > 0 else None
 
 
+# ─── PRODUCTION / SALES-PUSH ACTION LISTS ──────────────────────────────────
+# Two more views on the same T-SKU tier, driven by production-batch economics
+# rather than the Mix/Freshness/Volume scores above:
+#
+#   Production — for each of the 3 production teams (Flower, Prerolls,
+#   Other = Concentrate + Vape), the 5 T-SKUs worth producing next, sized to
+#   a 60-day-supply batch (target_units = 60 * daily sales rate). Ranked by
+#   projected Volume + Freshness score lift multiplied by the batch quantity
+#   — i.e. units added x how much better those units make the score, which
+#   also roughly tracks how much weight that T-SKU will carry once produced
+#   (weighted-avg rollup weights on inventory_units). A T-SKU currently at
+#   zero units with active demand (stockout) gets a priority bump since it's
+#   also failing its Mix flavor-count contribution.
+#
+#   Sales push — a single ranked list (not split by team; that's a sales,
+#   not production, list) of T-SKUs sitting on the most excess inventory
+#   beyond a 60-day supply, weighted up for aging stock.
+TARGET_DOS_DAYS = 60
+PRODUCTION_GROUP = {
+    "Flower": "flower", "Indoor Flower": "flower",
+    "Preroll": "prerolls",
+    "Concentrate": "other", "Vape": "other",
+}
+
+
+def _parse_batch_date(s):
+    if not s:
+        return None
+    try:
+        return date.fromisoformat(str(s)[:10])
+    except ValueError:
+        return None
+
+
+def build_action_lists(asku_data, tsku_meta, tsku_rates, today_dt):
+    """tsku_meta: tsku -> {bsku, bsku_concat, brand, category, type,
+    flavor_count, flavor_goal} (built from the already-scored bsku_nodes)."""
+    batches_raw = load_json("inventory_batches.json", default=[]) or []
+
+    sku_to_tsku = {}
+    for r in asku_data:
+        sid = str(r.get("sku_id") or "")
+        if sid:
+            sku_to_tsku[sid] = r.get("tsku")
+
+    tsku_inv = defaultdict(int)
+    tsku_past30 = defaultdict(int)
+    for r in asku_data:
+        tsku = r.get("tsku")
+        if not tsku:
+            continue
+        tsku_inv[tsku] += r.get("inv_total") or 0
+        tsku_past30[tsku] += r.get("past30") or 0
+
+    age_wsum = defaultdict(float)
+    age_wtot = defaultdict(float)
+    for b in batches_raw:
+        tsku = sku_to_tsku.get(str(b.get("ProductID") or ""))
+        if not tsku:
+            continue
+        units = float(b.get("InventoryUnits") or 0)
+        if units <= 0:
+            continue
+        bd = (
+            _parse_batch_date(b.get("PackDate"))
+            or _parse_batch_date(b.get("ManufactureDate"))
+            or _parse_batch_date(b.get("HarvestDate"))
+        )
+        if not bd:
+            continue
+        age_days = (today_dt - bd).days
+        age_wsum[tsku] += age_days * units
+        age_wtot[tsku] += units
+    tsku_age = {t: age_wsum[t] / age_wtot[t] for t in age_wtot if age_wtot[t] > 0}
+
+    rows = []
+    for tsku, meta in tsku_meta.items():
+        current_units = tsku_inv.get(tsku, 0)
+        past30 = tsku_past30.get(tsku, 0)
+        daily_rate = tsku_rates.get(tsku)
+        if daily_rate is None:
+            daily_rate = past30 / 30 if past30 else 0.0
+        if current_units <= 0 and daily_rate <= 0:
+            continue  # no inventory, no sales — nothing actionable either way
+
+        wos_now = round(current_units / (daily_rate * 7), 1) if daily_rate > 0 else None
+        volume_now = interp(VOLUME_TABLE, wos_now) if wos_now is not None else (0.0 if current_units > 0 else None)
+
+        target_units = round(TARGET_DOS_DAYS * daily_rate) if daily_rate > 0 else 0
+        qty_to_produce = max(0, target_units - current_units)
+
+        wos_after = round((current_units + qty_to_produce) / (daily_rate * 7), 1) if daily_rate > 0 else None
+        volume_after = interp(VOLUME_TABLE, wos_after) if wos_after is not None else volume_now
+
+        age_days = tsku_age.get(tsku)
+        freshness_now = freshness_score(age_days)
+        if qty_to_produce > 0 and age_days is not None:
+            new_age = (age_days * current_units) / (current_units + qty_to_produce)
+            freshness_after = freshness_score(new_age)
+        elif qty_to_produce > 0 and current_units == 0:
+            freshness_after = freshness_score(0)  # brand-new batch, no prior baseline
+        else:
+            freshness_after = freshness_now
+
+        excess_units = max(0, current_units - target_units)
+
+        rows.append({
+            "tsku": tsku,
+            "bsku": meta["bsku"],
+            "bsku_concat": meta.get("bsku_concat", ""),
+            "brand": meta.get("brand", ""),
+            "category": meta.get("category", ""),
+            "type": meta.get("type", ""),
+            "flavor_count": meta.get("flavor_count"),
+            "flavor_goal": meta.get("flavor_goal"),
+            "current_units": current_units,
+            "daily_rate": round(daily_rate, 2),
+            "wos_now": wos_now,
+            "wos_after": wos_after,
+            "target_units": target_units,
+            "qty_to_produce": qty_to_produce,
+            "volume_now": volume_now,
+            "volume_after": volume_after,
+            "age_days": round(age_days) if age_days is not None else None,
+            "freshness_now": freshness_now,
+            "freshness_after": freshness_after,
+            "excess_units": excess_units,
+            "stockout": current_units <= 0 and daily_rate > 0,
+        })
+
+    # ── Production: 5 per team, ranked by qty x projected score lift ──────
+    production = {"flower": [], "prerolls": [], "other": []}
+    for r in rows:
+        if r["qty_to_produce"] <= 0:
+            continue
+        group = PRODUCTION_GROUP.get(r["category"])
+        if not group:
+            continue
+        lift = (r["volume_after"] or 0) - (r["volume_now"] or 0)
+        if r["freshness_now"] is not None and r["freshness_after"] is not None:
+            lift += r["freshness_after"] - r["freshness_now"]
+        impact = r["qty_to_produce"] * max(lift, 0.1)
+        if r["stockout"]:
+            impact *= 1.5
+        production[group].append(dict(r, impact_score=round(impact, 1)))
+    for group in production:
+        production[group].sort(key=lambda r: r["impact_score"], reverse=True)
+        production[group] = production[group][:5]
+
+    # ── Sales push: excess units beyond 60-day supply, weighted up by age ──
+    push_candidates = []
+    for r in rows:
+        if r["current_units"] <= 0 or r["excess_units"] <= 0:
+            continue
+        age_factor = 1 + (100 - r["freshness_now"]) / 100 if r["freshness_now"] is not None else 1.0
+        push_candidates.append(dict(r, push_score=round(r["excess_units"] * age_factor, 1)))
+    push_candidates.sort(key=lambda r: r["push_score"], reverse=True)
+    sales_push = push_candidates[:5]
+
+    return production, sales_push
+
+
 def score():
     today = date.today().isoformat()
     print(f"\n=== menu_health_score.py  ref_date={today} ===\n")
@@ -331,7 +493,35 @@ def score():
         "overall": weighted_avg(active_brands, "overall", "inventory_units"),
     }
 
-    snapshot = {"ref_date": today, "total": total, "brands": brand_nodes}
+    # ── Production / Sales-push action lists (T-SKU tier) ─────────────────
+    tsku_meta = {}
+    for b in bsku_nodes:
+        for t in b["tskus"]:
+            tsku_meta[t["tsku"]] = {
+                "bsku": b["bsku"],
+                "bsku_concat": b["bsku_concat"],
+                "brand": b["brand"],
+                "category": b["category"],
+                "type": t["type"],
+                "flavor_count": t["flavor_count"],
+                "flavor_goal": t["flavor_goal"],
+            }
+    production, sales_push = build_action_lists(
+        asku_data, tsku_meta, inv.get("tsku_daily_rates", {}), date.fromisoformat(today)
+    )
+    print(
+        f"  Production picks: flower={len(production['flower'])} "
+        f"prerolls={len(production['prerolls'])} other={len(production['other'])}"
+    )
+    print(f"  Sales push picks: {len(sales_push)}")
+
+    snapshot = {
+        "ref_date": today,
+        "total": total,
+        "brands": brand_nodes,
+        "production": production,
+        "sales_push": sales_push,
+    }
     save_json("menu_health.json", snapshot)
 
     # ── History: dedupe by ref_date, keep most recent 180 days ────────────────

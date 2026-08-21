@@ -25,15 +25,21 @@
   body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5}
 
   /* NAV */
-  .nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;padding-top:env(safe-area-inset-top);display:flex;align-items:center;height:calc(52px + env(safe-area-inset-top));position:sticky;top:0;z-index:100;gap:0}
+  .nav{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;padding-top:env(safe-area-inset-top)}
+  .nav-top{display:flex;align-items:center;height:52px;padding:0 24px;gap:0}
   .nav-back{display:flex;align-items:center;height:52px;padding:0 16px;font-size:12px;font-weight:500;color:var(--muted);text-decoration:none;border-right:1px solid var(--border);margin-right:16px;transition:color .15s}
   .nav-back:hover{color:var(--text)}
-  .nav-brand{font-weight:700;font-size:15px;letter-spacing:.04em;color:var(--text);margin-right:32px}
+  .nav-brand{font-weight:700;font-size:15px;letter-spacing:.04em;color:var(--text);margin-right:auto}
   .nav-brand span{color:var(--accent)}
-  .nav-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+  .nav-right{display:flex;align-items:center;gap:12px;flex-shrink:0}
   .ref-date{font-size:11px;color:var(--muted)}
   .refresh-btn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:12px;padding:5px 12px;border-radius:6px;cursor:pointer}
   .refresh-btn:hover{color:var(--text);border-color:var(--accent)}
+  .nav-tabs{display:flex;align-items:stretch;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:0 24px;height:40px;border-top:1px solid var(--border)}
+  .nav-tabs::-webkit-scrollbar{display:none}
+  .nav-tab{padding:0 14px;height:40px;display:flex;align-items:center;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;flex-shrink:0;scroll-snap-align:start}
+  .nav-tab:hover{color:var(--text)}
+  .nav-tab.active{color:var(--text);border-bottom-color:var(--accent)}
 
   /* PAGE */
   .page{padding:24px;max-width:1400px;margin:0 auto}
@@ -84,16 +90,49 @@
     .mh-row{flex-wrap:wrap}
     .mh-mini-gauges{width:100%;justify-content:flex-start;margin-top:6px}
   }
+
+  /* PRODUCTION / SALES ACTION LISTS */
+  .prod-groups{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start}
+  @media(max-width:1000px){.prod-groups{grid-template-columns:1fr}}
+  .prod-group-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .prod-group-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+  .prod-group-title{font-size:14px;font-weight:700}
+  .prod-group-count{font-size:11px;color:var(--muted)}
+  .action-list{display:flex;flex-direction:column;gap:1px;background:var(--border)}
+  .action-item{background:var(--surface);padding:14px 18px;display:flex;gap:12px;align-items:flex-start}
+  .action-rank{width:22px;height:22px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--muted);flex-shrink:0;margin-top:1px}
+  .action-body{flex:1;min-width:0}
+  .action-name{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .action-name .type{color:var(--muted);font-weight:400}
+  .action-badges{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap}
+  .action-badge{font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 6px;border-radius:4px;background:rgba(240,92,92,.15);color:var(--red)}
+  .action-stats{display:flex;gap:16px;margin-top:8px;flex-wrap:wrap}
+  .action-stat{font-size:11px;color:var(--muted)}
+  .action-stat b{color:var(--text);font-family:var(--mono);font-weight:600}
+  .action-stat.hl b{color:var(--accent)}
+  .action-arrow{color:var(--muted);font-size:10px;margin:0 3px}
+  .empty-note{padding:18px;color:var(--muted);font-size:12px;text-align:center}
+  /* Sales page reuses .action-list full-width, single column */
+  #sales-list{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;gap:0}
+  #sales-list .action-item{background:var(--surface)}
+  #sales-list .action-item:not(:last-child){border-bottom:1px solid var(--border)}
 </style>
 </head>
 <body>
 
 <nav class="nav">
-  <a href="https://2cwdb.netlify.app" class="nav-back">← Directory</a>
-  <div class="nav-brand">2CW <span>Menu Health</span></div>
-  <div class="nav-right">
-    <span class="ref-date" id="ref-date">Loading…</span>
-    <button class="refresh-btn" onclick="loadAll()">↻ Refresh</button>
+  <div class="nav-top">
+    <a href="https://2cwdb.netlify.app" class="nav-back">← Directory</a>
+    <div class="nav-brand">2CW <span>Menu Health</span></div>
+    <div class="nav-right">
+      <span class="ref-date" id="ref-date">Loading…</span>
+      <button class="refresh-btn" onclick="loadAll()">↻ Refresh</button>
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="showPage('menu-health',this)">Menu Health</div>
+    <div class="nav-tab" onclick="showPage('production',this)">Production</div>
+    <div class="nav-tab" onclick="showPage('sales',this)">Sales</div>
   </div>
 </nav>
 
@@ -135,6 +174,22 @@
 
   <div class="section-title">Brands → B-SKUs → T-SKUs</div>
   <div class="mh-tree" id="mh-tree"></div>
+</div>
+
+<div id="page-production" class="page" style="display:none">
+  <div class="page-header">
+    <div class="page-title">Production Priorities</div>
+    <div class="page-sub">Top 5 T-SKUs per team to produce next, each batch sized to a 60-day supply. Ranked by projected Volume + Freshness score improvement — highest impact on menu health first. Split by team so Flower, Prerolls, and Concentrates/Vapes can each work their own queue.</div>
+  </div>
+  <div class="prod-groups" id="prod-groups"></div>
+</div>
+
+<div id="page-sales" class="page" style="display:none">
+  <div class="page-header">
+    <div class="page-title">Sales Push Priorities</div>
+    <div class="page-sub">Top 5 T-SKUs to push ASAP — the most excess inventory beyond a 60-day supply, weighted up for aging stock.</div>
+  </div>
+  <div class="action-list" id="sales-list"></div>
 </div>
 
 <script>
@@ -318,6 +373,91 @@ function renderTree() {
   $('mh-tree').innerHTML = menuData.brands.map(brandRowHTML).join('');
 }
 
+// ─── PRODUCTION / SALES ACTION LISTS ────────────────────────────────────────
+function fmtInt(n) {
+  return n == null ? '—' : Math.round(n).toLocaleString();
+}
+function actionName(r) {
+  return `${r.bsku_concat || r.bsku}<span class="type"> — ${r.type || 'Unclassified'}</span>`;
+}
+function prodItemHTML(r, rank) {
+  const badges = r.stockout ? '<span class="action-badge">Stockout</span>' : '';
+  const freshBit = (r.freshness_now != null && r.freshness_after != null)
+    ? `<div class="action-stat">Freshness <b>${Math.round(r.freshness_now)}</b><span class="action-arrow">→</span><b>${Math.round(r.freshness_after)}</b></div>`
+    : '';
+  return `<div class="action-item">
+    <div class="action-rank">${rank}</div>
+    <div class="action-body">
+      <div class="action-name">${actionName(r)}</div>
+      <div class="action-badges">${badges}</div>
+      <div class="action-stats">
+        <div class="action-stat">On hand <b>${fmtInt(r.current_units)}</b></div>
+        <div class="action-stat">Target (60d) <b>${fmtInt(r.target_units)}</b></div>
+        <div class="action-stat hl">Produce <b>+${fmtInt(r.qty_to_produce)}</b></div>
+        <div class="action-stat">WOS <b>${r.wos_now != null ? r.wos_now : '—'}</b><span class="action-arrow">→</span><b>${r.wos_after != null ? r.wos_after : '—'}</b></div>
+        ${freshBit}
+      </div>
+    </div>
+  </div>`;
+}
+function renderProduction() {
+  const groups = [
+    { key: 'flower', label: 'Flower' },
+    { key: 'prerolls', label: 'Prerolls' },
+    { key: 'other', label: 'Other (Concentrates & Vapes)' },
+  ];
+  const prod = (menuData && menuData.production) || {};
+  $('prod-groups').innerHTML = groups.map(g => {
+    const items = prod[g.key] || [];
+    const body = items.length
+      ? items.map((r, i) => prodItemHTML(r, i + 1)).join('')
+      : '<div class="empty-note">Nothing needs producing here right now.</div>';
+    return `<div class="prod-group-card">
+      <div class="prod-group-header">
+        <div class="prod-group-title">${g.label}</div>
+        <div class="prod-group-count">${items.length} pick${items.length === 1 ? '' : 's'}</div>
+      </div>
+      <div class="action-list">${body}</div>
+    </div>`;
+  }).join('');
+}
+function salesItemHTML(r, rank) {
+  const ageBit = r.age_days != null
+    ? `<div class="action-stat">Avg age <b>${fmtInt(r.age_days)}d</b></div>`
+    : '';
+  const freshBit = r.freshness_now != null
+    ? `<div class="action-stat">Freshness <b>${Math.round(r.freshness_now)}</b></div>`
+    : '';
+  return `<div class="action-item">
+    <div class="action-rank">${rank}</div>
+    <div class="action-body">
+      <div class="action-name">${actionName(r)}<span class="type"> · ${r.brand || ''}</span></div>
+      <div class="action-stats">
+        <div class="action-stat">On hand <b>${fmtInt(r.current_units)}</b></div>
+        <div class="action-stat">60-day need <b>${fmtInt(r.target_units)}</b></div>
+        <div class="action-stat hl">Push <b>${fmtInt(r.excess_units)}</b> units</div>
+        <div class="action-stat">WOS <b>${r.wos_now != null ? r.wos_now : '—'}</b></div>
+        ${ageBit}${freshBit}
+      </div>
+    </div>
+  </div>`;
+}
+function renderSales() {
+  const items = (menuData && menuData.sales_push) || [];
+  $('sales-list').innerHTML = items.length
+    ? items.map((r, i) => salesItemHTML(r, i + 1)).join('')
+    : '<div class="empty-note">No overstocked or aging T-SKUs flagged right now.</div>';
+}
+
+// ─── NAV ────────────────────────────────────────────────────────────────────
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => { p.style.display = 'none'; });
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  const page = $('page-' + id);
+  if (page) page.style.display = 'block';
+  if (el) el.classList.add('active');
+}
+
 // ─── TREND CHART ────────────────────────────────────────────────────────────
 Chart.defaults.color = '#7b8099';
 Chart.defaults.borderColor = '#2a2f42';
@@ -352,7 +492,7 @@ function renderTrend(history) {
 async function loadAll() {
   $('global-loading').style.display = 'flex';
   $('global-error').style.display = 'none';
-  $('page-menu-health').style.display = 'none';
+  document.querySelectorAll('.page').forEach(p => { p.style.display = 'none'; });
 
   try {
     const [menuRes, histRes] = await Promise.all([
@@ -373,13 +513,15 @@ async function loadAll() {
     renderTotal();
     renderTree();
     renderTrend(history);
+    renderProduction();
+    renderSales();
   } catch (err) {
     console.error('Data load failed:', err);
     $('global-error').textContent = 'Failed to load live data: ' + err.message;
     $('global-error').style.display = 'block';
   }
   $('global-loading').style.display = 'none';
-  $('page-menu-health').style.display = 'block';
+  showPage('menu-health', document.querySelector('.nav-tab'));
 }
 
 // ─── PIN GATE ──────────────────────────────────────────────────────────────
