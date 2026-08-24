@@ -156,7 +156,6 @@ def dedupe_by(records, key_field):
 # Human-readable PG labels keyed by BSKU.
 # New BSKUs added to DATAV but not listed here get an auto-derived label.
 PG_LABELS = {
-    "SRF010101": "SRF Flower 1g",
     "SRF010102": "SRF Flower 8th",
     "SRF010104": "SRF Flower 14g",
     "SRF010105": "SRF Flower Oz",
@@ -182,7 +181,6 @@ PG_LABELS = {
 
 # Hardcoded fallback used when DATAV fetch fails
 _FALLBACK_PG_TABLE = [
-    ("SRF Flower 1g",         "SRF010101", "Soma Rosa Farms", "Flower",      "Bigs",           "1g"  ),
     ("SRF Flower 8th",        "SRF010102", "Soma Rosa Farms", "Flower",      "Bigs",           "3.5g"),
     ("SRF Flower 14g",        "SRF010104", "Soma Rosa Farms", "Flower",      "Bigs",           "14g" ),
     ("SRF Flower Oz",         "SRF010105", "Soma Rosa Farms", "Flower",      "Bigs",           "28g" ),
@@ -1548,6 +1546,8 @@ def transform():
     print("Computing product group aggregates...")
     inv_pg_data = []
     for pg, bsku, brand, cat, sub, wu in PG_TABLE:
+        if STATUS_BY_BSKU.get(bsku, "").strip().lower() in _INACTIVE_STATUSES:
+            continue
         inv    = inv_by_bsku.get(bsku, 0)
         past30 = sales30_by_bsku.get(bsku, 0)
         dos    = round(inv / (past30 / 30), 1) if past30 > 0 else None
