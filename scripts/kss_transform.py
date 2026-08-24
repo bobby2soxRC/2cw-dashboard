@@ -772,6 +772,7 @@ _SOMA_REP_MAP = {
     "john donham":                "John",
     "jonathan castorena":         "Jonathan",
     "mac jorgensen":              "Mac",
+    "emily resnick":              "Emily",
 }
 
 def _fix_account_name(s: str) -> str:
@@ -969,6 +970,7 @@ def compute_commission_data(sales_rows: list, customer_name_map: dict,
         "mac":      {"base": 0.015, "new": 0.015},
         "john":     {"base": 0.015, "new": 0.03},
         "jonathan": {"base": 0.01,  "new": 0.01},
+        "emily":    {"base": 0.10,  "new": 0.10},
     }
 
     # Build per-customer monthly revenue for all history (new door lookback)
