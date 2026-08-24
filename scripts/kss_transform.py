@@ -834,6 +834,15 @@ def load_rep_assignments() -> dict:
             raise ValueError("No assignments parsed from sheet")
 
         print(f"{len(assignments)} accounts loaded.")
+
+        # Refresh the local fallback so it never goes more than one run stale.
+        try:
+            os.makedirs(CONFIG_DIR, exist_ok=True)
+            with open(os.path.join(CONFIG_DIR, "rep_assignments.json"), "w") as f:
+                json.dump(assignments, f, indent=2, sort_keys=True)
+        except OSError:
+            pass
+
         return assignments
 
     except Exception as exc:
@@ -1833,7 +1842,7 @@ def transform():
     # ── 2CW rep cards ─────────────────────────────────────────────────────────
     print("Computing 2CW rep cards...")
 
-    TWOCW_REPS = ["John", "Billy", "Mac", "Jonathan"]
+    TWOCW_REPS = ["John", "Billy", "Mac", "Jonathan", "Emily"]
     accts_by_twocw = defaultdict(list)
     for a in acct_records:
         for rep in a["_twocw_reps"]:
