@@ -639,7 +639,7 @@ function buildSales(){
   // Mendo-only accounts: any with MDO units
   const mendoAccts = records.filter(r => MDO_PGS.some(pg => (r.pg_units||{})[pg]>0));
   mendoAccts.forEach(r => {
-    r.mdo_units = MDO_PGS.reduce((s,pg)=>s+(r.pg_units||{})[pg]||0, 0);
+    r.mdo_units = MDO_PGS.reduce((s,pg)=>s+((r.pg_units||{})[pg]||0), 0);
   });
 
   // KPIs
@@ -769,8 +769,8 @@ function buildMtdBar(){
 
   // MTD from bskus
   const mtdBskus    = (monthlyData.mtd||{}).bskus || {};
-  const mdoMtdRev   = MDO_BSKUS.reduce((s,b)=>s+(mtdBskus[b]||{}).rev||0, 0);
-  const mdoMtdUnits = MDO_BSKUS.reduce((s,b)=>s+(mtdBskus[b]||{}).units||0, 0);
+  const mdoMtdRev   = MDO_BSKUS.reduce((s,b)=>s+((mtdBskus[b]||{}).rev||0), 0);
+  const mdoMtdUnits = MDO_BSKUS.reduce((s,b)=>s+((mtdBskus[b]||{}).units||0), 0);
 
   const daysElapsed   = monthlyData.days_elapsed   || 1;
   const daysRemaining = monthlyData.days_remaining || 0;
@@ -784,9 +784,10 @@ function buildMtdBar(){
   // Complete months (exclude current)
   const allMdo = (monthlyData.monthly||[]).map(m => {
     const s = m.subcats || {};
-    return { month: m.month, rev: MDO_SUBCATS.reduce((t,pg)=>t+(s[pg]||{}).rev||0, 0) };
+    return { month: m.month, rev: MDO_SUBCATS.reduce((t,pg)=>t+((s[pg]||{}).rev||0), 0) };
   });
-  const complete = allMdo.filter(m => m.month !== currentMonth);
+  const curDate  = new Date(currentMonth);
+  const complete = allMdo.filter(m => new Date(m.month) < curDate);
   const lastMo   = complete[complete.length - 1];
   const last3    = complete.slice(-3);
   const avg3     = last3.length ? last3.reduce((s,m)=>s+m.rev, 0) / last3.length : 0;
