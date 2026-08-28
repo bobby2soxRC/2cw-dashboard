@@ -6,7 +6,7 @@
 // do on paper and the arithmetic the app does can be compared directly.
 
 const A = require('../prod_analytics.js');
-const { stages, ASOF } = require('./prod_fixture.js');
+const { stages, ASOF, DRY_UID } = require('./prod_fixture.js');
 const { G_PER_LB } = require('../production_stations.js');
 
 let failures = 0;
@@ -75,6 +75,20 @@ check('#79 lbs', trimmers.find((x) => x.employeeNo === '79').lb, Math.round((298
 console.log('\ncrew throughput');
 const crew = A.crewThroughput(stages);
 check('bucking lbs per labor hour', crew.find((c) => c.key === 'buck').lbPerLaborHour, 102 / 32, 0.01);
+
+console.log('\ncrew labor log (employee × batch, the payroll-join seam)');
+const laborLog = A.crewLaborLog(stages);
+const buckTouches = laborLog.filter((e) => e.stationKey === 'buck');
+check('two crew rows off the buck record', buckTouches.length, 2);
+check('crew row carries the batch UID forward', buckTouches[0].uid, DRY_UID);
+check('hand-trim worksheet contributes touches with no hours yet', laborLog.some((e) => e.stationKey === 'hand_trim' && e.hours === null), true);
+
+const byEmp = A.crewLaborByEmployee(stages);
+const emp42 = byEmp.find((e) => e.employeeNo === '42');
+check('employee 42 shows 4 hours', emp42.hours, 4);
+check('employee 42 touched one distinct batch', emp42.batchCount, 1);
+const emp79 = byEmp.find((e) => e.employeeNo === '79');
+check('employee 79 (hand-trim only) shows 0 logged hours, 1 touch', [emp79.hours, emp79.touches], [0, 1]);
 
 console.log('\nrequests');
 const reqs = A.requestSummary(stages, ASOF);

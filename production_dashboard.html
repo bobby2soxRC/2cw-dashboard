@@ -365,7 +365,9 @@
   function renderLabor() {
     const trimmers = A.trimmerStats(stages, filter);
     const crew = A.crewThroughput(stages, filter);
+    const byEmployee = A.crewLaborByEmployee(stages, filter);
     const maxG = Math.max(...trimmers.map((x) => x.grams), 1);
+    const maxH = Math.max(...byEmployee.map((x) => x.hours), 1);
 
     const trimRows = trimmers.map((e) => `<tr>
       ${td(`<span style="font-family:'DM Mono',monospace">#${esc(e.employeeNo)}</span>`)}
@@ -376,8 +378,20 @@
       ${td(`<span class="pill ${STATION_BY_KEY[c.key].color}">${t(c.title)}</span>`)}
       ${tdn(c.records, 0)} ${tdn(c.lb, 1)} ${tdn(c.laborHours, 1)} ${tdn(c.lbPerLaborHour, 2)}
     </tr>`);
+    const empRows = byEmployee.map((e) => `<tr>
+      ${td(`<span style="font-family:'DM Mono',monospace">#${esc(e.employeeNo)}</span>`)}
+      ${tdn(e.hours, 2)} ${tdn(e.touches, 0)} ${tdn(e.batchCount, 0)}
+      ${td(e.stations.map((k) => `<span class="pill ${(STATION_BY_KEY[k] || {}).color || ''}">${t((STATION_BY_KEY[k] || {}).title || k)}</span>`).join(' '), 'wide')}
+      ${td(bar(e.hours / maxH))}
+    </tr>`);
 
     return `
+      <div class="card">
+        <h2>${t({ en: 'Crew log by employee', es: 'Registro de equipo por empleado' })}</h2>
+        <div class="note">${t({ en: 'Every employee number logged against a batch, from the optional crew grid on each station plus the hand-trim worksheet. This is the seam for a payroll/timeclock join later — match employee # + date here against a timeclock export to get labor cost per batch. Hours show as — where only the batch touch was captured, not time (the hand-trim worksheet today).', es: 'Cada número de empleado registrado contra un lote, desde la cuadrícula opcional de equipo en cada estación más la hoja de corte a mano. Este es el punto de conexión para un futuro cruce con nómina/reloj — coincida N.º de empleado + fecha aquí con una exportación de nómina para obtener el costo laboral por lote. Las horas se muestran como — donde solo se registró el contacto con el lote, no el tiempo (la hoja de corte a mano hoy).' })}</div>
+        ${table([{ label: t(L.employee) }, { label: t(L.laborHours), num: true }, { label: t({ en: 'Batch Touches', es: 'Contactos con lotes' }), num: true },
+                 { label: t({ en: 'Distinct Batches', es: 'Lotes distintos' }), num: true }, { label: t(L.stage) }, { label: '' }], empRows)}
+      </div>
       <div class="card">
         <h2>${t({ en: 'Trimmer output', es: 'Producción por persona' })}</h2>
         <div class="note">${t({ en: 'Straight off the hand-trim work orders — every bag weighed out, by employee number.', es: 'Directo de las órdenes de corte a mano — cada bolsa pesada, por número de empleado.' })}</div>

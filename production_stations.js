@@ -67,6 +67,20 @@ const F = {
   laborHours: () => ({ k: 'laborHours', t: 'number', min: 0, step: 0.25,
                        l: { en: 'Labor Hours', es: 'Horas de trabajo' } }),
   notes: () => ({ k: 'notes', t: 'textarea', l: { en: 'Notes', es: 'Notas' } }),
+  // Per-employee hours on this batch/UID — the crewSize/laborHours fields above
+  // give a station-level total; this is what actually links a numeric employee
+  // ID to a specific batch, which is what a future payroll join needs (match
+  // employee # + date here against employee # + date in a timeclock export to
+  // get real labor cost per batch). Optional: a precision layer, not a gate.
+  crew: () => ({ k: 'crew', t: 'lineitems',
+    l: { en: 'Crew — Hours by Employee (optional)', es: 'Equipo — horas por empleado (opcional)' },
+    hint: { en: 'One row per person, if you want labor cost tracked down to this batch. Skip it and the crew size/hours above still cover the total.',
+            es: 'Una fila por persona, si desea rastrear el costo laboral hasta este lote. Si se omite, el tamaño del equipo y las horas de arriba siguen cubriendo el total.' },
+    cols: [
+      { k: 'employeeNo', t: 'text', l: { en: 'Employee #', es: 'N.º de empleado' }, inputmode: 'numeric' },
+      { k: 'hours', t: 'number', l: { en: 'Hours', es: 'Horas' }, min: 0, step: 0.25 }
+    ],
+    totalCol: 'hours' }),
   photo: () => ({ k: 'photo', t: 'photo', l: { en: 'Photo (optional)', es: 'Foto (opcional)' },
                   hint: { en: 'Photo of the scale reading, tag, or paperwork.',
                           es: 'Foto de la báscula, la etiqueta o el papeleo.' } }),
@@ -93,6 +107,90 @@ function totalsBlock(inputKey, outputKeys) {
 }
 
 const PROD_STATIONS = [
+  // ── CULTIVATION (PLACEHOLDER) ────────────────────────────────────────────
+  // Everything below, up to Harvest, is a stub. Cultivation runs several real
+  // processes today (clone/veg intake, feed schedules, IPM, defoliation,
+  // room transitions, pre-harvest sign-off...) and none of them are captured
+  // yet — these three stations exist so the department shows up in the app
+  // and the shape (date, batch tag, crew) is ready, not because the fields
+  // below are the real SOP. Replace/expand them once cultivation's actual
+  // process list is nailed down; nothing downstream depends on these three
+  // keys or their fields, so they're free to change shape without breaking
+  // the harvest-onward pipeline.
+  {
+    key: 'cult_batch_log',
+    dept: { en: 'Cultivation', es: 'Cultivo' },
+    title: { en: 'Plant Batch Log (placeholder)', es: 'Registro de lote de plantas (borrador)' },
+    desc: { en: 'PLACEHOLDER — a new batch starting cultivation: clone/seed intake, or a stage move (veg → flower). Fields below are a stub pending the real process list.',
+            es: 'BORRADOR — un nuevo lote que inicia cultivo: recepción de clones/semillas, o cambio de etapa (veg → flor). Los campos son un borrador pendiente del proceso real.' },
+    color: 'green',
+    headline: 'plantCount',
+    fields: [
+      F.date(), F.site(),
+      { k: 'room', t: 'text', l: { en: 'Room / Zone', es: 'Sala / zona' } },
+      { k: 'batchTag', t: 'uid', l: { en: 'Batch Tag / Metrc Plant Tag', es: 'Etiqueta de lote / etiqueta de planta Metrc' } },
+      F.strain(),
+      { k: 'stage', t: 'select', allowOther: true,
+        l: { en: 'Stage', es: 'Etapa' },
+        opts: [
+          { v: 'clone', l: { en: 'Clone / Propagation', es: 'Clon / propagación' } },
+          { v: 'veg', l: { en: 'Vegetative', es: 'Vegetativo' } },
+          { v: 'flower', l: { en: 'Flower', es: 'Floración' } }
+        ] },
+      { k: 'plantCount', t: 'number', min: 0, step: 1, dp: 0,
+        l: { en: 'Plant Count', es: 'Número de plantas' } },
+      F.teamLead(), F.crewSize(), F.laborHours(), F.crew(), F.notes(), F.photo()
+    ]
+  },
+  {
+    key: 'cult_ipm_feed',
+    dept: { en: 'Cultivation', es: 'Cultivo' },
+    title: { en: 'IPM / Feed Log (placeholder)', es: 'Registro de IPM / alimentación (borrador)' },
+    desc: { en: 'PLACEHOLDER — a feeding or pest/disease management application against a room or batch. Fields below are a stub pending the real product list and rates.',
+            es: 'BORRADOR — una aplicación de alimentación o manejo de plagas/enfermedades a una sala o lote. Los campos son un borrador pendiente de la lista real de productos y dosis.' },
+    color: 'green',
+    headline: 'quantity',
+    fields: [
+      F.date(), F.site(),
+      { k: 'room', t: 'text', l: { en: 'Room / Zone', es: 'Sala / zona' } },
+      { k: 'batchTag', t: 'uid', l: { en: 'Batch Tag / Metrc Plant Tag', es: 'Etiqueta de lote / etiqueta de planta Metrc' } },
+      { k: 'applicationType', t: 'select', allowOther: true,
+        l: { en: 'Type', es: 'Tipo' },
+        opts: [
+          { v: 'feed', l: { en: 'Feed / Nutrients', es: 'Alimentación / nutrientes' } },
+          { v: 'ipm', l: { en: 'IPM — Pest / Disease', es: 'IPM — plaga / enfermedad' } },
+          { v: 'defoliation', l: { en: 'Defoliation', es: 'Defoliación' } }
+        ] },
+      { k: 'product', t: 'text', l: { en: 'Product / Mix', es: 'Producto / mezcla' } },
+      { k: 'quantity', t: 'number', min: 0, step: 0.01, l: { en: 'Quantity Used', es: 'Cantidad usada' } },
+      { k: 'unit', t: 'text', l: { en: 'Unit', es: 'Unidad' }, hint: { en: 'gal, oz, lb — whatever the product is measured in.', es: 'gal, oz, lb — como se mida el producto.' } },
+      F.teamLead(), F.crewSize(), F.laborHours(), F.crew(), F.notes(), F.photo()
+    ]
+  },
+  {
+    key: 'cult_preharvest',
+    dept: { en: 'Cultivation', es: 'Cultivo' },
+    title: { en: 'Pre-Harvest Inspection (placeholder)', es: 'Inspección previa a cosecha (borrador)' },
+    desc: { en: 'PLACEHOLDER — final sign-off before the harvest crew is called in. Fields below are a stub pending the real checklist.',
+            es: 'BORRADOR — visto bueno final antes de llamar al equipo de cosecha. Los campos son un borrador pendiente de la lista de verificación real.' },
+    color: 'green',
+    headline: 'result',
+    fields: [
+      F.date(), F.site(),
+      { k: 'room', t: 'text', l: { en: 'Room / Zone', es: 'Sala / zona' } },
+      { k: 'batchTag', t: 'uid', l: { en: 'Batch Tag / Metrc Plant Tag', es: 'Etiqueta de lote / etiqueta de planta Metrc' } },
+      F.strain(),
+      { k: 'result', t: 'select', req: true,
+        l: { en: 'Result', es: 'Resultado' },
+        opts: [
+          { v: 'ready', l: { en: 'Ready for harvest', es: 'Lista para cosecha' } },
+          { v: 'hold', l: { en: 'Hold — not ready', es: 'En espera — no lista' } }
+        ] },
+      { k: 'inspectedBy', t: 'text', req: true, l: { en: 'Inspected By', es: 'Inspeccionado por' } },
+      F.notes(), F.photo()
+    ]
+  },
+
   // ── HARVEST ───────────────────────────────────────────────────────────────
   {
     key: 'harvest',
@@ -142,7 +240,7 @@ const PROD_STATIONS = [
           { v: 'dry_facility', l: { en: 'Drying facility', es: 'Instalación de secado' } },
           { v: 'freezer', l: { en: 'Freezer (fresh frozen)', es: 'Congelador (fresco congelado)' } }
         ] },
-      F.teamLead(), F.crewSize(), F.laborHours(), F.notes(), F.photo()
+      F.teamLead(), F.crewSize(), F.laborHours(), F.crew(), F.notes(), F.photo()
     ],
     flow: { lossKind: 'origin', outputs: [{ field: 'wetWeightLb', category: 'wet_whole_plant' }] }
   },
@@ -184,7 +282,7 @@ const PROD_STATIONS = [
         l: { en: 'Trellises / Cages Hung', es: 'Mallas / jaulas colgadas' } },
       { k: 'dryRoom', t: 'select', ref: 'dryRooms', allowOther: true, req: true,
         l: { en: 'Dry Room / Area', es: 'Sala / área de secado' } },
-      F.teamLead(), F.crewSize(), F.laborHours(), F.notes(), F.photo()
+      F.teamLead(), F.crewSize(), F.laborHours(), F.crew(), F.notes(), F.photo()
     ],
     flow: { lossKind: 'receiving',
             input: { field: 'farmReportedLb', category: 'wet_whole_plant' },
@@ -268,7 +366,7 @@ const PROD_STATIONS = [
         l: { en: 'Bucked Flower Yield %', es: '% de rendimiento de flor desvarada' } },
       { k: 'newBuckedUid', t: 'uid', l: { en: 'New Bucked Flower UID', es: 'Nuevo UID de flor desvarada' } },
       { k: 'newBigLeafUid', t: 'uid', l: { en: 'New Big Leaf UID', es: 'Nuevo UID de hoja grande' } },
-      F.teamLead(), F.crewSize(), F.laborHours(), F.notes(), F.photo()
+      F.teamLead(), F.crewSize(), F.laborHours(), F.crew(), F.notes(), F.photo()
     ],
     flow: { lossKind: 'conserving',
             input: { field: 'startingDryLb', category: 'dry_whole_plant' },
@@ -320,7 +418,7 @@ const PROD_STATIONS = [
         l: { en: 'Machine Run Hours', es: 'Horas de máquina' } },
       { k: 'lbPerHour', t: 'calc', calc: (v) => (num(v.runHours) > 0 ? num(v.inputBuckedLb) / num(v.runHours) : null),
         l: { en: 'Throughput (lbs/hr)', es: 'Rendimiento (lbs/h)' } },
-      F.teamLead(), F.crewSize(), F.notes(), F.photo()
+      F.teamLead(), F.crewSize(), F.crew(), F.notes(), F.photo()
     ],
     flow: { lossKind: 'conserving',
             input: { field: 'inputBuckedLb', category: 'bucked_flower' },
@@ -453,7 +551,7 @@ const PROD_STATIONS = [
           { v: 'live_resin', l: { en: 'Live Resin', es: 'Live Resin' } },
           { v: 'bulk_sale', l: { en: 'Bulk sale', es: 'Venta a granel' } }
         ] },
-      F.teamLead(), F.crewSize(), F.notes(), F.photo()
+      F.teamLead(), F.crewSize(), F.crew(), F.notes(), F.photo()
     ],
     flow: { lossKind: 'origin', outputs: [{ field: 'totalLb', category: 'fresh_frozen' }] }
   },
@@ -550,7 +648,7 @@ const PROD_STATIONS = [
         l: { en: 'Packaging Yield %', es: '% de rendimiento de empaque' } },
       { k: 'destination', t: 'select', ref: 'licenses', allowOther: true,
         l: { en: 'Ship To', es: 'Enviar a' } },
-      F.teamLead(), F.crewSize(), F.laborHours(), F.notes(), F.photo()
+      F.teamLead(), F.crewSize(), F.laborHours(), F.crew(), F.notes(), F.photo()
     ],
     // Finished goods leave the biomass ledger entirely, so the input weight
     // "disappearing" here is the run working, not weight going missing.

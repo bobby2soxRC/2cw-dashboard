@@ -13,6 +13,7 @@ const BRANCH = 'main';
 const API_ROOT = `https://api.github.com/repos/${OWNER}/${REPO}`;
 
 const KNOWN_STATIONS = new Set([
+  'cult_batch_log', 'cult_ipm_feed', 'cult_preharvest',
   'harvest', 'intake_wet', 'dry_check', 'buck', 'machine_trim',
   'hand_trim', 'fresh_frozen', 'biomass_request', 'mfg_output'
 ]);

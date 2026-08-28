@@ -29,6 +29,7 @@ the existing Operations Hub — same login, same Netlify deploy.
 
 ## Stations
 
+**Cultivation** *(placeholder — see below)* — Plant Batch Log · IPM / Feed Log · Pre-Harvest Inspection
 **Harvest** — Harvest · Fresh Frozen
 **Drying** — Intake-Wet · Post-Dry Check
 **Processing** — Bucking · Machine Trim · Hand Trim / Hand Touch
@@ -69,6 +70,43 @@ what went in, live, while the operator is still standing at the scale.
   Exceptions tab instead of being discovered a month later in a spreadsheet.
 - **Keeps one lot identity.** Bucking issues a new Metrc tag; the app follows
   the link so the lot stays one row from farm to finished flower.
+
+## Cultivation stations — placeholder, not real yet
+
+`cult_batch_log`, `cult_ipm_feed`, and `cult_preharvest` exist so the
+Cultivation department shows up in the app and the app's shape (date, batch
+tag, crew) is ready — not because their fields match your real process. Real
+cultivation has more going on before harvest than three generic stubs: clone
+or seed intake, a feed schedule, IPM applications, defoliation, room or stage
+transitions, whatever else your SOPs actually call for. Once you have that
+list, replace or add to these three — nothing downstream (the yield pipeline,
+the biomass ledger) depends on their keys or fields, so they're free to
+change shape without breaking anything past Harvest.
+
+## Employee / crew tracking — the "who worked what batch" database
+
+Every station that has a crew now carries an optional **Crew — Hours by
+Employee** grid (same repeating-row control as the hand-trim weighing
+worksheet): one row per person, their employee number, and their hours on
+*this* batch. It sits alongside the existing crew-size/labor-hours totals —
+skip it and the totals still cover the station-level number; fill it in and
+you get a real link between a numeric employee ID and a specific batch/UID.
+
+That link is what `prod_analytics.js`'s `crewLaborLog` / `crewLaborByEmployee`
+read, and what the dashboard's Labor tab now shows first: every employee
+number, their logged hours, how many distinct batches they touched, and
+which stations. It's also on the hand-trim worksheet already (employee # per
+bag), just without hours — those rows show up as a batch "touch" with no
+hours until the worksheet captures time too.
+
+**This is the seam for payroll, not payroll itself.** Nothing in this app
+knows anyone's hourly rate. What it knows is *employee number × date ×
+batch × hours*. Once you've confirmed which timeclock/payroll system you're
+on, connecting it is a matching exercise, not a redesign: pull that system's
+hours-worked-by-employee-by-date, join it to this table on employee number +
+date, and you can allocate real labor cost down to a batch. I didn't build a
+speculative importer for a system you haven't picked yet — tell me which one
+once you know, and the join is a small, concrete piece of work.
 
 ## Setting up Supabase (do this before going live)
 
@@ -212,6 +250,9 @@ Deliberately out of this pass, roughly in the order I'd add them:
   Submit; after that, a correction still needs a new record rather than a fix
   in place, the same as before. Straightforward to add now that everything
   lives in one Supabase table — mainly a question of who should be allowed to.
+- **Payroll/timeclock cost join.** The data model is ready (see Employee /
+  Crew tracking above) but nothing pulls in a $/hour to turn hours into cost
+  — waiting on which system you're actually on.
 - **Bulk biomass sales.** Sales to outside distributors and manufacturers aren't
   modelled yet, so biomass that leaves that way will sit on the ledger as
   on-hand.

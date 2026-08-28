@@ -290,6 +290,63 @@ function crewThroughput(stages, filter) {
   }).filter((s) => s.records > 0);
 }
 
+// The per-employee crew log, flattened across every station that has a
+// `crew` lineitems field (plus hand_trim's per-bag weighing worksheet, which
+// already ties an employee number to a batch the same way). This is the seam
+// for a future payroll/timeclock join: match employeeNo + date here against
+// employeeNo + date in a timeclock export to get real labor cost per batch —
+// nothing here knows an hourly rate, it only knows who worked what, when.
+function crewLaborLog(stages, filter) {
+  const out = [];
+  PROD_STATIONS.forEach((station) => {
+    const hasCrew = station.fields.some((f) => f.k === 'crew' && f.t === 'lineitems');
+    (stages[station.key] || []).forEach((r) => {
+      if (!matches(r, filter)) return;
+      if (hasCrew) {
+        (r.crew || []).forEach((c) => {
+          const emp = String(c.employeeNo || '').trim();
+          if (!emp || !num(c.hours)) return;
+          out.push({ employeeNo: emp, hours: num(c.hours), date: dayOf(r), stationKey: station.key,
+                     stationTitle: station.title, uid: r.sourceUid || r.batchTag || '',
+                     batch: r.harvestBatchName || '', strain: r.strain || '' });
+        });
+      }
+      if (station.key === 'hand_trim') {
+        (r.weights || []).forEach((w) => {
+          const emp = String(w.employeeNo || '').trim();
+          if (!emp) return;
+          // No hours captured on the weighing worksheet today (grams only) —
+          // record the touch so the batch/employee link exists; hours stays
+          // null until the worksheet captures time, or payroll supplies it.
+          out.push({ employeeNo: emp, hours: null, date: dayOf(r), stationKey: station.key,
+                     stationTitle: station.title, uid: r.sourceUid || '', batch: '', strain: r.strain || '' });
+        });
+      }
+    });
+  });
+  return out;
+}
+
+// Rolled up by employee: total logged hours, distinct batches/UIDs touched,
+// and which stations — the view that answers "what has employee #79 been
+// working on."
+function crewLaborByEmployee(stages, filter) {
+  const by = {};
+  crewLaborLog(stages, filter).forEach((e) => {
+    const row = by[e.employeeNo] || (by[e.employeeNo] = {
+      employeeNo: e.employeeNo, hours: 0, touches: 0, batches: new Set(), stations: new Set()
+    });
+    row.hours += e.hours || 0;
+    row.touches += 1;
+    if (e.uid || e.batch) row.batches.add(e.uid || e.batch);
+    row.stations.add(e.stationKey);
+  });
+  return Object.values(by).map((r) => ({
+    employeeNo: r.employeeNo, hours: round2(r.hours), touches: r.touches,
+    batchCount: r.batches.size, stations: [...r.stations]
+  })).sort((a, b) => b.hours - a.hours || b.touches - a.touches);
+}
+
 // ── Requests ────────────────────────────────────────────────────────────────
 function requestSummary(stages, asOf) {
   const today = asOf || new Date().toISOString().slice(0, 10);
@@ -352,6 +409,6 @@ function exceptions(stages, asOf) {
   return out.sort((a, b) => String(b.date).localeCompare(String(a.date)));
 }
 
-return { buildLots, stageYields, strainYields, biomassLedger, trimmerStats, crewThroughput,
+return { buildLots, stageYields, strainYields, biomassLedger, trimmerStats, crewThroughput, crewLaborLog, crewLaborByEmployee,
          requestSummary, exceptions, buildAliasMap, rootUid, daysBetween };
 }));
