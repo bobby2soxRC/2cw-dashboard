@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Production Form — 2CW</title>
+  <script>
+    // Bounce anyone without an active hub session or production access.
+    (function(){
+      if (!sessionStorage.getItem('2cw_pin')) { window.location.replace('/index.html'); }
+    })();
+  </script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0c0d0f">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0c0d0f;--surface:#13151a;--surface2:#181b21;--border:#1e2129;
+      --green:#3db87a;--gold:#d4a843;--blue:#5a9fd4;--purple:#9b7fd4;--red:#ef5350;
+      --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;
+      --accent:var(--green);
+    }
+    html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-text-size-adjust:100%}
+    body{padding-bottom:120px}
+
+    .hdr{min-height:calc(54px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:12px;position:sticky;top:0;z-index:20}
+    .hdr-back{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
+    .hdr-div{width:1px;height:18px;background:var(--border)}
+    .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .lang{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+    .lang button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:12px;font-weight:600;padding:8px 12px;cursor:pointer;min-height:36px}
+    .lang button.on{background:var(--accent);color:#000}
+
+    .queue{display:none;align-items:center;justify-content:space-between;gap:12px;background:rgba(212,168,67,.12);border-bottom:1px solid var(--gold);color:var(--gold);padding:10px 16px;font-family:'DM Mono',monospace;font-size:12px;position:sticky;top:calc(54px + env(safe-area-inset-top));z-index:19}
+    .queue button{background:var(--gold);color:#000;border:none;border-radius:8px;padding:8px 14px;font-weight:700;font-family:inherit;font-size:12px;cursor:pointer}
+
+    main{padding:24px 16px 40px;max-width:720px;margin:0 auto}
+    .title{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,6vw,44px);letter-spacing:.04em;line-height:1}
+    .subtitle{margin-top:6px;font-size:.85rem;color:var(--subtext);line-height:1.5}
+    .dept{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+
+    .panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 18px;margin-top:24px}
+    .field{margin-bottom:20px}
+    .field:last-child{margin-bottom:0}
+    label.lbl{display:block;font-size:.72rem;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem}
+    label.lbl .req{color:var(--red);margin-left:3px}
+    .hint{font-size:.78rem;color:var(--muted);margin-top:.45rem;line-height:1.45}
+
+    /* Tablet-first sizing: 16px font stops iOS zooming on focus, 52px targets
+       are usable with gloves on. */
+    input,select,textarea{width:100%;background:#0c0d0f;border:1px solid var(--border);color:var(--text);
+      padding:.8rem .9rem;border-radius:10px;font-size:16px;font-family:inherit;outline:none;min-height:52px;transition:border-color .15s}
+    input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+    textarea{resize:vertical;min-height:88px}
+    select{appearance:none;background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%239aa0b0' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;background-size:12px;padding-right:38px}
+    input.uid{font-family:'DM Mono',monospace;letter-spacing:.04em}
+
+    .calc{display:flex;align-items:baseline;justify-content:space-between;gap:12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.75rem .9rem;min-height:52px}
+    .calc .k{font-size:.72rem;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:.08em}
+    .calc .v{font-family:'DM Mono',monospace;font-size:1.15rem;font-weight:500;color:var(--text);white-space:nowrap}
+    .calc.neg .v{color:var(--red)}
+    .calc.flagged{border-color:var(--gold)}
+    .calc.flagged .v{color:var(--gold)}
+
+    /* Weighing worksheet */
+    .li-table{width:100%;border-collapse:collapse}
+    .li-table th{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:left;padding:0 0 8px}
+    .li-table td{padding:0 6px 8px 0;vertical-align:middle}
+    .li-table td:last-child{padding-right:0;width:52px}
+    .li-table input{min-height:48px;padding:.6rem .7rem}
+    .li-del{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;width:100%;min-height:48px;font-size:20px;line-height:1;cursor:pointer}
+    .li-del:hover{border-color:var(--red);color:var(--red)}
+    .li-add{width:100%;margin-top:4px;background:transparent;border:1px dashed var(--border);color:var(--subtext);border-radius:10px;min-height:52px;font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer}
+    .li-add:hover{border-color:var(--accent);color:var(--accent)}
+    .li-total{display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+    .li-total .k{font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+    .li-total .v{font-family:'DM Mono',monospace;font-size:1.3rem;color:var(--accent)}
+
+    .photo-wrap{display:flex;gap:12px;align-items:center}
+    .photo-wrap img{width:72px;height:72px;object-fit:cover;border-radius:10px;border:1px solid var(--border);display:none}
+
+    /* Sticky action bar keeps Submit reachable on a long form without scrolling. */
+    .actions{position:fixed;left:0;right:0;bottom:0;z-index:20;background:rgba(19,21,26,.97);border-top:1px solid var(--border);
+      padding:12px 16px calc(12px + env(safe-area-inset-bottom));backdrop-filter:blur(8px)}
+    .actions-inner{max-width:720px;margin:0 auto;display:flex;gap:12px;align-items:center}
+    .running{flex:1;min-width:0}
+    .running .k{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+    .running .v{font-family:'DM Mono',monospace;font-size:1.05rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .submit-btn{flex:0 0 auto;min-width:190px;padding:1rem 1.5rem;background:var(--accent);color:#000;border:none;border-radius:12px;font-size:1.05rem;font-weight:700;font-family:inherit;cursor:pointer;min-height:56px}
+    .submit-btn:disabled{opacity:.5;cursor:not-allowed}
+
+    .banner{margin-top:16px;padding:.9rem 1rem;border-radius:10px;font-size:.9rem;display:none;font-family:'DM Mono',monospace;line-height:1.5}
+    .banner.success{display:block;background:rgba(61,184,122,.12);color:var(--green);border:1px solid var(--green)}
+    .banner.warn{display:block;background:rgba(212,168,67,.12);color:var(--gold);border:1px solid var(--gold)}
+    .banner.error{display:block;background:rgba(239,83,80,.12);color:var(--red);border:1px solid var(--red)}
+    .match{font-size:.78rem;color:var(--green);margin-top:.45rem;font-family:'DM Mono',monospace;display:none}
+    .field.invalid input,.field.invalid select,.field.invalid textarea{border-color:var(--red)}
+  </style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="/production.html" id="back">← Stations</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand" id="brand">Production</div>
+  <div class="lang" id="lang"></div>
+</header>
+<div class="queue" id="queue"></div>
+
+<main>
+  <div class="dept" id="dept"></div>
+  <div class="title" id="title"></div>
+  <div class="subtitle" id="subtitle"></div>
+  <form class="panel" id="form" autocomplete="off"></form>
+  <div class="banner" id="banner"></div>
+</main>
+
+<div class="actions">
+  <div class="actions-inner">
+    <div class="running"><div class="k" id="running-k"></div><div class="v" id="running-v">—</div></div>
+    <button class="submit-btn" type="button" id="submit-btn">Submit</button>
+  </div>
+</div>
+
+<script src="/production_stations.js"></script>
+<script src="/prod_common.js"></script>
+<script>
+(async function () {
+  const params = new URLSearchParams(location.search);
+  const station = STATION_BY_KEY[params.get('station')];
+  if (!station) { location.replace('/production.html'); return; }
+
+  // Per-station access, set at hub login from the directory sheet.
+  const allowed = JSON.parse(sessionStorage.getItem('2cw_prod_access') || 'null');
+  if (allowed && allowed !== 'all' && !allowed.includes(station.key)) {
+    location.replace('/production.html');
+    return;
+  }
+
+  mountLangToggle('lang');
+  mountQueueBanner('queue');
+  document.documentElement.style.setProperty('--accent', `var(--${station.color || 'green'})`);
+  document.getElementById('back').textContent = t(UI.back);
+  document.getElementById('brand').textContent = t(station.title);
+  document.getElementById('dept').textContent = t(station.dept);
+  document.getElementById('title').textContent = t(station.title);
+  document.getElementById('subtitle').textContent = t(station.desc);
+  document.title = `${t(station.title)} — 2CW Production`;
+
+  const PERSON_FIELDS = new Set(['teamLead', 'checkedBy', 'requestedBy']);
+  const reference = await loadReference();
+  const form = document.getElementById('form');
+  const values = {};          // live form state, keyed by field key
+  const els = {};             // key -> { wrap, input }
+
+  // ── Render ────────────────────────────────────────────────────────────────
+  function optionsFor(f) {
+    if (f.ref) return refOptions(reference, f.ref);
+    if (f.refConst === 'BIOMASS') return Object.entries(BIOMASS).map(([v, l]) => ({ v, label: t(l) }));
+    return (f.opts || []).map((o) => ({ v: o.v, label: t(o.l) }));
+  }
+
+  function labelHtml(f) {
+    return `<label class="lbl" for="f_${f.k}">${t(f.l)}${f.req ? '<span class="req">*</span>' : ''}</label>`;
+  }
+
+  function buildField(f) {
+    const wrap = document.createElement('div');
+    wrap.className = 'field';
+    wrap.dataset.key = f.k;
+
+    if (f.t === 'calc') {
+      wrap.innerHTML = `<div class="calc" id="c_${f.k}"><span class="k">${t(f.l)}</span><span class="v">—</span></div>` +
+                       (f.hint ? `<div class="hint">${t(f.hint)}</div>` : '');
+      return wrap;
+    }
+
+    if (f.t === 'lineitems') return buildLineItems(f, wrap);
+
+    let control = '';
+    if (f.t === 'select') {
+      const opts = optionsFor(f);
+      control = `<select id="f_${f.k}">` +
+        `<option value=""></option>` +
+        opts.map((o) => `<option value="${escapeAttr(o.v)}">${escapeHtml(o.label)}</option>`).join('') +
+        (f.allowOther ? `<option value="__other__">${escapeHtml(t(UI.other))}</option>` : '') +
+        `</select>` +
+        (f.allowOther ? `<input type="text" id="o_${f.k}" placeholder="${escapeAttr(t(UI.otherPrompt))}" style="display:none;margin-top:10px">` : '');
+    } else if (f.t === 'textarea') {
+      control = `<textarea id="f_${f.k}" rows="3"></textarea>`;
+    } else if (f.t === 'photo') {
+      control = `<div class="photo-wrap"><input type="file" id="f_${f.k}" accept="image/*" capture="environment"><img id="p_${f.k}" alt=""></div>`;
+    } else if (f.t === 'number') {
+      control = `<input type="number" id="f_${f.k}" inputmode="decimal" step="${f.step || 'any'}"` +
+                (f.min !== undefined ? ` min="${f.min}"` : '') + (f.max !== undefined ? ` max="${f.max}"` : '') + `>`;
+    } else if (f.t === 'date') {
+      control = `<input type="date" id="f_${f.k}">`;
+    } else if (f.t === 'uid') {
+      control = `<input type="text" id="f_${f.k}" class="uid" inputmode="latin" autocapitalize="characters" placeholder="1A40603…  ${t(UI.other) === 'Otro…' ? 'o' : 'or'} 1008">` +
+                `<div class="match" id="m_${f.k}"></div>`;
+    } else {
+      control = `<input type="text" id="f_${f.k}"${f.inputmode ? ` inputmode="${f.inputmode}"` : ''}>`;
+    }
+
+    wrap.innerHTML = labelHtml(f) + control + (f.hint ? `<div class="hint">${t(f.hint)}</div>` : '');
+    return wrap;
+  }
+
+  // The weighing worksheet: a repeating employee-# / weight grid with a live
+  // sub-total, mirroring the paper work order it replaces.
+  function buildLineItems(f, wrap) {
+    values[f.k] = [];
+    wrap.innerHTML = labelHtml(f) +
+      (f.hint ? `<div class="hint" style="margin-top:0;margin-bottom:10px">${t(f.hint)}</div>` : '') +
+      `<table class="li-table"><thead><tr>` +
+      f.cols.map((c) => `<th>${t(c.l)}</th>`).join('') + `<th></th></tr></thead><tbody id="li_${f.k}"></tbody></table>` +
+      `<button type="button" class="li-add" id="add_${f.k}">${t(UI.addRow)}</button>` +
+      `<div class="li-total"><span class="k">${t(UI.subtotal)}</span><span class="v" id="lit_${f.k}">0</span></div>`;
+
+    setTimeout(() => {
+      const tbody = wrap.querySelector(`#li_${f.k}`);
+      const addRow = () => {
+        const row = {};
+        values[f.k].push(row);
+        const tr = document.createElement('tr');
+        f.cols.forEach((c) => {
+          const td = document.createElement('td');
+          const inp = document.createElement('input');
+          inp.type = c.t === 'number' ? 'number' : 'text';
+          if (c.t === 'number') { inp.inputMode = 'decimal'; inp.step = c.step || 'any'; if (c.min !== undefined) inp.min = c.min; }
+          if (c.inputmode) inp.inputMode = c.inputmode;
+          inp.addEventListener('input', () => {
+            row[c.k] = c.t === 'number' ? (inp.value === '' ? null : Number(inp.value)) : inp.value;
+            recompute();
+          });
+          td.appendChild(inp); tr.appendChild(td);
+        });
+        const tdDel = document.createElement('td');
+        const del = document.createElement('button');
+        del.type = 'button'; del.className = 'li-del'; del.textContent = '×';
+        del.setAttribute('aria-label', t(UI.remove));
+        del.onclick = () => {
+          const i = values[f.k].indexOf(row);
+          if (i > -1) values[f.k].splice(i, 1);
+          tr.remove(); recompute();
+        };
+        tdDel.appendChild(del); tr.appendChild(tdDel);
+        tbody.appendChild(tr);
+        tr.querySelector('input').focus();
+      };
+      wrap.querySelector(`#add_${f.k}`).onclick = addRow;
+      addRow(); addRow(); addRow();   // start with a few rows ready to fill
+    }, 0);
+
+    return wrap;
+  }
+
+  const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const escapeAttr = escapeHtml;
+
+  station.fields.forEach((f) => {
+    const wrap = buildField(f);
+    form.appendChild(wrap);
+    els[f.k] = wrap;
+  });
+
+  // ── Wire inputs ───────────────────────────────────────────────────────────
+  station.fields.forEach((f) => {
+    if (f.t === 'calc' || f.t === 'lineitems') return;
+    const inp = document.getElementById(`f_${f.k}`);
+    if (!inp) return;
+
+    if (f.t === 'date' && f.today !== false) {
+      inp.value = new Date().toISOString().slice(0, 10);
+      values[f.k] = inp.value;
+    }
+    if (f.def) { inp.value = f.def; values[f.k] = f.def; }
+
+    // Whoever is logged into this tablet is almost always the person signing
+    // the form, so fill their name in for them — still editable, because
+    // stations do get handed off mid-shift.
+    if (PERSON_FIELDS.has(f.k)) {
+      const who = sessionStorage.getItem('2cw_user_name');
+      if (who) { inp.value = who; values[f.k] = who; }
+    }
+
+    if (f.t === 'photo') {
+      inp.addEventListener('change', async () => {
+        const file = inp.files && inp.files[0];
+        if (!file) { values[f.k] = null; return; }
+        values[f.k] = await compressImage(file);
+        const img = document.getElementById(`p_${f.k}`);
+        img.src = values[f.k].dataUrl; img.style.display = 'block';
+      });
+      return;
+    }
+
+    const other = f.allowOther ? document.getElementById(`o_${f.k}`) : null;
+    const read = () => {
+      if (f.t === 'select' && inp.value === '__other__') return other ? other.value.trim() : '';
+      if (f.t === 'number') return inp.value === '' ? null : Number(inp.value);
+      if (f.t === 'uid') return inp.value.trim().toUpperCase();
+      return inp.value.trim();
+    };
+    const onChange = () => {
+      if (other) other.style.display = inp.value === '__other__' ? 'block' : 'none';
+      values[f.k] = read();
+      recompute();
+      updateVisibility();
+    };
+    inp.addEventListener('input', onChange);
+    inp.addEventListener('change', onChange);
+    if (other) other.addEventListener('input', () => { values[f.k] = read(); recompute(); });
+
+    if (f.t === 'uid') inp.addEventListener('change', () => tryPrefill(inp.value.trim()));
+  });
+
+  // ── Prefill from the upstream stage ───────────────────────────────────────
+  // Bucking should not have to re-weigh what the post-dry check already
+  // recorded; typing the last 4 of the tag pulls it forward.
+  async function tryPrefill(uid) {
+    const spec = PREFILL_MAP[station.key];
+    const note = document.getElementById('m_sourceUid');
+    if (!spec || !uid || uid.length < 4) return;
+    const upstream = await findUpstream(spec.from, uid);
+    if (!upstream) {
+      if (note) { note.style.display = 'block'; note.style.color = 'var(--muted)'; note.textContent = t(UI.noMatch); }
+      return;
+    }
+    Object.entries(spec.map).forEach(([here, there]) => {
+      const val = upstream[there];
+      if (val === undefined || val === null || val === '') return;
+      const inp = document.getElementById(`f_${here}`);
+      if (!inp || (values[here] !== undefined && values[here] !== null && values[here] !== '')) return;
+      inp.value = val;
+      values[here] = val;
+      // A strain that isn't on the reference list still needs to show up.
+      if (inp.tagName === 'SELECT' && inp.value !== String(val)) {
+        const opt = document.createElement('option');
+        opt.value = val; opt.textContent = val;
+        inp.appendChild(opt); inp.value = val;
+      }
+    });
+    if (note) {
+      note.style.display = 'block'; note.style.color = 'var(--green)';
+      note.textContent = `${t(UI.matched)}: ${upstream.strain || ''} ${upstream.harvestBatchName || ''}`.trim();
+    }
+    recompute();
+  }
+
+  // ── Computed fields ───────────────────────────────────────────────────────
+  const primaryCalc = station.fields.find((f) => f.t === 'calc' &&
+    /finishedFlowerLb|totalOutputLb|netWetLb|wetWeightLb|dryWeightLb/.test(f.k)) ||
+    station.fields.find((f) => f.t === 'calc');
+
+  function recompute() {
+    station.fields.forEach((f) => {
+      if (f.t === 'lineitems') {
+        const total = (values[f.k] || []).reduce((a, r) => a + (Number(r[f.totalCol]) || 0), 0);
+        const el = document.getElementById(`lit_${f.k}`);
+        if (el) el.textContent = fmtNum(total, 0);
+        return;
+      }
+      if (f.t !== 'calc') return;
+      const box = document.getElementById(`c_${f.k}`);
+      if (!box) return;
+      let out = null;
+      try { out = f.calc(values); } catch { out = null; }
+      values[f.k] = out;
+      const text = out === null || out === undefined || !Number.isFinite(Number(out))
+        ? '—'
+        : (f.fmt === 'pct' ? fmtPct(out) : fmtNum(out, f.dp === undefined ? 2 : f.dp));
+      box.querySelector('.v').textContent = (f.signed && Number(out) > 0 ? '+' : '') + text;
+      box.classList.toggle('neg', f.signed && Number(out) < 0);
+      box.classList.toggle('flagged', !!(f.flag && Number.isFinite(Number(out)) && f.flag(Number(out))));
+    });
+
+    if (primaryCalc) {
+      document.getElementById('running-k').textContent = t(primaryCalc.l);
+      const v = values[primaryCalc.k];
+      document.getElementById('running-v').textContent =
+        (v === null || v === undefined || !Number.isFinite(Number(v))) ? '—'
+          : (primaryCalc.fmt === 'pct' ? fmtPct(v) : fmtNum(v, primaryCalc.dp === undefined ? 2 : primaryCalc.dp));
+    }
+  }
+
+  function updateVisibility() {
+    station.fields.forEach((f) => {
+      if (!f.showIf) return;
+      const wrap = els[f.k];
+      if (wrap) wrap.style.display = f.showIf(values) ? '' : 'none';
+    });
+  }
+
+  // ── Submit ────────────────────────────────────────────────────────────────
+  const banner = document.getElementById('banner');
+  const btn = document.getElementById('submit-btn');
+  btn.textContent = t(UI.submit);
+
+  btn.addEventListener('click', async () => {
+    banner.className = 'banner';
+    form.querySelectorAll('.field.invalid').forEach((e) => e.classList.remove('invalid'));
+
+    const missing = station.fields.filter((f) => {
+      if (!f.req || f.t === 'calc') return false;
+      if (f.showIf && !f.showIf(values)) return false;
+      const v = values[f.k];
+      if (f.t === 'lineitems') return !(v || []).some((r) => Object.values(r).some((x) => x !== '' && x !== null && x !== undefined));
+      return v === undefined || v === null || v === '';
+    });
+    if (missing.length) {
+      missing.forEach((f) => els[f.k] && els[f.k].classList.add('invalid'));
+      banner.className = 'banner error';
+      banner.textContent = t(UI.required);
+      els[missing[0].k].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = t(UI.submitting);
+
+    // Drop empty worksheet rows before sending.
+    const payload = { ...values };
+    station.fields.filter((f) => f.t === 'lineitems').forEach((f) => {
+      payload[f.k] = (payload[f.k] || []).filter((r) => Object.values(r).some((x) => x !== '' && x !== null && x !== undefined));
+    });
+
+    const result = await submitProduction(station.key, payload);
+    btn.disabled = false;
+    btn.textContent = t(UI.submit);
+
+    if (result.ok) {
+      banner.className = result.queued ? 'banner warn' : 'banner success';
+      banner.textContent = result.queued ? t(UI.queued) : t(UI.submitted);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => location.reload(), 1800);
+    } else {
+      banner.className = 'banner error';
+      banner.textContent = result.error || t(UI.failed);
+    }
+  });
+
+  // Photo downscale — same approach as the field forms, kept local so this page
+  // doesn't need forms_common.js.
+  function compressImage(file, maxDim = 1600, quality = 0.72) {
+    return new Promise((resolve, reject) => {
+      const img = new Image(); const reader = new FileReader();
+      reader.onerror = reject;
+      reader.onload = () => {
+        img.onerror = reject;
+        img.onload = () => {
+          const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve({ dataUrl: canvas.toDataURL('image/jpeg', quality) });
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  updateVisibility();
+  recompute();
+})();
+</script>
+</body>
+</html>

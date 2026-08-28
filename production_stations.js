@@ -1,0 +1,569 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// 2CW Production — station definitions.
+//
+// This is the single source of truth for the production app: prod_form.html
+// renders its forms straight off these definitions, and production_dashboard.html
+// reads the same `flow` descriptors to build the yield/inventory numbers. Adding
+// a field to a station is a one-line edit here — no HTML to touch.
+//
+// Every user-visible string carries its Spanish translation inline, so a label
+// and its translation can never drift apart.
+//
+// Field spec:
+//   k      key stored in the record
+//   t      text | number | date | time | select | textarea | uid | photo | calc | lineitems
+//   l      label {en, es}
+//   req    required
+//   ref    name of a list in data/production/reference.json to populate a select
+//   opts   inline select options [{v, l:{en,es}}]
+//   calc   (v) => number | null   — computed from the other values, read-only
+//   dp     decimal places for number/calc display (default 2)
+//   hint   {en, es} helper text under the field
+//   showIf (v) => bool
+//   prefill 'lookup' — pull from the upstream stage record matching sourceUid
+// ─────────────────────────────────────────────────────────────────────────────
+
+const G_PER_LB = 453.59237;
+
+// Biomass categories — the vocabulary the inventory ledger is built from.
+const BIOMASS = {
+  wet_whole_plant: { en: 'Wet Whole Plant',   es: 'Planta entera húmeda' },
+  dry_whole_plant: { en: 'Dry Whole Plant',   es: 'Planta entera seca' },
+  bucked_flower:   { en: 'Bucked Flower',     es: 'Flor desvarada' },
+  flower_a:        { en: 'Flower (A-Bud)',    es: 'Flor (Bud A)' },
+  smalls_b:        { en: 'Smalls (B-Bud)',    es: 'Flor pequeña (Bud B)' },
+  sugar_trim:      { en: 'Sugar Trim',        es: 'Hoja azucarada' },
+  trim:            { en: 'Trim',              es: 'Recorte' },
+  shake:           { en: 'Shake',             es: 'Shake' },
+  big_leaf:        { en: 'Big Leaf',          es: 'Hoja grande' },
+  stems:           { en: 'Stems',             es: 'Tallos' },
+  waste:           { en: 'Waste',             es: 'Desecho' },
+  fresh_frozen:    { en: 'Fresh Frozen',      es: 'Fresco congelado' }
+};
+
+// Categories that are sellable / usable biomass (the rest is waste or an
+// intermediate that gets consumed by the next stage).
+const SELLABLE = ['flower_a', 'smalls_b', 'sugar_trim', 'trim', 'shake', 'fresh_frozen'];
+
+const num = (x) => { const n = parseFloat(x); return Number.isFinite(n) ? n : 0; };
+const sum = (v, keys) => keys.reduce((a, k) => a + num(v[k]), 0);
+const pct = (part, whole) => (num(whole) > 0 ? num(part) / num(whole) : null);
+
+// Shared field builders ------------------------------------------------------
+const F = {
+  date: () => ({ k: 'date', t: 'date', l: { en: 'Date', es: 'Fecha' }, req: true, today: true }),
+  strain: () => ({ k: 'strain', t: 'select', ref: 'strains', allowOther: true, req: true,
+                   l: { en: 'Strain', es: 'Variedad (cepa)' } }),
+  site: () => ({ k: 'site', t: 'select', ref: 'sites', allowOther: true, req: true,
+                 l: { en: 'Farm / Site', es: 'Rancho / sitio' } }),
+  sourceUid: (lbl) => ({ k: 'sourceUid', t: 'uid', req: true, prefill: 'lookup',
+                         l: lbl || { en: 'Source UID Tag', es: 'Etiqueta UID de origen' },
+                         hint: { en: 'Metrc tag on the incoming package. Scan or type the last 4 to search.',
+                                 es: 'Etiqueta Metrc del paquete entrante. Escanee o escriba los últimos 4 para buscar.' } }),
+  teamLead: () => ({ k: 'teamLead', t: 'text', req: true,
+                     l: { en: 'Team Lead', es: 'Líder de equipo' } }),
+  crewSize: () => ({ k: 'crewSize', t: 'number', min: 0, step: 1, dp: 0,
+                     l: { en: 'Crew Size', es: 'Tamaño del equipo' } }),
+  laborHours: () => ({ k: 'laborHours', t: 'number', min: 0, step: 0.25,
+                       l: { en: 'Labor Hours', es: 'Horas de trabajo' } }),
+  notes: () => ({ k: 'notes', t: 'textarea', l: { en: 'Notes', es: 'Notas' } }),
+  photo: () => ({ k: 'photo', t: 'photo', l: { en: 'Photo (optional)', es: 'Foto (opcional)' },
+                  hint: { en: 'Photo of the scale reading, tag, or paperwork.',
+                          es: 'Foto de la báscula, la etiqueta o el papeleo.' } }),
+  waste: () => ({ k: 'wasteLb', t: 'number', min: 0, step: 0.01,
+                  l: { en: 'Waste (lbs)', es: 'Desecho (lbs)' },
+                  hint: { en: 'Stems and water leaf destined for destruction.',
+                          es: 'Tallos y hoja de agua destinados a destrucción.' } })
+};
+
+// Totals / variance block shared by every stage that converts an input weight
+// into a set of output weights.
+function totalsBlock(inputKey, outputKeys) {
+  return [
+    { k: 'totalOutputLb', t: 'calc', calc: (v) => sum(v, outputKeys),
+      l: { en: 'Total Output (lbs)', es: 'Producción total (lbs)' } },
+    { k: 'varianceLb', t: 'calc', calc: (v) => sum(v, outputKeys) - num(v[inputKey]), signed: true,
+      l: { en: 'Variance (lbs)', es: 'Variación (lbs)' },
+      hint: { en: 'Output minus input. Should be close to zero — a big negative means weight is missing.',
+              es: 'Producción menos entrada. Debe ser cercano a cero — un negativo grande indica peso faltante.' } },
+    { k: 'lossPct', t: 'calc', fmt: 'pct',
+      calc: (v) => pct(num(v[inputKey]) - sum(v, outputKeys), v[inputKey]),
+      l: { en: 'Stage Loss %', es: '% de pérdida de la etapa' } }
+  ];
+}
+
+const PROD_STATIONS = [
+  // ── HARVEST ───────────────────────────────────────────────────────────────
+  {
+    key: 'harvest',
+    dept: { en: 'Harvest', es: 'Cosecha' },
+    title: { en: 'Harvest', es: 'Cosecha' },
+    desc: { en: 'Log a harvest off a farm block — plant count, wet weight, and where it is headed.',
+            es: 'Registre una cosecha de un bloque — número de plantas, peso húmedo y su destino.' },
+    color: 'green',
+    fields: [
+      F.date(),
+      F.site(),
+      { k: 'pid', t: 'select', ref: 'properties', allowOther: true,
+        l: { en: 'Property ID (PID)', es: 'ID de propiedad (PID)' } },
+      { k: 'block', t: 'text', l: { en: 'Field / Block', es: 'Campo / bloque' } },
+      { k: 'round', t: 'select', allowOther: true,
+        l: { en: 'Season / Round', es: 'Temporada / ronda' },
+        opts: [
+          { v: 'R1', l: { en: 'Round 1', es: 'Ronda 1' } },
+          { v: 'R2', l: { en: 'Round 2', es: 'Ronda 2' } },
+          { v: 'R3', l: { en: 'Round 3', es: 'Ronda 3' } },
+          { v: 'R4', l: { en: 'Round 4', es: 'Ronda 4' } }
+        ] },
+      F.strain(),
+      { k: 'harvestBatchName', t: 'text', req: true,
+        l: { en: 'Harvest / Batch Name', es: 'Nombre de cosecha / lote' },
+        hint: { en: 'e.g. AF-071-Glitter Bomb-224-T2', es: 'p. ej. AF-071-Glitter Bomb-224-T2' } },
+      { k: 'sourceUid', t: 'uid', l: { en: 'Metrc UID Tag', es: 'Etiqueta UID de Metrc' } },
+      { k: 'harvestStyle', t: 'select', req: true,
+        l: { en: 'Harvest Style', es: 'Estilo de cosecha' },
+        opts: [
+          { v: 'whole_plant', l: { en: 'Whole plant — hang to dry', es: 'Planta entera — colgar a secar' } },
+          { v: 'bucked_wet', l: { en: 'Bucked wet — to dry facility', es: 'Desvarado húmedo — a secado' } },
+          { v: 'fresh_frozen', l: { en: 'Fresh frozen — to freezer', es: 'Fresco congelado — a congelador' } }
+        ] },
+      { k: 'plantCount', t: 'number', min: 0, step: 1, dp: 0,
+        l: { en: 'Plant Count', es: 'Número de plantas' } },
+      { k: 'wetWeightLb', t: 'number', req: true, min: 0, step: 0.01,
+        l: { en: 'Wet Weight (lbs)', es: 'Peso húmedo (lbs)' } },
+      { k: 'lbPerPlant', t: 'calc', calc: (v) => (num(v.plantCount) > 0 ? num(v.wetWeightLb) / num(v.plantCount) : null),
+        l: { en: 'Wet lbs / Plant', es: 'Lbs húmedos por planta' } },
+      { k: 'binCount', t: 'number', min: 0, step: 1, dp: 0,
+        l: { en: 'Bins / Bags Loaded', es: 'Bins / bolsas cargadas' } },
+      { k: 'destination', t: 'select', req: true,
+        l: { en: 'Destination', es: 'Destino' },
+        opts: [
+          { v: 'dry_facility', l: { en: 'Drying facility', es: 'Instalación de secado' } },
+          { v: 'freezer', l: { en: 'Freezer (fresh frozen)', es: 'Congelador (fresco congelado)' } }
+        ] },
+      F.teamLead(), F.crewSize(), F.laborHours(), F.notes(), F.photo()
+    ],
+    flow: { lossKind: 'origin', outputs: [{ field: 'wetWeightLb', category: 'wet_whole_plant' }] }
+  },
+
+  // ── DRYING: INTAKE-WET ────────────────────────────────────────────────────
+  {
+    key: 'intake_wet',
+    dept: { en: 'Drying', es: 'Secado' },
+    title: { en: 'Intake — Wet', es: 'Recepción — húmedo' },
+    desc: { en: 'Receive a load off the truck: verify the weight against the farm, then hang.',
+            es: 'Reciba una carga del camión: verifique el peso contra el rancho y luego cuelgue.' },
+    color: 'blue',
+    fields: [
+      F.date(),
+      F.sourceUid(),
+      { k: 'harvestBatchName', t: 'text', prefill: 'lookup',
+        l: { en: 'Harvest / Batch Name', es: 'Nombre de cosecha / lote' } },
+      F.strain(), F.site(),
+      { k: 'farmReportedLb', t: 'number', min: 0, step: 0.01, prefill: 'lookup',
+        l: { en: 'Farm-Reported Weight (lbs)', es: 'Peso reportado por el rancho (lbs)' },
+        hint: { en: 'Fills in automatically from the harvest log when the UID matches.',
+                es: 'Se completa automáticamente desde el registro de cosecha cuando coincide el UID.' } },
+      { k: 'scaleWeightLb', t: 'number', req: true, min: 0, step: 0.01,
+        l: { en: 'Gross Weight on Scale (lbs)', es: 'Peso bruto en báscula (lbs)' } },
+      { k: 'tareLb', t: 'number', min: 0, step: 0.01,
+        l: { en: 'Tare — Bins / Boxes (lbs)', es: 'Tara — bins / cajas (lbs)' } },
+      { k: 'netWetLb', t: 'calc', calc: (v) => num(v.scaleWeightLb) - num(v.tareLb),
+        l: { en: 'Net Wet Weight (lbs)', es: 'Peso húmedo neto (lbs)' } },
+      { k: 'intakeVarianceLb', t: 'calc', signed: true,
+        calc: (v) => (num(v.farmReportedLb) > 0 ? (num(v.scaleWeightLb) - num(v.tareLb)) - num(v.farmReportedLb) : null),
+        l: { en: 'Variance vs Farm (lbs)', es: 'Variación vs. rancho (lbs)' } },
+      { k: 'intakeVariancePct', t: 'calc', fmt: 'pct',
+        calc: (v) => (num(v.farmReportedLb) > 0
+          ? ((num(v.scaleWeightLb) - num(v.tareLb)) - num(v.farmReportedLb)) / num(v.farmReportedLb) : null),
+        l: { en: 'Variance vs Farm %', es: '% de variación vs. rancho' },
+        flag: (x) => Math.abs(x) > 0.02 },
+      { k: 'hangCount', t: 'number', min: 0, step: 1, dp: 0,
+        l: { en: 'Trellises / Cages Hung', es: 'Mallas / jaulas colgadas' } },
+      { k: 'dryRoom', t: 'select', ref: 'dryRooms', allowOther: true, req: true,
+        l: { en: 'Dry Room / Area', es: 'Sala / área de secado' } },
+      F.teamLead(), F.crewSize(), F.laborHours(), F.notes(), F.photo()
+    ],
+    flow: { lossKind: 'receiving',
+            input: { field: 'farmReportedLb', category: 'wet_whole_plant' },
+            outputs: [{ field: 'netWetLb', category: 'dry_whole_plant', pending: true }] }
+  },
+
+  // ── DRYING: POST-DRY CHECK ────────────────────────────────────────────────
+  {
+    key: 'dry_check',
+    dept: { en: 'Drying', es: 'Secado' },
+    title: { en: 'Post-Dry Check', es: 'Verificación post-secado' },
+    desc: { en: 'Weigh the dried batch and record moisture before it moves to bucking.',
+            es: 'Pese el lote seco y registre la humedad antes de pasar a desvarado.' },
+    color: 'blue',
+    fields: [
+      F.date(),
+      F.sourceUid(),
+      { k: 'strain', t: 'select', ref: 'strains', allowOther: true, prefill: 'lookup',
+        l: { en: 'Strain', es: 'Variedad (cepa)' } },
+      { k: 'dryRoom', t: 'select', ref: 'dryRooms', allowOther: true, prefill: 'lookup',
+        l: { en: 'Dry Room / Area', es: 'Sala / área de secado' } },
+      { k: 'wetIntakeLb', t: 'number', min: 0, step: 0.01, prefill: 'lookup',
+        l: { en: 'Wet Intake Weight (lbs)', es: 'Peso húmedo de entrada (lbs)' } },
+      { k: 'dryWeightLb', t: 'number', req: true, min: 0, step: 0.01,
+        l: { en: 'Dry Weight (lbs)', es: 'Peso seco (lbs)' } },
+      { k: 'moistureLossLb', t: 'calc', calc: (v) => num(v.wetIntakeLb) - num(v.dryWeightLb),
+        l: { en: 'Moisture Loss (lbs)', es: 'Pérdida de humedad (lbs)' } },
+      { k: 'moistureLossPct', t: 'calc', fmt: 'pct',
+        calc: (v) => pct(num(v.wetIntakeLb) - num(v.dryWeightLb), v.wetIntakeLb),
+        l: { en: 'Moisture Loss %', es: '% de pérdida de humedad' },
+        hint: { en: 'Typically 70–80% on whole-plant hang dries.',
+                es: 'Típicamente 70–80% en secado de planta entera.' },
+        flag: (x) => x < 0.6 || x > 0.85 },
+      { k: 'moisturePct', t: 'number', min: 0, max: 100, step: 0.1,
+        l: { en: 'Moisture Meter Reading (%)', es: 'Lectura del medidor de humedad (%)' } },
+      { k: 'waterActivity', t: 'number', min: 0, max: 1, step: 0.01, dp: 2,
+        l: { en: 'Water Activity (aw)', es: 'Actividad de agua (aw)' } },
+      { k: 'result', t: 'select', req: true,
+        l: { en: 'Result', es: 'Resultado' },
+        opts: [
+          { v: 'pass', l: { en: 'Pass — release to bucking', es: 'Aprobado — liberar a desvarado' } },
+          { v: 'hold', l: { en: 'Hold — needs more dry time', es: 'En espera — necesita más secado' } },
+          { v: 'rework', l: { en: 'Rework — quality issue', es: 'Reproceso — problema de calidad' } }
+        ] },
+      { k: 'checkedBy', t: 'text', req: true, l: { en: 'Checked By', es: 'Verificado por' } },
+      F.notes(), F.photo()
+    ],
+    flow: { lossKind: 'moisture',
+            input: { field: 'wetIntakeLb', category: 'wet_whole_plant' },
+            outputs: [{ field: 'dryWeightLb', category: 'dry_whole_plant' }] }
+  },
+
+  // ── PROCESSING: BUCKING ───────────────────────────────────────────────────
+  {
+    key: 'buck',
+    dept: { en: 'Processing', es: 'Procesamiento' },
+    title: { en: 'Bucking', es: 'Desvarado (bucking)' },
+    desc: { en: 'Cut buds off the stems and split out big leaf, stems, and waste.',
+            es: 'Corte los cogollos del tallo y separe hoja grande, tallos y desecho.' },
+    color: 'gold',
+    fields: [
+      F.date(),
+      F.sourceUid(),
+      { k: 'strain', t: 'select', ref: 'strains', allowOther: true, prefill: 'lookup',
+        l: { en: 'Strain', es: 'Variedad (cepa)' } },
+      { k: 'startingDryLb', t: 'number', req: true, min: 0, step: 0.01, prefill: 'lookup',
+        l: { en: 'Starting Dry Weight (lbs)', es: 'Peso seco inicial (lbs)' },
+        hint: { en: 'Pulled from the post-dry check for this UID — correct it if the scale disagrees.',
+                es: 'Tomado de la verificación post-secado de este UID — corríjalo si la báscula no coincide.' } },
+      { k: 'buckedFlowerLb', t: 'number', req: true, min: 0, step: 0.01,
+        l: { en: 'Bucked Flower (lbs)', es: 'Flor desvarada (lbs)' } },
+      { k: 'bigLeafLb', t: 'number', min: 0, step: 0.01,
+        l: { en: 'Big Leaf (lbs)', es: 'Hoja grande (lbs)' } },
+      { k: 'stemLb', t: 'number', min: 0, step: 0.01,
+        l: { en: 'Stems / Sticks (lbs)', es: 'Tallos / palos (lbs)' } },
+      F.waste(),
+      ...totalsBlock('startingDryLb', ['buckedFlowerLb', 'bigLeafLb', 'stemLb', 'wasteLb']),
+      { k: 'buckYieldPct', t: 'calc', fmt: 'pct', calc: (v) => pct(v.buckedFlowerLb, v.startingDryLb),
+        l: { en: 'Bucked Flower Yield %', es: '% de rendimiento de flor desvarada' } },
+      { k: 'newBuckedUid', t: 'uid', l: { en: 'New Bucked Flower UID', es: 'Nuevo UID de flor desvarada' } },
+      { k: 'newBigLeafUid', t: 'uid', l: { en: 'New Big Leaf UID', es: 'Nuevo UID de hoja grande' } },
+      F.teamLead(), F.crewSize(), F.laborHours(), F.notes(), F.photo()
+    ],
+    flow: { lossKind: 'conserving',
+            input: { field: 'startingDryLb', category: 'dry_whole_plant' },
+            outputs: [
+              { field: 'buckedFlowerLb', category: 'bucked_flower' },
+              { field: 'bigLeafLb', category: 'big_leaf' },
+              { field: 'stemLb', category: 'stems' },
+              { field: 'wasteLb', category: 'waste' }
+            ] }
+  },
+
+  // ── PROCESSING: MACHINE TRIM ──────────────────────────────────────────────
+  {
+    key: 'machine_trim',
+    dept: { en: 'Processing', es: 'Procesamiento' },
+    title: { en: 'Machine Trim', es: 'Corte a máquina' },
+    desc: { en: 'Run bucked flower through the Mobius and sorters; split A-buds from smalls.',
+            es: 'Pase la flor desvarada por la Mobius y clasificadoras; separe buds A de smalls.' },
+    color: 'gold',
+    fields: [
+      F.date(),
+      F.sourceUid({ en: 'Bucked Flower UID', es: 'UID de flor desvarada' }),
+      { k: 'strain', t: 'select', ref: 'strains', allowOther: true, prefill: 'lookup',
+        l: { en: 'Strain', es: 'Variedad (cepa)' } },
+      { k: 'machine', t: 'select', ref: 'trimMachines', allowOther: true, req: true,
+        l: { en: 'Machine / Line', es: 'Máquina / línea' } },
+      { k: 'trimStyle', t: 'select', req: true,
+        l: { en: 'Trim Style', es: 'Estilo de corte' },
+        opts: [
+          { v: 'machine_only', l: { en: 'Machine trim only', es: 'Solo corte a máquina' } },
+          { v: 'machine_hand', l: { en: 'Machine + hand finish', es: 'Máquina + acabado a mano' } }
+        ] },
+      { k: 'inputBuckedLb', t: 'number', req: true, min: 0, step: 0.01, prefill: 'lookup',
+        l: { en: 'Input Bucked Weight (lbs)', es: 'Peso desvarado de entrada (lbs)' } },
+      { k: 'flowerALb', t: 'number', req: true, min: 0, step: 0.01,
+        l: { en: 'Flower — A-Buds (lbs)', es: 'Flor — Buds A (lbs)' } },
+      { k: 'smallsBLb', t: 'number', min: 0, step: 0.01,
+        l: { en: 'Smalls — B-Buds (lbs)', es: 'Smalls — Buds B (lbs)' } },
+      { k: 'machineShakeLb', t: 'number', min: 0, step: 0.01,
+        l: { en: 'Machine Shake (lbs)', es: 'Shake de máquina (lbs)' } },
+      { k: 'sugarTrimLb', t: 'number', min: 0, step: 0.01,
+        l: { en: 'Sugar Trim (lbs)', es: 'Hoja azucarada (lbs)' } },
+      F.waste(),
+      ...totalsBlock('inputBuckedLb', ['flowerALb', 'smallsBLb', 'machineShakeLb', 'sugarTrimLb', 'wasteLb']),
+      { k: 'aBudPct', t: 'calc', fmt: 'pct', calc: (v) => pct(v.flowerALb, v.inputBuckedLb),
+        l: { en: 'A-Bud Yield %', es: '% de rendimiento Bud A' } },
+      { k: 'runHours', t: 'number', min: 0, step: 0.25,
+        l: { en: 'Machine Run Hours', es: 'Horas de máquina' } },
+      { k: 'lbPerHour', t: 'calc', calc: (v) => (num(v.runHours) > 0 ? num(v.inputBuckedLb) / num(v.runHours) : null),
+        l: { en: 'Throughput (lbs/hr)', es: 'Rendimiento (lbs/h)' } },
+      F.teamLead(), F.crewSize(), F.notes(), F.photo()
+    ],
+    flow: { lossKind: 'conserving',
+            input: { field: 'inputBuckedLb', category: 'bucked_flower' },
+            outputs: [
+              { field: 'flowerALb', category: 'flower_a' },
+              { field: 'smallsBLb', category: 'smalls_b' },
+              { field: 'machineShakeLb', category: 'shake' },
+              { field: 'sugarTrimLb', category: 'sugar_trim' },
+              { field: 'wasteLb', category: 'waste' }
+            ] }
+  },
+
+  // ── PROCESSING: HAND TRIM / HAND TOUCH (WORK ORDER) ───────────────────────
+  {
+    key: 'hand_trim',
+    dept: { en: 'Processing', es: 'Procesamiento' },
+    title: { en: 'Hand Trim / Hand Touch', es: 'Corte a mano / retoque' },
+    desc: { en: 'The trimming work order — weigh each trimmer’s finished flower and total the run.',
+            es: 'La orden de trabajo de corte — pese la flor terminada de cada persona y sume la corrida.' },
+    color: 'purple',
+    fields: [
+      { k: 'workOrderNo', t: 'text', l: { en: 'Work Order #', es: 'N.º de orden de trabajo' } },
+      F.date(),
+      F.sourceUid({ en: 'Package UID', es: 'UID del paquete' }),
+      { k: 'strain', t: 'select', ref: 'strains', allowOther: true, req: true,
+        l: { en: 'Strain', es: 'Variedad (cepa)' } },
+      { k: 'strainGrade', t: 'select',
+        l: { en: 'Strain Grade', es: 'Grado de la variedad' },
+        opts: [
+          { v: 'A', l: { en: 'A', es: 'A' } },
+          { v: 'B', l: { en: 'B', es: 'B' } },
+          { v: 'whole_plant', l: { en: 'Whole Plant', es: 'Planta entera' } },
+          { v: 'mixed', l: { en: 'Mixed', es: 'Mixto' } }
+        ] },
+      { k: 'trimStyle', t: 'select', req: true,
+        l: { en: 'Trim Style', es: 'Estilo de corte' },
+        opts: [
+          { v: 'hand_finish', l: { en: 'Machine trim + hand finish', es: 'Corte a máquina + acabado a mano' } },
+          { v: 'full_hand', l: { en: '100% hand trim', es: '100% a mano' } }
+        ] },
+      { k: 'pid', t: 'select', ref: 'properties', allowOther: true,
+        l: { en: 'Property ID (PID)', es: 'ID de propiedad (PID)' } },
+      { k: 'cid', t: 'text', l: { en: 'Customer ID (CID)', es: 'ID de cliente (CID)' } },
+      { k: 'startingBins', t: 'number', min: 0, step: 1, dp: 0,
+        l: { en: 'Starting # of Bins / Bags', es: 'N.º inicial de bins / bolsas' } },
+      { k: 'startingBuckedLb', t: 'number', req: true, min: 0, step: 0.01, prefill: 'lookup',
+        l: { en: 'Total Starting Bucked Weight (lbs)', es: 'Peso desvarado inicial total (lbs)' } },
+
+      // The weighing worksheet from the paper form: one row per trimmer.
+      { k: 'weights', t: 'lineitems', req: true,
+        l: { en: 'Finished Flower — Weighing Worksheet', es: 'Flor terminada — hoja de pesaje' },
+        hint: { en: 'One row per trimmer. Add a row for every bag weighed out.',
+                es: 'Una fila por persona. Agregue una fila por cada bolsa pesada.' },
+        cols: [
+          { k: 'employeeNo', t: 'text', l: { en: 'Employee #', es: 'N.º de empleado' }, inputmode: 'numeric' },
+          { k: 'grams', t: 'number', l: { en: 'Weight (gm)', es: 'Peso (gm)' }, min: 0, step: 1 }
+        ],
+        totalCol: 'grams' },
+
+      { k: 'totalGrams', t: 'calc', dp: 0,
+        calc: (v) => (v.weights || []).reduce((a, r) => a + num(r.grams), 0),
+        l: { en: 'Total Finished Flower (grams)', es: 'Flor terminada total (gramos)' } },
+      { k: 'finishedFlowerLb', t: 'calc',
+        calc: (v) => (v.weights || []).reduce((a, r) => a + num(r.grams), 0) / G_PER_LB,
+        l: { en: 'Total Finished Flower (lbs)', es: 'Flor terminada total (lbs)' },
+        hint: { en: 'grams ÷ 453.592. (The printed form says "× 454" — that is a typo on the form.)',
+                es: 'gramos ÷ 453.592. (El formulario impreso dice "× 454" — es un error del formulario.)' } },
+      { k: 'trimmerCount', t: 'calc', dp: 0,
+        calc: (v) => new Set((v.weights || []).map((r) => String(r.employeeNo || '').trim()).filter(Boolean)).size,
+        l: { en: 'Trimmers on this Order', es: 'Personas en esta orden' } },
+      { k: 'gramsPerTrimmer', t: 'calc', dp: 0,
+        calc: (v) => {
+          const rows = v.weights || [];
+          const people = new Set(rows.map((r) => String(r.employeeNo || '').trim()).filter(Boolean)).size;
+          return people > 0 ? rows.reduce((a, r) => a + num(r.grams), 0) / people : null;
+        },
+        l: { en: 'Avg Grams / Trimmer', es: 'Gramos promedio por persona' } },
+
+      { k: 'smallsLb', t: 'number', min: 0, step: 0.01,
+        l: { en: 'Smalls Pulled (lbs)', es: 'Smalls separados (lbs)' } },
+      { k: 'sugarTrimLb', t: 'number', min: 0, step: 0.01,
+        l: { en: 'Sugar Trim / Scissor Leaf (lbs)', es: 'Hoja azucarada / de tijera (lbs)' } },
+      F.waste(),
+      { k: 'bagCount', t: 'number', min: 0, step: 1, dp: 0,
+        l: { en: 'Finished Bag Count', es: 'Conteo de bolsas terminadas' } },
+      ...totalsBlock('startingBuckedLb', ['finishedFlowerLb', 'smallsLb', 'sugarTrimLb', 'wasteLb']),
+      F.teamLead(), F.laborHours(), F.notes(), F.photo()
+    ],
+    flow: { lossKind: 'conserving',
+            input: { field: 'startingBuckedLb', category: 'bucked_flower' },
+            outputs: [
+              { field: 'finishedFlowerLb', category: 'flower_a' },
+              { field: 'smallsLb', category: 'smalls_b' },
+              { field: 'sugarTrimLb', category: 'sugar_trim' },
+              { field: 'wasteLb', category: 'waste' }
+            ] }
+  },
+
+  // ── FRESH FROZEN ──────────────────────────────────────────────────────────
+  {
+    key: 'fresh_frozen',
+    dept: { en: 'Harvest', es: 'Cosecha' },
+    title: { en: 'Fresh Frozen', es: 'Fresco congelado' },
+    desc: { en: 'Bucked-and-bagged material going straight into totes and the freezer for extraction.',
+            es: 'Material desvarado y embolsado que va directo a totes y al congelador para extracción.' },
+    color: 'blue',
+    fields: [
+      F.date(), F.site(), F.strain(),
+      { k: 'sourceUid', t: 'uid', l: { en: 'Harvest UID Tag', es: 'Etiqueta UID de cosecha' } },
+      { k: 'harvestBatchName', t: 'text', l: { en: 'Harvest / Batch Name', es: 'Nombre de cosecha / lote' } },
+      { k: 'bagCount', t: 'number', req: true, min: 0, step: 1, dp: 0,
+        l: { en: 'Bag Count', es: 'Conteo de bolsas' } },
+      { k: 'totalLb', t: 'number', req: true, min: 0, step: 0.01,
+        l: { en: 'Total Weight (lbs)', es: 'Peso total (lbs)' } },
+      { k: 'lbPerBag', t: 'calc', calc: (v) => (num(v.bagCount) > 0 ? num(v.totalLb) / num(v.bagCount) : null),
+        l: { en: 'Avg lbs / Bag', es: 'Lbs promedio por bolsa' } },
+      { k: 'toteCount', t: 'number', min: 0, step: 1, dp: 0,
+        l: { en: 'Tote Count', es: 'Conteo de totes' } },
+      { k: 'toteIds', t: 'text', l: { en: 'Tote IDs', es: 'ID de totes' } },
+      { k: 'freezer', t: 'select', ref: 'freezers', allowOther: true, req: true,
+        l: { en: 'Freezer', es: 'Congelador' } },
+      { k: 'freezerTempF', t: 'number', step: 1, dp: 0,
+        l: { en: 'Freezer Temp (°F)', es: 'Temp. del congelador (°F)' } },
+      { k: 'intendedUse', t: 'select',
+        l: { en: 'Intended Use', es: 'Uso previsto' },
+        opts: [
+          { v: 'live_rosin', l: { en: 'Live Rosin', es: 'Live Rosin' } },
+          { v: 'live_resin', l: { en: 'Live Resin', es: 'Live Resin' } },
+          { v: 'bulk_sale', l: { en: 'Bulk sale', es: 'Venta a granel' } }
+        ] },
+      F.teamLead(), F.crewSize(), F.notes(), F.photo()
+    ],
+    flow: { lossKind: 'origin', outputs: [{ field: 'totalLb', category: 'fresh_frozen' }] }
+  },
+
+  // ── BIOMASS REQUEST (PROCESSING → MANUFACTURING) ──────────────────────────
+  {
+    key: 'biomass_request',
+    dept: { en: 'Manufacturing', es: 'Manufactura' },
+    title: { en: 'Biomass Request', es: 'Solicitud de biomasa' },
+    desc: { en: 'Request biomass from the processing facility for a manufacturing run.',
+            es: 'Solicite biomasa de la planta de procesamiento para una corrida de manufactura.' },
+    color: 'purple',
+    fields: [
+      F.date(),
+      { k: 'requestedBy', t: 'text', req: true, l: { en: 'Requested By', es: 'Solicitado por' } },
+      { k: 'destinationDept', t: 'select', req: true,
+        l: { en: 'For Which Line?', es: '¿Para qué línea?' },
+        opts: [
+          { v: 'prerolls', l: { en: 'Manufacturing — Prerolls', es: 'Manufactura — Prerolls' } },
+          { v: 'flower', l: { en: 'Manufacturing — Flower', es: 'Manufactura — Flor' } },
+          { v: 'concentrates', l: { en: 'Manufacturing — Concentrates', es: 'Manufactura — Concentrados' } },
+          { v: 'bulk_sale', l: { en: 'Bulk sale / transfer out', es: 'Venta a granel / transferencia' } }
+        ] },
+      { k: 'brand', t: 'select', ref: 'brands', allowOther: true,
+        l: { en: 'Brand', es: 'Marca' } },
+      { k: 'category', t: 'select', req: true, refConst: 'BIOMASS',
+        l: { en: 'Biomass Category', es: 'Categoría de biomasa' } },
+      { k: 'strain', t: 'select', ref: 'strains', allowOther: true,
+        l: { en: 'Strain', es: 'Variedad (cepa)' },
+        hint: { en: 'Leave blank if any strain will do.', es: 'Deje en blanco si cualquier variedad sirve.' } },
+      { k: 'requestedLb', t: 'number', req: true, min: 0, step: 0.01,
+        l: { en: 'Requested Weight (lbs)', es: 'Peso solicitado (lbs)' } },
+      { k: 'neededBy', t: 'date', l: { en: 'Needed By', es: 'Necesario para' } },
+      { k: 'purpose', t: 'text', l: { en: 'Purpose / SKU', es: 'Propósito / SKU' } },
+      { k: 'status', t: 'select', req: true, today: false,
+        l: { en: 'Status', es: 'Estado' },
+        opts: [
+          { v: 'requested', l: { en: 'Requested', es: 'Solicitado' } },
+          { v: 'approved', l: { en: 'Approved', es: 'Aprobado' } },
+          { v: 'transferred', l: { en: 'Transferred', es: 'Transferido' } },
+          { v: 'denied', l: { en: 'Denied', es: 'Denegado' } }
+        ], def: 'requested' },
+      { k: 'sourceUid', t: 'uid', showIf: (v) => v.status === 'approved' || v.status === 'transferred',
+        l: { en: 'Source Package UID', es: 'UID del paquete de origen' } },
+      { k: 'transferredLb', t: 'number', min: 0, step: 0.01, showIf: (v) => v.status === 'transferred',
+        l: { en: 'Actually Transferred (lbs)', es: 'Transferido realmente (lbs)' } },
+      { k: 'transferDate', t: 'date', showIf: (v) => v.status === 'transferred',
+        l: { en: 'Transfer Date', es: 'Fecha de transferencia' } },
+      { k: 'approvedBy', t: 'text', showIf: (v) => v.status !== 'requested',
+        l: { en: 'Approved By', es: 'Aprobado por' } },
+      F.notes()
+    ],
+    flow: { transfer: { field: 'transferredLb', categoryField: 'category', whenStatus: 'transferred' } }
+  },
+
+  // ── MANUFACTURING OUTPUT ──────────────────────────────────────────────────
+  {
+    key: 'mfg_output',
+    dept: { en: 'Manufacturing', es: 'Manufactura' },
+    title: { en: 'Manufacturing Run', es: 'Corrida de manufactura' },
+    desc: { en: 'Log a finished-goods run — what went in, how many units came out.',
+            es: 'Registre una corrida de producto terminado — qué entró y cuántas unidades salieron.' },
+    color: 'purple',
+    fields: [
+      F.date(),
+      { k: 'line', t: 'select', req: true,
+        l: { en: 'Line', es: 'Línea' },
+        opts: [
+          { v: 'prerolls', l: { en: 'Prerolls', es: 'Prerolls' } },
+          { v: 'flower', l: { en: 'Flower packaging', es: 'Empaque de flor' } },
+          { v: 'concentrates', l: { en: 'Concentrates', es: 'Concentrados' } }
+        ] },
+      { k: 'brand', t: 'select', ref: 'brands', allowOther: true, req: true,
+        l: { en: 'Brand', es: 'Marca' } },
+      { k: 'sku', t: 'text', req: true, l: { en: 'SKU / Product', es: 'SKU / producto' } },
+      F.strain(),
+      { k: 'sourceUid', t: 'uid', l: { en: 'Input Package UID', es: 'UID del paquete de entrada' } },
+      { k: 'inputCategory', t: 'select', refConst: 'BIOMASS', req: true,
+        l: { en: 'Input Biomass Category', es: 'Categoría de biomasa de entrada' } },
+      { k: 'inputLb', t: 'number', req: true, min: 0, step: 0.01,
+        l: { en: 'Input Weight (lbs)', es: 'Peso de entrada (lbs)' } },
+      { k: 'unitsProduced', t: 'number', req: true, min: 0, step: 1, dp: 0,
+        l: { en: 'Units Produced', es: 'Unidades producidas' } },
+      { k: 'unitSizeG', t: 'number', min: 0, step: 0.01,
+        l: { en: 'Unit Size (grams)', es: 'Tamaño de unidad (gramos)' } },
+      { k: 'packedLb', t: 'calc', calc: (v) => (num(v.unitsProduced) * num(v.unitSizeG)) / G_PER_LB,
+        l: { en: 'Packed Weight (lbs)', es: 'Peso empacado (lbs)' } },
+      { k: 'wasteLb', t: 'number', min: 0, step: 0.01,
+        l: { en: 'Waste / Loss (lbs)', es: 'Desecho / pérdida (lbs)' } },
+      { k: 'packYieldPct', t: 'calc', fmt: 'pct',
+        calc: (v) => pct((num(v.unitsProduced) * num(v.unitSizeG)) / G_PER_LB, v.inputLb),
+        l: { en: 'Packaging Yield %', es: '% de rendimiento de empaque' } },
+      { k: 'destination', t: 'select', ref: 'licenses', allowOther: true,
+        l: { en: 'Ship To', es: 'Enviar a' } },
+      F.teamLead(), F.crewSize(), F.laborHours(), F.notes(), F.photo()
+    ],
+    // Finished goods leave the biomass ledger entirely, so the input weight
+    // "disappearing" here is the run working, not weight going missing.
+    flow: { lossKind: 'transform', input: { field: 'inputLb', categoryField: 'inputCategory' }, outputs: [] }
+  }
+];
+
+// Which stage a station pulls its `prefill: 'lookup'` values from, and which
+// field on that stage supplies each prefilled key.
+const PREFILL_MAP = {
+  intake_wet:  { from: 'harvest',      map: { harvestBatchName: 'harvestBatchName', strain: 'strain', site: 'site', farmReportedLb: 'wetWeightLb' } },
+  dry_check:   { from: 'intake_wet',   map: { strain: 'strain', dryRoom: 'dryRoom', wetIntakeLb: 'netWetLb' } },
+  buck:        { from: 'dry_check',    map: { strain: 'strain', startingDryLb: 'dryWeightLb' } },
+  machine_trim:{ from: 'buck',         map: { strain: 'strain', inputBuckedLb: 'buckedFlowerLb' } },
+  hand_trim:   { from: 'machine_trim', map: { strain: 'strain', startingBuckedLb: 'flowerALb' } }
+};
+
+// Order of the pipeline, for the dashboard's stage funnel.
+const PIPELINE_ORDER = ['harvest', 'intake_wet', 'dry_check', 'buck', 'machine_trim', 'hand_trim'];
+
+const STATION_BY_KEY = Object.fromEntries(PROD_STATIONS.map((s) => [s.key, s]));
+
+if (typeof module !== 'undefined') {
+  module.exports = { PROD_STATIONS, STATION_BY_KEY, BIOMASS, SELLABLE, PREFILL_MAP, PIPELINE_ORDER, G_PER_LB };
+}

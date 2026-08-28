@@ -268,6 +268,22 @@ const CARD_DEFS = [
     href: '/menu.html'
   },
   {
+    key: 'production',
+    color: 'gold',
+    label: 'Operations',
+    title: 'Production Stations',
+    desc: 'Harvest, drying, bucking, trimming, and manufacturing forms for the floor — bilingual, tablet-ready, and they work offline.',
+    href: '/production.html'
+  },
+  {
+    key: 'production_dashboard',
+    color: 'blue',
+    label: 'Operations',
+    title: 'Production Dashboard',
+    desc: 'Where every lot is, yield and loss by stage and strain, biomass on hand, and trimmer output.',
+    href: '/production_dashboard.html'
+  },
+  {
     key: 'brand_assets',
     color: 'blue',
     label: 'Marketing',
@@ -291,6 +307,8 @@ const CARD_ORDER_OVERRIDES = {
 // spaces). Card keys not listed here are looked up as-is.
 const CARD_SHEET_COLS = {
   menu_health: 'menu health',
+  production: 'production',
+  production_dashboard: 'production dashboard',
   brand_assets: 'brand assets'
 };
 
@@ -455,6 +473,18 @@ async function buildHub(user){
   });
   sessionStorage.setItem('2cw_form_access', JSON.stringify(formAccess));
   user.field_forms = anyFormAccess ? 'TRUE' : 'FALSE';
+
+  // Production station access. The 'production' column opens the stations hub;
+  // the optional 'production stations' column narrows it to a comma-separated
+  // list of station keys (e.g. "buck,machine_trim,hand_trim"). Leave that column
+  // blank — or off the sheet entirely — and someone with 'production' sees every
+  // station, which is what a plant manager wants.
+  const stationList = (user['production stations'] || '').trim();
+  sessionStorage.setItem('2cw_prod_access', JSON.stringify(
+    !stationList || stationList.toLowerCase() === 'all'
+      ? 'all'
+      : stationList.split(',').map(s => s.trim()).filter(Boolean)
+  ));
 
   // Standard cards this user is authorized for (per-user order override applied, if any)
   const orderOverride = CARD_ORDER_OVERRIDES[userName.trim().toLowerCase()];
@@ -667,6 +697,7 @@ function doLogout(){
   sessionStorage.removeItem('2cw_pin');
   sessionStorage.removeItem('2cw_user_name');
   sessionStorage.removeItem('2cw_form_access');
+  sessionStorage.removeItem('2cw_prod_access');
   document.getElementById('pin-input').value = '';
   for(let i = 0; i < 4; i++) document.getElementById('dot'+i).classList.remove('filled');
   document.getElementById('login-err').style.display = 'none';
