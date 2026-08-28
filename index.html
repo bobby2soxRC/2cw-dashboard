@@ -284,6 +284,14 @@ const CARD_DEFS = [
     href: '/production_dashboard.html'
   },
   {
+    key: 'production_today',
+    color: 'gold',
+    label: 'Operations',
+    title: 'Today — Live',
+    desc: 'Every form in progress or finished today, updating live as it happens — for anyone with view access, whether or not they can edit it.',
+    href: '/production_today.html'
+  },
+  {
     key: 'brand_assets',
     color: 'blue',
     label: 'Marketing',
@@ -307,10 +315,11 @@ const CARD_ORDER_OVERRIDES = {
 // spaces). Card keys not listed here are looked up as-is.
 const CARD_SHEET_COLS = {
   menu_health: 'menu health',
-  production: 'production',
-  production_dashboard: 'production dashboard',
   brand_assets: 'brand assets'
 };
+// production, production_dashboard, and production_today are not sheet
+// columns — they're derived from 'production edit stations' / 'production
+// view stations' below, the same way field_forms is derived per-form.
 
 // Commission columns in the sheet
 const COMMISSION_COLS = ['commission niki','commission billy','commission john','commission jonathan','commission mac','commission emily'];
@@ -474,17 +483,27 @@ async function buildHub(user){
   sessionStorage.setItem('2cw_form_access', JSON.stringify(formAccess));
   user.field_forms = anyFormAccess ? 'TRUE' : 'FALSE';
 
-  // Production station access. The 'production' column opens the stations hub;
-  // the optional 'production stations' column narrows it to a comma-separated
-  // list of station keys (e.g. "buck,machine_trim,hand_trim"). Leave that column
-  // blank — or off the sheet entirely — and someone with 'production' sees every
-  // station, which is what a plant manager wants.
-  const stationList = (user['production stations'] || '').trim();
-  sessionStorage.setItem('2cw_prod_access', JSON.stringify(
-    !stationList || stationList.toLowerCase() === 'all'
-      ? 'all'
-      : stationList.split(',').map(s => s.trim()).filter(Boolean)
-  ));
+  // Production access has two independent axes: EDIT (create/autosave/submit
+  // forms for a station) and VIEW (see it on the live Today board without
+  // being able to touch it — a plant manager watching bucking, say). Each is
+  // a comma-separated list of station keys, or 'all', or blank for none.
+  // 'production stations' is kept as the old name for edit access so a sheet
+  // set up before the view/edit split still works unchanged.
+  const parseStationList = (raw) => {
+    const s = (raw || '').trim();
+    if (!s) return [];
+    if (s.toLowerCase() === 'all') return 'all';
+    return s.split(',').map(x => x.trim()).filter(Boolean);
+  };
+  const editList = parseStationList(user['production edit stations'] || user['production stations']);
+  const viewList = parseStationList(user['production view stations']);
+  sessionStorage.setItem('2cw_prod_edit_access', JSON.stringify(editList));
+  sessionStorage.setItem('2cw_prod_view_access', JSON.stringify(viewList));
+  const hasEdit = editList === 'all' || editList.length > 0;
+  const hasView = viewList === 'all' || viewList.length > 0;
+  user.production = hasEdit ? 'TRUE' : 'FALSE';                  // station hub — create/edit only
+  user.production_dashboard = (hasEdit || hasView) ? 'TRUE' : 'FALSE';  // historical yields/biomass
+  user.production_today = (hasEdit || hasView) ? 'TRUE' : 'FALSE';       // live board
 
   // Standard cards this user is authorized for (per-user order override applied, if any)
   const orderOverride = CARD_ORDER_OVERRIDES[userName.trim().toLowerCase()];
@@ -697,7 +716,8 @@ function doLogout(){
   sessionStorage.removeItem('2cw_pin');
   sessionStorage.removeItem('2cw_user_name');
   sessionStorage.removeItem('2cw_form_access');
-  sessionStorage.removeItem('2cw_prod_access');
+  sessionStorage.removeItem('2cw_prod_edit_access');
+  sessionStorage.removeItem('2cw_prod_view_access');
   document.getElementById('pin-input').value = '';
   for(let i = 0; i < 4; i++) document.getElementById('dot'+i).classList.remove('filled');
   document.getElementById('login-err').style.display = 'none';

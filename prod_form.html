@@ -29,6 +29,12 @@
     .hdr-back{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
     .hdr-div{width:1px;height:18px;background:var(--border)}
     .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .autosave{font-family:'DM Mono',monospace;font-size:10.5px;letter-spacing:.06em;color:var(--muted);white-space:nowrap;display:flex;align-items:center;gap:6px}
+    .autosave .dot{width:6px;height:6px;border-radius:50%;background:var(--muted)}
+    .autosave.saving .dot{background:var(--gold);animation:pulse 1s infinite}
+    .autosave.saved .dot{background:var(--green)}
+    .autosave.offline .dot{background:var(--red)}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
     .lang{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
     .lang button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:12px;font-weight:600;padding:8px 12px;cursor:pointer;min-height:36px}
     .lang button.on{background:var(--accent);color:#000}
@@ -40,6 +46,15 @@
     .title{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,6vw,44px);letter-spacing:.04em;line-height:1}
     .subtitle{margin-top:6px;font-size:.85rem;color:var(--subtext);line-height:1.5}
     .dept{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+
+    /* "Your open forms" strain switcher — lets someone bounce between the
+       three strains they're running today without losing any of them. */
+    .switcher{display:flex;gap:8px;overflow-x:auto;margin-top:18px;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+    .chip{flex:0 0 auto;display:flex;flex-direction:column;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:9px 14px;text-decoration:none;color:var(--text);min-width:110px}
+    .chip.on{border-color:var(--accent);background:var(--surface2)}
+    .chip .cs{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+    .chip .cv{font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+    .chip.new{color:var(--accent);border-style:dashed;justify-content:center;align-items:center}
 
     .panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 18px;margin-top:24px}
     .field{margin-bottom:20px}
@@ -104,6 +119,7 @@
   <a class="hdr-back" href="/production.html" id="back">← Stations</a>
   <div class="hdr-div"></div>
   <div class="hdr-brand" id="brand">Production</div>
+  <div class="autosave" id="autosave" style="display:none"><span class="dot"></span><span id="autosave-txt"></span></div>
   <div class="lang" id="lang"></div>
 </header>
 <div class="queue" id="queue"></div>
@@ -112,6 +128,7 @@
   <div class="dept" id="dept"></div>
   <div class="title" id="title"></div>
   <div class="subtitle" id="subtitle"></div>
+  <div class="switcher" id="switcher" style="display:none"></div>
   <form class="panel" id="form" autocomplete="off"></form>
   <div class="banner" id="banner"></div>
 </main>
@@ -123,16 +140,19 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/config/supabase_config.js"></script>
 <script src="/production_stations.js"></script>
 <script src="/prod_common.js"></script>
+<script src="/prod_data.js"></script>
 <script>
 (async function () {
   const params = new URLSearchParams(location.search);
   const station = STATION_BY_KEY[params.get('station')];
   if (!station) { location.replace('/production.html'); return; }
 
-  // Per-station access, set at hub login from the directory sheet.
-  const allowed = JSON.parse(sessionStorage.getItem('2cw_prod_access') || 'null');
+  // Per-station edit access, set at hub login from the directory sheet.
+  const allowed = JSON.parse(sessionStorage.getItem('2cw_prod_edit_access') || 'null');
   if (allowed && allowed !== 'all' && !allowed.includes(station.key)) {
     location.replace('/production.html');
     return;
@@ -142,17 +162,32 @@
   mountQueueBanner('queue');
   document.documentElement.style.setProperty('--accent', `var(--${station.color || 'green'})`);
   document.getElementById('back').textContent = t(UI.back);
-  document.getElementById('brand').textContent = t(station.title);
+  document.querySelector('.hdr-brand').textContent = t(station.title);
   document.getElementById('dept').textContent = t(station.dept);
   document.getElementById('title').textContent = t(station.title);
   document.getElementById('subtitle').textContent = t(station.desc);
   document.title = `${t(station.title)} — 2CW Production`;
 
+  const owner = sessionStorage.getItem('2cw_user_name') || null;
+  const draftsOn = supabaseReady();
+
+  // The draft id is the only thing that has to travel for cross-device
+  // resume to work — put it in the URL the moment one exists so a reload
+  // (or a link shared with a teammate) lands back on the same form.
+  let draftId = params.get('draft');
+  if (draftsOn && !draftId) {
+    draftId = crypto.randomUUID();
+    const url = new URL(location.href);
+    url.searchParams.set('draft', draftId);
+    history.replaceState(null, '', url);
+  }
+
   const PERSON_FIELDS = new Set(['teamLead', 'checkedBy', 'requestedBy']);
   const reference = await loadReference();
   const form = document.getElementById('form');
   const values = {};          // live form state, keyed by field key
-  const els = {};             // key -> { wrap, input }
+  const els = {};             // key -> wrap element
+  const lineitemAdders = {};  // lineitems key -> addRow(prefill?) function
 
   // ── Render ────────────────────────────────────────────────────────────────
   function optionsFor(f) {
@@ -208,7 +243,8 @@
   }
 
   // The weighing worksheet: a repeating employee-# / weight grid with a live
-  // sub-total, mirroring the paper work order it replaces.
+  // sub-total, mirroring the paper work order it replaces. Exposes addRow()
+  // so hydrate() can rebuild saved rows on resume.
   function buildLineItems(f, wrap) {
     values[f.k] = [];
     wrap.innerHTML = labelHtml(f) +
@@ -220,7 +256,7 @@
 
     setTimeout(() => {
       const tbody = wrap.querySelector(`#li_${f.k}`);
-      const addRow = () => {
+      const addRow = (prefill) => {
         const row = {};
         values[f.k].push(row);
         const tr = document.createElement('tr');
@@ -230,9 +266,14 @@
           inp.type = c.t === 'number' ? 'number' : 'text';
           if (c.t === 'number') { inp.inputMode = 'decimal'; inp.step = c.step || 'any'; if (c.min !== undefined) inp.min = c.min; }
           if (c.inputmode) inp.inputMode = c.inputmode;
+          if (prefill && prefill[c.k] !== undefined && prefill[c.k] !== null) {
+            inp.value = prefill[c.k];
+            row[c.k] = prefill[c.k];
+          }
           inp.addEventListener('input', () => {
             row[c.k] = c.t === 'number' ? (inp.value === '' ? null : Number(inp.value)) : inp.value;
             recompute();
+            markDirty();
           });
           td.appendChild(inp); tr.appendChild(td);
         });
@@ -243,13 +284,14 @@
         del.onclick = () => {
           const i = values[f.k].indexOf(row);
           if (i > -1) values[f.k].splice(i, 1);
-          tr.remove(); recompute();
+          tr.remove(); recompute(); markDirty();
         };
         tdDel.appendChild(del); tr.appendChild(tdDel);
         tbody.appendChild(tr);
-        tr.querySelector('input').focus();
+        if (!prefill) tr.querySelector('input').focus();
       };
-      wrap.querySelector(`#add_${f.k}`).onclick = addRow;
+      lineitemAdders[f.k] = addRow;
+      wrap.querySelector(`#add_${f.k}`).onclick = () => addRow();
       addRow(); addRow(); addRow();   // start with a few rows ready to fill
     }, 0);
 
@@ -292,6 +334,7 @@
         values[f.k] = await compressImage(file);
         const img = document.getElementById(`p_${f.k}`);
         img.src = values[f.k].dataUrl; img.style.display = 'block';
+        // Not autosaved — see the note in docs about photos and cross-device resume.
       });
       return;
     }
@@ -308,10 +351,11 @@
       values[f.k] = read();
       recompute();
       updateVisibility();
+      markDirty();
     };
     inp.addEventListener('input', onChange);
     inp.addEventListener('change', onChange);
-    if (other) other.addEventListener('input', () => { values[f.k] = read(); recompute(); });
+    if (other) other.addEventListener('input', () => { values[f.k] = read(); recompute(); markDirty(); });
 
     if (f.t === 'uid') inp.addEventListener('change', () => tryPrefill(inp.value.trim()));
   });
@@ -347,11 +391,50 @@
       note.textContent = `${t(UI.matched)}: ${upstream.strain || ''} ${upstream.harvestBatchName || ''}`.trim();
     }
     recompute();
+    markDirty();
+  }
+
+  // ── Hydrate from a saved draft (resume, possibly on a different device) ────
+  function setFieldValue(f, val) {
+    if (val === undefined || val === null) return;
+    values[f.k] = val;
+    const inp = document.getElementById(`f_${f.k}`);
+    if (!inp) return;
+    if (f.t === 'select') {
+      if (inp.querySelector(`option[value="${CSS.escape(String(val))}"]`)) {
+        inp.value = val;
+      } else {
+        const opt = document.createElement('option');
+        opt.value = val; opt.textContent = val;
+        inp.appendChild(opt); inp.value = val;
+      }
+      const other = f.allowOther ? document.getElementById(`o_${f.k}`) : null;
+      if (other) other.style.display = inp.value === '__other__' ? 'block' : 'none';
+    } else {
+      inp.value = val;
+    }
+  }
+
+  function hydrate(fields) {
+    station.fields.forEach((f) => {
+      if (f.t === 'calc' || f.t === 'photo') return;
+      if (f.t === 'lineitems') {
+        const rows = fields[f.k];
+        if (!Array.isArray(rows) || !rows.length) return;
+        // Clear the blank starter rows, then rebuild from the saved data.
+        document.getElementById(`li_${f.k}`).innerHTML = '';
+        values[f.k] = [];
+        rows.forEach((r) => lineitemAdders[f.k] && lineitemAdders[f.k](r));
+        return;
+      }
+      setFieldValue(f, fields[f.k]);
+    });
+    updateVisibility();
+    recompute();
   }
 
   // ── Computed fields ───────────────────────────────────────────────────────
-  const primaryCalc = station.fields.find((f) => f.t === 'calc' &&
-    /finishedFlowerLb|totalOutputLb|netWetLb|wetWeightLb|dryWeightLb/.test(f.k)) ||
+  const primaryCalc = station.fields.find((f) => f.k === station.headline) ||
     station.fields.find((f) => f.t === 'calc');
 
   function recompute() {
@@ -393,10 +476,84 @@
     });
   }
 
+  // ── Autosave ─────────────────────────────────────────────────────────────
+  // Debounced so we save a pause in typing, not every keystroke. The local
+  // mirror is written synchronously on every change regardless of network,
+  // so a reload on this same tablet before the debounce fires — or before
+  // Supabase is reachable at all — still has something to restore from.
+  const autosaveEl = document.getElementById('autosave');
+  const autosaveTxt = document.getElementById('autosave-txt');
+  const AS = {
+    saving: { en: 'Saving…', es: 'Guardando…' },
+    saved:  { en: 'Saved', es: 'Guardado' },
+    offline:{ en: 'Saved on this tablet — offline', es: 'Guardado en esta tableta — sin conexión' }
+  };
+  let autosaveTimer = null;
+  const mirrorKey = () => `2cw_draft_mirror_${draftId}`;
+
+  function draftPayload() {
+    const fields = { ...values };
+    station.fields.filter((f) => f.t === 'photo').forEach((f) => { delete fields[f.k]; });
+    return { stationKey: station.key, owner, strain: values.strain || null, date: values.date || todayStr(), fields };
+  }
+
+  function markDirty() {
+    if (!draftsOn) return;
+    localStorage.setItem(mirrorKey(), JSON.stringify({ ...draftPayload(), savedAt: Date.now() }));
+    autosaveEl.style.display = 'flex';
+    autosaveEl.className = 'autosave saving';
+    autosaveTxt.textContent = t(AS.saving);
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(doAutosave, 1500);
+  }
+
+  async function doAutosave() {
+    const res = await saveDraft(draftId, draftPayload());
+    if (res.ok) {
+      autosaveEl.className = 'autosave saved';
+      autosaveTxt.textContent = `${t(AS.saved)} ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+      localStorage.removeItem(mirrorKey());
+    } else {
+      autosaveEl.className = 'autosave offline';
+      autosaveTxt.textContent = t(AS.offline);
+      // Not reachable right now — try again shortly rather than losing the change.
+      autosaveTimer = setTimeout(doAutosave, 8000);
+    }
+  }
+
+  // ── Strain switcher ──────────────────────────────────────────────────────
+  const SW = { newForm: { en: '+ New', es: '+ Nuevo' }, untitled: { en: 'Untitled', es: 'Sin título' } };
+  async function renderSwitcher() {
+    if (!draftsOn || !owner) return;
+    const drafts = await listMyDrafts(station.key, owner, todayStr());
+    const el = document.getElementById('switcher');
+    if (!drafts.length) { el.style.display = 'none'; return; }
+    el.style.display = 'flex';
+    el.innerHTML = drafts.map((d) => `
+      <a class="chip ${d.id === draftId ? 'on' : ''}" href="/prod_form.html?station=${station.key}&draft=${d.id}">
+        <span class="cs">${new Date(d.updated_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</span>
+        <span class="cv">${escapeHtml(d.strain || t(SW.untitled))}</span>
+      </a>`).join('') +
+      `<a class="chip new" href="/prod_form.html?station=${station.key}">${t(SW.newForm)}</a>`;
+  }
+
   // ── Submit ────────────────────────────────────────────────────────────────
   const banner = document.getElementById('banner');
   const btn = document.getElementById('submit-btn');
   btn.textContent = t(UI.submit);
+
+  async function uploadPhotoDirect(fieldKey, photoValue) {
+    if (!photoValue || !photoValue.dataUrl) return null;
+    try {
+      const res = await fetch('/.netlify/functions/upload-production-photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stationKey: station.key, id: draftId, fieldKey, dataUrl: photoValue.dataUrl })
+      });
+      const data = await res.json().catch(() => ({}));
+      return res.ok && data.ok ? data.url : null;
+    } catch { return null; }
+  }
 
   btn.addEventListener('click', async () => {
     banner.className = 'banner';
@@ -419,6 +576,7 @@
 
     btn.disabled = true;
     btn.textContent = t(UI.submitting);
+    clearTimeout(autosaveTimer);
 
     // Drop empty worksheet rows before sending.
     const payload = { ...values };
@@ -426,7 +584,35 @@
       payload[f.k] = (payload[f.k] || []).filter((r) => Object.values(r).some((x) => x !== '' && x !== null && x !== undefined));
     });
 
-    const result = await submitProduction(station.key, payload);
+    let result;
+    if (draftsOn) {
+      for (const f of station.fields) {
+        if (f.t === 'photo' && payload[f.k] && payload[f.k].dataUrl) {
+          payload[f.k] = await uploadPhotoDirect(f.k, payload[f.k]);
+        }
+      }
+      const submitFields = {
+        stationKey: station.key, owner, strain: payload.strain || null,
+        date: payload.date || todayStr(), fields: payload
+      };
+      const sres = await submitDraft(draftId, submitFields);
+      if (sres.ok) {
+        result = { ok: true };
+        localStorage.removeItem(mirrorKey());
+      } else if (!navigator.onLine) {
+        // No signal right now — the values are already safe in the local
+        // mirror; mark it as a pending submit (not just a pending autosave)
+        // so reconnecting finishes the submit instead of leaving it a draft.
+        pendingSubmitFields = submitFields;
+        localStorage.setItem(mirrorKey(), JSON.stringify({ ...submitFields, pendingSubmit: true, savedAt: Date.now() }));
+        result = { ok: true, queued: true };
+      } else {
+        result = { ok: false, error: sres.reason };
+      }
+    } else {
+      result = await submitProduction(station.key, payload);
+    }
+
     btn.disabled = false;
     btn.textContent = t(UI.submit);
 
@@ -434,12 +620,34 @@
       banner.className = result.queued ? 'banner warn' : 'banner success';
       banner.textContent = result.queued ? t(UI.queued) : t(UI.submitted);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      setTimeout(() => location.reload(), 1800);
+      if (!result.queued) {
+        // Start clean rather than reloading back into the just-finished draft.
+        setTimeout(() => { location.href = `/prod_form.html?station=${station.key}`; }, 1400);
+      }
+      // Queued: stay put — attemptPendingSubmit finishes it in the background
+      // the moment signal returns, and redirects itself once it does.
     } else {
       banner.className = 'banner error';
       banner.textContent = result.error || t(UI.failed);
     }
   });
+
+  // A submit that couldn't reach the server while offline retries here —
+  // on reconnect, and as a periodic safety net in case the 'online' event
+  // doesn't fire (some tablets are unreliable about it).
+  let pendingSubmitFields = null;
+  async function attemptPendingSubmit() {
+    if (!pendingSubmitFields || !draftsOn) return;
+    const sres = await submitDraft(draftId, pendingSubmitFields);
+    if (!sres.ok) return;
+    pendingSubmitFields = null;
+    localStorage.removeItem(mirrorKey());
+    banner.className = 'banner success';
+    banner.textContent = t(UI.submitted);
+    setTimeout(() => { location.href = `/prod_form.html?station=${station.key}`; }, 1200);
+  }
+  window.addEventListener('online', attemptPendingSubmit);
+  setInterval(attemptPendingSubmit, 20000);
 
   // Photo downscale — same approach as the field forms, kept local so this page
   // doesn't need forms_common.js.
@@ -463,8 +671,38 @@
     });
   }
 
+  // ── Boot ─────────────────────────────────────────────────────────────────
   updateVisibility();
   recompute();
+
+  if (draftsOn) {
+    // Prefer whatever is on the server; if this exact draft never made it
+    // there (tablet died before the first autosave landed), fall back to
+    // this browser's local mirror so nothing typed gets lost.
+    const existing = await getDraft(draftId);
+    if (existing) {
+      hydrate(existing.fields || {});
+    } else {
+      const mirrored = localStorage.getItem(mirrorKey());
+      if (mirrored) {
+        try {
+          const m = JSON.parse(mirrored);
+          hydrate(m.fields || {});
+          if (m.pendingSubmit) {
+            // This browser tried to submit while offline and never got a
+            // confirmation back. Retry now; if it still can't reach Supabase,
+            // the 'online' listener and the 20s interval below keep trying
+            // until it lands — the values are safe in this mirror either way.
+            pendingSubmitFields = { stationKey: station.key, owner, strain: m.strain, date: m.work_date || m.date, fields: m.fields };
+            attemptPendingSubmit();
+          } else {
+            markDirty();
+          }
+        } catch { /* corrupt mirror, ignore */ }
+      }
+    }
+    renderSwitcher();
+  }
 })();
 </script>
 </body>

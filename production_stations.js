@@ -101,6 +101,7 @@ const PROD_STATIONS = [
     desc: { en: 'Log a harvest off a farm block — plant count, wet weight, and where it is headed.',
             es: 'Registre una cosecha de un bloque — número de plantas, peso húmedo y su destino.' },
     color: 'green',
+    headline: 'wetWeightLb',
     fields: [
       F.date(),
       F.site(),
@@ -154,6 +155,7 @@ const PROD_STATIONS = [
     desc: { en: 'Receive a load off the truck: verify the weight against the farm, then hang.',
             es: 'Reciba una carga del camión: verifique el peso contra el rancho y luego cuelgue.' },
     color: 'blue',
+    headline: 'netWetLb',
     fields: [
       F.date(),
       F.sourceUid(),
@@ -197,6 +199,7 @@ const PROD_STATIONS = [
     desc: { en: 'Weigh the dried batch and record moisture before it moves to bucking.',
             es: 'Pese el lote seco y registre la humedad antes de pasar a desvarado.' },
     color: 'blue',
+    headline: 'dryWeightLb',
     fields: [
       F.date(),
       F.sourceUid(),
@@ -243,6 +246,7 @@ const PROD_STATIONS = [
     desc: { en: 'Cut buds off the stems and split out big leaf, stems, and waste.',
             es: 'Corte los cogollos del tallo y separe hoja grande, tallos y desecho.' },
     color: 'gold',
+    headline: 'buckedFlowerLb',
     fields: [
       F.date(),
       F.sourceUid(),
@@ -284,6 +288,7 @@ const PROD_STATIONS = [
     desc: { en: 'Run bucked flower through the Mobius and sorters; split A-buds from smalls.',
             es: 'Pase la flor desvarada por la Mobius y clasificadoras; separe buds A de smalls.' },
     color: 'gold',
+    headline: 'flowerALb',
     fields: [
       F.date(),
       F.sourceUid({ en: 'Bucked Flower UID', es: 'UID de flor desvarada' }),
@@ -336,6 +341,7 @@ const PROD_STATIONS = [
     desc: { en: 'The trimming work order — weigh each trimmer’s finished flower and total the run.',
             es: 'La orden de trabajo de corte — pese la flor terminada de cada persona y sume la corrida.' },
     color: 'purple',
+    headline: 'finishedFlowerLb',
     fields: [
       { k: 'workOrderNo', t: 'text', l: { en: 'Work Order #', es: 'N.º de orden de trabajo' } },
       F.date(),
@@ -422,6 +428,7 @@ const PROD_STATIONS = [
     desc: { en: 'Bucked-and-bagged material going straight into totes and the freezer for extraction.',
             es: 'Material desvarado y embolsado que va directo a totes y al congelador para extracción.' },
     color: 'blue',
+    headline: 'totalLb',
     fields: [
       F.date(), F.site(), F.strain(),
       { k: 'sourceUid', t: 'uid', l: { en: 'Harvest UID Tag', es: 'Etiqueta UID de cosecha' } },
@@ -459,6 +466,7 @@ const PROD_STATIONS = [
     desc: { en: 'Request biomass from the processing facility for a manufacturing run.',
             es: 'Solicite biomasa de la planta de procesamiento para una corrida de manufactura.' },
     color: 'purple',
+    headline: 'requestedLb',
     fields: [
       F.date(),
       { k: 'requestedBy', t: 'text', req: true, l: { en: 'Requested By', es: 'Solicitado por' } },
@@ -510,6 +518,7 @@ const PROD_STATIONS = [
     desc: { en: 'Log a finished-goods run — what went in, how many units came out.',
             es: 'Registre una corrida de producto terminado — qué entró y cuántas unidades salieron.' },
     color: 'purple',
+    headline: 'unitsProduced',
     fields: [
       F.date(),
       { k: 'line', t: 'select', req: true,

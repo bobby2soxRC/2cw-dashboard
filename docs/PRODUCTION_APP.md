@@ -1,25 +1,31 @@
 # 2CW Production App
 
-Replaces the hand-written station paperwork (and the retyping that follows it)
-with tablet forms that total themselves, plus a dashboard that reads the same
-records. It is built into the existing Operations Hub — same login, same
-Netlify deploy, same JSON-in-the-repo storage as the field forms.
+Replaces the hand-written station paperwork — and the retyping into
+spreadsheets that follows it — with tablet forms that total themselves,
+autosave as someone works through their day, and can be picked back up on a
+different tablet if the first one dies or a shift changes hands. Built into
+the existing Operations Hub — same login, same Netlify deploy.
 
 ## What's here
 
 | File | What it is |
 |---|---|
-| `production.html` | Station picker, grouped by department |
-| `prod_form.html` | The form for every station, rendered from the schema |
-| `production_dashboard.html` | Pipeline, yields, biomass, labor, requests, exceptions |
+| `production.html` | Station picker, grouped by department, with "continue" chips for your open drafts |
+| `prod_form.html` | The form for every station, rendered from the schema, with autosave + resume |
+| `production_today.html` | Live board — every form in progress or finished today, for anyone with view access |
+| `production_dashboard.html` | Pipeline, yields, biomass, labor, requests, exceptions (finished forms only) |
 | `production_stations.js` | **The schema.** Station and field definitions, EN + ES |
-| `prod_common.js` | Language, data loading, offline queue, submit |
+| `prod_common.js` | Language, reference-data loading, the legacy offline queue |
+| `prod_data.js` | Supabase-backed drafts, autosave, live "Today" queries |
 | `prod_analytics.js` | Lot tracking, yields, biomass ledger, labor, exceptions |
-| `netlify/functions/submit-production.js` | Commits submissions to `data/production/` |
+| `supabase/schema.sql` | Run once in a new Supabase project — see setup below |
+| `config/supabase_config.js` | Your project's URL + anon key go here |
+| `netlify/functions/upload-production-photo.js` | Photo storage (stays in GitHub, alongside the field-form photos) |
+| `netlify/functions/submit-production.js` | The old single-shot submit path — kept as the fallback when Supabase isn't configured |
 | `data/production/reference.json` | Farms, strains, dry rooms, machines, brands |
-| `data/production/<station>.json` | One append-only file per station |
+| `data/production/<station>.json` | Fallback data source when Supabase isn't configured; otherwise unused |
 | `scripts/test_prod_analytics.js` | `node scripts/test_prod_analytics.js` |
-| `scripts/seed_demo_production.js` | Demo data for the dashboard; `--clear` to empty |
+| `scripts/seed_demo_production.js` | Demo data for the static-fallback dashboard; `--clear` to empty |
 
 ## Stations
 
@@ -38,16 +44,70 @@ what went in, live, while the operator is still standing at the scale.
 - **Totals itself.** The hand-trim work order adds up every trimmer's grams,
   converts to pounds, and shows the variance against the starting bucked weight
   before anyone signs it.
+- **Autosaves, and survives a device switch.** Every open form gets a stable
+  id the moment someone starts it (it's in the URL — `?draft=<id>`) and saves
+  itself roughly every 1.5 seconds. Open that same id from a different tablet
+  and the current values are there — a tablet dying mid-shift, or the form
+  getting handed to someone else, doesn't lose anything typed so far.
+- **Switch strains without losing either one.** An operator running three
+  strains through bucking at once sees "Continue —" chips for each open draft,
+  both on the station hub and inside the form itself, and can jump between
+  them freely. Each is its own row, autosaving independently.
+- **A live board for supervisors.** `production_today.html` shows every form
+  in progress or finished today, updating within a second or two of an
+  autosave landing on another tablet. Gated by its own *view* permission,
+  separate from who can actually create or edit forms — a plant manager can
+  watch bucking all day without being able to touch it.
 - **Bilingual.** EN/ES toggle in the header, translation stored next to each
   field so a label and its translation cannot drift apart.
-- **Works offline.** Submissions queue on the tablet when there is no signal and
-  send themselves when it comes back. The dry rooms and the farms were the
-  reason for this.
+- **Works offline.** Autosave keeps a local copy on the tablet the moment
+  Supabase is unreachable and retries in the background; Submit does the same
+  — a form finished with no signal queues and finalizes itself the moment the
+  tablet reconnects, no re-entry needed.
 - **Flags what's off.** A weight that doesn't reconcile, an intake more than 2%
   off the farm's number, or a request nobody has actioned lands on the
   Exceptions tab instead of being discovered a month later in a spreadsheet.
 - **Keeps one lot identity.** Bucking issues a new Metrc tag; the app follows
   the link so the lot stays one row from farm to finished flower.
+
+## Setting up Supabase (do this before going live)
+
+Drafts, autosave, cross-device resume, and the live Today board all need a
+real database — a git commit per keystroke doesn't work, and a supervisor's
+live view needs to query across everyone's tablets at once. I can't create
+the project myself (it needs your account), but everything is built and
+tested against it — this is genuinely a five-minute setup, not a development
+task:
+
+1. **Create a project** at [supabase.com](https://supabase.com) (free tier is
+   plenty for this — a few hundred rows a day).
+2. **Run the schema.** Project → SQL Editor → New query → paste in the
+   contents of `supabase/schema.sql` → Run. Creates one table
+   (`production_forms`) with the indexes and realtime subscription the app
+   needs. Safe to re-run.
+3. **Copy two values** from Project Settings → API: the **Project URL** and
+   the **anon / public key** (not the `service_role` key — that one must
+   never go in a browser file). Paste them into `config/supabase_config.js`:
+   ```js
+   const SUPABASE_URL = 'https://xxxxxxxx.supabase.co';
+   const SUPABASE_ANON_KEY = 'eyJhbGci...';
+   ```
+4. **Commit and deploy.** That's it — `prod_form.html`, `production.html`,
+   `production_today.html`, and `production_dashboard.html` all detect the
+   config automatically and switch from single-shot/static-file mode into
+   live drafts + Supabase-backed history.
+
+**Read the RLS note at the top of `supabase/schema.sql` before you consider
+this "secured."** This app has no real login yet — PINs live in a Google
+Sheet published to the web (see the SSO section below) — so the anon key's
+access policy is deliberately as open as the rest of the app already is, not
+a locked door. Real per-user row security is one of the things proper SSO
+would unlock.
+
+**Until you do this**, the app still works exactly as it did before: forms
+submit in one shot (no autosave, no resume, no live board — those pages show
+a short "not connected yet" message instead), and the dashboard reads the
+static `data/production/*.json` files. Nothing breaks on a fresh checkout.
 
 ## Before going live
 
@@ -63,18 +123,32 @@ what went in, live, while the operator is still standing at the scale.
    - `strains` — 39 canonical names, with the workbook's spelling variants kept
      as `aliases`. See the note below.
 
-2. **Add the access columns to the directory sheet.**
-   - `production` — `TRUE` opens the station hub.
-   - `production dashboard` — `TRUE` opens the dashboard.
-   - `production stations` *(optional)* — a comma-separated list to restrict
-     someone to their own stations, e.g. `buck,machine_trim,hand_trim`. Blank
-     or `all` means every station, which is what a plant manager wants.
+2. **Add the access columns to the directory sheet.** Two independent lists,
+   both comma-separated station keys (`buck,machine_trim,hand_trim`), `all`,
+   or blank:
+   - `production edit stations` — can create, autosave, and submit forms for
+     these stations. Drives the station hub and the dashboard. (The old
+     column name `production stations` still works, read as edit access, if
+     a sheet was already set up under that name.)
+   - `production view stations` — can watch these stations live on
+     `production_today.html` and see them on the dashboard, without being
+     able to touch them. A plant manager watching a department they don't
+     personally run belongs here. Edit access already implies view access,
+     so you only need this column for someone who should see a station but
+     not submit to it.
 
-3. **Clear the demo data** if you seeded any:
+   There's no separate on/off switch for the hub or the dashboard cards
+   anymore — having anything in either list is what makes them appear, the
+   same way `field_forms` already works off the per-form columns.
+
+3. **Set up Supabase** — see above.
+
+4. **Clear the demo data** if you seeded any (only matters for the static
+   fallback):
    `node scripts/seed_demo_production.js --clear`
 
-4. `GITHUB_TOKEN` is already set in Netlify for the field forms; the production
-   function uses the same one. Nothing new to configure.
+5. `GITHUB_TOKEN` is already set in Netlify for the field forms; the
+   photo-upload function uses the same one. Nothing new to configure there.
 
 ## Three things worth knowing about the current paperwork
 
@@ -103,11 +177,15 @@ one line in that station's `fields` array — the form, the dashboard, and the
 stored record all pick it up. Field types: `text`, `number`, `date`, `select`
 (with `ref` for a reference list, `opts` for inline options, `allowOther`),
 `textarea`, `uid`, `photo`, `calc` (a function of the other values), and
-`lineitems` (the repeating grid the weighing worksheet uses).
+`lineitems` (the repeating grid the weighing worksheet uses). `headline`
+names the one field worth showing on a card or the live board without
+opening the form — the running total in the form's sticky footer follows it
+too.
 
-To make a new station appear, add an entry to `PROD_STATIONS`, add its key to
-`KNOWN_STATIONS` in `netlify/functions/submit-production.js`, and create an
-empty `data/production/<key>.json` containing `[]`.
+To make a new station appear, add an entry to `PROD_STATIONS` and add its key
+to `KNOWN_STATIONS` in both `netlify/functions/submit-production.js` and
+`netlify/functions/upload-production-photo.js`. Create an empty
+`data/production/<key>.json` containing `[]` for the static fallback.
 
 Run `node scripts/test_prod_analytics.js` after touching `prod_analytics.js` or
 any station's `flow` block.
@@ -116,20 +194,29 @@ any station's `flow` block.
 
 Deliberately out of this pass, roughly in the order I'd add them:
 
+- **Discarding a draft.** `prod_data.js` has `deleteDraft()` but nothing in
+  the UI calls it yet — an abandoned draft (wrong strain, started by mistake)
+  just sits there until someone submits or ignores it. A "discard" button on
+  the strain switcher is a small addition.
+- **Photos don't follow a draft across devices yet.** They upload at final
+  Submit, same as before; a photo taken mid-day on tablet A isn't visible if
+  the draft is resumed on tablet B before submitting. Fixing this means
+  Supabase Storage instead of (or alongside) the GitHub upload — worth doing
+  together if photos-mid-draft turns out to matter in practice.
 - **Metrc API integration.** Right now tags are typed in. Metrc's API could pull
   package weights and strains directly and push package adjustments back, which
   would remove most of the typing and all of the transcription risk.
 - **Barcode / tag scanning.** The UID fields accept the last 4 by hand; a camera
   scan on the tablet would be faster and eliminate mis-keys.
-- **Edit and void.** Records are append-only. A wrong entry currently needs a
-  correcting entry, not a fix. A supervisor-only edit path is the next thing
-  the floor will ask for.
+- **Editing a submitted (finalized) form.** Drafts are fully editable up to
+  Submit; after that, a correction still needs a new record rather than a fix
+  in place, the same as before. Straightforward to add now that everything
+  lives in one Supabase table — mainly a question of who should be allowed to.
 - **Bulk biomass sales.** Sales to outside distributors and manufacturers aren't
   modelled yet, so biomass that leaves that way will sit on the ledger as
   on-hand.
 - **Storage locations.** The ledger tracks *processing* vs *manufacturing*, not
   which room or rack. Fine for reconciliation, not enough for a physical count.
-- **A real backend.** See below.
 
 ## SSO — short answer: yes, and multiple domains is not the problem
 
@@ -163,18 +250,17 @@ code before every work order. Recommended split:
 One security note while we're here: the current PIN directory is a Google Sheet
 published to the web, which means anyone with that URL can read every user's
 PIN. It's fine for a dashboard behind an unguessable link; it is not something
-to build production authority on top of. Whichever SSO route you pick, moving
-the directory out of a published sheet should go with it.
+to build production authority on top of — and it's the reason the Supabase
+Row Level Security policy is left deliberately open rather than pretending to
+restrict access it has no real identity to restrict by. Whichever SSO route
+you pick, moving the directory out of a published sheet and tightening RLS
+to match should go with it.
 
 ### About the storage model
 
-Submissions are committed to JSON files in this repo. That is genuinely fine at
-your volume — a few hundred records a week, and it gives you free version
-history of every correction. Two limits to know about before you outgrow it:
-concurrent submissions from several stations serialise through one GitHub file
-write (handled, with retries, but it's a real ceiling), and there's no way to
-edit or query without rewriting a whole file. When either starts to hurt — or
-when you want Metrc sync and edit history — the move is a real database
-(Supabase or Postgres) behind the same forms. The station schema and the
-analytics would carry over unchanged; only `prod_common.js` and the Netlify
-function would need rewriting.
+Live state (drafts, autosave, the Today board) lives in Supabase — a real
+database, needed for the write-heavy, read-heavy pattern autosave and live
+viewing create. The static `data/production/*.json` files are only a
+fallback for a fresh install with no Supabase project yet; once one is
+configured, they stop being read. GitHub still holds the photos, same as the
+field forms, since that storage never needed to be "live."

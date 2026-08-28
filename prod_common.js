@@ -99,8 +99,12 @@ function uidMatches(candidate, query) {
 
 // Find the most recent record on `stageKey` whose sourceUid / newBuckedUid /
 // newBigLeafUid matches, so downstream stages can prefill their input weight.
+// loadSubmitted (prod_data.js) reads finalized Supabase rows when a project
+// is configured and falls back to the static JSON otherwise — defined in a
+// script tag that loads after this one, but not called until well after
+// every page's scripts have finished loading.
 async function findUpstream(stageKey, uid) {
-  const rows = await loadStage(stageKey);
+  const rows = typeof loadSubmitted === 'function' ? await loadSubmitted(stageKey) : await loadStage(stageKey);
   const hits = rows.filter((r) =>
     uidMatches(r.sourceUid, uid) || uidMatches(r.newBuckedUid, uid) ||
     uidMatches(r.newBigLeafUid, uid) || uidMatches(r.harvestBatchName, uid));

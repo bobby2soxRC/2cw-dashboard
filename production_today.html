@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Today — 2CW Production</title>
+  <script>
+    (function(){ if (!sessionStorage.getItem('2cw_pin')) window.location.replace('/index.html'); })();
+  </script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0c0d0f">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0c0d0f;--surface:#13151a;--border:#1e2129;
+      --green:#3db87a;--gold:#d4a843;--blue:#5a9fd4;--purple:#9b7fd4;--red:#ef5350;
+      --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;
+    }
+    html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-text-size-adjust:100%}
+
+    .hdr{min-height:calc(54px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:12px;position:sticky;top:0;z-index:20}
+    .hdr-back{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
+    .hdr-div{width:1px;height:18px;background:var(--border)}
+    .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--green);flex:1}
+    .live{display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+    .live .dot{width:6px;height:6px;border-radius:50%;background:var(--muted)}
+    .live.on .dot{background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 1.6s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+    .lang{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+    .lang button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:12px;font-weight:600;padding:8px 12px;cursor:pointer;min-height:36px}
+    .lang button.on{background:var(--green);color:#000}
+
+    main{padding:28px 16px 60px;max-width:1100px;margin:0 auto}
+    .title{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,6vw,46px);letter-spacing:.04em;line-height:1}
+    .sub{margin-top:6px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+
+    .filters{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0}
+    .filters button{background:var(--surface);border:1px solid var(--border);color:var(--subtext);border-radius:10px;padding:.6rem 1rem;
+      font-family:'DM Mono',monospace;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;min-height:44px}
+    .filters button.on{background:var(--green);border-color:var(--green);color:#000;font-weight:700}
+
+    .board{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+    .row{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;transition:border-color .2s}
+    .row.draft{border-left:3px solid var(--gold)}
+    .row.submitted{border-left:3px solid var(--green)}
+    .row-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px}
+    .row-station{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+    .row-strain{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.03em;line-height:1.1;margin-top:2px}
+    .pill{flex:0 0 auto;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border-radius:99px;border:1px solid var(--border)}
+    .pill.draft{border-color:var(--gold);color:var(--gold)}
+    .pill.submitted{border-color:var(--green);color:var(--green)}
+    .row-meta{display:flex;justify-content:space-between;align-items:baseline;font-size:.8rem;color:var(--subtext);margin-top:10px}
+    .row-headline{font-family:'DM Mono',monospace;font-size:1.1rem;color:var(--text)}
+    .row-who{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);margin-top:8px}
+
+    .empty{color:var(--muted);text-align:center;padding:60px 0;font-size:.9rem}
+    .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
+    .setup{background:var(--surface);border:1px dashed var(--border);border-radius:14px;padding:20px;color:var(--subtext);font-size:.85rem;line-height:1.6}
+  </style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="/production.html" id="back">← Stations</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand" id="brand">Today</div>
+  <div class="live" id="live"><span class="dot"></span><span id="live-txt">—</span></div>
+  <div class="lang" id="lang"></div>
+</header>
+
+<main>
+  <div class="title" id="title">Today</div>
+  <div class="sub" id="sub">—</div>
+  <div class="filters" id="filters"></div>
+  <div id="board"></div>
+  <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution</footer>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/config/supabase_config.js"></script>
+<script src="/production_stations.js"></script>
+<script src="/prod_common.js"></script>
+<script src="/prod_data.js"></script>
+<script>
+(async function () {
+  mountLangToggle('lang');
+
+  const L = {
+    title: { en: 'Today', es: 'Hoy' },
+    back: { en: '← Stations', es: '← Estaciones' },
+    live: { en: 'Live', es: 'En vivo' },
+    connecting: { en: 'Connecting…', es: 'Conectando…' },
+    allStations: { en: 'All stations', es: 'Todas las estaciones' },
+    draftPill: { en: 'In progress', es: 'En curso' },
+    submittedPill: { en: 'Submitted', es: 'Enviado' },
+    updated: { en: 'updated', es: 'actualizado' },
+    noAccess: { en: 'You don’t have view access to the production board yet. Ask your manager to turn it on.',
+                es: 'Aún no tiene acceso de visualización al panel de producción. Pida a su gerente que lo active.' },
+    empty: { en: 'Nothing logged yet today.', es: 'Nada registrado hoy todavía.' },
+    setupTitle: { en: 'Live view isn’t connected yet', es: 'La vista en vivo aún no está conectada' },
+    setupBody: { en: 'This page needs a Supabase project (config/supabase_config.js is still blank). Until then there is nothing to show here — finished forms still show up on the Production Dashboard.',
+                 es: 'Esta página necesita un proyecto de Supabase (config/supabase_config.js sigue vacío). Mientras tanto no hay nada que mostrar aquí — los formularios terminados siguen apareciendo en el Panel de Producción.' }
+  };
+  document.getElementById('title').textContent = t(L.title);
+  document.getElementById('back').textContent = t(L.back);
+  document.querySelector('.hdr-brand').textContent = t(L.title);
+  document.title = `${t(L.title)} — 2CW`;
+
+  const editAccess = JSON.parse(sessionStorage.getItem('2cw_prod_edit_access') || 'null');
+  const viewAccess = JSON.parse(sessionStorage.getItem('2cw_prod_view_access') || 'null');
+  // Edit access implies you can see your own department's board; explicit
+  // view access can additionally reach stations you can't submit to.
+  const canSee = (key) =>
+    viewAccess === 'all' || (Array.isArray(viewAccess) && viewAccess.includes(key)) ||
+    editAccess === 'all' || (Array.isArray(editAccess) && editAccess.includes(key));
+  const visibleStations = PROD_STATIONS.filter((s) => canSee(s.key));
+
+  if (!visibleStations.length) {
+    document.getElementById('board').innerHTML = `<div class="empty">${t(L.noAccess)}</div>`;
+    return;
+  }
+
+  if (!supabaseReady()) {
+    document.getElementById('board').innerHTML =
+      `<div class="setup"><strong>${t(L.setupTitle)}</strong><br><br>${t(L.setupBody)}</div>`;
+    return;
+  }
+
+  document.getElementById('live').classList.add('on');
+  document.getElementById('live-txt').textContent = t(L.live);
+
+  let stationFilter = null;
+  document.getElementById('filters').innerHTML =
+    `<button data-k="" class="on">${t(L.allStations)}</button>` +
+    visibleStations.map((s) => `<button data-k="${s.key}">${t(s.title)}</button>`).join('');
+  document.querySelectorAll('#filters button').forEach((b) => {
+    b.onclick = () => {
+      stationFilter = b.dataset.k || null;
+      document.querySelectorAll('#filters button').forEach((x) => x.classList.toggle('on', x === b));
+      render();
+    };
+  });
+
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const timeAgo = (iso) => {
+    const s = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
+    if (s < 60) return `${s}s`;
+    if (s < 3600) return `${Math.round(s / 60)}m`;
+    return `${Math.round(s / 3600)}h`;
+  };
+
+  let rows = (await listToday()).filter((r) => visibleStations.some((s) => s.key === r.station_key));
+
+  function render() {
+    const filtered = stationFilter ? rows.filter((r) => r.station_key === stationFilter) : rows;
+    document.getElementById('sub').textContent =
+      `${filtered.length} ${filtered.length === 1 ? 'form' : 'forms'} · ${new Date().toLocaleDateString()}`;
+    const board = document.getElementById('board');
+    if (!filtered.length) { board.innerHTML = `<div class="empty">${t(L.empty)}</div>`; return; }
+
+    board.className = 'board';
+    board.innerHTML = filtered.map((r) => {
+      const station = STATION_BY_KEY[r.station_key];
+      const headline = station && station.headline ? r.fields[station.headline] : null;
+      const headlineLabel = station && station.fields.find((f) => f.k === station.headline);
+      return `<div class="row ${r.status}">
+        <div class="row-top">
+          <div>
+            <div class="row-station">${station ? t(station.title) : r.station_key}</div>
+            <div class="row-strain">${esc(r.strain || r.fields.harvestBatchName || '—')}</div>
+          </div>
+          <span class="pill ${r.status}">${r.status === 'draft' ? t(L.draftPill) : t(L.submittedPill)}</span>
+        </div>
+        <div class="row-meta">
+          <span>${headlineLabel ? t(headlineLabel.l) : ''}</span>
+          <span class="row-headline">${Number.isFinite(Number(headline)) ? fmtNum(headline, headlineLabel && headlineLabel.dp !== undefined ? headlineLabel.dp : 2) : '—'}</span>
+        </div>
+        <div class="row-who">${esc(r.owner_user || '—')} · ${t(L.updated)} ${timeAgo(r.updated_at)}</div>
+      </div>`;
+    }).join('');
+  }
+  render();
+
+  // Realtime: a row landing here means someone's autosave just committed on
+  // another tablet. Patch it into the local list rather than refetching.
+  subscribeToday((row) => {
+    if (!row || !visibleStations.some((s) => s.key === row.station_key)) return;
+    if (row.work_date !== new Date().toISOString().slice(0, 10)) return;
+    const i = rows.findIndex((r) => r.id === row.id);
+    if (i > -1) rows[i] = row; else rows.unshift(row);
+    render();
+  });
+  setInterval(render, 15000);   // keeps the "updated Ns ago" labels honest between events
+})();
+</script>
+</body>
+</html>

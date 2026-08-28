@@ -41,10 +41,11 @@
     .dept-hd{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin:32px 0 14px;display:flex;align-items:center;gap:12px}
     .dept-hd::after{content:'';flex:1;height:1px;background:var(--border)}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
-    .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px 24px;text-decoration:none;color:inherit;display:block;transition:border-color .2s,transform .15s;min-height:150px}
-    .card:active{transform:scale(.99)}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px 24px;transition:border-color .2s;min-height:150px;display:flex;flex-direction:column}
     .card.green:hover{border-color:var(--green)}.card.gold:hover{border-color:var(--gold)}
     .card.blue:hover{border-color:var(--blue)}.card.purple:hover{border-color:var(--purple)}
+    .card-link{text-decoration:none;color:inherit;display:block;transition:transform .15s}
+    .card-link:active{transform:scale(.99)}
     .card-dot{width:8px;height:8px;border-radius:50%;margin-bottom:14px}
     .green .card-dot{background:var(--green);box-shadow:0 0 8px var(--green)}
     .gold .card-dot{background:var(--gold);box-shadow:0 0 8px var(--gold)}
@@ -53,6 +54,11 @@
     .card-title{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.03em;line-height:1.05;margin-bottom:8px}
     .card-desc{font-size:.85rem;color:var(--subtext);line-height:1.55}
     .card-today{margin-top:12px;font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+    .card-drafts{margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:8px}
+    .draft-chip{font-family:'DM Mono',monospace;font-size:.72rem;background:var(--bg);border:1px solid var(--border);border-radius:99px;padding:6px 12px;text-decoration:none;color:var(--text)}
+    .draft-chip:hover{border-color:var(--gold);color:var(--gold)}
+    .today-link{display:flex;align-items:center;gap:8px;font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);text-decoration:none}
+    .today-link .live-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);box-shadow:0 0 6px var(--gold)}
 
     .dash-link{display:block;margin-top:34px;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:14px;
       padding:18px;text-decoration:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:.8rem;letter-spacing:.12em;text-transform:uppercase}
@@ -66,6 +72,7 @@
   <a class="hdr-back" href="/index.html">← Hub</a>
   <div class="hdr-div"></div>
   <div class="hdr-brand">Production</div>
+  <a class="today-link" href="/production_today.html" id="today-link" style="display:none"><span class="live-dot"></span><span id="today-link-txt">Today</span></a>
   <div class="lang" id="lang"></div>
 </header>
 <div class="queue" id="queue"></div>
@@ -81,8 +88,11 @@
   <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution</footer>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/config/supabase_config.js"></script>
 <script src="/production_stations.js"></script>
 <script src="/prod_common.js"></script>
+<script src="/prod_data.js"></script>
 <script>
 (async function () {
   mountLangToggle('lang');
@@ -92,9 +102,11 @@
     title:    { en: 'Production', es: 'Producción' },
     tagline:  { en: 'Pick your station', es: 'Elija su estación' },
     dash:     { en: 'Production Dashboard →', es: 'Panel de producción →' },
+    today:    { en: 'Today — Live', es: 'Hoy — En vivo' },
     todayNone:{ en: 'No entries today', es: 'Sin registros hoy' },
     todayOne: { en: '1 entry today', es: '1 registro hoy' },
     todayMany:{ en: '{n} entries today', es: '{n} registros hoy' },
+    yourDrafts:{ en: 'Continue —', es: 'Continuar —' },
     noAccess: { en: 'No production stations are assigned to you yet. Ask your manager to turn them on.',
                 es: 'Aún no tiene estaciones de producción asignadas. Pida a su gerente que las active.' }
   };
@@ -104,8 +116,16 @@
   document.getElementById('dash-link').textContent = t(L.dash);
   document.title = `${t(L.title)} — 2CW`;
 
-  const allowed = JSON.parse(sessionStorage.getItem('2cw_prod_access') || 'null');
-  const visible = PROD_STATIONS.filter((s) => !allowed || allowed === 'all' || allowed.includes(s.key));
+  const editAccess = JSON.parse(sessionStorage.getItem('2cw_prod_edit_access') || 'null');
+  const viewAccess = JSON.parse(sessionStorage.getItem('2cw_prod_view_access') || 'null');
+  const hasAny = (a) => a === 'all' || (Array.isArray(a) && a.length > 0);
+  if (hasAny(editAccess) || hasAny(viewAccess)) {
+    const link = document.getElementById('today-link');
+    link.style.display = 'flex';
+    document.getElementById('today-link-txt').textContent = t(L.today);
+  }
+
+  const visible = PROD_STATIONS.filter((s) => hasAny(editAccess) && (editAccess === 'all' || editAccess.includes(s.key)));
 
   if (!visible.length) {
     document.getElementById('empty').style.display = 'block';
@@ -122,12 +142,17 @@
     g.stations.push(s);
   });
 
+  const owner = sessionStorage.getItem('2cw_user_name') || null;
   const today = new Date().toISOString().slice(0, 10);
   const counts = {};
+  const myDrafts = {};
   await Promise.all(visible.map(async (s) => {
-    const rows = await loadStage(s.key);
+    const rows = await loadSubmitted(s.key);
     counts[s.key] = rows.filter((r) => (r.date || r.submittedAt || '').slice(0, 10) === today).length;
+    myDrafts[s.key] = owner ? await listMyDrafts(s.key, owner, today) : [];
   }));
+
+  const esc = (str) => String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   document.getElementById('depts').innerHTML = byDept.map((g) => `
     <div class="dept-hd">${g.name}</div>
@@ -135,12 +160,19 @@
       ${g.stations.map((s) => {
         const n = counts[s.key] || 0;
         const todayLabel = n === 0 ? t(L.todayNone) : n === 1 ? t(L.todayOne) : t(L.todayMany).replace('{n}', n);
-        return `<a class="card ${s.color}" href="/prod_form.html?station=${s.key}">
-          <div class="card-dot"></div>
-          <div class="card-title">${t(s.title)}</div>
-          <div class="card-desc">${t(s.desc)}</div>
-          <div class="card-today">${todayLabel}</div>
-        </a>`;
+        const drafts = myDrafts[s.key] || [];
+        return `<div class="card ${s.color}">
+          <a class="card-link" href="/prod_form.html?station=${s.key}">
+            <div class="card-dot"></div>
+            <div class="card-title">${t(s.title)}</div>
+            <div class="card-desc">${t(s.desc)}</div>
+            <div class="card-today">${todayLabel}</div>
+          </a>
+          ${drafts.length ? `<div class="card-drafts">
+            <span class="card-today" style="margin:0 4px 0 0">${t(L.yourDrafts)}</span>
+            ${drafts.map((d) => `<a class="draft-chip" href="/prod_form.html?station=${s.key}&draft=${d.id}">${esc(d.strain || d.id.slice(0, 8))}</a>`).join('')}
+          </div>` : ''}
+        </div>`;
       }).join('')}
     </div>`).join('');
 })();

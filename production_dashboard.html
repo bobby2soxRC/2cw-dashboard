@@ -94,8 +94,11 @@
   <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution</footer>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/config/supabase_config.js"></script>
 <script src="/production_stations.js"></script>
 <script src="/prod_common.js"></script>
+<script src="/prod_data.js"></script>
 <script src="/prod_analytics.js"></script>
 <script>
 (async function () {
@@ -165,7 +168,11 @@
 
   // ── Load every stage file up front; they are small and the tabs all cross-read.
   const stages = {};
-  await Promise.all(PROD_STATIONS.map(async (s) => { stages[s.key] = await loadStage(s.key); }));
+  // loadSubmitted reads finalized (status='submitted') rows from Supabase
+  // when it's configured, and falls back to the static JSON files when it
+  // isn't — same shape either way, so prod_analytics.js never has to know
+  // which one it got.
+  await Promise.all(PROD_STATIONS.map(async (s) => { stages[s.key] = await loadSubmitted(s.key); }));
 
   const allRows = Object.values(stages).flat();
   const lastEntry = allRows.map((r) => String(r.submittedAt || r.date || '')).sort().pop();
