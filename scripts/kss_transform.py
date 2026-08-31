@@ -1855,6 +1855,30 @@ def transform():
     if len(twocw_cards) > 1:
         normalize_rep_cards(twocw_cards)
 
+    # ── Unassigned bucket — accounts with no rep match ────────────────────────
+    # Accounts fall out of every rep's table when their name doesn't exactly
+    # match an entry in the Rep Assignments sheet (2CW) or KSS's own
+    # sales_reps.Customers mapping (KSS) — typos, missing spaces, new store
+    # locations not yet added, etc. Surfaced here instead of silently dropped
+    # so ops can fix the source sheet/mapping. Excluded from composite scoring
+    # (normalize_rep_cards already ran above) — not a rep to rank.
+    def build_unassigned_card(accts: list) -> dict:
+        card = build_rep_card("Unassigned", accts)
+        card["composite_score"] = None
+        card["rank"] = None
+        card["unassigned"] = True
+        return card
+
+    unassigned_kss_accts = [a for a in acct_records if not a["kss_reps"]]
+    if unassigned_kss_accts:
+        kss_cards.append(build_unassigned_card(unassigned_kss_accts))
+        print(f"  [WARN] {len(unassigned_kss_accts)} accounts have no KSS rep match (Unassigned bucket)")
+
+    unassigned_twocw_accts = [a for a in acct_records if not a["_twocw_reps"]]
+    if unassigned_twocw_accts:
+        twocw_cards.append(build_unassigned_card(unassigned_twocw_accts))
+        print(f"  [WARN] {len(unassigned_twocw_accts)} accounts have no 2CW rep match (Unassigned bucket)")
+
     # ── Strip internal fields from account records before output ─────────────
     output_fields_to_strip = {"_cid", "_kss_rep_ids", "_twocw_reps",
                                "carried", "missing", "reorder_cadence"}

@@ -698,11 +698,11 @@ function repRow(r) {
   </tr>`;
 }
 function buildLeaderboards(kss, twocw) {
-  const kssReps = [...(kss.kss || [])].sort((a,b) => a.rank - b.rank).slice(0, 5);
+  const kssReps = [...(kss.kss || [])].filter(r => !r.unassigned).sort((a,b) => a.rank - b.rank).slice(0, 5);
   $('kss-asof').textContent = 'As of ' + (kss.ref_date || 'unknown');
   $('kss-lb-table').innerHTML = kssReps.map(repRow).join('');
 
-  const twocwReps = [...(twocw.twocw || [])].sort((a,b) => a.rank - b.rank);
+  const twocwReps = [...(twocw.twocw || [])].filter(r => !r.unassigned).sort((a,b) => a.rank - b.rank);
   $('twocw-asof').textContent = 'As of ' + (twocw.ref_date || 'unknown');
   $('twocw-lb-table').innerHTML = twocwReps.map(repRow).join('');
 }
