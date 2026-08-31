@@ -31,6 +31,12 @@
   .loc-chip.on .dot{background:#00c9a7;box-shadow:0 0 5px #00c9a7}
   .slider-input{width:90px;accent-color:#00c9a7}
   .slider-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:#00c9a7;min-width:14px;text-align:center}
+  .switch{position:relative;display:inline-block;width:34px;height:19px;flex-shrink:0}
+  .switch input{opacity:0;width:0;height:0;position:absolute}
+  .switch-track{position:absolute;cursor:pointer;inset:0;background:#2a2f42;border-radius:19px;transition:.15s}
+  .switch-track::before{content:'';position:absolute;height:15px;width:15px;left:2px;bottom:2px;background:#7b8099;border-radius:50%;transition:.15s}
+  .switch input:checked + .switch-track{background:rgba(0,201,167,.35)}
+  .switch input:checked + .switch-track::before{transform:translateX(15px);background:#00c9a7}
   .tb-btn{background:#1e2333;color:#e8eaf0;border:1px solid #2a2f42;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600}
   .tb-btn:hover{border-color:#00c9a7;color:#00c9a7}
   .tb-btn:disabled{opacity:.5;cursor:default}
@@ -61,17 +67,21 @@
   .wm-blogo-chip{background:#fff;border-radius:7px;padding:5px 9px;display:flex;align-items:center;justify-content:center;height:34px}
   .wm-blogo-chip img{max-height:24px;max-width:78px;object-fit:contain;display:block}
 
-  /* brand zone — solid brand color is the fallback; JS adds an inline
-     background-image (brand banner PNG) when that asset is present. */
-  .wm-brand-bar{padding:14px 40px;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.08em;color:#fff;display:flex;align-items:center;gap:14px;background-size:cover;background-position:center}
+  /* brand zone — a compact solid-color title bar is the fallback (no banner
+     uploaded yet). Once a real banner exists, it replaces the bar entirely and
+     renders at its own natural aspect ratio — no crop, so the banner's logo
+     always shows in full instead of being squeezed into a thin strip. */
+  .wm-brand-bar{padding:14px 40px;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.08em;color:#fff;display:flex;align-items:center;gap:14px}
   .wm-brand-bar .wm-brand-tag{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.2em;font-weight:700;background:rgba(255,255,255,.18);padding:3px 9px;border-radius:12px}
   .wm-brand-howie{background-color:#b5410c}
   .wm-brand-soma{background-color:#0d6e61}
   .wm-brand-mendo{background-color:#495c2a}
+  .wm-brand-banner-img{width:100%;height:auto;display:block}
 
   /* promo banner — full-width image slot between the header and the first brand row.
-     Fixed aspect-ratio keeps the box stable whether it's holding a placeholder or real art. */
-  .wm-promo-banner{width:100%;aspect-ratio:4/1;object-fit:cover;display:block}
+     No forced crop: this is marketing copy, not a decorative photo, so it renders at
+     its own natural aspect ratio rather than risking cropped-off text. */
+  .wm-promo-banner{width:100%;height:auto;display:block}
 
   .wm-grid{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid #eee}
   .wm-card{padding:16px 18px;border-right:1px solid #eee;border-top:1px solid #eee;display:flex;flex-direction:column}
@@ -147,6 +157,13 @@
       <div id="loc-chips" style="display:flex;gap:6px"></div>
     </div>
     <div class="tb-group">
+      <span class="tb-label">Promo Banner</span>
+      <label class="switch">
+        <input type="checkbox" id="promoToggle" checked>
+        <span class="switch-track"></span>
+      </label>
+    </div>
+    <div class="tb-group">
       <span class="tb-label">Min Cases</span>
       <input type="range" min="0" max="20" step="1" value="1" id="minSlider" class="slider-input">
       <span class="slider-val" id="minVal">1</span>
@@ -183,6 +200,7 @@ let selectedLocations = JSON.parse(localStorage.getItem('2cw_menu_locations') ||
 let minCases = +(localStorage.getItem('2cw_menu_mincases') ?? '1');
 let minAgeDays = +(localStorage.getItem('2cw_menu_minage') ?? '0');
 let maxAgeDays = +(localStorage.getItem('2cw_menu_maxage') ?? '180');
+let showPromo = (localStorage.getItem('2cw_menu_showpromo') ?? '1') === '1';
 
 // Marketing/design manage art in the "2CW Menu Images" Drive folder; a
 // GitHub Action (manually triggered — Actions tab → "Sync Menu Images" →
@@ -263,6 +281,12 @@ async function loadAll(){
 
 function initControls(){
   $('updated-note').textContent = 'Updated ' + MENU.updated;
+  $('promoToggle').checked = showPromo;
+  $('promoToggle').onchange = function(){
+    showPromo = this.checked;
+    localStorage.setItem('2cw_menu_showpromo', showPromo ? '1' : '0');
+    render();
+  };
   $('minSlider').value = minCases;
   $('minVal').textContent = minCases;
   $('minSlider').oninput = function(){
@@ -340,7 +364,7 @@ function render(){
     ? `<img class="wm-menu-logo" src="${ASSET_PATHS.logo}" alt="2CW">`
     : `<div class="wm-hdr-word">2<span>CW</span></div>`;
 
-  const promoHtml = ASSET_OK[ASSET_PATHS.promo]
+  const promoHtml = showPromo && ASSET_OK[ASSET_PATHS.promo]
     ? `<img class="wm-promo-banner" src="${ASSET_PATHS.promo}" alt="Promo">`
     : '';
 
@@ -388,11 +412,15 @@ function renderBrandZone(brand){
   if(!cards) return ''; // no inventory available for this brand under current filters — hide the section entirely
 
   const bannerUrl = ASSET_PATHS.banners[brand.brandColor];
-  const bannerStyle = bannerUrl && ASSET_OK[bannerUrl]
-    ? ` style="background-image:linear-gradient(100deg,rgba(0,0,0,.35),rgba(0,0,0,.15)),url('${bannerUrl}')"`
-    : '';
+  const hasBanner = bannerUrl && ASSET_OK[bannerUrl];
+  // A real banner photo already carries the brand's own logo/wordmark, so it
+  // replaces the plain-text title bar entirely rather than being cropped down
+  // to fit inside it.
+  const barHtml = hasBanner
+    ? `<img class="wm-brand-banner-img" src="${bannerUrl}" alt="${esc(brand.brand)}">`
+    : `<div class="wm-brand-bar ${barCls}">${esc(brand.brand)}</div>`;
 
-  return `<div class="wm-brand-bar ${barCls}"${bannerStyle}>${esc(brand.brand)}</div>
+  return `${barHtml}
     <div class="wm-grid ${cls}">${cards}</div>`;
 }
 
