@@ -51,6 +51,7 @@
   .wm-header{display:flex;align-items:center;gap:28px;background:linear-gradient(135deg,#0f2a22 0%,#123a2e 55%,#0d4a3d 100%);color:#fff;padding:26px 40px}
   .wm-hdr-word{font-family:'Bebas Neue',sans-serif;font-size:50px;letter-spacing:.05em;line-height:1}
   .wm-hdr-word span{color:#4de8c4}
+  .wm-menu-logo{height:50px;width:150px;object-fit:contain;object-position:left center;display:block}
   .wm-hdr-mid{flex:1}
   .wm-hdr-sub{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.35em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:4px}
   .wm-hdr-main{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:.05em;color:#fff}
@@ -60,12 +61,17 @@
   .wm-blogo-chip{background:#fff;border-radius:7px;padding:5px 9px;display:flex;align-items:center;justify-content:center;height:34px}
   .wm-blogo-chip img{max-height:24px;max-width:78px;object-fit:contain;display:block}
 
-  /* brand zone */
+  /* brand zone — solid brand color is the fallback; JS adds an inline
+     background-image (brand banner PNG) when that asset is present. */
   .wm-brand-bar{padding:14px 40px;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.08em;color:#fff;display:flex;align-items:center;gap:14px;background-size:cover;background-position:center}
   .wm-brand-bar .wm-brand-tag{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.2em;font-weight:700;background:rgba(255,255,255,.18);padding:3px 9px;border-radius:12px}
-  .wm-brand-howie{background-image:linear-gradient(100deg,rgba(140,50,9,.90),rgba(140,50,9,.78)),url(/img/menu/howie_roll_pouches.jpg);background-position:center 35%}
-  .wm-brand-soma{background-image:linear-gradient(100deg,rgba(10,85,75,.90),rgba(10,85,75,.78)),url(/img/menu/soma_rosa_tube.jpg);background-position:center 15%}
-  .wm-brand-mendo{background-image:linear-gradient(100deg,rgba(53,64,36,.90),rgba(53,64,36,.78)),url(/img/menu/mendo_cans.jpg);background-position:center}
+  .wm-brand-howie{background-color:#b5410c}
+  .wm-brand-soma{background-color:#0d6e61}
+  .wm-brand-mendo{background-color:#495c2a}
+
+  /* promo banner — full-width image slot between the header and the first brand row.
+     Fixed aspect-ratio keeps the box stable whether it's holding a placeholder or real art. */
+  .wm-promo-banner{width:100%;aspect-ratio:4/1;object-fit:cover;display:block}
 
   .wm-grid{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid #eee}
   .wm-card{padding:16px 18px;border-right:1px solid #eee;border-top:1px solid #eee;display:flex;flex-direction:column}
@@ -178,6 +184,62 @@ let minCases = +(localStorage.getItem('2cw_menu_mincases') ?? '1');
 let minAgeDays = +(localStorage.getItem('2cw_menu_minage') ?? '0');
 let maxAgeDays = +(localStorage.getItem('2cw_menu_maxage') ?? '180');
 
+// Marketing/design manage art in the "2CW Menu Images" Drive folder; a
+// GitHub Action (manually triggered — Actions tab → "Sync Menu Images" →
+// Run workflow) pulls whatever's currently there into /img/menu/, which is
+// what these paths actually point at. (Drive can't serve images directly to
+// a third-party page — it blocks hotlinked <img> embeds even when public —
+// so the sync step is required, not optional.)
+// Folder: https://drive.google.com/drive/folders/1t8zwDVyoyCbmdmIRs3dUJHO6qO_qgLJv
+const ASSET_PATHS = {
+  logo: '/img/menu/menulogo.png',
+  promo: '/img/menu/promobanner.png',
+  banners: {
+    howie: '/img/menu/hwrbanner.png',
+    soma: '/img/menu/somabanner.png',
+    mendo: '/img/menu/mendobanner.png',
+  },
+};
+
+// One photo per menu card (title|brand). Falls back to no photo if the file
+// isn't present in /img/menu — checked at load time via probeAllAssets().
+const CARD_IMAGES = {
+  'All-In-One Vape|Howie Roll': '/img/menu/howie_roll_vape.png',
+  'Live Resin Sauce|Howie Roll': '/img/menu/howie_roll_live_resin.png',
+  'Premium Smalls (1/8)|Howie Roll': '/img/menu/howie_roll_smalls_eighth.png',
+  'Premium Smalls (14G)|Howie Roll': '/img/menu/howie_roll_smalls_14g.png',
+  'All-In-One Vape|Mendo': '/img/menu/mendo_vape.png',
+  'Indoor Flower (1/8)|Mendo': '/img/menu/mendo_flower_eighth.png',
+  'Indoor Flower (14G)|Mendo': '/img/menu/mendo_flower_14g.png',
+  'Indoor Flower (1G)|Mendo': '/img/menu/mendo_flower_1g.png',
+  'Pre-Roll 10-Pack|Mendo': '/img/menu/mendo_preroll_10pack.png',
+  'Flower (1/8)|Soma Rosa Farms': '/img/menu/soma_rosa_flower_eighth.png',
+  'Flower (14G)|Soma Rosa Farms': '/img/menu/soma_rosa_flower_14g.png',
+  'Flower (28G)|Soma Rosa Farms': '/img/menu/soma_rosa_flower_28g.png',
+  'Live Rosin|Soma Rosa Farms': '/img/menu/soma_rosa_live_rosin.png',
+  'Pre-Roll Party Packs — 28ct|Soma Rosa Farms': '/img/menu/soma_rosa_jar.png',
+  'Pre-Rolls — Single 1g|Soma Rosa Farms': '/img/menu/soma_rosa_preroll_single.png',
+};
+
+const ASSET_OK = {}; // url -> true/false, populated by probeAllAssets() before first render
+
+function probeImage(url){
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => resolve(true);
+    img.onerror = () => resolve(false);
+    img.src = url;
+  });
+}
+
+async function probeAllAssets(){
+  const urls = [ASSET_PATHS.logo, ASSET_PATHS.promo, ...Object.values(ASSET_PATHS.banners), ...Object.values(CARD_IMAGES)];
+  await Promise.all(urls.map(async url => { ASSET_OK[url] = await probeImage(url); }));
+}
+
+// Brands render in this fixed order regardless of what order menu.json lists them in.
+const BRAND_ORDER = ['Soma Rosa Farms', 'Howie Roll', 'Mendo'];
+
 async function loadAll(){
   $('global-loading').style.display = 'flex';
   $('global-error').style.display = 'none';
@@ -186,6 +248,8 @@ async function loadAll(){
     const res = await fetch('/data/menu.json?t=' + Date.now());
     if(!res.ok) throw new Error('HTTP ' + res.status);
     MENU = await res.json();
+    MENU.brands.sort((a, b) => BRAND_ORDER.indexOf(a.brand) - BRAND_ORDER.indexOf(b.brand));
+    await probeAllAssets();
     initControls();
     render();
     $('global-loading').style.display = 'none';
@@ -272,23 +336,32 @@ function render(){
 
   const brandZones = MENU.brands.map(brand => renderBrandZone(brand)).join('');
 
+  const logoHtml = ASSET_OK[ASSET_PATHS.logo]
+    ? `<img class="wm-menu-logo" src="${ASSET_PATHS.logo}" alt="2CW">`
+    : `<div class="wm-hdr-word">2<span>CW</span></div>`;
+
+  const promoHtml = ASSET_OK[ASSET_PATHS.promo]
+    ? `<img class="wm-promo-banner" src="${ASSET_PATHS.promo}" alt="Promo">`
+    : '';
+
   page.innerHTML = `
     <div class="wm-header">
-      <div class="wm-hdr-word">2<span>CW</span></div>
+      ${logoHtml}
       <div class="wm-hdr-mid">
         <div class="wm-hdr-sub">Wholesale Menu</div>
         <div class="wm-hdr-main">${esc(monthYear())}</div>
-        <div class="wm-hdr-detail">HOWIE ROLL &nbsp;•&nbsp; SOMA ROSA FARMS &nbsp;•&nbsp; MENDO &nbsp;•&nbsp; CALIFORNIA</div>
+        <div class="wm-hdr-detail">SOMA ROSA FARMS &nbsp;•&nbsp; HOWIE ROLL &nbsp;•&nbsp; MENDO &nbsp;•&nbsp; CALIFORNIA</div>
       </div>
       <div class="wm-hdr-right">
         <div class="wm-brand-logos">
-          <div class="wm-blogo-chip"><img src="/img/menu/howie_roll_logo.png" alt="Howie Roll"></div>
           <div class="wm-blogo-chip"><img src="/img/menu/soma_rosa_logo.png" alt="Soma Rosa Farms"></div>
+          <div class="wm-blogo-chip"><img src="/img/menu/howie_roll_logo.png" alt="Howie Roll"></div>
           <div class="wm-blogo-chip"><img src="/img/menu/mendo_logo.png" alt="Mendo"></div>
         </div>
         NORCAL · ALAMEDA<br>SOCAL · VAN NUYS
       </div>
     </div>
+    ${promoHtml}
     ${brandZones}
     <div class="wm-footer">
       <div>
@@ -313,7 +386,13 @@ function renderBrandZone(brand){
   const barCls = 'wm-brand-' + brand.brandColor; // wm-brand-howie / wm-brand-soma / wm-brand-mendo
   const cards = brand.cards.map(card => renderCard(card, cls, brand.brand)).filter(Boolean).join('');
   if(!cards) return ''; // no inventory available for this brand under current filters — hide the section entirely
-  return `<div class="wm-brand-bar ${barCls}">${esc(brand.brand)}</div>
+
+  const bannerUrl = ASSET_PATHS.banners[brand.brandColor];
+  const bannerStyle = bannerUrl && ASSET_OK[bannerUrl]
+    ? ` style="background-image:linear-gradient(100deg,rgba(0,0,0,.35),rgba(0,0,0,.15)),url('${bannerUrl}')"`
+    : '';
+
+  return `<div class="wm-brand-bar ${barCls}"${bannerStyle}>${esc(brand.brand)}</div>
     <div class="wm-grid ${cls}">${cards}</div>`;
 }
 
@@ -322,13 +401,6 @@ function strainMatchesFilters(strain){
   if(strain.daysOld != null && (strain.daysOld < minAgeDays || strain.daysOld > maxAgeDays)) return false;
   return true;
 }
-
-// Real product photos, matched to the one card each actually depicts.
-// Cards without a match just keep the plain colored accent bar.
-const CARD_IMAGES = {
-  'All-In-One Vape|Howie Roll': '/img/menu/howie_roll_vape.jpg',
-  'Pre-Roll Party Packs — 28ct|Soma Rosa Farms': '/img/menu/soma_rosa_jar.jpg',
-};
 
 function renderCard(card, cls, brandName){
   const groupsHtml = card.groups.map(g => {
@@ -352,7 +424,7 @@ function renderCard(card, cls, brandName){
   const unitPrice = card.unitPrice != null ? `$${card.unitPrice.toFixed(2)}` : '—';
   const casePrice = card.casePrice != null ? `$${card.casePrice.toFixed(2)}` : '—';
   const imgUrl = CARD_IMAGES[card.title + '|' + brandName];
-  const imgHtml = imgUrl ? `<div class="wm-card-img" style="background-image:url('${imgUrl}')"></div>` : '';
+  const imgHtml = imgUrl && ASSET_OK[imgUrl] ? `<div class="wm-card-img" style="background-image:url('${imgUrl}')"></div>` : '';
 
   return `<div class="wm-card ${cls}">
     ${imgHtml}

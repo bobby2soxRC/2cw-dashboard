@@ -1,6 +1,6 @@
 // 2CW Operations Hub - service worker
 // Cache-first app shell; live data always goes to the network.
-const CACHE_VERSION = 'v11';
+const CACHE_VERSION = 'v12';
 const CACHE_NAME = '2cw-shell-' + CACHE_VERSION;
 
 const APP_SHELL = [
@@ -43,6 +43,11 @@ function isLiveData(url) {
   }
   // Same-origin data files are synced nightly and must stay live too.
   if (url.origin === self.location.origin && url.pathname.startsWith('/data/')) {
+    return true;
+  }
+  // Menu imagery is swapped in place by marketing/design under fixed filenames —
+  // cache-first would keep serving a stale photo indefinitely after a swap.
+  if (url.origin === self.location.origin && url.pathname.startsWith('/img/menu/')) {
     return true;
   }
   return false;

@@ -719,7 +719,8 @@ def build_menu(product_catalog: dict, products_raw: list, inventory_raw: list,
         brand_cards.sort(key=lambda c: (c["title"], _WEIGHT_ORDER.get(c["size"], 99)))
         out_brands.append({"brand": brand, "brandColor": brand_color(brand), "cards": brand_cards})
 
-    out_brands.sort(key=lambda b: b["brand"])
+    brand_order = ["Soma Rosa Farms", "Howie Roll", "Mendo"]
+    out_brands.sort(key=lambda b: brand_order.index(b["brand"]) if b["brand"] in brand_order else 99)
 
     return {
         "updated": today,
