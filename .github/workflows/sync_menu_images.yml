@@ -1,0 +1,38 @@
+name: Sync Menu Images
+
+on:
+  workflow_dispatch:   # Manual only — run from the Actions tab whenever Drive art has been updated
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Sync images from Drive
+        env:
+          DRIVE_API_KEY: ${{ secrets.DRIVE_API_KEY }}
+        run: python scripts/sync_menu_images.py
+
+      - name: Commit and push updated images
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add img/menu/*.png
+          git diff --staged --quiet || git commit -m "Sync menu imagery from Drive"
+          git pull --rebase origin main
+          git push

@@ -78,6 +78,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
 .lb-row:hover{background:var(--bg3)}
 .lb-row.r1bg{background:rgba(91,191,126,0.04)}
 .lb-row.r1bg:hover{background:rgba(91,191,126,0.08)}
+.lb-row.lb-unassigned{background:rgba(217,91,91,0.05);border-top:1px dashed var(--red)}
+.lb-row.lb-unassigned:hover{background:rgba(217,91,91,0.1)}
+.unassigned-banner{background:var(--red2);border:1px solid rgba(217,91,91,0.3);border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--text2);margin-bottom:14px}
 .ch{font-family:var(--font-c);font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);text-align:right}
 .cd{font-family:var(--font-c);font-size:13px;color:var(--text2);text-align:right}
 .rnk{width:30px;height:30px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:var(--font-c);font-weight:800}
@@ -296,7 +299,8 @@ function init(){
     +CARDS.map(c=>`<div class="rview" id="rv_${esc(c.rep)}">${buildRep(c)}</div>`).join('');
   CARDS.forEach(c=>{
     const tid='t_'+esc(c.rep);
-    const ra=RAW.acct_records.filter(r=>(r.twocw_reps||[]).includes(c.rep));
+    const keys=new Set(c.account_keys||[]);
+    const ra=RAW.acct_records.filter(r=>keys.has(r.key));
     TBL[tid]={accts:ra,page:0,sort:{col:'rev_now',dir:-1},f:{q:'',status:'',trend:'',promos:''}};
     renderTbl(tid);
   });
@@ -328,7 +332,8 @@ function lbSort(col){
 }
 
 function renderLeaderboard(){
-  const sorted=[...CARDS].sort((a,b)=>{
+  const unassigned=CARDS.find(c=>c.unassigned);
+  const sorted=[...CARDS.filter(c=>!c.unassigned)].sort((a,b)=>{
     let av=a[LB_SORT.col],bv=b[LB_SORT.col];
     if(typeof av==='string'){av=av.toLowerCase();bv=(bv||'').toLowerCase();}
     return LB_SORT.dir*(av>bv?1:av<bv?-1:0);
@@ -358,15 +363,29 @@ function renderLeaderboard(){
       <div class="lc cd"><div class="sc-wrap"><div class="sc-bar"><div class="sc-fill" style="width:${s}%;background:${sC(s)}"></div></div><div class="sc-num" style="color:${sC(s)}">${Math.round(s)}</div></div></div>
     </div>`;
   }).join('');
+  const uRow=unassigned?`<div class="lb-grid lb-row lb-unassigned" onclick="ge('tab_Unassigned').click()">
+      <div class="lc"><div class="rnk rn" style="background:var(--red2);color:var(--red)">!</div></div>
+      <div class="lc cd" style="text-align:right;color:var(--text3);font-size:11px">&mdash;</div>
+      <div class="lc rep-name" style="color:var(--red)">Unassigned<span style="font-weight:400;color:var(--text3);font-size:11px;margin-left:6px">needs rep mapping</span></div>
+      <div class="lc cd">${fK(unassigned.total_rev)}</div>
+      <div class="lc cd">&mdash;</div>
+      <div class="lc cd" style="color:var(--green)">${unassigned.active}</div>
+      <div class="lc cd" style="color:var(--teal)">${unassigned.priority}</div>
+      <div class="lc cd" style="color:${unassigned.at_risk>3?'var(--orange)':'var(--text2)'}">${unassigned.at_risk}</div>
+      <div class="lc cd" style="color:${unassigned.lost>2?'var(--red)':'var(--text2)'}">${unassigned.lost}</div>
+      <div class="lc cd" style="color:var(--blue)">${unassigned.n_sampled}</div>
+      <div class="lc cd">&mdash;</div>
+    </div>`:'';
   const lb=ge('lb_overview');
-  if(lb)lb.innerHTML=hdr+rows;
+  if(lb)lb.innerHTML=hdr+rows+uRow;
 }
 
 function buildOverview(){
-  const tRev=CARDS.reduce((s,c)=>s+c.total_rev,0);
-  const tAct=CARDS.reduce((s,c)=>s+c.active,0),tPri=CARDS.reduce((s,c)=>s+c.priority,0);
-  const tAR=CARDS.reduce((s,c)=>s+c.at_risk,0),tLost=CARDS.reduce((s,c)=>s+c.lost,0);
-  const tGrow=CARDS.reduce((s,c)=>s+c.growing,0),avgG=CARDS.reduce((s,c)=>s+c.rev_growth,0)/CARDS.length;
+  const real=CARDS.filter(c=>!c.unassigned);
+  const tRev=real.reduce((s,c)=>s+c.total_rev,0);
+  const tAct=real.reduce((s,c)=>s+c.active,0),tPri=real.reduce((s,c)=>s+c.priority,0);
+  const tAR=real.reduce((s,c)=>s+c.at_risk,0),tLost=real.reduce((s,c)=>s+c.lost,0);
+  const tGrow=real.reduce((s,c)=>s+c.growing,0),avgG=real.reduce((s,c)=>s+c.rev_growth,0)/real.length;
   const kpis=`<div class="kpis">
     <div class="kpi ac"><div class="kpi-lbl">Revenue (90d)</div><div class="kpi-val">${fK(tRev)}</div><div class="kpi-sub">Combined last 90 days</div></div>
     <div class="kpi green"><div class="kpi-lbl">Active &#x2264;30d</div><div class="kpi-val">${tAct}</div><div class="kpi-sub">Ordered within 30 days</div></div>
@@ -382,8 +401,14 @@ function buildOverview(){
 function buildRep(card){
   const s=card.composite_score,rl=card.rank===1?'&#129351;':card.rank===2?'&#129352;':card.rank===3?'&#129353;':'#'+card.rank;
   const tid='t_'+esc(card.rep);
+  const rankTile=card.unassigned
+    ?`<div class="kpi ac" style="border-left:2px solid var(--red)"><div class="kpi-lbl">Status</div><div class="kpi-val" style="color:var(--red);font-size:18px">Unmapped</div><div class="kpi-sub">Not scored &mdash; fix Rep Assignments sheet</div></div>`
+    :`<div class="kpi ac"><div class="kpi-lbl">Rank</div><div class="kpi-val">${rl}</div><div class="kpi-sub">Score: ${s.toFixed(1)}/100</div></div>`;
+  const banner=card.unassigned
+    ?`<div class="unassigned-banner">&#9888;&#65039; These accounts have no rep match in the Rep Assignments sheet &mdash; usually a name mismatch (typo, missing space, or a new store location not yet added) or a genuinely unassigned account. Fix the sheet and they'll move to the correct rep on the next nightly sync.</div>`
+    :'';
   const kpis=`<div class="kpis">
-    <div class="kpi ac"><div class="kpi-lbl">Rank</div><div class="kpi-val">${rl}</div><div class="kpi-sub">Score: ${s.toFixed(1)}/100</div></div>
+    ${rankTile}
     <div class="kpi ac"><div class="kpi-lbl">Revenue (90d)</div><div class="kpi-val">${fK(card.total_rev)}</div><div class="kpi-sub" style="color:${pC(card.rev_growth)}">${card.rev_growth>0?'+':''}${card.rev_growth.toFixed(1)}% vs prior</div></div>
     <div class="kpi green"><div class="kpi-lbl">Active &#x2264;30d</div><div class="kpi-val">${card.active}</div><div class="kpi-sub">${card.n_accounts} real accounts</div></div>
     <div class="kpi teal"><div class="kpi-lbl">Priority 31&ndash;60d</div><div class="kpi-val">${card.priority}</div><div class="kpi-sub">Follow up soon</div></div>
@@ -411,7 +436,7 @@ function buildRep(card){
       ${ps.length?`<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">${promoSummary(ps)}</div>`:''}
     </div>`;
   }).join('')}</div>`:'' ;
-  return kpis+actions+sampHtml+`<div class="sec">All Accounts</div><div id="tbwrap_${tid}">${buildTblShell(tid)}</div>`;
+  return banner+kpis+actions+sampHtml+`<div class="sec">All Accounts</div><div id="tbwrap_${tid}">${buildTblShell(tid)}</div>`;
 }
 
 const TBL={};

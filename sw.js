@@ -54,6 +54,11 @@ function isLiveData(url) {
   if (url.origin === self.location.origin && url.pathname.startsWith('/data/')) {
     return true;
   }
+  // Menu imagery is swapped in place by marketing/design under fixed filenames —
+  // cache-first would keep serving a stale photo indefinitely after a swap.
+  if (url.origin === self.location.origin && url.pathname.startsWith('/img/menu/')) {
+    return true;
+  }
   return false;
 }
 
