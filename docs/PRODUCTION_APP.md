@@ -300,14 +300,18 @@ code before every work order. Recommended split:
   productivity tracking. That's how the hand-trim worksheet already works on
   paper, and it's what the app does today.
 
-One security note while we're here: the current PIN directory is a Google Sheet
-published to the web, which means anyone with that URL can read every user's
-PIN. It's fine for a dashboard behind an unguessable link; it is not something
-to build production authority on top of — and it's the reason the Supabase
-Row Level Security policy is left deliberately open rather than pretending to
-restrict access it has no real identity to restrict by. Whichever SSO route
-you pick, moving the directory out of a published sheet and tightening RLS
-to match should go with it.
+One security note while we're here: the PIN directory (now `app_users` in
+Supabase, managed at `/admin.html` — see `docs/USER_ADMIN.md` — with the old
+published Google Sheet kept only as a fallback) is still just a 4-digit PIN
+with no real identity behind it, readable by anyone who reaches the login
+page. It's fine for a dashboard behind an unguessable link; it is not
+something to build production authority on top of — and it's the reason the
+`production_forms` Row Level Security policy is left deliberately open
+rather than pretending to restrict access it has no real identity to
+restrict by (`app_users` itself is locked down further — writes require the
+separate admin PIN — see `docs/USER_ADMIN.md`). Whichever SSO route you
+pick, replacing the PIN directory and tightening RLS to match should go
+with it.
 
 ### About the storage model
 

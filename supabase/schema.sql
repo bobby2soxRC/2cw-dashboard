@@ -77,3 +77,44 @@ create policy "anon write" on production_forms for insert with check (true);
 
 drop policy if exists "anon update" on production_forms;
 create policy "anon update" on production_forms for update using (true) with check (true);
+
+-- ── User directory (app_users) ───────────────────────────────────────────
+-- Backs the in-app admin panel (admin.html) that replaces the "Users"
+-- Google Sheet. Unlike production_forms above, this table gates access to
+-- commission and executive data, so it does NOT get an open anon-write
+-- policy — all writes go through netlify/functions/admin.js, which uses the
+-- Supabase service role key server-side (never shipped to the browser) and
+-- requires an admin PIN + signed token. Anon SELECT stays open because the
+-- directory sheet it replaces was already world-readable-if-you-have-the-
+-- link; that isn't a downgrade.
+--
+-- `columns` deliberately mirrors the exact flat shape parseCSV() produces
+-- from the old sheet (lowercase keys, 'TRUE'/'FALSE' strings, comma-list
+-- strings for production station access) so index.html's loadDirectory()
+-- is the only place that needs to change — buildHub() and everything
+-- downstream stays untouched.
+
+create table if not exists app_users (
+  id           uuid primary key default gen_random_uuid(),
+  name         text not null,
+  pin          text not null,
+  active       boolean not null default true,
+  columns      jsonb not null default '{}'::jsonb,
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+
+create unique index if not exists idx_app_users_pin_active on app_users (pin) where active;
+
+drop trigger if exists trg_touch_app_users on app_users;
+create trigger trg_touch_app_users
+  before update on app_users
+  for each row execute function touch_production_forms();
+
+alter table app_users enable row level security;
+
+drop policy if exists "anon read" on app_users;
+create policy "anon read" on app_users for select using (true);
+
+-- No anon insert/update/delete policies — writes only via the service role
+-- key inside netlify/functions/admin.js.
