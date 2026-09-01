@@ -77,7 +77,7 @@ what went in, live, while the operator is still standing at the scale.
 Cultivation department shows up in the app and the app's shape (date, batch
 tag, crew) is ready — not because their fields match your real process. Real
 cultivation has more going on before harvest than three generic stubs: clone
-or seed intake, a feed schedule, IPM applications, defoliation, room or stage
+or seed intake, a feed schedule, IPM applications, defoliation, field or stage
 transitions, whatever else your SOPs actually call for. Once you have that
 list, replace or add to these three — nothing downstream (the yield pipeline,
 the biomass ledger) depends on their keys or fields, so they're free to

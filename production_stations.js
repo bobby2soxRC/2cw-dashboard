@@ -110,7 +110,7 @@ const PROD_STATIONS = [
   // ── CULTIVATION (PLACEHOLDER) ────────────────────────────────────────────
   // Everything below, up to Harvest, is a stub. Cultivation runs several real
   // processes today (clone/veg intake, feed schedules, IPM, defoliation,
-  // room transitions, pre-harvest sign-off...) and none of them are captured
+  // field/stage transitions, pre-harvest sign-off...) and none of them are captured
   // yet — these three stations exist so the department shows up in the app
   // and the shape (date, batch tag, crew) is ready, not because the fields
   // below are the real SOP. Replace/expand them once cultivation's actual
@@ -127,7 +127,7 @@ const PROD_STATIONS = [
     headline: 'plantCount',
     fields: [
       F.date(), F.site(),
-      { k: 'room', t: 'text', l: { en: 'Room / Zone', es: 'Sala / zona' } },
+      { k: 'block', t: 'text', l: { en: 'Field / Block', es: 'Campo / bloque' } },
       { k: 'batchTag', t: 'uid', l: { en: 'Batch Tag / Metrc Plant Tag', es: 'Etiqueta de lote / etiqueta de planta Metrc' } },
       F.strain(),
       { k: 'stage', t: 'select', allowOther: true,
@@ -146,13 +146,13 @@ const PROD_STATIONS = [
     key: 'cult_ipm_feed',
     dept: { en: 'Cultivation', es: 'Cultivo' },
     title: { en: 'IPM / Feed Log (placeholder)', es: 'Registro de IPM / alimentación (borrador)' },
-    desc: { en: 'PLACEHOLDER — a feeding or pest/disease management application against a room or batch. Fields below are a stub pending the real product list and rates.',
-            es: 'BORRADOR — una aplicación de alimentación o manejo de plagas/enfermedades a una sala o lote. Los campos son un borrador pendiente de la lista real de productos y dosis.' },
+    desc: { en: 'PLACEHOLDER — a feeding or pest/disease management application against a field/block or batch. Fields below are a stub pending the real product list and rates.',
+            es: 'BORRADOR — una aplicación de alimentación o manejo de plagas/enfermedades a un campo/bloque o lote. Los campos son un borrador pendiente de la lista real de productos y dosis.' },
     color: 'green',
     headline: 'quantity',
     fields: [
       F.date(), F.site(),
-      { k: 'room', t: 'text', l: { en: 'Room / Zone', es: 'Sala / zona' } },
+      { k: 'block', t: 'text', l: { en: 'Field / Block', es: 'Campo / bloque' } },
       { k: 'batchTag', t: 'uid', l: { en: 'Batch Tag / Metrc Plant Tag', es: 'Etiqueta de lote / etiqueta de planta Metrc' } },
       { k: 'applicationType', t: 'select', allowOther: true,
         l: { en: 'Type', es: 'Tipo' },
@@ -177,7 +177,7 @@ const PROD_STATIONS = [
     headline: 'result',
     fields: [
       F.date(), F.site(),
-      { k: 'room', t: 'text', l: { en: 'Room / Zone', es: 'Sala / zona' } },
+      { k: 'block', t: 'text', l: { en: 'Field / Block', es: 'Campo / bloque' } },
       { k: 'batchTag', t: 'uid', l: { en: 'Batch Tag / Metrc Plant Tag', es: 'Etiqueta de lote / etiqueta de planta Metrc' } },
       F.strain(),
       { k: 'result', t: 'select', req: true,
