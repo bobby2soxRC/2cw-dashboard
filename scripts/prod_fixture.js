@@ -26,7 +26,7 @@ const stages = {
         { containerType: 'bins', containerCount: 3, weight: 155, sourceUid: DRY_UID, strain: 'Lemon Cherry Gelato', intakeFormat: 'wet_on_stem' },
         { containerType: 'totes', containerCount: 2, weight: 92, sourceUid: '1A9999', strain: 'Zoap', intakeFormat: 'wet_on_stem' }
       ],
-      totalWetLb: 402, binCount: 8 }
+      totalWetLb: 402, binCount: 8, dryRoom: 'DRY1' }
   ],
   dry_check: [
     { id: 'd1', date: '2026-08-17', sourceUid: DRY_UID, strain: 'Lemon Cherry Gelato',

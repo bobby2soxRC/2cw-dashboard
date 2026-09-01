@@ -295,6 +295,11 @@ const PROD_STATIONS = [
         l: { en: 'Total Wet Weight (lbs)', es: 'Peso húmedo total (lbs)' } },
       { k: 'binCount', t: 'calc', dp: 0, calc: (v) => (v.lines || []).reduce((a, r) => a + num(r.containerCount), 0),
         l: { en: 'Total Containers', es: 'Contenedores totales' } },
+      // One room for the whole load — the crew hangs a truck together in
+      // whichever room has space, not split by strain/line. Flag if that
+      // turns out wrong and a truck really does get split across rooms.
+      { k: 'dryRoom', t: 'select', ref: 'dryRooms', allowOther: true, req: true,
+        l: { en: 'Dry Room / Area', es: 'Sala / área de secado' } },
       F.teamLead(), F.crewSize(), F.laborHours(), F.crew(), F.notes()
     ],
     flow: {
@@ -679,7 +684,7 @@ const PREFILL_MAP = {
   // Fresh Plant Intake has no single top-level UID to type in (a truck can
   // carry several), so it no longer offers an incoming prefill from harvest —
   // the operator types the strain/UID per line off the manifest instead.
-  dry_check:   { from: 'intake_wet',   map: { strain: 'strain', wetIntakeLb: 'weight' } },
+  dry_check:   { from: 'intake_wet',   map: { strain: 'strain', dryRoom: 'dryRoom', wetIntakeLb: 'weight' } },
   buck:        { from: 'dry_check',    map: { strain: 'strain', startingDryLb: 'dryWeightLb' } },
   machine_trim:{ from: 'buck',         map: { strain: 'strain', inputBuckedLb: 'buckedFlowerLb' } },
   hand_trim:   { from: 'machine_trim', map: { strain: 'strain', startingBuckedLb: 'flowerALb' } }
