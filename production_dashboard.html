@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Production Dashboard — 2CW</title>
+  <script>
+    (function(){ if (!sessionStorage.getItem('2cw_pin')) window.location.replace('/index.html'); })();
+  </script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0c0d0f">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0c0d0f;--surface:#13151a;--surface2:#181b21;--border:#1e2129;
+      --green:#3db87a;--gold:#d4a843;--blue:#5a9fd4;--purple:#9b7fd4;--red:#ef5350;
+      --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;
+    }
+    html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-text-size-adjust:100%}
+
+    .hdr{min-height:calc(54px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:12px;position:sticky;top:0;z-index:20}
+    .hdr-back{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
+    .hdr-div{width:1px;height:18px;background:var(--border)}
+    .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--green);flex:1}
+    .lang{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+    .lang button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:12px;font-weight:600;padding:8px 12px;cursor:pointer;min-height:36px}
+    .lang button.on{background:var(--green);color:#000}
+
+    main{padding:28px 16px 60px;max-width:1200px;margin:0 auto}
+    .title{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,6vw,46px);letter-spacing:.04em;line-height:1}
+    .sub{margin-top:6px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+
+    .filters{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 8px}
+    .filters select,.filters input{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .8rem;font-size:15px;font-family:inherit;min-height:46px}
+    .filters .reset{background:transparent;border:1px solid var(--border);color:var(--subtext);border-radius:10px;padding:.6rem 1rem;font-family:inherit;font-size:.85rem;cursor:pointer;min-height:46px}
+
+    .tabs{display:flex;gap:6px;overflow-x:auto;margin:22px 0 20px;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+    .tabs button{background:transparent;border:1px solid var(--border);color:var(--subtext);border-radius:10px;padding:.6rem 1.1rem;
+      font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;white-space:nowrap;min-height:44px}
+    .tabs button.on{background:var(--green);border-color:var(--green);color:#000;font-weight:700}
+
+    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:22px}
+    .kpi{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+    .kpi .k{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+    .kpi .v{font-family:'DM Mono',monospace;font-size:1.5rem;line-height:1.1;color:var(--text)}
+    .kpi .n{font-size:.75rem;color:var(--subtext);margin-top:6px}
+    .kpi.green .v{color:var(--green)}.kpi.gold .v{color:var(--gold)}.kpi.blue .v{color:var(--blue)}.kpi.purple .v{color:var(--purple)}.kpi.red .v{color:var(--red)}
+
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:18px;overflow:hidden}
+    .card h2{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.03em;font-weight:400;margin-bottom:4px}
+    .card .note{font-size:.8rem;color:var(--muted);line-height:1.5;margin-bottom:16px}
+
+    .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -20px;padding:0 20px}
+    table{width:100%;border-collapse:collapse;min-width:560px}
+    th{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:left;padding:0 12px 10px 0;white-space:nowrap;font-weight:500}
+    td{padding:10px 12px 10px 0;border-top:1px solid var(--border);font-size:.9rem;white-space:nowrap}
+    td.num,th.num{text-align:right;font-family:'DM Mono',monospace}
+    td.wide{white-space:normal;min-width:220px}
+    tr.total td{border-top:2px solid var(--border);font-weight:700}
+    .pill{display:inline-block;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border-radius:99px;border:1px solid var(--border);color:var(--subtext)}
+    .pill.green{border-color:var(--green);color:var(--green)}
+    .pill.gold{border-color:var(--gold);color:var(--gold)}
+    .pill.blue{border-color:var(--blue);color:var(--blue)}
+    .pill.purple{border-color:var(--purple);color:var(--purple)}
+    .pill.red{border-color:var(--red);color:var(--red)}
+    .neg{color:var(--red)}
+
+    /* Simple inline bar so a yield or a trimmer's output reads at a glance. */
+    .bar{height:6px;border-radius:3px;background:var(--border);min-width:60px;position:relative;overflow:hidden}
+    .bar span{position:absolute;inset:0 auto 0 0;background:var(--green);border-radius:3px}
+
+    .empty{color:var(--muted);font-size:.9rem;padding:24px 0;text-align:center}
+    .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
+  </style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="/production.html" id="back">← Stations</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand">Production</div>
+  <div class="lang" id="lang"></div>
+</header>
+
+<main>
+  <div class="title" id="title">Production Dashboard</div>
+  <div class="sub" id="sub">—</div>
+
+  <div class="filters" id="filters"></div>
+  <div class="tabs" id="tabs"></div>
+  <div id="view"></div>
+
+  <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution</footer>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/config/supabase_config.js"></script>
+<script src="/production_stations.js"></script>
+<script src="/prod_common.js"></script>
+<script src="/prod_data.js"></script>
+<script src="/prod_analytics.js"></script>
+<script>
+(async function () {
+  mountLangToggle('lang');
+  const A = ProdAnalytics;
+
+  const L = {
+    title:     { en: 'Production Dashboard', es: 'Panel de producción' },
+    back:      { en: '← Stations', es: '← Estaciones' },
+    tabs: {
+      pipeline:   { en: 'Pipeline', es: 'Flujo' },
+      yields:     { en: 'Yields', es: 'Rendimientos' },
+      biomass:    { en: 'Biomass', es: 'Biomasa' },
+      labor:      { en: 'Labor', es: 'Mano de obra' },
+      requests:   { en: 'Requests', es: 'Solicitudes' },
+      exceptions: { en: 'Exceptions', es: 'Excepciones' }
+    },
+    allStrains:{ en: 'All strains', es: 'Todas las variedades' },
+    allSites:  { en: 'All farms', es: 'Todos los ranchos' },
+    reset:     { en: 'Reset', es: 'Restablecer' },
+    from:      { en: 'From', es: 'Desde' },
+    to:        { en: 'To', es: 'Hasta' },
+    noData:    { en: 'Nothing recorded yet for this filter.', es: 'Nada registrado aún para este filtro.' },
+    lastEntry: { en: 'Last entry', es: 'Último registro' },
+    never:     { en: 'no entries yet', es: 'sin registros' },
+
+    lot: { en: 'Lot / Batch', es: 'Lote' }, strain: { en: 'Strain', es: 'Variedad' },
+    site: { en: 'Farm', es: 'Rancho' }, stage: { en: 'Stage', es: 'Etapa' },
+    days: { en: 'Days', es: 'Días' }, wetIn: { en: 'Wet in', es: 'Húmedo' },
+    dry: { en: 'Dry', es: 'Seco' }, bucked: { en: 'Bucked', es: 'Desvarado' },
+    flower: { en: 'Flower', es: 'Flor' }, smalls: { en: 'Smalls', es: 'Smalls' },
+    trim: { en: 'Trim', es: 'Recorte' },
+    records: { en: 'Runs', es: 'Corridas' }, input: { en: 'Input', es: 'Entrada' },
+    output: { en: 'Output', es: 'Salida' }, loss: { en: 'Unaccounted', es: 'No contabilizado' },
+    lossCol: { en: 'Weight lost', es: 'Peso perdido' }, lossKind: { en: 'Which is', es: 'Que es' },
+    dryOfWet: { en: 'Dry % of wet', es: '% seco de húmedo' },
+    flowerOfDry: { en: 'Flower % of dry', es: '% flor de seco' },
+    flowerOfWet: { en: 'Flower % of wet', es: '% flor de húmedo' },
+    category: { en: 'Category', es: 'Categoría' },
+    atProcessing: { en: 'At processing', es: 'En procesamiento' },
+    atMfg: { en: 'At manufacturing', es: 'En manufactura' },
+    total: { en: 'Total on hand', es: 'Total disponible' },
+    produced: { en: 'Produced', es: 'Producido' },
+    employee: { en: 'Employee #', es: 'N.º empleado' },
+    grams: { en: 'Grams', es: 'Gramos' }, pounds: { en: 'Pounds', es: 'Libras' },
+    bags: { en: 'Bags', es: 'Bolsas' }, daysWorked: { en: 'Days', es: 'Días' },
+    gPerDay: { en: 'g / day', es: 'g / día' },
+    lbPerHr: { en: 'lbs / labor hr', es: 'lbs / hora' },
+    laborHours: { en: 'Labor hrs', es: 'Horas' },
+    date: { en: 'Date', es: 'Fecha' }, status: { en: 'Status', es: 'Estado' },
+    forLine: { en: 'For', es: 'Para' }, requested: { en: 'Requested', es: 'Solicitado' },
+    transferred: { en: 'Transferred', es: 'Transferido' }, age: { en: 'Age', es: 'Antigüedad' },
+    issue: { en: 'Issue', es: 'Problema' },
+    kpiInDry: { en: 'Lots in dry', es: 'Lotes en secado' },
+    kpiInProc: { en: 'Lots in processing', es: 'Lotes en proceso' },
+    kpiFlower: { en: 'Flower on hand', es: 'Flor disponible' },
+    kpiSmalls: { en: 'Smalls on hand', es: 'Smalls disponibles' },
+    kpiFF: { en: 'Fresh frozen', es: 'Fresco congelado' },
+    kpiOpenReq: { en: 'Open requests', es: 'Solicitudes abiertas' },
+    kpiExc: { en: 'Exceptions', es: 'Excepciones' },
+    noExc: { en: 'Nothing needs attention — every stage reconciles.', es: 'Nada requiere atención — todas las etapas cuadran.' }
+  };
+  document.querySelector('.hdr-brand').textContent = t(L.title);
+  document.getElementById('title').textContent = t(L.title);
+  document.getElementById('back').textContent = t(L.back);
+  document.title = `${t(L.title)} — 2CW`;
+
+  // ── Load every stage file up front; they are small and the tabs all cross-read.
+  const stages = {};
+  // loadSubmitted reads finalized (status='submitted') rows from Supabase
+  // when it's configured, and falls back to the static JSON files when it
+  // isn't — same shape either way, so prod_analytics.js never has to know
+  // which one it got.
+  await Promise.all(PROD_STATIONS.map(async (s) => { stages[s.key] = await loadSubmitted(s.key); }));
+
+  const allRows = Object.values(stages).flat();
+  const lastEntry = allRows.map((r) => String(r.submittedAt || r.date || '')).sort().pop();
+  document.getElementById('sub').textContent =
+    `${t(L.lastEntry)}: ${lastEntry ? lastEntry.slice(0, 10) : t(L.never)} · ${allRows.length} records`;
+
+  // ── Filters ───────────────────────────────────────────────────────────────
+  const filter = { strain: '', site: '', from: '', to: '' };
+  const strains = [...new Set(allRows.map((r) => r.strain).filter(Boolean))].sort();
+  const sites = [...new Set(allRows.map((r) => r.site).filter(Boolean))].sort();
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  document.getElementById('filters').innerHTML = `
+    <select id="f-strain"><option value="">${t(L.allStrains)}</option>${strains.map((s) => `<option>${esc(s)}</option>`).join('')}</select>
+    <select id="f-site"><option value="">${t(L.allSites)}</option>${sites.map((s) => `<option>${esc(s)}</option>`).join('')}</select>
+    <input type="date" id="f-from" aria-label="${t(L.from)}">
+    <input type="date" id="f-to" aria-label="${t(L.to)}">
+    <button class="reset" id="f-reset">${t(L.reset)}</button>`;
+  ['strain', 'site', 'from', 'to'].forEach((k) => {
+    document.getElementById(`f-${k}`).addEventListener('change', (e) => { filter[k] = e.target.value; render(); });
+  });
+  document.getElementById('f-reset').onclick = () => {
+    Object.keys(filter).forEach((k) => { filter[k] = ''; document.getElementById(`f-${k}`).value = ''; });
+    render();
+  };
+
+  // ── Tabs ──────────────────────────────────────────────────────────────────
+  let tab = 'pipeline';
+  const TABS = ['pipeline', 'yields', 'biomass', 'labor', 'requests', 'exceptions'];
+  document.getElementById('tabs').innerHTML =
+    TABS.map((k) => `<button data-tab="${k}">${t(L.tabs[k])}</button>`).join('');
+  document.querySelectorAll('#tabs button').forEach((b) => {
+    b.onclick = () => { tab = b.dataset.tab; render(); };
+  });
+
+  // ── Rendering helpers ─────────────────────────────────────────────────────
+  const table = (headers, rows, opts = {}) => rows.length
+    ? `<div class="scroll"><table><thead><tr>${headers.map((h) =>
+        `<th class="${h.num ? 'num' : ''}">${h.label}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`
+    : `<div class="empty">${opts.empty || t(L.noData)}</div>`;
+  const td = (v, cls = '') => `<td class="${cls}">${v}</td>`;
+  const tdn = (v, dp = 2) => `<td class="num">${fmtNum(v, dp)}</td>`;
+  const tdp = (v) => `<td class="num">${fmtPct(v)}</td>`;
+  const kpi = (cls, k, v, n) => `<div class="kpi ${cls}"><div class="k">${k}</div><div class="v">${v}</div>${n ? `<div class="n">${n}</div>` : ''}</div>`;
+  const bar = (frac) => `<div class="bar"><span style="width:${Math.max(0, Math.min(1, frac || 0)) * 100}%"></span></div>`;
+
+  function render() {
+    document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
+    const view = document.getElementById('view');
+    view.innerHTML = ({
+      pipeline: renderPipeline,
+      yields: renderYields,
+      biomass: renderBiomass,
+      labor: renderLabor,
+      requests: renderRequests,
+      exceptions: renderExceptions
+    })[tab]();
+  }
+
+  // ── Pipeline ──────────────────────────────────────────────────────────────
+  function renderPipeline() {
+    const lots = A.buildLots(stages).filter((lot) =>
+      (!filter.strain || lot.strain === filter.strain) &&
+      (!filter.site || lot.site === filter.site) &&
+      (!filter.from || lot.lastDate >= filter.from) &&
+      (!filter.to || lot.lastDate <= filter.to));
+
+    const inDry = lots.filter((l) => l.currentStage === 'intake_wet').length;
+    const inProc = lots.filter((l) => ['dry_check', 'buck', 'machine_trim'].includes(l.currentStage)).length;
+    const led = A.biomassLedger(stages, filter);
+    const cat = (c) => (led.find((x) => x.category === c) || {}).totalLb || 0;
+    const openReq = A.requestSummary(stages).filter((r) => r.open).length;
+
+    const rows = lots.map((lot) => {
+      const st = STATION_BY_KEY[lot.currentStage];
+      const g = (stage, c) => (lot.stages[stage] && lot.stages[stage].outputs[c]) || null;
+      return `<tr>
+        ${td(`<div style="font-family:'DM Mono',monospace;font-size:.8rem">${esc(lot.harvestBatchName || lot.uid)}</div>`, 'wide')}
+        ${td(esc(lot.strain || '—'))}
+        ${td(esc(lot.site || '—'))}
+        ${td(`<span class="pill ${st ? st.color : ''}">${st ? t(st.title) : '—'}</span>`)}
+        ${tdn(lot.daysInStage, 0)}
+        ${tdn(g('harvest', 'wet_whole_plant') || g('intake_wet', 'dry_whole_plant'))}
+        ${tdn(g('dry_check', 'dry_whole_plant'))}
+        ${tdn(g('buck', 'bucked_flower'))}
+        ${tdn((g('machine_trim', 'flower_a') || 0) + (g('hand_trim', 'flower_a') || 0))}
+      </tr>`;
+    });
+
+    return `
+      <div class="kpis">
+        ${kpi('blue', t(L.kpiInDry), lots.length ? inDry : '—')}
+        ${kpi('gold', t(L.kpiInProc), lots.length ? inProc : '—')}
+        ${kpi('green', t(L.kpiFlower), fmtNum(cat('flower_a'), 1), 'lb')}
+        ${kpi('green', t(L.kpiSmalls), fmtNum(cat('smalls_b'), 1), 'lb')}
+        ${kpi('blue', t(L.kpiFF), fmtNum(cat('fresh_frozen'), 1), 'lb')}
+        ${kpi('purple', t(L.kpiOpenReq), openReq)}
+      </div>
+      <div class="card">
+        <h2>${t(L.tabs.pipeline)}</h2>
+        <div class="note">${t({ en: 'Every lot and the furthest stage it has reached. A lot keeps one row even after bucking issues it a new Metrc tag.', es: 'Cada lote y la etapa más avanzada que ha alcanzado. Un lote conserva una sola fila aunque el desvarado le asigne una nueva etiqueta Metrc.' })}</div>
+        ${table([
+          { label: t(L.lot) }, { label: t(L.strain) }, { label: t(L.site) }, { label: t(L.stage) },
+          { label: t(L.days), num: true }, { label: t(L.wetIn), num: true }, { label: t(L.dry), num: true },
+          { label: t(L.bucked), num: true }, { label: t(L.flower), num: true }
+        ], rows)}
+      </div>`;
+  }
+
+  // ── Yields ────────────────────────────────────────────────────────────────
+  function renderYields() {
+    const ys = A.stageYields(stages, filter).filter((y) => y.records > 0);
+    const sy = A.strainYields(stages, filter);
+
+    const KIND = {
+      moisture:   { l: { en: 'moisture', es: 'humedad' },     bad: false },
+      receiving:  { l: { en: 'vs farm', es: 'vs rancho' },    bad: true, threshold: 0.02 },
+      conserving: { l: { en: 'unaccounted', es: 'sin contabilizar' }, bad: true, threshold: 0.05 },
+      transform:  { l: { en: 'consumed', es: 'consumido' },   bad: false },
+      origin:     { l: { en: '—', es: '—' },                  bad: false }
+    };
+    const stageRows = ys.map((y) => {
+      const kind = KIND[y.lossKind] || KIND.conserving;
+      const bad = kind.bad && Math.abs(y.lossPct) > kind.threshold;
+      return `<tr>
+        ${td(`<span class="pill ${STATION_BY_KEY[y.key].color}">${t(y.title)}</span>`)}
+        ${tdn(y.records, 0)}
+        ${tdn(y.inputLb)}
+        ${tdn(y.outputLb)}
+        ${td(`<span class="${bad ? 'neg' : ''}">${y.lossPct === null ? '—' : fmtPct(y.lossPct)}</span>`, 'num')}
+        ${td(`<span class="pill">${t(kind.l)}</span>`)}
+      </tr>`;
+    });
+
+    const maxFlower = Math.max(...sy.map((s) => s.flowerLb), 1);
+    const strainRows = sy.map((s) => `<tr>
+      ${td(esc(s.strain), 'wide')}
+      ${tdn(s.wetLb, 1)} ${tdn(s.dryLb, 1)} ${tdp(s.dryPctOfWet)}
+      ${tdn(s.flowerLb, 1)} ${tdn(s.smallsLb, 1)} ${tdn(s.trimLb, 1)}
+      ${tdp(s.flowerPctOfDry)} ${tdp(s.flowerPctOfWet)}
+      ${td(bar(s.flowerLb / maxFlower))}
+    </tr>`);
+
+    return `
+      <div class="card">
+        <h2>${t({ en: 'Loss by stage', es: 'Pérdida por etapa' })}</h2>
+        <div class="note">${t({ en: 'Input weight versus the sum of everything weighed out. Drying is supposed to lose two thirds to moisture and a manufacturing run consumes its input outright — only "unaccounted" and "vs farm" rows turn red, and those usually mean a bin was never weighed rather than material vanishing.', es: 'Peso de entrada contra la suma de todo lo pesado a la salida. El secado debe perder dos tercios por humedad y una corrida de manufactura consume su entrada por completo — solo las filas "sin contabilizar" y "vs rancho" se marcan en rojo, y normalmente significan que un bin no se pesó, no que el material desapareció.' })}</div>
+        ${table([{ label: t(L.stage) }, { label: t(L.records), num: true }, { label: t(L.input), num: true },
+                 { label: t(L.output), num: true }, { label: t(L.lossCol), num: true },
+                 { label: t(L.lossKind) }], stageRows)}
+      </div>
+      <div class="card">
+        <h2>${t({ en: 'Yield by strain', es: 'Rendimiento por variedad' })}</h2>
+        <div class="note">${t({ en: 'Wet pounds off the farm through to finished flower. "Flower % of wet" is the number to compare strains and farms on.', es: 'Libras húmedas del rancho hasta flor terminada. "% flor de húmedo" es el número para comparar variedades y ranchos.' })}</div>
+        ${table([{ label: t(L.strain) }, { label: t(L.wetIn), num: true }, { label: t(L.dry), num: true },
+                 { label: t(L.dryOfWet), num: true }, { label: t(L.flower), num: true }, { label: t(L.smalls), num: true },
+                 { label: t(L.trim), num: true }, { label: t(L.flowerOfDry), num: true },
+                 { label: t(L.flowerOfWet), num: true }, { label: '' }], strainRows)}
+      </div>`;
+  }
+
+  // ── Biomass ───────────────────────────────────────────────────────────────
+  function renderBiomass() {
+    const led = A.biomassLedger(stages, filter);
+    const sellable = led.filter((r) => r.sellable);
+    const rows = led.map((r) => `<tr>
+      ${td(`${t(r.label)}${r.sellable ? ' <span class="pill green">✓</span>' : ''}`, 'wide')}
+      ${tdn(r.producedLb, 1)} ${tdn(r.consumedLb, 1)} ${tdn(r.transferredLb, 1)}
+      ${tdn(r.processingLb, 1)} ${tdn(r.manufacturingLb, 1)}
+      ${td(`<strong>${fmtNum(r.totalLb, 1)}</strong>`, 'num')}
+    </tr>`);
+    const tot = (k) => led.reduce((a, r) => a + r[k], 0);
+
+    return `
+      <div class="kpis">
+        ${sellable.slice(0, 5).map((r) => kpi('green', t(r.label), fmtNum(r.totalLb, 1), 'lb')).join('')}
+      </div>
+      <div class="card">
+        <h2>${t({ en: 'Biomass ledger', es: 'Libro de biomasa' })}</h2>
+        <div class="note">${t({ en: 'Produced, minus what the next stage consumed, split by where it is sitting. A transfer to manufacturing moves weight between the two columns — it is not a loss.', es: 'Producido, menos lo que consumió la siguiente etapa, separado por dónde está. Una transferencia a manufactura mueve peso entre las dos columnas — no es una pérdida.' })}</div>
+        ${table([{ label: t(L.category) }, { label: t(L.produced), num: true },
+                 { label: t({ en: 'Consumed', es: 'Consumido' }), num: true },
+                 { label: t(L.transferred), num: true }, { label: t(L.atProcessing), num: true },
+                 { label: t(L.atMfg), num: true }, { label: t(L.total), num: true }],
+                rows.concat(led.length ? [`<tr class="total">${td(t(L.total))}${tdn(tot('producedLb'), 1)}${tdn(tot('consumedLb'), 1)}${tdn(tot('transferredLb'), 1)}${tdn(tot('processingLb'), 1)}${tdn(tot('manufacturingLb'), 1)}${tdn(tot('totalLb'), 1)}</tr>`] : []))}
+      </div>`;
+  }
+
+  // ── Labor ─────────────────────────────────────────────────────────────────
+  function renderLabor() {
+    const trimmers = A.trimmerStats(stages, filter);
+    const crew = A.crewThroughput(stages, filter);
+    const byEmployee = A.crewLaborByEmployee(stages, filter);
+    const maxG = Math.max(...trimmers.map((x) => x.grams), 1);
+    const maxH = Math.max(...byEmployee.map((x) => x.hours), 1);
+
+    const trimRows = trimmers.map((e) => `<tr>
+      ${td(`<span style="font-family:'DM Mono',monospace">#${esc(e.employeeNo)}</span>`)}
+      ${tdn(e.grams, 0)} ${tdn(e.lb, 2)} ${tdn(e.bags, 0)} ${tdn(e.days, 0)} ${tdn(e.gramsPerDay, 0)}
+      ${td(bar(e.grams / maxG))}
+    </tr>`);
+    const crewRows = crew.map((c) => `<tr>
+      ${td(`<span class="pill ${STATION_BY_KEY[c.key].color}">${t(c.title)}</span>`)}
+      ${tdn(c.records, 0)} ${tdn(c.lb, 1)} ${tdn(c.laborHours, 1)} ${tdn(c.lbPerLaborHour, 2)}
+    </tr>`);
+    const empRows = byEmployee.map((e) => `<tr>
+      ${td(`<span style="font-family:'DM Mono',monospace">#${esc(e.employeeNo)}</span>`)}
+      ${tdn(e.hours, 2)} ${tdn(e.touches, 0)} ${tdn(e.batchCount, 0)}
+      ${td(e.stations.map((k) => `<span class="pill ${(STATION_BY_KEY[k] || {}).color || ''}">${t((STATION_BY_KEY[k] || {}).title || k)}</span>`).join(' '), 'wide')}
+      ${td(bar(e.hours / maxH))}
+    </tr>`);
+
+    return `
+      <div class="card">
+        <h2>${t({ en: 'Crew log by employee', es: 'Registro de equipo por empleado' })}</h2>
+        <div class="note">${t({ en: 'Every employee number logged against a batch, from the optional crew grid on each station plus the hand-trim worksheet. This is the seam for a payroll/timeclock join later — match employee # + date here against a timeclock export to get labor cost per batch. Hours show as — where only the batch touch was captured, not time (the hand-trim worksheet today).', es: 'Cada número de empleado registrado contra un lote, desde la cuadrícula opcional de equipo en cada estación más la hoja de corte a mano. Este es el punto de conexión para un futuro cruce con nómina/reloj — coincida N.º de empleado + fecha aquí con una exportación de nómina para obtener el costo laboral por lote. Las horas se muestran como — donde solo se registró el contacto con el lote, no el tiempo (la hoja de corte a mano hoy).' })}</div>
+        ${table([{ label: t(L.employee) }, { label: t(L.laborHours), num: true }, { label: t({ en: 'Batch Touches', es: 'Contactos con lotes' }), num: true },
+                 { label: t({ en: 'Distinct Batches', es: 'Lotes distintos' }), num: true }, { label: t(L.stage) }, { label: '' }], empRows)}
+      </div>
+      <div class="card">
+        <h2>${t({ en: 'Trimmer output', es: 'Producción por persona' })}</h2>
+        <div class="note">${t({ en: 'Straight off the hand-trim work orders — every bag weighed out, by employee number.', es: 'Directo de las órdenes de corte a mano — cada bolsa pesada, por número de empleado.' })}</div>
+        ${table([{ label: t(L.employee) }, { label: t(L.grams), num: true }, { label: t(L.pounds), num: true },
+                 { label: t(L.bags), num: true }, { label: t(L.daysWorked), num: true },
+                 { label: t(L.gPerDay), num: true }, { label: '' }], trimRows)}
+      </div>
+      <div class="card">
+        <h2>${t({ en: 'Crew throughput', es: 'Rendimiento del equipo' })}</h2>
+        <div class="note">${t({ en: 'Pounds of input handled per labor hour (crew size × hours). Only runs where hours were recorded are counted.', es: 'Libras de entrada procesadas por hora de trabajo (tamaño del equipo × horas). Solo cuentan las corridas con horas registradas.' })}</div>
+        ${table([{ label: t(L.stage) }, { label: t(L.records), num: true }, { label: t(L.input), num: true },
+                 { label: t(L.laborHours), num: true }, { label: t(L.lbPerHr), num: true }], crewRows)}
+      </div>`;
+  }
+
+  // ── Requests ──────────────────────────────────────────────────────────────
+  function renderRequests() {
+    const reqs = A.requestSummary(stages).filter((r) =>
+      (!filter.strain || r.strain === filter.strain) &&
+      (!filter.from || String(r.date) >= filter.from) &&
+      (!filter.to || String(r.date) <= filter.to));
+    const pillFor = { requested: 'gold', approved: 'blue', transferred: 'green', denied: 'red' };
+    const rows = reqs.map((r) => `<tr>
+      ${td(esc(r.date || '—'))}
+      ${td(esc(r.destinationDept || '—'))}
+      ${td(esc(t((BIOMASS[r.category] || { en: r.category || '—' }))))}
+      ${td(esc(r.strain || '—'))}
+      ${tdn(r.requestedLb, 1)} ${tdn(r.transferredLb, 1)}
+      ${td(`<span class="pill ${pillFor[r.status] || ''}">${esc(r.status || '—')}</span>`)}
+      ${tdn(r.ageDays, 0)}
+      ${td(esc(r.requestedBy || '—'))}
+    </tr>`);
+    return `
+      <div class="card">
+        <h2>${t({ en: 'Biomass requests', es: 'Solicitudes de biomasa' })}</h2>
+        <div class="note">${t({ en: 'Manufacturing asking processing for material. Anything still "requested" after 3 days shows up on the Exceptions tab.', es: 'Manufactura pidiendo material a procesamiento. Todo lo que siga en "solicitado" después de 3 días aparece en Excepciones.' })}</div>
+        ${table([{ label: t(L.date) }, { label: t(L.forLine) }, { label: t(L.category) }, { label: t(L.strain) },
+                 { label: t(L.requested), num: true }, { label: t(L.transferred), num: true },
+                 { label: t(L.status) }, { label: t(L.age), num: true }, { label: t(L.employee) }], rows)}
+      </div>`;
+  }
+
+  // ── Exceptions ────────────────────────────────────────────────────────────
+  function renderExceptions() {
+    const exc = A.exceptions(stages).filter((e) =>
+      (!filter.strain || e.strain === filter.strain) &&
+      (!filter.from || e.date >= filter.from) &&
+      (!filter.to || e.date <= filter.to));
+    if (!exc.length) return `<div class="card"><div class="empty">${t(L.noExc)}</div></div>`;
+    const rows = exc.map((e) => `<tr>
+      ${td(esc(e.date || '—'))}
+      ${td(`<span class="pill ${(STATION_BY_KEY[e.stage] || {}).color || ''}">${t((STATION_BY_KEY[e.stage] || {}).title || e.stage)}</span>`)}
+      ${td(esc(e.strain || '—'))}
+      ${td(`<span style="font-family:'DM Mono',monospace;font-size:.78rem">${esc(String(e.uid || '').slice(-8) || '—')}</span>`)}
+      ${td(t(e.detail), 'wide')}
+    </tr>`);
+    return `
+      <div class="kpis">${kpi('red', t(L.kpiExc), exc.length)}</div>
+      <div class="card">
+        <h2>${t({ en: 'Needs a look', es: 'Requiere revisión' })}</h2>
+        <div class="note">${t({ en: 'Weights that do not reconcile, batches held at post-dry, and requests nobody has actioned.', es: 'Pesos que no cuadran, lotes retenidos en post-secado y solicitudes sin atender.' })}</div>
+        ${table([{ label: t(L.date) }, { label: t(L.stage) }, { label: t(L.strain) },
+                 { label: 'UID' }, { label: t(L.issue) }], rows)}
+      </div>`;
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>

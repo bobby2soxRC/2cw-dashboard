@@ -21,6 +21,15 @@ const APP_SHELL = [
   '/form_staff_sample.html',
   '/form_store_visit.html',
   '/forms_common.js',
+  '/production.html',
+  '/prod_form.html',
+  '/production_dashboard.html',
+  '/production_today.html',
+  '/production_stations.js',
+  '/prod_common.js',
+  '/prod_analytics.js',
+  '/prod_data.js',
+  '/config/supabase_config.js',
   '/manifest.json',
   '/favicon.png',
   '/icons/icon-192.png',
@@ -53,6 +62,13 @@ function isLiveData(url) {
   return false;
 }
 
+// Production data is live like everything under /data/, but the station forms
+// have to keep working in a dry room with no signal — so these get the fresh
+// copy when there is a network and the last good copy when there isn't.
+function isProductionData(url) {
+  return url.origin === self.location.origin && url.pathname.startsWith('/data/production/');
+}
+
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -75,6 +91,19 @@ self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
   if (event.request.method !== 'GET') return;
+
+  if (isProductionData(url)) {
+    event.respondWith(
+      fetch(event.request).then(response => {
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        }
+        return response;
+      }).catch(() => caches.match(event.request, { ignoreSearch: true }))
+    );
+    return;
+  }
 
   if (isLiveData(url)) {
     event.respondWith(fetch(event.request));

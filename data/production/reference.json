@@ -1,0 +1,481 @@
+{
+  "_comment": "Reference lists for the production app. Edit here (or via the Admin card) \u2014 every form picker reads from this file. Codes were seeded from the Cannabis_Processing_Inventory_Workbook; rename `label` fields to the real farm/room/machine names.",
+  "updatedAt": "2026-08-28",
+  "sites": [
+    {
+      "id": "AF",
+      "label": "AF",
+      "kind": "farm",
+      "active": true
+    },
+    {
+      "id": "BG",
+      "label": "BG",
+      "kind": "farm",
+      "active": true
+    },
+    {
+      "id": "HSR",
+      "label": "HSR",
+      "kind": "farm",
+      "active": true
+    },
+    {
+      "id": "AHD",
+      "label": "AHD",
+      "kind": "farm",
+      "active": true
+    },
+    {
+      "id": "WC",
+      "label": "WC",
+      "kind": "farm",
+      "active": true
+    }
+  ],
+  "properties": [
+    {
+      "pid": "071",
+      "label": "PID 071",
+      "active": true
+    },
+    {
+      "pid": "073",
+      "label": "PID 073",
+      "active": true
+    },
+    {
+      "pid": "075",
+      "label": "PID 075",
+      "active": true
+    },
+    {
+      "pid": "309",
+      "label": "PID 309",
+      "active": true
+    },
+    {
+      "pid": "310",
+      "label": "PID 310",
+      "active": true
+    },
+    {
+      "pid": "540",
+      "label": "PID 540",
+      "active": true
+    }
+  ],
+  "dryRooms": [
+    {
+      "id": "DRY1",
+      "label": "Dry Area 1",
+      "active": true
+    },
+    {
+      "id": "DRY2",
+      "label": "Dry Area 2",
+      "active": true
+    }
+  ],
+  "trimMachines": [
+    {
+      "id": "MOB-1",
+      "label": "Mobius M108S #1",
+      "kind": "trimmer",
+      "active": true
+    },
+    {
+      "id": "MOB-2",
+      "label": "Mobius M108S #2",
+      "kind": "trimmer",
+      "active": true
+    },
+    {
+      "id": "SORT-1",
+      "label": "Sorter #1",
+      "kind": "sorter",
+      "active": true
+    }
+  ],
+  "freezers": [
+    {
+      "id": "FRZ-1",
+      "label": "Freezer 1",
+      "active": true
+    },
+    {
+      "id": "FRZ-2",
+      "label": "Freezer 2",
+      "active": true
+    }
+  ],
+  "brands": [
+    {
+      "id": "soma_rosa",
+      "label": "Soma Rosa",
+      "active": true
+    },
+    {
+      "id": "howie_roll",
+      "label": "Howie Roll",
+      "active": true
+    },
+    {
+      "id": "bulk",
+      "label": "Bulk / White Label",
+      "active": true
+    }
+  ],
+  "licenses": [
+    {
+      "id": "airway",
+      "label": "Airway (2CW Distribution)",
+      "kind": "distribution"
+    },
+    {
+      "id": "kss",
+      "label": "KSS (3rd-party Distributor)",
+      "kind": "3pl"
+    }
+  ],
+  "employees": [],
+  "strains": [
+    {
+      "name": "Applescotti",
+      "sources": [
+        "CUS"
+      ],
+      "aliases": [
+        "Applescotti [CUS]"
+      ],
+      "active": true
+    },
+    {
+      "name": "Banana Punch",
+      "sources": [
+        "HVN"
+      ],
+      "aliases": [
+        "Banana Punch [HVN]"
+      ],
+      "active": true
+    },
+    {
+      "name": "Black Maple Zuava",
+      "sources": [
+        "RC"
+      ],
+      "aliases": [
+        "Black Maple Zuava [RC]"
+      ],
+      "active": true
+    },
+    {
+      "name": "Blue Nerdz",
+      "sources": [],
+      "aliases": [
+        "Blue Nerds"
+      ],
+      "active": true
+    },
+    {
+      "name": "Blue Taffeze",
+      "sources": [
+        "CUS"
+      ],
+      "aliases": [
+        "Blue Taffeze [CUS]"
+      ],
+      "active": true
+    },
+    {
+      "name": "Blue Z",
+      "sources": [],
+      "aliases": [],
+      "active": true
+    },
+    {
+      "name": "Galactic Warheadz",
+      "sources": [
+        "PH"
+      ],
+      "aliases": [
+        "Galactic Warheadz [PH]"
+      ],
+      "active": true
+    },
+    {
+      "name": "Gelato 33",
+      "sources": [
+        "RC"
+      ],
+      "aliases": [
+        "Gelato 33 [RC]"
+      ],
+      "active": true
+    },
+    {
+      "name": "Gelato Pop",
+      "sources": [],
+      "aliases": [],
+      "active": true
+    },
+    {
+      "name": "Glitter Bomb",
+      "sources": [
+        "PH"
+      ],
+      "aliases": [
+        "Glitter Bomb [PH]"
+      ],
+      "active": true
+    },
+    {
+      "name": "Grape Gas",
+      "sources": [],
+      "aliases": [
+        "Grape Gas - AF"
+      ],
+      "active": true
+    },
+    {
+      "name": "Guava Tart",
+      "sources": [],
+      "aliases": [],
+      "active": true
+    },
+    {
+      "name": "Hashburger",
+      "sources": [],
+      "aliases": [],
+      "active": true
+    },
+    {
+      "name": "High Society 132",
+      "sources": [
+        "PH"
+      ],
+      "aliases": [
+        "High Society 132 [PH]"
+      ],
+      "active": true
+    },
+    {
+      "name": "Ice Cream Pie",
+      "sources": [],
+      "aliases": [
+        "Ice cream pie"
+      ],
+      "active": true
+    },
+    {
+      "name": "It'z Pluto",
+      "sources": [],
+      "aliases": [
+        "It'z Pluto - AF",
+        "Itz Pluto"
+      ],
+      "active": true
+    },
+    {
+      "name": "Kept Secret",
+      "sources": [],
+      "aliases": [],
+      "active": true
+    },
+    {
+      "name": "Lemon Cherry Gelato",
+      "sources": [
+        "RC"
+      ],
+      "aliases": [
+        "Lemon Cherry Gelato - AF",
+        "Lemon Cherry Gelato 2",
+        "Lemon Cherry Gelato [RC]"
+      ],
+      "active": true
+    },
+    {
+      "name": "Mad Fruit",
+      "sources": [],
+      "aliases": [],
+      "active": true
+    },
+    {
+      "name": "Mule Fuel",
+      "sources": [
+        "HVN"
+      ],
+      "aliases": [
+        "Mule Fuel [HVN]"
+      ],
+      "active": true
+    },
+    {
+      "name": "Nimbus Snacks",
+      "sources": [
+        "CUS"
+      ],
+      "aliases": [
+        "Nimbus Snacks [CUS]"
+      ],
+      "active": true
+    },
+    {
+      "name": "Pack Mule #3",
+      "sources": [
+        "HVN"
+      ],
+      "aliases": [
+        "Pack Mule #3 [HVN]"
+      ],
+      "active": true
+    },
+    {
+      "name": "Pack Mule #4",
+      "sources": [
+        "HVN"
+      ],
+      "aliases": [
+        "Pack Mule #4 [HVN]"
+      ],
+      "active": true
+    },
+    {
+      "name": "Papaya",
+      "sources": [],
+      "aliases": [],
+      "active": true
+    },
+    {
+      "name": "Peanut Butter Breath",
+      "sources": [],
+      "aliases": [],
+      "active": true
+    },
+    {
+      "name": "Permanent Marker",
+      "sources": [
+        "HVN"
+      ],
+      "aliases": [
+        "Permanent Marker [HVN]"
+      ],
+      "active": true
+    },
+    {
+      "name": "Pink Certs",
+      "sources": [
+        "HVN"
+      ],
+      "aliases": [
+        "Pink Certs [HVN]"
+      ],
+      "active": true
+    },
+    {
+      "name": "Pinyatti",
+      "sources": [
+        "CUS"
+      ],
+      "aliases": [
+        "Pinyatti [CUS]"
+      ],
+      "active": true
+    },
+    {
+      "name": "Ron Burgandy",
+      "sources": [
+        "CUS"
+      ],
+      "aliases": [
+        "Ron Burgandy [CUS]"
+      ],
+      "active": true
+    },
+    {
+      "name": "Runtz",
+      "sources": [],
+      "aliases": [],
+      "active": true
+    },
+    {
+      "name": "Super Buff Cherry",
+      "sources": [
+        "HVN"
+      ],
+      "aliases": [
+        "Super Bluff Cherry",
+        "Super Buff Cherry [HVN]"
+      ],
+      "active": true
+    },
+    {
+      "name": "Super Runtz",
+      "sources": [
+        "PH"
+      ],
+      "aliases": [
+        "Super Runtz [PH]"
+      ],
+      "active": true
+    },
+    {
+      "name": "Tahiti Twist",
+      "sources": [],
+      "aliases": [],
+      "active": true
+    },
+    {
+      "name": "Total Eclipse",
+      "sources": [
+        "PH"
+      ],
+      "aliases": [
+        "Total Eclipse [PH]"
+      ],
+      "active": true
+    },
+    {
+      "name": "Wedding Cake",
+      "sources": [],
+      "aliases": [],
+      "active": true
+    },
+    {
+      "name": "White Runtz",
+      "sources": [],
+      "aliases": [
+        "White Runtz - AF"
+      ],
+      "active": true
+    },
+    {
+      "name": "Wimbledon",
+      "sources": [],
+      "aliases": [],
+      "active": true
+    },
+    {
+      "name": "ZClair",
+      "sources": [
+        "PH"
+      ],
+      "aliases": [
+        "ZClair [PH]"
+      ],
+      "active": true
+    },
+    {
+      "name": "Zoap",
+      "sources": [
+        "PH"
+      ],
+      "aliases": [
+        "Zoap - AF",
+        "Zoap [PH]"
+      ],
+      "active": true
+    }
+  ]
+}
