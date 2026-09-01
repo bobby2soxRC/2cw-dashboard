@@ -245,48 +245,65 @@ const PROD_STATIONS = [
     flow: { lossKind: 'origin', outputs: [{ field: 'wetWeightLb', category: 'wet_whole_plant' }] }
   },
 
-  // ── DRYING: INTAKE-WET ────────────────────────────────────────────────────
+  // ── DRYING: FRESH PLANT INTAKE ────────────────────────────────────────────
+  // Matches the real paper log: one truck, one license, unloaded a few
+  // containers at a time — each weigh-in gets its own line with its own UID,
+  // strain, and format, since a truck can carry more than one of each.
   {
     key: 'intake_wet',
     dept: { en: 'Drying', es: 'Secado' },
-    title: { en: 'Intake — Wet', es: 'Recepción — húmedo' },
-    desc: { en: 'Receive a load off the truck: verify the weight against the farm, then hang.',
-            es: 'Reciba una carga del camión: verifique el peso contra el rancho y luego cuelgue.' },
+    title: { en: 'Fresh Plant Intake', es: 'Recepción de Planta Fresca' },
+    desc: { en: 'Log a truck as it comes off the farm — one line per group of containers weighed as it’s unloaded.',
+            es: 'Registre un camión que llega del rancho — una línea por cada grupo de contenedores pesado al descargar.' },
     color: 'blue',
-    headline: 'netWetLb',
+    headline: 'totalWetLb',
     fields: [
       F.date(),
-      F.sourceUid(),
-      { k: 'harvestBatchName', t: 'text', prefill: 'lookup',
-        l: { en: 'Harvest / Batch Name', es: 'Nombre de cosecha / lote' } },
-      F.strain(), F.site(),
-      { k: 'farmReportedLb', t: 'number', min: 0, step: 0.01, prefill: 'lookup',
-        l: { en: 'Farm-Reported Weight (lbs)', es: 'Peso reportado por el rancho (lbs)' },
-        hint: { en: 'Fills in automatically from the harvest log when the UID matches.',
-                es: 'Se completa automáticamente desde el registro de cosecha cuando coincide el UID.' } },
-      { k: 'scaleWeightLb', t: 'number', req: true, min: 0, step: 0.01,
-        l: { en: 'Gross Weight on Scale (lbs)', es: 'Peso bruto en báscula (lbs)' } },
-      { k: 'tareLb', t: 'number', min: 0, step: 0.01,
-        l: { en: 'Tare — Bins / Boxes (lbs)', es: 'Tara — bins / cajas (lbs)' } },
-      { k: 'netWetLb', t: 'calc', calc: (v) => num(v.scaleWeightLb) - num(v.tareLb),
-        l: { en: 'Net Wet Weight (lbs)', es: 'Peso húmedo neto (lbs)' } },
-      { k: 'intakeVarianceLb', t: 'calc', signed: true,
-        calc: (v) => (num(v.farmReportedLb) > 0 ? (num(v.scaleWeightLb) - num(v.tareLb)) - num(v.farmReportedLb) : null),
-        l: { en: 'Variance vs Farm (lbs)', es: 'Variación vs. rancho (lbs)' } },
-      { k: 'intakeVariancePct', t: 'calc', fmt: 'pct',
-        calc: (v) => (num(v.farmReportedLb) > 0
-          ? ((num(v.scaleWeightLb) - num(v.tareLb)) - num(v.farmReportedLb)) / num(v.farmReportedLb) : null),
-        l: { en: 'Variance vs Farm %', es: '% de variación vs. rancho' },
-        flag: (x) => Math.abs(x) > 0.02 },
-      { k: 'hangCount', t: 'number', min: 0, step: 1, dp: 0,
-        l: { en: 'Trellises / Cages Hung', es: 'Mallas / jaulas colgadas' } },
-      { k: 'dryRoom', t: 'select', ref: 'dryRooms', allowOther: true, req: true,
-        l: { en: 'Dry Room / Area', es: 'Sala / área de secado' } },
-      F.teamLead(), F.crewSize(), F.laborHours(), F.crew(), F.notes(), F.photo()
+      { k: 'pid', t: 'select', ref: 'properties', allowOther: true, req: true,
+        l: { en: 'License / PID', es: 'Licencia / PID' },
+        hint: { en: 'Which license this truck is coming from.', es: 'De qué licencia proviene este camión.' } },
+      { k: 'manifestPhoto', t: 'photo',
+        l: { en: 'Metrc Manifest Photo', es: 'Foto del manifiesto de Metrc' },
+        hint: { en: 'Photo of the manifest that came with this truck.',
+                es: 'Foto del manifiesto que llegó con este camión.' } },
+      { k: 'lines', t: 'lineitems', req: true,
+        l: { en: 'Unloaded Containers', es: 'Contenedores descargados' },
+        hint: { en: 'One row per weigh-in as the truck is unloaded — e.g. 3 bins weighed, then another 3 or 4.',
+                es: 'Una fila por cada pesaje al descargar el camión — p. ej. 3 bins pesados, luego otros 3 o 4.' },
+        cols: [
+          { k: 'containerType', t: 'select', def: 'bins',
+            l: { en: 'Container', es: 'Contenedor' },
+            opts: [
+              { v: 'bins', l: { en: 'Bins (Venes)', es: 'Venes' } },
+              { v: 'totes', l: { en: 'Totes', es: 'Totes' } },
+              { v: 'crates', l: { en: 'Crates', es: 'Cajas de campo' } },
+              { v: 'boxes', l: { en: 'Boxes', es: 'Cajas' } }
+            ] },
+          { k: 'containerCount', t: 'number', l: { en: '#', es: '#' }, min: 0, step: 1, inputmode: 'numeric' },
+          { k: 'weight', t: 'number', l: { en: 'Weight (lbs)', es: 'Peso (lbs)' }, min: 0, step: 0.01 },
+          { k: 'sourceUid', t: 'text', l: { en: 'UID', es: 'UID' }, inputmode: 'latin' },
+          { k: 'strain', t: 'text', l: { en: 'Strain', es: 'Variedad' } },
+          { k: 'intakeFormat', t: 'select', def: 'wet_on_stem',
+            l: { en: 'Format', es: 'Formato' },
+            opts: [
+              { v: 'wet_on_stem', l: { en: 'Wet on Stem', es: 'Húmedo en tallo' } },
+              { v: 'fresh_frozen', l: { en: 'Fresh Frozen', es: 'Fresco congelado' } }
+            ] }
+        ],
+        totalCol: 'weight' },
+      { k: 'totalWetLb', t: 'calc', calc: (v) => (v.lines || []).reduce((a, r) => a + num(r.weight), 0),
+        l: { en: 'Total Wet Weight (lbs)', es: 'Peso húmedo total (lbs)' } },
+      { k: 'binCount', t: 'calc', dp: 0, calc: (v) => (v.lines || []).reduce((a, r) => a + num(r.containerCount), 0),
+        l: { en: 'Total Containers', es: 'Contenedores totales' } },
+      F.teamLead(), F.crewSize(), F.laborHours(), F.crew(), F.notes()
     ],
-    flow: { lossKind: 'receiving',
-            input: { field: 'farmReportedLb', category: 'wet_whole_plant' },
-            outputs: [{ field: 'netWetLb', category: 'dry_whole_plant', pending: true }] }
+    flow: {
+      // buildLots/findUpstream read this to walk into `lines` instead of a
+      // single top-level UID — a truck can carry more than one batch, so its
+      // intake record has to split across lots/prefill by line, not as one.
+      perLine: { arrayField: 'lines', uidCol: 'sourceUid', strainCol: 'strain', weightCol: 'weight', category: 'wet_whole_plant' },
+      outputs: [{ field: 'totalWetLb', category: 'wet_whole_plant', pending: true }]
+    }
   },
 
   // ── DRYING: POST-DRY CHECK ────────────────────────────────────────────────
@@ -659,8 +676,10 @@ const PROD_STATIONS = [
 // Which stage a station pulls its `prefill: 'lookup'` values from, and which
 // field on that stage supplies each prefilled key.
 const PREFILL_MAP = {
-  intake_wet:  { from: 'harvest',      map: { harvestBatchName: 'harvestBatchName', strain: 'strain', site: 'site', farmReportedLb: 'wetWeightLb' } },
-  dry_check:   { from: 'intake_wet',   map: { strain: 'strain', dryRoom: 'dryRoom', wetIntakeLb: 'netWetLb' } },
+  // Fresh Plant Intake has no single top-level UID to type in (a truck can
+  // carry several), so it no longer offers an incoming prefill from harvest —
+  // the operator types the strain/UID per line off the manifest instead.
+  dry_check:   { from: 'intake_wet',   map: { strain: 'strain', wetIntakeLb: 'weight' } },
   buck:        { from: 'dry_check',    map: { strain: 'strain', startingDryLb: 'dryWeightLb' } },
   machine_trim:{ from: 'buck',         map: { strain: 'strain', inputBuckedLb: 'buckedFlowerLb' } },
   hand_trim:   { from: 'machine_trim', map: { strain: 'strain', startingBuckedLb: 'flowerALb' } }

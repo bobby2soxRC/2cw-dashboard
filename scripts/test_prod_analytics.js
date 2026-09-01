@@ -33,6 +33,15 @@ check('lot sits at hand_trim', lcg.currentStage, 'hand_trim');
 check('days since last touch', lcg.daysInStage, 1);
 check('dry-check output carried through', lcg.stages.dry_check.outputs.dry_whole_plant, 102);
 
+// The truck in Fresh Plant Intake carries two batches on one manifest — its
+// two Lemon Cherry Gelato lines should land on the LCG lot (310 = 155+155),
+// and the Zoap line on a lot of its own, not lumped into either.
+check('the mixed truck\'s two LCG lines both land on the LCG lot', lcg.stages.intake_wet.outputLb, 310);
+check('the mixed truck\'s two LCG lines count as two runs', lcg.stages.intake_wet.runs, 2);
+const zoapLot = lots.find((l) => l.strain === 'Zoap');
+check('the same truck\'s Zoap line becomes its own lot, not merged into LCG', !!zoapLot, true);
+check('the Zoap lot only touched intake — no downstream stages for it in this fixture', Object.keys(zoapLot.stages), ['intake_wet']);
+
 console.log('\nstage yields');
 const ys = A.stageYields(stages);
 const buck = ys.find((y) => y.key === 'buck');
@@ -97,14 +106,17 @@ check('transferred request came up 1 lb short', reqs.find((r) => r.id === 'r1').
 
 console.log('\nexceptions');
 const exc = A.exceptions(stages, ASOF);
-check('the 5%-light intake is flagged', exc.filter((e) => e.kind === 'intake_variance').length, 1);
 check('the stale request is flagged', exc.filter((e) => e.kind === 'stale_request').length, 1);
 check('balanced stages raise nothing', exc.filter((e) => e.kind === 'unbalanced' && e.stage === 'buck').length, 0);
 // Drying is meant to shed two thirds of its weight and a preroll run consumes
 // its input outright; flagging either would bury the rows that matter.
 check('moisture loss is not an exception', exc.filter((e) => e.stage === 'dry_check' && e.kind === 'unbalanced').length, 0);
 check('a manufacturing run is not an exception', exc.filter((e) => e.stage === 'mfg_output').length, 0);
-check('total exceptions', exc.length, 2);
+// Fresh Plant Intake has no single farm-reported number to check the scale
+// against anymore (a truck can carry more than one batch) — the old
+// intake_variance check is gone with it; see the comment in exceptions().
+check('no intake_variance exceptions exist anymore', exc.filter((e) => e.kind === 'intake_variance').length, 0);
+check('total exceptions', exc.length, 1);
 
 console.log(failures ? `\n${failures} test(s) failed\n` : '\nAll tests passed\n');
 process.exit(failures ? 1 : 0);

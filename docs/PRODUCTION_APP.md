@@ -31,7 +31,7 @@ the existing Operations Hub — same login, same Netlify deploy.
 
 **Cultivation** *(placeholder — see below)* — Plant Batch Log · IPM / Feed Log · Pre-Harvest Inspection
 **Harvest** — Harvest · Fresh Frozen
-**Drying** — Intake-Wet · Post-Dry Check
+**Drying** — Fresh Plant Intake · Post-Dry Check
 **Processing** — Bucking · Machine Trim · Hand Trim / Hand Touch
 **Manufacturing** — Biomass Request · Manufacturing Run
 
@@ -215,10 +215,22 @@ one line in that station's `fields` array — the form, the dashboard, and the
 stored record all pick it up. Field types: `text`, `number`, `date`, `select`
 (with `ref` for a reference list, `opts` for inline options, `allowOther`),
 `textarea`, `uid`, `photo`, `calc` (a function of the other values), and
-`lineitems` (the repeating grid the weighing worksheet uses). `headline`
+`lineitems` (the repeating grid the weighing worksheet and Fresh Plant
+Intake's container table both use — a `lineitems` column can itself be
+`number`/`text` or `select` with inline `opts` and a `def` default). `headline`
 names the one field worth showing on a card or the live board without
 opening the form — the running total in the form's sticky footer follows it
 too.
+
+**A record that represents more than one batch** (Fresh Plant Intake: one
+truck, several UIDs) declares `flow.perLine: { arrayField, uidCol, strainCol,
+weightCol, category }` alongside its normal `flow.outputs`. `outputs` still
+feeds the dashboard's stage-total and biomass numbers off one flat top-level
+field on the record (`totalWetLb`, a `calc` summing the lines); `perLine` is
+what `findUpstream` (live-form prefill) and `buildLots` (the Pipeline tab)
+read to walk into the individual lines instead, so a UID typed into a
+downstream form — or a lot on the dashboard — resolves to its own line's
+weight and strain, not the whole truck's total.
 
 To make a new station appear, add an entry to `PROD_STATIONS` and add its key
 to `KNOWN_STATIONS` in both `netlify/functions/submit-production.js` and

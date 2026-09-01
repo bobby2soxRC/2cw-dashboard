@@ -16,12 +16,17 @@ const stages = {
     { id: 'h1', date: '2026-08-05', sourceUid: DRY_UID, strain: 'Lemon Cherry Gelato', site: 'BG',
       harvestBatchName: 'BG-0309-Lemon Cherry Gelato-216-T4', wetWeightLb: 310, plantCount: 40 }
   ],
+  // A single truck (Fresh Plant Intake) carrying more than one batch — the
+  // real paper log unloads a few bins at a time, weighing each group, and a
+  // truck can be mixed (two strains/UIDs on one manifest).
   intake_wet: [
-    { id: 'i1', date: '2026-08-05', sourceUid: DRY_UID, strain: 'Lemon Cherry Gelato', site: 'BG',
-      farmReportedLb: 310, scaleWeightLb: 320, tareLb: 10, netWetLb: 310, dryRoom: 'DRY1' },
-    // A load that came in 5% light — should be flagged.
-    { id: 'i2', date: '2026-08-06', sourceUid: '1A9999', strain: 'Zoap', site: 'AF',
-      farmReportedLb: 100, scaleWeightLb: 97, tareLb: 2, netWetLb: 95, dryRoom: 'DRY1' }
+    { id: 'i1', date: '2026-08-05', pid: '540', site: 'BG',
+      lines: [
+        { containerType: 'bins', containerCount: 3, weight: 155, sourceUid: DRY_UID, strain: 'Lemon Cherry Gelato', intakeFormat: 'wet_on_stem' },
+        { containerType: 'bins', containerCount: 3, weight: 155, sourceUid: DRY_UID, strain: 'Lemon Cherry Gelato', intakeFormat: 'wet_on_stem' },
+        { containerType: 'totes', containerCount: 2, weight: 92, sourceUid: '1A9999', strain: 'Zoap', intakeFormat: 'wet_on_stem' }
+      ],
+      totalWetLb: 402, binCount: 8 }
   ],
   dry_check: [
     { id: 'd1', date: '2026-08-17', sourceUid: DRY_UID, strain: 'Lemon Cherry Gelato',

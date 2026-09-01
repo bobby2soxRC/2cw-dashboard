@@ -105,6 +105,25 @@ function uidMatches(candidate, query) {
 // every page's scripts have finished loading.
 async function findUpstream(stageKey, uid) {
   const rows = typeof loadSubmitted === 'function' ? await loadSubmitted(stageKey) : await loadStage(stageKey);
+
+  // A station whose flow declares `perLine` (Fresh Plant Intake, say) can
+  // hold several batches under one record — a truck's worth of lines, each
+  // with its own UID. Match inside those lines and return the line merged
+  // over its header record, so a downstream form sees one flat object
+  // whichever kind of upstream record it came from.
+  const station = typeof STATION_BY_KEY !== 'undefined' ? STATION_BY_KEY[stageKey] : null;
+  const perLine = station && station.flow && station.flow.perLine;
+  if (perLine) {
+    const candidates = [];
+    rows.forEach((r) => {
+      (r[perLine.arrayField] || []).forEach((line) => {
+        if (uidMatches(line[perLine.uidCol], uid)) candidates.push({ ...r, ...line });
+      });
+    });
+    if (!candidates.length) return null;
+    return candidates.sort((a, b) => String(b.submittedAt || '').localeCompare(String(a.submittedAt || '')))[0];
+  }
+
   const hits = rows.filter((r) =>
     uidMatches(r.sourceUid, uid) || uidMatches(r.newBuckedUid, uid) ||
     uidMatches(r.newBigLeafUid, uid) || uidMatches(r.harvestBatchName, uid));

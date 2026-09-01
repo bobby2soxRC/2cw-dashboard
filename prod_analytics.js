@@ -68,42 +68,65 @@ function buildLots(stages, asOf) {
   const lots = new Map();
   const roots = new Set();
 
+  // A station can declare `flow.perLine` (Fresh Plant Intake: one truck, many
+  // batches) — walk its records as a set of {sourceUid, strain, weight} rows
+  // pulled out of the line-items array instead of one row per record.
+  const contributionsFor = (station, r) => {
+    const perLine = station.flow && station.flow.perLine;
+    if (!perLine) return [{ sourceUid: r.sourceUid, strain: r.strain, harvestBatchName: r.harvestBatchName, record: r }];
+    return (r[perLine.arrayField] || []).map((line) => ({
+      sourceUid: line[perLine.uidCol], strain: line[perLine.strainCol] || r.strain,
+      harvestBatchName: r.harvestBatchName, record: r, line, category: perLine.category
+    }));
+  };
+
   PIPELINE_ORDER.forEach((key) => {
-    (stages[key] || []).forEach((r) => roots.add(rootUid(alias, r.sourceUid)));
+    const station = STATION_BY_KEY[key];
+    (stages[key] || []).forEach((r) => {
+      contributionsFor(station, r).forEach((c) => roots.add(rootUid(alias, c.sourceUid)));
+    });
   });
 
   PIPELINE_ORDER.forEach((key) => {
     const station = STATION_BY_KEY[key];
     (stages[key] || []).forEach((r) => {
-      const id = resolveKey(roots, rootUid(alias, r.sourceUid)) || `batch:${r.harvestBatchName || r.id}`;
-      if (!lots.has(id)) {
-        lots.set(id, { id, uid: id, strain: '', site: '', harvestBatchName: '', stages: {}, currentStage: null, lastDate: '' });
-      }
-      const lot = lots.get(id);
-      if (r.strain && !lot.strain) lot.strain = r.strain;
-      if (r.site && !lot.site) lot.site = r.site;
-      if (r.harvestBatchName && !lot.harvestBatchName) lot.harvestBatchName = r.harvestBatchName;
+      contributionsFor(station, r).forEach((c, idx) => {
+        const id = resolveKey(roots, rootUid(alias, c.sourceUid)) || `batch:${c.harvestBatchName || r.id + '-' + idx}`;
+        if (!lots.has(id)) {
+          lots.set(id, { id, uid: id, strain: '', site: '', harvestBatchName: '', stages: {}, currentStage: null, lastDate: '' });
+        }
+        const lot = lots.get(id);
+        if (c.strain && !lot.strain) lot.strain = c.strain;
+        if (r.site && !lot.site) lot.site = r.site;
+        if (c.harvestBatchName && !lot.harvestBatchName) lot.harvestBatchName = c.harvestBatchName;
 
-      const outputs = {};
-      let outTotal = 0;
-      ((station.flow && station.flow.outputs) || []).forEach((o) => {
-        const v = num(r[o.field]);
-        outputs[o.category] = (outputs[o.category] || 0) + v;
-        outTotal += v;
+        const outputs = {};
+        let outTotal = 0;
+        let inLb = null;
+        if (c.line) {
+          const v = num(c.line[station.flow.perLine.weightCol]);
+          outputs[c.category] = v; outTotal = v;
+        } else {
+          ((station.flow && station.flow.outputs) || []).forEach((o) => {
+            const v = num(r[o.field]);
+            outputs[o.category] = (outputs[o.category] || 0) + v;
+            outTotal += v;
+          });
+          inLb = station.flow && station.flow.input ? num(r[station.flow.input.field]) : null;
+        }
+
+        // A lot can be bucked or trimmed over several days; roll the runs up.
+        const prev = lot.stages[key];
+        lot.stages[key] = {
+          date: dayOf(r),
+          runs: (prev ? prev.runs : 0) + 1,
+          inputLb: (prev ? prev.inputLb : 0) + (inLb || 0),
+          outputLb: (prev ? prev.outputLb : 0) + outTotal,
+          outputs: mergeSums(prev ? prev.outputs : {}, outputs),
+          result: r.result || null
+        };
+        if (dayOf(r) >= lot.lastDate) { lot.lastDate = dayOf(r); }
       });
-      const inLb = station.flow && station.flow.input ? num(r[station.flow.input.field]) : null;
-
-      // A lot can be bucked or trimmed over several days; roll the runs up.
-      const prev = lot.stages[key];
-      lot.stages[key] = {
-        date: dayOf(r),
-        runs: (prev ? prev.runs : 0) + 1,
-        inputLb: (prev ? prev.inputLb : 0) + (inLb || 0),
-        outputLb: (prev ? prev.outputLb : 0) + outTotal,
-        outputs: mergeSums(prev ? prev.outputs : {}, outputs),
-        result: r.result || null
-      };
-      if (dayOf(r) >= lot.lastDate) { lot.lastDate = dayOf(r); }
     });
   });
 
@@ -364,15 +387,11 @@ function exceptions(stages, asOf) {
   const out = [];
   const today = asOf || new Date().toISOString().slice(0, 10);
 
-  (stages.intake_wet || []).forEach((r) => {
-    const net = num(r.scaleWeightLb) - num(r.tareLb);
-    const farm = num(r.farmReportedLb);
-    if (farm > 0 && Math.abs(net - farm) / farm > 0.02) {
-      out.push({ kind: 'intake_variance', stage: 'intake_wet', date: dayOf(r), uid: r.sourceUid, strain: r.strain,
-                 detail: { en: `Intake weight is ${((net - farm) / farm * 100).toFixed(1)}% off the farm's number`,
-                           es: `El peso de recepción difiere ${((net - farm) / farm * 100).toFixed(1)}% del número del rancho` } });
-    }
-  });
+  // Fresh Plant Intake no longer carries a single farm-reported number to
+  // check the scale against — a truck can hold several batches now. A
+  // per-line reconciliation against Harvest is a reasonable follow-up once
+  // that matching exists in this layer (findUpstream already does it for the
+  // live form's prefill), not invented here as a guess.
 
   PROD_STATIONS.forEach((station) => {
     if (!station.flow || !station.flow.input || !station.flow.outputs) return;

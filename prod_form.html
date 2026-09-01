@@ -262,19 +262,35 @@
         const tr = document.createElement('tr');
         f.cols.forEach((c) => {
           const td = document.createElement('td');
-          const inp = document.createElement('input');
-          inp.type = c.t === 'number' ? 'number' : 'text';
-          if (c.t === 'number') { inp.inputMode = 'decimal'; inp.step = c.step || 'any'; if (c.min !== undefined) inp.min = c.min; }
-          if (c.inputmode) inp.inputMode = c.inputmode;
-          if (prefill && prefill[c.k] !== undefined && prefill[c.k] !== null) {
-            inp.value = prefill[c.k];
-            row[c.k] = prefill[c.k];
+          let inp;
+          if (c.t === 'select') {
+            inp = document.createElement('select');
+            (c.opts || []).forEach((o) => {
+              const opt = document.createElement('option');
+              opt.value = o.v; opt.textContent = t(o.l);
+              inp.appendChild(opt);
+            });
+          } else {
+            inp = document.createElement('input');
+            inp.type = c.t === 'number' ? 'number' : 'text';
+            if (c.t === 'number') { inp.inputMode = 'decimal'; inp.step = c.step || 'any'; if (c.min !== undefined) inp.min = c.min; }
+            if (c.inputmode) inp.inputMode = c.inputmode;
           }
-          inp.addEventListener('input', () => {
+          // A prefilled value (resuming a draft) wins; otherwise a column can
+          // declare a default so every fresh row starts sensible (e.g. the
+          // container type defaulting to "Bins" instead of blank).
+          const initial = (prefill && prefill[c.k] !== undefined && prefill[c.k] !== null) ? prefill[c.k] : c.def;
+          if (initial !== undefined && initial !== null) {
+            inp.value = initial;
+            row[c.k] = c.t === 'number' ? Number(initial) : initial;
+          }
+          const onCellChange = () => {
             row[c.k] = c.t === 'number' ? (inp.value === '' ? null : Number(inp.value)) : inp.value;
             recompute();
             markDirty();
-          });
+          };
+          inp.addEventListener('input', onCellChange);
+          inp.addEventListener('change', onCellChange);
           td.appendChild(inp); tr.appendChild(td);
         });
         const tdDel = document.createElement('td');
@@ -288,7 +304,7 @@
         };
         tdDel.appendChild(del); tr.appendChild(tdDel);
         tbody.appendChild(tr);
-        if (!prefill) tr.querySelector('input').focus();
+        if (!prefill) { const first = tr.querySelector('input, select'); if (first) first.focus(); }
       };
       lineitemAdders[f.k] = addRow;
       wrap.querySelector(`#add_${f.k}`).onclick = () => addRow();
