@@ -1,10 +1,12 @@
 // 2CW Operations Hub - service worker
 // Cache-first app shell; live data always goes to the network.
-const CACHE_VERSION = 'v12';
+const CACHE_VERSION = 'v13';
 const CACHE_NAME = '2cw-shell-' + CACHE_VERSION;
 
 const APP_SHELL = [
   '/index.html',
+  '/hub_config.js',
+  '/admin.html',
   '/2cw_portal.html',
   '/commission.html',
   '/executive.html',
