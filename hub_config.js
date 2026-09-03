@@ -126,6 +126,14 @@ const CARD_DEFS = [
     desc: 'Logos, photography, and brand guidelines for 2CW and partner brands — shared Drive folder.',
     href: 'https://drive.google.com/drive/folders/1pb3zbrnUVXp1tBou8yIFSBFGON32df4T',
     external: true
+  },
+  {
+    key: 'staff_hours',
+    color: 'blue',
+    label: 'Operations',
+    title: 'Staff Hours',
+    desc: 'Live clock-in status, daily/weekly hours, and schedule adherence — synced hourly from Connecteam.',
+    href: '/staff_hours.html'
   }
   // Commission card is handled separately (see commCardDef in index.html)
 ];
@@ -142,7 +150,8 @@ const CARD_ORDER_OVERRIDES = {
 // spaces). Card keys not listed here are looked up as-is.
 const CARD_SHEET_COLS = {
   menu_health: 'menu health',
-  brand_assets: 'brand assets'
+  brand_assets: 'brand assets',
+  staff_hours: 'staff hours'
 };
 // production, production_dashboard, and production_today are not sheet
 // columns — they're derived from 'production edit stations' / 'production

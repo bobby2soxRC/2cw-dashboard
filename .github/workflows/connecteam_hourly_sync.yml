@@ -1,0 +1,46 @@
+name: Connecteam Hourly Sync
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # Every hour, on the hour (UTC)
+  workflow_dispatch:       # Allows manual trigger from the Actions tab
+
+# Only one sync at a time — queue rather than race, same reasoning as the
+# KSS nightly sync's concurrency group.
+concurrency:
+  group: connecteam-hourly-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run Connecteam sync
+        env:
+          CONNECTEAM_API_KEY: ${{ secrets.CONNECTEAM_API_KEY }}
+        run: python scripts/connecteam_sync.py
+
+      - name: Commit and push data file
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/connecteam_hours.json
+          git diff --staged --quiet || git commit -m "Hourly Connecteam staff hours sync"
+          git pull --rebase origin main
+          git push

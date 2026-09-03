@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>2CW — Staff Hours</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0f1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="2CW Ops">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<style>
+  :root {
+    --bg:#0f1117;--surface:#181c26;--surface2:#1e2333;--border:#2a2f42;
+    --text:#e8eaf0;--muted:#7b8099;--accent:#00c9a7;--accent2:#7c6af7;
+    --red:#f05c5c;--yellow:#f5c518;--green:#4ade80;--blue:#60a5fa;
+    --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono','Fira Code',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5}
+
+  /* NAV */
+  .nav{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;padding-top:env(safe-area-inset-top)}
+  .nav-top{display:flex;align-items:center;height:52px;padding:0 24px;gap:0}
+  .nav-back{display:flex;align-items:center;height:52px;padding:0 16px;font-size:12px;font-weight:500;color:var(--muted);text-decoration:none;border-right:1px solid var(--border);margin-right:16px;transition:color .15s}
+  .nav-back:hover{color:var(--text)}
+  .nav-brand{font-weight:700;font-size:15px;letter-spacing:.04em;color:var(--text);margin-right:auto}
+  .nav-brand span{color:var(--accent)}
+  .nav-right{display:flex;align-items:center;gap:12px;flex-shrink:0}
+  .ref-date{font-size:11px;color:var(--muted)}
+  .refresh-btn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:12px;padding:5px 12px;border-radius:6px;cursor:pointer}
+  .refresh-btn:hover{color:var(--text);border-color:var(--accent)}
+
+  /* PAGE */
+  .page{padding:24px;max-width:1400px;margin:0 auto}
+  .loading{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;padding:40px 24px}
+  .spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .error-msg{background:rgba(240,92,92,.1);border:1px solid rgba(240,92,92,.3);border-radius:8px;padding:14px 18px;color:var(--red);font-size:13px;margin:24px}
+
+  .page-header{margin-bottom:24px}
+  .page-title{font-size:22px;font-weight:700;letter-spacing:-.01em}
+  .page-sub{color:var(--muted);font-size:13px;margin-top:4px}
+  .section-title{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;margin-top:28px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+  .section-title:first-of-type{margin-top:0}
+
+  /* STAFF TABLE */
+  .staff-table{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  table{width:100%;border-collapse:collapse}
+  thead th{text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:10px 16px;border-bottom:1px solid var(--border);background:var(--surface2);cursor:pointer;user-select:none;white-space:nowrap}
+  thead th:hover{color:var(--text)}
+  thead th.sorted::after{content:' ▾';color:var(--accent)}
+  thead th.sorted.asc::after{content:' ▴'}
+  tbody td{padding:10px 16px;border-bottom:1px solid var(--border);font-size:13px}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover td{background:rgba(255,255,255,.02)}
+  .num{font-family:var(--mono);text-align:right}
+  .name-cell{font-weight:600}
+  .empty-note{padding:24px;color:var(--muted);font-size:12px;text-align:center}
+
+  .badge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:4px;margin-left:6px}
+  .badge-live{background:rgba(74,222,128,.15);color:var(--green)}
+  .badge-ot{background:rgba(245,197,24,.15);color:var(--yellow)}
+  .badge-dt{background:rgba(240,92,92,.15);color:var(--red)}
+  .badge-late{background:rgba(245,197,24,.15);color:var(--yellow)}
+  .badge-noshow{background:rgba(240,92,92,.15);color:var(--red)}
+  .badge-ontime{background:rgba(74,222,128,.15);color:var(--green)}
+  .badge-upcoming{background:var(--surface2);color:var(--muted)}
+
+  .live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:7px;box-shadow:0 0 0 2px rgba(74,222,128,.2);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-top">
+    <a href="https://2cwdb.netlify.app" class="nav-back">← Directory</a>
+    <div class="nav-brand">2CW <span>Staff Hours</span></div>
+    <div class="nav-right">
+      <span class="ref-date" id="ref-date">Loading…</span>
+      <button class="refresh-btn" onclick="loadAll()">↻ Refresh</button>
+    </div>
+  </div>
+</nav>
+
+<div id="global-loading" class="loading"><div class="spinner"></div>Loading live data from GitHub…</div>
+<div id="global-error" class="error-msg" style="display:none"></div>
+
+<div id="page-staff" class="page" style="display:none">
+  <div class="page-header">
+    <div class="page-title">Staff Hours</div>
+    <div class="page-sub" id="page-sub">Synced hourly from Connecteam — not second-by-second. Click a column header to sort.</div>
+  </div>
+
+  <div class="section-title">Clocked In Now</div>
+  <div class="staff-table">
+    <table id="tbl-clocked-in">
+      <thead><tr>
+        <th data-sort="name">Name</th>
+        <th data-sort="clockIn">Start Time</th>
+        <th data-sort="elapsedHours" class="num">Hours Worked</th>
+        <th class="num">End Time</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="empty-note" id="clocked-in-empty" style="display:none">No one is currently clocked in.</div>
+  </div>
+
+  <div class="section-title">Today's Hours</div>
+  <div class="staff-table">
+    <table id="tbl-today">
+      <thead><tr>
+        <th data-sort="name">Name</th>
+        <th data-sort="hoursToday" class="num">Hours Today</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="empty-note" id="today-empty" style="display:none">No hours logged yet today.</div>
+  </div>
+
+  <div class="section-title">This Week's Hours</div>
+  <div class="staff-table">
+    <table id="tbl-week">
+      <thead><tr>
+        <th data-sort="name">Name</th>
+        <th data-sort="hoursWeek" class="num">Hours This Week</th>
+        <th>Status</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="empty-note" id="week-empty" style="display:none">No hours logged yet this week.</div>
+  </div>
+
+  <div id="schedule-section" style="display:none">
+    <div class="section-title">Schedule vs Actual — Today</div>
+    <div class="staff-table">
+      <table id="tbl-schedule">
+        <thead><tr>
+          <th data-sort="name">Name</th>
+          <th data-sort="scheduledStart">Scheduled</th>
+          <th data-sort="actualStart">Actual</th>
+          <th>Status</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="empty-note" id="schedule-empty" style="display:none">No shifts scheduled today.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ────────────────────────────────────────────────────────────────
+const DATA_URL = 'https://raw.githubusercontent.com/bobby2soxRC/2cw-dashboard/main/data/connecteam_hours.json';
+
+const $ = id => document.getElementById(id);
+let staffData = null;
+let elapsedTimer = null;
+const sortState = {}; // tableId -> {key, asc}
+
+// ─── FORMATTING ──────────────────────────────────────────────────────────
+function fmtHours(h) {
+  if (h == null) return '—';
+  return h.toFixed(2) + 'h';
+}
+function fmtTime(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d)) return '—';
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+function fmtElapsedLive(clockInIso) {
+  const start = new Date(clockInIso);
+  if (isNaN(start)) return '—';
+  const ms = Date.now() - start.getTime();
+  const totalMin = Math.max(0, Math.floor(ms / 60000));
+  const h = Math.floor(totalMin / 60), m = totalMin % 60;
+  return `${h}h ${String(m).padStart(2, '0')}m`;
+}
+function fmtEndTime(clockInIso) {
+  const start = new Date(clockInIso);
+  if (isNaN(start)) return '—';
+  return fmtTime(new Date(start.getTime() + 8 * 3600000).toISOString());
+}
+function otBadge(hours, isDaily) {
+  if (isDaily && hours > 12) return '<span class="badge badge-dt">Double Time</span>';
+  if (isDaily && hours > 8) return '<span class="badge badge-ot">Overtime</span>';
+  if (!isDaily && hours > 40) return '<span class="badge badge-ot">Overtime</span>';
+  return '';
+}
+function scheduleBadge(status) {
+  const map = {
+    on_time: ['badge-ontime', 'On Time'],
+    late: ['badge-late', 'Late'],
+    no_show: ['badge-noshow', 'No Show'],
+    upcoming: ['badge-upcoming', 'Upcoming'],
+    not_scheduled: ['badge-upcoming', 'Unscheduled'],
+  };
+  const [cls, label] = map[status] || ['badge-upcoming', status || '—'];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+// ─── SORTING ─────────────────────────────────────────────────────────────
+function sortRows(rows, key, asc) {
+  return [...rows].sort((a, b) => {
+    const av = a[key], bv = b[key];
+    let cmp;
+    if (typeof av === 'number' || typeof bv === 'number') cmp = (av || 0) - (bv || 0);
+    else cmp = String(av || '').localeCompare(String(bv || ''));
+    return asc ? cmp : -cmp;
+  });
+}
+function wireSort(tableId, rows, render) {
+  const table = $(tableId);
+  table.querySelectorAll('th[data-sort]').forEach(th => {
+    th.onclick = () => {
+      const key = th.dataset.sort;
+      const state = sortState[tableId] || { key: null, asc: true };
+      const asc = state.key === key ? !state.asc : true;
+      sortState[tableId] = { key, asc };
+      table.querySelectorAll('th').forEach(h => h.classList.remove('sorted', 'asc'));
+      th.classList.add('sorted');
+      if (asc) th.classList.add('asc');
+      render(sortRows(rows, key, asc));
+    };
+  });
+}
+
+// ─── RENDER: CLOCKED IN ──────────────────────────────────────────────────
+function renderClockedIn(rows) {
+  const tbody = $('tbl-clocked-in').querySelector('tbody');
+  $('clocked-in-empty').style.display = rows.length ? 'none' : 'block';
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td class="name-cell"><span class="live-dot"></span>${r.name}</td>
+      <td>${fmtTime(r.clockIn)}</td>
+      <td class="num" data-clock-in="${r.clockIn}">${fmtElapsedLive(r.clockIn)}</td>
+      <td class="num">${fmtEndTime(r.clockIn)}</td>
+    </tr>
+  `).join('');
+}
+
+// ─── RENDER: TODAY ───────────────────────────────────────────────────────
+function renderToday(rows) {
+  const tbody = $('tbl-today').querySelector('tbody');
+  $('today-empty').style.display = rows.length ? 'none' : 'block';
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td class="name-cell">${r.name}</td>
+      <td class="num">${fmtHours(r.hoursToday)} ${otBadge(r.hoursToday, true)}</td>
+    </tr>
+  `).join('');
+}
+
+// ─── RENDER: WEEK ────────────────────────────────────────────────────────
+function renderWeek(rows) {
+  const tbody = $('tbl-week').querySelector('tbody');
+  $('week-empty').style.display = rows.length ? 'none' : 'block';
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td class="name-cell">${r.name}</td>
+      <td class="num">${fmtHours(r.hoursWeek)}</td>
+      <td>${r.overtime ? otBadge(r.hoursWeek, false) : '—'}</td>
+    </tr>
+  `).join('');
+}
+
+// ─── RENDER: SCHEDULE ────────────────────────────────────────────────────
+function renderSchedule(rows) {
+  const tbody = $('tbl-schedule').querySelector('tbody');
+  $('schedule-empty').style.display = rows.length ? 'none' : 'block';
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td class="name-cell">${r.name}</td>
+      <td>${fmtTime(r.scheduledStart)} – ${fmtTime(r.scheduledEnd)}</td>
+      <td>${r.actualStart ? fmtTime(r.actualStart) : '—'}</td>
+      <td>${scheduleBadge(r.status)}</td>
+    </tr>
+  `).join('');
+}
+
+// ─── LIVE ELAPSED-TIME TICK ──────────────────────────────────────────────
+function tickElapsed() {
+  document.querySelectorAll('[data-clock-in]').forEach(td => {
+    td.textContent = fmtElapsedLive(td.dataset.clockIn);
+  });
+}
+
+// ─── LOAD ────────────────────────────────────────────────────────────────
+async function loadAll() {
+  $('global-loading').style.display = 'flex';
+  $('global-error').style.display = 'none';
+  $('page-staff').style.display = 'none';
+  if (elapsedTimer) clearInterval(elapsedTimer);
+
+  try {
+    const res = await fetch(DATA_URL + '?t=' + Date.now());
+    if (!res.ok) throw new Error('connecteam_hours.json: HTTP ' + res.status);
+    staffData = await res.json();
+
+    const asOf = staffData.last_sync ? new Date(staffData.last_sync).toLocaleString() : 'unknown';
+    $('ref-date').textContent = 'As of: ' + asOf;
+    $('page-sub').textContent = `Synced hourly from Connecteam — as of ${asOf}, not second-by-second. Click a column header to sort.`;
+
+    const clockedIn = staffData.clocked_in || [];
+    const today = staffData.today || [];
+    const week = staffData.week || [];
+    const schedule = staffData.schedule_today;
+
+    renderClockedIn(clockedIn);
+    renderToday(today);
+    renderWeek(week);
+    wireSort('tbl-clocked-in', clockedIn, renderClockedIn);
+    wireSort('tbl-today', today, renderToday);
+    wireSort('tbl-week', week, renderWeek);
+
+    if (schedule && schedule.length) {
+      $('schedule-section').style.display = 'block';
+      renderSchedule(schedule);
+      wireSort('tbl-schedule', schedule, renderSchedule);
+    } else {
+      $('schedule-section').style.display = 'none';
+    }
+
+    elapsedTimer = setInterval(tickElapsed, 30000);
+  } catch (err) {
+    console.error('Data load failed:', err);
+    $('global-error').textContent = 'Failed to load live data: ' + err.message;
+    $('global-error').style.display = 'block';
+  }
+  $('global-loading').style.display = 'none';
+  $('page-staff').style.display = 'block';
+}
+
+// ─── PIN GATE ────────────────────────────────────────────────────────────
+// Mirrors menu_health.html's pattern. Add a "staff hours" column (TRUE/FALSE)
+// to the Users directory sheet to control who can reach this page; falls
+// back to allowing any already-authenticated PIN through if the directory
+// can't be reached or the column doesn't exist yet.
+(async function pinGate() {
+  const DIRECTORY_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTvUb2y2US1Qcyf12mngWEcvdCU3Yh9vgIzN_5-6x1psQRCIkG9Y4velrdcBB9zEw/pub?gid=165442896&single=true&output=csv';
+  const storedPin = sessionStorage.getItem('2cw_pin') || '';
+
+  if (!storedPin || storedPin.length !== 4) {
+    window.location.href = '/index.html';
+    return;
+  }
+  try {
+    const res = await fetch(DIRECTORY_URL + '&t=' + Date.now());
+    const text = await res.text();
+    const lines = text.trim().split('\n').map(l => l.trim()).filter(Boolean);
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const pinIdx = headers.indexOf('pin');
+    const shIdx  = headers.indexOf('staff hours');
+
+    if (shIdx === -1) return; // column not set up yet — allow any authenticated PIN through
+
+    const allowedPins = [];
+    for (let i = 1; i < lines.length; i++) {
+      const vals = lines[i].split(',').map(v => v.trim());
+      if (!vals[0]) continue;
+      if ((vals[shIdx] || '').toUpperCase() === 'TRUE') allowedPins.push(vals[pinIdx]);
+    }
+    if (!allowedPins.includes(storedPin)) window.location.href = '/index.html';
+  } catch (e) {
+    // directory unreachable — already authenticated at the hub, let them through
+  }
+})();
+
+loadAll();
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js').catch(err=>console.warn(err));
+  });
+}
+</script>
+</body>
+</html>
