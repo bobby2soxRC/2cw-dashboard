@@ -1559,12 +1559,6 @@ function panelInvAll(include){
 function closePanel(){document.getElementById('modal-overlay').classList.remove('open');}
 function overlayClick(e){if(e.target===document.getElementById('modal-overlay'))closePanel();}
 </script>
-<script>
-if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('/sw.js').catch(err=>console.warn(err));
-  });
-}
-</script>
+<script src="/sw_register.js"></script>
 </body>
 </html>

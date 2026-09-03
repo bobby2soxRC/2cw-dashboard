@@ -752,12 +752,6 @@ async function loadData(){
 }
 loadData();
 </script>
-<script>
-if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('/sw.js').catch(err=>console.warn(err));
-  });
-}
-</script>
+<script src="/sw_register.js"></script>
 </body>
 </html>
