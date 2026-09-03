@@ -29,6 +29,9 @@
   .lang button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:12px;font-weight:600;padding:8px 12px;cursor:pointer;min-height:36px}
   .lang button.on{background:var(--accent);color:#000}
 
+  .queue{display:none;align-items:center;justify-content:space-between;gap:12px;background:rgba(212,168,67,.12);border-bottom:1px solid var(--gold);color:var(--gold);padding:10px 16px;font-family:'DM Mono',monospace;font-size:12px}
+  .queue button{background:var(--gold);color:#000;border:none;border-radius:8px;padding:8px 14px;font-weight:700;font-family:inherit;font-size:12px;cursor:pointer}
+
   .tabs{display:flex;gap:2px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:calc(54px + env(safe-area-inset-top));z-index:19;overflow-x:auto}
   .tab-btn{flex:1;min-width:110px;background:transparent;border:none;border-bottom:3px solid transparent;color:var(--subtext);font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:14px 10px;cursor:pointer;white-space:nowrap}
   .tab-btn.on{color:var(--accent);border-bottom-color:var(--accent)}
@@ -54,6 +57,7 @@
   .qe-status{margin-top:10px;font-family:'DM Mono',monospace;font-size:.82rem;display:none;padding:.6rem .8rem;border-radius:8px}
   .qe-status.ok{display:block;background:rgba(61,184,122,.12);color:var(--green)}
   .qe-status.err{display:block;background:rgba(239,83,80,.12);color:var(--red)}
+  .qe-status.queued{display:block;background:rgba(212,168,67,.12);color:var(--gold)}
 
   /* Roster */
   .roster-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--border);border-radius:16px}
@@ -118,6 +122,8 @@
   <div class="hdr-brand" id="brand">Bucking</div>
   <div class="lang" id="lang"></div>
 </header>
+
+<div class="queue" id="queue"></div>
 
 <nav class="tabs" id="tabs">
   <button class="tab-btn on" data-tab="today" id="tab-btn-today">Today</button>
@@ -258,8 +264,15 @@
     strainContains: { en: 'Strain contains', es: 'Variedad contiene' },
     uidContains: { en: 'UID contains', es: 'UID contiene' },
     noResults: { en: 'No submissions in that range.', es: 'No hay envíos en ese rango.' },
-    finePrint: { en: 'Quick-entry works only while online right now — offline queuing for Bucking is on the list, not built yet.',
-                 es: 'El registro rápido solo funciona con conexión por ahora — la cola sin conexión para Desvarado está pendiente.' },
+    finePrint: { en: 'No signal? Quick-entry, box saves, and closing a batch all still work — they’re saved on this tablet and sent the moment you’re back online.',
+                 es: 'Sin señal? El registro rápido, guardar cajas y cerrar un lote siguen funcionando — se guardan en esta tableta y se envían en cuanto vuelva la conexión.' },
+    queuedEntry: { en: '✓ Saved on this tablet — will send when back online.', es: '✓ Guardado en esta tableta — se enviará cuando vuelva la conexión.' },
+    queuedBox: { en: '✓ Saved on this tablet — will send when back online. The box list above won’t show it until then.',
+                 es: '✓ Guardado en esta tableta — se enviará cuando vuelva la conexión. La lista de cajas no lo mostrará hasta entonces.' },
+    queuedClose: { en: '✓ Close saved on this tablet — will finish once back online.', es: '✓ Cierre guardado en esta tableta — se completará al volver la conexión.' },
+    pendingOne: { en: 'entry waiting to send', es: 'registro pendiente de enviar' },
+    pendingMany: { en: 'entries waiting to send', es: 'registros pendientes de enviar' },
+    sendNow: { en: 'Send now', es: 'Enviar ahora' },
     date: { en: 'Date', es: 'Fecha' },
     strain: { en: 'Strain', es: 'Variedad' },
     uid: { en: 'UID', es: 'UID' },
@@ -293,6 +306,10 @@
   const todayStr = () => new Date().toISOString().slice(0, 10);
   const shortUid = (u) => String(u || '').slice(-4);
   const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+  // Reassigned once mountBuckQueueBanner runs, near the end of this script —
+  // called from handlers defined above it so the "N pending" banner appears
+  // the instant something queues, not up to 5s later on the next poll.
+  let refreshQueueBanner = () => {};
 
   // ── Tabs ──────────────────────────────────────────────────────────────────
   document.getElementById('tabs').addEventListener('click', (e) => {
@@ -330,8 +347,10 @@
     const batch = batchByUid(batchUid);
     const res = await logBuckSubmission({ batchUid, batchStrain: batch ? batch.strain : '', boxNo, employeeNo, weightLb, owner });
     btn.disabled = false; btn.textContent = t(L.submit);
+    refreshQueueBanner();
     if (res.ok) {
-      statusEl.className = 'qe-status ok'; statusEl.textContent = t(L.logged);
+      statusEl.className = res.queued ? 'qe-status queued' : 'qe-status ok';
+      statusEl.textContent = res.queued ? t(L.queuedEntry) : t(L.logged);
       document.getElementById('qe-employee').value = '';
       document.getElementById('qe-box').value = '';
       document.getElementById('qe-weight').value = '';
@@ -344,7 +363,13 @@
 
   let todaySubs = [];
   async function refreshRoster() {
-    todaySubs = await listSubmissions({ date: todayStr() });
+    const serverSubs = await listSubmissions({ date: todayStr() });
+    // A submission made offline needs to show up on the roster the instant
+    // it's entered — merge it in locally until it actually syncs (its real
+    // server row, once flushed, replaces this one; dedupe on id).
+    const queued = queuedSubmissionsForDate(todayStr());
+    const seen = new Set(serverSubs.map((r) => r.id));
+    todaySubs = serverSubs.concat(queued.filter((r) => !seen.has(r.id)));
     renderRoster();
   }
 
@@ -562,7 +587,12 @@
         bTrimLb: document.getElementById('box-btrim').value
       };
       const res = await saveBuckBoxFields(batch.uid, boxNo, partial, owner);
-      if (res.ok) {
+      refreshQueueBanner();
+      if (res.ok && res.queued) {
+        // Not actually written yet — nothing new to reflect in the box list
+        // or totals until this syncs, so just say so rather than refresh.
+        statusEl.className = 'qe-status queued'; statusEl.textContent = t(L.queuedBox);
+      } else if (res.ok) {
         statusEl.className = 'qe-status ok'; statusEl.textContent = t(L.boxSaved);
         // Refresh totals + the box list in place — NOT a full re-render,
         // which would wipe this success message before anyone sees it.
@@ -587,14 +617,20 @@
       const btn = document.getElementById('close-batch-btn');
       btn.disabled = true;
       const res = await closeBuckBatch(batch.uid, batch.strain, extra, owner);
-      btn.disabled = false;
-      if (res.ok) {
-        statusEl.className = 'qe-status ok'; statusEl.textContent = t(L.closed);
+      refreshQueueBanner();
+      if (res.ok && res.queued) {
+        // Queue it and lock the button — re-clicking while this is still
+        // pending would queue a second close and double-count the batch
+        // once both eventually sync.
+        statusEl.className = 'qe-status queued'; statusEl.textContent = t(L.queuedClose);
+      } else if (res.ok) {
         btn.disabled = true; // closed — leave the confirmation and summary visible, don't hide the panel
+        statusEl.className = 'qe-status ok'; statusEl.textContent = t(L.closed);
         openBatches = await listOpenBatches();
         await loadOpenBatchesIntoPicker();
         renderBatchList();
       } else {
+        btn.disabled = false;
         statusEl.className = 'qe-status err'; statusEl.textContent = t(L.failed);
       }
     });
@@ -642,6 +678,19 @@
     mount.innerHTML = `<table class="simple"><thead><tr><th>${esc(t(L.date))}</th><th>${esc(t(L.time))}</th><th>${esc(t(L.employeeNo))}</th><th>${esc(t(L.strain))}</th><th>${esc(t(L.uid))}</th><th>${esc(t(L.box))}</th><th>${esc(t(L.weightLb))}</th></tr></thead>
       <tbody>${rows.map((r) => `<tr><td>${esc(r.work_date)}</td><td>${esc(new Date(r.submitted_at).toLocaleTimeString())}</td><td>${esc(r.fields.employeeNo)}</td><td>${esc(r.strain)}</td><td>${esc(shortUid(r.fields.batchUid))}</td><td>${esc(r.fields.boxNo)}</td><td>${round2(r.fields.weightLb).toFixed(2)}</td></tr>`).join('')}</tbody>
       </table>`;
+  });
+
+  // ── OFFLINE QUEUE ─────────────────────────────────────────────────────────
+  // Quick-entry, box saves, and batch close-out all fall back to this same
+  // queue on any write failure (see buck_data.js) — this just renders the
+  // "N pending" banner and refreshes whatever's on screen once a flush lands
+  // real data.
+  refreshQueueBanner = mountBuckQueueBanner('queue', { pendingOne: L.pendingOne, pendingMany: L.pendingMany, sendNow: L.sendNow }, async () => {
+    await refreshRoster();
+    if (activeBatch && activeBatch.kind === 'open') {
+      const batch = batchByUid(activeBatch.uid) || (await listOpenBatches()).find((b) => b.uid === activeBatch.uid);
+      if (batch) openBatchDetail(batch);
+    }
   });
 })();
 </script>

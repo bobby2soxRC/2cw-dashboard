@@ -87,10 +87,18 @@ instead of one big form. **Bucking does not mint a new UID when it
 finishes** — the summary record stays tagged under the same UID Post-Dry
 Check produced, and that's what an operator types in at Machine Trim.
 
-**Known gap:** quick-entry only works while online right now. Every other
-station's autosave survives a dead connection by queuing locally; Bucking's
-event log doesn't have that yet — a real thing to build if the floor's wifi
-turns out to be unreliable at the buck tables specifically.
+**Works offline too.** Quick-entry, box saves, and closing a batch all queue
+locally (`localStorage`, key `2cw_buck_queue`) on any write failure and
+retry when the connection comes back — same idea as the rest of the app's
+offline queue, just pointed at Supabase directly instead of the Netlify
+function the old single-form queue uses. The tricky part was keeping the
+box merge-safety guarantee across a dropped connection: a queued box save
+doesn't store a pre-merged row, it stores "retry this exact call" — so
+whenever it actually runs (now or after reconnecting), it re-reads
+whatever's really on the server at that moment and merges into *that*,
+never stale or guessed data. A submission made offline shows up on the
+Today roster immediately too (merged in locally from the queue until its
+real row lands), so an operator isn't left wondering whether it took.
 
 ## Things the forms do that the paper doesn't
 
