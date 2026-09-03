@@ -118,3 +118,9 @@ create policy "anon read" on app_users for select using (true);
 
 -- No anon insert/update/delete policies — writes only via the service role
 -- key inside netlify/functions/admin.js.
+
+-- RLS bypass (which the service role has) does not skip Postgres's own
+-- table-level GRANT check underneath it — without this, admin.js's queries
+-- fail with "permission denied for table app_users" even though the key
+-- is correct.
+grant select, insert, update, delete on public.app_users to service_role;
