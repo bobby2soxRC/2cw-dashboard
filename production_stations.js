@@ -359,6 +359,9 @@ const PROD_STATIONS = [
   },
 
   // ── PROCESSING: BUCKING ───────────────────────────────────────────────────
+  // Laid out to match the paper "Work Order Form (Bucking — Hourly)" exactly —
+  // same two grids (boxes pulled from inventory, then bags weighed off the
+  // buck table), just self-totaling instead of hand-added.
   {
     key: 'buck',
     dept: { en: 'Processing', es: 'Procesamiento' },
@@ -368,16 +371,51 @@ const PROD_STATIONS = [
     color: 'gold',
     headline: 'buckedFlowerLb',
     fields: [
+      { k: 'workOrderNo', t: 'text', l: { en: 'Work Order #', es: 'N.º de orden de trabajo' } },
       F.date(),
-      F.sourceUid(),
+      { k: 'pid', t: 'select', ref: 'properties', allowOther: true,
+        l: { en: 'Property ID (PID)', es: 'ID de propiedad (PID)' } },
+      { k: 'cid', t: 'text', l: { en: 'Customer ID (CID)', es: 'ID de cliente (CID)' } },
+      F.sourceUid({ en: 'Package UID (last 5)', es: 'UID del paquete (últimos 5)' }),
       { k: 'strain', t: 'select', ref: 'strains', allowOther: true, prefill: 'lookup',
         l: { en: 'Strain', es: 'Variedad (cepa)' } },
-      { k: 'startingDryLb', t: 'number', req: true, min: 0, step: 0.01, prefill: 'lookup',
-        l: { en: 'Starting Dry Weight (lbs)', es: 'Peso seco inicial (lbs)' },
-        hint: { en: 'Pulled from the post-dry check for this UID — correct it if the scale disagrees.',
-                es: 'Tomado de la verificación post-secado de este UID — corríjalo si la báscula no coincide.' } },
-      { k: 'buckedFlowerLb', t: 'number', req: true, min: 0, step: 0.01,
-        l: { en: 'Bucked Flower (lbs)', es: 'Flor desvarada (lbs)' } },
+      { k: 'strainGrade', t: 'select',
+        l: { en: 'Strain Grade', es: 'Grado de la variedad' },
+        opts: [
+          { v: 'A', l: { en: 'A', es: 'A' } },
+          { v: 'B', l: { en: 'B', es: 'B' } },
+          { v: 'whole_plant', l: { en: 'Whole Plant', es: 'Planta entera' } },
+          { v: 'mixed', l: { en: 'Mixed', es: 'Mixto' } }
+        ] },
+      { k: 'estWeightNeededLb', t: 'number', min: 0, step: 0.01, prefill: 'lookup',
+        l: { en: 'Total Stem Weight Needed from Inventory — Estimate (lbs)', es: 'Peso de tallo necesario del inventario — estimado (lbs)' },
+        hint: { en: 'Pulled from the post-dry check for this UID — a target, not what has to match.',
+                es: 'Tomado de la verificación post-secado de este UID — una referencia, no algo que deba coincidir exactamente.' } },
+
+      { k: 'boxesRemoved', t: 'lineitems', req: true,
+        l: { en: 'Boxes and Weight Removed from Inventory', es: 'Cajas y peso retirado del inventario' },
+        hint: { en: 'One row per box, same as the paper form.', es: 'Una fila por caja, igual que el formulario en papel.' },
+        cols: [
+          { k: 'boxNo', t: 'text', l: { en: 'Box #', es: 'Caja n.º' } },
+          { k: 'weightLb', t: 'number', l: { en: 'Weight (lbs)', es: 'Peso (lbs)' }, min: 0, step: 0.01 }
+        ],
+        totalCol: 'weightLb' },
+      { k: 'startingDryLb', t: 'calc',
+        calc: (v) => (v.boxesRemoved || []).reduce((a, r) => a + num(r.weightLb), 0),
+        l: { en: 'Total Stem Weight Removed — Actual Starting Weight (lbs)', es: 'Peso de tallo retirado — peso inicial real (lbs)' } },
+
+      { k: 'buckedWeights', t: 'lineitems', req: true,
+        l: { en: 'Bucked Flower — Weighing Worksheet', es: 'Flor desvarada — hoja de pesaje' },
+        hint: { en: 'One row per bag weighed off the buck table.', es: 'Una fila por bolsa pesada en la mesa de desvarado.' },
+        cols: [
+          { k: 'bagNo', t: 'text', l: { en: 'Bag #', es: 'Bolsa n.º' } },
+          { k: 'weightLb', t: 'number', l: { en: 'Weight (lbs)', es: 'Peso (lbs)' }, min: 0, step: 0.01 }
+        ],
+        totalCol: 'weightLb' },
+      { k: 'buckedFlowerLb', t: 'calc',
+        calc: (v) => (v.buckedWeights || []).reduce((a, r) => a + num(r.weightLb), 0),
+        l: { en: 'Total Bucked Flower (lbs)', es: 'Flor desvarada total (lbs)' } },
+
       { k: 'bigLeafLb', t: 'number', min: 0, step: 0.01,
         l: { en: 'Big Leaf (lbs)', es: 'Hoja grande (lbs)' } },
       { k: 'stemLb', t: 'number', min: 0, step: 0.01,
@@ -685,7 +723,7 @@ const PREFILL_MAP = {
   // carry several), so it no longer offers an incoming prefill from harvest —
   // the operator types the strain/UID per line off the manifest instead.
   dry_check:   { from: 'intake_wet',   map: { strain: 'strain', dryRoom: 'dryRoom', wetIntakeLb: 'weight' } },
-  buck:        { from: 'dry_check',    map: { strain: 'strain', startingDryLb: 'dryWeightLb' } },
+  buck:        { from: 'dry_check',    map: { strain: 'strain', estWeightNeededLb: 'dryWeightLb' } },
   machine_trim:{ from: 'buck',         map: { strain: 'strain', inputBuckedLb: 'buckedFlowerLb' } },
   hand_trim:   { from: 'machine_trim', map: { strain: 'strain', startingBuckedLb: 'flowerALb' } }
 };

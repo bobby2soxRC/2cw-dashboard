@@ -34,7 +34,11 @@ const stages = {
   ],
   buck: [
     { id: 'b1', date: '2026-08-19', sourceUid: DRY_UID, strain: 'Lemon Cherry Gelato',
-      startingDryLb: 102, buckedFlowerLb: 60, bigLeafLb: 22, stemLb: 16, wasteLb: 4,
+      estWeightNeededLb: 102,
+      boxesRemoved: [{ boxNo: '1', weightLb: 52 }, { boxNo: '2', weightLb: 50 }],
+      startingDryLb: 102,
+      buckedWeights: [{ bagNo: '1', weightLb: 30 }, { bagNo: '2', weightLb: 30 }],
+      buckedFlowerLb: 60, bigLeafLb: 22, stemLb: 16, wasteLb: 4,
       newBuckedUid: BUCKED_UID, laborHours: 8, crewSize: 4,
       crew: [{ employeeNo: '42', hours: 4 }, { employeeNo: '58', hours: 4 }] }
   ],
