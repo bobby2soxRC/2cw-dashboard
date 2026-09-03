@@ -124,3 +124,10 @@ create policy "anon read" on app_users for select using (true);
 -- fail with "permission denied for table app_users" even though the key
 -- is correct.
 grant select, insert, update, delete on public.app_users to service_role;
+
+-- Same story for anon: the "anon read" RLS policy above only takes effect
+-- once anon also has the base table GRANT. Without this, index.html's
+-- loadDirectorySupabase() gets a permission error, treats it as "Supabase
+-- not available," and silently falls back to the legacy sheet — so admin
+-- panel changes look like they're not taking effect, even though they saved.
+grant select on public.app_users to anon;
