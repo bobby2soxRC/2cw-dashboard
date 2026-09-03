@@ -111,9 +111,13 @@ def api_get_all(path, params=None, list_path=("data",), page_size=200):
     params["limit"] = page_size
     offset = 0
     out = []
+    first_page = True
     while True:
         params["offset"] = offset
         body = api_get(path, params)
+        if first_page:
+            print(f"    [shape] {path} → {_shape(body)}")
+            first_page = False
         records = body
         for key in list_path:
             records = records.get(key, []) if isinstance(records, dict) else []
@@ -127,6 +131,24 @@ def api_get_all(path, params=None, list_path=("data",), page_size=200):
         offset += page_size
         time.sleep(REQUEST_PACE_SECONDS)
     return out
+
+
+def _shape(obj, depth=3):
+    """Structure-only preview (keys and types, never values) of an unfamiliar
+    API response — lets us see the real envelope shape in CI logs without
+    printing employee names/PII. E.g. {'data': {'users': 'list[12] of dict
+    keys=[userId,firstName,...]'}}."""
+    if depth <= 0:
+        return type(obj).__name__
+    if isinstance(obj, dict):
+        return {k: _shape(v, depth - 1) for k, v in obj.items()}
+    if isinstance(obj, list):
+        if not obj:
+            return "list[0]"
+        if isinstance(obj[0], dict):
+            return f"list[{len(obj)}] of dict keys={sorted(obj[0].keys())}"
+        return f"list[{len(obj)}] of {type(obj[0]).__name__}"
+    return type(obj).__name__
 
 
 def _first(d, *keys, default=None):
@@ -179,6 +201,7 @@ def sync_users():
 def discover_clocks():
     print("\n[2/4] Time Clocks")
     body = api_get("/time-clock/v1/time-clocks")
+    print(f"    [shape] /time-clock/v1/time-clocks → {_shape(body)}")
     clocks = _first(body.get("data", {}) if isinstance(body, dict) else {}, "timeClocks")
     if clocks is None:
         clocks = body.get("data") if isinstance(body, dict) else None
