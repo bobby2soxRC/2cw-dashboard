@@ -16,4 +16,4 @@
 // local preview working with zero setup.
 
 const SUPABASE_URL = 'https://ugtxmyciyuelxxzqmrdx.supabase.co';
-const SUPABASE_ANON_KEY = '';
+const SUPABASE_ANON_KEY = 'sb_publishable_vQOGvetjSzPx1UaaCS8FUQ_kZGgywo5';
