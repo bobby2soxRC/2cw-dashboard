@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Bucking — 2CW Production</title>
+<script>
+  (function(){ if (!sessionStorage.getItem('2cw_pin')) { window.location.replace('/index.html'); } })();
+</script>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0c0d0f">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0c0d0f;--surface:#13151a;--surface2:#181b21;--border:#1e2129;
+    --green:#3db87a;--gold:#d4a843;--blue:#5a9fd4;--purple:#9b7fd4;--red:#ef5350;
+    --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;--accent:var(--gold);
+  }
+  html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-text-size-adjust:100%}
+  body{padding-bottom:40px}
+
+  .hdr{min-height:calc(54px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:12px;position:sticky;top:0;z-index:20}
+  .hdr-back{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
+  .hdr-div{width:1px;height:18px;background:var(--border)}
+  .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);flex:1}
+  .lang{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .lang button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:12px;font-weight:600;padding:8px 12px;cursor:pointer;min-height:36px}
+  .lang button.on{background:var(--accent);color:#000}
+
+  .queue{display:none;align-items:center;justify-content:space-between;gap:12px;background:rgba(212,168,67,.12);border-bottom:1px solid var(--gold);color:var(--gold);padding:10px 16px;font-family:'DM Mono',monospace;font-size:12px}
+  .queue button{background:var(--gold);color:#000;border:none;border-radius:8px;padding:8px 14px;font-weight:700;font-family:inherit;font-size:12px;cursor:pointer}
+
+  .tabs{display:flex;gap:2px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:calc(54px + env(safe-area-inset-top));z-index:19;overflow-x:auto}
+  .tab-btn{flex:1;min-width:110px;background:transparent;border:none;border-bottom:3px solid transparent;color:var(--subtext);font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:14px 10px;cursor:pointer;white-space:nowrap}
+  .tab-btn.on{color:var(--accent);border-bottom-color:var(--accent)}
+
+  main{padding:20px 16px 40px;max-width:960px;margin:0 auto}
+  .tab-panel{display:none}
+  .tab-panel.on{display:block}
+
+  h1.section-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(26px,5vw,36px);letter-spacing:.03em;margin-bottom:14px}
+
+  input,select,textarea{width:100%;background:#0c0d0f;border:1px solid var(--border);color:var(--text);
+    padding:.75rem .85rem;border-radius:10px;font-size:16px;font-family:inherit;outline:none;min-height:50px}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+  label.lbl{display:block;font-size:.68rem;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem}
+  select{appearance:none;background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%239aa0b0' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;background-size:12px;padding-right:38px}
+
+  /* Quick entry */
+  .qe-bar{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:24px}
+  .qe-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px}
+  @media (max-width:680px){ .qe-grid{grid-template-columns:1fr 1fr} }
+  .qe-submit{margin-top:12px;width:100%;background:var(--green);color:#000;border:none;border-radius:12px;font-size:1.05rem;font-weight:700;font-family:inherit;padding:1rem;cursor:pointer;min-height:56px}
+  .qe-submit:disabled{opacity:.5;cursor:not-allowed}
+  .qe-status{margin-top:10px;font-family:'DM Mono',monospace;font-size:.82rem;display:none;padding:.6rem .8rem;border-radius:8px}
+  .qe-status.ok{display:block;background:rgba(61,184,122,.12);color:var(--green)}
+  .qe-status.err{display:block;background:rgba(239,83,80,.12);color:var(--red)}
+  .qe-status.queued{display:block;background:rgba(212,168,67,.12);color:var(--gold)}
+
+  /* Roster */
+  .roster-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--border);border-radius:16px}
+  table.roster{width:100%;border-collapse:collapse;min-width:520px}
+  table.roster th,table.roster td{padding:10px 12px;text-align:right;border-bottom:1px solid var(--border);font-size:.85rem;white-space:nowrap}
+  table.roster th{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--surface2);text-align:right}
+  table.roster th:first-child,table.roster td:first-child{text-align:left;position:sticky;left:0;background:var(--surface)}
+  table.roster th:first-child{background:var(--surface2)}
+  table.roster td.total,table.roster th.total{color:var(--gold);font-weight:700}
+  table.roster tfoot td{font-weight:700;border-top:2px solid var(--border);background:var(--surface2)}
+  .empty-note{color:var(--subtext);font-size:.85rem;padding:24px;text-align:center}
+
+  /* Batches */
+  .batch-list{display:grid;gap:10px;margin-bottom:20px}
+  .batch-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .batch-card:hover{border-color:var(--gold)}
+  .batch-card.on{border-color:var(--gold);background:var(--surface2)}
+  .batch-card .bname{font-weight:600}
+  .batch-card .bmeta{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--subtext)}
+  .toggle-closed{background:transparent;border:1px solid var(--border);color:var(--subtext);border-radius:8px;padding:.5rem 1rem;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;margin-bottom:14px}
+
+  .detail{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px}
+  .detail-hd{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+  .detail-hd h2{font-family:'Bebas Neue',sans-serif;font-size:26px}
+  .detail-hd .sub{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--subtext)}
+  .stat-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+  .stat{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.6rem .9rem;min-width:110px}
+  .stat .k{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .stat .v{font-family:'DM Mono',monospace;font-size:1.05rem}
+
+  .section-hd{font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin:20px 0 10px}
+  .box-form{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px}
+  @media (max-width:680px){ .box-form{grid-template-columns:1fr 1fr} }
+  .box-form label.lbl{margin-bottom:.3rem}
+  .btn{padding:.75rem 1.2rem;border:1px solid var(--border);border-radius:10px;font-family:'DM Mono',monospace;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;cursor:pointer;background:transparent;color:var(--text);min-height:48px}
+  .btn-gold{background:var(--gold);color:#000;border-color:var(--gold)}
+  .btn-green{background:var(--green);color:#000;border-color:var(--green)}
+  .btn-ghost{color:var(--subtext)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+
+  table.simple{width:100%;border-collapse:collapse;margin-top:6px}
+  table.simple th,table.simple td{padding:8px 10px;text-align:left;font-size:.82rem;border-bottom:1px solid var(--border)}
+  table.simple th{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .box-row{cursor:pointer}
+  .box-row:hover{color:var(--gold)}
+
+  .close-block{margin-top:24px;padding-top:18px;border-top:1px solid var(--border)}
+  .close-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+  @media (max-width:680px){ .close-grid{grid-template-columns:1fr 1fr} }
+
+  /* Employee / Historical */
+  .filter-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;align-items:flex-end}
+  .filter-field{min-width:150px;flex:1}
+  .filter-bar .btn{flex:0 0 auto}
+  .fine-print{color:var(--muted);font-size:.75rem;margin-top:14px;line-height:1.5}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="/production.html" id="back">← Stations</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand" id="brand">Bucking</div>
+  <div class="lang" id="lang"></div>
+</header>
+
+<div class="queue" id="queue"></div>
+
+<nav class="tabs" id="tabs">
+  <button class="tab-btn on" data-tab="today" id="tab-btn-today">Today</button>
+  <button class="tab-btn" data-tab="batches" id="tab-btn-batches">Batches</button>
+  <button class="tab-btn" data-tab="employee" id="tab-btn-employee">Employee</button>
+  <button class="tab-btn" data-tab="historical" id="tab-btn-historical">Historical</button>
+</nav>
+
+<main>
+  <!-- ── TODAY ─────────────────────────────────────────────────────────── -->
+  <section class="tab-panel on" id="panel-today">
+    <div class="qe-bar">
+      <div class="qe-grid">
+        <div>
+          <label class="lbl" id="qe-batch-lbl">Batch</label>
+          <select id="qe-batch"></select>
+        </div>
+        <div>
+          <label class="lbl" id="qe-employee-lbl">Employee #</label>
+          <input id="qe-employee" inputmode="numeric"/>
+        </div>
+        <div>
+          <label class="lbl" id="qe-box-lbl">Box #</label>
+          <input id="qe-box"/>
+        </div>
+        <div>
+          <label class="lbl" id="qe-weight-lbl">Weight (lbs)</label>
+          <input id="qe-weight" type="number" inputmode="decimal" step="0.01" min="0"/>
+        </div>
+      </div>
+      <button class="qe-submit" id="qe-submit">Submit</button>
+      <div class="qe-status" id="qe-status"></div>
+    </div>
+
+    <h1 class="section-title" id="roster-title">Today — by Employee &amp; Strain</h1>
+    <div class="roster-wrap"><div id="roster-mount"></div></div>
+  </section>
+
+  <!-- ── BATCHES ───────────────────────────────────────────────────────── -->
+  <section class="tab-panel" id="panel-batches">
+    <button class="toggle-closed" id="toggle-closed">Show closed batches</button>
+    <div class="batch-list" id="batch-list"></div>
+    <div class="detail" id="batch-detail" hidden></div>
+  </section>
+
+  <!-- ── EMPLOYEE ──────────────────────────────────────────────────────── -->
+  <section class="tab-panel" id="panel-employee">
+    <h1 class="section-title" id="emp-title">Employee Production</h1>
+    <div class="filter-bar">
+      <div class="filter-field"><label class="lbl">Employee #</label><input id="emp-no" inputmode="numeric"/></div>
+      <div class="filter-field"><label class="lbl">From</label><input id="emp-from" type="date"/></div>
+      <div class="filter-field"><label class="lbl">To</label><input id="emp-to" type="date"/></div>
+      <button class="btn btn-gold" id="emp-search">Look Up</button>
+    </div>
+    <div id="emp-result"></div>
+  </section>
+
+  <!-- ── HISTORICAL ────────────────────────────────────────────────────── -->
+  <section class="tab-panel" id="panel-historical">
+    <h1 class="section-title" id="hist-title">Historical</h1>
+    <div class="filter-bar">
+      <div class="filter-field"><label class="lbl">From</label><input id="hist-from" type="date"/></div>
+      <div class="filter-field"><label class="lbl">To</label><input id="hist-to" type="date"/></div>
+      <div class="filter-field"><label class="lbl">Strain contains</label><input id="hist-strain"/></div>
+      <div class="filter-field"><label class="lbl">UID contains</label><input id="hist-uid"/></div>
+      <button class="btn btn-gold" id="hist-search">Search</button>
+    </div>
+    <div id="hist-result"></div>
+  </section>
+
+  <div class="fine-print" id="fine-print"></div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/config/supabase_config.js"></script>
+<script src="/production_stations.js"></script>
+<script src="/prod_common.js"></script>
+<script src="/prod_data.js"></script>
+<script src="/buck_data.js"></script>
+<script>
+(async function () {
+  // Per-station edit access, same check prod_form.html uses.
+  const allowed = JSON.parse(sessionStorage.getItem('2cw_prod_edit_access') || 'null');
+  if (allowed && allowed !== 'all' && !allowed.includes('buck')) {
+    location.replace('/production.html');
+    return;
+  }
+  mountLangToggle('lang');
+
+  const L = {
+    brand: { en: 'Bucking', es: 'Desvarado' },
+    tToday: { en: 'Today', es: 'Hoy' },
+    tBatches: { en: 'Batches', es: 'Lotes' },
+    tEmployee: { en: 'Employee', es: 'Empleado' },
+    tHistorical: { en: 'Historical', es: 'Historial' },
+    back: { en: '← Stations', es: '← Estaciones' },
+    batch: { en: 'Batch', es: 'Lote' },
+    employeeNo: { en: 'Employee #', es: 'N.º de empleado' },
+    boxNo: { en: 'Box #', es: 'Caja n.º' },
+    weightLb: { en: 'Weight (lbs)', es: 'Peso (lbs)' },
+    submit: { en: 'Submit', es: 'Enviar' },
+    submitting: { en: 'Submitting…', es: 'Enviando…' },
+    logged: { en: '✓ Logged', es: '✓ Registrado' },
+    failed: { en: 'Something went wrong — try again.', es: 'Algo salió mal — intente de nuevo.' },
+    fillAll: { en: 'Fill in batch, employee #, box #, and weight.', es: 'Complete lote, n.º de empleado, caja y peso.' },
+    rosterTitle: { en: 'Today — by Employee & Strain', es: 'Hoy — por empleado y variedad' },
+    noRoster: { en: 'No submissions logged yet today.', es: 'Aún no hay envíos registrados hoy.' },
+    total: { en: 'Total', es: 'Total' },
+    showClosed: { en: 'Show closed batches', es: 'Mostrar lotes cerrados' },
+    hideClosed: { en: 'Hide closed batches', es: 'Ocultar lotes cerrados' },
+    noOpenBatches: { en: 'No open batches — every dried batch has been bucked out, or none are ready yet.',
+                      es: 'No hay lotes abiertos — todos los lotes secos ya se desvararon, o ninguno está listo aún.' },
+    startingWeight: { en: 'Starting Weight (lbs)', es: 'Peso inicial (lbs)' },
+    waste: { en: 'Waste (lbs)', es: 'Desecho (lbs)' },
+    stems: { en: 'Stems (lbs)', es: 'Tallos (lbs)' },
+    bigLeaf: { en: 'Big Leaf (lbs)', es: 'Hoja grande (lbs)' },
+    aPlus: { en: 'A+ Trim (lbs)', es: 'Recorte A+ (lbs)' },
+    aTrim: { en: 'A Trim (lbs)', es: 'Recorte A (lbs)' },
+    bTrim: { en: 'B Trim (lbs)', es: 'Recorte B (lbs)' },
+    saveBox: { en: 'Save Box', es: 'Guardar caja' },
+    boxSaved: { en: '✓ Saved', es: '✓ Guardado' },
+    loadBox: { en: 'Load / Add Box', es: 'Cargar / agregar caja' },
+    existingBoxes: { en: 'Boxes on this batch', es: 'Cajas de este lote' },
+    submissionsLog: { en: 'Submissions on this batch', es: 'Envíos de este lote' },
+    closeBatch: { en: 'Close Batch', es: 'Cerrar lote' },
+    closeBatchHint: { en: 'Rolls up every box and submission into the finished record Machine Trim and the dashboard read.',
+                       es: 'Reúne cada caja y envío en el registro terminado que leen Corte a máquina y el panel.' },
+    teamLead: { en: 'Team Lead (optional)', es: 'Líder de equipo (opcional)' },
+    crewSize: { en: 'Crew Size (optional)', es: 'Tamaño del equipo (opcional)' },
+    laborHours: { en: 'Labor Hours (optional)', es: 'Horas de trabajo (opcional)' },
+    notes: { en: 'Notes (optional)', es: 'Notas (opcional)' },
+    closed: { en: '✓ Batch closed', es: '✓ Lote cerrado' },
+    lookUp: { en: 'Look Up', es: 'Buscar' },
+    search: { en: 'Search', es: 'Buscar' },
+    empNoField: { en: 'Employee #', es: 'N.º de empleado' },
+    from: { en: 'From', es: 'Desde' },
+    to: { en: 'To', es: 'Hasta' },
+    strainContains: { en: 'Strain contains', es: 'Variedad contiene' },
+    uidContains: { en: 'UID contains', es: 'UID contiene' },
+    noResults: { en: 'No submissions in that range.', es: 'No hay envíos en ese rango.' },
+    finePrint: { en: 'No signal? Quick-entry, box saves, and closing a batch all still work — they’re saved on this tablet and sent the moment you’re back online.',
+                 es: 'Sin señal? El registro rápido, guardar cajas y cerrar un lote siguen funcionando — se guardan en esta tableta y se envían en cuanto vuelva la conexión.' },
+    queuedEntry: { en: '✓ Saved on this tablet — will send when back online.', es: '✓ Guardado en esta tableta — se enviará cuando vuelva la conexión.' },
+    queuedBox: { en: '✓ Saved on this tablet — will send when back online. The box list above won’t show it until then.',
+                 es: '✓ Guardado en esta tableta — se enviará cuando vuelva la conexión. La lista de cajas no lo mostrará hasta entonces.' },
+    queuedClose: { en: '✓ Close saved on this tablet — will finish once back online.', es: '✓ Cierre guardado en esta tableta — se completará al volver la conexión.' },
+    pendingOne: { en: 'entry waiting to send', es: 'registro pendiente de enviar' },
+    pendingMany: { en: 'entries waiting to send', es: 'registros pendientes de enviar' },
+    sendNow: { en: 'Send now', es: 'Enviar ahora' },
+    date: { en: 'Date', es: 'Fecha' },
+    strain: { en: 'Strain', es: 'Variedad' },
+    uid: { en: 'UID', es: 'UID' },
+    box: { en: 'Box', es: 'Caja' },
+    time: { en: 'Time', es: 'Hora' },
+    lbs: { en: 'lbs', es: 'lbs' }
+  };
+
+  document.getElementById('back').textContent = t(L.back);
+  document.getElementById('brand').textContent = t(L.brand);
+  document.title = `${t(L.brand)} — 2CW Production`;
+  document.getElementById('tab-btn-today').textContent = t(L.tToday);
+  document.getElementById('tab-btn-batches').textContent = t(L.tBatches);
+  document.getElementById('tab-btn-employee').textContent = t(L.tEmployee);
+  document.getElementById('tab-btn-historical').textContent = t(L.tHistorical);
+  document.getElementById('qe-batch-lbl').textContent = t(L.batch);
+  document.getElementById('qe-employee-lbl').textContent = t(L.employeeNo);
+  document.getElementById('qe-box-lbl').textContent = t(L.boxNo);
+  document.getElementById('qe-weight-lbl').textContent = t(L.weightLb);
+  document.getElementById('qe-submit').textContent = t(L.submit);
+  document.getElementById('roster-title').textContent = t(L.rosterTitle);
+  document.getElementById('toggle-closed').textContent = t(L.showClosed);
+  document.getElementById('emp-title').textContent = t(L.tEmployee) + ' — ' + t(L.rosterTitle).split('—')[0].trim();
+  document.getElementById('hist-title').textContent = t(L.tHistorical);
+  document.getElementById('emp-search').textContent = t(L.lookUp);
+  document.getElementById('hist-search').textContent = t(L.search);
+  document.getElementById('fine-print').textContent = t(L.finePrint);
+
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const owner = sessionStorage.getItem('2cw_user_name') || null;
+  const todayStr = () => new Date().toISOString().slice(0, 10);
+  const shortUid = (u) => String(u || '').slice(-4);
+  const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+  // Reassigned once mountBuckQueueBanner runs, near the end of this script —
+  // called from handlers defined above it so the "N pending" banner appears
+  // the instant something queues, not up to 5s later on the next poll.
+  let refreshQueueBanner = () => {};
+
+  // ── Tabs ──────────────────────────────────────────────────────────────────
+  document.getElementById('tabs').addEventListener('click', (e) => {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    document.querySelectorAll('.tab-btn').forEach((b) => b.classList.toggle('on', b === btn));
+    document.querySelectorAll('.tab-panel').forEach((p) => p.classList.toggle('on', p.id === `panel-${btn.dataset.tab}`));
+    if (btn.dataset.tab === 'batches' && !batchesLoaded) loadBatches();
+  });
+
+  // ── TODAY: quick-entry + live roster ───────────────────────────────────────
+  let openBatches = [];
+  async function loadOpenBatchesIntoPicker() {
+    openBatches = await listOpenBatches();
+    const sel = document.getElementById('qe-batch');
+    sel.innerHTML = openBatches.map((b) =>
+      `<option value="${esc(b.uid)}">${esc(shortUid(b.uid))} — ${esc(b.strain)}</option>`).join('') ||
+      `<option value="">${esc(t(L.noOpenBatches))}</option>`;
+  }
+
+  function batchByUid(uid) { return openBatches.find((b) => b.uid === uid); }
+
+  document.getElementById('qe-submit').addEventListener('click', async () => {
+    const batchUid = document.getElementById('qe-batch').value;
+    const employeeNo = document.getElementById('qe-employee').value.trim();
+    const boxNo = document.getElementById('qe-box').value.trim();
+    const weightLb = document.getElementById('qe-weight').value;
+    const statusEl = document.getElementById('qe-status');
+    if (!batchUid || !employeeNo || !boxNo || !weightLb) {
+      statusEl.className = 'qe-status err'; statusEl.textContent = t(L.fillAll);
+      return;
+    }
+    const btn = document.getElementById('qe-submit');
+    btn.disabled = true; btn.textContent = t(L.submitting);
+    const batch = batchByUid(batchUid);
+    const res = await logBuckSubmission({ batchUid, batchStrain: batch ? batch.strain : '', boxNo, employeeNo, weightLb, owner });
+    btn.disabled = false; btn.textContent = t(L.submit);
+    refreshQueueBanner();
+    if (res.ok) {
+      statusEl.className = res.queued ? 'qe-status queued' : 'qe-status ok';
+      statusEl.textContent = res.queued ? t(L.queuedEntry) : t(L.logged);
+      document.getElementById('qe-employee').value = '';
+      document.getElementById('qe-box').value = '';
+      document.getElementById('qe-weight').value = '';
+      document.getElementById('qe-employee').focus();
+      await refreshRoster();
+    } else {
+      statusEl.className = 'qe-status err'; statusEl.textContent = t(L.failed);
+    }
+  });
+
+  let todaySubs = [];
+  async function refreshRoster() {
+    const serverSubs = await listSubmissions({ date: todayStr() });
+    // A submission made offline needs to show up on the roster the instant
+    // it's entered — merge it in locally until it actually syncs (its real
+    // server row, once flushed, replaces this one; dedupe on id).
+    const queued = queuedSubmissionsForDate(todayStr());
+    const seen = new Set(serverSubs.map((r) => r.id));
+    todaySubs = serverSubs.concat(queued.filter((r) => !seen.has(r.id)));
+    renderRoster();
+  }
+
+  function renderRoster() {
+    const mount = document.getElementById('roster-mount');
+    if (!todaySubs.length) {
+      mount.innerHTML = `<div class="empty-note">${esc(t(L.noRoster))}</div>`;
+      return;
+    }
+    // Pivot: employee (row) × strain (col) = summed weight.
+    const strains = [...new Set(todaySubs.map((s) => s.strain || '—'))].sort();
+    const byEmp = new Map();
+    todaySubs.forEach((s) => {
+      const emp = s.fields.employeeNo || '?';
+      if (!byEmp.has(emp)) byEmp.set(emp, {});
+      const row = byEmp.get(emp);
+      const strain = s.strain || '—';
+      row[strain] = (row[strain] || 0) + (Number(s.fields.weightLb) || 0);
+    });
+    const empRows = [...byEmp.entries()].sort((a, b) => a[0].localeCompare(b[0], undefined, { numeric: true }));
+    const colTotals = strains.map((st) => empRows.reduce((a, [, row]) => a + (row[st] || 0), 0));
+    const grandTotal = colTotals.reduce((a, x) => a + x, 0);
+
+    let html = '<table class="roster"><thead><tr><th>' + esc(t(L.employeeNo)) + '</th>' +
+      strains.map((s) => `<th>${esc(s)}</th>`).join('') + `<th class="total">${esc(t(L.total))}</th></tr></thead><tbody>`;
+    empRows.forEach(([emp, row]) => {
+      const rowTotal = strains.reduce((a, s) => a + (row[s] || 0), 0);
+      html += `<tr><td>${esc(emp)}</td>` +
+        strains.map((s) => `<td>${row[s] ? round2(row[s]).toFixed(2) : '—'}</td>`).join('') +
+        `<td class="total">${round2(rowTotal).toFixed(2)}</td></tr>`;
+    });
+    html += `</tbody><tfoot><tr><td>${esc(t(L.total))}</td>` +
+      colTotals.map((c) => `<td>${round2(c).toFixed(2)}</td>`).join('') +
+      `<td class="total">${round2(grandTotal).toFixed(2)}</td></tr></tfoot></table>`;
+    mount.innerHTML = html;
+  }
+
+  await loadOpenBatchesIntoPicker();
+  await refreshRoster();
+  subscribeBuckSubmissions(() => refreshRoster());
+
+  // ── BATCHES ─────────────────────────────────────────────────────────────
+  let batchesLoaded = false;
+  let showClosed = false;
+  let closedBatches = [];
+  let activeBatch = null;
+
+  document.getElementById('toggle-closed').addEventListener('click', async () => {
+    showClosed = !showClosed;
+    document.getElementById('toggle-closed').textContent = t(showClosed ? L.hideClosed : L.showClosed);
+    if (showClosed && !closedBatches.length) closedBatches = await listClosedBatches();
+    renderBatchList();
+  });
+
+  async function loadBatches() {
+    batchesLoaded = true;
+    openBatches = await listOpenBatches();
+    renderBatchList();
+  }
+
+  function renderBatchList() {
+    const mount = document.getElementById('batch-list');
+    const openHtml = openBatches.map((b) => `
+      <div class="batch-card ${activeBatch && activeBatch.kind === 'open' && activeBatch.uid === b.uid ? 'on' : ''}" data-kind="open" data-uid="${esc(b.uid)}">
+        <div><div class="bname">${esc(b.strain)}</div><div class="bmeta">${esc(shortUid(b.uid))} · ${esc(b.openedDate || '')}</div></div>
+        <div class="bmeta">${b.dryWeightLb != null ? round2(b.dryWeightLb).toFixed(2) + ' lb' : ''}</div>
+      </div>`).join('');
+    const closedHtml = showClosed ? closedBatches.map((r) => `
+      <div class="batch-card ${activeBatch && activeBatch.kind === 'closed' && activeBatch.id === r.id ? 'on' : ''}" data-kind="closed" data-id="${esc(r.id)}">
+        <div><div class="bname">${esc(r.fields.strain || '')}</div><div class="bmeta">${esc(shortUid(r.fields.sourceUid))} · ${esc(r.work_date)}</div></div>
+        <div class="bmeta">${esc(t(L.closed))}</div>
+      </div>`).join('') : '';
+    mount.innerHTML = openHtml + closedHtml || `<div class="empty-note">${esc(t(L.noOpenBatches))}</div>`;
+  }
+
+  document.getElementById('batch-list').addEventListener('click', async (e) => {
+    const card = e.target.closest('.batch-card');
+    if (!card) return;
+    if (card.dataset.kind === 'open') {
+      activeBatch = { kind: 'open', uid: card.dataset.uid };
+      await openBatchDetail(batchByUid(card.dataset.uid) || openBatches.find((b) => b.uid === card.dataset.uid));
+    } else {
+      activeBatch = { kind: 'closed', id: card.dataset.id };
+      const rec = closedBatches.find((r) => r.id === card.dataset.id);
+      openClosedDetail(rec);
+    }
+    renderBatchList();
+  });
+
+  function openClosedDetail(rec) {
+    const f = rec.fields;
+    const det = document.getElementById('batch-detail');
+    det.hidden = false;
+    det.innerHTML = `
+      <div class="detail-hd">
+        <div><h2>${esc(f.strain || '')}</h2><div class="sub">${esc(shortUid(f.sourceUid))} · ${esc(rec.work_date)} · ${esc(t(L.closed))}</div></div>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><div class="k">${esc(t(L.startingWeight))}</div><div class="v">${round2(f.startingDryLb).toFixed(2)}</div></div>
+        <div class="stat"><div class="k">Bucked</div><div class="v">${round2(f.buckedFlowerLb).toFixed(2)}</div></div>
+        <div class="stat"><div class="k">${esc(t(L.waste))}</div><div class="v">${round2(f.wasteLb).toFixed(2)}</div></div>
+        <div class="stat"><div class="k">${esc(t(L.bigLeaf))}</div><div class="v">${round2(f.bigLeafLb).toFixed(2)}</div></div>
+        <div class="stat"><div class="k">${esc(t(L.aPlus))}</div><div class="v">${round2(f.aPlusTrimLb).toFixed(2)}</div></div>
+        <div class="stat"><div class="k">${esc(t(L.aTrim))}</div><div class="v">${round2(f.aTrimLb).toFixed(2)}</div></div>
+        <div class="stat"><div class="k">${esc(t(L.bTrim))}</div><div class="v">${round2(f.bTrimLb).toFixed(2)}</div></div>
+      </div>`;
+  }
+
+  async function openBatchDetail(batch) {
+    const det = document.getElementById('batch-detail');
+    det.hidden = false;
+    det.innerHTML = `<div class="empty-note">…</div>`;
+    let [subs, boxes] = await Promise.all([listSubmissions({ batchUid: batch.uid }), listBuckBoxes(batch.uid)]);
+    let buckedTotal = subs.reduce((a, s) => a + (Number(s.fields.weightLb) || 0), 0);
+    let startingTotal = boxes.reduce((a, b) => a + (Number(b.fields.startingWeightLb) || 0), 0);
+
+    const boxListHtml = (arr) => arr.map((b) => `<tr class="box-row" data-box="${esc(b.fields.boxNo)}">
+            <td>${esc(b.fields.boxNo)}</td><td>${round2(b.fields.startingWeightLb || 0).toFixed(2)}</td>
+            <td>${round2(b.fields.wasteLb || 0).toFixed(2)}</td><td>${round2(b.fields.stemsLb || 0).toFixed(2)}</td>
+            <td>${round2(b.fields.bigLeafLb || 0).toFixed(2)}</td><td>${round2(b.fields.aPlusTrimLb || 0).toFixed(2)}</td>
+            <td>${round2(b.fields.aTrimLb || 0).toFixed(2)}</td><td>${round2(b.fields.bTrimLb || 0).toFixed(2)}</td></tr>`).join('') ||
+      `<tr><td colspan="8" class="empty-note">—</td></tr>`;
+
+    det.innerHTML = `
+      <div class="detail-hd">
+        <div><h2>${esc(batch.strain)}</h2><div class="sub">${esc(shortUid(batch.uid))} · ${esc(t(L.batch))}</div></div>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><div class="k">${esc(t(L.startingWeight))}</div><div class="v" id="stat-starting">${round2(startingTotal).toFixed(2)}</div></div>
+        <div class="stat"><div class="k">Bucked</div><div class="v" id="stat-bucked">${round2(buckedTotal).toFixed(2)}</div></div>
+        <div class="stat"><div class="k">Yield</div><div class="v" id="stat-yield">${startingTotal > 0 ? Math.round((buckedTotal / startingTotal) * 1000) / 10 + '%' : '—'}</div></div>
+      </div>
+
+      <div class="section-hd">${esc(t(L.loadBox))}</div>
+      <div class="box-form">
+        <div><label class="lbl">${esc(t(L.boxNo))}</label><input id="box-no"/></div>
+        <div><label class="lbl">${esc(t(L.startingWeight))}</label><input id="box-starting" type="number" step="0.01" min="0"/></div>
+        <div><label class="lbl">${esc(t(L.waste))}</label><input id="box-waste" type="number" step="0.01" min="0"/></div>
+        <div><label class="lbl">${esc(t(L.stems))}</label><input id="box-stems" type="number" step="0.01" min="0"/></div>
+        <div><label class="lbl">${esc(t(L.bigLeaf))}</label><input id="box-bigleaf" type="number" step="0.01" min="0"/></div>
+        <div><label class="lbl">${esc(t(L.aPlus))}</label><input id="box-aplus" type="number" step="0.01" min="0"/></div>
+        <div><label class="lbl">${esc(t(L.aTrim))}</label><input id="box-atrim" type="number" step="0.01" min="0"/></div>
+        <div><label class="lbl">${esc(t(L.bTrim))}</label><input id="box-btrim" type="number" step="0.01" min="0"/></div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-ghost" id="box-load" type="button">${esc(t(L.loadBox))}</button>
+        <button class="btn btn-gold" id="box-save" type="button">${esc(t(L.saveBox))}</button>
+      </div>
+      <div class="qe-status" id="box-status"></div>
+
+      <div class="section-hd">${esc(t(L.existingBoxes))}</div>
+      <table class="simple"><thead><tr><th>${esc(t(L.boxNo))}</th><th>${esc(t(L.startingWeight))}</th><th>${esc(t(L.waste))}</th><th>${esc(t(L.stems))}</th><th>${esc(t(L.bigLeaf))}</th><th>A+</th><th>A</th><th>B</th></tr></thead>
+        <tbody id="box-list">${boxListHtml(boxes)}</tbody></table>
+
+      <div class="section-hd">${esc(t(L.submissionsLog))}</div>
+      <table class="simple"><thead><tr><th>${esc(t(L.time))}</th><th>${esc(t(L.employeeNo))}</th><th>${esc(t(L.box))}</th><th>${esc(t(L.weightLb))}</th></tr></thead>
+        <tbody>
+          ${subs.map((s) => `<tr><td>${esc(new Date(s.submitted_at).toLocaleString())}</td><td>${esc(s.fields.employeeNo)}</td><td>${esc(s.fields.boxNo)}</td><td>${round2(s.fields.weightLb).toFixed(2)}</td></tr>`).join('') ||
+            `<tr><td colspan="4" class="empty-note">—</td></tr>`}
+        </tbody></table>
+
+      <div class="close-block">
+        <div class="section-hd">${esc(t(L.closeBatch))}</div>
+        <div class="fine-print" style="margin-top:0;margin-bottom:12px">${esc(t(L.closeBatchHint))}</div>
+        <div class="close-grid">
+          <div><label class="lbl">${esc(t(L.teamLead))}</label><input id="close-lead"/></div>
+          <div><label class="lbl">${esc(t(L.crewSize))}</label><input id="close-crewsize" type="number" min="0" step="1"/></div>
+          <div><label class="lbl">${esc(t(L.laborHours))}</label><input id="close-hours" type="number" min="0" step="0.25"/></div>
+        </div>
+        <div style="margin-bottom:12px"><label class="lbl">${esc(t(L.notes))}</label><textarea id="close-notes" style="min-height:70px"></textarea></div>
+        <button class="btn btn-green" id="close-batch-btn" type="button">${esc(t(L.closeBatch))}</button>
+        <div class="qe-status" id="close-status"></div>
+      </div>
+    `;
+
+    const fillBoxForm = (fields) => {
+      document.getElementById('box-starting').value = fields.startingWeightLb ?? '';
+      document.getElementById('box-waste').value = fields.wasteLb ?? '';
+      document.getElementById('box-stems').value = fields.stemsLb ?? '';
+      document.getElementById('box-bigleaf').value = fields.bigLeafLb ?? '';
+      document.getElementById('box-aplus').value = fields.aPlusTrimLb ?? '';
+      document.getElementById('box-atrim').value = fields.aTrimLb ?? '';
+      document.getElementById('box-btrim').value = fields.bTrimLb ?? '';
+    };
+
+    det.querySelector('#box-list').addEventListener('click', (e) => {
+      const row = e.target.closest('.box-row');
+      if (!row) return;
+      const boxNo = row.dataset.box;
+      const rec = boxes.find((b) => String(b.fields.boxNo) === boxNo);
+      document.getElementById('box-no').value = boxNo;
+      if (rec) fillBoxForm(rec.fields);
+    });
+
+    det.querySelector('#box-load').addEventListener('click', async () => {
+      const boxNo = document.getElementById('box-no').value.trim();
+      const statusEl = document.getElementById('box-status');
+      if (!boxNo) { statusEl.className = 'qe-status err'; statusEl.textContent = t(L.boxNo); return; }
+      const rec = await getBuckBox(batch.uid, boxNo);
+      fillBoxForm(rec ? rec.fields : {});
+      statusEl.className = '';
+    });
+
+    det.querySelector('#box-save').addEventListener('click', async () => {
+      const boxNo = document.getElementById('box-no').value.trim();
+      const statusEl = document.getElementById('box-status');
+      if (!boxNo) { statusEl.className = 'qe-status err'; statusEl.textContent = t(L.boxNo); return; }
+      const partial = {
+        startingWeightLb: document.getElementById('box-starting').value,
+        wasteLb: document.getElementById('box-waste').value,
+        stemsLb: document.getElementById('box-stems').value,
+        bigLeafLb: document.getElementById('box-bigleaf').value,
+        aPlusTrimLb: document.getElementById('box-aplus').value,
+        aTrimLb: document.getElementById('box-atrim').value,
+        bTrimLb: document.getElementById('box-btrim').value
+      };
+      const res = await saveBuckBoxFields(batch.uid, boxNo, partial, owner);
+      refreshQueueBanner();
+      if (res.ok && res.queued) {
+        // Not actually written yet — nothing new to reflect in the box list
+        // or totals until this syncs, so just say so rather than refresh.
+        statusEl.className = 'qe-status queued'; statusEl.textContent = t(L.queuedBox);
+      } else if (res.ok) {
+        statusEl.className = 'qe-status ok'; statusEl.textContent = t(L.boxSaved);
+        // Refresh totals + the box list in place — NOT a full re-render,
+        // which would wipe this success message before anyone sees it.
+        boxes = await listBuckBoxes(batch.uid);
+        startingTotal = boxes.reduce((a, b) => a + (Number(b.fields.startingWeightLb) || 0), 0);
+        document.getElementById('box-list').innerHTML = boxListHtml(boxes);
+        document.getElementById('stat-starting').textContent = round2(startingTotal).toFixed(2);
+        document.getElementById('stat-yield').textContent = startingTotal > 0 ? Math.round((buckedTotal / startingTotal) * 1000) / 10 + '%' : '—';
+      } else {
+        statusEl.className = 'qe-status err'; statusEl.textContent = t(L.failed);
+      }
+    });
+
+    det.querySelector('#close-batch-btn').addEventListener('click', async () => {
+      const statusEl = document.getElementById('close-status');
+      const extra = {
+        teamLead: document.getElementById('close-lead').value || null,
+        crewSize: document.getElementById('close-crewsize').value || null,
+        laborHours: document.getElementById('close-hours').value || null,
+        notes: document.getElementById('close-notes').value || null
+      };
+      const btn = document.getElementById('close-batch-btn');
+      btn.disabled = true;
+      const res = await closeBuckBatch(batch.uid, batch.strain, extra, owner);
+      refreshQueueBanner();
+      if (res.ok && res.queued) {
+        // Queue it and lock the button — re-clicking while this is still
+        // pending would queue a second close and double-count the batch
+        // once both eventually sync.
+        statusEl.className = 'qe-status queued'; statusEl.textContent = t(L.queuedClose);
+      } else if (res.ok) {
+        btn.disabled = true; // closed — leave the confirmation and summary visible, don't hide the panel
+        statusEl.className = 'qe-status ok'; statusEl.textContent = t(L.closed);
+        openBatches = await listOpenBatches();
+        await loadOpenBatchesIntoPicker();
+        renderBatchList();
+      } else {
+        btn.disabled = false;
+        statusEl.className = 'qe-status err'; statusEl.textContent = t(L.failed);
+      }
+    });
+  }
+
+  // ── EMPLOYEE ────────────────────────────────────────────────────────────
+  document.getElementById('emp-from').value = todayStr();
+  document.getElementById('emp-to').value = todayStr();
+  document.getElementById('emp-search').addEventListener('click', async () => {
+    const empNo = document.getElementById('emp-no').value.trim();
+    const from = document.getElementById('emp-from').value;
+    const to = document.getElementById('emp-to').value;
+    const mount = document.getElementById('emp-result');
+    if (!empNo) { mount.innerHTML = `<div class="empty-note">${esc(t(L.empNoField))}</div>`; return; }
+    mount.innerHTML = `<div class="empty-note">…</div>`;
+    const rows = await listSubmissionsByEmployee(empNo, from, to);
+    if (!rows.length) { mount.innerHTML = `<div class="empty-note">${esc(t(L.noResults))}</div>`; return; }
+    const byStrain = {};
+    rows.forEach((r) => { byStrain[r.strain || '—'] = (byStrain[r.strain || '—'] || 0) + (Number(r.fields.weightLb) || 0); });
+    const total = Object.values(byStrain).reduce((a, x) => a + x, 0);
+    mount.innerHTML = `
+      <div class="stat-row">
+        <div class="stat"><div class="k">${esc(t(L.total))}</div><div class="v">${round2(total).toFixed(2)} lb</div></div>
+        ${Object.entries(byStrain).map(([s, v]) => `<div class="stat"><div class="k">${esc(s)}</div><div class="v">${round2(v).toFixed(2)}</div></div>`).join('')}
+      </div>
+      <table class="simple"><thead><tr><th>${esc(t(L.date))}</th><th>${esc(t(L.time))}</th><th>${esc(t(L.strain))}</th><th>${esc(t(L.uid))}</th><th>${esc(t(L.box))}</th><th>${esc(t(L.weightLb))}</th></tr></thead>
+        <tbody>${rows.map((r) => `<tr><td>${esc(r.work_date)}</td><td>${esc(new Date(r.submitted_at).toLocaleTimeString())}</td><td>${esc(r.strain)}</td><td>${esc(shortUid(r.fields.batchUid))}</td><td>${esc(r.fields.boxNo)}</td><td>${round2(r.fields.weightLb).toFixed(2)}</td></tr>`).join('')}</tbody>
+      </table>`;
+  });
+
+  // ── HISTORICAL ──────────────────────────────────────────────────────────
+  document.getElementById('hist-from').value = todayStr();
+  document.getElementById('hist-to').value = todayStr();
+  document.getElementById('hist-search').addEventListener('click', async () => {
+    const from = document.getElementById('hist-from').value;
+    const to = document.getElementById('hist-to').value;
+    const strainFilter = document.getElementById('hist-strain').value.trim().toLowerCase();
+    const uidFilter = document.getElementById('hist-uid').value.trim().toLowerCase();
+    const mount = document.getElementById('hist-result');
+    mount.innerHTML = `<div class="empty-note">…</div>`;
+    let rows = await listSubmissionsByDateRange(from, to);
+    if (strainFilter) rows = rows.filter((r) => (r.strain || '').toLowerCase().includes(strainFilter));
+    if (uidFilter) rows = rows.filter((r) => (r.fields.batchUid || '').toLowerCase().includes(uidFilter));
+    if (!rows.length) { mount.innerHTML = `<div class="empty-note">${esc(t(L.noResults))}</div>`; return; }
+    mount.innerHTML = `<table class="simple"><thead><tr><th>${esc(t(L.date))}</th><th>${esc(t(L.time))}</th><th>${esc(t(L.employeeNo))}</th><th>${esc(t(L.strain))}</th><th>${esc(t(L.uid))}</th><th>${esc(t(L.box))}</th><th>${esc(t(L.weightLb))}</th></tr></thead>
+      <tbody>${rows.map((r) => `<tr><td>${esc(r.work_date)}</td><td>${esc(new Date(r.submitted_at).toLocaleTimeString())}</td><td>${esc(r.fields.employeeNo)}</td><td>${esc(r.strain)}</td><td>${esc(shortUid(r.fields.batchUid))}</td><td>${esc(r.fields.boxNo)}</td><td>${round2(r.fields.weightLb).toFixed(2)}</td></tr>`).join('')}</tbody>
+      </table>`;
+  });
+
+  // ── OFFLINE QUEUE ─────────────────────────────────────────────────────────
+  // Quick-entry, box saves, and batch close-out all fall back to this same
+  // queue on any write failure (see buck_data.js) — this just renders the
+  // "N pending" banner and refreshes whatever's on screen once a flush lands
+  // real data.
+  refreshQueueBanner = mountBuckQueueBanner('queue', { pendingOne: L.pendingOne, pendingMany: L.pendingMany, sendNow: L.sendNow }, async () => {
+    await refreshRoster();
+    if (activeBatch && activeBatch.kind === 'open') {
+      const batch = batchByUid(activeBatch.uid) || (await listOpenBatches()).find((b) => b.uid === activeBatch.uid);
+      if (batch) openBatchDetail(batch);
+    }
+  });
+})();
+</script>
+</body>
+</html>

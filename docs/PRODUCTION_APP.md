@@ -12,6 +12,8 @@ the existing Operations Hub — same login, same Netlify deploy.
 |---|---|
 | `production.html` | Station picker, grouped by department, with "continue" chips for your open drafts |
 | `prod_form.html` | The form for every station, rendered from the schema, with autosave + resume |
+| `buck_station.html` | Bucking's own 4-tab page (Today / Batches / Employee / Historical) — see below, doesn't use `prod_form.html` |
+| `buck_data.js` | Bucking's data layer — submissions, boxes, batch close-out. Reuses `production_forms`, no schema changes |
 | `production_today.html` | Live board — every form in progress or finished today, for anyone with view access |
 | `production_dashboard.html` | Pipeline, yields, biomass, labor, requests, exceptions (finished forms only) |
 | `production_stations.js` | **The schema.** Station and field definitions, EN + ES |
@@ -39,6 +41,64 @@ Each stage pulls its input weight forward from the stage before it: type the
 last 4 of the Metrc tag and bucking fills in the dry weight the post-dry check
 recorded. Every stage totals its own outputs and shows the variance against
 what went in, live, while the operator is still standing at the scale.
+
+## Bucking — a different shape from every other station
+
+Every other station is one record per work order: fill out a form, submit
+it, done. Bucking isn't, because the real floor doesn't work that way —
+several strains get bucked at once by a rotating crew, a batch can span
+several days, and the crew needs to log a scale reading the instant it
+happens, not fill out a form at the end of a shift. So Bucking gets its own
+page, `buck_station.html` (linked via `customHref` on the `buck` entry in
+`production_stations.js` instead of `prod_form.html`), with four tabs:
+
+- **Today** — a quick-entry bar (batch, employee #, box #, weight) team
+  leads use all day, plus a live roster grid — employees × strains, exactly
+  the paper "Miercoles" tally sheet — built automatically from every
+  submission, not filled in by hand.
+- **Batches** — pick a batch (a dried UID Post-Dry Check already produced;
+  Bucking never creates one, just watches for `dry_check` "pass" records
+  with no closing record yet) to see every submission against it, log
+  starting weight / waste / stems / big leaf / A+ / A / B trim **per box**,
+  and close it out when done.
+- **Employee** — one person's production over a date range.
+- **Historical** — everything, filterable by date / strain / UID.
+
+**No new schema, no new Supabase project changes.** This reuses the same
+`production_forms` table as everything else (see `buck_data.js`), just with
+station keys of its own instead of the one-record-per-form shape:
+
+- `buck_submission` — insert-only. One row per scale trip: employee, batch,
+  box, weight, timestamp. This is the log the roster and history read.
+- `buck_box` — one row per (batch, box #), **patched, not replaced**, as
+  different fields get filled in at different times by different people.
+  Every save is read-merge-write client-side, so submitting just the waste
+  weight later never blanks out the starting weight someone already logged.
+- `buck_batch_close` — insert-only marker that a batch is done.
+
+Closing a batch also writes a normal `station_key: 'buck'` record — the
+rolled-up totals from every submission and box against it, in the exact
+same field shape the OLD single-form Bucking used (`startingDryLb`,
+`buckedFlowerLb`, `bigLeafLb`, `stemLb`, `wasteLb`, plus new `aPlusTrimLb` /
+`aTrimLb` / `bTrimLb`). That's deliberate: Machine Trim's prefill, the
+yield/variance calc, and the dashboard all keep reading `buck` exactly like
+before — they have no idea the data came from many small submissions
+instead of one big form. **Bucking does not mint a new UID when it
+finishes** — the summary record stays tagged under the same UID Post-Dry
+Check produced, and that's what an operator types in at Machine Trim.
+
+**Works offline too.** Quick-entry, box saves, and closing a batch all queue
+locally (`localStorage`, key `2cw_buck_queue`) on any write failure and
+retry when the connection comes back — same idea as the rest of the app's
+offline queue, just pointed at Supabase directly instead of the Netlify
+function the old single-form queue uses. The tricky part was keeping the
+box merge-safety guarantee across a dropped connection: a queued box save
+doesn't store a pre-merged row, it stores "retry this exact call" — so
+whenever it actually runs (now or after reconnecting), it re-reads
+whatever's really on the server at that moment and merges into *that*,
+never stale or guessed data. A submission made offline shows up on the
+Today roster immediately too (merged in locally from the queue until its
+real row lands), so an operator isn't left wondering whether it took.
 
 ## Things the forms do that the paper doesn't
 
