@@ -1,9 +1,8 @@
 """
 Connecteam Hourly Staff Sync
 ============================
-Pulls time-clock activity (and, best-effort, scheduled shifts) from the
-Connecteam API and writes data/connecteam_hours.json for the Staff Hours
-dashboard (staff_hours.html).
+Pulls time-clock activity from the Connecteam API and writes
+data/connecteam_hours.json for the Staff Hours dashboard (staff_hours.html).
 
 Usage:
     python scripts/connecteam_sync.py
@@ -13,15 +12,6 @@ Output:
 
 Requirements:
     pip install requests
-
-NOTE ON FIELD MAPPING: the endpoint paths and field names below follow
-Connecteam's published Developer API docs but have NOT been verified against
-a live account yet — this is the same situation kss_sync.py was in for its
-inventory/batches endpoint (see sync_time_activities / sync_schedule_today
-below for the fail-soft handling). The _first() helper tries a few
-plausible field-name spellings so a close-but-not-exact real response still
-mostly works; expect to tighten these once we see actual output from a
-workflow_dispatch run against a real CONNECTEAM_API_KEY.
 """
 
 import json
@@ -188,7 +178,7 @@ def save(filename, data):
 # ── SYNC FUNCTIONS ────────────────────────────────────────────────────────────
 
 def sync_users():
-    print("\n[1/4] Users")
+    print("\n[1/3] Users")
     users = api_get_all("/users/v1/users", list_path=("data", "users"))
     by_id = {}
     for u in users:
@@ -202,7 +192,7 @@ def sync_users():
 
 
 def discover_clocks():
-    print("\n[2/4] Time Clocks")
+    print("\n[2/3] Time Clocks")
     body = api_get("/time-clock/v1/time-clocks")
     print(f"    [shape] /time-clock/v1/time-clocks → {_shape(body)}")
     clocks = _first(body.get("data", {}) if isinstance(body, dict) else {}, "timeClocks")
@@ -223,7 +213,7 @@ def sync_time_activities(clock_ids, start_date, end_date):
     # period, rather than a flat list of shift records. So we pull each
     # user's `shifts` array and inject their userId onto every shift, which
     # keeps everything downstream (build_hours_json) working unchanged.
-    print("\n[3/4] Time Activities")
+    print("\n[3/3] Time Activities")
     all_shifts = []
     shift_shape_logged = False
     for clock_id in clock_ids:
@@ -246,29 +236,9 @@ def sync_time_activities(clock_ids, start_date, end_date):
     return all_shifts
 
 
-def sync_schedule_today(clock_ids, today_str):
-    # Best-effort — the Scheduler module/API may not be enabled on this
-    # account. Fail soft into None (dashboard hides the section) rather than
-    # failing the whole sync, same pattern as kss_sync's inventory batches.
-    print("\n[4/4] Schedule (best-effort)")
-    try:
-        shifts = []
-        for clock_id in clock_ids:
-            shifts.extend(api_get_all(
-                "/scheduler/v1/shifts",
-                params={"startDate": today_str, "endDate": today_str},
-                list_path=("data", "shifts"),
-            ))
-        print(f"  → {len(shifts)} scheduled shift(s)")
-        return shifts
-    except RuntimeError as e:
-        print(f"  [WARN] Scheduler fetch failed, continuing without it: {e}")
-        return None
-
-
 # ── TRANSFORM ──────────────────────────────────────────────────────────────
 
-def build_hours_json(users, shifts, schedule_shifts):
+def build_hours_json(users, shifts):
     now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     week_start = today_start - timedelta(days=today_start.weekday())
@@ -321,44 +291,11 @@ def build_hours_json(users, shifts, schedule_shifts):
         for uid, v in sorted(week_totals.items(), key=lambda kv: -kv[1]["hours"])
     ]
 
-    schedule_today = None
-    if schedule_shifts is not None:
-        actual_start_by_user = {}
-        for s in shifts:
-            uid = str(_first(s, "userId", "employeeId"))
-            start = _to_dt(_first(s, "start", "shiftStartTime", "startTime", "clockIn"))
-            if start and start >= today_start:
-                actual_start_by_user.setdefault(uid, start)
-
-        schedule_today = []
-        for sched in schedule_shifts:
-            uid = str(_first(sched, "userId", "employeeId"))
-            name = users.get(uid, {}).get("name", f"User {uid}")
-            sched_start = _to_dt(_first(sched, "startTime", "shiftStartTime"))
-            sched_end = _to_dt(_first(sched, "endTime", "shiftEndTime"))
-            actual_start = actual_start_by_user.get(uid)
-
-            if actual_start is None:
-                status = "no_show" if sched_end and sched_end < now else "upcoming"
-            elif sched_start and actual_start > sched_start + timedelta(minutes=10):
-                status = "late"
-            else:
-                status = "on_time"
-
-            schedule_today.append({
-                "userId": uid, "name": name,
-                "scheduledStart": sched_start.isoformat() if sched_start else None,
-                "scheduledEnd": sched_end.isoformat() if sched_end else None,
-                "actualStart": actual_start.isoformat() if actual_start else None,
-                "status": status,
-            })
-
     return {
         "last_sync": now.isoformat(),
         "clocked_in": sorted(clocked_in, key=lambda c: c["clockIn"]),
         "today": today_list,
         "week": week_list,
-        "schedule_today": schedule_today,
     }
 
 
@@ -380,12 +317,11 @@ def main():
         if not clock_ids:
             raise RuntimeError("No time clocks found on this Connecteam account")
         shifts = sync_time_activities(clock_ids, week_start_str, today_str)
-        schedule_shifts = sync_schedule_today(clock_ids, today_str)
     except RuntimeError as e:
         print(f"\n\nFATAL ERROR: {e}")
         return 1
 
-    result = build_hours_json(users, shifts, schedule_shifts)
+    result = build_hours_json(users, shifts)
     save("connecteam_hours.json", result)
 
     elapsed = (datetime.now(timezone.utc) - started).total_seconds()
@@ -395,7 +331,6 @@ def main():
     print(f"  Clocked in   : {len(result['clocked_in'])}")
     print(f"  Today rows   : {len(result['today'])}")
     print(f"  Week rows    : {len(result['week'])}")
-    print(f"  Schedule     : {'n/a' if result['schedule_today'] is None else len(result['schedule_today'])}")
     print("=" * 55)
     return 0
 

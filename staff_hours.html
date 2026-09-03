@@ -61,13 +61,8 @@
   .empty-note{padding:24px;color:var(--muted);font-size:12px;text-align:center}
 
   .badge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:4px;margin-left:6px}
-  .badge-live{background:rgba(74,222,128,.15);color:var(--green)}
   .badge-ot{background:rgba(245,197,24,.15);color:var(--yellow)}
   .badge-dt{background:rgba(240,92,92,.15);color:var(--red)}
-  .badge-late{background:rgba(245,197,24,.15);color:var(--yellow)}
-  .badge-noshow{background:rgba(240,92,92,.15);color:var(--red)}
-  .badge-ontime{background:rgba(74,222,128,.15);color:var(--green)}
-  .badge-upcoming{background:var(--surface2);color:var(--muted)}
 
   .live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:7px;box-shadow:0 0 0 2px rgba(74,222,128,.2);animation:pulse 2s infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
@@ -133,22 +128,6 @@
     </table>
     <div class="empty-note" id="week-empty" style="display:none">No hours logged yet this week.</div>
   </div>
-
-  <div id="schedule-section" style="display:none">
-    <div class="section-title">Schedule vs Actual — Today</div>
-    <div class="staff-table">
-      <table id="tbl-schedule">
-        <thead><tr>
-          <th data-sort="name">Name</th>
-          <th data-sort="scheduledStart">Scheduled</th>
-          <th data-sort="actualStart">Actual</th>
-          <th>Status</th>
-        </tr></thead>
-        <tbody></tbody>
-      </table>
-      <div class="empty-note" id="schedule-empty" style="display:none">No shifts scheduled today.</div>
-    </div>
-  </div>
 </div>
 
 <script>
@@ -190,18 +169,6 @@ function otBadge(hours, isDaily) {
   if (!isDaily && hours > 40) return '<span class="badge badge-ot">Overtime</span>';
   return '';
 }
-function scheduleBadge(status) {
-  const map = {
-    on_time: ['badge-ontime', 'On Time'],
-    late: ['badge-late', 'Late'],
-    no_show: ['badge-noshow', 'No Show'],
-    upcoming: ['badge-upcoming', 'Upcoming'],
-    not_scheduled: ['badge-upcoming', 'Unscheduled'],
-  };
-  const [cls, label] = map[status] || ['badge-upcoming', status || '—'];
-  return `<span class="badge ${cls}">${label}</span>`;
-}
-
 // ─── SORTING ─────────────────────────────────────────────────────────────
 function sortRows(rows, key, asc) {
   return [...rows].sort((a, b) => {
@@ -267,20 +234,6 @@ function renderWeek(rows) {
   `).join('');
 }
 
-// ─── RENDER: SCHEDULE ────────────────────────────────────────────────────
-function renderSchedule(rows) {
-  const tbody = $('tbl-schedule').querySelector('tbody');
-  $('schedule-empty').style.display = rows.length ? 'none' : 'block';
-  tbody.innerHTML = rows.map(r => `
-    <tr>
-      <td class="name-cell">${r.name}</td>
-      <td>${fmtTime(r.scheduledStart)} – ${fmtTime(r.scheduledEnd)}</td>
-      <td>${r.actualStart ? fmtTime(r.actualStart) : '—'}</td>
-      <td>${scheduleBadge(r.status)}</td>
-    </tr>
-  `).join('');
-}
-
 // ─── LIVE ELAPSED-TIME TICK ──────────────────────────────────────────────
 function tickElapsed() {
   document.querySelectorAll('[data-clock-in]').forEach(td => {
@@ -307,7 +260,6 @@ async function loadAll() {
     const clockedIn = staffData.clocked_in || [];
     const today = staffData.today || [];
     const week = staffData.week || [];
-    const schedule = staffData.schedule_today;
 
     renderClockedIn(clockedIn);
     renderToday(today);
@@ -315,14 +267,6 @@ async function loadAll() {
     wireSort('tbl-clocked-in', clockedIn, renderClockedIn);
     wireSort('tbl-today', today, renderToday);
     wireSort('tbl-week', week, renderWeek);
-
-    if (schedule && schedule.length) {
-      $('schedule-section').style.display = 'block';
-      renderSchedule(schedule);
-      wireSort('tbl-schedule', schedule, renderSchedule);
-    } else {
-      $('schedule-section').style.display = 'none';
-    }
 
     elapsedTimer = setInterval(tickElapsed, 30000);
   } catch (err) {
