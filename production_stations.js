@@ -34,6 +34,9 @@ const BIOMASS = {
   smalls_b:        { en: 'Smalls (B-Bud)',    es: 'Flor pequeña (Bud B)' },
   sugar_trim:      { en: 'Sugar Trim',        es: 'Hoja azucarada' },
   trim:            { en: 'Trim',              es: 'Recorte' },
+  trim_a_plus:     { en: 'Trim (A+)',         es: 'Recorte (A+)' },
+  trim_a:          { en: 'Trim (A)',          es: 'Recorte (A)' },
+  trim_b:          { en: 'Trim (B)',          es: 'Recorte (B)' },
   shake:           { en: 'Shake',             es: 'Shake' },
   big_leaf:        { en: 'Big Leaf',          es: 'Hoja grande' },
   stems:           { en: 'Stems',             es: 'Tallos' },
@@ -43,7 +46,7 @@ const BIOMASS = {
 
 // Categories that are sellable / usable biomass (the rest is waste or an
 // intermediate that gets consumed by the next stage).
-const SELLABLE = ['flower_a', 'smalls_b', 'sugar_trim', 'trim', 'shake', 'fresh_frozen'];
+const SELLABLE = ['flower_a', 'smalls_b', 'sugar_trim', 'trim', 'trim_a_plus', 'trim_a', 'trim_b', 'shake', 'fresh_frozen'];
 
 const num = (x) => { const n = parseFloat(x); return Number.isFinite(n) ? n : 0; };
 const sum = (v, keys) => keys.reduce((a, k) => a + num(v[k]), 0);
@@ -359,74 +362,58 @@ const PROD_STATIONS = [
   },
 
   // ── PROCESSING: BUCKING ───────────────────────────────────────────────────
-  // Laid out to match the paper "Work Order Form (Bucking — Hourly)" exactly —
-  // same two grids (boxes pulled from inventory, then bags weighed off the
-  // buck table), just self-totaling instead of hand-added.
+  // Superseded by a custom 4-tab page (buck_station.html — see customHref)
+  // matching how the crew actually works: many strains being bucked at once,
+  // by a rotating crew, over multiple days per batch — not one form filled
+  // out once. The fields/flow below are KEPT (not deleted) because
+  // buck_station.html writes a summary record in this exact shape when a
+  // batch is closed, so machine_trim's prefill, the yield/variance calc, and
+  // the dashboard all keep reading 'buck' the same way they always did —
+  // they have no idea the data came from many small submissions instead of
+  // one big form. See docs/PRODUCTION_APP.md for the full data model.
   {
     key: 'buck',
     dept: { en: 'Processing', es: 'Procesamiento' },
     title: { en: 'Bucking', es: 'Desvarado (bucking)' },
-    desc: { en: 'Cut buds off the stems and split out big leaf, stems, and waste.',
-            es: 'Corte los cogollos del tallo y separe hoja grande, tallos y desecho.' },
+    desc: { en: 'Log bucked flower by employee and strain as it happens — batches, boxes, and the daily roster.',
+            es: 'Registre la flor desvarada por empleado y variedad a medida que ocurre — lotes, cajas y el registro diario.' },
     color: 'gold',
     headline: 'buckedFlowerLb',
+    customHref: '/buck_station.html',
+    // No sourceUid/dep on F.sourceUid() here — buck_station.html writes
+    // `sourceUid` directly as the batch's own UID (the one dry_check
+    // created). Bucking never mints a new UID of its own, so the material
+    // keeps flowing under that same tag straight through to Machine Trim.
     fields: [
-      { k: 'workOrderNo', t: 'text', l: { en: 'Work Order #', es: 'N.º de orden de trabajo' } },
       F.date(),
-      { k: 'pid', t: 'select', ref: 'properties', allowOther: true,
-        l: { en: 'Property ID (PID)', es: 'ID de propiedad (PID)' } },
-      { k: 'cid', t: 'text', l: { en: 'Customer ID (CID)', es: 'ID de cliente (CID)' } },
-      F.sourceUid({ en: 'Package UID (last 5)', es: 'UID del paquete (últimos 5)' }),
-      { k: 'strain', t: 'select', ref: 'strains', allowOther: true, prefill: 'lookup',
+      { k: 'strain', t: 'select', ref: 'strains', allowOther: true,
         l: { en: 'Strain', es: 'Variedad (cepa)' } },
-      { k: 'strainGrade', t: 'select',
-        l: { en: 'Strain Grade', es: 'Grado de la variedad' },
-        opts: [
-          { v: 'A', l: { en: 'A', es: 'A' } },
-          { v: 'B', l: { en: 'B', es: 'B' } },
-          { v: 'whole_plant', l: { en: 'Whole Plant', es: 'Planta entera' } },
-          { v: 'mixed', l: { en: 'Mixed', es: 'Mixto' } }
-        ] },
-      { k: 'estWeightNeededLb', t: 'number', min: 0, step: 0.01, prefill: 'lookup',
-        l: { en: 'Total Stem Weight Needed from Inventory — Estimate (lbs)', es: 'Peso de tallo necesario del inventario — estimado (lbs)' },
-        hint: { en: 'Pulled from the post-dry check for this UID — a target, not what has to match.',
-                es: 'Tomado de la verificación post-secado de este UID — una referencia, no algo que deba coincidir exactamente.' } },
-
-      { k: 'boxesRemoved', t: 'lineitems', req: true,
-        l: { en: 'Boxes and Weight Removed from Inventory', es: 'Cajas y peso retirado del inventario' },
-        hint: { en: 'One row per box, same as the paper form.', es: 'Una fila por caja, igual que el formulario en papel.' },
-        cols: [
-          { k: 'boxNo', t: 'text', l: { en: 'Box #', es: 'Caja n.º' } },
-          { k: 'weightLb', t: 'number', l: { en: 'Weight (lbs)', es: 'Peso (lbs)' }, min: 0, step: 0.01 }
-        ],
-        totalCol: 'weightLb' },
-      { k: 'startingDryLb', t: 'calc',
-        calc: (v) => (v.boxesRemoved || []).reduce((a, r) => a + num(r.weightLb), 0),
-        l: { en: 'Total Stem Weight Removed — Actual Starting Weight (lbs)', es: 'Peso de tallo retirado — peso inicial real (lbs)' } },
-
-      { k: 'buckedWeights', t: 'lineitems', req: true,
-        l: { en: 'Bucked Flower — Weighing Worksheet', es: 'Flor desvarada — hoja de pesaje' },
-        hint: { en: 'One row per person — how many pounds of this strain they bucked.',
-                es: 'Una fila por persona — cuántas libras de esta variedad desvaró.' },
-        cols: [
-          { k: 'employeeNo', t: 'text', l: { en: 'Employee #', es: 'N.º de empleado' }, inputmode: 'numeric' },
-          { k: 'weightLb', t: 'number', l: { en: 'Weight (lbs)', es: 'Peso (lbs)' }, min: 0, step: 0.01 }
-        ],
-        totalCol: 'weightLb' },
-      { k: 'buckedFlowerLb', t: 'calc',
-        calc: (v) => (v.buckedWeights || []).reduce((a, r) => a + num(r.weightLb), 0),
-        l: { en: 'Total Bucked Flower (lbs)', es: 'Flor desvarada total (lbs)' } },
-
+      { k: 'startingDryLb', t: 'number', min: 0, step: 0.01,
+        l: { en: 'Total Starting Weight — Sum of Boxes (lbs)', es: 'Peso inicial total — suma de cajas (lbs)' },
+        hint: { en: 'Sum of every box’s starting weight logged against this batch.',
+                es: 'Suma del peso inicial de cada caja registrada para este lote.' } },
+      { k: 'buckedFlowerLb', t: 'number', min: 0, step: 0.01,
+        l: { en: 'Total Bucked Flower (lbs)', es: 'Flor desvarada total (lbs)' },
+        hint: { en: 'Sum of every employee submission logged against this batch.',
+                es: 'Suma de cada envío de empleado registrado para este lote.' } },
       { k: 'bigLeafLb', t: 'number', min: 0, step: 0.01,
         l: { en: 'Big Leaf (lbs)', es: 'Hoja grande (lbs)' } },
       { k: 'stemLb', t: 'number', min: 0, step: 0.01,
         l: { en: 'Stems / Sticks (lbs)', es: 'Tallos / palos (lbs)' } },
       F.waste(),
-      ...totalsBlock('startingDryLb', ['buckedFlowerLb', 'bigLeafLb', 'stemLb', 'wasteLb']),
+      { k: 'aPlusTrimLb', t: 'number', min: 0, step: 0.01,
+        l: { en: 'A+ Trim (lbs)', es: 'Recorte A+ (lbs)' } },
+      { k: 'aTrimLb', t: 'number', min: 0, step: 0.01,
+        l: { en: 'A Trim (lbs)', es: 'Recorte A (lbs)' } },
+      { k: 'bTrimLb', t: 'number', min: 0, step: 0.01,
+        l: { en: 'B Trim (lbs)', es: 'Recorte B (lbs)' } },
+      ...totalsBlock('startingDryLb', ['buckedFlowerLb', 'bigLeafLb', 'stemLb', 'wasteLb', 'aPlusTrimLb', 'aTrimLb', 'bTrimLb']),
       { k: 'buckYieldPct', t: 'calc', fmt: 'pct', calc: (v) => pct(v.buckedFlowerLb, v.startingDryLb),
         l: { en: 'Bucked Flower Yield %', es: '% de rendimiento de flor desvarada' } },
-      { k: 'newBuckedUid', t: 'uid', l: { en: 'New Bucked Flower UID', es: 'Nuevo UID de flor desvarada' } },
-      { k: 'newBigLeafUid', t: 'uid', l: { en: 'New Big Leaf UID', es: 'Nuevo UID de hoja grande' } },
+      // Captured once, at batch close-out (buck_station.html's Batches tab) —
+      // a coarse crew/hours summary alongside the granular per-submission
+      // weight log, so the payroll-join seam (employeeNo × date × batch ×
+      // hours) documented in PRODUCTION_APP.md keeps working for Bucking.
       F.teamLead(), F.crewSize(), F.laborHours(), F.crew(), F.notes(), F.photo()
     ],
     flow: { lossKind: 'conserving',
@@ -435,7 +422,10 @@ const PROD_STATIONS = [
               { field: 'buckedFlowerLb', category: 'bucked_flower' },
               { field: 'bigLeafLb', category: 'big_leaf' },
               { field: 'stemLb', category: 'stems' },
-              { field: 'wasteLb', category: 'waste' }
+              { field: 'wasteLb', category: 'waste' },
+              { field: 'aPlusTrimLb', category: 'trim_a_plus' },
+              { field: 'aTrimLb', category: 'trim_a' },
+              { field: 'bTrimLb', category: 'trim_b' }
             ] }
   },
 
@@ -724,7 +714,9 @@ const PREFILL_MAP = {
   // carry several), so it no longer offers an incoming prefill from harvest —
   // the operator types the strain/UID per line off the manifest instead.
   dry_check:   { from: 'intake_wet',   map: { strain: 'strain', dryRoom: 'dryRoom', wetIntakeLb: 'weight' } },
-  buck:        { from: 'dry_check',    map: { strain: 'strain', estWeightNeededLb: 'dryWeightLb' } },
+  // Bucking has its own custom page (buck_station.html) now, not the generic
+  // form, so it does its own upstream lookups directly rather than through
+  // this table — no 'buck' entry needed here.
   machine_trim:{ from: 'buck',         map: { strain: 'strain', inputBuckedLb: 'buckedFlowerLb' } },
   hand_trim:   { from: 'machine_trim', map: { strain: 'strain', startingBuckedLb: 'flowerALb' } }
 };

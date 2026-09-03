@@ -160,9 +160,9 @@
       ${g.stations.map((s) => {
         const n = counts[s.key] || 0;
         const todayLabel = n === 0 ? t(L.todayNone) : n === 1 ? t(L.todayOne) : t(L.todayMany).replace('{n}', n);
-        const drafts = myDrafts[s.key] || [];
+        const drafts = s.customHref ? [] : (myDrafts[s.key] || []);
         return `<div class="card ${s.color}">
-          <a class="card-link" href="/prod_form.html?station=${s.key}">
+          <a class="card-link" href="${s.customHref || `/prod_form.html?station=${s.key}`}">
             <div class="card-dot"></div>
             <div class="card-title">${t(s.title)}</div>
             <div class="card-desc">${t(s.desc)}</div>
