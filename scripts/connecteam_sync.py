@@ -159,10 +159,13 @@ def _first(d, *keys, default=None):
 
 
 def _to_dt(value):
-    """Best-effort parse of a Connecteam timestamp — unix seconds/ms or an
-    ISO string, depending on which shape the real API turns out to send."""
+    """Best-effort parse of a Connecteam timestamp — unix seconds/ms, an ISO
+    string, or a {"timestamp": ...} wrapper object (confirmed pattern for
+    some Connecteam fields), depending on which shape the real API sends."""
     if value is None:
         return None
+    if isinstance(value, dict):
+        return _to_dt(_first(value, "timestamp", "value"))
     if isinstance(value, (int, float)):
         ts = value / 1000 if value > 10_000_000_000 else value
         return datetime.fromtimestamp(ts, tz=timezone.utc)
@@ -214,15 +217,31 @@ def discover_clocks():
 
 
 def sync_time_activities(clock_ids, start_date, end_date):
+    # The real endpoint (confirmed via [shape] logging against a live
+    # account) returns data.timeActivitiesByUsers — a list of PER-USER
+    # objects, each holding that user's shifts/manualBreaks/timeOffs for the
+    # period, rather than a flat list of shift records. So we pull each
+    # user's `shifts` array and inject their userId onto every shift, which
+    # keeps everything downstream (build_hours_json) working unchanged.
     print("\n[3/4] Time Activities")
     all_shifts = []
+    shift_shape_logged = False
     for clock_id in clock_ids:
-        shifts = api_get_all(
+        per_user = api_get_all(
             f"/time-clock/v1/time-clocks/{clock_id}/time-activities",
             params={"startDate": start_date, "endDate": end_date},
-            list_path=("data", "timeActivities"),
+            list_path=("data", "timeActivitiesByUsers"),
         )
-        all_shifts.extend(shifts)
+        for u in per_user:
+            uid = _first(u, "userId")
+            shifts = u.get("shifts") or []
+            if shifts and not shift_shape_logged:
+                print(f"    [shape] shift record → {_shape(shifts[0], depth=3)}")
+                shift_shape_logged = True
+            for s in shifts:
+                s = dict(s)
+                s["userId"] = uid
+                all_shifts.append(s)
     print(f"  → {len(all_shifts)} shift record(s) total")
     return all_shifts
 
@@ -257,21 +276,22 @@ def build_hours_json(users, shifts, schedule_shifts):
     clocked_in = []
     today_totals = {}
     week_totals = {}
+    unparseable = 0
 
     for s in shifts:
         uid = str(_first(s, "userId", "employeeId"))
         name = users.get(uid, {}).get("name", f"User {uid}")
-        job = _first(s, "jobName", "activityName", "shiftName", default="")
-        start = _to_dt(_first(s, "shiftStartTime", "startTime", "clockIn"))
-        end = _to_dt(_first(s, "shiftEndTime", "endTime", "clockOut"))
+        start = _to_dt(_first(s, "start", "shiftStartTime", "startTime", "clockIn"))
+        end = _to_dt(_first(s, "end", "shiftEndTime", "endTime", "clockOut"))
         if start is None:
+            unparseable += 1
             continue
 
         hours = max(0.0, ((end or now) - start).total_seconds() / 3600)
 
         if end is None:
             clocked_in.append({
-                "userId": uid, "name": name, "job": job,
+                "userId": uid, "name": name,
                 "clockIn": start.isoformat(),
                 "elapsedHours": round(hours, 2),
             })
@@ -284,6 +304,10 @@ def build_hours_json(users, shifts, schedule_shifts):
         if start >= week_start:
             bucket = week_totals.setdefault(uid, {"name": name, "hours": 0.0})
             bucket["hours"] += hours
+
+    if unparseable:
+        print(f"  [WARN] {unparseable} shift record(s) had no parseable start time — "
+              f"field-name guess in build_hours_json is likely still wrong")
 
     today_list = [
         {"userId": uid, "name": v["name"], "hoursToday": round(v["hours"], 2), "shiftsToday": v["shifts"]}
@@ -302,7 +326,7 @@ def build_hours_json(users, shifts, schedule_shifts):
         actual_start_by_user = {}
         for s in shifts:
             uid = str(_first(s, "userId", "employeeId"))
-            start = _to_dt(_first(s, "shiftStartTime", "startTime", "clockIn"))
+            start = _to_dt(_first(s, "start", "shiftStartTime", "startTime", "clockIn"))
             if start and start >= today_start:
                 actual_start_by_user.setdefault(uid, start)
 
