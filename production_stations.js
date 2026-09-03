@@ -406,9 +406,10 @@ const PROD_STATIONS = [
 
       { k: 'buckedWeights', t: 'lineitems', req: true,
         l: { en: 'Bucked Flower — Weighing Worksheet', es: 'Flor desvarada — hoja de pesaje' },
-        hint: { en: 'One row per bag weighed off the buck table.', es: 'Una fila por bolsa pesada en la mesa de desvarado.' },
+        hint: { en: 'One row per person — how many pounds of this strain they bucked.',
+                es: 'Una fila por persona — cuántas libras de esta variedad desvaró.' },
         cols: [
-          { k: 'bagNo', t: 'text', l: { en: 'Bag #', es: 'Bolsa n.º' } },
+          { k: 'employeeNo', t: 'text', l: { en: 'Employee #', es: 'N.º de empleado' }, inputmode: 'numeric' },
           { k: 'weightLb', t: 'number', l: { en: 'Weight (lbs)', es: 'Peso (lbs)' }, min: 0, step: 0.01 }
         ],
         totalCol: 'weightLb' },
