@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>2CW Production Requests</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0B0D10">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="2CW Ops">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0B0D10;--bg2:#111418;--bg3:#181C21;--bg4:#1F242B;
+      --border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.11);
+      --text:#EAE6DC;--text2:#9B9790;--text3:#575450;
+      --green:#5BBF7E;--green2:rgba(91,191,126,.12);
+      --blue:#5A9FD4;--blue2:rgba(90,159,212,.12);
+      --gold:#D4A843;--gold2:rgba(212,168,67,.12);
+      --orange:#E8904A;--orange2:rgba(232,144,74,.12);
+      --purple:#9B7FD4;--purple2:rgba(155,127,212,.12);
+      --red:#D95B5B;--red2:rgba(217,91,91,.12);
+      --teal:#3CB8C4;--teal2:rgba(60,184,196,.12);
+      --font:'Barlow',sans-serif;--font-c:'Barlow Condensed',sans-serif;--r:6px;
+    }
+    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh}
+
+    .hdr{height:calc(50px + env(safe-area-inset-top));background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 22px;padding-top:env(safe-area-inset-top);gap:14px;position:sticky;top:0;z-index:100}
+    .hdr-back{font-family:var(--font-c);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);text-decoration:none;transition:color .15s}
+    .hdr-back:hover{color:var(--text2)}
+    .hdr-div{width:1px;height:18px;background:var(--border2)}
+    .hdr-brand{font-family:var(--font-c);font-size:15px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+    .hdr-sub{font-family:var(--font-c);font-size:11px;color:var(--text3)}
+    .hdr-date{margin-left:auto;font-family:var(--font-c);font-size:11px;color:var(--text3)}
+
+    .tab-nav{display:flex;gap:2px;padding:0 22px;background:var(--bg2);border-bottom:1px solid var(--border)}
+    .tab-btn{font-family:var(--font-c);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:10px 16px;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none}
+    .tab-btn:hover{color:var(--text2)}
+    .tab-btn.active{color:var(--gold);border-bottom-color:var(--gold)}
+
+    .wrap{padding:20px 22px;max-width:1600px}
+
+    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:18px}
+    .kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;position:relative;overflow:hidden}
+    .kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+    .kpi.green::after{background:var(--green)}.kpi.blue::after{background:var(--blue)}
+    .kpi.gold::after{background:var(--gold)}.kpi.orange::after{background:var(--orange)}
+    .kpi.purple::after{background:var(--purple)}.kpi.red::after{background:var(--red)}
+    .kpi-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+    .kpi-val{font-family:var(--font-c);font-size:22px;font-weight:700;color:var(--text);line-height:1}
+    .kpi-sub{font-size:10px;color:var(--text3);margin-top:2px}
+
+    .sec{font-family:var(--font-c);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:8px;margin:18px 0 12px}
+    .sec::after{content:'';flex:1;height:1px;background:var(--border)}
+
+    .brand-filters{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+    .brand-filter-btn{font-family:var(--font-c);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;transition:all .15s}
+    .brand-filter-btn:hover{color:var(--text2);border-color:var(--border2)}
+    .brand-filter-btn.active{color:var(--text);border-color:var(--text2);background:var(--bg3)}
+    .brand-filter-btn.srf.active{color:var(--green);border-color:var(--green);background:var(--green2)}
+    .brand-filter-btn.hwr.active{color:var(--blue);border-color:var(--blue);background:var(--blue2)}
+    .brand-filter-btn.mendo.active{color:var(--purple);border-color:var(--purple);background:var(--purple2)}
+
+    .table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:20px;overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-family:var(--font-c);font-size:12px}
+    thead th{padding:9px 12px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);background:var(--bg3);border-bottom:1px solid var(--border);white-space:nowrap}
+    thead th.th-num{text-align:right}
+    tbody tr{border-bottom:1px solid var(--border);transition:background .12s}
+    tbody tr:last-child{border-bottom:none}
+    tbody tr:hover{background:var(--bg3)}
+    td{padding:9px 12px;color:var(--text2);vertical-align:middle;white-space:nowrap}
+    td.num-cell{text-align:right;color:var(--text)}
+    td.strong-cell{color:var(--text);font-weight:600}
+    td.notes-cell{white-space:normal;max-width:240px;color:var(--text3);font-family:var(--font)}
+
+    .status-pill{font-family:var(--font-c);font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 8px;border-radius:10px;display:inline-block}
+    .status-requested{background:var(--bg4);color:var(--text3)}
+    .status-slotted{background:var(--orange2);color:var(--orange)}
+    .status-sourced{background:var(--blue2);color:var(--blue)}
+    .status-scheduled{background:var(--purple2);color:var(--purple)}
+    .status-complete{background:var(--green2);color:var(--green)}
+    .status-open{background:var(--bg4);color:var(--text3)}
+    .status-confirmed{background:var(--green2);color:var(--green)}
+
+    .brand-tag{font-family:var(--font-c);font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px}
+    .brand-SRF{background:rgba(91,191,126,.15);color:var(--green)}
+    .brand-HWR{background:var(--blue2);color:var(--blue)}
+    .brand-Mendo{background:var(--purple2);color:var(--purple)}
+    .brand-other{background:var(--bg4);color:var(--text3)}
+
+    .over{color:var(--red)}
+    .under{color:var(--gold)}
+    .match{color:var(--green)}
+
+    .empty-state{padding:26px;text-align:center;font-family:var(--font-c);font-size:11px;color:var(--text3)}
+    .loading{display:flex;align-items:center;justify-content:center;height:300px;font-family:var(--font-c);font-size:13px;color:var(--text3);letter-spacing:.1em}
+    .error-msg{background:var(--red2);border:1px solid var(--red);border-radius:var(--r);padding:14px 18px;font-family:var(--font-c);font-size:12px;color:var(--red);margin:20px 0}
+    .readonly-note{font-family:var(--font-c);font-size:10px;color:var(--text3);margin-bottom:14px;letter-spacing:.02em}
+    .readonly-note a{color:var(--teal);text-decoration:none}
+    .readonly-note a:hover{text-decoration:underline}
+  </style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="/index.html">← Hub</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand">2CW Production Requests</div>
+  <div class="hdr-div"></div>
+  <div class="hdr-sub">Howie Roll · Soma Rosa Farms · Mendo</div>
+  <div class="hdr-date" id="ref-date"></div>
+</header>
+
+<nav class="tab-nav">
+  <button class="tab-btn active" onclick="showTab('requests')" id="tab-requests">Production Requests</button>
+  <button class="tab-btn" onclick="showTab('slots')" id="tab-slots">Material Request Slots</button>
+</nav>
+
+<div class="wrap" id="app">
+  <div class="loading">Loading production requests...</div>
+</div>
+
+<script>
+const DATA_URL = '/data/operations/production_requests.json';
+
+const REQ_STATUS_ORDER = ['Requested','Slotted','Sourced','Scheduled','Complete'];
+
+let _activeTab = 'requests';
+let _data = { requests: [], slots: [] };
+let _brandFilter = 'all';
+
+function brandKey(product){
+  if(!product) return 'other';
+  if(product.includes('Soma') || product.startsWith('SRF')) return 'SRF';
+  if(product.includes('Howie') || product.startsWith('HWR')) return 'HWR';
+  if(product.includes('Mendo') || product.startsWith('MDO')) return 'Mendo';
+  return 'other';
+}
+
+function statusClass(status){
+  return 'status-' + (status||'').trim().toLowerCase().replace(/\s+/g,'-');
+}
+
+function formatDate(str){
+  if(!str) return '—';
+  const d = new Date(str);
+  if(isNaN(d.getTime())) return str;
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+
+function showTab(tab){
+  _activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  render();
+}
+
+function setBrandFilter(b){
+  _brandFilter = b;
+  render();
+}
+
+function filteredRequests(){
+  if(_brandFilter === 'all') return _data.requests;
+  return _data.requests.filter(r => brandKey(r.product) === _brandFilter);
+}
+
+function render(){
+  const app = document.getElementById('app');
+  const requests = _data.requests;
+  const slots = _data.slots;
+
+  const open = requests.filter(r => r.status !== 'Complete');
+  const awaitingSlot = requests.filter(r => !r.slot_id && r.status !== 'Complete');
+  const pendingSlots = slots.filter(s => (s.status||'').toLowerCase() !== 'confirmed');
+  const confirmedSlots = slots.filter(s => (s.status||'').toLowerCase() === 'confirmed');
+
+  const byBrand = {};
+  open.forEach(r => { const b = brandKey(r.product); byBrand[b] = (byBrand[b]||0)+1; });
+
+  const brandsPresent = ['SRF','HWR','Mendo'].filter(b => requests.some(r => brandKey(r.product)===b));
+
+  const kpisHtml = `
+    <div class="kpis">
+      <div class="kpi gold"><div class="kpi-lbl">Open Requests</div><div class="kpi-val">${open.length}</div><div class="kpi-sub">Not yet complete</div></div>
+      <div class="kpi orange"><div class="kpi-lbl">Awaiting Slot</div><div class="kpi-val">${awaitingSlot.length}</div><div class="kpi-sub">No Slot ID yet</div></div>
+      <div class="kpi blue"><div class="kpi-lbl">Slots Pending</div><div class="kpi-val">${pendingSlots.length}</div><div class="kpi-sub">Not yet confirmed</div></div>
+      <div class="kpi green"><div class="kpi-lbl">Slots Confirmed</div><div class="kpi-val">${confirmedSlots.length}</div><div class="kpi-sub">Strain picked</div></div>
+      <div class="kpi green"><div class="kpi-lbl">Soma Rosa</div><div class="kpi-val">${byBrand['SRF']||0}</div><div class="kpi-sub">Open requests</div></div>
+      <div class="kpi blue"><div class="kpi-lbl">Howie Roll</div><div class="kpi-val">${byBrand['HWR']||0}</div><div class="kpi-sub">Open requests</div></div>
+      <div class="kpi purple"><div class="kpi-lbl">Mendo</div><div class="kpi-val">${byBrand['Mendo']||0}</div><div class="kpi-sub">Open requests</div></div>
+    </div>`;
+
+  const readonlyNote = `<div class="readonly-note">Read-only — all data entry happens in the <a href="https://docs.google.com/spreadsheets/d/1blObQmTGMQWBZfRsA2mOmC5PzKW8A6_d8wt7uzisPuM/edit" target="_blank" rel="noopener">Production Requests Sheet</a>.</div>`;
+
+  if(_activeTab === 'requests'){
+    app.innerHTML = kpisHtml + readonlyNote + `
+      <div class="brand-filters">
+        <button class="brand-filter-btn ${_brandFilter==='all'?'active':''}" onclick="setBrandFilter('all')">All Brands</button>
+        ${brandsPresent.map(b=>`<button class="brand-filter-btn ${b.toLowerCase()} ${_brandFilter===b?'active':''}" onclick="setBrandFilter('${b}')">${b==='SRF'?'Soma Rosa Farms':b==='HWR'?'Howie Roll':'Mendo'}</button>`).join('')}
+      </div>
+      <div class="sec">Production Requests</div>
+      ${renderRequestsTable(filteredRequests())}
+    `;
+  } else {
+    app.innerHTML = kpisHtml + readonlyNote + `
+      <div class="sec">Material Request Slots</div>
+      ${renderSlotsTable(slots)}
+    `;
+  }
+}
+
+function renderRequestsTable(rows){
+  if(!rows.length){
+    return `<div class="table-wrap"><div class="empty-state">No production requests yet — add rows to the Sheet's Production Requests tab.</div></div>`;
+  }
+  const sorted = [...rows].sort((a,b)=>(a.pr_num||'').localeCompare(b.pr_num||'', undefined, {numeric:true}));
+  const trs = sorted.map(r => {
+    const bk = brandKey(r.product);
+    return `<tr>
+      <td class="strong-cell">${r.pr_num||'—'}</td>
+      <td><span class="brand-tag brand-${bk}">${bk==='other'?'—':bk}</span> ${r.product||'—'}</td>
+      <td>${r.crew||'—'}</td>
+      <td>${r.strain_type||'—'}</td>
+      <td>${r.slot_id||'—'}</td>
+      <td>${r.output_strain||'—'}</td>
+      <td class="num-cell">${r.batch_size!=null && r.batch_size!=='' ? Number(r.batch_size).toLocaleString() : '—'}</td>
+      <td>${formatDate(r.ready_date)}</td>
+      <td>${formatDate(r.ship_date)}</td>
+      <td><span class="status-pill ${statusClass(r.status)}">${r.status||'—'}</span></td>
+      <td class="notes-cell">${r.notes||''}</td>
+    </tr>`;
+  }).join('');
+  return `<div class="table-wrap"><table>
+    <thead><tr>
+      <th>PR#</th><th>Product</th><th>Crew</th><th>Strain Type</th><th>Slot ID</th>
+      <th>Output Strain</th><th class="th-num">Batch Size</th><th>Ready Date</th><th>Ship Date</th><th>Status</th><th>Notes</th>
+    </tr></thead>
+    <tbody>${trs}</tbody>
+  </table></div>`;
+}
+
+function renderSlotsTable(rows){
+  if(!rows.length){
+    return `<div class="table-wrap"><div class="empty-state">No material request slots yet — add rows to the Sheet's Material Request Slots tab.</div></div>`;
+  }
+  const sorted = [...rows].sort((a,b)=>(a.slot_id||'').localeCompare(b.slot_id||''));
+  const trs = sorted.map(s => {
+    const target = Number(s.target_quantity)||0;
+    const linked = Number(s.linked_pr_total)||0;
+    const diff = linked - target;
+    const diffCls = diff === 0 ? 'match' : (diff > 0 ? 'over' : 'under');
+    const diffLabel = diff === 0 ? 'Matched' : (diff > 0 ? `+${diff.toLocaleString()} over` : `${Math.abs(diff).toLocaleString()} under`);
+    return `<tr>
+      <td class="strong-cell">${s.slot_id||'—'}</td>
+      <td>${formatDate(s.week_requested)}</td>
+      <td>${s.strain_type||'—'}</td>
+      <td class="num-cell">${target ? target.toLocaleString() : '—'}${s.unit?' '+s.unit:''}</td>
+      <td class="num-cell">${linked ? linked.toLocaleString() : '—'}</td>
+      <td class="num-cell ${diffCls}">${diffLabel}</td>
+      <td>${s.linked_prs||'—'}</td>
+      <td>${s.picked_strain||'—'}</td>
+      <td><span class="status-pill ${statusClass(s.status)}">${s.status||'—'}</span></td>
+      <td>${formatDate(s.confirmed_date)}</td>
+    </tr>`;
+  }).join('');
+  return `<div class="table-wrap"><table>
+    <thead><tr>
+      <th>Slot ID</th><th>Week Requested</th><th>Strain Type</th><th class="th-num">Target Qty</th>
+      <th class="th-num">Linked PR Total</th><th class="th-num">Balance</th><th>Linked PRs</th><th>Picked Strain</th><th>Status</th><th>Confirmed Date</th>
+    </tr></thead>
+    <tbody>${trs}</tbody>
+  </table></div>`;
+}
+
+async function loadData(){
+  try {
+    const resp = await fetch(DATA_URL + '?t=' + Date.now());
+    if(!resp.ok) throw new Error('Fetch failed: HTTP ' + resp.status);
+    _data = await resp.json();
+    render();
+    const asOf = _data.last_sync ? new Date(_data.last_sync) : new Date();
+    document.getElementById('ref-date').textContent = 'Synced ' + asOf.toLocaleString();
+  } catch(e) {
+    document.getElementById('app').innerHTML = `<div class="error-msg">Failed to load data: ${e.message}</div>`;
+    console.error(e);
+  }
+}
+loadData();
+</script>
+<script src="/sw_register.js"></script>
+</body>
+</html>

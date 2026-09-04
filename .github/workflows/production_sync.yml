@@ -1,0 +1,43 @@
+name: Production Requests Sync
+
+on:
+  schedule:
+    - cron: '15 * * * *'  # Every hour, 15 past (offset from the other hourly syncs)
+  workflow_dispatch:       # Allows manual trigger from the Actions tab
+
+# Only one sync at a time — same reasoning as the other hourly/nightly syncs.
+concurrency:
+  group: production-requests-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run Production Requests sync
+        run: python scripts/production_sync.py
+
+      - name: Commit and push data file
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/operations/production_requests.json
+          git diff --staged --quiet || git commit -m "Hourly Production Requests sync"
+          git pull --rebase origin main
+          git push
