@@ -354,6 +354,27 @@
   .rp-batch-row .lbl { color: var(--muted); }
   .rp-flower-pool { margin-bottom: 14px; }
   .rp-empty-tsku { color: var(--muted); font-size: 12px; font-style: italic; padding: 4px 0; }
+  /* PRODUCTION REQUEST — add-PR button + modal */
+  .pr-add-btn { margin-left: 8px; background: var(--surface2); border: 1px solid var(--accent); color: var(--accent); font-family: var(--font); font-size: 10px; font-weight: 600; letter-spacing: .04em; padding: 2px 8px; border-radius: 10px; cursor: pointer; white-space: nowrap; transition: background .15s; }
+  .pr-add-btn:hover { background: rgba(0,201,167,.12); }
+  .pr-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+  .pr-modal { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 22px; width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; }
+  .pr-modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .pr-modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+  .pr-field { margin-bottom: 12px; }
+  .pr-field label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+  .pr-field input, .pr-field textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: var(--font); font-size: 13px; padding: 8px 10px; border-radius: 6px; }
+  .pr-field input:focus, .pr-field textarea:focus { outline: none; border-color: var(--accent); }
+  .pr-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .pr-actions { display: flex; gap: 10px; margin-top: 18px; }
+  .pr-actions button { flex: 1; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); }
+  .pr-cancel-btn { background: transparent; color: var(--muted); }
+  .pr-cancel-btn:hover { color: var(--text); }
+  .pr-submit-btn { background: var(--accent); color: #0f1117; border-color: var(--accent); }
+  .pr-submit-btn:hover { opacity: .9; }
+  .pr-submit-btn:disabled { opacity: .5; cursor: default; }
+  .pr-error { display: none; background: rgba(240,92,92,.1); border: 1px solid rgba(240,92,92,.3); border-radius: 6px; padding: 10px 12px; color: var(--red); font-size: 12px; margin-bottom: 12px; }
+  .pr-success { display: none; background: rgba(74,222,128,.1); border: 1px solid rgba(74,222,128,.3); border-radius: 6px; padding: 14px; color: var(--green); font-size: 13px; }
 </style>
 </head>
 <body>
@@ -588,6 +609,43 @@
   <div id="recprod-content"></div>
 </div>
 
+<!-- ==================== ADD PR MODAL ==================== -->
+<div class="pr-modal-overlay" id="pr-modal-overlay">
+  <div class="pr-modal">
+    <h3>New Production Request</h3>
+    <div class="pr-modal-sub" id="pr-modal-product"></div>
+    <div class="pr-error" id="pr-error"></div>
+    <form id="pr-form" onsubmit="submitPrModal(event)">
+      <div class="pr-field">
+        <label for="pr-batch">Batch Size (units)</label>
+        <input type="number" id="pr-batch" min="1" step="1" required>
+      </div>
+      <div class="pr-field">
+        <label for="pr-crew">Crew</label>
+        <input type="text" id="pr-crew" placeholder="e.g. Crew A">
+      </div>
+      <div class="pr-row2">
+        <div class="pr-field">
+          <label for="pr-ready">Ready Date</label>
+          <input type="date" id="pr-ready">
+        </div>
+        <div class="pr-field">
+          <label for="pr-ship">Ship Date</label>
+          <input type="date" id="pr-ship">
+        </div>
+      </div>
+      <div class="pr-field">
+        <label for="pr-notes">Notes</label>
+        <textarea id="pr-notes" rows="2" placeholder="Optional"></textarea>
+      </div>
+      <div class="pr-actions">
+        <button type="button" class="pr-cancel-btn" onclick="closePrModal()">Cancel</button>
+        <button type="submit" class="pr-submit-btn" id="pr-submit-btn">Submit Request</button>
+      </div>
+    </form>
+    <div class="pr-success" id="pr-success"></div>
+  </div>
+</div>
 
 <script>
 // ─── TSKU/ASKU DATA (loaded live from inventory_data.json asku_data) ────────
@@ -596,6 +654,22 @@ let TSKU_DAILY_RATES = {};   // tsku → daily demand rate (units/day)
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const INVENTORY_URL = 'https://raw.githubusercontent.com/bobby2soxRC/2cw-dashboard/main/data/inventory_data.json';
+
+// ─── PRODUCTION REQUESTS (Add PR button on the TSKU accordion) ─────────────
+const PRODUCTION_REQUESTS_DATA_URL = '/data/operations/production_requests.json';
+// Apps Script Web App URL for scripts/production_sheet.gs's doPost handler.
+// Deploy it from the Sheet: Extensions > Apps Script > Deploy > New deployment
+// > Web app (Execute as: Me, Who has access: Anyone) > paste the /exec URL here.
+const PRODUCTION_REQUESTS_WEBAPP_URL = '';
+// sessionStorage's 2cw_user_name (set at login by index.html) must contain one
+// of these, case-insensitive, for the Add PR button to appear.
+const PR_ALLOWED_USERS = ['robert', 'yali'];
+let _prData = { requests: [], slots: [] };
+
+function isPrAllowedUser() {
+  const name = (sessionStorage.getItem('2cw_user_name') || '').toLowerCase();
+  return !!name && PR_ALLOWED_USERS.some(u => name.includes(u));
+}
 
 // ─── TARGET DAYS STATE ────────────────────────────────────────────────────────
 // Each page gets its own independent target. All default to 60 days.
@@ -1027,7 +1101,9 @@ function renderSkuDetailCharts(panel, bsku) {
           <th style="${TH}">Past 30</th>
           <th style="${TH}">DOS</th>
           <th style="${TH}">Units Needed</th>
+          <th style="${TH}" title="Open (non-Complete) Production Requests for this type, from the Production Requests Sheet">Open Requests</th>
           <th style="${TH}" title="Avg units for a single new flavor batch at target DOS">Suggested Batch / Flavor</th>
+          <th style="${TH}" title="Days of supply if all Open Requests' batch sizes landed today">Projected DOS</th>
           <th style="${TH}">Status</th>
         </tr></thead>
         <tbody>`;
@@ -1045,6 +1121,16 @@ function renderSkuDetailCharts(panel, bsku) {
       const TD  = 'padding:7px 12px;text-align:center;font-family:var(--mono);font-size:12px';
       const TDL = 'padding:7px 12px;text-align:left';
 
+      const openReqs = (_prData.requests || []).filter(r =>
+        r.bsku === bsku && (r.strain_type || '').toLowerCase() === type.toLowerCase() &&
+        (r.status || '').toLowerCase() !== 'complete');
+      const openUnits = openReqs.reduce((s, r) => s + (Number(r.batch_size) || 0), 0);
+      const velocity = p30 / 30;
+      const projectedDos = velocity > 0 ? (inv + openUnits) / velocity : null;
+      const prBtn = isPrAllowedUser()
+        ? `<button type="button" class="pr-add-btn" onclick="openPrModal('${tsku}','${bsku}','${type}')">+ Add PR</button>`
+        : '';
+
       tskuTableHtml += `<tr style="border-bottom:1px solid var(--border)">
         <td style="${TDL}">
           <span style="display:inline-flex;align-items:center;gap:6px">
@@ -1056,7 +1142,9 @@ function renderSkuDetailCharts(panel, bsku) {
         <td style="${TD}">${fmtNum(p30)}</td>
         <td style="padding:7px 12px;text-align:center">${dos != null ? daysBar(dos, t) : '<span style="color:var(--muted);font-size:11px">—</span>'}</td>
         <td style="padding:7px 12px;text-align:center">${unitsNeededBadge(needed)}</td>
-        <td style="padding:7px 12px;text-align:center;font-family:var(--mono);font-size:12px;color:var(--accent2)">${batch != null ? '+' + fmtNum(batch) : '<span style="color:var(--muted)">—</span>'}</td>
+        <td style="${TD}">${openReqs.length ? `${openReqs.length} · ${fmtNum(openUnits)}` : '<span style="color:var(--muted)">—</span>'}</td>
+        <td style="padding:7px 12px;text-align:center;font-family:var(--mono);font-size:12px;color:var(--accent2);white-space:nowrap">${batch != null ? '+' + fmtNum(batch) : '<span style="color:var(--muted)">—</span>'}${prBtn}</td>
+        <td style="${TD}">${projectedDos != null ? Math.round(projectedDos) + 'd' : '<span style="color:var(--muted)">—</span>'}</td>
         <td style="padding:7px 12px;text-align:center">${urgencyBadge(dos, t)}</td>
       </tr>`;
     });
@@ -1159,6 +1247,10 @@ async function loadData() {
     invData = json;
     TSKU_DATA = json.asku_data || [];
     TSKU_DAILY_RATES = json.tsku_daily_rates || {};
+    try {
+      const prRes = await fetch(PRODUCTION_REQUESTS_DATA_URL + '?t=' + Date.now());
+      if (prRes.ok) _prData = await prRes.json();
+    } catch { /* non-fatal — Open Requests/Projected DOS just show as unavailable */ }
     document.getElementById('ref-date').textContent = 'Updated: ' + (json.ref_date || 'unknown');
     buildAll(json.product_groups || []);
     document.getElementById('global-loading').style.display = 'none';
@@ -1654,6 +1746,87 @@ function suggestedBatch(tsku, targetDos) {
   const avgVelocity = tskuRows.reduce((s, r) => s + (r.past30 / 30), 0) / tskuRows.length;
   if (avgVelocity <= 0) return null;
   return Math.ceil(avgVelocity * targetDos);
+}
+
+// ─── ADD PR MODAL ─────────────────────────────────────────────────────────
+function openPrModal(tsku, bsku, type) {
+  const pg = (invData?.product_groups || []).find(p => p.bsku === bsku);
+  const productLabel = pg ? pg.pg : bsku;
+  const brand = pg ? pg.brand : (TSKU_DATA.find(r => r.tsku === tsku)?.brand || '');
+  const suggested = suggestedBatch(tsku, TARGET.overview);
+
+  document.getElementById('pr-modal-product').textContent = `${productLabel}${brand ? ' · ' + brand : ''} · ${type}`;
+  const form = document.getElementById('pr-form');
+  form.dataset.bsku = bsku;
+  form.dataset.type = type;
+  form.dataset.product = productLabel;
+  document.getElementById('pr-batch').value = suggested != null ? suggested : '';
+  document.getElementById('pr-crew').value = '';
+  document.getElementById('pr-ready').value = '';
+  document.getElementById('pr-ship').value = '';
+  document.getElementById('pr-notes').value = '';
+  document.getElementById('pr-error').style.display = 'none';
+  document.getElementById('pr-success').style.display = 'none';
+  form.style.display = 'block';
+  document.getElementById('pr-modal-overlay').style.display = 'flex';
+}
+
+function closePrModal() {
+  document.getElementById('pr-modal-overlay').style.display = 'none';
+}
+
+async function submitPrModal(event) {
+  event.preventDefault();
+  const form = document.getElementById('pr-form');
+  const errEl = document.getElementById('pr-error');
+  const btn = document.getElementById('pr-submit-btn');
+  errEl.style.display = 'none';
+
+  if (!PRODUCTION_REQUESTS_WEBAPP_URL) {
+    errEl.textContent = 'Not configured yet — deploy scripts/production_sheet.gs as a Web App and set PRODUCTION_REQUESTS_WEBAPP_URL near the top of inventory.html.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const batchSize = Number(document.getElementById('pr-batch').value);
+  if (!batchSize || batchSize <= 0) {
+    errEl.textContent = 'Enter a batch size greater than 0.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const payload = {
+    product: form.dataset.product,
+    bsku: form.dataset.bsku,
+    strainType: form.dataset.type,
+    crew: document.getElementById('pr-crew').value.trim(),
+    batchSize,
+    readyDate: document.getElementById('pr-ready').value,
+    shipDate: document.getElementById('pr-ship').value,
+    notes: document.getElementById('pr-notes').value.trim(),
+    requester: sessionStorage.getItem('2cw_user_name') || ''
+  };
+
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+  try {
+    // Apps Script Web Apps don't handle CORS preflight — sending a plain-text
+    // body (fetch's default Content-Type for a string) keeps this a "simple"
+    // request so the browser skips the OPTIONS preflight it can't answer.
+    const res = await fetch(PRODUCTION_REQUESTS_WEBAPP_URL, { method: 'POST', body: JSON.stringify(payload) });
+    const data = await res.json().catch(() => ({}));
+    if (!data.ok) throw new Error(data.error || 'Request failed.');
+    form.style.display = 'none';
+    const successEl = document.getElementById('pr-success');
+    successEl.textContent = `✓ Submitted as ${data.pr_num}. It'll appear in Open Requests after the next sync (hourly, or run the Production Requests Sync Action manually).`;
+    successEl.style.display = 'block';
+  } catch (err) {
+    errEl.textContent = err.message || 'Something went wrong — please try again.';
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Submit Request';
+  }
 }
 
 function unitsNeededBadge(n) {
