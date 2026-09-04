@@ -36,6 +36,8 @@
     .hdr-brand{font-family:var(--font-c);font-size:15px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
     .hdr-sub{font-family:var(--font-c);font-size:11px;color:var(--text3)}
     .hdr-date{margin-left:auto;font-family:var(--font-c);font-size:11px;color:var(--text3)}
+    .refresh-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text3);font-family:var(--font-c);font-size:11px;padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap}
+    .refresh-btn:hover{color:var(--text);border-color:var(--border2)}
 
     .tab-nav{display:flex;gap:2px;padding:0 22px;background:var(--bg2);border-bottom:1px solid var(--border)}
     .tab-btn{font-family:var(--font-c);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:10px 16px;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none}
@@ -115,6 +117,7 @@
   <div class="hdr-div"></div>
   <div class="hdr-sub">Howie Roll · Soma Rosa Farms · Mendo</div>
   <div class="hdr-date" id="ref-date"></div>
+  <button type="button" class="refresh-btn" onclick="loadData()">↻ Refresh</button>
 </header>
 
 <nav class="tab-nav">
@@ -127,7 +130,13 @@
 </div>
 
 <script>
-const DATA_URL = '/data/operations/production_requests.json';
+// Fetched straight from the published CSVs rather than the hourly-synced
+// JSON snapshot, so this dashboard reflects what's in the Sheet within a
+// refresh instead of waiting on the Action + a redeploy — the point being
+// to actually be usable live during a planning session.
+const PRODUCTION_REQUESTS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQkx0gxPTulAOv3WMXayY8HOqcoYByZ_kOXrLvd84-9ReSwGa-6Or-KTx4SdPfT0rC5_qOCE3LHz_mT/pub?gid=1857304423&single=true&output=csv';
+const MATERIAL_SLOTS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQkx0gxPTulAOv3WMXayY8HOqcoYByZ_kOXrLvd84-9ReSwGa-6Or-KTx4SdPfT0rC5_qOCE3LHz_mT/pub?gid=710383830&single=true&output=csv';
+const PR_AUTO_REFRESH_MS = 30000;
 
 let _activeTab = 'requests';
 let _data = { requests: [], slots: [] };
@@ -288,20 +297,78 @@ function renderSlotsTable(rows){
   </table></div>`;
 }
 
+function parsePrCsv(text){
+  const lines = text.replace(/\r/g,'').trim().split('\n');
+  if(lines.length < 1 || !text.trim()) return [];
+  const headers = lines[0].split(',').map(h=>h.trim());
+  const rows = [];
+  for(let li=1; li<lines.length; li++){
+    const line = lines[li];
+    if(!line.trim()) continue;
+    const vals=[]; let cur='',inQ=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch==='"'){ inQ=!inQ; }
+      else if(ch===','&&!inQ){ vals.push(cur.trim()); cur=''; }
+      else cur+=ch;
+    }
+    vals.push(cur.trim());
+    const row={};
+    headers.forEach((h,i)=>{ row[h] = (vals[i]!==undefined ? vals[i] : ''); });
+    rows.push(row);
+  }
+  return rows;
+}
+
+const PR_REQUEST_FIELD_MAP = {
+  'PR#':'pr_num','Product':'product','ASKU':'asku','BSKU':'bsku','Crew':'crew',
+  'Strain Type':'strain_type','Slot ID':'slot_id','Output Strain':'output_strain',
+  'Batch Size':'batch_size','Ready Date':'ready_date','Ship Date':'ship_date',
+  'Status':'status','Notes':'notes'
+};
+const PR_SLOT_FIELD_MAP = {
+  'Slot ID':'slot_id','Week Requested':'week_requested','Strain Type':'strain_type',
+  'Target Quantity':'target_quantity','Unit':'unit','Linked PRs':'linked_prs',
+  'Linked PR Total':'linked_pr_total','Picked Strain':'picked_strain',
+  'Status':'status','Confirmed Date':'confirmed_date'
+};
+const PR_NUMERIC_FIELDS = new Set(['batch_size','target_quantity','linked_pr_total']);
+
+function transformPrRows(rows, fieldMap, requiredKey){
+  return rows.map(row => {
+    const rec = {};
+    Object.entries(fieldMap).forEach(([csvCol, key]) => {
+      const raw = (row[csvCol] || '').trim();
+      rec[key] = PR_NUMERIC_FIELDS.has(key)
+        ? (raw.replace(/,/g,'') === '' ? null : Number(raw.replace(/,/g,'')))
+        : raw;
+    });
+    return rec;
+  }).filter(rec => rec[requiredKey]);
+}
+
 async function loadData(){
   try {
-    const resp = await fetch(DATA_URL + '?t=' + Date.now());
-    if(!resp.ok) throw new Error('Fetch failed: HTTP ' + resp.status);
-    _data = await resp.json();
+    const [reqResp, slotResp] = await Promise.all([
+      fetch(PRODUCTION_REQUESTS_CSV_URL + '&t=' + Date.now()),
+      fetch(MATERIAL_SLOTS_CSV_URL + '&t=' + Date.now())
+    ]);
+    if(!reqResp.ok) throw new Error('Requests fetch failed: HTTP ' + reqResp.status);
+    if(!slotResp.ok) throw new Error('Slots fetch failed: HTTP ' + slotResp.status);
+    const [reqText, slotText] = await Promise.all([reqResp.text(), slotResp.text()]);
+    _data = {
+      requests: transformPrRows(parsePrCsv(reqText), PR_REQUEST_FIELD_MAP, 'pr_num'),
+      slots: transformPrRows(parsePrCsv(slotText), PR_SLOT_FIELD_MAP, 'slot_id')
+    };
     render();
-    const asOf = _data.last_sync ? new Date(_data.last_sync) : new Date();
-    document.getElementById('ref-date').textContent = 'Synced ' + asOf.toLocaleString();
+    document.getElementById('ref-date').textContent = 'Synced ' + new Date().toLocaleTimeString();
   } catch(e) {
     document.getElementById('app').innerHTML = `<div class="error-msg">Failed to load data: ${e.message}</div>`;
     console.error(e);
   }
 }
 loadData();
+setInterval(loadData, PR_AUTO_REFRESH_MS);
 </script>
 <script src="/sw_register.js"></script>
 </body>

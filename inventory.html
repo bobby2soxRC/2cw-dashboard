@@ -671,7 +671,14 @@ let TSKU_DAILY_RATES = {};   // tsku → daily demand rate (units/day)
 const INVENTORY_URL = 'https://raw.githubusercontent.com/bobby2soxRC/2cw-dashboard/main/data/inventory_data.json';
 
 // ─── PRODUCTION REQUESTS (Add PR button on the TSKU accordion) ─────────────
-const PRODUCTION_REQUESTS_DATA_URL = '/data/operations/production_requests.json';
+// Fetched straight from the published CSVs (same URLs production_sync.py
+// uses) rather than the hourly-synced JSON snapshot, so a submitted PR shows
+// up here within a refresh instead of waiting on the Action + a redeploy —
+// matters most mid-planning-session, when people want to see the effect of
+// a request immediately.
+const PRODUCTION_REQUESTS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQkx0gxPTulAOv3WMXayY8HOqcoYByZ_kOXrLvd84-9ReSwGa-6Or-KTx4SdPfT0rC5_qOCE3LHz_mT/pub?gid=1857304423&single=true&output=csv';
+const MATERIAL_SLOTS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQkx0gxPTulAOv3WMXayY8HOqcoYByZ_kOXrLvd84-9ReSwGa-6Or-KTx4SdPfT0rC5_qOCE3LHz_mT/pub?gid=710383830&single=true&output=csv';
+const PR_AUTO_REFRESH_MS = 30000; // background poll while the page stays open
 // Apps Script Web App URL for scripts/production_sheet.gs's doPost handler.
 // Deploy it from the Sheet: Extensions > Apps Script > Deploy > New deployment
 // > Web app (Execute as: Me, Who has access: Anyone) > paste the /exec URL here.
@@ -680,6 +687,108 @@ const PRODUCTION_REQUESTS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfyc
 // of these, case-insensitive, for the Add PR button to appear.
 const PR_ALLOWED_USERS = ['robert', 'yali'];
 let _prData = { requests: [], slots: [] };
+
+function parsePrCsv(text) {
+  const lines = text.replace(/\r/g, '').trim().split('\n');
+  if (lines.length < 1 || !text.trim()) return [];
+  const headers = lines[0].split(',').map(h => h.trim());
+  const rows = [];
+  for (let li = 1; li < lines.length; li++) {
+    const line = lines[li];
+    if (!line.trim()) continue;
+    const vals = []; let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { inQ = !inQ; }
+      else if (ch === ',' && !inQ) { vals.push(cur.trim()); cur = ''; }
+      else cur += ch;
+    }
+    vals.push(cur.trim());
+    const row = {};
+    headers.forEach((h, i) => { row[h] = vals[i] !== undefined ? vals[i] : ''; });
+    rows.push(row);
+  }
+  return rows;
+}
+
+const PR_REQUEST_FIELD_MAP = {
+  'PR#': 'pr_num', 'Product': 'product', 'ASKU': 'asku', 'BSKU': 'bsku', 'Crew': 'crew',
+  'Strain Type': 'strain_type', 'Slot ID': 'slot_id', 'Output Strain': 'output_strain',
+  'Batch Size': 'batch_size', 'Ready Date': 'ready_date', 'Ship Date': 'ship_date',
+  'Status': 'status', 'Notes': 'notes'
+};
+const PR_SLOT_FIELD_MAP = {
+  'Slot ID': 'slot_id', 'Week Requested': 'week_requested', 'Strain Type': 'strain_type',
+  'Target Quantity': 'target_quantity', 'Unit': 'unit', 'Linked PRs': 'linked_prs',
+  'Linked PR Total': 'linked_pr_total', 'Picked Strain': 'picked_strain',
+  'Status': 'status', 'Confirmed Date': 'confirmed_date'
+};
+const PR_NUMERIC_FIELDS = new Set(['batch_size', 'target_quantity', 'linked_pr_total']);
+
+function transformPrRows(rows, fieldMap, requiredKey) {
+  return rows.map(row => {
+    const rec = {};
+    Object.entries(fieldMap).forEach(([csvCol, key]) => {
+      const raw = (row[csvCol] || '').trim();
+      if (PR_NUMERIC_FIELDS.has(key)) {
+        const cleaned = raw.replace(/,/g, '');
+        rec[key] = cleaned === '' ? null : Number(cleaned);
+      } else {
+        rec[key] = raw;
+      }
+    });
+    return rec;
+  }).filter(rec => rec[requiredKey]);
+}
+
+async function loadPrData() {
+  try {
+    const [reqResp, slotResp] = await Promise.all([
+      fetch(PRODUCTION_REQUESTS_CSV_URL + '&t=' + Date.now()),
+      fetch(MATERIAL_SLOTS_CSV_URL + '&t=' + Date.now())
+    ]);
+    const reqText = reqResp.ok ? await reqResp.text() : '';
+    const slotText = slotResp.ok ? await slotResp.text() : '';
+    _prData = {
+      last_sync: new Date().toISOString(),
+      requests: transformPrRows(parsePrCsv(reqText), PR_REQUEST_FIELD_MAP, 'pr_num'),
+      slots: transformPrRows(parsePrCsv(slotText), PR_SLOT_FIELD_MAP, 'slot_id')
+    };
+  } catch (e) {
+    console.warn('Production Requests live fetch failed, keeping last known data', e);
+  }
+}
+
+// Updates just the numbers that depend on _prData in place, instead of a
+// full table rebuild — keeps whatever detail rows are expanded and the
+// scroll position intact during a background poll.
+function isPrPanelOpen(panel) {
+  return panel.classList.contains('open') || panel.style.display === 'block';
+}
+function refreshPrDependentUI() {
+  document.querySelectorAll('tr.sku-row[data-bsku]').forEach(tr => {
+    const bsku = tr.dataset.bsku;
+    const pg = (invData?.product_groups || []).find(p => pgBsku(p) === bsku);
+    const cell = tr.querySelector('.postdos-cell');
+    if (!pg || !cell) return;
+    const pageEl = tr.closest('.page');
+    const pageKey = pageEl ? pageEl.id.replace('page-', '') : 'overview';
+    const t = TARGET[pageKey] || TARGET.overview;
+    cell.innerHTML = daysBar(pgPostPrDos(pg), t);
+  });
+  document.querySelectorAll('.sku-detail-wrap[data-bsku]').forEach(panel => {
+    if (isPrPanelOpen(panel)) renderSkuDetailCharts(panel, panel.dataset.bsku);
+  });
+}
+
+let _prAutoRefreshTimer = null;
+function startPrAutoRefresh() {
+  if (_prAutoRefreshTimer) return;
+  _prAutoRefreshTimer = setInterval(async () => {
+    await loadPrData();
+    refreshPrDependentUI();
+  }, PR_AUTO_REFRESH_MS);
+}
 
 function isPrAllowedUser() {
   const name = (sessionStorage.getItem('2cw_user_name') || '').toLowerCase();
@@ -1289,15 +1398,13 @@ async function loadData() {
     invData = json;
     TSKU_DATA = json.asku_data || [];
     TSKU_DAILY_RATES = json.tsku_daily_rates || {};
-    try {
-      const prRes = await fetch(PRODUCTION_REQUESTS_DATA_URL + '?t=' + Date.now());
-      if (prRes.ok) _prData = await prRes.json();
-    } catch { /* non-fatal — Open Requests/Projected DOS just show as unavailable */ }
+    await loadPrData(); // non-fatal on failure — _prData just keeps its last known value
     document.getElementById('ref-date').textContent = 'Updated: ' + (json.ref_date || 'unknown');
     buildAll(json.product_groups || []);
     document.getElementById('global-loading').style.display = 'none';
     document.getElementById('page-overview').style.display = 'block';
     document.getElementById('page-overview').classList.add('active');
+    startPrAutoRefresh();
   } catch (err) {
     document.getElementById('global-loading').style.display = 'none';
     const errEl = document.getElementById('global-error');
@@ -1360,11 +1467,12 @@ function refreshOverviewTable(pgs) {
     const tr = document.createElement('tr');
     tr.className = 'sku-row';
     tr.setAttribute('onclick', 'toggleSkuDetail(this)');
+    tr.dataset.bsku = bsku;
     tr.innerHTML = `<td><span class="sku-caret">▶</span>${brandBadge(r.brand)} ${r.brand}</td><td>${r.category}</td><td>${r.subcategory}</td>
       <td class="num">${r.weight_unit}</td><td class="num">${fmtNum(r.inventory)}</td>
       <td class="num">${fmtNum(r.past_30)}</td><td>${daysBar(r.days_of_supply,t)}</td>
       <td class="num">${unitsNeededBadge(bskuUnitsNeeded(r,t))}</td>
-      <td>${daysBar(pgPostPrDos(r),t)}</td>
+      <td class="postdos-cell">${daysBar(pgPostPrDos(r),t)}</td>
       <td>${urgencyBadge(r.days_of_supply,t)}</td>`;
     tb.appendChild(tr);
     tb.insertAdjacentHTML('beforeend', skuDetailRowHtml(`detail-overview-${bsku}`, bsku, 10));
@@ -1491,11 +1599,12 @@ function refreshBrandTable(tbId, brand, pgs, pageKey) {
     const tr = document.createElement('tr');
     tr.className = 'sku-row';
     tr.setAttribute('onclick', 'toggleSkuDetail(this)');
+    tr.dataset.bsku = bsku;
     tr.innerHTML = `<td><span class="sku-caret">▶</span>${r.category}</td><td>${r.subcategory}</td><td class="num">${r.weight_unit}</td>
       <td class="num">${fmtNum(r.inventory)}</td><td class="num">${fmtNum(r.past_30)}</td>
       <td>${daysBar(r.days_of_supply,t)}</td>
       <td class="num">${unitsNeededBadge(bskuUnitsNeeded(r,t))}</td>
-      <td>${daysBar(pgPostPrDos(r),t)}</td>
+      <td class="postdos-cell">${daysBar(pgPostPrDos(r),t)}</td>
       <td>${urgencyBadge(r.days_of_supply,t)}</td>`;
     tb.appendChild(tr);
     tb.insertAdjacentHTML('beforeend', skuDetailRowHtml(`detail-${tbId}-${bsku}`, bsku, 9));
@@ -1875,7 +1984,7 @@ async function submitPrModal(event) {
 
     form.style.display = 'none';
     const successEl = document.getElementById('pr-success');
-    successEl.textContent = `✓ Submitted as ${data.pr_num}. It'll appear in Open Requests after the next sync (hourly, or run the Production Requests Sync Action manually).`;
+    successEl.textContent = `✓ Submitted as ${data.pr_num}. It reads live from the Sheet, so it'll show up in Open Requests within a minute or two — Google's own publish refresh is the only delay left.`;
     successEl.style.display = 'block';
     document.getElementById('pr-success-actions').style.display = 'flex';
   } catch (err) {
