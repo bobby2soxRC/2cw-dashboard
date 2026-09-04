@@ -12,7 +12,7 @@
  * What it does:
  *  - When a Material Request Slots row's Status is set to "Confirmed",
  *    writes that slot's Picked Strain into every linked PR's Output Strain
- *    and advances that PR's Status (Requested -> Slotted -> Sourced).
+ *    and advances that PR's Status (Requested -> Slot Assigned -> Flavor Confirmed).
  *  - Keeps "Linked PRs" and "Linked PR Total" on the Slots tab in sync
  *    with whatever Production Requests rows currently point at each slot
  *    (recalculated after any edit to either tab, not just on Confirm).
@@ -36,9 +36,15 @@ const REQ_COLS = ['PR#', 'Product', 'ASKU', 'BSKU', 'Crew', 'Strain Type',
 const SLOT_COLS = ['Slot ID', 'Week Requested', 'Strain Type', 'Target Quantity', 'Unit',
   'Linked PRs', 'Linked PR Total', 'Picked Strain', 'Status', 'Confirmed Date'];
 
-// PR Status advances through this order; confirming a slot never moves a PR
-// backwards, only forward up to "Sourced".
-const REQ_STATUS_ORDER = ['Requested', 'Slotted', 'Sourced', 'Scheduled', 'Complete'];
+// PR Status advances through this order (matches the Sheet's Status column
+// data validation list — numbered there to control sort order; Cancelled/
+// Hold are side-states, not part of the forward progression, so they're
+// left out of this array on purpose). Confirming a slot never moves a PR
+// backwards, only forward up to "Flavor Confirmed".
+const REQ_STATUS_ORDER = ['1 - Requested', '2 - Slot Assigned', '3 - Flavor Confirmed',
+  '4 - Scheduled', '5 - In Progress', '6 - Complete'];
+const REQ_STATUS_FLAVOR_CONFIRMED = '3 - Flavor Confirmed';
+const REQ_STATUS_INITIAL = '1 - Requested';
 
 // Same allowlist as inventory.html's PR_ALLOWED_USERS — case-insensitive
 // substring match against the submitted requester name.
@@ -87,7 +93,7 @@ function handleSlotsEdit_(e, sheet) {
   if (!editedStatusCol) return;
 
   const status = sheet.getRange(editedRow, statusCol).getValue().toString().trim();
-  if (status.toLowerCase() !== 'confirmed') return;
+  if (!status.toLowerCase().includes('confirmed')) return;
 
   const slotIdCol = headers.indexOf('Slot ID') + 1;
   const pickedStrainCol = headers.indexOf('Picked Strain') + 1;
@@ -133,9 +139,9 @@ function applyPickedStrainToLinkedPRs_(slotId, pickedStrain) {
 
     const currentStatus = statuses[i][0].toString().trim();
     const currentIdx = REQ_STATUS_ORDER.indexOf(currentStatus);
-    const sourcedIdx = REQ_STATUS_ORDER.indexOf('Sourced');
-    if (currentIdx < sourcedIdx) {
-      reqSheet.getRange(row, statusCol).setValue('Sourced');
+    const flavorConfirmedIdx = REQ_STATUS_ORDER.indexOf(REQ_STATUS_FLAVOR_CONFIRMED);
+    if (currentIdx < flavorConfirmedIdx) {
+      reqSheet.getRange(row, statusCol).setValue(REQ_STATUS_FLAVOR_CONFIRMED);
     }
   }
 }
@@ -238,7 +244,7 @@ function doPost(e) {
   set('Batch Size', batchSize);
   set('Ready Date', (body.readyDate || '').toString().trim());
   set('Ship Date', (body.shipDate || '').toString().trim());
-  set('Status', 'Requested');
+  set('Status', REQ_STATUS_INITIAL);
   set('Notes', (body.notes || '').toString().trim());
 
   reqSheet.appendRow(row);
