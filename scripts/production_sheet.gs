@@ -18,6 +18,14 @@
  *    (recalculated after any edit to either tab, not just on Confirm).
  *  - Adds a "Production Requests" menu with "Recalculate All" as a manual
  *    fallback, since onEdit doesn't fire for pasted/imported data.
+ *  - doPost(): lets inventory.html's "+ Add PR" button append a new row to
+ *    Production Requests directly, with a server-assigned PR# and a
+ *    server-side requester check (belt-and-suspenders — inventory.html
+ *    already hides the button from anyone but Robert/Yali).
+ *
+ * Deploying doPost for the "+ Add PR" button: Deploy > New deployment >
+ * Web app (Execute as: Me, Who has access: Anyone) -> copy the /exec URL
+ * into PRODUCTION_REQUESTS_WEBAPP_URL near the top of inventory.html.
  */
 
 const REQUESTS_SHEET = 'Production Requests';
@@ -31,6 +39,10 @@ const SLOT_COLS = ['Slot ID', 'Week Requested', 'Strain Type', 'Target Quantity'
 // PR Status advances through this order; confirming a slot never moves a PR
 // backwards, only forward up to "Sourced".
 const REQ_STATUS_ORDER = ['Requested', 'Slotted', 'Sourced', 'Scheduled', 'Complete'];
+
+// Same allowlist as inventory.html's PR_ALLOWED_USERS — case-insensitive
+// substring match against the submitted requester name.
+const PR_ALLOWED_REQUESTERS = ['robert', 'yali'];
 
 function onOpen() {
   SpreadsheetApp.getUi()
@@ -176,4 +188,80 @@ function syncLinkedTotals_() {
     slotSheet.getRange(row, linkedPrsCol).setValue(info.prNums.join(', '));
     slotSheet.getRange(row, linkedTotalCol).setValue(info.total);
   }
+}
+
+// ── Add PR from inventory.html ───────────────────────────────────────────
+
+function doPost(e) {
+  let body;
+  try {
+    body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+  } catch (err) {
+    return jsonResponse_({ ok: false, error: 'Invalid request body.' });
+  }
+
+  const requester = (body.requester || '').toString().trim();
+  const requesterOk = requester && PR_ALLOWED_REQUESTERS.some(u =>
+    requester.toLowerCase().indexOf(u) !== -1);
+  if (!requesterOk) {
+    return jsonResponse_({ ok: false, error: 'Not authorized to submit a production request.' });
+  }
+
+  const bsku = (body.bsku || '').toString().trim();
+  const strainType = (body.strainType || '').toString().trim();
+  const batchSize = Number(body.batchSize);
+  if (!bsku || !strainType || !batchSize || batchSize <= 0) {
+    return jsonResponse_({ ok: false, error: 'Missing bsku, strainType, or a positive batchSize.' });
+  }
+
+  const reqSheet = SpreadsheetApp.getActive().getSheetByName(REQUESTS_SHEET);
+  if (!reqSheet) {
+    return jsonResponse_({ ok: false, error: 'Production Requests tab not found.' });
+  }
+
+  const headers = reqSheet.getRange(1, 1, 1, reqSheet.getLastColumn()).getValues()[0];
+  const colIndex = {};
+  REQ_COLS.forEach(c => { colIndex[c] = headers.indexOf(c) + 1; });
+  if (!colIndex['PR#']) {
+    return jsonResponse_({ ok: false, error: 'Production Requests tab is missing expected columns.' });
+  }
+
+  const prNum = nextPrNumber_(reqSheet, colIndex['PR#']);
+
+  const row = new Array(headers.length).fill('');
+  const set = (col, val) => { if (colIndex[col]) row[colIndex[col] - 1] = val; };
+  set('PR#', prNum);
+  set('Product', (body.product || '').toString().trim());
+  set('BSKU', bsku);
+  set('Crew', (body.crew || '').toString().trim());
+  set('Strain Type', strainType);
+  set('Batch Size', batchSize);
+  set('Ready Date', (body.readyDate || '').toString().trim());
+  set('Ship Date', (body.shipDate || '').toString().trim());
+  set('Status', 'Requested');
+  set('Notes', (body.notes || '').toString().trim());
+
+  reqSheet.appendRow(row);
+  syncLinkedTotals_();
+
+  return jsonResponse_({ ok: true, pr_num: prNum });
+}
+
+// Next PR# as PR-<n+1>, based on the highest existing PR-#### in the sheet.
+function nextPrNumber_(reqSheet, prNumCol) {
+  const rows = reqSheet.getLastRow() - 1;
+  let max = 1000;
+  if (rows > 0) {
+    const values = reqSheet.getRange(2, prNumCol, rows, 1).getValues();
+    values.forEach(([v]) => {
+      const m = /^PR-(\d+)$/.exec((v || '').toString().trim());
+      if (m) max = Math.max(max, parseInt(m[1], 10));
+    });
+  }
+  return 'PR-' + (max + 1);
+}
+
+function jsonResponse_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
 }
