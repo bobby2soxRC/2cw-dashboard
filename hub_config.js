@@ -12,11 +12,22 @@ const DIRECTORY_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTvUb2y2U
 
 // ── CARD DEFINITIONS ─────────────────────────────────────
 // key must match column headers in the sheet (lowercase, spaces→ as-is)
+// ── DEPARTMENT TREE ───────────────────────────────────────
+// `dept` places a card in the new folder-structured hub (see index.html's
+// buildTree()/resolvePath()): 'executive' is pinned at the root and never
+// nested; everything else lives under its dept, optionally one level deeper
+// under `subdept` (Operations is the only department with subdepts today —
+// Cultivation/Processing/Manufacturing, matching operations_stations.js's
+// own `dept` field on each station, which buildTree() merges in alongside
+// these cards). A department with zero visible cards for a user simply
+// doesn't appear — Marketing and Finance aren't referenced anywhere yet
+// because there's nothing to put in them.
 const CARD_DEFS = [
   {
     key: 'kss_dashboard',
     color: 'green',
     label: 'Sales',
+    dept: 'sales',
     title: 'KSS Leaderboard',
     desc: 'KSS account performance, territory coverage, and sales activity across the distribution network.',
     href: '/kss_dashboard.html'
@@ -25,6 +36,7 @@ const CARD_DEFS = [
     key: 'twocw_dashboard',
     color: 'green',
     label: 'Sales',
+    dept: 'sales',
     title: 'Sales Leaderboard',
     desc: 'Rep performance, account status, upsell opportunities, and coverage across all 2CW accounts.',
     href: '/twocw_dashboard.html'
@@ -32,7 +44,8 @@ const CARD_DEFS = [
   {
     key: 'pipeline',
     color: 'blue',
-    label: 'Production',
+    label: 'Sales',
+    dept: 'sales',
     title: 'Pipeline',
     desc: 'Live view of what\'s currently in production — by stage, brand, and strain. Updated from the production sheet.',
     href: '/pipeline.html'
@@ -40,7 +53,9 @@ const CARD_DEFS = [
   {
     key: 'inventory',
     color: 'gold',
-    label: 'Inventory',
+    label: 'Manufacturing',
+    dept: 'operations',
+    subdept: 'manufacturing',
     title: 'Inventory & Production',
     desc: 'Current inventory levels, days of supply, and production planning recommendations by product group.',
     href: '/inventory.html'
@@ -49,6 +64,7 @@ const CARD_DEFS = [
     key: 'sales',
     color: 'green',
     label: 'Sales',
+    dept: 'sales',
     title: 'Sales Dashboard',
     desc: 'Monthly revenue by brand, MTD pacing and trajectory, product mix, and 12-month trend analysis.',
     href: '/sales.html'
@@ -57,7 +73,8 @@ const CARD_DEFS = [
   {
     key: 'mendo',
     color: 'mendo',
-    label: 'Partner',
+    label: 'Partners',
+    dept: 'partners',
     title: 'Mendo Dashboard',
     desc: 'Mendo brand sales performance, inventory levels, and production pipeline — dedicated partner view.',
     href: '/mendo.html'
@@ -66,6 +83,8 @@ const CARD_DEFS = [
     key: 'executive',
     color: 'purple',
     label: 'Executive',
+    dept: 'executive',
+    pinned: true,
     title: 'Executive Dashboard',
     desc: 'High-level sales pacing, inventory health, and rep leaderboards — the one-page view for leadership.',
     href: '/executive.html'
@@ -73,7 +92,8 @@ const CARD_DEFS = [
   {
     key: 'field_forms',
     color: 'gold',
-    label: 'Field Team',
+    label: 'Sales',
+    dept: 'sales',
     title: 'Field Forms',
     desc: 'Log budtender trainings, buyer meetings, staff samples, and store visits from the field.',
     href: '/field_forms.html'
@@ -81,7 +101,9 @@ const CARD_DEFS = [
   {
     key: 'menu_health',
     color: 'gold',
-    label: 'Inventory',
+    label: 'Manufacturing',
+    dept: 'operations',
+    subdept: 'manufacturing',
     title: 'Menu Health',
     desc: 'Mix, freshness, and volume scores rolled up from T-SKU to B-SKU to Brand — with a trend over time.',
     href: '/menu_health.html'
@@ -90,22 +112,20 @@ const CARD_DEFS = [
     key: 'menu',
     color: 'green',
     label: 'Sales',
+    dept: 'sales',
     title: 'Menu',
     desc: 'This week\'s Howie Roll, Soma Rosa, and Mendo menu — toggle NorCal (Alameda) and SoCal (Van Nuys) to see what each warehouse has on hand.',
     href: '/menu.html'
   },
   {
-    key: 'production',
-    color: 'gold',
-    label: 'Operations',
-    title: 'Processing Stations',
-    desc: 'Harvest, drying, bucking, trimming, and manufacturing forms for the floor — bilingual, tablet-ready, and they work offline.',
-    href: '/operations.html'
-  },
-  {
     key: 'production_dashboard',
     color: 'blue',
-    label: 'Operations',
+    label: 'Processing',
+    dept: 'operations',
+    subdept: 'processing',
+    ambient: true, // auto-granted alongside any station edit/view access (see index.html buildHub) —
+                   // doesn't count toward the "only one real option" auto-collapse check, so a person
+                   // with exactly one station still lands straight on it instead of a 2-tile chooser.
     title: 'Processing Dashboard',
     desc: 'Where every lot is, yield and loss by stage and strain, biomass on hand, and trimmer output.',
     href: '/operations_dashboard.html'
@@ -114,6 +134,8 @@ const CARD_DEFS = [
     key: 'production_today',
     color: 'gold',
     label: 'Operations',
+    dept: 'operations',
+    ambient: true, // same reasoning as production_dashboard above
     title: 'Today — Live',
     desc: 'Every form in progress or finished today, updating live as it happens — for anyone with view access, whether or not they can edit it.',
     href: '/operations_today.html'
@@ -121,7 +143,8 @@ const CARD_DEFS = [
   {
     key: 'brand_assets',
     color: 'blue',
-    label: 'Marketing',
+    label: 'Sales',
+    dept: 'sales',
     title: 'Brand Assets',
     desc: 'Logos, photography, and brand guidelines for 2CW and partner brands — shared Drive folder.',
     href: 'https://drive.google.com/drive/folders/1pb3zbrnUVXp1tBou8yIFSBFGON32df4T',
@@ -131,11 +154,18 @@ const CARD_DEFS = [
     key: 'staff_hours',
     color: 'blue',
     label: 'Operations',
+    dept: 'operations',
     title: 'Staff Hours',
     desc: 'Live clock-in status, daily/weekly hours, and schedule adherence — synced hourly from Connecteam.',
     href: '/staff_hours.html'
   }
-  // Commission card is handled separately (see commCardDef in index.html)
+  // Commission card is handled separately (see commCardDef in index.html) —
+  // it's dept: 'sales' too.
+  //
+  // The old 'production' card (Processing Stations, → operations.html) is
+  // gone on purpose: its job — picking a Cultivation/Processing/Manufacturing
+  // station — is now what the Operations department branch of the tree does
+  // natively, so a separate flat "station picker" card would just duplicate it.
 ];
 
 // Per-user override: force a specific card order on the hub screen for

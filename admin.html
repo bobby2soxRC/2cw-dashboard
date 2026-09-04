@@ -131,10 +131,10 @@ const ADMIN_ENDPOINT = '/.netlify/functions/admin';
 const TOKEN_KEY = '2cw_admin_token';
 
 // Cards toggled directly in the editor — everything in CARD_DEFS except the
-// ones derived from other settings (production access derives production /
+// ones derived from other settings (production access derives
 // production_dashboard / production_today; FORM_ACCESS_COLS derives
 // field_forms).
-const DERIVED_CARD_KEYS = ['production', 'production_dashboard', 'production_today', 'field_forms'];
+const DERIVED_CARD_KEYS = ['production_dashboard', 'production_today', 'field_forms'];
 const TOGGLE_CARDS = CARD_DEFS.filter(d => !DERIVED_CARD_KEYS.includes(d.key));
 
 let users = [];

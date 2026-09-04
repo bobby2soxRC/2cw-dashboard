@@ -117,7 +117,7 @@
 </head>
 <body>
 <header class="hdr">
-  <a class="hdr-back" href="/operations.html" id="back">← Stations</a>
+  <a class="hdr-back" href="/index.html" id="back">← Hub</a>
   <div class="hdr-div"></div>
   <div class="hdr-brand" id="brand">Bucking</div>
   <div class="lang" id="lang"></div>
@@ -208,7 +208,7 @@
   // Per-station edit access, same check ops_form.html uses.
   const allowed = JSON.parse(sessionStorage.getItem('2cw_ops_edit_access') || 'null');
   if (allowed && allowed !== 'all' && !allowed.includes('buck')) {
-    location.replace('/operations.html');
+    location.replace('/index.html');
     return;
   }
   mountLangToggle('lang');
@@ -219,7 +219,7 @@
     tBatches: { en: 'Batches', es: 'Lotes' },
     tEmployee: { en: 'Employee', es: 'Empleado' },
     tHistorical: { en: 'Historical', es: 'Historial' },
-    back: { en: '← Stations', es: '← Estaciones' },
+    back: { en: '← Hub', es: '← Inicio' },
     batch: { en: 'Batch', es: 'Lote' },
     employeeNo: { en: 'Employee #', es: 'N.º de empleado' },
     boxNo: { en: 'Box #', es: 'Caja n.º' },

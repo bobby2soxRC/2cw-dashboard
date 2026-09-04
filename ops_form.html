@@ -116,7 +116,7 @@
 </head>
 <body>
 <header class="hdr">
-  <a class="hdr-back" href="/operations.html" id="back">← Stations</a>
+  <a class="hdr-back" href="/index.html" id="back">← Hub</a>
   <div class="hdr-div"></div>
   <div class="hdr-brand" id="brand">Operations</div>
   <div class="autosave" id="autosave" style="display:none"><span class="dot"></span><span id="autosave-txt"></span></div>
@@ -149,12 +149,12 @@
 (async function () {
   const params = new URLSearchParams(location.search);
   const station = STATION_BY_KEY[params.get('station')];
-  if (!station) { location.replace('/operations.html'); return; }
+  if (!station) { location.replace('/index.html'); return; }
 
   // Per-station edit access, set at hub login from the directory sheet.
   const allowed = JSON.parse(sessionStorage.getItem('2cw_ops_edit_access') || 'null');
   if (allowed && allowed !== 'all' && !allowed.includes(station.key)) {
-    location.replace('/operations.html');
+    location.replace('/index.html');
     return;
   }
 

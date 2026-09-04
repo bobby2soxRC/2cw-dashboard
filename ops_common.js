@@ -54,7 +54,7 @@ const UI = {
   noMatch:       { en: 'No earlier record found for that UID — enter the weights by hand.',
                    es: 'No se encontró un registro anterior para ese UID — ingrese los pesos a mano.' },
   matched:       { en: 'Matched', es: 'Coincide con' },
-  back:          { en: '← Stations', es: '← Estaciones' }
+  back:          { en: '← Hub', es: '← Inicio' }
 };
 
 // ── Data access ─────────────────────────────────────────────────────────────

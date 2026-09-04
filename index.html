@@ -96,19 +96,33 @@
     .card.blue:hover{border-color:var(--blue);box-shadow:0 0 40px rgba(90,159,212,.1)}
     .card.purple:hover{border-color:var(--purple);box-shadow:0 0 40px rgba(155,127,212,.1)}
     .card.mendo:hover{border-color:var(--mendo);box-shadow:0 0 40px rgba(167,139,250,.15)}
+    .card.red:hover{border-color:var(--red);box-shadow:0 0 40px rgba(239,83,80,.1)}
     .card-dot{width:8px;height:8px;border-radius:50%;margin-bottom:16px;animation:pulse 2.5s ease-in-out infinite}
     .green .card-dot{background:var(--green);box-shadow:0 0 8px var(--green)}
     .gold .card-dot{background:var(--gold);box-shadow:0 0 8px var(--gold)}
     .blue .card-dot{background:var(--blue);box-shadow:0 0 8px var(--blue)}
     .purple .card-dot{background:var(--purple);box-shadow:0 0 8px var(--purple)}
     .mendo .card-dot{background:var(--mendo);box-shadow:0 0 8px var(--mendo)}
+    .red .card-dot{background:var(--red);box-shadow:0 0 8px var(--red)}
     .card-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.25em;text-transform:uppercase;margin-bottom:5px}
-    .green .card-label{color:var(--green-dim)}.gold .card-label{color:#8a6a22}.blue .card-label{color:#2a5a80}.purple .card-label{color:#5a3a90}.mendo .card-label{color:var(--mendo-dim)}
+    .green .card-label{color:var(--green-dim)}.gold .card-label{color:#8a6a22}.blue .card-label{color:#2a5a80}.purple .card-label{color:#5a3a90}.mendo .card-label{color:var(--mendo-dim)}.red .card-label{color:#8a3230}
     .card-title{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:.04em;line-height:1;margin-bottom:10px}
     .card-desc{font-size:13px;color:var(--subtext);line-height:1.6;margin-bottom:22px}
     .card-badge{display:inline-flex;align-items:center;gap:5px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;padding:4px 10px;border-radius:20px}
     .badge-open{background:var(--green2);color:var(--green);border:1px solid rgba(61,184,122,.25)}
     .badge-mendo{background:rgba(167,139,250,.15);color:var(--mendo);border:1px solid rgba(167,139,250,.3)}
+    .badge-folder{background:rgba(255,255,255,.06);color:var(--subtext);border:1px solid var(--border2)}
+    .card-today{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+    .card-drafts{margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:8px}
+    .draft-chip{font-family:'DM Mono',monospace;font-size:.72rem;background:var(--bg);border:1px solid var(--border);border-radius:99px;padding:6px 12px;text-decoration:none;color:var(--text)}
+    .draft-chip:hover{border-color:var(--gold);color:var(--gold)}
+
+    /* ── FOLDER BREADCRUMB ── */
+    .crumb-bar{width:100%;max-width:960px;display:flex;align-items:center;gap:10px;margin-bottom:20px;font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.06em;color:var(--subtext)}
+    .crumb-back{background:transparent;border:1px solid var(--border);color:var(--subtext);border-radius:8px;padding:.4rem .8rem;cursor:pointer;font-family:inherit;font-size:inherit;text-transform:uppercase;letter-spacing:.08em;transition:all .15s}
+    .crumb-back:hover{border-color:var(--text);color:var(--text)}
+    .crumb-trail{text-transform:uppercase;color:var(--muted)}
+    .crumb-trail b{color:var(--text);font-weight:600}
     .footer{margin-top:44px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center;animation:fadeUp .5s .4s ease both}
     @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
     @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
@@ -170,7 +184,13 @@
     </div>
   </div>
 
+  <div class="crumb-bar hidden" id="crumb-bar">
+    <button class="crumb-back" id="crumb-back-btn" onclick="goBack()">← Back</button>
+    <div class="crumb-trail" id="crumb-trail"></div>
+  </div>
+
   <div class="grid" id="card-grid"></div>
+  <div class="empty" id="hub-empty" style="display:none;text-align:center;color:var(--subtext);padding:40px 0;max-width:520px"></div>
 
   <div class="hidden-panel hidden" id="hidden-panel">
     <div class="hidden-panel-label">Hidden — click to restore</div>
@@ -183,6 +203,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/config/supabase_config.js"></script>
 <script src="/hub_config.js"></script>
+<script src="/operations_stations.js"></script>
+<script src="/ops_common.js"></script>
+<script src="/ops_data.js"></script>
 <script>
 // DIRECTORY_URL, CARD_DEFS, CARD_ORDER_OVERRIDES, CARD_SHEET_COLS,
 // COMMISSION_COLS, COMMISSION_REP_MAP, FORM_ACCESS_COLS, and parseCSV()
@@ -200,6 +223,19 @@ let hubState = null;
 let customizeMode = false;
 let draftHidden = []; // working copy while customizeMode is on
 let draftOrder = [];
+
+// ── FOLDER TREE STATE ─────────────────────────────────────
+// The whole hub is one tree (see buildTree()): Executive is a pinned leaf at
+// the root, everything else nests under its department, Operations one level
+// deeper again under Cultivation/Processing/Manufacturing (merging in
+// operations_stations.js's own stations). resolveLanding()/collapseFrom()
+// implement the "skip the chooser when there's only one option" rule
+// recursively at every level, all the way down to a single leaf if that's
+// all a person has.
+let treeRoot = null;        // the full tree for this login, built once
+let currentFolder = null;   // the folder node currently rendered
+let backStack = [];         // folders to pop back to (in-session only)
+const LAST_FOLDER_KEY = '2cw_hub_last_folder';
 
 async function loadPrefs(userName){
   try{
@@ -356,7 +392,6 @@ async function buildHub(user){
   sessionStorage.setItem('2cw_ops_view_access', JSON.stringify(viewList));
   const hasEdit = editList === 'all' || editList.length > 0;
   const hasView = viewList === 'all' || viewList.length > 0;
-  user.production = hasEdit ? 'TRUE' : 'FALSE';                  // station hub — create/edit only
   user.production_dashboard = (hasEdit || hasView) ? 'TRUE' : 'FALSE';  // historical yields/biomass
   user.production_today = (hasEdit || hasView) ? 'TRUE' : 'FALSE';       // live board
 
@@ -391,8 +426,17 @@ async function buildHub(user){
 
   const savedPrefs = await loadPrefs(userName);
   hubState = { userName, defaultOrder, defsByKey, savedPrefs };
-  customizeMode = false;
-  renderGrid();
+
+  treeRoot = await buildTree();
+  const { landing } = computeHome(treeRoot);
+  backStack = [];
+  customizeMode = false; draftHidden = []; draftOrder = [];
+
+  if(landing.type === 'leaf'){
+    window.location.href = landing.href;
+    return;
+  }
+  renderFolder(landing);
 
   // Show hub
   document.getElementById('login-screen').style.display = 'none';
@@ -402,57 +446,228 @@ async function buildHub(user){
 
 function commCardDef(title, href){
   return {
-    key: 'commission', color: 'purple', label: 'Finance', title, href,
+    key: 'commission', color: 'purple', label: 'Sales', dept: 'sales', title, href,
     desc: title === 'My Commissions'
       ? 'Your commission report — select the accounts you worked to generate your pay period summary.'
       : 'Commission reports for all reps. Select rep and period to generate full summary.'
   };
 }
 
+// ── TREE BUILDING ──────────────────────────────────────────
+// Buckets every access-filtered hub_config.js card by dept/subdept, merges in
+// operations_stations.js's own stations (grouped by their own `dept` field —
+// Cultivation/Processing/Manufacturing), and returns one root folder. See the
+// state comment above for how this gets walked/collapsed.
+function hasAnyAccess(a){ return a === 'all' || (Array.isArray(a) && a.length > 0); }
+
+async function buildTree(){
+  const editList = JSON.parse(sessionStorage.getItem('2cw_ops_edit_access') || 'null') || [];
+
+  const salesChildren = [], partnersChildren = [], opsDirect = [];
+  const cultChildren = [], procChildren = [], mfgChildren = [];
+  let executiveLeaf = null;
+
+  hubState.defaultOrder.forEach((key) => {
+    const def = hubState.defsByKey[key];
+    if(!def) return;
+    const leaf = { type:'leaf', key, color:def.color, label:def.label, title:def.title, desc:def.desc, href:def.href, external:def.external, ambient:def.ambient };
+    if(def.pinned){ executiveLeaf = leaf; return; }
+    if(def.dept === 'sales') salesChildren.push(leaf);
+    else if(def.dept === 'partners') partnersChildren.push(leaf);
+    else if(def.dept === 'operations'){
+      if(def.subdept === 'processing') procChildren.push(leaf);
+      else if(def.subdept === 'manufacturing') mfgChildren.push(leaf);
+      else opsDirect.push(leaf);
+    }
+  });
+
+  // Station forms — same visibility rule the old operations.html picker used:
+  // edit access only (view-only access surfaces on Today/Processing Dashboard,
+  // not as an individual submit-form tile).
+  const visibleStations = (typeof OPERATIONS_STATIONS !== 'undefined' ? OPERATIONS_STATIONS : [])
+    .filter((s) => hasAnyAccess(editList) && (editList === 'all' || editList.includes(s.key)));
+
+  if(visibleStations.length){
+    const owner = sessionStorage.getItem('2cw_user_name') || null;
+    const today = new Date().toISOString().slice(0, 10);
+    await Promise.all(visibleStations.map(async (s) => {
+      let n = 0, drafts = [];
+      try {
+        const rows = await loadSubmitted(s.key);
+        n = rows.filter((r) => (r.date || r.submittedAt || '').slice(0, 10) === today).length;
+        drafts = s.customHref ? [] : (owner ? await listMyDrafts(s.key, owner, today) : []);
+      } catch(e){ console.warn('station load failed', s.key, e); }
+      const leaf = {
+        type:'leaf', key:s.key, color:s.color, label:t(s.dept),
+        title:t(s.title), desc:t(s.desc),
+        href: s.customHref || `/ops_form.html?station=${s.key}`,
+        today:n, drafts
+      };
+      const deptName = t(s.dept);
+      if(deptName === 'Cultivation') cultChildren.push(leaf);
+      else if(deptName === 'Processing') procChildren.push(leaf);
+      else if(deptName === 'Manufacturing') mfgChildren.push(leaf);
+    }));
+  }
+
+  const mkFolder = (key, title, color, children) => children.length ? { type:'folder', key, title, color, children } : null;
+
+  const operationsChildren = [
+    ...opsDirect,
+    mkFolder('cultivation', 'Cultivation', 'green', cultChildren),
+    mkFolder('processing', 'Processing', 'gold', procChildren),
+    mkFolder('manufacturing', 'Manufacturing', 'purple', mfgChildren)
+  ].filter(Boolean);
+
+  const rootChildren = [
+    ...(executiveLeaf ? [executiveLeaf] : []),
+    mkFolder('sales', 'Sales', 'green', salesChildren),
+    mkFolder('partners', 'Partners', 'mendo', partnersChildren),
+    mkFolder('operations', 'Operations', 'blue', operationsChildren)
+  ].filter(Boolean);
+
+  return { type:'folder', key:'root', title:'2CW Operations', children:rootChildren };
+}
+
+// Walks through any chain of single-*meaningful*-child folders and stops at
+// the first folder with 0 or 2+ real choices, or at a leaf — the "skip the
+// chooser when there's only one option" rule, applied recursively. Children
+// flagged `ambient` (Today — Live, Processing Dashboard — auto-granted
+// alongside any station access, not a deliberate pick) don't count toward
+// that "only one option" check, so a person with exactly one station still
+// lands straight on it instead of stalling on a 2-tile chooser; ambient
+// items are never hidden, they just don't block auto-navigation past them.
+function collapseFrom(node){
+  const skipped = [];
+  let cur = node;
+  while(cur.type === 'folder'){
+    const meaningful = cur.children.filter((c) => !c.ambient);
+    if(meaningful.length !== 1) break;
+    skipped.push(cur.key);
+    cur = meaningful[0];
+  }
+  return { landing: cur, skipped };
+}
+
+function findFolderByKey(node, key){
+  if(node.type !== 'folder') return null;
+  if(node.key === key) return node;
+  for(const c of node.children){
+    const found = findFolderByKey(c, key);
+    if(found) return found;
+  }
+  return null;
+}
+
+// Where this login lands: try to restore the folder the user was last in
+// (so a "back" click from a leaf page returns them to the right place),
+// falling back to a fresh collapse from the root.
+function computeHome(root){
+  const savedKey = sessionStorage.getItem(LAST_FOLDER_KEY);
+  const savedFolder = savedKey ? findFolderByKey(root, savedKey) : null;
+  return collapseFrom(savedFolder || root);
+}
+
+function escHtml(s){ return String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// ── FOLDER NAVIGATION ───────────────────────────────────────
+function enterFolder(folder){
+  const { landing } = collapseFrom(folder);
+  if(landing.type === 'leaf'){
+    sessionStorage.setItem(LAST_FOLDER_KEY, currentFolder.key);
+    window.location.href = landing.href;
+    return;
+  }
+  backStack.push(currentFolder);
+  customizeMode = false; draftHidden = []; draftOrder = [];
+  renderFolder(landing);
+}
+
+function goBack(){
+  const prev = backStack.pop();
+  if(!prev) return;
+  customizeMode = false; draftHidden = []; draftOrder = [];
+  renderFolder(prev);
+}
+
 // ── GRID RENDERING (normal + customize mode) ──────────────
-function renderGrid(){
+// Customize's hide/reorder prefs are namespaced per folder ("<folderKey>::
+// <childKey>") within the same flat {hidden,order} string arrays the backend
+// already stores — no schema change, just keys scoped so hiding a card in
+// one folder can never collide with a same-named key in another.
+function nsKey(child){ return `${currentFolder.key}::${child.key}`; }
+function currentChildrenNsKeys(){ return (currentFolder.children||[]).map(nsKey); }
+function childByNsKey(k){
+  const prefix = currentFolder.key + '::';
+  if(!k.startsWith(prefix)) return null;
+  const rawKey = k.slice(prefix.length);
+  return (currentFolder.children||[]).find((c) => c.key === rawKey);
+}
+
+function renderFolder(folder){
+  currentFolder = folder;
+  sessionStorage.setItem(LAST_FOLDER_KEY, folder.key);
+
   const grid = document.getElementById('card-grid');
   const toolbar = document.getElementById('customize-toolbar');
   const hiddenPanel = document.getElementById('hidden-panel');
   const customizeBtn = document.getElementById('customize-btn');
+  const emptyEl = document.getElementById('hub-empty');
+  const crumbBar = document.getElementById('crumb-bar');
+  const crumbTrail = document.getElementById('crumb-trail');
   grid.innerHTML = '';
-
-  if(!hubState){ return; }
+  emptyEl.style.display = 'none';
 
   customizeBtn.classList.toggle('active', customizeMode);
   customizeBtn.textContent = customizeMode ? 'Editing…' : 'Customize';
 
+  if(backStack.length){
+    crumbBar.classList.remove('hidden');
+    const trail = [...backStack, folder].filter((f) => f.key !== 'root');
+    crumbTrail.innerHTML = trail.map((f, i, arr) =>
+      i === arr.length - 1 ? `<b>${escHtml(f.title)}</b>` : `${escHtml(f.title)} /`).join(' ');
+  } else {
+    crumbBar.classList.add('hidden');
+  }
+
+  if(!folder.children.length){
+    toolbar.classList.add('hidden');
+    hiddenPanel.classList.add('hidden');
+    emptyEl.style.display = 'block';
+    emptyEl.textContent = 'Nothing here yet.';
+    return;
+  }
+
+  const allNs = currentChildrenNsKeys();
+
   if(!customizeMode){
     toolbar.classList.add('hidden');
     hiddenPanel.classList.add('hidden');
-    const keys = computeEffectiveOrder(hubState.defaultOrder, hubState.savedPrefs.hidden, hubState.savedPrefs.order);
-    keys.forEach((key, idx) => {
-      const def = hubState.defsByKey[key];
-      if(!def) return; // access to this card may have been revoked since prefs were saved
-      grid.appendChild(makeCard(def, idx));
+    const keys = computeEffectiveOrder(allNs, hubState.savedPrefs.hidden, hubState.savedPrefs.order);
+    keys.forEach((k, idx) => {
+      const child = childByNsKey(k);
+      if(!child) return; // access may have been revoked since prefs were saved
+      grid.appendChild(child.type === 'folder' ? makeFolderCard(child, idx) : makeLeafCard(child, idx));
     });
     return;
   }
 
-  // Customize mode: show all authorized cards, hidden ones excluded from the
-  // grid but listed below for restoring. Reorder/hide only ever touches keys
-  // in hubState.defaultOrder — a user can't reference a card they don't have.
   toolbar.classList.remove('hidden');
-  const visibleKeys = computeEffectiveOrder(hubState.defaultOrder, draftHidden, draftOrder);
-  visibleKeys.forEach((key, idx) => {
-    const def = hubState.defsByKey[key];
-    if(!def) return;
-    grid.appendChild(makeCustomizeCard(def, idx, idx===0, idx===visibleKeys.length-1));
+  const visibleKeys = computeEffectiveOrder(allNs, draftHidden, draftOrder);
+  visibleKeys.forEach((k, idx) => {
+    const child = childByNsKey(k);
+    if(!child) return;
+    grid.appendChild(makeCustomizeCard(child, k, idx, idx===0, idx===visibleKeys.length-1));
   });
 
-  const hiddenKeys = hubState.defaultOrder.filter(k => draftHidden.includes(k));
+  const hiddenNsKeys = allNs.filter((k) => draftHidden.includes(k));
   const chipRow = document.getElementById('hidden-chip-row');
-  if(hiddenKeys.length){
+  if(hiddenNsKeys.length){
     hiddenPanel.classList.remove('hidden');
-    chipRow.innerHTML = hiddenKeys.map(k => {
-      const def = hubState.defsByKey[k];
-      if(!def) return '';
-      return `<div class="hidden-chip"><span>${def.title}</span><button onclick="showCard('${k}')">Show</button></div>`;
+    chipRow.innerHTML = hiddenNsKeys.map((k) => {
+      const child = childByNsKey(k);
+      if(!child) return '';
+      return `<div class="hidden-chip"><span>${escHtml(child.title)}</span><button onclick="showCard('${k}')">Show</button></div>`;
     }).join('');
   } else {
     hiddenPanel.classList.add('hidden');
@@ -460,85 +675,116 @@ function renderGrid(){
   }
 }
 
-function makeCard(def, idx){
+function makeLeafCard(child, idx){
   const delays = ['.08s','.16s','.24s','.32s','.40s','.48s'];
-  const badgeClass = def.color === 'mendo' ? 'badge-mendo' : 'badge-open';
+  const badgeClass = child.color === 'mendo' ? 'badge-mendo' : 'badge-open';
   const a = document.createElement('a');
-  a.className = `card ${def.color}`;
-  a.href = def.href;
-  if(def.external){ a.target = '_blank'; a.rel = 'noopener'; }
+  a.className = `card ${child.color || 'blue'}`;
+  a.href = child.href;
+  if(child.external){ a.target = '_blank'; a.rel = 'noopener'; }
   a.style.animationDelay = delays[idx] || '.08s';
+  const todayHtml = child.today !== undefined
+    ? `<div class="card-today">${child.today === 0 ? 'No entries today' : child.today === 1 ? '1 entry today' : child.today + ' entries today'}</div>` : '';
   a.innerHTML = `
     <div class="card-dot"></div>
-    <div class="card-label">${def.label}</div>
-    <div class="card-title">${def.title}</div>
-    <div class="card-desc">${def.desc}</div>
+    <div class="card-label">${escHtml(child.label || '')}</div>
+    <div class="card-title">${escHtml(child.title)}</div>
+    <div class="card-desc">${escHtml(child.desc || '')}</div>
+    ${todayHtml}
     <span class="card-badge ${badgeClass}">● Live</span>
   `;
+  if(child.drafts && child.drafts.length){
+    const wrap = document.createElement('div');
+    wrap.className = 'card-drafts';
+    wrap.innerHTML = child.drafts.map((d) =>
+      `<a class="draft-chip" href="${child.href}&draft=${d.id}" onclick="event.stopPropagation()">${escHtml(d.strain || d.id.slice(0,8))}</a>`).join('');
+    a.appendChild(wrap);
+  }
   return a;
 }
 
-function makeCustomizeCard(def, idx, isFirst, isLast){
+function makeFolderCard(child, idx){
+  const delays = ['.08s','.16s','.24s','.32s','.40s','.48s'];
+  const n = (child.children||[]).length;
   const div = document.createElement('div');
-  div.className = `card customizing ${def.color}`;
+  div.className = `card ${child.color || 'blue'}`;
+  div.style.animationDelay = delays[idx] || '.08s';
+  div.onclick = () => enterFolder(child);
+  div.innerHTML = `
+    <div class="card-dot"></div>
+    <div class="card-title">${escHtml(child.title)}</div>
+    <div class="card-desc">${escHtml(child.desc || '')}</div>
+    <span class="card-badge badge-folder">→ ${n} ${n===1?'item':'items'}</span>
+  `;
+  return div;
+}
+
+function makeCustomizeCard(child, nsKeyStr, idx, isFirst, isLast){
+  const div = document.createElement('div');
+  div.className = `card customizing ${child.color || 'blue'}`;
   div.innerHTML = `
     <div class="card-ctrl-bar">
-      <button ${isFirst?'disabled':''} onclick="moveCard('${def.key}',-1)" title="Move up">▲</button>
-      <button ${isLast?'disabled':''} onclick="moveCard('${def.key}',1)" title="Move down">▼</button>
-      <button class="hide-btn" onclick="hideCard('${def.key}')" title="Hide">🙈</button>
+      <button ${isFirst?'disabled':''} onclick="moveCard('${nsKeyStr}',-1)" title="Move up">▲</button>
+      <button ${isLast?'disabled':''} onclick="moveCard('${nsKeyStr}',1)" title="Move down">▼</button>
+      <button class="hide-btn" onclick="hideCard('${nsKeyStr}')" title="Hide">🙈</button>
     </div>
-    <div class="card-label">${def.label}</div>
-    <div class="card-title">${def.title}</div>
-    <div class="card-desc">${def.desc}</div>
+    <div class="card-label">${escHtml(child.label || (child.type==='folder' ? 'Folder' : ''))}</div>
+    <div class="card-title">${escHtml(child.title)}</div>
+    <div class="card-desc">${escHtml(child.desc || '')}</div>
   `;
   return div;
 }
 
 // ── CUSTOMIZE MODE CONTROLS ────────────────────────────────
+// Operates on whichever folder is currently rendered — see the nsKey()
+// comment above for how hide/reorder stays scoped to that folder only.
 function toggleCustomize(){
-  if(!hubState) return;
+  if(!currentFolder) return;
   if(customizeMode){
     cancelCustomize();
     return;
   }
   customizeMode = true;
   draftHidden = [...hubState.savedPrefs.hidden];
-  draftOrder = computeEffectiveOrder(hubState.defaultOrder, draftHidden, hubState.savedPrefs.order);
-  renderGrid();
+  draftOrder = [...hubState.savedPrefs.order];
+  renderFolder(currentFolder);
 }
 
 function cancelCustomize(){
   customizeMode = false;
   draftHidden = [];
   draftOrder = [];
-  renderGrid();
+  renderFolder(currentFolder);
 }
 
 function resetCustomize(){
   if(!customizeMode) return;
-  draftHidden = [];
-  draftOrder = [...hubState.defaultOrder];
-  renderGrid();
+  const allNs = currentChildrenNsKeys();
+  draftHidden = draftHidden.filter((k) => !allNs.includes(k));
+  draftOrder = draftOrder.filter((k) => !allNs.includes(k));
+  renderFolder(currentFolder);
 }
 
-function moveCard(key, dir){
-  const keys = computeEffectiveOrder(hubState.defaultOrder, draftHidden, draftOrder);
-  const i = keys.indexOf(key);
+function moveCard(nsKeyStr, dir){
+  const allNs = currentChildrenNsKeys();
+  const keys = computeEffectiveOrder(allNs, draftHidden, draftOrder);
+  const i = keys.indexOf(nsKeyStr);
   const j = i + dir;
   if(i===-1 || j<0 || j>=keys.length) return;
   [keys[i], keys[j]] = [keys[j], keys[i]];
-  draftOrder = keys;
-  renderGrid();
+  const otherNs = draftOrder.filter((k) => !allNs.includes(k));
+  draftOrder = [...otherNs, ...keys];
+  renderFolder(currentFolder);
 }
 
-function hideCard(key){
-  if(!draftHidden.includes(key)) draftHidden.push(key);
-  renderGrid();
+function hideCard(nsKeyStr){
+  if(!draftHidden.includes(nsKeyStr)) draftHidden.push(nsKeyStr);
+  renderFolder(currentFolder);
 }
 
-function showCard(key){
-  draftHidden = draftHidden.filter(k => k !== key);
-  renderGrid();
+function showCard(nsKeyStr){
+  draftHidden = draftHidden.filter((k) => k !== nsKeyStr);
+  renderFolder(currentFolder);
 }
 
 async function saveCustomize(){
@@ -555,7 +801,7 @@ async function saveCustomize(){
     hubState.savedPrefs = { hidden: draftHidden, order: draftOrder };
     customizeMode = false;
     draftHidden = []; draftOrder = [];
-    renderGrid();
+    renderFolder(currentFolder);
   }catch(err){
     alert('Could not save your dashboard layout: ' + err.message);
     btn.disabled = false; btn.textContent = 'Save';
@@ -568,17 +814,21 @@ function doLogout(){
   hubState = null;
   customizeMode = false;
   draftHidden = []; draftOrder = [];
+  treeRoot = null; currentFolder = null; backStack = [];
   sessionStorage.removeItem('2cw_pin');
   sessionStorage.removeItem('2cw_user_name');
   sessionStorage.removeItem('2cw_form_access');
   sessionStorage.removeItem('2cw_ops_edit_access');
   sessionStorage.removeItem('2cw_ops_view_access');
+  sessionStorage.removeItem(LAST_FOLDER_KEY);
   document.getElementById('pin-input').value = '';
   for(let i = 0; i < 4; i++) document.getElementById('dot'+i).classList.remove('filled');
   document.getElementById('login-err').style.display = 'none';
   document.getElementById('card-grid').innerHTML = '';
   document.getElementById('customize-toolbar').classList.add('hidden');
   document.getElementById('hidden-panel').classList.add('hidden');
+  document.getElementById('crumb-bar').classList.add('hidden');
+  document.getElementById('hub-empty').style.display = 'none';
   document.getElementById('hub-screen').classList.remove('visible');
   document.getElementById('login-screen').style.display = 'flex';
   setTimeout(() => document.getElementById('pin-input').focus(), 100);
