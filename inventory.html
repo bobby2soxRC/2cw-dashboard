@@ -358,12 +358,14 @@
   .pr-add-btn { margin-left: 8px; background: var(--surface2); border: 1px solid var(--accent); color: var(--accent); font-family: var(--font); font-size: 10px; font-weight: 600; letter-spacing: .04em; padding: 2px 8px; border-radius: 10px; cursor: pointer; white-space: nowrap; transition: background .15s; }
   .pr-add-btn:hover { background: rgba(0,201,167,.12); }
   .pr-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
-  .pr-modal { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 22px; width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; }
-  .pr-modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .pr-modal { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 22px; width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; }
+  .pr-modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; padding-right: 24px; }
+  .pr-modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--muted); font-size: 16px; line-height: 1; cursor: pointer; padding: 4px; }
+  .pr-modal-close:hover { color: var(--text); }
   .pr-modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
   .pr-field { margin-bottom: 12px; }
   .pr-field label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
-  .pr-field input, .pr-field textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: var(--font); font-size: 13px; padding: 8px 10px; border-radius: 6px; }
+  .pr-field input, .pr-field textarea, .pr-field select { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: var(--font); font-size: 13px; padding: 8px 10px; border-radius: 6px; }
   .pr-field input:focus, .pr-field textarea:focus { outline: none; border-color: var(--accent); }
   .pr-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .pr-actions { display: flex; gap: 10px; margin-top: 18px; }
@@ -430,6 +432,7 @@
       <th class="sortable" onclick="sortTableBy('overview','past30')">Past 30<span class="sort-arrow" id="arrow-overview-past30"></span></th>
       <th class="sortable" onclick="sortTableBy('overview','dos')">Days of Supply<span class="sort-arrow" id="arrow-overview-dos"></span></th>
       <th class="sortable" onclick="sortTableBy('overview','needed')">Units Needed<span class="sort-arrow" id="arrow-overview-needed"></span></th>
+      <th class="sortable" onclick="sortTableBy('overview','postdos')" title="Days of supply if every in-process production request for this SKU landed today">Post-PR DOS<span class="sort-arrow" id="arrow-overview-postdos"></span></th>
       <th class="sortable" onclick="sortTableBy('overview','status')">Status<span class="sort-arrow" id="arrow-overview-status"></span></th>
     </tr></thead><tbody id="overview-table"></tbody></table>
   </div>
@@ -485,6 +488,7 @@
       <th class="sortable" onclick="sortTableBy('srf','past30')">Past 30<span class="sort-arrow" id="arrow-srf-past30"></span></th>
       <th class="sortable" onclick="sortTableBy('srf','dos')">Days of Supply<span class="sort-arrow" id="arrow-srf-dos"></span></th>
       <th class="sortable" onclick="sortTableBy('srf','needed')">Units Needed<span class="sort-arrow" id="arrow-srf-needed"></span></th>
+      <th class="sortable" onclick="sortTableBy('srf','postdos')" title="Days of supply if every in-process production request for this SKU landed today">Post-PR DOS<span class="sort-arrow" id="arrow-srf-postdos"></span></th>
       <th class="sortable" onclick="sortTableBy('srf','status')">Status<span class="sort-arrow" id="arrow-srf-status"></span></th>
     </tr></thead>
     <tbody id="srf-table"></tbody></table>
@@ -527,6 +531,7 @@
       <th class="sortable" onclick="sortTableBy('hwr','past30')">Past 30<span class="sort-arrow" id="arrow-hwr-past30"></span></th>
       <th class="sortable" onclick="sortTableBy('hwr','dos')">Days of Supply<span class="sort-arrow" id="arrow-hwr-dos"></span></th>
       <th class="sortable" onclick="sortTableBy('hwr','needed')">Units Needed<span class="sort-arrow" id="arrow-hwr-needed"></span></th>
+      <th class="sortable" onclick="sortTableBy('hwr','postdos')" title="Days of supply if every in-process production request for this SKU landed today">Post-PR DOS<span class="sort-arrow" id="arrow-hwr-postdos"></span></th>
       <th class="sortable" onclick="sortTableBy('hwr','status')">Status<span class="sort-arrow" id="arrow-hwr-status"></span></th>
     </tr></thead>
     <tbody id="hwr-table"></tbody></table>
@@ -569,6 +574,7 @@
       <th class="sortable" onclick="sortTableBy('mendo','past30')">Past 30<span class="sort-arrow" id="arrow-mendo-past30"></span></th>
       <th class="sortable" onclick="sortTableBy('mendo','dos')">Days of Supply<span class="sort-arrow" id="arrow-mendo-dos"></span></th>
       <th class="sortable" onclick="sortTableBy('mendo','needed')">Units Needed<span class="sort-arrow" id="arrow-mendo-needed"></span></th>
+      <th class="sortable" onclick="sortTableBy('mendo','postdos')" title="Days of supply if every in-process production request for this SKU landed today">Post-PR DOS<span class="sort-arrow" id="arrow-mendo-postdos"></span></th>
       <th class="sortable" onclick="sortTableBy('mendo','status')">Status<span class="sort-arrow" id="arrow-mendo-status"></span></th>
     </tr></thead>
     <tbody id="mendo-table"></tbody></table>
@@ -612,6 +618,7 @@
 <!-- ==================== ADD PR MODAL ==================== -->
 <div class="pr-modal-overlay" id="pr-modal-overlay">
   <div class="pr-modal">
+    <button type="button" class="pr-modal-close" onclick="closePrModal()" aria-label="Close">✕</button>
     <h3>New Production Request</h3>
     <div class="pr-modal-sub" id="pr-modal-product"></div>
     <div class="pr-error" id="pr-error"></div>
@@ -621,8 +628,13 @@
         <input type="number" id="pr-batch" min="1" step="1" required>
       </div>
       <div class="pr-field">
-        <label for="pr-crew">Crew</label>
-        <input type="text" id="pr-crew" placeholder="e.g. Crew A">
+        <label for="pr-crew">Team</label>
+        <select id="pr-crew" required>
+          <option value="" disabled selected>Select a team</option>
+          <option value="Flower">Flower</option>
+          <option value="Prerolls">Prerolls</option>
+          <option value="Concentrates">Concentrates</option>
+        </select>
       </div>
       <div class="pr-row2">
         <div class="pr-field">
@@ -644,6 +656,9 @@
       </div>
     </form>
     <div class="pr-success" id="pr-success"></div>
+    <div class="pr-actions" id="pr-success-actions" style="display:none">
+      <button type="button" class="pr-submit-btn" style="flex:none;margin-left:auto" onclick="closePrModal()">Close</button>
+    </div>
   </div>
 </div>
 
@@ -669,6 +684,32 @@ let _prData = { requests: [], slots: [] };
 function isPrAllowedUser() {
   const name = (sessionStorage.getItem('2cw_user_name') || '').toLowerCase();
   return !!name && PR_ALLOWED_USERS.some(u => name.includes(u));
+}
+
+// "In process" = not finished and not abandoned. Cancelled isn't a status
+// the Sheet defines today, but excluding it here means nothing needs to
+// change on this side if/when it is.
+const PR_CLOSED_STATUSES = ['complete', 'cancelled', 'canceled'];
+function isOpenPrStatus(status) {
+  return !PR_CLOSED_STATUSES.includes((status || '').toString().toLowerCase().trim());
+}
+// type=null matches every type for the bsku (used for the BSKU-level rollup).
+function prRequestsFor(bsku, type) {
+  return (_prData.requests || []).filter(r =>
+    r.bsku === bsku &&
+    (type == null || (r.strain_type || '').toLowerCase() === type.toLowerCase()) &&
+    isOpenPrStatus(r.status));
+}
+function prOpenUnits(bsku, type) {
+  return prRequestsFor(bsku, type).reduce((s, r) => s + (Number(r.batch_size) || 0), 0);
+}
+// Post-PR DOS: days of supply if every open (in-process) request for this
+// BSKU, across all types, lands today.
+function pgPostPrDos(r) {
+  const velocity = (r.past_30 || 0) / 30;
+  if (velocity <= 0) return null;
+  const openUnits = prOpenUnits(pgBsku(r), null);
+  return (r.inventory + openUnits) / velocity;
 }
 
 // ─── TARGET DAYS STATE ────────────────────────────────────────────────────────
@@ -701,6 +742,7 @@ function sortValue(r, col, t) {
     case 'past30':    return r.past_30 || 0;
     case 'dos':       return r.days_of_supply;
     case 'needed':    return bskuUnitsNeeded(r, t);
+    case 'postdos':   return pgPostPrDos(r);
     case 'status':    return statusRank(r.days_of_supply, t);
     default:          return 0;
   }
@@ -725,7 +767,7 @@ function applySort(rows, pageKey, t) {
 
 function updateSortIndicators(pageKey) {
   const st = SORT_STATE[pageKey];
-  ['brand','category','sku','pack','units','past30','dos','needed','status'].forEach(col => {
+  ['brand','category','sku','pack','units','past30','dos','needed','postdos','status'].forEach(col => {
     const el = document.getElementById(`arrow-${pageKey}-${col}`);
     if (!el) return;
     const th = el.closest('th');
@@ -1121,10 +1163,8 @@ function renderSkuDetailCharts(panel, bsku) {
       const TD  = 'padding:7px 12px;text-align:center;font-family:var(--mono);font-size:12px';
       const TDL = 'padding:7px 12px;text-align:left';
 
-      const openReqs = (_prData.requests || []).filter(r =>
-        r.bsku === bsku && (r.strain_type || '').toLowerCase() === type.toLowerCase() &&
-        (r.status || '').toLowerCase() !== 'complete');
-      const openUnits = openReqs.reduce((s, r) => s + (Number(r.batch_size) || 0), 0);
+      const openReqs = prRequestsFor(bsku, type);
+      const openUnits = prOpenUnits(bsku, type);
       const velocity = p30 / 30;
       const projectedDos = velocity > 0 ? (inv + openUnits) / velocity : null;
       const prBtn = isPrAllowedUser()
@@ -1322,9 +1362,10 @@ function refreshOverviewTable(pgs) {
       <td class="num">${r.weight_unit}</td><td class="num">${fmtNum(r.inventory)}</td>
       <td class="num">${fmtNum(r.past_30)}</td><td>${daysBar(r.days_of_supply,t)}</td>
       <td class="num">${unitsNeededBadge(bskuUnitsNeeded(r,t))}</td>
+      <td>${daysBar(pgPostPrDos(r),t)}</td>
       <td>${urgencyBadge(r.days_of_supply,t)}</td>`;
     tb.appendChild(tr);
-    tb.insertAdjacentHTML('beforeend', skuDetailRowHtml(`detail-overview-${bsku}`, bsku, 9));
+    tb.insertAdjacentHTML('beforeend', skuDetailRowHtml(`detail-overview-${bsku}`, bsku, 10));
   });
   buildMobileList('overview-mobile-list', sorted, t, 'overview', true);
 }
@@ -1452,9 +1493,10 @@ function refreshBrandTable(tbId, brand, pgs, pageKey) {
       <td class="num">${fmtNum(r.inventory)}</td><td class="num">${fmtNum(r.past_30)}</td>
       <td>${daysBar(r.days_of_supply,t)}</td>
       <td class="num">${unitsNeededBadge(bskuUnitsNeeded(r,t))}</td>
+      <td>${daysBar(pgPostPrDos(r),t)}</td>
       <td>${urgencyBadge(r.days_of_supply,t)}</td>`;
     tb.appendChild(tr);
-    tb.insertAdjacentHTML('beforeend', skuDetailRowHtml(`detail-${tbId}-${bsku}`, bsku, 8));
+    tb.insertAdjacentHTML('beforeend', skuDetailRowHtml(`detail-${tbId}-${bsku}`, bsku, 9));
   });
   // Derive mobile list id from table id: "srf-table" → "srf-mobile-list"
   const mobileId = tbId.replace('-table', '-mobile-list');
@@ -1767,6 +1809,7 @@ function openPrModal(tsku, bsku, type) {
   document.getElementById('pr-notes').value = '';
   document.getElementById('pr-error').style.display = 'none';
   document.getElementById('pr-success').style.display = 'none';
+  document.getElementById('pr-success-actions').style.display = 'none';
   form.style.display = 'block';
   document.getElementById('pr-modal-overlay').style.display = 'flex';
 }
@@ -1832,6 +1875,7 @@ async function submitPrModal(event) {
     const successEl = document.getElementById('pr-success');
     successEl.textContent = `✓ Submitted as ${data.pr_num}. It'll appear in Open Requests after the next sync (hourly, or run the Production Requests Sync Action manually).`;
     successEl.style.display = 'block';
+    document.getElementById('pr-success-actions').style.display = 'flex';
   } catch (err) {
     errEl.textContent = err.message || 'Something went wrong — please try again.';
     errEl.style.display = 'block';
