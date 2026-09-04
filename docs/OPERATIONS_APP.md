@@ -1,4 +1,4 @@
-# 2CW Production App
+# 2CW Operations App
 
 Replaces the hand-written station paperwork — and the retyping into
 spreadsheets that follows it — with tablet forms that total themselves,
@@ -10,24 +10,24 @@ the existing Operations Hub — same login, same Netlify deploy.
 
 | File | What it is |
 |---|---|
-| `production.html` | Station picker, grouped by department, with "continue" chips for your open drafts |
-| `prod_form.html` | The form for every station, rendered from the schema, with autosave + resume |
-| `buck_station.html` | Bucking's own 4-tab page (Today / Batches / Employee / Historical) — see below, doesn't use `prod_form.html` |
-| `buck_data.js` | Bucking's data layer — submissions, boxes, batch close-out. Reuses `production_forms`, no schema changes |
-| `production_today.html` | Live board — every form in progress or finished today, for anyone with view access |
-| `production_dashboard.html` | Pipeline, yields, biomass, labor, requests, exceptions (finished forms only) |
-| `production_stations.js` | **The schema.** Station and field definitions, EN + ES |
-| `prod_common.js` | Language, reference-data loading, the legacy offline queue |
-| `prod_data.js` | Supabase-backed drafts, autosave, live "Today" queries |
-| `prod_analytics.js` | Lot tracking, yields, biomass ledger, labor, exceptions |
+| `operations.html` | Station picker, grouped by department, with "continue" chips for your open drafts |
+| `ops_form.html` | The form for every station, rendered from the schema, with autosave + resume |
+| `buck_station.html` | Bucking's own 4-tab page (Today / Batches / Employee / Historical) — see below, doesn't use `ops_form.html` |
+| `buck_data.js` | Bucking's data layer — submissions, boxes, batch close-out. Reuses `operations_forms`, no schema changes |
+| `operations_today.html` | Live board — every form in progress or finished today, for anyone with view access |
+| `operations_dashboard.html` | Pipeline, yields, biomass, labor, requests, exceptions (finished forms only) |
+| `operations_stations.js` | **The schema.** Station and field definitions, EN + ES |
+| `ops_common.js` | Language, reference-data loading, the legacy offline queue |
+| `ops_data.js` | Supabase-backed drafts, autosave, live "Today" queries |
+| `ops_analytics.js` | Lot tracking, yields, biomass ledger, labor, exceptions |
 | `supabase/schema.sql` | Run once in a new Supabase project — see setup below |
 | `config/supabase_config.js` | Your project's URL + anon key go here |
-| `netlify/functions/upload-production-photo.js` | Photo storage (stays in GitHub, alongside the field-form photos) |
-| `netlify/functions/submit-production.js` | The old single-shot submit path — kept as the fallback when Supabase isn't configured |
-| `data/production/reference.json` | Farms, strains, dry rooms, machines, brands |
-| `data/production/<station>.json` | Fallback data source when Supabase isn't configured; otherwise unused |
-| `scripts/test_prod_analytics.js` | `node scripts/test_prod_analytics.js` |
-| `scripts/seed_demo_production.js` | Demo data for the static-fallback dashboard; `--clear` to empty |
+| `netlify/functions/upload-operations-photo.js` | Photo storage (stays in GitHub, alongside the field-form photos) |
+| `netlify/functions/submit-operations.js` | The old single-shot submit path — kept as the fallback when Supabase isn't configured |
+| `data/operations/reference.json` | Farms, strains, dry rooms, machines, brands |
+| `data/operations/<station>.json` | Fallback data source when Supabase isn't configured; otherwise unused |
+| `scripts/test_ops_analytics.js` | `node scripts/test_ops_analytics.js` |
+| `scripts/seed_demo_operations.js` | Demo data for the static-fallback dashboard; `--clear` to empty |
 
 ## Stations
 
@@ -50,7 +50,7 @@ several strains get bucked at once by a rotating crew, a batch can span
 several days, and the crew needs to log a scale reading the instant it
 happens, not fill out a form at the end of a shift. So Bucking gets its own
 page, `buck_station.html` (linked via `customHref` on the `buck` entry in
-`production_stations.js` instead of `prod_form.html`), with four tabs:
+`operations_stations.js` instead of `ops_form.html`), with four tabs:
 
 - **Today** — a quick-entry bar (batch, employee #, box #, weight) team
   leads use all day, plus a live roster grid — employees × strains, exactly
@@ -65,7 +65,7 @@ page, `buck_station.html` (linked via `customHref` on the `buck` entry in
 - **Historical** — everything, filterable by date / strain / UID.
 
 **No new schema, no new Supabase project changes.** This reuses the same
-`production_forms` table as everything else (see `buck_data.js`), just with
+`operations_forms` table as everything else (see `buck_data.js`), just with
 station keys of its own instead of the one-record-per-form shape:
 
 - `buck_submission` — insert-only. One row per scale trip: employee, batch,
@@ -114,7 +114,7 @@ real row lands), so an operator isn't left wondering whether it took.
   strains through bucking at once sees "Continue —" chips for each open draft,
   both on the station hub and inside the form itself, and can jump between
   them freely. Each is its own row, autosaving independently.
-- **A live board for supervisors.** `production_today.html` shows every form
+- **A live board for supervisors.** `operations_today.html` shows every form
   in progress or finished today, updating within a second or two of an
   autosave landing on another tablet. Gated by its own *view* permission,
   separate from who can actually create or edit forms — a plant manager can
@@ -152,7 +152,7 @@ worksheet): one row per person, their employee number, and their hours on
 skip it and the totals still cover the station-level number; fill it in and
 you get a real link between a numeric employee ID and a specific batch/UID.
 
-That link is what `prod_analytics.js`'s `crewLaborLog` / `crewLaborByEmployee`
+That link is what `ops_analytics.js`'s `crewLaborLog` / `crewLaborByEmployee`
 read, and what the dashboard's Labor tab now shows first: every employee
 number, their logged hours, how many distinct batches they touched, and
 which stations. It's also on the hand-trim worksheet already (employee # per
@@ -181,7 +181,7 @@ task:
    plenty for this — a few hundred rows a day).
 2. **Run the schema.** Project → SQL Editor → New query → paste in the
    contents of `supabase/schema.sql` → Run. Creates one table
-   (`production_forms`) with the indexes and realtime subscription the app
+   (`operations_forms`) with the indexes and realtime subscription the app
    needs. Safe to re-run.
 3. **Copy two values** from Project Settings → API: the **Project URL** and
    the **anon / public key** (not the `service_role` key — that one must
@@ -190,8 +190,8 @@ task:
    const SUPABASE_URL = 'https://xxxxxxxx.supabase.co';
    const SUPABASE_ANON_KEY = 'eyJhbGci...';
    ```
-4. **Commit and deploy.** That's it — `prod_form.html`, `production.html`,
-   `production_today.html`, and `production_dashboard.html` all detect the
+4. **Commit and deploy.** That's it — `ops_form.html`, `operations.html`,
+   `operations_today.html`, and `operations_dashboard.html` all detect the
    config automatically and switch from single-shot/static-file mode into
    live drafts + Supabase-backed history.
 
@@ -205,11 +205,11 @@ would unlock.
 **Until you do this**, the app still works exactly as it did before: forms
 submit in one shot (no autosave, no resume, no live board — those pages show
 a short "not connected yet" message instead), and the dashboard reads the
-static `data/production/*.json` files. Nothing breaks on a fresh checkout.
+static `data/operations/*.json` files. Nothing breaks on a fresh checkout.
 
 ## Before going live
 
-1. **Fill in `data/production/reference.json`.** Seeded from your workbook, so
+1. **Fill in `data/operations/reference.json`.** Seeded from your workbook, so
    the codes are real but the labels are placeholders:
    - `sites` — `AF`, `BG`, `HSR`, `AHD`, `WC` came out of the batch names.
      Rename `label` to the actual farm names.
@@ -229,7 +229,7 @@ static `data/production/*.json` files. Nothing breaks on a fresh checkout.
      column name `production stations` still works, read as edit access, if
      a sheet was already set up under that name.)
    - `production view stations` — can watch these stations live on
-     `production_today.html` and see them on the dashboard, without being
+     `operations_today.html` and see them on the dashboard, without being
      able to touch them. A plant manager watching a department they don't
      personally run belongs here. Edit access already implies view access,
      so you only need this column for someone who should see a station but
@@ -243,7 +243,7 @@ static `data/production/*.json` files. Nothing breaks on a fresh checkout.
 
 4. **Clear the demo data** if you seeded any (only matters for the static
    fallback):
-   `node scripts/seed_demo_production.js --clear`
+   `node scripts/seed_demo_operations.js --clear`
 
 5. `GITHUB_TOKEN` is already set in Netlify for the field forms; the
    photo-upload function uses the same one. Nothing new to configure there.
@@ -270,7 +270,7 @@ static `data/production/*.json` files. Nothing breaks on a fresh checkout.
 
 ## Adding a field or a station
 
-Everything is driven by `production_stations.js`. Adding a field to bucking is
+Everything is driven by `operations_stations.js`. Adding a field to bucking is
 one line in that station's `fields` array — the form, the dashboard, and the
 stored record all pick it up. Field types: `text`, `number`, `date`, `select`
 (with `ref` for a reference list, `opts` for inline options, `allowOther`),
@@ -292,19 +292,19 @@ read to walk into the individual lines instead, so a UID typed into a
 downstream form — or a lot on the dashboard — resolves to its own line's
 weight and strain, not the whole truck's total.
 
-To make a new station appear, add an entry to `PROD_STATIONS` and add its key
-to `KNOWN_STATIONS` in both `netlify/functions/submit-production.js` and
-`netlify/functions/upload-production-photo.js`. Create an empty
-`data/production/<key>.json` containing `[]` for the static fallback.
+To make a new station appear, add an entry to `OPERATIONS_STATIONS` and add its key
+to `KNOWN_STATIONS` in both `netlify/functions/submit-operations.js` and
+`netlify/functions/upload-operations-photo.js`. Create an empty
+`data/operations/<key>.json` containing `[]` for the static fallback.
 
-Run `node scripts/test_prod_analytics.js` after touching `prod_analytics.js` or
+Run `node scripts/test_ops_analytics.js` after touching `ops_analytics.js` or
 any station's `flow` block.
 
 ## Not built yet
 
 Deliberately out of this pass, roughly in the order I'd add them:
 
-- **Discarding a draft.** `prod_data.js` has `deleteDraft()` but nothing in
+- **Discarding a draft.** `ops_data.js` has `deleteDraft()` but nothing in
   the UI calls it yet — an abandoned draft (wrong strain, started by mistake)
   just sits there until someone submits or ignores it. A "discard" button on
   the strain switcher is a small addition.
@@ -366,7 +366,7 @@ published Google Sheet kept only as a fallback) is still just a 4-digit PIN
 with no real identity behind it, readable by anyone who reaches the login
 page. It's fine for a dashboard behind an unguessable link; it is not
 something to build production authority on top of — and it's the reason the
-`production_forms` Row Level Security policy is left deliberately open
+`operations_forms` Row Level Security policy is left deliberately open
 rather than pretending to restrict access it has no real identity to
 restrict by (`app_users` itself is locked down further — writes require the
 separate admin PIN — see `docs/USER_ADMIN.md`). Whichever SSO route you
@@ -377,7 +377,7 @@ with it.
 
 Live state (drafts, autosave, the Today board) lives in Supabase — a real
 database, needed for the write-heavy, read-heavy pattern autosave and live
-viewing create. The static `data/production/*.json` files are only a
+viewing create. The static `data/operations/*.json` files are only a
 fallback for a fresh install with no Supabase project yet; once one is
 configured, they stop being read. GitHub still holds the photos, same as the
 field forms, since that storage never needed to be "live."

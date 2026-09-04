@@ -1,11 +1,11 @@
-// Uploads one production-form photo to GitHub and returns its URL. Split out
-// from the old submit-production.js because photo storage still lives in
+// Uploads one operations-form photo to GitHub and returns its URL. Split out
+// from the old submit-operations.js because photo storage still lives in
 // git (durable, versioned, and it's exactly what the field-forms photos
 // already do) while the form records themselves now live in Supabase —
 // this is the one place those two storage systems meet.
 //
 // Requires GITHUB_TOKEN (same fine-grained PAT already used by the other
-// production/field-form functions) in the Netlify site config.
+// operations/field-form functions) in the Netlify site config.
 
 const OWNER = 'bobby2soxRC';
 const REPO = '2cw-dashboard';
@@ -23,7 +23,7 @@ function ghHeaders(token) {
     Authorization: `Bearer ${token}`,
     Accept: 'application/vnd.github+json',
     'X-GitHub-Api-Version': '2022-11-28',
-    'User-Agent': '2cw-dashboard-production'
+    'User-Agent': '2cw-dashboard-operations'
   };
 }
 
@@ -55,14 +55,14 @@ exports.handler = async (event) => {
   const match = /^data:(image\/\w+);base64,(.+)$/s.exec(dataUrl);
   if (!match) return { statusCode: 400, body: JSON.stringify({ ok: false, error: 'Bad photo data URL' }) };
   const ext = match[1] === 'image/png' ? 'png' : 'jpg';
-  const path = `data/production/uploads/${stationKey}/${id}-${fieldKey}.${ext}`;
+  const path = `data/operations/uploads/${stationKey}/${id}-${fieldKey}.${ext}`;
 
   try {
     const res = await fetch(`${API_ROOT}/contents/${path}`, {
       method: 'PUT',
       headers: { ...ghHeaders(token), 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        message: `Production photo: ${stationKey}/${id}-${fieldKey}`,
+        message: `Operations photo: ${stationKey}/${id}-${fieldKey}`,
         content: match[2],
         branch: BRANCH
       })

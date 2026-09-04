@@ -1,8 +1,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Bucking — the event-sourced data layer behind buck_station.html.
 //
-// Reuses the same `production_forms` table and Supabase project as
-// prod_data.js — no new schema — by giving Bucking its own station_key
+// Reuses the same `operations_forms` table and Supabase project as
+// ops_data.js — no new schema — by giving Bucking its own station_key
 // "namespace" instead of the one-record-per-work-order shape every other
 // station uses:
 //
@@ -28,7 +28,7 @@
 // records that don't have a matching buck_batch_close yet.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const BUCK_TABLE = 'production_forms';
+const BUCK_TABLE = 'operations_forms';
 
 function buckClient() {
   return typeof getClient === 'function' ? getClient() : null;
@@ -115,7 +115,7 @@ async function flushBuckQueue() {
 }
 
 // Renders a "N entries waiting to send" banner and keeps it current — same
-// idea as prod_common.js's mountQueueBanner, just pointed at this station's
+// idea as ops_common.js's mountQueueBanner, just pointed at this station's
 // own queue since it writes straight to Supabase instead of through the
 // Netlify function the old queue targets. `strings` needs {pendingOne,
 // pendingMany, sendNow} translation objects; `onFlush` (optional) is called
@@ -204,7 +204,7 @@ async function listSubmissions({ batchUid, date, employeeNo } = {}) {
 
 // Pushes onChange(row) for every new submission — what makes the Today
 // roster update live as other tablets log weight, the same idea as
-// prod_data.js's subscribeToday.
+// ops_data.js's subscribeToday.
 function subscribeBuckSubmissions(onChange) {
   const client = buckClient();
   if (!client) return () => {};

@@ -239,7 +239,7 @@ document.getElementById('pin-input').addEventListener('keydown', e => {
 // ── LOAD DIRECTORY ────────────────────────────────────────
 // Tries the app_users table (in-app admin panel) first, falls back to the
 // legacy Google Sheet if Supabase isn't configured yet or has no active
-// users — same fallback story as the production app's autosave. app_users
+// users — same fallback story as the operations app's autosave. app_users
 // rows store `columns` in the exact flat shape parseCSV() produces, so
 // nothing downstream of this function needs to know which source it came
 // from.
@@ -338,7 +338,7 @@ async function buildHub(user){
   sessionStorage.setItem('2cw_form_access', JSON.stringify(formAccess));
   user.field_forms = anyFormAccess ? 'TRUE' : 'FALSE';
 
-  // Production access has two independent axes: EDIT (create/autosave/submit
+  // Operations access has two independent axes: EDIT (create/autosave/submit
   // forms for a station) and VIEW (see it on the live Today board without
   // being able to touch it — a plant manager watching bucking, say). Each is
   // a comma-separated list of station keys, or 'all', or blank for none.
@@ -352,8 +352,8 @@ async function buildHub(user){
   };
   const editList = parseStationList(user['production edit stations'] || user['production stations']);
   const viewList = parseStationList(user['production view stations']);
-  sessionStorage.setItem('2cw_prod_edit_access', JSON.stringify(editList));
-  sessionStorage.setItem('2cw_prod_view_access', JSON.stringify(viewList));
+  sessionStorage.setItem('2cw_ops_edit_access', JSON.stringify(editList));
+  sessionStorage.setItem('2cw_ops_view_access', JSON.stringify(viewList));
   const hasEdit = editList === 'all' || editList.length > 0;
   const hasView = viewList === 'all' || viewList.length > 0;
   user.production = hasEdit ? 'TRUE' : 'FALSE';                  // station hub — create/edit only
@@ -571,8 +571,8 @@ function doLogout(){
   sessionStorage.removeItem('2cw_pin');
   sessionStorage.removeItem('2cw_user_name');
   sessionStorage.removeItem('2cw_form_access');
-  sessionStorage.removeItem('2cw_prod_edit_access');
-  sessionStorage.removeItem('2cw_prod_view_access');
+  sessionStorage.removeItem('2cw_ops_edit_access');
+  sessionStorage.removeItem('2cw_ops_view_access');
   document.getElementById('pin-input').value = '';
   for(let i = 0; i < 4; i++) document.getElementById('dot'+i).classList.remove('filled');
   document.getElementById('login-err').style.display = 'none';

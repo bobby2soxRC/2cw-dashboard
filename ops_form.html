@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <title>Production Form — 2CW</title>
+  <title>Operations Form — 2CW</title>
   <script>
-    // Bounce anyone without an active hub session or production access.
+    // Bounce anyone without an active hub session or operations access.
     (function(){
       if (!sessionStorage.getItem('2cw_pin')) { window.location.replace('/index.html'); }
     })();
@@ -116,9 +116,9 @@
 </head>
 <body>
 <header class="hdr">
-  <a class="hdr-back" href="/production.html" id="back">← Stations</a>
+  <a class="hdr-back" href="/operations.html" id="back">← Stations</a>
   <div class="hdr-div"></div>
-  <div class="hdr-brand" id="brand">Production</div>
+  <div class="hdr-brand" id="brand">Operations</div>
   <div class="autosave" id="autosave" style="display:none"><span class="dot"></span><span id="autosave-txt"></span></div>
   <div class="lang" id="lang"></div>
 </header>
@@ -142,19 +142,19 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/config/supabase_config.js"></script>
-<script src="/production_stations.js"></script>
-<script src="/prod_common.js"></script>
-<script src="/prod_data.js"></script>
+<script src="/operations_stations.js"></script>
+<script src="/ops_common.js"></script>
+<script src="/ops_data.js"></script>
 <script>
 (async function () {
   const params = new URLSearchParams(location.search);
   const station = STATION_BY_KEY[params.get('station')];
-  if (!station) { location.replace('/production.html'); return; }
+  if (!station) { location.replace('/operations.html'); return; }
 
   // Per-station edit access, set at hub login from the directory sheet.
-  const allowed = JSON.parse(sessionStorage.getItem('2cw_prod_edit_access') || 'null');
+  const allowed = JSON.parse(sessionStorage.getItem('2cw_ops_edit_access') || 'null');
   if (allowed && allowed !== 'all' && !allowed.includes(station.key)) {
-    location.replace('/production.html');
+    location.replace('/operations.html');
     return;
   }
 
@@ -166,7 +166,7 @@
   document.getElementById('dept').textContent = t(station.dept);
   document.getElementById('title').textContent = t(station.title);
   document.getElementById('subtitle').textContent = t(station.desc);
-  document.title = `${t(station.title)} — 2CW Production`;
+  document.title = `${t(station.title)} — 2CW Operations`;
 
   const owner = sessionStorage.getItem('2cw_user_name') || null;
   const draftsOn = supabaseReady();
@@ -546,11 +546,11 @@
     if (!drafts.length) { el.style.display = 'none'; return; }
     el.style.display = 'flex';
     el.innerHTML = drafts.map((d) => `
-      <a class="chip ${d.id === draftId ? 'on' : ''}" href="/prod_form.html?station=${station.key}&draft=${d.id}">
+      <a class="chip ${d.id === draftId ? 'on' : ''}" href="/ops_form.html?station=${station.key}&draft=${d.id}">
         <span class="cs">${new Date(d.updated_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</span>
         <span class="cv">${escapeHtml(d.strain || t(SW.untitled))}</span>
       </a>`).join('') +
-      `<a class="chip new" href="/prod_form.html?station=${station.key}">${t(SW.newForm)}</a>`;
+      `<a class="chip new" href="/ops_form.html?station=${station.key}">${t(SW.newForm)}</a>`;
   }
 
   // ── Submit ────────────────────────────────────────────────────────────────
@@ -561,7 +561,7 @@
   async function uploadPhotoDirect(fieldKey, photoValue) {
     if (!photoValue || !photoValue.dataUrl) return null;
     try {
-      const res = await fetch('/.netlify/functions/upload-production-photo', {
+      const res = await fetch('/.netlify/functions/upload-operations-photo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ stationKey: station.key, id: draftId, fieldKey, dataUrl: photoValue.dataUrl })
@@ -626,7 +626,7 @@
         result = { ok: false, error: sres.reason };
       }
     } else {
-      result = await submitProduction(station.key, payload);
+      result = await submitOperations(station.key, payload);
     }
 
     btn.disabled = false;
@@ -638,7 +638,7 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
       if (!result.queued) {
         // Start clean rather than reloading back into the just-finished draft.
-        setTimeout(() => { location.href = `/prod_form.html?station=${station.key}`; }, 1400);
+        setTimeout(() => { location.href = `/ops_form.html?station=${station.key}`; }, 1400);
       }
       // Queued: stay put — attemptPendingSubmit finishes it in the background
       // the moment signal returns, and redirects itself once it does.
@@ -660,7 +660,7 @@
     localStorage.removeItem(mirrorKey());
     banner.className = 'banner success';
     banner.textContent = t(UI.submitted);
-    setTimeout(() => { location.href = `/prod_form.html?station=${station.key}`; }, 1200);
+    setTimeout(() => { location.href = `/ops_form.html?station=${station.key}`; }, 1200);
   }
   window.addEventListener('online', attemptPendingSubmit);
   setInterval(attemptPendingSubmit, 20000);

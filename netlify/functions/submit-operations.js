@@ -1,7 +1,7 @@
-// Receives a production-station record and commits it to GitHub, the same way
+// Receives an operations-station record and commits it to GitHub, the same way
 // submit-form.js handles the field-team forms:
-//   - the record is appended to data/production/<stationKey>.json
-//   - any photo is committed separately under data/production/uploads/<stationKey>/
+//   - the record is appended to data/operations/<stationKey>.json
+//   - any photo is committed separately under data/operations/uploads/<stationKey>/
 //
 // Records carry a clientId generated on the tablet. Because the forms queue
 // offline and retry, the same record can arrive twice — the clientId is what
@@ -40,7 +40,7 @@ function ghHeaders(token) {
     Authorization: `Bearer ${token}`,
     Accept: 'application/vnd.github+json',
     'X-GitHub-Api-Version': '2022-11-28',
-    'User-Agent': '2cw-dashboard-production'
+    'User-Agent': '2cw-dashboard-operations'
   };
 }
 
@@ -70,8 +70,8 @@ async function uploadPhoto(token, stationKey, id, dataUrl) {
   const match = /^data:(image\/\w+);base64,(.+)$/s.exec(dataUrl);
   if (!match) throw new Error('Bad photo data URL');
   const ext = match[1] === 'image/png' ? 'png' : 'jpg';
-  const path = `data/production/uploads/${stationKey}/${id}.${ext}`;
-  const res = await putFile(token, path, { contentBase64: match[2], message: `Production photo: ${stationKey}/${id}` });
+  const path = `data/operations/uploads/${stationKey}/${id}.${ext}`;
+  const res = await putFile(token, path, { contentBase64: match[2], message: `Operations photo: ${stationKey}/${id}` });
   if (!res.ok) throw new Error(`GitHub photo upload failed: ${res.status} ${await res.text()}`);
   return `/${path}`;
 }
@@ -82,7 +82,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // on the stage file genuinely races. Re-read and retry on a 409 rather than
 // dropping a count someone just walked across the floor to hand in.
 async function appendRecord(token, stationKey, record) {
-  const path = `data/production/${stationKey}.json`;
+  const path = `data/operations/${stationKey}.json`;
   for (let attempt = 0; attempt < 5; attempt++) {
     const file = await getFile(token, path);
     const list = file.json || [];
@@ -92,7 +92,7 @@ async function appendRecord(token, stationKey, record) {
     list.push(record);
     const res = await putFile(token, path, {
       contentBase64: Buffer.from(JSON.stringify(list, null, 2), 'utf-8').toString('base64'),
-      message: `Production: ${stationKey} — ${record.strain || record.sku || 'record'} (${record.sessionUser || record.teamLead || 'unknown'})`,
+      message: `Operations: ${stationKey} — ${record.strain || record.sku || 'record'} (${record.sessionUser || record.teamLead || 'unknown'})`,
       sha: file.sha
     });
     if (res.ok) return { duplicate: false };
@@ -140,7 +140,7 @@ exports.handler = async (event) => {
 
   const { stationKey, fields, clientId, clientSubmittedAt } = payload;
   if (!KNOWN_STATIONS.has(stationKey) || !fields || typeof fields !== 'object') {
-    return { statusCode: 400, body: JSON.stringify({ ok: false, error: 'Invalid production submission' }) };
+    return { statusCode: 400, body: JSON.stringify({ ok: false, error: 'Invalid operations submission' }) };
   }
   if (Object.keys(fields).length > MAX_FIELDS) {
     return { statusCode: 400, body: JSON.stringify({ ok: false, error: 'Too many fields' }) };

@@ -6,7 +6,7 @@ commission rep view, which production stations to edit or view — is now
 managed from `/admin.html` instead of editing sheet columns by hand.
 
 **This is a stopgap, not SSO.** See "SSO — short answer: yes, and multiple
-domains is not the problem" in `PRODUCTION_APP.md` for the real long-term
+domains is not the problem" in `OPERATIONS_APP.md` for the real long-term
 direction. Everything below is explicitly the interim step: one shared admin
 PIN instead of per-person identity, because the floor still needs to log in
 with a 4-digit PIN on a shared tablet, and building real SSO wasn't in scope
@@ -46,8 +46,8 @@ sheet row or a database row.
 ## Setting it up
 
 1. **Run the schema.** In the Supabase SQL editor, run `supabase/schema.sql`
-   (idempotent — safe even if you already ran it for the production app).
-   This adds `app_users` alongside the existing `production_forms` table.
+   (idempotent — safe even if you already ran it for the operations app).
+   This adds `app_users` alongside the existing `operations_forms` table.
 2. **Add four Netlify env vars** (Site configuration → Environment
    variables) — none of these are shipped to the browser:
    - `ADMIN_PIN` — the PIN that unlocks `/admin.html`. Pick something that
@@ -75,9 +75,9 @@ sheet row or a database row.
    the project gets torn down, login degrades back to the sheet instead of
    locking everyone out) — it isn't something you need to keep maintaining.
 
-## Why `app_users` isn't as open as `production_forms`
+## Why `app_users` isn't as open as `operations_forms`
 
-`production_forms`' RLS intentionally allows anonymous read/write — see the
+`operations_forms`' RLS intentionally allows anonymous read/write — see the
 comment in `supabase/schema.sql` — because there's no real identity to
 restrict by yet, and a closed policy there would be false security, not
 real security. `app_users` is treated differently: it gates access to
@@ -107,5 +107,5 @@ This is intentionally simple and has real limits: there's one shared admin
 PIN (not per-admin identity or an audit trail of *which* admin made a
 change), and a leaked `ADMIN_SIGNING_SECRET` lets anyone mint tokens without
 knowing the PIN. Both are acceptable for a small ops team today and both
-are the kind of thing real SSO (see `PRODUCTION_APP.md`) would clean up —
+are the kind of thing real SSO (see `OPERATIONS_APP.md`) would clean up —
 rotate `ADMIN_SIGNING_SECRET` in Netlify if you ever suspect it leaked.

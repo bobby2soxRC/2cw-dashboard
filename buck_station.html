@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>Bucking — 2CW Production</title>
+<title>Bucking — 2CW Operations</title>
 <script>
   (function(){ if (!sessionStorage.getItem('2cw_pin')) { window.location.replace('/index.html'); } })();
 </script>
@@ -117,7 +117,7 @@
 </head>
 <body>
 <header class="hdr">
-  <a class="hdr-back" href="/production.html" id="back">← Stations</a>
+  <a class="hdr-back" href="/operations.html" id="back">← Stations</a>
   <div class="hdr-div"></div>
   <div class="hdr-brand" id="brand">Bucking</div>
   <div class="lang" id="lang"></div>
@@ -171,7 +171,7 @@
 
   <!-- ── EMPLOYEE ──────────────────────────────────────────────────────── -->
   <section class="tab-panel" id="panel-employee">
-    <h1 class="section-title" id="emp-title">Employee Production</h1>
+    <h1 class="section-title" id="emp-title">Employee Output</h1>
     <div class="filter-bar">
       <div class="filter-field"><label class="lbl">Employee #</label><input id="emp-no" inputmode="numeric"/></div>
       <div class="filter-field"><label class="lbl">From</label><input id="emp-from" type="date"/></div>
@@ -199,16 +199,16 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/config/supabase_config.js"></script>
-<script src="/production_stations.js"></script>
-<script src="/prod_common.js"></script>
-<script src="/prod_data.js"></script>
+<script src="/operations_stations.js"></script>
+<script src="/ops_common.js"></script>
+<script src="/ops_data.js"></script>
 <script src="/buck_data.js"></script>
 <script>
 (async function () {
-  // Per-station edit access, same check prod_form.html uses.
-  const allowed = JSON.parse(sessionStorage.getItem('2cw_prod_edit_access') || 'null');
+  // Per-station edit access, same check ops_form.html uses.
+  const allowed = JSON.parse(sessionStorage.getItem('2cw_ops_edit_access') || 'null');
   if (allowed && allowed !== 'all' && !allowed.includes('buck')) {
-    location.replace('/production.html');
+    location.replace('/operations.html');
     return;
   }
   mountLangToggle('lang');
@@ -283,7 +283,7 @@
 
   document.getElementById('back').textContent = t(L.back);
   document.getElementById('brand').textContent = t(L.brand);
-  document.title = `${t(L.brand)} — 2CW Production`;
+  document.title = `${t(L.brand)} — 2CW Operations`;
   document.getElementById('tab-btn-today').textContent = t(L.tToday);
   document.getElementById('tab-btn-batches').textContent = t(L.tBatches);
   document.getElementById('tab-btn-employee').textContent = t(L.tEmployee);

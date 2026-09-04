@@ -3,7 +3,7 @@
 // Pulled out of index.html so admin.html (user management) can reuse the
 // exact same card list / sheet-column mapping / commission mapping without
 // drifting out of sync. Loaded as a plain <script> (no build step, no
-// modules) — everything here is a global, same as production_stations.js.
+// modules) — everything here is a global, same as operations_stations.js.
 
 // ── MEMBER DIRECTORY CSV URL ──────────────────────────────
 // Still used as the fallback source when Supabase (app_users) isn't
@@ -98,17 +98,17 @@ const CARD_DEFS = [
     key: 'production',
     color: 'gold',
     label: 'Operations',
-    title: 'Production Stations',
+    title: 'Processing Stations',
     desc: 'Harvest, drying, bucking, trimming, and manufacturing forms for the floor — bilingual, tablet-ready, and they work offline.',
-    href: '/production.html'
+    href: '/operations.html'
   },
   {
     key: 'production_dashboard',
     color: 'blue',
     label: 'Operations',
-    title: 'Production Dashboard',
+    title: 'Processing Dashboard',
     desc: 'Where every lot is, yield and loss by stage and strain, biomass on hand, and trimmer output.',
-    href: '/production_dashboard.html'
+    href: '/operations_dashboard.html'
   },
   {
     key: 'production_today',
@@ -116,7 +116,7 @@ const CARD_DEFS = [
     label: 'Operations',
     title: 'Today — Live',
     desc: 'Every form in progress or finished today, updating live as it happens — for anyone with view access, whether or not they can edit it.',
-    href: '/production_today.html'
+    href: '/operations_today.html'
   },
   {
     key: 'brand_assets',

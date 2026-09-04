@@ -1,6 +1,6 @@
 // 2CW Operations Hub - service worker
 // Cache-first app shell; live data always goes to the network.
-const CACHE_VERSION = 'v16';
+const CACHE_VERSION = 'v17';
 const CACHE_NAME = '2cw-shell-' + CACHE_VERSION;
 
 const APP_SHELL = [
@@ -25,15 +25,15 @@ const APP_SHELL = [
   '/form_staff_sample.html',
   '/form_store_visit.html',
   '/forms_common.js',
-  '/production.html',
-  '/prod_form.html',
-  '/production_dashboard.html',
-  '/production_today.html',
+  '/operations.html',
+  '/ops_form.html',
+  '/operations_dashboard.html',
+  '/operations_today.html',
   '/buck_station.html',
-  '/production_stations.js',
-  '/prod_common.js',
-  '/prod_analytics.js',
-  '/prod_data.js',
+  '/operations_stations.js',
+  '/ops_common.js',
+  '/ops_analytics.js',
+  '/ops_data.js',
   '/buck_data.js',
   '/config/supabase_config.js',
   '/manifest.json',
@@ -68,11 +68,11 @@ function isLiveData(url) {
   return false;
 }
 
-// Production data is live like everything under /data/, but the station forms
+// Operations data is live like everything under /data/, but the station forms
 // have to keep working in a dry room with no signal — so these get the fresh
 // copy when there is a network and the last good copy when there isn't.
-function isProductionData(url) {
-  return url.origin === self.location.origin && url.pathname.startsWith('/data/production/');
+function isOperationsData(url) {
+  return url.origin === self.location.origin && url.pathname.startsWith('/data/operations/');
 }
 
 self.addEventListener('install', event => {
@@ -98,7 +98,7 @@ self.addEventListener('fetch', event => {
 
   if (event.request.method !== 'GET') return;
 
-  if (isProductionData(url)) {
+  if (isOperationsData(url)) {
     event.respondWith(
       fetch(event.request).then(response => {
         if (response.ok) {

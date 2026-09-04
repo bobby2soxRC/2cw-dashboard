@@ -1,8 +1,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// 2CW Production — the Supabase-backed data layer for drafts and live data.
+// 2CW Operations — the Supabase-backed data layer for drafts and live data.
 //
 // This is what makes a form survive a tablet dying mid-shift: a draft isn't a
-// value sitting in one browser's memory, it's a row in `production_forms` with
+// value sitting in one browser's memory, it's a row in `operations_forms` with
 // a stable id, autosaved as the operator types. Open that same id on a
 // different tablet and the current values are there. A supervisor's "Today"
 // board subscribes to the same table and sees edits land within a second or
@@ -10,8 +10,8 @@
 //
 // Falls back cleanly when config/supabase_config.js is still blank (fresh
 // checkout, no project created yet): drafts/autosave/live-view are disabled,
-// prod_form.html reverts to single-shot submit, and the dashboard reads the
-// static data/production/*.json files instead. Nothing throws either way —
+// ops_form.html reverts to single-shot submit, and the dashboard reads the
+// static data/operations/*.json files instead. Nothing throws either way —
 // callers check `supabaseReady()` or just get an empty/queued result back.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -33,7 +33,7 @@ function getClient() {
   return _client;
 }
 
-const TABLE = 'production_forms';
+const TABLE = 'operations_forms';
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
 // ── Drafts ──────────────────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ async function listToday(date) {
 function subscribeToday(onChange) {
   const client = getClient();
   if (!client) return () => {};
-  const channel = client.channel('production_forms_today')
+  const channel = client.channel('operations_forms_today')
     .on('postgres_changes', { event: '*', schema: 'public', table: TABLE }, (payload) => {
       onChange(payload.new || payload.old);
     })
@@ -132,7 +132,7 @@ function subscribeToday(onChange) {
 // ── Finalized records for the dashboard/analytics ───────────────────────────
 
 // Shapes a submitted row back into the flat {strain, date, ...fields} object
-// prod_analytics.js has always consumed — so the analytics layer doesn't
+// ops_analytics.js has always consumed — so the analytics layer doesn't
 // need to know Supabase exists.
 function flattenRecord(row) {
   return {
@@ -145,12 +145,12 @@ function flattenRecord(row) {
   };
 }
 
-// All submitted records for one station, shaped for prod_analytics.js. Falls
+// All submitted records for one station, shaped for ops_analytics.js. Falls
 // back to the static JSON file when Supabase isn't configured yet, so the
 // dashboard still works on a fresh checkout.
 async function loadSubmitted(stationKey) {
   const client = getClient();
-  if (!client) return loadJson(`/data/production/${stationKey}.json`, []);
+  if (!client) return loadJson(`/data/operations/${stationKey}.json`, []);
   const { data, error } = await client.from(TABLE).select('*')
     .eq('station_key', stationKey).eq('status', 'submitted')
     .order('submitted_at', { ascending: true });

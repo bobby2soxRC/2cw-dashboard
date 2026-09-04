@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <title>Production Dashboard — 2CW</title>
+  <title>Operations Dashboard — 2CW</title>
   <script>
     (function(){ if (!sessionStorage.getItem('2cw_pin')) window.location.replace('/index.html'); })();
   </script>
@@ -72,19 +72,20 @@
     .bar span{position:absolute;inset:0 auto 0 0;background:var(--green);border-radius:3px}
 
     .empty{color:var(--muted);font-size:.9rem;padding:24px 0;text-align:center}
+    .chart-wrap{position:relative;height:280px;margin-bottom:4px}
     .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
   </style>
 </head>
 <body>
 <header class="hdr">
-  <a class="hdr-back" href="/production.html" id="back">← Stations</a>
+  <a class="hdr-back" href="/operations.html" id="back">← Stations</a>
   <div class="hdr-div"></div>
-  <div class="hdr-brand">Production</div>
+  <div class="hdr-brand">Operations</div>
   <div class="lang" id="lang"></div>
 </header>
 
 <main>
-  <div class="title" id="title">Production Dashboard</div>
+  <div class="title" id="title">Operations Dashboard</div>
   <div class="sub" id="sub">—</div>
 
   <div class="filters" id="filters"></div>
@@ -94,28 +95,39 @@
   <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution</footer>
 </main>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"
+  onerror="this.onerror=null;var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';document.head.appendChild(s);"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/config/supabase_config.js"></script>
-<script src="/production_stations.js"></script>
-<script src="/prod_common.js"></script>
-<script src="/prod_data.js"></script>
-<script src="/prod_analytics.js"></script>
+<script src="/operations_stations.js"></script>
+<script src="/ops_common.js"></script>
+<script src="/ops_data.js"></script>
+<script src="/ops_analytics.js"></script>
 <script>
 (async function () {
   mountLangToggle('lang');
-  const A = ProdAnalytics;
+  const A = OpsAnalytics;
 
   const L = {
-    title:     { en: 'Production Dashboard', es: 'Panel de producción' },
+    title:     { en: 'Operations Dashboard', es: 'Panel de operaciones' },
     back:      { en: '← Stations', es: '← Estaciones' },
     tabs: {
       pipeline:   { en: 'Pipeline', es: 'Flujo' },
+      daily:      { en: 'Daily Output', es: 'Producción diaria' },
       yields:     { en: 'Yields', es: 'Rendimientos' },
       biomass:    { en: 'Biomass', es: 'Biomasa' },
       labor:      { en: 'Labor', es: 'Mano de obra' },
       requests:   { en: 'Requests', es: 'Solicitudes' },
       exceptions: { en: 'Exceptions', es: 'Excepciones' }
     },
+    dailyChartTitle: { en: 'Daily output by process', es: 'Producción diaria por proceso' },
+    dailyChartNote:  { en: 'Total pounds weighed out each day, by processing stage. Bars are stacked — the full bar height is that day’s output across every process.',
+                        es: 'Libras totales pesadas cada día, por etapa de proceso. Las barras están apiladas — la altura total de la barra es la producción de ese día en todos los procesos.' },
+    dailyTableTitle: { en: 'Daily totals by process', es: 'Totales diarios por proceso' },
+    dailyTotalRange: { en: 'Total output (range)', es: 'Producción total (rango)' },
+    dailyBestDay:    { en: 'Best day', es: 'Mejor día' },
+    dailyActiveDays: { en: 'Active days', es: 'Días activos' },
+    process:         { en: 'Process', es: 'Proceso' },
     allStrains:{ en: 'All strains', es: 'Todas las variedades' },
     allSites:  { en: 'All farms', es: 'Todos los ranchos' },
     reset:     { en: 'Reset', es: 'Restablecer' },
@@ -170,9 +182,9 @@
   const stages = {};
   // loadSubmitted reads finalized (status='submitted') rows from Supabase
   // when it's configured, and falls back to the static JSON files when it
-  // isn't — same shape either way, so prod_analytics.js never has to know
+  // isn't — same shape either way, so ops_analytics.js never has to know
   // which one it got.
-  await Promise.all(PROD_STATIONS.map(async (s) => { stages[s.key] = await loadSubmitted(s.key); }));
+  await Promise.all(OPERATIONS_STATIONS.map(async (s) => { stages[s.key] = await loadSubmitted(s.key); }));
 
   const allRows = Object.values(stages).flat();
   const lastEntry = allRows.map((r) => String(r.submittedAt || r.date || '')).sort().pop();
@@ -201,7 +213,30 @@
 
   // ── Tabs ──────────────────────────────────────────────────────────────────
   let tab = 'pipeline';
-  const TABS = ['pipeline', 'yields', 'biomass', 'labor', 'requests', 'exceptions'];
+  const TABS = ['pipeline', 'daily', 'yields', 'biomass', 'labor', 'requests', 'exceptions'];
+  const STATION_COLOR_HEX = { green: '#3db87a', gold: '#d4a843', blue: '#5a9fd4', purple: '#9b7fd4', red: '#ef5350' };
+  if (typeof Chart !== 'undefined') {
+    Chart.defaults.color = '#9aa0b0';
+    Chart.defaults.borderColor = '#1e2129';
+    Chart.defaults.font.family = "'DM Sans', sans-serif";
+    Chart.defaults.font.size = 11;
+  }
+  const charts = {};
+  function mkChart(id, type, data, options = {}) {
+    if (typeof Chart === 'undefined') return;
+    if (charts[id]) charts[id].destroy();
+    const ctx = document.getElementById(id);
+    if (!ctx) return;
+    charts[id] = new Chart(ctx, { type, data, options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { boxWidth: 10, padding: 14, color: '#9aa0b0', font: { size: 11 } } } },
+      scales: {
+        x: { grid: { color: '#1e2129' }, ticks: { color: '#9aa0b0', maxRotation: 45 } },
+        y: { grid: { color: '#1e2129' }, ticks: { color: '#9aa0b0' }, beginAtZero: true }
+      },
+      ...options
+    }});
+  }
   document.getElementById('tabs').innerHTML =
     TABS.map((k) => `<button data-tab="${k}">${t(L.tabs[k])}</button>`).join('');
   document.querySelectorAll('#tabs button').forEach((b) => {
@@ -224,12 +259,14 @@
     const view = document.getElementById('view');
     view.innerHTML = ({
       pipeline: renderPipeline,
+      daily: renderDailyOutput,
       yields: renderYields,
       biomass: renderBiomass,
       labor: renderLabor,
       requests: renderRequests,
       exceptions: renderExceptions
     })[tab]();
+    if (tab === 'daily') mountDailyChart();
   }
 
   // ── Pipeline ──────────────────────────────────────────────────────────────
@@ -280,6 +317,66 @@
           { label: t(L.bucked), num: true }, { label: t(L.flower), num: true }
         ], rows)}
       </div>`;
+  }
+
+  // ── Daily Output ─────────────────────────────────────────────────────────
+  // The rollup view: how much came out of each process, per day — a stacked
+  // bar chart plus the same numbers as a pivot table. Complements Pipeline
+  // (where each lot is right now) and Yields (loss per stage overall) with a
+  // day-by-day read on throughput.
+  function renderDailyOutput() {
+    const d = A.dailyOutput(stages, filter);
+    const bestIdx = d.totalsByDate.reduce((best, v, i) => (v > (d.totalsByDate[best] ?? -1) ? i : best), -1);
+
+    const dateOrder = [...d.dates].reverse(); // most recent first, matching Pipeline's sort
+    const rows = dateOrder.map((day) => {
+      const idx = d.dates.indexOf(day);
+      const rowTotal = d.totalsByDate[idx];
+      return `<tr>
+        ${td(esc(day))}
+        ${d.stationKeys.map((k) => tdn(d.byDateStation[day][k] ?? null, 1)).join('')}
+        ${td(`<strong>${fmtNum(rowTotal, 1)}</strong>`, 'num')}
+      </tr>`;
+    });
+    const totalRow = d.dates.length ? `<tr class="total">
+      ${td(t({ en: 'Total', es: 'Total' }))}
+      ${d.stationKeys.map((k, i) => tdn(d.totalsByStation[i], 1)).join('')}
+      ${td(`<strong>${fmtNum(d.totalsByDate.reduce((a, v) => a + v, 0), 1)}</strong>`, 'num')}
+    </tr>` : '';
+
+    return `
+      <div class="kpis">
+        ${kpi('green', t(L.dailyTotalRange), fmtNum(d.totalsByDate.reduce((a, v) => a + v, 0), 1), 'lb')}
+        ${kpi('gold', t(L.dailyBestDay), bestIdx >= 0 ? d.dates[bestIdx] : '—', bestIdx >= 0 ? `${fmtNum(d.totalsByDate[bestIdx], 1)} lb` : '')}
+        ${kpi('blue', t(L.dailyActiveDays), d.dates.length)}
+      </div>
+      <div class="card">
+        <h2>${t(L.dailyChartTitle)}</h2>
+        <div class="note">${t(L.dailyChartNote)}</div>
+        ${d.dates.length
+          ? `<div class="chart-wrap"><canvas id="daily-chart"></canvas></div>`
+          : `<div class="empty">${t(L.noData)}</div>`}
+      </div>
+      <div class="card">
+        <h2>${t(L.dailyTableTitle)}</h2>
+        ${table([{ label: t(L.date) }, ...d.stationKeys.map((k) => ({ label: t(STATION_BY_KEY[k].title), num: true })),
+                 { label: t({ en: 'Total', es: 'Total' }), num: true }], rows.concat(totalRow ? [totalRow] : []))}
+      </div>`;
+  }
+
+  function mountDailyChart() {
+    const d = A.dailyOutput(stages, filter);
+    if (!d.dates.length) return;
+    mkChart('daily-chart', 'bar', {
+      labels: d.dates,
+      datasets: d.stationKeys.map((k) => ({
+        label: t(STATION_BY_KEY[k].title),
+        data: d.dates.map((day) => d.byDateStation[day][k] || 0),
+        backgroundColor: STATION_COLOR_HEX[STATION_BY_KEY[k].color] || '#5a6070',
+        borderRadius: 2
+      }))
+    }, { scales: { x: { stacked: true, grid: { color: '#1e2129' }, ticks: { color: '#9aa0b0', maxRotation: 45 } },
+                   y: { stacked: true, grid: { color: '#1e2129' }, ticks: { color: '#9aa0b0' }, beginAtZero: true } } });
   }
 
   // ── Yields ────────────────────────────────────────────────────────────────

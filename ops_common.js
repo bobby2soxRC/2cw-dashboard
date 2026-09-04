@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// 2CW Production — shared runtime for the station forms and the dashboard.
+// 2CW Operations — shared runtime for the station forms and the dashboard.
 //
 // Three jobs:
 //   1. Language (EN/ES) — every station label carries both, this picks one.
@@ -9,8 +9,8 @@
 //      about mid-count.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const PROD_ENDPOINT = '/.netlify/functions/submit-production';
-const QUEUE_KEY = '2cw_prod_queue';
+const OPS_ENDPOINT = '/.netlify/functions/submit-operations';
+const QUEUE_KEY = '2cw_ops_queue';
 const LANG_KEY = '2cw_lang';
 
 // ── Language ────────────────────────────────────────────────────────────────
@@ -70,8 +70,8 @@ async function loadJson(path, fallback) {
     return fallback;
   }
 }
-const loadReference = () => loadJson('/data/production/reference.json', { strains: [], sites: [] });
-const loadStage = (key) => loadJson(`/data/production/${key}.json`, []);
+const loadReference = () => loadJson('/data/operations/reference.json', { strains: [], sites: [] });
+const loadStage = (key) => loadJson(`/data/operations/${key}.json`, []);
 
 // Reference lists are objects ({id,label}) or bare strains ({name}); normalise
 // both into the {v, label} shape the selects want.
@@ -99,7 +99,7 @@ function uidMatches(candidate, query) {
 
 // Find the most recent record on `stageKey` whose sourceUid / newBuckedUid /
 // newBigLeafUid matches, so downstream stages can prefill their input weight.
-// loadSubmitted (prod_data.js) reads finalized Supabase rows when a project
+// loadSubmitted (ops_data.js) reads finalized Supabase rows when a project
 // is configured and falls back to the static JSON otherwise — defined in a
 // script tag that loads after this one, but not called until well after
 // every page's scripts have finished loading.
@@ -143,7 +143,7 @@ function queueCount() {
 }
 
 async function postRecord(payload) {
-  const res = await fetch(PROD_ENDPOINT, {
+  const res = await fetch(OPS_ENDPOINT, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
@@ -161,7 +161,7 @@ async function postRecord(payload) {
 
 // Submits a station record. If the network is down (or the request fails for a
 // reason that could clear up), the record is parked on the tablet and retried.
-async function submitProduction(stationKey, fields) {
+async function submitOperations(stationKey, fields) {
   const payload = {
     stationKey,
     clientId: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,

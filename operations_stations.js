@@ -1,8 +1,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// 2CW Production — station definitions.
+// 2CW Operations — station definitions.
 //
-// This is the single source of truth for the production app: prod_form.html
-// renders its forms straight off these definitions, and production_dashboard.html
+// This is the single source of truth for the operations app: ops_form.html
+// renders its forms straight off these definitions, and operations_dashboard.html
 // reads the same `flow` descriptors to build the yield/inventory numbers. Adding
 // a field to a station is a one-line edit here — no HTML to touch.
 //
@@ -14,7 +14,7 @@
 //   t      text | number | date | time | select | textarea | uid | photo | calc | lineitems
 //   l      label {en, es}
 //   req    required
-//   ref    name of a list in data/production/reference.json to populate a select
+//   ref    name of a list in data/operations/reference.json to populate a select
 //   opts   inline select options [{v, l:{en,es}}]
 //   calc   (v) => number | null   — computed from the other values, read-only
 //   dp     decimal places for number/calc display (default 2)
@@ -109,7 +109,7 @@ function totalsBlock(inputKey, outputKeys) {
   ];
 }
 
-const PROD_STATIONS = [
+const OPERATIONS_STATIONS = [
   // ── CULTIVATION (PLACEHOLDER) ────────────────────────────────────────────
   // Everything below, up to Harvest, is a stub. Cultivation runs several real
   // processes today (clone/veg intake, feed schedules, IPM, defoliation,
@@ -194,10 +194,10 @@ const PROD_STATIONS = [
     ]
   },
 
-  // ── HARVEST ───────────────────────────────────────────────────────────────
+  // ── CULTIVATION: HARVEST ─────────────────────────────────────────────────
   {
     key: 'harvest',
-    dept: { en: 'Harvest', es: 'Cosecha' },
+    dept: { en: 'Cultivation', es: 'Cultivo' },
     title: { en: 'Harvest', es: 'Cosecha' },
     desc: { en: 'Log a harvest off a farm block — plant count, wet weight, and where it is headed.',
             es: 'Registre una cosecha de un bloque — número de plantas, peso húmedo y su destino.' },
@@ -248,13 +248,13 @@ const PROD_STATIONS = [
     flow: { lossKind: 'origin', outputs: [{ field: 'wetWeightLb', category: 'wet_whole_plant' }] }
   },
 
-  // ── DRYING: FRESH PLANT INTAKE ────────────────────────────────────────────
+  // ── PROCESSING: FRESH PLANT INTAKE ────────────────────────────────────────
   // Matches the real paper log: one truck, one license, unloaded a few
   // containers at a time — each weigh-in gets its own line with its own UID,
   // strain, and format, since a truck can carry more than one of each.
   {
     key: 'intake_wet',
-    dept: { en: 'Drying', es: 'Secado' },
+    dept: { en: 'Processing', es: 'Procesamiento' },
     title: { en: 'Fresh Plant Intake', es: 'Recepción de Planta Fresca' },
     desc: { en: 'Log a truck as it comes off the farm — one line per group of containers weighed as it’s unloaded.',
             es: 'Registre un camión que llega del rancho — una línea por cada grupo de contenedores pesado al descargar.' },
@@ -314,10 +314,10 @@ const PROD_STATIONS = [
     }
   },
 
-  // ── DRYING: POST-DRY CHECK ────────────────────────────────────────────────
+  // ── PROCESSING: POST-DRY CHECK ────────────────────────────────────────────
   {
     key: 'dry_check',
-    dept: { en: 'Drying', es: 'Secado' },
+    dept: { en: 'Processing', es: 'Procesamiento' },
     title: { en: 'Post-Dry Check', es: 'Verificación post-secado' },
     desc: { en: 'Weigh the dried batch and record moisture before it moves to bucking.',
             es: 'Pese el lote seco y registre la humedad antes de pasar a desvarado.' },
@@ -370,7 +370,7 @@ const PROD_STATIONS = [
   // batch is closed, so machine_trim's prefill, the yield/variance calc, and
   // the dashboard all keep reading 'buck' the same way they always did —
   // they have no idea the data came from many small submissions instead of
-  // one big form. See docs/PRODUCTION_APP.md for the full data model.
+  // one big form. See docs/OPERATIONS_APP.md for the full data model.
   {
     key: 'buck',
     dept: { en: 'Processing', es: 'Procesamiento' },
@@ -413,7 +413,7 @@ const PROD_STATIONS = [
       // Captured once, at batch close-out (buck_station.html's Batches tab) —
       // a coarse crew/hours summary alongside the granular per-submission
       // weight log, so the payroll-join seam (employeeNo × date × batch ×
-      // hours) documented in PRODUCTION_APP.md keeps working for Bucking.
+      // hours) documented in OPERATIONS_APP.md keeps working for Bucking.
       F.teamLead(), F.crewSize(), F.laborHours(), F.crew(), F.notes(), F.photo()
     ],
     flow: { lossKind: 'conserving',
@@ -436,7 +436,7 @@ const PROD_STATIONS = [
     title: { en: 'Machine Trim', es: 'Corte a máquina' },
     desc: { en: 'Run bucked flower through the Mobius and sorters; split A-buds from smalls.',
             es: 'Pase la flor desvarada por la Mobius y clasificadoras; separe buds A de smalls.' },
-    color: 'gold',
+    color: 'red',
     headline: 'flowerALb',
     fields: [
       F.date(),
@@ -569,10 +569,10 @@ const PROD_STATIONS = [
             ] }
   },
 
-  // ── FRESH FROZEN ──────────────────────────────────────────────────────────
+  // ── CULTIVATION: FRESH FROZEN ────────────────────────────────────────────
   {
     key: 'fresh_frozen',
-    dept: { en: 'Harvest', es: 'Cosecha' },
+    dept: { en: 'Cultivation', es: 'Cultivo' },
     title: { en: 'Fresh Frozen', es: 'Fresco congelado' },
     desc: { en: 'Bucked-and-bagged material going straight into totes and the freezer for extraction.',
             es: 'Material desvarado y embolsado que va directo a totes y al congelador para extracción.' },
@@ -724,8 +724,8 @@ const PREFILL_MAP = {
 // Order of the pipeline, for the dashboard's stage funnel.
 const PIPELINE_ORDER = ['harvest', 'intake_wet', 'dry_check', 'buck', 'machine_trim', 'hand_trim'];
 
-const STATION_BY_KEY = Object.fromEntries(PROD_STATIONS.map((s) => [s.key, s]));
+const STATION_BY_KEY = Object.fromEntries(OPERATIONS_STATIONS.map((s) => [s.key, s]));
 
 if (typeof module !== 'undefined') {
-  module.exports = { PROD_STATIONS, STATION_BY_KEY, BIOMASS, SELLABLE, PREFILL_MAP, PIPELINE_ORDER, G_PER_LB };
+  module.exports = { OPERATIONS_STATIONS, STATION_BY_KEY, BIOMASS, SELLABLE, PREFILL_MAP, PIPELINE_ORDER, G_PER_LB };
 }

@@ -123,8 +123,8 @@
   <div id="editor"></div>
 </div>
 
-<script src="/production_stations.js"></script>
-<script src="/prod_common.js"></script>
+<script src="/operations_stations.js"></script>
+<script src="/ops_common.js"></script>
 <script src="/hub_config.js"></script>
 <script>
 const ADMIN_ENDPOINT = '/.netlify/functions/admin';
@@ -261,7 +261,7 @@ async function toggleActive(id, currentlyActive){
 // ── Editor ──────────────────────────────────────────────────────────────
 function stationDepts(){
   const depts = [];
-  PROD_STATIONS.forEach(s => {
+  OPERATIONS_STATIONS.forEach(s => {
     const name = t(s.dept);
     let g = depts.find(x => x.name === name);
     if(!g){ g = { name, stations: [] }; depts.push(g); }
@@ -313,11 +313,11 @@ function openEditor(id){
       ${COMMISSION_COLS.map(col => `<label class="check-item"><input type="checkbox" data-comm="${col}" ${commSet.has(col)?'checked':''}/> ${esc(COMMISSION_REP_MAP[col])}</label>`).join('')}
     </div>
 
-    <div class="section-hd">Production — edit access</div>
+    <div class="section-hd">Processing — edit access</div>
     <label class="check-item" style="margin-bottom:10px"><input type="checkbox" id="ed-all" ${editAll?'checked':''}/> All stations</label>
     <div id="ed-station-list"></div>
 
-    <div class="section-hd">Production — view only (Today board)</div>
+    <div class="section-hd">Processing — view only (Today board)</div>
     <label class="check-item" style="margin-bottom:10px"><input type="checkbox" id="view-all" ${viewAll?'checked':''}/> All stations</label>
     <div id="view-station-list"></div>
 

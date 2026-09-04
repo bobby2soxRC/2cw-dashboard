@@ -1,0 +1,19 @@
+[
+  {
+    "id": "mtrim_0054",
+    "date": "2026-09-01",
+    "sourceUid": "906",
+    "uidKey": "0906",
+    "strain": "Galactic Warheadz",
+    "teamLead": "Sandy Cardenas",
+    "inputBuckedLb": 76.5,
+    "flowerALb": 63.4,
+    "smallsBLb": 0,
+    "sugarTrimLb": 0,
+    "machineShakeLb": 12.4,
+    "wasteLb": -0.7,
+    "notes": "This is a different form type from the Bucking/Trimming work orders -- a 'Trim in Progress' machine log (Tote #, M-Flower Output, Smalls, Sugar, Shake, Waste columns), which lines up closely with the live app's `machine_trim` station fields (inputBuckedLb / flowerALb / smallsBLb / sugarTrimLb / machineShakeLb / wasteLb) -- data\\\\production\\\\machine_trim.json is currently empty and could take rows shaped like this. Waste is printed as -0.7 (a small weight GAIN, not a loss: the handwritten note reads '75.8 - 76.5 = -0.7') -- kept as negative rather than corrected to zero, since that's what's on the page. SAME UID (0906) as batch 2's Galactic Warheadz BUCKING order (starting weight 106 lbs) -- this 76.5 lb starting weight for the machine-trim step is a plausible portion of that bucked flower moving downstream, but not a confirmed link.",
+    "_reviewStatus": "complete",
+    "_reviewSource": "machine_trim_batch4_2026-09.csv"
+  }
+]

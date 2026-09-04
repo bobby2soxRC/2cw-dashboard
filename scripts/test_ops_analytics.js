@@ -1,13 +1,13 @@
-// Tests for prod_analytics.js. Run with: node scripts/test_prod_analytics.js
+// Tests for ops_analytics.js. Run with: node scripts/test_ops_analytics.js
 //
 // The fixture below is a single lot walked end to end, using the real numbers
 // off the Lemon Cherry Gelato work order (23.65 lb bucked in; trimmers 79, 125
 // and 174 weighing out 298, 311 and 377 grams) so the arithmetic the operators
 // do on paper and the arithmetic the app does can be compared directly.
 
-const A = require('../prod_analytics.js');
-const { stages, ASOF, DRY_UID } = require('./prod_fixture.js');
-const { G_PER_LB } = require('../production_stations.js');
+const A = require('../ops_analytics.js');
+const { stages, ASOF, DRY_UID } = require('./ops_fixture.js');
+const { G_PER_LB } = require('../operations_stations.js');
 
 let failures = 0;
 function check(name, actual, expected, tol = 1e-6) {
@@ -62,6 +62,14 @@ const [sy] = A.strainYields(stages, { strain: 'Lemon Cherry Gelato' });
 check('wet in', sy.wetLb, 310);
 check('finished flower = machine A-buds + hand-trim finished', sy.flowerLb, 20 + 986 / G_PER_LB, 1e-6);
 check('dry as % of wet', sy.dryPctOfWet, 102 / 310, 1e-9);
+
+console.log('\ndaily output by process');
+const daily = A.dailyOutput(stages);
+check('one date per station touched in the fixture', daily.dates.length, 6);
+check('buck shows up with its one day of output (all four output fields, not just buckedFlowerLb)', daily.byDateStation['2026-08-19'].buck, 60 + 22 + 16 + 4);
+check('machine_trim total for its day = all five output fields', daily.byDateStation['2026-08-22'].machine_trim, 20 + 8 + 3 + 5 + 0.35, 1e-6);
+check('mfg_output never appears (no biomass outputs of its own)', daily.stationKeys.includes('mfg_output'), false);
+check('totalsByDate sums every station touched that day', daily.totalsByDate[daily.dates.indexOf('2026-08-05')], 310 + 402, 1e-6);
 
 console.log('\nbiomass ledger');
 const led = A.biomassLedger(stages);

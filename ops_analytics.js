@@ -1,23 +1,23 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// 2CW Production — analytics.
+// 2CW Operations — analytics.
 //
 // Turns the raw per-stage record files into the four things operations actually
 // asks for: where every lot currently is, what each stage yields, how much
 // biomass is on hand and where, and who trimmed how much.
 //
 // Pure functions over plain data, so the same code runs in the dashboard page
-// and under node for the tests in scripts/test_prod_analytics.js.
+// and under node for the tests in scripts/test_ops_analytics.js.
 // ─────────────────────────────────────────────────────────────────────────────
 
 (function (root, factory) {
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = factory(require('./production_stations.js'));
+    module.exports = factory(require('./operations_stations.js'));
   } else {
-    root.ProdAnalytics = factory({ PROD_STATIONS, STATION_BY_KEY, BIOMASS, SELLABLE, PIPELINE_ORDER, G_PER_LB });
+    root.OpsAnalytics = factory({ OPERATIONS_STATIONS, STATION_BY_KEY, BIOMASS, SELLABLE, PIPELINE_ORDER, G_PER_LB });
   }
 }(typeof self !== 'undefined' ? self : this, function (S) {
 
-const { PROD_STATIONS, STATION_BY_KEY, BIOMASS, SELLABLE, PIPELINE_ORDER } = S;
+const { OPERATIONS_STATIONS, STATION_BY_KEY, BIOMASS, SELLABLE, PIPELINE_ORDER } = S;
 
 const num = (x) => { const n = parseFloat(x); return Number.isFinite(n) ? n : 0; };
 const normUid = (u) => String(u || '').toUpperCase().replace(/\s/g, '');
@@ -159,7 +159,7 @@ function daysBetween(from, to) {
 // Loss is measured against what went in, so a stage with no recorded input
 // weight contributes to the totals but not to the loss average.
 function stageYields(stages, filter) {
-  return PROD_STATIONS.filter((s) => s.flow && s.flow.outputs && s.flow.outputs.length).map((station) => {
+  return OPERATIONS_STATIONS.filter((s) => s.flow && s.flow.outputs && s.flow.outputs.length).map((station) => {
     const rows = (stages[station.key] || []).filter((r) => matches(r, filter));
     let inputLb = 0, outputLb = 0, withInput = 0;
     const outputs = {};
@@ -226,6 +226,40 @@ function strainYields(stages, filter) {
   })).sort((a, b) => b.flowerLb - a.flowerLb);
 }
 
+// ── Daily output by process ─────────────────────────────────────────────────
+// One number per (day, station): total lbs weighed out that day at that
+// station, regardless of what stage the lot is at overall — the rollup view
+// answers "how much did each process put out today/this week", not "where is
+// each lot now" (that's buildLots) or "what did a stage lose" (stageYields).
+function dailyOutput(stages, filter) {
+  const byDateStation = {};
+  const stationKeys = [];
+
+  OPERATIONS_STATIONS.forEach((station) => {
+    if (!station.flow || !station.flow.outputs || !station.flow.outputs.length) return;
+    let used = false;
+    (stages[station.key] || []).filter((r) => matches(r, filter)).forEach((r) => {
+      const day = dayOf(r);
+      if (!day) return;
+      const out = station.flow.outputs.reduce((a, o) => a + num(r[o.field]), 0);
+      if (!out) return;
+      used = true;
+      byDateStation[day] = byDateStation[day] || {};
+      byDateStation[day][station.key] = round2((byDateStation[day][station.key] || 0) + out);
+    });
+    if (used) stationKeys.push(station.key);
+  });
+
+  const dates = Object.keys(byDateStation).sort();
+  return {
+    dates,
+    stationKeys,
+    byDateStation,
+    totalsByDate: dates.map((d) => round2(Object.values(byDateStation[d]).reduce((a, b) => a + b, 0))),
+    totalsByStation: stationKeys.map((k) => round2(dates.reduce((a, d) => a + (byDateStation[d][k] || 0), 0)))
+  };
+}
+
 // ── Biomass ledger ──────────────────────────────────────────────────────────
 // Material sits in one of two places. Processing produces it and consumes it
 // stage to stage; an approved biomass request is what moves it across to
@@ -235,7 +269,7 @@ function biomassLedger(stages, filter) {
   const processing = {}, manufacturing = {}, produced = {}, consumed = {}, transferred = {};
   const add = (obj, cat, v) => { if (cat) obj[cat] = (obj[cat] || 0) + v; };
 
-  PROD_STATIONS.forEach((station) => {
+  OPERATIONS_STATIONS.forEach((station) => {
     const flow = station.flow;
     if (!flow) return;
     (stages[station.key] || []).filter((r) => matches(r, filter)).forEach((r) => {
@@ -304,7 +338,7 @@ function trimmerStats(stages, filter) {
 
 // Crew throughput per stage — lbs of input processed per labor hour.
 function crewThroughput(stages, filter) {
-  return PROD_STATIONS.filter((s) => s.flow && s.flow.input).map((station) => {
+  return OPERATIONS_STATIONS.filter((s) => s.flow && s.flow.input).map((station) => {
     const rows = (stages[station.key] || []).filter((r) => matches(r, filter) && num(r.laborHours) > 0);
     const lb = rows.reduce((a, r) => a + num(r[station.flow.input.field]), 0);
     const hrs = rows.reduce((a, r) => a + num(r.laborHours) * Math.max(1, num(r.crewSize) || 1), 0);
@@ -321,7 +355,7 @@ function crewThroughput(stages, filter) {
 // nothing here knows an hourly rate, it only knows who worked what, when.
 function crewLaborLog(stages, filter) {
   const out = [];
-  PROD_STATIONS.forEach((station) => {
+  OPERATIONS_STATIONS.forEach((station) => {
     const hasCrew = station.fields.some((f) => f.k === 'crew' && f.t === 'lineitems');
     (stages[station.key] || []).forEach((r) => {
       if (!matches(r, filter)) return;
@@ -393,7 +427,7 @@ function exceptions(stages, asOf) {
   // that matching exists in this layer (findUpstream already does it for the
   // live form's prefill), not invented here as a guess.
 
-  PROD_STATIONS.forEach((station) => {
+  OPERATIONS_STATIONS.forEach((station) => {
     if (!station.flow || !station.flow.input || !station.flow.outputs) return;
     if (station.flow.lossKind !== 'conserving') return;
     (stages[station.key] || []).forEach((r) => {
@@ -428,6 +462,6 @@ function exceptions(stages, asOf) {
   return out.sort((a, b) => String(b.date).localeCompare(String(a.date)));
 }
 
-return { buildLots, stageYields, strainYields, biomassLedger, trimmerStats, crewThroughput, crewLaborLog, crewLaborByEmployee,
+return { buildLots, stageYields, strainYields, dailyOutput, biomassLedger, trimmerStats, crewThroughput, crewLaborLog, crewLaborByEmployee,
          requestSummary, exceptions, buildAliasMap, rootUid, daysBetween };
 }));

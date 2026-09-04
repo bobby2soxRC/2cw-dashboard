@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <title>Today — 2CW Production</title>
+  <title>Today — 2CW Operations</title>
   <script>
     (function(){ if (!sessionStorage.getItem('2cw_pin')) window.location.replace('/index.html'); })();
   </script>
@@ -62,7 +62,7 @@
 </head>
 <body>
 <header class="hdr">
-  <a class="hdr-back" href="/production.html" id="back">← Stations</a>
+  <a class="hdr-back" href="/operations.html" id="back">← Stations</a>
   <div class="hdr-div"></div>
   <div class="hdr-brand" id="brand">Today</div>
   <div class="live" id="live"><span class="dot"></span><span id="live-txt">—</span></div>
@@ -79,9 +79,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/config/supabase_config.js"></script>
-<script src="/production_stations.js"></script>
-<script src="/prod_common.js"></script>
-<script src="/prod_data.js"></script>
+<script src="/operations_stations.js"></script>
+<script src="/ops_common.js"></script>
+<script src="/ops_data.js"></script>
 <script>
 (async function () {
   mountLangToggle('lang');
@@ -95,11 +95,11 @@
     draftPill: { en: 'In progress', es: 'En curso' },
     submittedPill: { en: 'Submitted', es: 'Enviado' },
     updated: { en: 'updated', es: 'actualizado' },
-    noAccess: { en: 'You don’t have view access to the production board yet. Ask your manager to turn it on.',
+    noAccess: { en: 'You don’t have view access to the operations board yet. Ask your manager to turn it on.',
                 es: 'Aún no tiene acceso de visualización al panel de producción. Pida a su gerente que lo active.' },
     empty: { en: 'Nothing logged yet today.', es: 'Nada registrado hoy todavía.' },
     setupTitle: { en: 'Live view isn’t connected yet', es: 'La vista en vivo aún no está conectada' },
-    setupBody: { en: 'This page needs a Supabase project (config/supabase_config.js is still blank). Until then there is nothing to show here — finished forms still show up on the Production Dashboard.',
+    setupBody: { en: 'This page needs a Supabase project (config/supabase_config.js is still blank). Until then there is nothing to show here — finished forms still show up on the Operations Dashboard.',
                  es: 'Esta página necesita un proyecto de Supabase (config/supabase_config.js sigue vacío). Mientras tanto no hay nada que mostrar aquí — los formularios terminados siguen apareciendo en el Panel de Producción.' }
   };
   document.getElementById('title').textContent = t(L.title);
@@ -107,14 +107,14 @@
   document.querySelector('.hdr-brand').textContent = t(L.title);
   document.title = `${t(L.title)} — 2CW`;
 
-  const editAccess = JSON.parse(sessionStorage.getItem('2cw_prod_edit_access') || 'null');
-  const viewAccess = JSON.parse(sessionStorage.getItem('2cw_prod_view_access') || 'null');
+  const editAccess = JSON.parse(sessionStorage.getItem('2cw_ops_edit_access') || 'null');
+  const viewAccess = JSON.parse(sessionStorage.getItem('2cw_ops_view_access') || 'null');
   // Edit access implies you can see your own department's board; explicit
   // view access can additionally reach stations you can't submit to.
   const canSee = (key) =>
     viewAccess === 'all' || (Array.isArray(viewAccess) && viewAccess.includes(key)) ||
     editAccess === 'all' || (Array.isArray(editAccess) && editAccess.includes(key));
-  const visibleStations = PROD_STATIONS.filter((s) => canSee(s.key));
+  const visibleStations = OPERATIONS_STATIONS.filter((s) => canSee(s.key));
 
   if (!visibleStations.length) {
     document.getElementById('board').innerHTML = `<div class="empty">${t(L.noAccess)}</div>`;

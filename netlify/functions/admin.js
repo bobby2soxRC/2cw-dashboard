@@ -1,7 +1,7 @@
 // User-management admin panel backend (admin.html).
 //
 // This table (app_users) gates access to commissions and executive data, so
-// unlike production_forms it does NOT get an open anon-write RLS policy —
+// unlike operations_forms it does NOT get an open anon-write RLS policy —
 // every write goes through here, using the Supabase *service role* key
 // (server-side only, never shipped to the browser) and gated by a separate
 // admin PIN. This is an explicit stopgap, not real SSO: anyone who has the

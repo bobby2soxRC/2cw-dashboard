@@ -1,12 +1,12 @@
 // A single lot walked end to end, plus a couple of deliberately imperfect rows.
-// Used by scripts/test_prod_analytics.js, and by scripts/seed_demo_production.js
+// Used by scripts/test_ops_analytics.js, and by scripts/seed_demo_operations.js
 // to fill an empty install so the dashboard has something to draw.
 //
 // The numbers come off the real Lemon Cherry Gelato work order: 23.65 lb of
 // bucked flower in, trimmers 79, 125 and 174 weighing out 298, 311 and 377
 // grams.
 
-const { G_PER_LB } = require('../production_stations.js');
+const { G_PER_LB } = require('../operations_stations.js');
 
 const DRY_UID = '1A4060300032386000001008';
 
@@ -34,7 +34,7 @@ const stages = {
   // Bucking no longer mints a new UID when it finishes — the summary record
   // (what buck_station.html writes when a batch closes, rolled up from many
   // small employee/box submissions) stays tagged under the same dried-batch
-  // UID dry_check produced. See production_stations.js's 'buck' entry.
+  // UID dry_check produced. See operations_stations.js's 'buck' entry.
   buck: [
     { id: 'b1', date: '2026-08-19', sourceUid: DRY_UID, strain: 'Lemon Cherry Gelato',
       startingDryLb: 102,
