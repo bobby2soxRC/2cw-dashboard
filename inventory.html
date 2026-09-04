@@ -632,8 +632,8 @@
         <select id="pr-crew" required>
           <option value="" disabled selected>Select a team</option>
           <option value="Flower">Flower</option>
-          <option value="Prerolls">Prerolls</option>
-          <option value="Concentrates">Concentrates</option>
+          <option value="Preroll">Preroll</option>
+          <option value="Concentrate">Concentrate</option>
         </select>
       </div>
       <div class="pr-row2">
@@ -686,12 +686,14 @@ function isPrAllowedUser() {
   return !!name && PR_ALLOWED_USERS.some(u => name.includes(u));
 }
 
-// "In process" = not finished and not abandoned. Cancelled isn't a status
-// the Sheet defines today, but excluding it here means nothing needs to
-// change on this side if/when it is.
+// "In process" = not finished and not abandoned. The Sheet's Status column
+// is numbered ("1 - Requested", "6 - Complete", "8 - Cancelled", ...) to
+// control sort order there, so this matches by substring rather than an
+// exact value.
 const PR_CLOSED_STATUSES = ['complete', 'cancelled', 'canceled'];
 function isOpenPrStatus(status) {
-  return !PR_CLOSED_STATUSES.includes((status || '').toString().toLowerCase().trim());
+  const s = (status || '').toString().toLowerCase();
+  return !PR_CLOSED_STATUSES.some(closed => s.includes(closed));
 }
 // type=null matches every type for the bsku (used for the BSKU-level rollup).
 function prRequestsFor(bsku, type) {

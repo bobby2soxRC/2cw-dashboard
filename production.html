@@ -79,10 +79,13 @@
 
     .status-pill{font-family:var(--font-c);font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 8px;border-radius:10px;display:inline-block}
     .status-requested{background:var(--bg4);color:var(--text3)}
-    .status-slotted{background:var(--orange2);color:var(--orange)}
-    .status-sourced{background:var(--blue2);color:var(--blue)}
+    .status-slot-assigned{background:var(--orange2);color:var(--orange)}
+    .status-flavor-confirmed{background:var(--blue2);color:var(--blue)}
     .status-scheduled{background:var(--purple2);color:var(--purple)}
+    .status-in-progress{background:var(--teal2);color:var(--teal)}
     .status-complete{background:var(--green2);color:var(--green)}
+    .status-cancelled{background:var(--red2);color:var(--red)}
+    .status-hold{background:var(--gold2);color:var(--gold)}
     .status-open{background:var(--bg4);color:var(--text3)}
     .status-confirmed{background:var(--green2);color:var(--green)}
 
@@ -126,8 +129,6 @@
 <script>
 const DATA_URL = '/data/operations/production_requests.json';
 
-const REQ_STATUS_ORDER = ['Requested','Slotted','Sourced','Scheduled','Complete'];
-
 let _activeTab = 'requests';
 let _data = { requests: [], slots: [] };
 let _brandFilter = 'all';
@@ -140,8 +141,19 @@ function brandKey(product){
   return 'other';
 }
 
+// Request Status values in the Sheet are numbered ("1 - Requested", "2 -
+// Slot Assigned", ...) to control sort order there; strip the "N - " prefix
+// before deriving a CSS class. Slot Status ("Open"/"Confirmed") has no
+// prefix, so the regex is a no-op for those.
 function statusClass(status){
-  return 'status-' + (status||'').trim().toLowerCase().replace(/\s+/g,'-');
+  const label = (status||'').replace(/^\d+\s*-\s*/, '').trim();
+  return 'status-' + label.toLowerCase().replace(/\s+/g,'-');
+}
+
+// Substring match so this doesn't care about the "N - " numbering.
+function isOpenReqStatus(status){
+  const s = (status||'').toLowerCase();
+  return !s.includes('complete') && !s.includes('cancelled') && !s.includes('canceled');
 }
 
 function formatDate(str){
@@ -173,8 +185,8 @@ function render(){
   const requests = _data.requests;
   const slots = _data.slots;
 
-  const open = requests.filter(r => r.status !== 'Complete');
-  const awaitingSlot = requests.filter(r => !r.slot_id && r.status !== 'Complete');
+  const open = requests.filter(r => isOpenReqStatus(r.status));
+  const awaitingSlot = requests.filter(r => !r.slot_id && isOpenReqStatus(r.status));
   const pendingSlots = slots.filter(s => (s.status||'').toLowerCase() !== 'confirmed');
   const confirmedSlots = slots.filter(s => (s.status||'').toLowerCase() === 'confirmed');
 
