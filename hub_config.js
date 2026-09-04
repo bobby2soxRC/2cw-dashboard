@@ -109,6 +109,16 @@ const CARD_DEFS = [
     href: '/menu_health.html'
   },
   {
+    key: 'production_requests',
+    color: 'gold',
+    label: 'Manufacturing',
+    dept: 'operations',
+    subdept: 'manufacturing',
+    title: 'Production Requests',
+    desc: 'Weekly production requests and material sourcing slots for Howie Roll, Soma Rosa Farms, and Mendo — read-only, synced hourly from the Production Requests Sheet.',
+    href: '/production.html'
+  },
+  {
     key: 'menu',
     color: 'green',
     label: 'Sales',
