@@ -429,7 +429,11 @@ async function buildHub(user){
 
   treeRoot = await buildTree();
   const { landing } = computeHome(treeRoot);
-  backStack = [];
+  // Auto-collapse (see collapseFrom) can land the user straight on a
+  // sub-folder — e.g. Operations > Processing — skipping the root screen
+  // entirely. Seed the back stack with root in that case so the crumb
+  // bar's "← Back" button still appears and returns them to the hub.
+  backStack = landing.key === treeRoot.key ? [] : [treeRoot];
   customizeMode = false; draftHidden = []; draftOrder = [];
 
   if(landing.type === 'leaf'){
