@@ -1814,8 +1814,20 @@ async function submitPrModal(event) {
     // body (fetch's default Content-Type for a string) keeps this a "simple"
     // request so the browser skips the OPTIONS preflight it can't answer.
     const res = await fetch(PRODUCTION_REQUESTS_WEBAPP_URL, { method: 'POST', body: JSON.stringify(payload) });
-    const data = await res.json().catch(() => ({}));
-    if (!data.ok) throw new Error(data.error || 'Request failed.');
+    const rawText = await res.text();
+    let data = null;
+    try { data = JSON.parse(rawText); } catch { /* handled below */ }
+
+    if (!data) {
+      // The Apps Script deployment ran and likely wrote the row (Google's
+      // redirect-based Web App response is sometimes unreadable as JSON from
+      // a cross-origin fetch even when the request itself succeeded) — check
+      // the Sheet before retrying to avoid a duplicate row.
+      console.error('Add PR: non-JSON response', res.status, rawText.slice(0, 500));
+      throw new Error(`Got an unreadable response (HTTP ${res.status}) — check the Sheet before retrying, it may have saved anyway. Details logged to the browser console.`);
+    }
+    if (!data.ok) throw new Error(data.error || `Request failed (HTTP ${res.status}).`);
+
     form.style.display = 'none';
     const successEl = document.getElementById('pr-success');
     successEl.textContent = `✓ Submitted as ${data.pr_num}. It'll appear in Open Requests after the next sync (hourly, or run the Production Requests Sync Action manually).`;
