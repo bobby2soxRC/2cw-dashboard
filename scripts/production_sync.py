@@ -19,6 +19,7 @@ Output:
 import csv
 import io
 import json
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -64,10 +65,20 @@ SLOT_FIELDS = {
 NUMERIC_FIELDS = {"batch_size", "target_quantity", "linked_pr_total"}
 
 
-def fetch_csv(url):
-    resp = requests.get(url, timeout=30)
-    resp.raise_for_status()
-    return list(csv.DictReader(io.StringIO(resp.text)))
+def fetch_csv(url, retries=3, backoff=5):
+    last_exc = None
+    for attempt in range(retries):
+        try:
+            resp = requests.get(url, timeout=30)
+            resp.raise_for_status()
+            return list(csv.DictReader(io.StringIO(resp.text)))
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as exc:
+            last_exc = exc
+            if attempt < retries - 1:
+                wait = backoff * (attempt + 1)
+                print(f"  [WARN] Fetch failed ({exc}); retrying in {wait}s...")
+                time.sleep(wait)
+    raise last_exc
 
 
 def to_number(value):
