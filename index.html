@@ -429,7 +429,12 @@ async function buildHub(user){
 
   treeRoot = await buildTree();
   const { landing } = computeHome(treeRoot);
-  backStack = [];
+  // backStack must reflect the true root→landing path, not just the folders
+  // skipped by collapseFrom() — computeHome() may start its collapse from a
+  // remembered sub-folder (LAST_FOLDER_KEY), which would otherwise strand the
+  // user there on every future login with no way back up to root.
+  const landingPath = findPath(treeRoot, landing.key) || [treeRoot];
+  backStack = landingPath.slice(0, -1);
   customizeMode = false; draftHidden = []; draftOrder = [];
 
   if(landing.type === 'leaf'){
@@ -555,6 +560,20 @@ function findFolderByKey(node, key){
   for(const c of node.children){
     const found = findFolderByKey(c, key);
     if(found) return found;
+  }
+  return null;
+}
+
+// Returns the chain of folder nodes from `node` down to (and including) the
+// node whose key is `targetKey` — used to seed backStack with the real
+// ancestor trail so "← Back" always leads all the way up to root.
+function findPath(node, targetKey){
+  if(node.key === targetKey) return [node];
+  if(node.type !== 'folder') return null;
+  for(const c of node.children){
+    if(c.type !== 'folder') continue;
+    const sub = findPath(c, targetKey);
+    if(sub) return [node, ...sub];
   }
   return null;
 }
