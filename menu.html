@@ -470,74 +470,73 @@ function renderCard(card, cls, brandName){
 }
 
 // ─── PDF PUBLISH ────────────────────────────────────────────
-function publishPDF(){
+// Renders #menuPage to a canvas and embeds that as a single PDF page sized
+// to match it exactly — no page breaks, and no browser print engine
+// involved (iOS Safari's print-to-PDF ignores custom @page sizing and
+// forces Letter/A4, which is what caused the page-break bug). On devices
+// that support the Web Share API (iOS, most Android), the PDF goes
+// straight to the native share sheet — Messages, Mail, Save to Files,
+// AirDrop — in one tap. Elsewhere it downloads as a normal file.
+let _pdfLibsPromise = null;
+function loadPDFLibs(){
+  if(_pdfLibsPromise) return _pdfLibsPromise;
+  const loadScript = src => new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('Failed to load ' + src));
+    document.head.appendChild(s);
+  });
+  _pdfLibsPromise = Promise.all([
+    window.html2canvas ? Promise.resolve() : loadScript('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js'),
+    window.jspdf ? Promise.resolve() : loadScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js')
+  ]);
+  return _pdfLibsPromise;
+}
+
+async function publishPDF(){
   const btn = $('pdfBtn');
   btn.textContent = '⏳ Preparing…';
   btn.disabled = true;
 
   try{
+    await loadPDFLibs();
     const el = $('menuPage');
-    const styles = [...document.styleSheets].map(ss => {
-      try{ return [...ss.cssRules].map(r => r.cssText).join('\n'); }catch(e){ return ''; }
-    }).join('\n');
+    if(document.fonts) await document.fonts.ready;
 
-    const contentW = el.offsetWidth;
-    const printWin = window.open('', '_blank', 'width=1100,height=900');
-    if(!printWin){
-      alert('Pop-up blocked — allow pop-ups for this site and click Publish PDF again.');
-      btn.textContent = '📄 Publish PDF';
-      btn.disabled = false;
-      return;
+    const canvas = await html2canvas(el, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff'
+    });
+
+    const { jsPDF } = window.jspdf;
+    const w = canvas.width / 2;   // back out the scale — page size in CSS px
+    const h = canvas.height / 2;
+    const doc = new jsPDF({
+      orientation: w >= h ? 'landscape' : 'portrait',
+      unit: 'px',
+      format: [w, h],
+      hotfixes: ['px_scaling']
+    });
+    doc.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, w, h);
+
+    const filename = '2CW-Wholesale-Menu-' + monthYear().replace(/\s+/g, '-') + '.pdf';
+    const blob = doc.output('blob');
+    const file = new File([blob], filename, { type: 'application/pdf' });
+
+    if(navigator.canShare && navigator.canShare({ files: [file] })){
+      await navigator.share({
+        files: [file],
+        title: '2CW Wholesale Menu — ' + monthYear()
+      });
+    }else{
+      doc.save(filename);
     }
-    printWin.document.write(
-      '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
-      '<base href="' + window.location.origin + '/">' +
-      '<title>2CW Wholesale Menu — ' + monthYear() + '</title>' +
-      '<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">' +
-      '<style>' + styles +
-      '*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}' +
-      'html,body{background:#fff;margin:0;padding:0}' +
-      '#menuPage{box-shadow:none!important;border-radius:0!important;width:' + contentW + 'px}' +
-      '*{page-break-inside:avoid!important;break-inside:avoid!important}' +
-      '</style><style id="pageSizeStyle"></style></head><body>' +
-      el.outerHTML +
-      '</body></html>'
-    );
-    printWin.document.close();
-
-    // Size the PDF to the menu's ACTUAL rendered height (after web fonts and
-    // card images finish loading in the popup — printing before then locks in
-    // a page height that's too short, which is what pushes content onto a
-    // second, mostly-blank page) instead of a size guessed in advance.
-    let printed = false;
-    const runPrint = () => {
-      if(printed) return;
-      printed = true;
-      const target = printWin.document.getElementById('menuPage');
-      const h = Math.ceil(target.getBoundingClientRect().height);
-      const pageStyle = printWin.document.getElementById('pageSizeStyle');
-      pageStyle.textContent = '@page{size:' + contentW + 'px ' + h + 'px;margin:0}';
-      printWin.focus();
-      setTimeout(() => printWin.print(), 50);
-    };
-
-    const imagesReady = () => {
-      const imgs = [...printWin.document.images];
-      const pending = imgs.filter(img => !img.complete);
-      if(pending.length === 0) return Promise.resolve();
-      return Promise.all(pending.map(img => new Promise(res => {
-        img.addEventListener('load', res, {once:true});
-        img.addEventListener('error', res, {once:true});
-      })));
-    };
-
-    printWin.onload = () => {
-      const fontsReady = printWin.document.fonts ? printWin.document.fonts.ready : Promise.resolve();
-      Promise.all([fontsReady, imagesReady()]).then(runPrint);
-    };
-    setTimeout(runPrint, 3000); // fallback if a font/image event never fires
   }catch(err){
-    alert('PDF failed: ' + err.message);
+    if(err.name !== 'AbortError'){ // user just cancelled the share sheet
+      alert('PDF failed: ' + err.message);
+    }
   }
 
   btn.textContent = '📄 Publish PDF';
