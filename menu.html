@@ -482,7 +482,6 @@ function publishPDF(){
     }).join('\n');
 
     const contentW = el.offsetWidth;
-    const contentH = el.scrollHeight + 40;
     const printWin = window.open('', '_blank', 'width=1100,height=900');
     if(!printWin){
       alert('Pop-up blocked — allow pop-ups for this site and click Publish PDF again.');
@@ -497,16 +496,46 @@ function publishPDF(){
       '<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">' +
       '<style>' + styles +
       '*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}' +
-      'body{background:#fff;margin:0;padding:0}' +
-      '@page{size:' + contentW + 'px ' + contentH + 'px;margin:0}' +
+      'html,body{background:#fff;margin:0;padding:0}' +
       '#menuPage{box-shadow:none!important;border-radius:0!important;width:' + contentW + 'px}' +
       '*{page-break-inside:avoid!important;break-inside:avoid!important}' +
-      '</style></head><body>' +
+      '</style><style id="pageSizeStyle"></style></head><body>' +
       el.outerHTML +
-      '<scr' + 'ipt>window.onload=function(){setTimeout(function(){window.print();},400)}</' + 'script>' +
       '</body></html>'
     );
     printWin.document.close();
+
+    // Size the PDF to the menu's ACTUAL rendered height (after web fonts and
+    // card images finish loading in the popup — printing before then locks in
+    // a page height that's too short, which is what pushes content onto a
+    // second, mostly-blank page) instead of a size guessed in advance.
+    let printed = false;
+    const runPrint = () => {
+      if(printed) return;
+      printed = true;
+      const target = printWin.document.getElementById('menuPage');
+      const h = Math.ceil(target.getBoundingClientRect().height);
+      const pageStyle = printWin.document.getElementById('pageSizeStyle');
+      pageStyle.textContent = '@page{size:' + contentW + 'px ' + h + 'px;margin:0}';
+      printWin.focus();
+      setTimeout(() => printWin.print(), 50);
+    };
+
+    const imagesReady = () => {
+      const imgs = [...printWin.document.images];
+      const pending = imgs.filter(img => !img.complete);
+      if(pending.length === 0) return Promise.resolve();
+      return Promise.all(pending.map(img => new Promise(res => {
+        img.addEventListener('load', res, {once:true});
+        img.addEventListener('error', res, {once:true});
+      })));
+    };
+
+    printWin.onload = () => {
+      const fontsReady = printWin.document.fonts ? printWin.document.fonts.ready : Promise.resolve();
+      Promise.all([fontsReady, imagesReady()]).then(runPrint);
+    };
+    setTimeout(runPrint, 3000); // fallback if a font/image event never fires
   }catch(err){
     alert('PDF failed: ' + err.message);
   }
