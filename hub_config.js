@@ -168,6 +168,16 @@ const CARD_DEFS = [
     title: 'Staff Hours',
     desc: 'Live clock-in status, daily/weekly hours, and schedule adherence — synced hourly from Connecteam.',
     href: '/staff_hours.html'
+  },
+  {
+    key: 'tasks_dashboard',
+    color: 'purple',
+    label: 'Executive',
+    dept: 'executive',
+    pinned: true,
+    title: 'Ops Gameplan Tracker',
+    desc: 'The VP-of-Ops 30/60/90 plan as editable tasks and subtasks — status, owners, due dates, and CSV import.',
+    href: '/tasks_dashboard.html'
   }
   // Commission card is handled separately (see commCardDef in index.html) —
   // it's dept: 'sales' too.

@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Ops Gameplan Tracker — 2CW</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<meta name="theme-color" content="#0c0d0f">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0c0d0f;--surface:#13151a;--surface2:#181b21;--border:#1e2129;--border2:rgba(255,255,255,.11);
+    --green:#3db87a;--gold:#d4a843;--blue:#5a9fd4;--purple:#9b7fd4;--red:#ef5350;--slate:#7d8899;
+    --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;
+  }
+  html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:48px 48px;opacity:.35;pointer-events:none;z-index:0}
+  a{color:inherit}
+  .hdr{min-height:calc(54px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:12px;position:sticky;top:0;z-index:20}
+  .hdr-back{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
+  .hdr-div{width:1px;height:18px;background:var(--border)}
+  .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--purple);flex:1}
+
+  main{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:28px 16px 100px}
+
+  .btn{padding:.6rem 1rem;border:1px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer;background:transparent;color:var(--text)}
+  .btn-purple{background:var(--purple);color:#000;border-color:var(--purple)}
+  .btn-purple:hover{opacity:.88}
+  .btn-green{background:var(--green);color:#000;border-color:var(--green)}
+  .btn-green:hover{opacity:.88}
+  .btn-ghost{color:var(--subtext)}
+  .btn-ghost:hover{border-color:var(--muted);color:var(--text)}
+  .btn-danger{color:var(--red);border-color:rgba(239,83,80,.35)}
+  .btn-danger:hover{border-color:var(--red)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn-sm{padding:.32rem .6rem;font-size:.62rem}
+
+  .toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+  .toolbar h1{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:.03em}
+  .toolbar-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .status-line{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--subtext);margin-bottom:16px;min-height:1.2em}
+  .status-line b{color:var(--text)}
+
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  select, input[type=text], input[type=search], input[type=date], textarea{
+    background:#0c0d0f;border:1px solid var(--border);color:var(--text);
+    padding:.55rem .7rem;border-radius:8px;font-size:.85rem;font-family:'DM Sans',sans-serif;outline:none;
+  }
+  select:focus, input:focus, textarea:focus{border-color:var(--purple)}
+  .filters select{font-family:'DM Mono',monospace;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em}
+  .search-wrap{flex:1;min-width:180px}
+  .search-wrap input{width:100%}
+
+  .phase-section{margin-bottom:26px}
+  .phase-hd{display:flex;align-items:center;gap:12px;margin-bottom:10px;cursor:pointer;user-select:none}
+  .phase-hd h2{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.03em}
+  .phase-hd .chev{color:var(--muted);font-size:.7rem;transition:transform .15s}
+  .phase-hd.collapsed .chev{transform:rotate(-90deg)}
+  .phase-progress{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--subtext)}
+  .phase-bar{flex:1;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden;max-width:220px}
+  .phase-bar-fill{height:100%;background:var(--green)}
+  .phase-body.collapsed{display:none}
+
+  .task-list{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface)}
+  .task-row{border-bottom:1px solid var(--border)}
+  .task-row:last-child{border-bottom:none}
+  .task-main{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;cursor:pointer}
+  .task-main:hover{background:var(--surface2)}
+  .status-dot{flex:none;width:11px;height:11px;border-radius:50%;margin-top:4px;border:2px solid var(--border)}
+  .status-dot.not_started{background:transparent;border-color:var(--muted)}
+  .status-dot.in_progress{background:var(--blue);border-color:var(--blue)}
+  .status-dot.blocked{background:var(--red);border-color:var(--red)}
+  .status-dot.done{background:var(--green);border-color:var(--green)}
+  .task-body{flex:1;min-width:0}
+  .task-title-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .task-title{font-size:.92rem;font-weight:500}
+  .task-title.done{color:var(--subtext);text-decoration:line-through}
+  .task-meta{display:flex;align-items:center;gap:10px;margin-top:4px;flex-wrap:wrap;font-family:'DM Mono',monospace;font-size:.68rem;color:var(--subtext)}
+  .tag{display:inline-block;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);color:var(--subtext)}
+  .tag.track-compliance{color:var(--red);border-color:rgba(239,83,80,.35)}
+  .tag.track-systems{color:var(--green);border-color:rgba(61,184,122,.35)}
+  .tag.track-facilities{color:var(--gold);border-color:rgba(212,168,67,.35)}
+  .tag.track-people{color:var(--blue);border-color:rgba(90,159,212,.35)}
+  .tag.prio-high{color:var(--red)}
+  .tag.prio-medium{color:var(--gold)}
+  .tag.prio-low{color:var(--subtext)}
+  .due{white-space:nowrap}
+  .due.overdue{color:var(--red);font-weight:700}
+  .task-actions{flex:none;display:flex;gap:6px;align-items:flex-start;padding-top:2px}
+  .task-actions button{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.05em;text-transform:uppercase;background:transparent;border:1px solid var(--border);color:var(--subtext);padding:.28rem .55rem;border-radius:6px;cursor:pointer}
+  .task-actions button:hover{border-color:var(--purple);color:var(--purple)}
+  .chev-btn{color:var(--muted);font-size:.7rem;padding-top:6px;transition:transform .15s}
+  .chev-btn.open{transform:rotate(90deg)}
+
+  .task-detail{display:none;padding:0 14px 16px 37px;border-top:1px dashed var(--border)}
+  .task-detail.open{display:block}
+  .task-desc{font-size:.82rem;color:var(--subtext);margin:12px 0 14px;max-width:70ch;line-height:1.5}
+  .subtask-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .subtask-hd .lbl{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .subtask-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--border);font-size:.8rem}
+  .subtask-row:first-child{border-top:none}
+  .subtask-row .status-dot{margin-top:0;cursor:pointer}
+  .subtask-title{flex:1}
+  .subtask-title.done{color:var(--subtext);text-decoration:line-through}
+  .subtask-meta{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--subtext);white-space:nowrap}
+  .subtask-row button{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:.7rem;padding:2px 4px}
+  .subtask-row button:hover{color:var(--red)}
+  .add-subtask-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .add-subtask-row input[type=text]{flex:1;min-width:160px}
+
+  .empty-note{color:var(--subtext);font-size:.85rem;padding:30px;text-align:center}
+
+  /* editor overlay */
+  #editor-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;padding:24px;overflow-y:auto}
+  #editor{background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:560px;margin:0 auto;padding:28px}
+  #editor h2{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.03em;margin-bottom:18px}
+  .field-label{display:block;font-size:.68rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.35rem}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+  .form-row.full{grid-template-columns:1fr}
+  .form-row select, .form-row input, .form-row textarea{width:100%}
+  textarea{resize:vertical;min-height:64px;font-family:'DM Sans',sans-serif}
+  .editor-actions{display:flex;justify-content:space-between;gap:10px;margin-top:22px}
+  .editor-actions .right{display:flex;gap:10px}
+
+  .import-log{font-family:'DM Mono',monospace;font-size:.72rem;line-height:1.7;max-height:220px;overflow-y:auto;background:#0c0d0f;border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin:12px 0}
+  #csv-input{display:none}
+
+  @media (max-width:720px){
+    .form-row{grid-template-columns:1fr}
+    .task-meta{gap:6px}
+  }
+</style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="/index.html">← Hub</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand">Ops Gameplan Tracker</div>
+</header>
+
+<main>
+  <div class="toolbar">
+    <h1>Tasks</h1>
+    <div class="toolbar-actions">
+      <input type="file" id="csv-input" accept=".csv" onchange="handleCsvFile(event)"/>
+      <button class="btn btn-ghost" onclick="document.getElementById('csv-input').click()">Upload CSV</button>
+      <button class="btn btn-purple" onclick="openEditor(null)">+ Add Task</button>
+    </div>
+  </div>
+  <div class="status-line" id="status-line">Loading…</div>
+  <div id="import-result"></div>
+
+  <div class="filters">
+    <select id="f-phase" onchange="render()">
+      <option value="">All phases</option>
+      <option value="0-30">Day 1–30</option>
+      <option value="31-60">Day 31–60</option>
+      <option value="61-90">Day 61–90</option>
+      <option value="none">Unphased / backlog</option>
+    </select>
+    <select id="f-status" onchange="render()">
+      <option value="">All statuses</option>
+      <option value="not_started">Not started</option>
+      <option value="in_progress">In progress</option>
+      <option value="blocked">Blocked</option>
+      <option value="done">Done</option>
+    </select>
+    <select id="f-track" onchange="render()">
+      <option value="">All tracks</option>
+      <option value="compliance">Compliance</option>
+      <option value="systems">Systems</option>
+      <option value="facilities">Facilities</option>
+      <option value="people">People</option>
+    </select>
+    <label style="display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:.72rem;color:var(--subtext);text-transform:uppercase">
+      <input type="checkbox" id="f-hide-done" onchange="render()"/> Hide done
+    </label>
+    <div class="search-wrap"><input type="text" id="f-search" placeholder="Search tasks…" oninput="render()"/></div>
+  </div>
+
+  <div id="list-wrap"></div>
+</main>
+
+<div id="editor-backdrop">
+  <div id="editor"></div>
+</div>
+
+<script src="/config/supabase_config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const STATUS_LABELS = { not_started: 'Not started', in_progress: 'In progress', blocked: 'Blocked', done: 'Done' };
+const PHASE_LABELS = { '0-30': 'Day 1–30', '31-60': 'Day 31–60', '61-90': 'Day 61–90', none: 'Unphased / backlog' };
+const PHASE_ORDER = ['0-30', '31-60', '61-90', 'none'];
+const TRACK_LABELS = { compliance: 'Compliance', systems: 'Systems', facilities: 'Facilities', people: 'People' };
+
+let client = null;
+if (typeof SUPABASE_URL !== 'undefined' && SUPABASE_URL) {
+  client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+let tasks = [];        // [{...task, subtasks:[...]}]
+let openTaskIds = new Set();
+let collapsedPhases = new Set();
+let editingId = null;   // task id being edited, or null for new
+let editingSubtasks = []; // working copy of subtasks while the editor is open
+
+function esc(str){ return String(str==null?'':str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function fmtDate(d){ if(!d) return ''; const dt = new Date(d+'T00:00:00'); return dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
+function isOverdue(due, status){ return due && status !== 'done' && due < todayStr(); }
+
+async function requireClient(){
+  if(!client) throw new Error('Supabase is not configured (config/supabase_config.js is blank).');
+  return client;
+}
+
+// ── Load ──────────────────────────────────────────────────────────────────
+async function loadAll(){
+  const status = document.getElementById('status-line');
+  status.textContent = 'Loading tasks…';
+  try{
+    const c = await requireClient();
+    const [{ data: taskRows, error: e1 }, { data: subRows, error: e2 }] = await Promise.all([
+      c.from('tasks').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
+      c.from('task_subtasks').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true })
+    ]);
+    if(e1) throw e1;
+    if(e2) throw e2;
+    const byTask = {};
+    (subRows||[]).forEach(s => { (byTask[s.task_id] = byTask[s.task_id]||[]).push(s); });
+    tasks = (taskRows||[]).map(t => ({ ...t, subtasks: byTask[t.id] || [] }));
+    updateStatusLine();
+    render();
+  }catch(e){
+    status.textContent = 'Could not load tasks: ' + e.message;
+    document.getElementById('list-wrap').innerHTML = '';
+  }
+}
+
+function updateStatusLine(){
+  const status = document.getElementById('status-line');
+  const done = tasks.filter(t=>t.status==='done').length;
+  const overdue = tasks.filter(t=>isOverdue(t.due_date, t.status)).length;
+  status.innerHTML = `<b>${tasks.length}</b> tasks · <b>${done}</b> done · ` +
+    (overdue ? `<b style="color:var(--red)">${overdue} overdue</b>` : `0 overdue`);
+}
+
+// ── Render ────────────────────────────────────────────────────────────────
+function matchesFilters(t){
+  const fPhase = document.getElementById('f-phase').value;
+  const fStatus = document.getElementById('f-status').value;
+  const fTrack = document.getElementById('f-track').value;
+  const hideDone = document.getElementById('f-hide-done').checked;
+  const q = document.getElementById('f-search').value.trim().toLowerCase();
+  const phaseKey = t.phase || 'none';
+  if(fPhase && phaseKey !== fPhase) return false;
+  if(fStatus && t.status !== fStatus) return false;
+  if(fTrack && t.track !== fTrack) return false;
+  if(hideDone && t.status === 'done') return false;
+  if(q){
+    const hay = (t.title+' '+(t.description||'')+' '+(t.owner||'')).toLowerCase();
+    if(!hay.includes(q)) return false;
+  }
+  return true;
+}
+
+function render(){
+  const wrap = document.getElementById('list-wrap');
+  if(!tasks.length){
+    wrap.innerHTML = '<div class="empty-note">No tasks yet. Add one, or upload a CSV to get started.</div>';
+    return;
+  }
+  const filtered = tasks.filter(matchesFilters);
+  const byPhase = {};
+  PHASE_ORDER.forEach(p => byPhase[p] = []);
+  filtered.forEach(t => byPhase[t.phase || 'none'].push(t));
+
+  let html = '';
+  PHASE_ORDER.forEach(p => {
+    const list = byPhase[p];
+    if(!list.length) return;
+    const done = list.filter(t=>t.status==='done').length;
+    const pct = list.length ? Math.round(done/list.length*100) : 0;
+    const collapsed = collapsedPhases.has(p);
+    html += `
+      <div class="phase-section">
+        <div class="phase-hd ${collapsed?'collapsed':''}" onclick="togglePhase('${p}')">
+          <span class="chev">▾</span>
+          <h2>${esc(PHASE_LABELS[p])}</h2>
+          <div class="phase-bar"><div class="phase-bar-fill" style="width:${pct}%"></div></div>
+          <div class="phase-progress">${done}/${list.length} done</div>
+        </div>
+        <div class="phase-body ${collapsed?'collapsed':''}">
+          <div class="task-list">${list.map(taskRowHtml).join('')}</div>
+        </div>
+      </div>`;
+  });
+  wrap.innerHTML = html || '<div class="empty-note">No tasks match these filters.</div>';
+}
+
+function togglePhase(p){
+  if(collapsedPhases.has(p)) collapsedPhases.delete(p); else collapsedPhases.add(p);
+  render();
+}
+
+function taskRowHtml(t){
+  const open = openTaskIds.has(t.id);
+  const overdue = isOverdue(t.due_date, t.status);
+  const subDone = t.subtasks.filter(s=>s.status==='done').length;
+  return `
+    <div class="task-row" data-id="${t.id}">
+      <div class="task-main" onclick="toggleTask('${t.id}')">
+        <span class="chev-btn ${open?'open':''}">▸</span>
+        <span class="status-dot ${t.status}" title="${esc(STATUS_LABELS[t.status])}" onclick="event.stopPropagation();cycleStatus('${t.id}')"></span>
+        <div class="task-body">
+          <div class="task-title-row">
+            <span class="task-title ${t.status==='done'?'done':''}">${esc(t.title)}</span>
+            ${t.track ? `<span class="tag track-${t.track}">${esc(TRACK_LABELS[t.track])}</span>` : ''}
+            ${t.priority ? `<span class="tag prio-${t.priority}">${esc(t.priority)}</span>` : ''}
+          </div>
+          <div class="task-meta">
+            ${t.owner ? `<span>${esc(t.owner)}</span>` : ''}
+            ${t.due_date ? `<span class="due ${overdue?'overdue':''}">Due ${fmtDate(t.due_date)}</span>` : ''}
+            ${t.subtasks.length ? `<span>${subDone}/${t.subtasks.length} subtasks</span>` : ''}
+          </div>
+        </div>
+        <div class="task-actions" onclick="event.stopPropagation()">
+          <button onclick="openEditor('${t.id}')">Edit</button>
+          <button onclick="deleteTask('${t.id}')">Delete</button>
+        </div>
+      </div>
+      <div class="task-detail ${open?'open':''}">
+        ${t.description ? `<div class="task-desc">${esc(t.description)}</div>` : ''}
+        <div class="subtask-hd"><span class="lbl">Subtasks</span></div>
+        ${t.subtasks.map(s => subtaskRowHtml(t.id, s)).join('') || '<div class="empty-note" style="padding:10px 0">No subtasks yet.</div>'}
+        <div class="add-subtask-row">
+          <input type="text" placeholder="New subtask…" id="new-sub-${t.id}" onkeydown="if(event.key==='Enter') addSubtask('${t.id}')"/>
+          <button class="btn btn-sm btn-ghost" onclick="addSubtask('${t.id}')">+ Add</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function subtaskRowHtml(taskId, s){
+  const overdue = isOverdue(s.due_date, s.status);
+  return `
+    <div class="subtask-row" data-id="${s.id}">
+      <span class="status-dot ${s.status}" title="${esc(STATUS_LABELS[s.status])}" onclick="cycleSubtaskStatus('${taskId}','${s.id}')"></span>
+      <span class="subtask-title ${s.status==='done'?'done':''}">${esc(s.title)}</span>
+      ${s.owner ? `<span class="subtask-meta">${esc(s.owner)}</span>` : ''}
+      ${s.due_date ? `<span class="subtask-meta ${overdue?'due overdue':''}">${fmtDate(s.due_date)}</span>` : ''}
+      <button onclick="deleteSubtask('${taskId}','${s.id}')" title="Delete subtask">✕</button>
+    </div>`;
+}
+
+function toggleTask(id){
+  if(openTaskIds.has(id)) openTaskIds.delete(id); else openTaskIds.add(id);
+  render();
+}
+
+const STATUS_CYCLE = ['not_started','in_progress','blocked','done'];
+async function cycleStatus(id){
+  const t = tasks.find(x=>x.id===id);
+  if(!t) return;
+  const next = STATUS_CYCLE[(STATUS_CYCLE.indexOf(t.status)+1) % STATUS_CYCLE.length];
+  t.status = next;
+  render();
+  try{
+    const c = await requireClient();
+    const { error } = await c.from('tasks').update({ status: next }).eq('id', id);
+    if(error) throw error;
+    updateStatusLine();
+  }catch(e){ alert('Could not update status: ' + e.message); loadAll(); }
+}
+
+async function cycleSubtaskStatus(taskId, subId){
+  const t = tasks.find(x=>x.id===taskId);
+  const s = t && t.subtasks.find(x=>x.id===subId);
+  if(!s) return;
+  s.status = STATUS_CYCLE[(STATUS_CYCLE.indexOf(s.status)+1) % STATUS_CYCLE.length];
+  render();
+  try{
+    const c = await requireClient();
+    const { error } = await c.from('task_subtasks').update({ status: s.status }).eq('id', subId);
+    if(error) throw error;
+  }catch(e){ alert('Could not update subtask: ' + e.message); loadAll(); }
+}
+
+async function addSubtask(taskId){
+  const input = document.getElementById('new-sub-'+taskId);
+  const title = input.value.trim();
+  if(!title) return;
+  try{
+    const c = await requireClient();
+    const { data, error } = await c.from('task_subtasks').insert({ task_id: taskId, title }).select().single();
+    if(error) throw error;
+    const t = tasks.find(x=>x.id===taskId);
+    t.subtasks.push(data);
+    openTaskIds.add(taskId);
+    render();
+  }catch(e){ alert('Could not add subtask: ' + e.message); }
+}
+
+async function deleteSubtask(taskId, subId){
+  if(!confirm('Delete this subtask?')) return;
+  try{
+    const c = await requireClient();
+    const { error } = await c.from('task_subtasks').delete().eq('id', subId);
+    if(error) throw error;
+    const t = tasks.find(x=>x.id===taskId);
+    t.subtasks = t.subtasks.filter(s=>s.id!==subId);
+    render();
+  }catch(e){ alert('Could not delete subtask: ' + e.message); }
+}
+
+async function deleteTask(id){
+  if(!confirm('Delete this task and all its subtasks?')) return;
+  try{
+    const c = await requireClient();
+    const { error } = await c.from('tasks').delete().eq('id', id);
+    if(error) throw error;
+    tasks = tasks.filter(t=>t.id!==id);
+    updateStatusLine();
+    render();
+  }catch(e){ alert('Could not delete task: ' + e.message); }
+}
+
+// ── Editor ────────────────────────────────────────────────────────────────
+function openEditor(id){
+  editingId = id;
+  const t = id ? tasks.find(x=>x.id===id) : null;
+  document.getElementById('editor').innerHTML = `
+    <h2>${t ? 'Edit Task' : 'Add Task'}</h2>
+    <div class="form-row full"><div><label class="field-label">Title</label><input type="text" id="ed-title" value="${esc(t?t.title:'')}"/></div></div>
+    <div class="form-row full"><div><label class="field-label">Description</label><textarea id="ed-desc">${esc(t?t.description:'')}</textarea></div></div>
+    <div class="form-row">
+      <div><label class="field-label">Phase</label>
+        <select id="ed-phase">
+          <option value="">None / backlog</option>
+          <option value="0-30" ${t&&t.phase==='0-30'?'selected':''}>Day 1–30</option>
+          <option value="31-60" ${t&&t.phase==='31-60'?'selected':''}>Day 31–60</option>
+          <option value="61-90" ${t&&t.phase==='61-90'?'selected':''}>Day 61–90</option>
+        </select>
+      </div>
+      <div><label class="field-label">Track</label>
+        <select id="ed-track">
+          <option value="">None</option>
+          <option value="compliance" ${t&&t.track==='compliance'?'selected':''}>Compliance</option>
+          <option value="systems" ${t&&t.track==='systems'?'selected':''}>Systems</option>
+          <option value="facilities" ${t&&t.track==='facilities'?'selected':''}>Facilities</option>
+          <option value="people" ${t&&t.track==='people'?'selected':''}>People</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div><label class="field-label">Status</label>
+        <select id="ed-status">
+          ${STATUS_CYCLE.map(s=>`<option value="${s}" ${t&&t.status===s?'selected':''}>${STATUS_LABELS[s]}</option>`).join('')}
+        </select>
+      </div>
+      <div><label class="field-label">Priority</label>
+        <select id="ed-priority">
+          <option value="">None</option>
+          <option value="high" ${t&&t.priority==='high'?'selected':''}>High</option>
+          <option value="medium" ${t&&t.priority==='medium'?'selected':''}>Medium</option>
+          <option value="low" ${t&&t.priority==='low'?'selected':''}>Low</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div><label class="field-label">Owner</label><input type="text" id="ed-owner" value="${esc(t?t.owner:'')}"/></div>
+      <div><label class="field-label">Requested by</label><input type="text" id="ed-reqby" value="${esc(t?t.requested_by:'')}"/></div>
+    </div>
+    <div class="form-row">
+      <div><label class="field-label">Due date</label><input type="date" id="ed-due" value="${t&&t.due_date?t.due_date:''}"/></div>
+      <div><label class="field-label">Notes</label><input type="text" id="ed-notes" value="${esc(t?t.notes:'')}"/></div>
+    </div>
+    <div class="editor-actions">
+      <div>${t ? '<button class="btn btn-danger" onclick="deleteTask(\''+t.id+'\'); closeEditor();">Delete</button>' : ''}</div>
+      <div class="right">
+        <button class="btn btn-ghost" onclick="closeEditor()">Cancel</button>
+        <button class="btn btn-purple" onclick="saveEditor()">Save</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('editor-backdrop').style.display = 'block';
+  document.getElementById('editor-backdrop').scrollTop = 0;
+  setTimeout(()=>document.getElementById('ed-title').focus(), 50);
+}
+
+function closeEditor(){
+  document.getElementById('editor-backdrop').style.display = 'none';
+  editingId = null;
+}
+
+async function saveEditor(){
+  const title = document.getElementById('ed-title').value.trim();
+  if(!title){ alert('Enter a title.'); return; }
+  const payload = {
+    title,
+    description: document.getElementById('ed-desc').value.trim() || null,
+    phase: document.getElementById('ed-phase').value || null,
+    track: document.getElementById('ed-track').value || null,
+    status: document.getElementById('ed-status').value,
+    priority: document.getElementById('ed-priority').value || null,
+    owner: document.getElementById('ed-owner').value.trim() || null,
+    requested_by: document.getElementById('ed-reqby').value.trim() || null,
+    due_date: document.getElementById('ed-due').value || null,
+    notes: document.getElementById('ed-notes').value.trim() || null
+  };
+  const btn = document.querySelector('#editor .btn-purple');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try{
+    const c = await requireClient();
+    if(editingId){
+      const { error } = await c.from('tasks').update(payload).eq('id', editingId);
+      if(error) throw error;
+    }else{
+      payload.source = 'manual';
+      const { error } = await c.from('tasks').insert(payload);
+      if(error) throw error;
+    }
+    closeEditor();
+    await loadAll();
+  }catch(e){
+    alert('Could not save task: ' + e.message);
+    btn.disabled = false; btn.textContent = 'Save';
+  }
+}
+
+// ── CSV upload ──────────────────────────────────────────────────────────
+// Proper CSV parser (handles quoted fields with embedded commas/newlines),
+// unlike hub_config.js's naive parseCSV — task descriptions routinely have
+// commas, so the naive split(',') would misalign columns.
+function parseCsvText(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for(let i=0; i<text.length; i++){
+    const c = text[i], next = text[i+1];
+    if(inQuotes){
+      if(c === '"' && next === '"'){ field += '"'; i++; }
+      else if(c === '"'){ inQuotes = false; }
+      else field += c;
+    }else{
+      if(c === '"') inQuotes = true;
+      else if(c === ','){ row.push(field); field=''; }
+      else if(c === '\r'){ /* skip */ }
+      else if(c === '\n'){ row.push(field); rows.push(row); row=[]; field=''; }
+      else field += c;
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  if(!rows.length) return [];
+  const headers = rows[0].map(h => h.trim().toLowerCase());
+  return rows.slice(1).filter(r => r.some(v => v.trim())).map(r => {
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = (r[i]||'').trim());
+    return obj;
+  });
+}
+
+// Accepts either the original "action items" export (Action Item, Description,
+// Responsible, Requested By, Status, Priority, Results) or this app's own
+// column names (title, description, owner, requested_by, status, priority,
+// notes, phase, track, due_date) — matched case-insensitively so either
+// sheet can be dropped in without reformatting first.
+function statusFromCsv(raw){
+  const s = (raw||'').trim().toLowerCase();
+  if(s === 'complete' || s === 'done') return 'done';
+  if(s === 'in progress') return 'in_progress';
+  if(s === 'unsure' || s === 'blocked') return 'blocked';
+  return 'not_started';
+}
+function priorityFromCsv(raw){
+  const s = (raw||'').trim().toLowerCase();
+  if(s === 'high' || s === 'medium' || s === 'low') return s;
+  return null;
+}
+function phaseFromCsv(raw){
+  const s = (raw||'').trim().toLowerCase().replace(/\s+/g,'');
+  if(['0-30','1-30','30'].includes(s)) return '0-30';
+  if(['31-60','60'].includes(s)) return '31-60';
+  if(['61-90','90'].includes(s)) return '61-90';
+  return null;
+}
+function trackFromCsv(raw){
+  const s = (raw||'').trim().toLowerCase();
+  if(['compliance','systems','facilities','people'].includes(s)) return s;
+  return null;
+}
+
+function rowToTask(row){
+  const title = row['title'] || row['action item'] || '';
+  if(!title) return null;
+  return {
+    title,
+    description: row['description'] || null,
+    owner: row['owner'] || row['responsible'] || null,
+    requested_by: row['requested_by'] || row['requested by'] || null,
+    status: statusFromCsv(row['status']),
+    priority: priorityFromCsv(row['priority']),
+    phase: phaseFromCsv(row['phase']),
+    track: trackFromCsv(row['track']),
+    due_date: row['due_date'] || row['due date'] || null,
+    notes: row['notes'] || row['results'] || null
+  };
+}
+
+async function handleCsvFile(event){
+  const file = event.target.files[0];
+  event.target.value = '';
+  if(!file) return;
+  const out = document.getElementById('import-result');
+  out.innerHTML = '<div class="import-log">Reading file…</div>';
+  const text = await file.text();
+  const rows = parseCsvText(text).map(rowToTask).filter(Boolean);
+  if(!rows.length){ out.innerHTML = '<div class="import-log" style="color:var(--red)">No usable rows found — need at least a "title" or "Action Item" column.</div>'; return; }
+  if(!confirm(`Import ${rows.length} task${rows.length===1?'':'s'}? Existing tasks with a matching title will be updated, not duplicated.`)) { out.innerHTML=''; return; }
+
+  try{
+    const c = await requireClient();
+    const existingByTitle = {};
+    tasks.forEach(t => { existingByTitle[t.title.trim().toLowerCase()] = t; });
+
+    let added = 0, updated = 0;
+    const failed = [];
+    for(const r of rows){
+      const key = r.title.trim().toLowerCase();
+      const match = existingByTitle[key];
+      try{
+        if(match){
+          const { error } = await c.from('tasks').update(r).eq('id', match.id);
+          if(error) throw error;
+          updated++;
+        }else{
+          const { error } = await c.from('tasks').insert({ ...r, source: 'csv_upload' });
+          if(error) throw error;
+          added++;
+        }
+      }catch(e){ failed.push(r.title + ' — ' + e.message); }
+    }
+    out.innerHTML = `<div class="import-log">Imported: ${added} added, ${updated} updated.${failed.length ? '<br>Failed: '+failed.map(esc).join('; ') : ''}</div>`;
+    await loadAll();
+  }catch(e){
+    out.innerHTML = `<div class="import-log" style="color:var(--red)">Import failed: ${esc(e.message)}</div>`;
+  }
+}
+
+loadAll();
+</script>
+</body>
+</html>

@@ -45,8 +45,20 @@ create trigger trg_touch_operations_forms
   for each row execute function touch_operations_forms();
 
 -- Realtime: lets operations_today.html subscribe and see edits land live
--- instead of polling.
-alter publication supabase_realtime add table operations_forms;
+-- instead of polling. Guarded because `alter publication ... add table` has
+-- no `if not exists` of its own — re-running this file unguarded throws
+-- "relation ... is already member of publication" on the second run, which
+-- (run via the SQL Editor as one batch) rolls back everything else in the
+-- paste along with it, contrary to the "safe to re-run" promise below.
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'operations_forms'
+  ) then
+    alter publication supabase_realtime add table operations_forms;
+  end if;
+end $$;
 
 -- ── Row Level Security ───────────────────────────────────────────────────
 -- IMPORTANT — read this before you trust it with anything sensitive.
@@ -139,3 +151,87 @@ grant select, insert, update, delete on public.app_users to service_role;
 -- not available," and silently falls back to the legacy sheet — so admin
 -- panel changes look like they're not taking effect, even though they saved.
 grant select on public.app_users to anon;
+
+-- ── Tasks (Ops Gameplan Tracker) ─────────────────────────────────────────
+-- Backs tasks_dashboard.html — the VP-of-Ops 30/60/90 gameplan, tracked as
+-- editable tasks instead of a static document. Visibility is the same
+-- PIN-card gate as every other dashboard (see hub_config.js's
+-- 'tasks_dashboard' card, toggled per person in admin.html) — not a locked
+-- table like app_users, because the only two people with the card today are
+-- Robert and Ned and there's nothing here more sensitive than what's already
+-- on operations_forms. Same anon-write posture as operations_forms above:
+-- the wall is "you can't reach the page," not "the table refuses you."
+
+create table if not exists tasks (
+  id            uuid primary key default gen_random_uuid(),
+  title         text not null,
+  description   text,
+  source        text not null default 'manual' check (source in ('30_60_90_plan', 'action_items_csv', 'manual', 'csv_upload')),
+  phase         text check (phase in ('0-30', '31-60', '61-90')),   -- null = not tied to a 30/60/90 window
+  track         text check (track in ('compliance', 'systems', 'facilities', 'people')), -- null = no pillar tag
+  status        text not null default 'not_started' check (status in ('not_started', 'in_progress', 'blocked', 'done')),
+  priority      text check (priority in ('low', 'medium', 'high')),
+  owner         text,          -- "Responsible" in the original action-items list
+  requested_by  text,
+  due_date      date,
+  notes         text,          -- free-text status notes / "Results" column from CSV imports
+  sort_order    integer not null default 0,
+  updated_by    text,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+
+create index if not exists idx_tasks_phase on tasks (phase);
+create index if not exists idx_tasks_status on tasks (status);
+
+drop trigger if exists trg_touch_tasks on tasks;
+create trigger trg_touch_tasks
+  before update on tasks
+  for each row execute function touch_operations_forms();
+
+alter table tasks enable row level security;
+
+drop policy if exists "anon read" on tasks;
+create policy "anon read" on tasks for select using (true);
+drop policy if exists "anon write" on tasks;
+create policy "anon write" on tasks for insert with check (true);
+drop policy if exists "anon update" on tasks;
+create policy "anon update" on tasks for update using (true) with check (true);
+drop policy if exists "anon delete" on tasks;
+create policy "anon delete" on tasks for delete using (true);
+
+grant select, insert, update, delete on public.tasks to anon;
+
+-- Subtasks are full mini-tasks (own status/owner/due date), not a checklist —
+-- each row references its parent task and is deleted along with it.
+create table if not exists task_subtasks (
+  id            uuid primary key default gen_random_uuid(),
+  task_id       uuid not null references tasks(id) on delete cascade,
+  title         text not null,
+  status        text not null default 'not_started' check (status in ('not_started', 'in_progress', 'blocked', 'done')),
+  owner         text,
+  due_date      date,
+  sort_order    integer not null default 0,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+
+create index if not exists idx_task_subtasks_task on task_subtasks (task_id);
+
+drop trigger if exists trg_touch_task_subtasks on task_subtasks;
+create trigger trg_touch_task_subtasks
+  before update on task_subtasks
+  for each row execute function touch_operations_forms();
+
+alter table task_subtasks enable row level security;
+
+drop policy if exists "anon read" on task_subtasks;
+create policy "anon read" on task_subtasks for select using (true);
+drop policy if exists "anon write" on task_subtasks;
+create policy "anon write" on task_subtasks for insert with check (true);
+drop policy if exists "anon update" on task_subtasks;
+create policy "anon update" on task_subtasks for update using (true) with check (true);
+drop policy if exists "anon delete" on task_subtasks;
+create policy "anon delete" on task_subtasks for delete using (true);
+
+grant select, insert, update, delete on public.task_subtasks to anon;
