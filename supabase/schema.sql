@@ -235,3 +235,86 @@ drop policy if exists "anon delete" on task_subtasks;
 create policy "anon delete" on task_subtasks for delete using (true);
 
 grant select, insert, update, delete on public.task_subtasks to anon;
+
+-- ── Canix facility nicknames ─────────────────────────────────────────────
+-- Backs canix_inventory.html's facility labeling/grouping (stage, farm
+-- group, a human nickname) for the licenses pulled by scripts/canix_sync.py.
+-- Same security posture as app_users above: this is admin-managed reference
+-- data, not something every viewer should be able to rewrite, so it does
+-- NOT get an open anon-write policy. Two different writers, on purpose:
+--   - scripts/canix_sync.py (service role key, run nightly) owns
+--     canix_name/license_number/status — it upserts every facility Canix
+--     currently reports (status='active') and flips status to 'archived'
+--     for any facility_id it used to see but no longer does. It never
+--     touches display_name/stage/farm_group/exclude.
+--   - netlify/functions/canix-facilities.js (service role key, admin PIN)
+--     owns display_name/stage/farm_group/exclude — the human-edited fields
+--     from admin.html's "Canix Facilities" tab. It never touches
+--     canix_name/license_number/status.
+-- Anon SELECT stays open so the dashboard itself (no login) can read
+-- facility labels.
+
+create table if not exists canix_facilities (
+  facility_id       bigint primary key,   -- Canix's own facility id
+  canix_name        text,                 -- facility "name" field as Canix has it on file
+  license_number    text,                 -- Canix's license_number field (can differ from canix_name — see CCL25/28-0000167 mixup)
+  display_name      text,                 -- nickname shown on the dashboard; falls back to canix_name when null
+  stage             text,                 -- Cultivation | Processing | Manufacturing | Distribution
+  farm_group        text,                 -- cultivation-only: which physical farm this license sits on
+  dcc_license_type  text,                 -- verified against search.cannabis.ca.gov, not guessed
+  dcc_county        text,
+  held_by           text,                 -- legal entity holding the license per DCC
+  address           text,
+  exclude           boolean not null default false,  -- e.g. the Canix sandbox facility
+  updated_at        timestamptz not null default now()
+);
+
+-- Added after the table's first release — `create table if not exists`
+-- above won't retrofit a new column onto an already-existing table, so this
+-- runs separately and is safe to re-run.
+alter table canix_facilities add column if not exists status text not null default 'active';
+alter table canix_facilities drop constraint if exists canix_facilities_status_check;
+alter table canix_facilities add constraint canix_facilities_status_check check (status in ('active', 'archived'));
+
+drop trigger if exists trg_touch_canix_facilities on canix_facilities;
+create trigger trg_touch_canix_facilities
+  before update on canix_facilities
+  for each row execute function touch_operations_forms();
+
+alter table canix_facilities enable row level security;
+
+drop policy if exists "anon read" on canix_facilities;
+create policy "anon read" on canix_facilities for select using (true);
+
+-- No anon insert/update/delete policies. service_role covers both writers:
+-- scripts/canix_sync.py (canix_name/license_number/status) and
+-- netlify/functions/canix-facilities.js (display_name/stage/farm_group/exclude).
+
+grant select, insert, update, delete on public.canix_facilities to service_role;
+grant select on public.canix_facilities to anon;
+
+-- Seed with the 16 licenses verified against the DCC's public license
+-- search (search.cannabis.ca.gov) on 2026-09-14 — not guessed from license
+-- number prefixes. Safe to re-run: existing rows (and any nicknames already
+-- set on them) are left alone. scripts/canix_sync.py takes over keeping
+-- canix_name/license_number/status current after this one-time seed.
+insert into canix_facilities
+  (facility_id, canix_name, license_number, status, stage, farm_group, dcc_license_type, dcc_county, held_by, address, exclude)
+values
+  (5123, '2CW-Sandbox', '2CW-Sandbox', 'active', null, null, null, null, null, '2351 Circadian Way, Santa Rosa, CA 95407', true),
+  (5098, 'CCL21-0006075-Artemis Farms, LLC', 'CCL21-0006075', 'active', 'Cultivation', 'Bartlett Springs Rd', 'Cultivation - Medium Outdoor', 'Lake', 'Artemis Farms, LLC', '5200 Bartlett Springs Road, Unincorporated, CA 95464', false),
+  (5097, 'CCL21-0006073-Artemis Farms, LLC', 'CCL21-0006073', 'active', 'Cultivation', 'Bartlett Springs Rd', 'Cultivation - Medium Outdoor', 'Lake', 'Artemis Farms, LLC', '5200 Bartlett Springs Road, Unincorporated, CA 95464', false),
+  (5096, 'CCL21-0006071-Artemis Farms, LLC', 'CCL21-0006071', 'active', 'Cultivation', 'Bartlett Springs Rd', 'Cultivation - Medium Outdoor', 'Lake', 'Artemis Farms, LLC', '5200 Bartlett Springs Road, Unincorporated, CA 95464', false),
+  (5095, 'CCL26-0000027 - All Good Properties, Inc', 'CCL26-0000027', 'active', 'Cultivation', 'Grange Rd', 'Cultivation - Large Outdoor', 'Lake', 'All Good Properties, Inc.', '19955 Grange Road, Unincorporated, CA 95461', false),
+  (5012, 'CCL21-0002183', 'CCL21-0002183', 'active', 'Cultivation', 'Antler Hill Dr', 'Cultivation - Small Outdoor', 'Lake', 'Wildcat Farmz LLC', '9275 Antler Hill Drive, Unincorporated, CA 95451', false),
+  (5011, 'CCL21-0002182', 'CCL21-0002182', 'active', 'Cultivation', 'Antler Hill Dr', 'Cultivation - Small Outdoor', 'Lake', 'Wildcat Farmz LLC', '9275 Antler Hill Drive, Unincorporated, CA 95451', false),
+  (5010, 'CCL21-0002181', 'CCL21-0002181', 'active', 'Cultivation', 'Antler Hill Dr', 'Cultivation - Small Outdoor', 'Lake', 'Wildcat Farmz LLC', '9275 Antler Hill Drive, Unincorporated, CA 95451', false),
+  (5009, 'CCL21-0002180', 'CCL21-0002180', 'active', 'Cultivation', 'Antler Hill Dr', 'Cultivation - Small Outdoor', 'Lake', 'Wildcat Farmz LLC', '9275 Antler Hill Drive, Unincorporated, CA 95451', false),
+  (5008, 'CCL21-0002179', 'CCL21-0002179', 'active', 'Cultivation', 'Antler Hill Dr', 'Cultivation - Small Outdoor', 'Lake', 'Wildcat Farmz LLC', '9275 Antler Hill Drive, Unincorporated, CA 95451', false),
+  (4929, 'C11-0001652-LIC', 'C11-0001652-LIC', 'active', 'Distribution', null, 'Commercial - Distributor', 'Sonoma', 'Airway Industries Inc.', '3415 Industrial Drive, Santa Rosa, CA 95403', false),
+  (4927, 'CCL23-0000540', 'CCL23-0000540', 'active', 'Cultivation', 'Highland Springs Rd', 'Cultivation - Medium Outdoor', 'Lake', 'BG Property Management, LLC', '9200 Highland Springs Road, Unincorporated, CA 95453', false),
+  (4926, 'CCL21-0000310', 'CCL21-0000310', 'active', 'Cultivation', 'Highland Springs Rd', 'Cultivation - Medium Outdoor', 'Lake', 'BG Property Management, LLC', '9200 Highland Springs Road, Unincorporated, CA 95453', false),
+  (4925, 'CCL21-0000309', 'CCL21-0000309', 'active', 'Cultivation', 'Highland Springs Rd', 'Cultivation - Medium Outdoor', 'Lake', 'BG Property Management, LLC', '9200 Highland Springs Road, Unincorporated, CA 95453', false),
+  (4924, 'CCL28-0000167', 'CCL25-0000167', 'active', 'Cultivation', 'Sulphur Bank Dr', 'Cultivation - Large Outdoor', 'Lake', 'All Good Properties, Inc.', '1111 Sulphur Bank Drive, Clearlake Oaks, CA 95423', false),
+  (4923, 'CCL22-0001284', 'CCL22-0001284', 'active', 'Cultivation', 'Loasa Rd', 'Cultivation - Processor', 'Lake', '2CW Productions, Inc.', '4820 Loasa Rd, Kelseyville, CA 95451', false)
+on conflict (facility_id) do nothing;

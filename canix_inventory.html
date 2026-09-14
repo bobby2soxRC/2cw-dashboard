@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Canix Inventory — 2CW</title>
+  <script>
+    (function(){ if (!sessionStorage.getItem('2cw_pin')) window.location.replace('/index.html'); })();
+  </script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0c0d0f">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0c0d0f;--surface:#13151a;--surface2:#181b21;--border:#1e2129;
+      --green:#3db87a;--gold:#d4a843;--blue:#5a9fd4;--purple:#9b7fd4;--red:#ef5350;
+      --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;
+    }
+    html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-text-size-adjust:100%}
+
+    .hdr{min-height:calc(54px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:12px;position:sticky;top:0;z-index:20}
+    .hdr-back{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
+    .hdr-div{width:1px;height:18px;background:var(--border)}
+    .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--green);flex:1}
+    .hdr-refresh{background:transparent;border:1px solid var(--border);color:var(--subtext);border-radius:8px;padding:6px 10px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer}
+
+    main{padding:28px 16px 60px;max-width:1200px;margin:0 auto}
+    .title{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,6vw,46px);letter-spacing:.04em;line-height:1}
+    .sub{margin-top:6px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+
+    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:22px 0}
+    .kpi{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+    .kpi .k{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+    .kpi .v{font-family:'DM Mono',monospace;font-size:1.5rem;line-height:1.1;color:var(--text)}
+    .kpi .n{font-size:.75rem;color:var(--subtext);margin-top:6px}
+    .kpi.green .v{color:var(--green)}.kpi.gold .v{color:var(--gold)}.kpi.blue .v{color:var(--blue)}.kpi.purple .v{color:var(--purple)}
+
+    .tabs{display:flex;gap:6px;overflow-x:auto;margin:22px 0 20px;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+    .tabs button{background:transparent;border:1px solid var(--border);color:var(--subtext);border-radius:10px;padding:.6rem 1.1rem;
+      font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;white-space:nowrap;min-height:44px}
+    .tabs button.on{background:var(--green);border-color:var(--green);color:#000;font-weight:700}
+    .tabs button .ct{color:var(--muted);margin-left:6px}
+    .tabs button.on .ct{color:#0006}
+
+    .search{margin-bottom:18px}
+    .search input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.7rem .9rem;font-size:15px;font-family:inherit;min-height:46px}
+
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:18px;overflow:hidden}
+    .card h2{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.03em;font-weight:400;margin-bottom:2px}
+    .card .note{font-size:.8rem;color:var(--muted);line-height:1.5;margin-bottom:16px}
+    .card-hd{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+    .card-hd .rollup{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--subtext);white-space:nowrap}
+    .card-hd .rollup b{color:var(--text)}
+
+    .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -20px;padding:0 20px}
+    table{width:100%;border-collapse:collapse;min-width:640px}
+    th{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:left;padding:0 12px 10px 0;white-space:nowrap;font-weight:500}
+    td{padding:10px 12px 10px 0;border-top:1px solid var(--border);font-size:.85rem;white-space:nowrap}
+    td.num,th.num{text-align:right;font-family:'DM Mono',monospace}
+    td.wide{white-space:normal;min-width:220px}
+
+    .pill{display:inline-block;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border-radius:99px;border:1px solid var(--border);color:var(--subtext)}
+    .pill.green{border-color:var(--green);color:var(--green)}
+    .pill.gold{border-color:var(--gold);color:var(--gold)}
+    .pill.blue{border-color:var(--blue);color:var(--blue)}
+    .pill.purple{border-color:var(--purple);color:var(--purple)}
+
+    .farm-group{margin-bottom:22px}
+    .farm-group:last-child{margin-bottom:0}
+    .farm-hd{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:10px}
+    .farm-hd .name{font-family:'DM Mono',monospace;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;color:var(--gold)}
+    .farm-hd .rollup{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--subtext)}
+    .facility-label{font-size:.72rem;color:var(--muted);margin:10px 0 6px}
+
+    .empty{color:var(--muted);font-size:.9rem;padding:32px 0;text-align:center}
+    .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
+    .loading{color:var(--muted);font-family:'DM Mono',monospace;font-size:.8rem;padding:40px 0;text-align:center}
+  </style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="/index.html" id="back">← Hub</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand">Canix Inventory</div>
+  <button class="hdr-refresh" id="refreshBtn">Refresh</button>
+</header>
+
+<main>
+  <div class="title">Canix Inventory</div>
+  <div class="sub" id="sub">Loading…</div>
+
+  <div class="kpis" id="kpis"></div>
+  <div class="tabs" id="tabs"></div>
+  <div class="search"><input type="text" id="search" placeholder="Search item, strain, or license…"></div>
+  <div id="view"><div class="loading">Loading inventory…</div></div>
+
+  <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution</footer>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/config/supabase_config.js"></script>
+<script>
+const BASE = 'https://raw.githubusercontent.com/bobby2soxRC/2cw-dashboard/main/data/';
+// Facility nicknames/stage/farm-group live in Supabase (canix_facilities
+// table), edited from admin.html's "Canix Facilities" tab — reading from
+// there means a nickname edit shows up on refresh immediately, no git push
+// needed. Falls back to the static JSON (last-synced snapshot, committed by
+// scripts/canix_sync.py) if Supabase isn't reachable.
+const CONFIG_FALLBACK_URL = 'https://raw.githubusercontent.com/bobby2soxRC/2cw-dashboard/main/config/canix_facility_config.json?t=' + Date.now();
+const INVENTORY_URL = BASE + 'canix_inventory.json?t=' + Date.now();
+const META_URL = BASE + 'canix_meta.json?t=' + Date.now();
+
+function supabaseReady() {
+  return typeof SUPABASE_URL === 'string' && SUPABASE_URL.startsWith('http') &&
+    typeof SUPABASE_ANON_KEY === 'string' && SUPABASE_ANON_KEY.length > 10;
+}
+
+async function loadFacilityConfig() {
+  if (supabaseReady() && typeof supabase !== 'undefined') {
+    try {
+      const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const { data, error } = await client.from('canix_facilities').select('*');
+      if (error) throw error;
+      if (data && data.length) {
+        const cfg = {};
+        data.forEach(row => { cfg[String(row.facility_id)] = row; });
+        return cfg;
+      }
+    } catch (e) {
+      console.warn('Supabase facility config load failed, falling back to static JSON:', e);
+    }
+  }
+  const raw = await fetch(CONFIG_FALLBACK_URL).then(r => r.json());
+  return Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_')));
+}
+
+const $ = id => document.getElementById(id);
+const STAGE_ORDER = ['Cultivation', 'Processing', 'Manufacturing', 'Distribution', 'Unclassified'];
+const STAGE_COLOR = { Cultivation: 'green', Processing: 'gold', Manufacturing: 'purple', Distribution: 'blue', Unclassified: '' };
+
+let ALL_PACKAGES = [];
+let FACILITY_CONFIG = {};
+let CURRENT_STAGE = 'All';
+
+function fmtWeight(pkg) {
+  if (pkg.weight == null) return '—';
+  const n = Number(pkg.weight);
+  return (Number.isInteger(n) ? n : n.toFixed(2)) + ' ' + (pkg.weight_unit || '');
+}
+
+function statusPill(status) {
+  const cls = status === 'Available To Sell' ? 'green'
+    : status === 'In Progress' ? 'gold'
+    : status === 'In Transit' ? 'blue'
+    : status === 'In Quarantine' ? 'purple' : '';
+  return `<span class="pill ${cls}">${status || '—'}</span>`;
+}
+
+function facilityInfo(fid) {
+  const fc = FACILITY_CONFIG[String(fid)];
+  if (!fc) return { displayName: 'Unknown facility (' + fid + ')', stage: 'Unclassified', farmGroup: null, license: null, exclude: false, archived: false };
+  return {
+    displayName: fc.display_name || fc.canix_name || fc.license_number || String(fid),
+    stage: fc.stage || 'Unclassified',
+    farmGroup: fc.farm_group || null,
+    license: fc.license_number || null,
+    // Archived (Canix no longer reports this license, set by
+    // scripts/canix_sync.py) is treated the same as a manual exclude for
+    // the live view — its historical packages/batches/transfers stay in
+    // the data/canix_*_history.json files either way, nothing is deleted.
+    exclude: !!fc.exclude || fc.status === 'archived',
+    archived: fc.status === 'archived',
+  };
+}
+
+function visiblePackages() {
+  return ALL_PACKAGES.filter(p => !facilityInfo(p.facility_id).exclude);
+}
+
+function renderKpis() {
+  const pkgs = visiblePackages();
+  const facilityIds = new Set(pkgs.map(p => p.facility_id));
+  const byStage = {};
+  pkgs.forEach(p => {
+    const stage = facilityInfo(p.facility_id).stage;
+    byStage[stage] = (byStage[stage] || 0) + 1;
+  });
+  const stageLine = STAGE_ORDER.filter(s => byStage[s]).map(s => `${s}: ${byStage[s]}`).join(' · ');
+
+  $('kpis').innerHTML = `
+    <div class="kpi green"><div class="k">On-Hand Packages</div><div class="v">${pkgs.length}</div><div class="n">${stageLine}</div></div>
+    <div class="kpi blue"><div class="k">Facilities Tracked</div><div class="v">${facilityIds.size}</div><div class="n">across ${STAGE_ORDER.filter(s => byStage[s]).length} stage(s)</div></div>
+  `;
+}
+
+function renderTabs() {
+  const pkgs = visiblePackages();
+  const counts = { All: pkgs.length };
+  STAGE_ORDER.forEach(s => { counts[s] = pkgs.filter(p => facilityInfo(p.facility_id).stage === s).length; });
+
+  const stages = ['All', ...STAGE_ORDER];
+  $('tabs').innerHTML = stages.map(s =>
+    `<button data-stage="${s}" class="${s === CURRENT_STAGE ? 'on' : ''}">${s}<span class="ct">${counts[s] ?? 0}</span></button>`
+  ).join('');
+  $('tabs').querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => { CURRENT_STAGE = btn.dataset.stage; renderTabs(); renderView(); });
+  });
+}
+
+function packageRow(p) {
+  const item = p.item || {};
+  const fi = facilityInfo(p.facility_id);
+  return `<tr>
+    <td class="wide">${item.name || '—'}</td>
+    <td>${item.strain?.name || '—'}</td>
+    <td class="num">${fmtWeight(p)}</td>
+    <td>${statusPill(p.status)}</td>
+    <td>${fi.displayName}${fi.license ? ` <span style="color:var(--muted)">(${fi.license})</span>` : ''}</td>
+    <td class="num">${(p.packaged_date || '').slice(0, 10) || '—'}</td>
+  </tr>`;
+}
+
+function tableHtml(pkgs) {
+  if (!pkgs.length) return '<div class="empty">Nothing here.</div>';
+  return `<div class="scroll"><table>
+    <thead><tr><th>Item</th><th>Strain</th><th class="num">Weight</th><th>Status</th><th>Facility (License)</th><th class="num">Packaged</th></tr></thead>
+    <tbody>${pkgs.map(packageRow).join('')}</tbody>
+  </table></div>`;
+}
+
+function applySearch(pkgs) {
+  const q = $('search').value.trim().toLowerCase();
+  if (!q) return pkgs;
+  return pkgs.filter(p => {
+    const item = p.item || {};
+    const fi = facilityInfo(p.facility_id);
+    return [item.name, item.strain?.name, fi.displayName, fi.license]
+      .filter(Boolean).some(v => String(v).toLowerCase().includes(q));
+  });
+}
+
+function renderView() {
+  const pkgs = applySearch(visiblePackages().filter(p =>
+    CURRENT_STAGE === 'All' || facilityInfo(p.facility_id).stage === CURRENT_STAGE
+  ));
+
+  if (!pkgs.length) { $('view').innerHTML = '<div class="empty">No packages for this view.</div>'; return; }
+
+  // Cultivation (and only Cultivation) gets the farm-group roll-up view the
+  // user asked for — other stages are usually a single facility, so a flat
+  // table is clearer there.
+  if (CURRENT_STAGE === 'Cultivation') {
+    const byFarm = {};
+    pkgs.forEach(p => {
+      const fi = facilityInfo(p.facility_id);
+      const farm = fi.farmGroup || fi.displayName;
+      (byFarm[farm] = byFarm[farm] || []).push(p);
+    });
+    const farms = Object.keys(byFarm).sort((a, b) => byFarm[b].length - byFarm[a].length);
+    $('view').innerHTML = `<div class="card"><h2>Cultivation — by farm</h2>
+      <div class="note">${farms.length} farm(s), ${pkgs.length} on-hand package(s) total.</div>
+      ${farms.map(farm => {
+        const rows = byFarm[farm];
+        const licenses = new Set(rows.map(p => facilityInfo(p.facility_id).license));
+        return `<div class="farm-group">
+          <div class="farm-hd"><div class="name">${farm}</div>
+            <div class="rollup"><b>${rows.length}</b> package(s) · <b>${licenses.size}</b> license(s)</div></div>
+          ${tableHtml(rows)}
+        </div>`;
+      }).join('')}
+    </div>`;
+    return;
+  }
+
+  const label = CURRENT_STAGE === 'All' ? 'All facilities' : CURRENT_STAGE;
+  $('view').innerHTML = `<div class="card">
+    <div class="card-hd"><h2>${label}</h2><div class="rollup"><b>${pkgs.length}</b> package(s)</div></div>
+    ${tableHtml(pkgs)}
+  </div>`;
+}
+
+async function load() {
+  try {
+    const [inv, cfg, meta] = await Promise.all([
+      fetch(INVENTORY_URL).then(r => r.json()),
+      loadFacilityConfig(),
+      fetch(META_URL).then(r => r.json()).catch(() => null),
+    ]);
+    ALL_PACKAGES = inv;
+    FACILITY_CONFIG = cfg;
+    $('sub').textContent = meta?.last_sync
+      ? 'Last synced ' + new Date(meta.last_sync).toLocaleString()
+      : 'Current on-hand inventory across all licenses';
+    renderKpis();
+    renderTabs();
+    renderView();
+  } catch (e) {
+    console.error(e);
+    $('view').innerHTML = '<div class="empty">Could not load Canix data. Check that data/canix_inventory.json has been pushed to main, and that the canix_facilities Supabase table exists (see supabase/schema.sql).</div>';
+    $('sub').textContent = 'Load failed';
+  }
+}
+
+$('search').addEventListener('input', renderView);
+$('refreshBtn').addEventListener('click', load);
+load();
+</script>
+</body>
+</html>

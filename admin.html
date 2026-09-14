@@ -83,6 +83,19 @@
   .active-toggle{display:flex;align-items:center;gap:8px;font-size:.85rem;margin-top:2px}
   .import-log{font-family:'DM Mono',monospace;font-size:.72rem;line-height:1.7;max-height:220px;overflow-y:auto;background:#0c0d0f;border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-top:12px}
   .empty-note{color:var(--subtext);font-size:.85rem;padding:24px;text-align:center}
+
+  /* top-level panel tabs (Users / Canix Facilities) */
+  .top-tabs{display:flex;gap:8px;margin-bottom:20px}
+  .top-tabs button{background:transparent;border:1px solid var(--border);color:var(--subtext);border-radius:8px;padding:.5rem 1rem;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+  .top-tabs button.on{background:var(--gold);border-color:var(--gold);color:#000;font-weight:700}
+  .view{display:none}
+  .view.on{display:block}
+  td input[type=text]{width:100%;background:#0c0d0f;border:1px solid var(--border);color:var(--text);padding:.4rem .55rem;border-radius:6px;font-size:.82rem;font-family:inherit}
+  td select{background:#0c0d0f;border:1px solid var(--border);color:var(--text);padding:.4rem .5rem;border-radius:6px;font-size:.8rem;font-family:inherit}
+  td.muted{color:var(--muted);font-size:.78rem}
+  .row-saved{color:var(--green);font-size:.7rem;font-family:'DM Mono',monospace;margin-left:6px}
+  .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .table-scroll table{min-width:760px}
 </style>
 </head>
 <body>
@@ -106,16 +119,31 @@
   </div>
 
   <div id="panel">
-    <div class="toolbar">
-      <h1>Users</h1>
-      <div class="toolbar-actions">
-        <button class="btn btn-ghost" onclick="doImport()" id="import-btn">Import from Sheet</button>
-        <button class="btn btn-green" onclick="openEditor(null)">+ Add User</button>
-      </div>
+    <div class="top-tabs" id="top-tabs">
+      <button data-tab="users" class="on" onclick="switchTab('users')">Users</button>
+      <button data-tab="canix" onclick="switchTab('canix')">Canix Facilities</button>
     </div>
-    <div class="status-line" id="status-line"></div>
-    <div id="import-result"></div>
-    <div id="table-wrap"></div>
+
+    <div id="users-view" class="view on">
+      <div class="toolbar">
+        <h1>Users</h1>
+        <div class="toolbar-actions">
+          <button class="btn btn-ghost" onclick="doImport()" id="import-btn">Import from Sheet</button>
+          <button class="btn btn-green" onclick="openEditor(null)">+ Add User</button>
+        </div>
+      </div>
+      <div class="status-line" id="status-line"></div>
+      <div id="import-result"></div>
+      <div id="table-wrap"></div>
+    </div>
+
+    <div id="canix-view" class="view">
+      <div class="toolbar">
+        <h1>Canix Facilities</h1>
+      </div>
+      <div class="status-line" id="canix-status-line">Nicknames and stage/farm grouping shown on canix_inventory.html. Edits here go live immediately — no deploy needed.</div>
+      <div id="canix-table-wrap"></div>
+    </div>
   </div>
 </main>
 
@@ -128,7 +156,9 @@
 <script src="/hub_config.js"></script>
 <script>
 const ADMIN_ENDPOINT = '/.netlify/functions/admin';
+const CANIX_ENDPOINT = '/.netlify/functions/canix-facilities';
 const TOKEN_KEY = '2cw_admin_token';
+const CANIX_STAGES = ['Cultivation', 'Processing', 'Manufacturing', 'Distribution'];
 
 // Cards toggled directly in the editor — everything in CARD_DEFS except the
 // ones derived from other settings (production access derives
@@ -139,13 +169,22 @@ const TOGGLE_CARDS = CARD_DEFS.filter(d => !DERIVED_CARD_KEYS.includes(d.key));
 
 let users = [];
 let editingId = null; // null = new user
+let canixFacilities = [];
+let canixLoaded = false;
+
+function switchTab(tab){
+  document.querySelectorAll('#top-tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  document.getElementById('users-view').classList.toggle('on', tab === 'users');
+  document.getElementById('canix-view').classList.toggle('on', tab === 'canix');
+  if(tab === 'canix' && !canixLoaded) refreshCanixFacilities();
+}
 
 function esc(str){ return String(str==null?'':str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 function getToken(){ return sessionStorage.getItem(TOKEN_KEY); }
 
-async function callAdmin(body){
-  const res = await fetch(ADMIN_ENDPOINT, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+async function callApi(endpoint, body){
+  const res = await fetch(endpoint, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
   let j;
   try { j = await res.json(); } catch { j = { ok:false, error: 'Bad response (HTTP '+res.status+')' }; }
   if(!res.ok || !j.ok){
@@ -157,6 +196,12 @@ async function callAdmin(body){
   }
   return j;
 }
+
+// Both endpoints verify tokens against the same ADMIN_SIGNING_SECRET (see
+// netlify/functions/canix-facilities.js), so one admin login covers both —
+// no separate sign-in for the Canix tab.
+function callAdmin(body){ return callApi(ADMIN_ENDPOINT, body); }
+function callCanix(body){ return callApi(CANIX_ENDPOINT, body); }
 
 async function doAdminLogin(){
   const pin = document.getElementById('admin-pin').value.trim();
@@ -414,6 +459,78 @@ async function doImport(){
     out.innerHTML = `<div class="import-log" style="color:var(--red)">Import failed: ${esc(e.message)}</div>`;
   }
   btn.disabled = false; btn.textContent = 'Import from Sheet';
+}
+
+// ── Canix Facilities tab ───────────────────────────────────────────────
+async function refreshCanixFacilities(){
+  const status = document.getElementById('canix-status-line');
+  const prevNote = status.textContent;
+  try{
+    const j = await callCanix({ action: 'list', token: getToken() });
+    canixFacilities = j.facilities || [];
+    canixLoaded = true;
+    renderCanixTable();
+  }catch(e){
+    document.getElementById('canix-table-wrap').innerHTML =
+      `<div class="empty-note">Could not load Canix facilities: ${esc(e.message)}<br><br>` +
+      `If this says the table or function is missing, run the latest supabase/schema.sql in the Supabase SQL editor ` +
+      `and make sure netlify/functions/canix-facilities.js has deployed.</div>`;
+  }
+  status.textContent = prevNote;
+}
+
+function renderCanixTable(){
+  const wrap = document.getElementById('canix-table-wrap');
+  if(!canixFacilities.length){ wrap.innerHTML = '<div class="empty-note">No Canix facilities yet — run the seed in supabase/schema.sql.</div>'; return; }
+
+  const sorted = [...canixFacilities].sort((a,b) => (a.status==='archived') - (b.status==='archived') || (a.exclude - b.exclude) || String(a.stage||'zzz').localeCompare(String(b.stage||'zzz')) || String(a.farm_group||'').localeCompare(String(b.farm_group||'')));
+  const archivedCount = canixFacilities.filter(f => f.status === 'archived').length;
+
+  wrap.innerHTML = `
+    ${archivedCount ? `<div class="status-line" style="color:var(--gold)">${archivedCount} archived — Canix no longer reports ${archivedCount===1?'this license':'these licenses'}, but historical packages/batches keep the label. Nicknames stay editable in case it comes back.</div>` : ''}
+    <div class="table-scroll"><table>
+    <thead><tr><th>License</th><th>Status</th><th>Type / County / Held By</th><th>Nickname</th><th>Stage</th><th>Farm Group</th><th>Exclude</th><th></th></tr></thead>
+    <tbody>
+      ${sorted.map(f => `
+        <tr class="${f.exclude || f.status==='archived' ? 'inactive' : ''}" data-facility-id="${f.facility_id}">
+          <td>${esc(f.license_number || f.canix_name)}${f.canix_name && f.canix_name !== f.license_number ? `<br><span class="td muted" style="color:var(--muted);font-size:.72rem">${esc(f.canix_name)}</span>` : ''}</td>
+          <td>${f.status === 'archived' ? '<span class="pill" style="border-color:var(--red);color:var(--red)">archived</span>' : '<span class="pill" style="border-color:var(--green);color:var(--green)">active</span>'}</td>
+          <td class="muted">${esc(f.dcc_license_type || '—')}<br>${esc(f.dcc_county || '—')} · ${esc(f.held_by || '—')}</td>
+          <td><input type="text" data-field="display_name" value="${esc(f.display_name || '')}" placeholder="${esc(f.canix_name || '')}"/></td>
+          <td><select data-field="stage">
+            <option value="">—</option>
+            ${CANIX_STAGES.map(s => `<option value="${s}" ${f.stage===s?'selected':''}>${s}</option>`).join('')}
+          </select></td>
+          <td><input type="text" data-field="farm_group" value="${esc(f.farm_group || '')}"/></td>
+          <td style="text-align:center"><input type="checkbox" data-field="exclude" ${f.exclude?'checked':''}/></td>
+          <td><div class="row-actions"><button onclick="saveCanixRow('${f.facility_id}', this)">Save</button></div></td>
+        </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+async function saveCanixRow(facilityId, btn){
+  const row = btn.closest('tr');
+  const facility = {
+    facility_id: facilityId,
+    display_name: row.querySelector('[data-field=display_name]').value.trim(),
+    stage: row.querySelector('[data-field=stage]').value,
+    farm_group: row.querySelector('[data-field=farm_group]').value.trim(),
+    exclude: row.querySelector('[data-field=exclude]').checked,
+  };
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try{
+    const j = await callCanix({ action: 'update', token: getToken(), facility });
+    const i = canixFacilities.findIndex(f => String(f.facility_id) === String(facilityId));
+    if(i >= 0) canixFacilities[i] = j.facility;
+    btn.disabled = false; btn.textContent = 'Save';
+    btn.insertAdjacentHTML('afterend', '<span class="row-saved">Saved</span>');
+    setTimeout(() => { const s = row.querySelector('.row-saved'); if(s) s.remove(); }, 2000);
+    renderCanixTable();
+  }catch(e){
+    alert('Could not save: ' + e.message);
+    btn.disabled = false; btn.textContent = 'Save';
+  }
 }
 
 document.getElementById('admin-pin').addEventListener('keydown', e => { if(e.key==='Enter') doAdminLogin(); });

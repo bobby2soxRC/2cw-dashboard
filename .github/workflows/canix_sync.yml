@@ -1,0 +1,84 @@
+name: Canix Sync
+
+on:
+  workflow_dispatch:       # Manual trigger only, for now — enable a cron
+                            # schedule (like nightly_sync.yml) once this has
+                            # been run and verified against real data.
+
+concurrency:
+  group: canix-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      # canix_sync.py's incremental-fetch state (packages/plant_batches/
+      # harvests/transfers history) is deliberately NOT committed to git —
+      # the packages history alone hit 137MB, over GitHub's 100MB file
+      # limit, the first time it was tried. This cache is what keeps
+      # incremental sync fast in CI across runs instead of every run being
+      # a full backfill. Not a permanent archive: entries evict after ~7
+      # days unused, or under cache-storage pressure. canix_sync.py treats
+      # a missing/empty history file as reason to backfill fully (not just
+      # trust the last cutoff), so an evicted cache costs one slow run, not
+      # incorrect data — see its is_backfill check.
+      - name: Restore Canix history cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            data/canix_packages_history.json
+            data/canix_plant_batches.json
+            data/canix_harvests.json
+            data/canix_transfers.json
+          key: canix-history-${{ github.run_id }}
+          restore-keys: |
+            canix-history-
+
+      - name: Run Canix sync
+        env:
+          CANIX_API_KEY: ${{ secrets.CANIX_API_KEY }}
+          CANIX_API_KEY_HOWIE_ROLL: ${{ secrets.CANIX_API_KEY_HOWIE_ROLL }}
+          CANIX_API_KEY_SRF: ${{ secrets.CANIX_API_KEY_SRF }}
+          CANIX_API_KEY_MENDO: ${{ secrets.CANIX_API_KEY_MENDO }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python scripts/canix_sync.py
+
+      # Always save, even if the sync step above failed partway — a partial
+      # history is still worth keeping so the next run has less to redo.
+      - name: Save Canix history cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            data/canix_packages_history.json
+            data/canix_plant_batches.json
+            data/canix_harvests.json
+            data/canix_transfers.json
+          key: canix-history-${{ github.run_id }}
+
+      - name: Commit and push data files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/canix_*.json
+          git diff --staged --quiet || git commit -m "Canix data sync"
+          git pull --rebase origin main
+          git push

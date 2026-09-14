@@ -61,6 +61,15 @@ const CARD_DEFS = [
     href: '/inventory.html'
   },
   {
+    key: 'canix_inventory',
+    color: 'green',
+    label: 'Operations',
+    dept: 'operations',
+    title: 'Canix Inventory',
+    desc: 'Live on-hand cultivation/manufacturing/distribution inventory across all 16 Canix licenses, by farm and stage.',
+    href: '/canix_inventory.html'
+  },
+  {
     key: 'sales',
     color: 'green',
     label: 'Sales',

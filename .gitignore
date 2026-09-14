@@ -1,2 +1,13 @@
 __pycache__/
 *.pyc
+
+# canix_sync.py's own incremental-fetch working state, not read by any
+# dashboard (only data/canix_inventory.json, the small derived current-stock
+# snapshot, is). These grow forever — canix_packages_history.json alone hit
+# 137MB, over GitHub's 100MB hard limit, the first time it was committed.
+# Kept on disk locally; in CI, persisted across runs via actions/cache in
+# .github/workflows/canix_sync.yml instead of git.
+data/canix_packages_history.json
+data/canix_plant_batches.json
+data/canix_harvests.json
+data/canix_transfers.json

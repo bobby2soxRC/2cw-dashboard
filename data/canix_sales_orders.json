@@ -1,0 +1,156 @@
+[
+  {
+    "id": 530640,
+    "name": "0000000001",
+    "facility_id": 4923,
+    "status": "created",
+    "customer": {
+      "id": 159250,
+      "company_name": "Fake Dispo",
+      "facility_license_number": "FAKE-DISP"
+    },
+    "delivery_date": "2026-03-31",
+    "delivery_fee": 0.0,
+    "payment_date": null,
+    "payment_terms": null,
+    "local_tax_rate": 0.0,
+    "state_tax_rate": 0.0,
+    "other_tax_rate": 0.0,
+    "subtotal": 0.0,
+    "total_cultivation_tax": 0.0,
+    "total_price": 0.0,
+    "total_paid": 0.0,
+    "credits": 0.0,
+    "discount": 0.0,
+    "internal_notes": null,
+    "remaining_balance": 0.0,
+    "external_identifier": null,
+    "sales_representative": {
+      "id": 22331,
+      "name": "Erika Beltran",
+      "email": "erika@somarosafarms.com"
+    },
+    "sales_order_credit": null,
+    "display_status": "created",
+    "invoice_url": null,
+    "created_at": "2026-03-30T18:15:33.546Z",
+    "updated_at": "2026-03-30T18:15:33.546Z",
+    "contents": [
+      {
+        "id": 4822992,
+        "weight": 100.0,
+        "weight_unit": "Pounds",
+        "weight_unit_id": 17978,
+        "weight_unit_name": "Pounds",
+        "unit_price": "0.0",
+        "total_price": 0.0,
+        "item": {
+          "id": 2977705,
+          "name": "RM Flower - DO15[RBL]",
+          "sku": null
+        },
+        "item_type": "item",
+        "brand": null,
+        "product_id": null,
+        "product_brand": null,
+        "is_sample": false,
+        "package_ids": [
+          28542436
+        ],
+        "updated_at": "2026-03-30T18:16:49.027Z",
+        "discount": null,
+        "cultivation_tax": 0.0,
+        "packages": [
+          {
+            "id": 28542436,
+            "tag": "1A406030005E0B2000009164",
+            "is_active": false,
+            "is_testing_package": false,
+            "status": "Transferred"
+          }
+        ]
+      }
+    ],
+    "payments": [],
+    "_license_key_label": "All Facilities",
+    "_facility_name": "CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 562069,
+    "name": "0000000002",
+    "facility_id": 4923,
+    "status": "approved",
+    "customer": {
+      "id": 159250,
+      "company_name": "Fake Dispo",
+      "facility_license_number": "FAKE-DISP"
+    },
+    "delivery_date": "2026-05-18",
+    "delivery_fee": 0.0,
+    "payment_date": "2026-06-17",
+    "payment_terms": "NET30",
+    "local_tax_rate": 0.0,
+    "state_tax_rate": 0.0,
+    "other_tax_rate": 0.0,
+    "subtotal": 86450.0,
+    "total_cultivation_tax": 0.0,
+    "total_price": 86450.0,
+    "total_paid": 0.0,
+    "credits": 0.0,
+    "discount": 0.0,
+    "internal_notes": null,
+    "remaining_balance": 86450.0,
+    "external_identifier": null,
+    "sales_representative": {
+      "id": 22639,
+      "name": "Kevin McGowan",
+      "email": "kevin.m@2cwproductions.com-a537a010"
+    },
+    "sales_order_credit": null,
+    "display_status": "approved",
+    "invoice_url": "https://app.canix.com/sales/invoice/view/6ad0bd05-7bd9-4109-9c62-93457c4fe330",
+    "created_at": "2026-05-14T18:23:18.137Z",
+    "updated_at": "2026-05-14T18:29:14.019Z",
+    "contents": [
+      {
+        "id": 5138946,
+        "weight": 86.45,
+        "weight_unit": "Pounds",
+        "weight_unit_id": 17978,
+        "weight_unit_name": "Pounds",
+        "unit_price": "1000.0",
+        "total_price": 86450.0,
+        "item": {
+          "id": 2977705,
+          "name": "RM Flower - DO15[RBL]",
+          "sku": null
+        },
+        "item_type": "item",
+        "brand": null,
+        "product_id": null,
+        "product_brand": null,
+        "is_sample": false,
+        "package_ids": [
+          28495631
+        ],
+        "updated_at": "2026-05-14T18:29:04.147Z",
+        "discount": null,
+        "cultivation_tax": 0.0,
+        "packages": [
+          {
+            "id": 28495631,
+            "tag": "1A406030005E0B2000009163",
+            "is_active": false,
+            "is_testing_package": false,
+            "status": "Transferred"
+          }
+        ]
+      }
+    ],
+    "payments": [],
+    "_license_key_label": "All Facilities",
+    "_facility_name": "CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  }
+]

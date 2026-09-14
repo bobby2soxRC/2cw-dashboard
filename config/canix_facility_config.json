@@ -1,0 +1,156 @@
+{
+  "_readme": "Maps each Canix facility (by id) to how it should show up on the dashboard. display_name overrides Canix's own name (many are just the raw license number). stage is one of: Cultivation, Processing, Manufacturing, Distribution — left null where CCL/C11 prefixes don't make it obvious. farm_group only matters for Cultivation-stage facilities and is what the 'split by farm, with a roll-up' view groups on — pre-filled from shared street addresses, rename to your actual ranch/farm names. Set exclude:true to drop a facility (e.g. the sandbox) from the dashboard entirely.",
+
+  "5123": {
+    "canix_name": "2CW-Sandbox",
+    "license_number": "2CW-Sandbox",
+    "display_name": null,
+    "stage": null,
+    "farm_group": null,
+    "exclude": true,
+    "_note": "Canix sandbox/test facility, not real production data"
+  },
+  "5098": {
+    "canix_name": "CCL21-0006075-Artemis Farms, LLC",
+    "license_number": "CCL21-0006075",
+    "display_name": null,
+    "stage": "Cultivation",
+    "farm_group": "Bartlett Springs Rd",
+    "exclude": false,
+    "_note": "Shares address with 5097, 5096 — same farm, 3 licenses"
+  },
+  "5097": {
+    "canix_name": "CCL21-0006073-Artemis Farms, LLC",
+    "license_number": "CCL21-0006073",
+    "display_name": null,
+    "stage": "Cultivation",
+    "farm_group": "Bartlett Springs Rd",
+    "exclude": false,
+    "_note": "Shares address with 5098, 5096 — same farm, 3 licenses"
+  },
+  "5096": {
+    "canix_name": "CCL21-0006071-Artemis Farms, LLC",
+    "license_number": "CCL21-0006071",
+    "display_name": null,
+    "stage": "Cultivation",
+    "farm_group": "Bartlett Springs Rd",
+    "exclude": false,
+    "_note": "Shares address with 5098, 5097 — same farm, 3 licenses"
+  },
+  "5095": {
+    "canix_name": "CCL26-0000027 - All Good Properties, Inc",
+    "license_number": "CCL26-0000027",
+    "display_name": null,
+    "stage": "Cultivation",
+    "farm_group": "Grange Rd",
+    "dcc_license_type": "Cultivation - Large Outdoor",
+    "dcc_county": "Lake",
+    "exclude": false,
+    "_note": "Verified on DCC 2026-09-14"
+  },
+  "5012": {
+    "canix_name": "CCL21-0002183",
+    "license_number": "CCL21-0002183",
+    "display_name": null,
+    "stage": "Cultivation",
+    "farm_group": "Antler Hill Dr",
+    "exclude": false,
+    "_note": "Shares address with 5011, 5010, 5009, 5008 — same farm, 5 licenses"
+  },
+  "5011": {
+    "canix_name": "CCL21-0002182",
+    "license_number": "CCL21-0002182",
+    "display_name": null,
+    "stage": "Cultivation",
+    "farm_group": "Antler Hill Dr",
+    "exclude": false,
+    "_note": "Shares address with 5012, 5010, 5009, 5008 — same farm, 5 licenses"
+  },
+  "5010": {
+    "canix_name": "CCL21-0002181",
+    "license_number": "CCL21-0002181",
+    "display_name": null,
+    "stage": "Cultivation",
+    "farm_group": "Antler Hill Dr",
+    "exclude": false,
+    "_note": "Shares address with 5012, 5011, 5009, 5008 — same farm, 5 licenses"
+  },
+  "5009": {
+    "canix_name": "CCL21-0002180",
+    "license_number": "CCL21-0002180",
+    "display_name": null,
+    "stage": "Cultivation",
+    "farm_group": "Antler Hill Dr",
+    "exclude": false,
+    "_note": "Shares address with 5012, 5011, 5010, 5008 — same farm, 5 licenses"
+  },
+  "5008": {
+    "canix_name": "CCL21-0002179",
+    "license_number": "CCL21-0002179",
+    "display_name": null,
+    "stage": "Cultivation",
+    "farm_group": "Antler Hill Dr",
+    "exclude": false,
+    "_note": "Shares address with 5012, 5011, 5010, 5009 — same farm, 5 licenses"
+  },
+  "4929": {
+    "canix_name": "C11-0001652-LIC",
+    "license_number": "C11-0001652-LIC",
+    "display_name": null,
+    "stage": "Distribution",
+    "farm_group": null,
+    "dcc_license_type": "Commercial - Distributor",
+    "dcc_county": "Sonoma",
+    "exclude": false,
+    "_note": "Verified on DCC license search 2026-09-14: Commercial - Distributor, held by Airway Industries Inc. — confirmed this is a 2CW entity (distribution arm)."
+  },
+  "4927": {
+    "canix_name": "CCL23-0000540",
+    "license_number": "CCL23-0000540",
+    "display_name": null,
+    "stage": "Cultivation",
+    "farm_group": "Highland Springs Rd",
+    "dcc_license_type": "Cultivation - Medium Outdoor",
+    "dcc_county": "Lake",
+    "exclude": false,
+    "_note": "Verified on DCC 2026-09-14. Shares address with 4926, 4925 — same farm, 3 licenses"
+  },
+  "4926": {
+    "canix_name": "CCL21-0000310",
+    "license_number": "CCL21-0000310",
+    "display_name": null,
+    "stage": "Cultivation",
+    "farm_group": "Highland Springs Rd",
+    "exclude": false,
+    "_note": "Shares address with 4927, 4925 — same farm, 3 licenses"
+  },
+  "4925": {
+    "canix_name": "CCL21-0000309",
+    "license_number": "CCL21-0000309",
+    "display_name": null,
+    "stage": "Cultivation",
+    "farm_group": "Highland Springs Rd",
+    "exclude": false,
+    "_note": "Shares address with 4927, 4926 — same farm, 3 licenses"
+  },
+  "4924": {
+    "canix_name": "CCL28-0000167",
+    "license_number": "CCL25-0000167",
+    "display_name": null,
+    "stage": "Cultivation",
+    "farm_group": "Sulphur Bank Dr",
+    "dcc_license_type": "Cultivation - Large Outdoor",
+    "dcc_county": "Lake",
+    "exclude": false,
+    "_note": "Checked DCC 2026-09-14: 'CCL28-0000167' (Canix's facility NAME field) returns zero results on the DCC license search — it isn't a real license number. 'CCL25-0000167' (Canix's separate license_number field for this same facility) IS real and active: Cultivation - Large Outdoor, Lake County, All Good Properties Inc — same entity as the Grange Rd license. Likely a typo in Canix's facility name label specifically (28 vs 25); the license_number field on file looks correct. User confirmed they don't see 'CCL25' anywhere in the Canix UI, consistent with Canix showing the name field, not license_number, as the primary label — worth checking the facility's edit screen for the actual License Number field."
+  },
+  "4923": {
+    "canix_name": "CCL22-0001284",
+    "license_number": "CCL22-0001284",
+    "display_name": null,
+    "stage": "Cultivation",
+    "farm_group": "Loasa Rd",
+    "exclude": false,
+    "_note": null
+  }
+}
