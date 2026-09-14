@@ -154,32 +154,18 @@
 
       <div class="card" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:20px">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;margin-bottom:4px">Yield Estimates</div>
-        <div class="status-line" style="margin-bottom:14px">A history, not a single value — each entry is kept even after a newer one is added, so you can see what estimate a past forecast used. Farm group must match a farm already set on the Canix Facilities tab.</div>
-        <div class="form-row" style="grid-template-columns:1fr 1fr 1fr 2fr auto;align-items:end">
-          <div><label class="field-label">Farm Group</label><input type="text" id="est-farm" list="farm-group-options"/></div>
-          <div><label class="field-label">Lbs / Plant</label><input type="text" id="est-lbs" inputmode="decimal" placeholder="e.g. 1.8"/></div>
-          <div><label class="field-label">Effective Date</label><input type="text" id="est-date" placeholder="YYYY-MM-DD"/></div>
-          <div><label class="field-label">Notes</label><input type="text" id="est-notes" placeholder="optional"/></div>
-          <button class="btn btn-green" onclick="addYieldEstimate()">+ Add</button>
-        </div>
-        <datalist id="farm-group-options"></datalist>
-        <div id="estimates-table-wrap" style="margin-top:16px"></div>
+        <div class="status-line" style="margin-bottom:14px">One row per active Cultivation farm, with today's live flowering-plant count for reference. Blank Lbs/Plant means nothing's been assigned yet. Saving a changed value logs a new dated entry rather than overwriting — so a past forecast's estimate stays visible in the history below.</div>
+        <div id="estimates-checklist-wrap"></div>
+        <div class="section-hd">History</div>
+        <div id="estimates-history-wrap"></div>
       </div>
 
       <div class="card" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;margin-bottom:4px">Harvest Plans</div>
-        <div class="status-line" style="margin-bottom:14px">Planned harvest date per farm. Leave plant count override blank to use the live flowering-plant count from Canix.</div>
-        <div class="form-row" style="grid-template-columns:1fr 1fr 1fr 1fr 2fr auto;align-items:end">
-          <div><label class="field-label">Farm Group</label><input type="text" id="plan-farm" list="farm-group-options"/></div>
-          <div><label class="field-label">Harvest Date</label><input type="text" id="plan-date" placeholder="YYYY-MM-DD"/></div>
-          <div><label class="field-label">Plant Count Override</label><input type="text" id="plan-count" inputmode="numeric" placeholder="optional"/></div>
-          <div><label class="field-label">Status</label><select id="plan-status">
-            <option value="planned">planned</option><option value="completed">completed</option><option value="canceled">canceled</option>
-          </select></div>
-          <div><label class="field-label">Notes</label><input type="text" id="plan-notes" placeholder="optional"/></div>
-          <button class="btn btn-green" onclick="addHarvestPlan()">+ Add</button>
-        </div>
-        <div id="plans-table-wrap" style="margin-top:16px"></div>
+        <div class="status-line" style="margin-bottom:14px">One row per active Cultivation farm — its current planned harvest. Leave plant count override blank to use the live flowering-plant count from Canix instead.</div>
+        <div id="plans-checklist-wrap"></div>
+        <div class="section-hd">Other / Past Plans</div>
+        <div id="plans-history-wrap"></div>
       </div>
     </div>
   </div>
@@ -213,6 +199,20 @@ let canixLoaded = false;
 let yieldEstimates = [];
 let harvestPlans = [];
 let forecastLoaded = false;
+let plantBatches = [];
+let plantBatchesLoaded = false;
+
+const CANIX_DATA_BASE = 'https://raw.githubusercontent.com/bobby2soxRC/2cw-dashboard/main/data/';
+
+async function loadPlantBatches(){
+  try{
+    plantBatches = await fetch(CANIX_DATA_BASE + 'canix_plant_batches.json?t=' + Date.now()).then(r => r.json());
+  }catch(e){
+    console.warn('Could not load plant batches (live plant counts will show as 0):', e);
+    plantBatches = [];
+  }
+  plantBatchesLoaded = true;
+}
 
 function switchTab(tab){
   document.querySelectorAll('#top-tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
@@ -220,16 +220,47 @@ function switchTab(tab){
   document.getElementById('canix-view').classList.toggle('on', tab === 'canix');
   document.getElementById('forecast-view').classList.toggle('on', tab === 'forecast');
   if(tab === 'canix' && !canixLoaded) refreshCanixFacilities();
-  if(tab === 'forecast'){
-    if(!canixLoaded) refreshCanixFacilities().then(populateFarmGroupOptions);
-    else populateFarmGroupOptions();
-    if(!forecastLoaded) refreshYieldForecast();
-  }
+  if(tab === 'forecast') refreshForecastTab();
 }
 
-function populateFarmGroupOptions(){
-  const farms = [...new Set(canixFacilities.map(f => f.farm_group).filter(Boolean))].sort();
-  document.getElementById('farm-group-options').innerHTML = farms.map(f => `<option value="${esc(f)}">`).join('');
+async function refreshForecastTab(){
+  await Promise.all([
+    canixLoaded ? Promise.resolve() : refreshCanixFacilities(),
+    plantBatchesLoaded ? Promise.resolve() : loadPlantBatches(),
+    forecastLoaded ? Promise.resolve() : refreshYieldForecast(),
+  ]);
+  renderEstimatesChecklist();
+  renderPlansChecklist();
+}
+
+// Farms yield forecasting applies to — Cultivation-stage, not excluded/
+// archived. A farm_group counts as Cultivation if any of its facilities
+// are (in practice every facility on a given farm shares one stage).
+function cultivationFarmGroups(){
+  const farms = new Set();
+  canixFacilities.forEach(f => {
+    if(f.stage === 'Cultivation' && !f.exclude && f.status !== 'archived' && f.farm_group) farms.add(f.farm_group);
+  });
+  return [...farms].sort();
+}
+
+function liveFloweringCountForFarm(farm){
+  const facilityIds = new Set(canixFacilities.filter(f => f.farm_group === farm).map(f => String(f.facility_id)));
+  return plantBatches
+    .filter(b => facilityIds.has(String(b.facility_id)))
+    .reduce((sum, b) => sum + (Number(b.flowering_count) || 0), 0);
+}
+
+function latestEstimateForFarm(farm){
+  return yieldEstimates
+    .filter(e => e.farm_group === farm)
+    .reduce((best, e) => (!best || e.effective_date > best.effective_date) ? e : best, null);
+}
+
+function currentPlanForFarm(farm){
+  const planned = harvestPlans.filter(p => p.farm_group === farm && p.status === 'planned');
+  if(!planned.length) return null;
+  return planned.reduce((best, p) => (!best || p.planned_harvest_date < best.planned_harvest_date) ? p : best, null);
 }
 
 function esc(str){ return String(str==null?'':str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -597,16 +628,63 @@ async function refreshYieldForecast(){
     yieldEstimates = e.estimates || [];
     harvestPlans = p.plans || [];
     forecastLoaded = true;
-    renderEstimatesTable();
-    renderPlansTable();
+    renderEstimatesHistory();
+    renderPlansHistory();
   }catch(e){
-    document.getElementById('estimates-table-wrap').innerHTML = `<div class="empty-note">Could not load: ${esc(e.message)}<br><br>If this says the table or function is missing, run the latest supabase/schema.sql and confirm netlify/functions/canix-forecast.js has deployed.</div>`;
+    document.getElementById('estimates-checklist-wrap').innerHTML = `<div class="empty-note">Could not load: ${esc(e.message)}<br><br>If this says the table or function is missing, run the latest supabase/schema.sql and confirm netlify/functions/canix-forecast.js has deployed.</div>`;
   }
 }
 
-function renderEstimatesTable(){
-  const wrap = document.getElementById('estimates-table-wrap');
-  if(!yieldEstimates.length){ wrap.innerHTML = '<div class="empty-note">No estimates yet — add one above.</div>'; return; }
+function todayStr(){ return new Date().toISOString().slice(0, 10); }
+
+// ── Estimates: checklist (one row per Cultivation farm, blank = unassigned) ──
+function renderEstimatesChecklist(){
+  const wrap = document.getElementById('estimates-checklist-wrap');
+  const farms = cultivationFarmGroups();
+  if(!farms.length){ wrap.innerHTML = '<div class="empty-note">No Cultivation-stage farms yet — set a farm\'s stage on the Canix Facilities tab first.</div>'; return; }
+
+  wrap.innerHTML = `<div class="table-scroll"><table>
+    <thead><tr><th>Farm</th><th class="num">Live Flowering Count</th><th>Lbs / Plant</th><th>Effective Date</th><th></th></tr></thead>
+    <tbody>
+      ${farms.map(farm => {
+        const current = latestEstimateForFarm(farm);
+        const needsAssignment = !current;
+        return `<tr data-farm="${esc(farm)}" class="${needsAssignment ? 'inactive' : ''}">
+          <td>${esc(farm)}</td>
+          <td class="num">${liveFloweringCountForFarm(farm).toLocaleString()}</td>
+          <td><input type="text" data-field="lbs" inputmode="decimal" value="${current ? esc(current.estimated_lbs_per_plant) : ''}" placeholder="${needsAssignment ? 'needs assignment' : ''}"/></td>
+          <td><input type="text" data-field="date" value="${current ? esc(current.effective_date) : todayStr()}"/></td>
+          <td><div class="row-actions"><button onclick="saveEstimateChecklistRow(this)">Save</button></div></td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+async function saveEstimateChecklistRow(btn){
+  const row = btn.closest('tr');
+  const farm = row.dataset.farm;
+  const lbs = row.querySelector('[data-field=lbs]').value.trim();
+  const date = row.querySelector('[data-field=date]').value.trim();
+  if(!lbs){ alert('Enter a lbs/plant value first.'); return; }
+  const current = latestEstimateForFarm(farm);
+  if(current && Number(current.estimated_lbs_per_plant) === Number(lbs) && current.effective_date === date){
+    return; // unchanged — no need to log a duplicate history entry
+  }
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try{
+    await callForecast({ action: 'add_estimate', token: getToken(), estimate: { farm_group: farm, estimated_lbs_per_plant: lbs, effective_date: date } });
+    await refreshYieldForecast();
+    renderEstimatesChecklist();
+  }catch(e){
+    alert('Could not save: ' + e.message);
+    btn.disabled = false; btn.textContent = 'Save';
+  }
+}
+
+function renderEstimatesHistory(){
+  const wrap = document.getElementById('estimates-history-wrap');
+  if(!yieldEstimates.length){ wrap.innerHTML = '<div class="empty-note">No estimates logged yet.</div>'; return; }
   const sorted = [...yieldEstimates].sort((a,b) => a.farm_group.localeCompare(b.farm_group) || b.effective_date.localeCompare(a.effective_date));
   wrap.innerHTML = `<div class="table-scroll"><table>
     <thead><tr><th>Farm Group</th><th>Lbs / Plant</th><th>Effective</th><th>Notes</th><th></th></tr></thead>
@@ -623,103 +701,95 @@ function renderEstimatesTable(){
   </table></div>`;
 }
 
-async function addYieldEstimate(){
-  const estimate = {
-    farm_group: document.getElementById('est-farm').value.trim(),
-    estimated_lbs_per_plant: document.getElementById('est-lbs').value.trim(),
-    effective_date: document.getElementById('est-date').value.trim() || undefined,
-    notes: document.getElementById('est-notes').value.trim(),
-  };
-  try{
-    await callForecast({ action: 'add_estimate', token: getToken(), estimate });
-    document.getElementById('est-farm').value = '';
-    document.getElementById('est-lbs').value = '';
-    document.getElementById('est-date').value = '';
-    document.getElementById('est-notes').value = '';
-    await refreshYieldForecast();
-  }catch(e){
-    alert('Could not add estimate: ' + e.message);
-  }
-}
-
 async function deleteYieldEstimate(id){
-  if(!confirm('Delete this estimate? This removes it from history — only do this for a mistaken entry, not just to "update" it (add a new one instead).')) return;
+  if(!confirm('Delete this estimate? This removes it from history — only do this for a mistaken entry, not just to "update" it (save a new value in the checklist instead).')) return;
   try{
     await callForecast({ action: 'delete_estimate', token: getToken(), id });
     await refreshYieldForecast();
+    renderEstimatesChecklist();
   }catch(e){
     alert('Could not delete: ' + e.message);
   }
 }
 
-function renderPlansTable(){
-  const wrap = document.getElementById('plans-table-wrap');
-  if(!harvestPlans.length){ wrap.innerHTML = '<div class="empty-note">No harvest plans yet — add one above.</div>'; return; }
-  const sorted = [...harvestPlans].sort((a,b) => a.planned_harvest_date.localeCompare(b.planned_harvest_date));
+// ── Harvest plans: checklist (one row per Cultivation farm) ─────────────
+function renderPlansChecklist(){
+  const wrap = document.getElementById('plans-checklist-wrap');
+  const farms = cultivationFarmGroups();
+  if(!farms.length){ wrap.innerHTML = '<div class="empty-note">No Cultivation-stage farms yet — set a farm\'s stage on the Canix Facilities tab first.</div>'; return; }
+
   wrap.innerHTML = `<div class="table-scroll"><table>
-    <thead><tr><th>Farm Group</th><th>Harvest Date</th><th>Count Override</th><th>Status</th><th>Notes</th><th></th></tr></thead>
+    <thead><tr><th>Farm</th><th class="num">Live Flowering Count</th><th>Harvest Date</th><th>Count Override</th><th>Status</th><th>Notes</th><th></th></tr></thead>
     <tbody>
-      ${sorted.map(p => `
-        <tr class="${p.status!=='planned' ? 'inactive' : ''}" data-plan-id="${p.id}">
-          <td>${esc(p.farm_group)}</td>
-          <td><input type="text" data-field="planned_harvest_date" value="${esc(p.planned_harvest_date)}"/></td>
-          <td><input type="text" data-field="plant_count_override" value="${esc(p.plant_count_override ?? '')}" placeholder="live"/></td>
+      ${farms.map(farm => {
+        const current = currentPlanForFarm(farm);
+        const needsAssignment = !current;
+        return `<tr data-farm="${esc(farm)}" data-plan-id="${current ? current.id : ''}" class="${needsAssignment ? 'inactive' : ''}">
+          <td>${esc(farm)}</td>
+          <td class="num">${liveFloweringCountForFarm(farm).toLocaleString()}</td>
+          <td><input type="text" data-field="date" value="${current ? esc(current.planned_harvest_date) : ''}" placeholder="${needsAssignment ? 'needs assignment' : ''}"/></td>
+          <td><input type="text" data-field="count" value="${current && current.plant_count_override != null ? esc(current.plant_count_override) : ''}" placeholder="live"/></td>
           <td><select data-field="status">
-            <option value="planned" ${p.status==='planned'?'selected':''}>planned</option>
-            <option value="completed" ${p.status==='completed'?'selected':''}>completed</option>
-            <option value="canceled" ${p.status==='canceled'?'selected':''}>canceled</option>
+            <option value="planned" ${!current || current.status==='planned' ? 'selected' : ''}>planned</option>
+            <option value="completed" ${current && current.status==='completed' ? 'selected' : ''}>completed</option>
+            <option value="canceled" ${current && current.status==='canceled' ? 'selected' : ''}>canceled</option>
           </select></td>
-          <td><input type="text" data-field="notes" value="${esc(p.notes || '')}"/></td>
-          <td><div class="row-actions">
-            <button onclick="saveHarvestPlanRow('${p.id}', this)">Save</button>
-            <button onclick="deleteHarvestPlan('${p.id}')">Delete</button>
-          </div></td>
-        </tr>`).join('')}
+          <td><input type="text" data-field="notes" value="${current ? esc(current.notes || '') : ''}"/></td>
+          <td><div class="row-actions"><button onclick="savePlanChecklistRow(this)">Save</button></div></td>
+        </tr>`;
+      }).join('')}
     </tbody>
   </table></div>`;
 }
 
-async function addHarvestPlan(){
-  const plan = {
-    farm_group: document.getElementById('plan-farm').value.trim(),
-    planned_harvest_date: document.getElementById('plan-date').value.trim(),
-    plant_count_override: document.getElementById('plan-count').value.trim(),
-    status: document.getElementById('plan-status').value,
-    notes: document.getElementById('plan-notes').value.trim(),
-  };
-  try{
-    await callForecast({ action: 'upsert_harvest_plan', token: getToken(), plan });
-    document.getElementById('plan-farm').value = '';
-    document.getElementById('plan-date').value = '';
-    document.getElementById('plan-count').value = '';
-    document.getElementById('plan-notes').value = '';
-    await refreshYieldForecast();
-  }catch(e){
-    alert('Could not add harvest plan: ' + e.message);
-  }
-}
-
-async function saveHarvestPlanRow(id, btn){
+async function savePlanChecklistRow(btn){
   const row = btn.closest('tr');
-  const existing = harvestPlans.find(p => String(p.id) === String(id));
+  const farm = row.dataset.farm;
+  const id = row.dataset.planId || null;
+  const date = row.querySelector('[data-field=date]').value.trim();
+  if(!date){ alert('Enter a planned harvest date first.'); return; }
   const plan = {
     id,
-    farm_group: existing.farm_group,
-    planned_harvest_date: row.querySelector('[data-field=planned_harvest_date]').value.trim(),
-    plant_count_override: row.querySelector('[data-field=plant_count_override]').value.trim(),
+    farm_group: farm,
+    planned_harvest_date: date,
+    plant_count_override: row.querySelector('[data-field=count]').value.trim(),
     status: row.querySelector('[data-field=status]').value,
     notes: row.querySelector('[data-field=notes]').value.trim(),
   };
   btn.disabled = true; btn.textContent = 'Saving…';
   try{
-    const j = await callForecast({ action: 'upsert_harvest_plan', token: getToken(), plan });
-    const i = harvestPlans.findIndex(p => String(p.id) === String(id));
-    if(i >= 0) harvestPlans[i] = j.plan;
-    renderPlansTable();
+    await callForecast({ action: 'upsert_harvest_plan', token: getToken(), plan });
+    await refreshYieldForecast();
+    renderPlansChecklist();
   }catch(e){
     alert('Could not save: ' + e.message);
     btn.disabled = false; btn.textContent = 'Save';
   }
+}
+
+// History shows everything NOT currently surfaced in the checklist above
+// (a farm's "current" planned entry) — completed/canceled plans, or a
+// second concurrent plan for a farm with more than one harvest tracked.
+function renderPlansHistory(){
+  const wrap = document.getElementById('plans-history-wrap');
+  const currentIds = new Set(cultivationFarmGroups().map(f => currentPlanForFarm(f)?.id).filter(Boolean));
+  const rest = harvestPlans.filter(p => !currentIds.has(p.id));
+  if(!rest.length){ wrap.innerHTML = '<div class="empty-note">Nothing else here.</div>'; return; }
+  const sorted = [...rest].sort((a,b) => a.planned_harvest_date.localeCompare(b.planned_harvest_date));
+  wrap.innerHTML = `<div class="table-scroll"><table>
+    <thead><tr><th>Farm Group</th><th>Harvest Date</th><th>Count Override</th><th>Status</th><th>Notes</th><th></th></tr></thead>
+    <tbody>
+      ${sorted.map(p => `
+        <tr class="${p.status!=='planned' ? 'inactive' : ''}">
+          <td>${esc(p.farm_group)}</td>
+          <td class="muted">${esc(p.planned_harvest_date)}</td>
+          <td class="muted">${esc(p.plant_count_override ?? 'live')}</td>
+          <td class="muted">${esc(p.status)}</td>
+          <td class="muted">${esc(p.notes || '—')}</td>
+          <td><div class="row-actions"><button onclick="deleteHarvestPlan('${p.id}')">Delete</button></div></td>
+        </tr>`).join('')}
+    </tbody>
+  </table></div>`;
 }
 
 async function deleteHarvestPlan(id){
@@ -727,6 +797,7 @@ async function deleteHarvestPlan(id){
   try{
     await callForecast({ action: 'delete_harvest_plan', token: getToken(), id });
     await refreshYieldForecast();
+    renderPlansChecklist();
   }catch(e){
     alert('Could not delete: ' + e.message);
   }
