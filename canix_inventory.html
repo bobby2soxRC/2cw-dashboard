@@ -355,6 +355,80 @@ function liveFloweringCount(farm) {
   return total;
 }
 
+// One row per (farm, strain) for each planned harvest — the farm-level
+// forecast broken down using each plant_batch's own strain. Farms using a
+// manual plant_count_override are skipped here: an override is a single
+// hand-entered total with no per-strain detail to derive from, so a
+// strain breakdown for it would just be wrong.
+function strainBreakdownRows() {
+  const rows = [];
+  HARVEST_PLANS.filter(p => p.status === 'planned').forEach(plan => {
+    if (plan.plant_count_override != null) return;
+    const estimate = latestEstimateForFarm(plan.farm_group);
+    if (!estimate) return;
+    const lbsPerPlant = Number(estimate.estimated_lbs_per_plant);
+    const byStrain = {};
+    PLANT_BATCHES.forEach(b => {
+      const fi = facilityInfo(b.facility_id);
+      if (fi.exclude) return;
+      if ((fi.farmGroup || fi.displayName) !== plan.farm_group) return;
+      const count = Number(b.flowering_count) || 0;
+      if (!count) return;
+      const strain = b.strain?.name || 'Unknown';
+      byStrain[strain] = (byStrain[strain] || 0) + count;
+    });
+    Object.entries(byStrain).forEach(([strain, count]) => {
+      rows.push({ strain, farm: plan.farm_group, date: plan.planned_harvest_date, count, lbsPerPlant, forecastLbs: count * lbsPerPlant });
+    });
+  });
+  return rows;
+}
+
+function renderStrainBreakdown() {
+  const rows = strainBreakdownRows();
+  const overridesSkipped = HARVEST_PLANS.filter(p => p.status === 'planned' && p.plant_count_override != null).length;
+
+  if (!rows.length) {
+    return `<div class="card">
+      <div class="card-hd"><h2>Forecasted Flower by Strain</h2></div>
+      <div class="empty">No strain-level forecast yet — needs a planned harvest date and an lbs/plant estimate for at least one farm not using a manual plant-count override.</div>
+    </div>`;
+  }
+
+  const q = ($('strainFilter')?.value || '').trim().toLowerCase();
+  const filtered = q ? rows.filter(r => r.strain.toLowerCase().includes(q) || r.farm.toLowerCase().includes(q)) : rows;
+
+  const byStrainTotal = {};
+  rows.forEach(r => { byStrainTotal[r.strain] = (byStrainTotal[r.strain] || 0) + r.forecastLbs; });
+  const strainTotals = Object.entries(byStrainTotal).sort((a, b) => b[1] - a[1]);
+
+  const byDateStrain = [...filtered].sort((a, b) => a.date.localeCompare(b.date) || a.strain.localeCompare(b.strain));
+
+  return `<div class="card">
+    <div class="card-hd"><h2>Total Forecasted by Strain</h2><div class="rollup"><b>${strainTotals.length}</b> strain(s)</div></div>
+    <div class="note">Summed across every planned harvest and farm.${overridesSkipped ? ` ${overridesSkipped} planned harvest(s) using a manual plant-count override aren't broken down here (no per-strain detail to derive it from) — they're still counted in the farm-level total above.` : ''}</div>
+    <div class="scroll"><table>
+      <thead><tr><th>Strain</th><th class="num">Forecasted Lbs</th></tr></thead>
+      <tbody>${strainTotals.map(([strain, lbs]) => `<tr><td>${strain}</td><td class="num">${fmtLbs(lbs)} lb</td></tr>`).join('')}</tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><h2>Forecasted Flower by Strain &amp; Date</h2><div class="rollup"><b>${byDateStrain.length}</b> row(s)</div></div>
+    <div class="search"><input type="text" id="strainFilter" placeholder="Filter by strain or farm…" value="${q ? q.replace(/"/g, '&quot;') : ''}"></div>
+    <div class="scroll"><table>
+      <thead><tr><th class="num">Harvest Date</th><th>Strain</th><th>Farm</th><th class="num">Plant Count</th><th class="num">Forecasted Lbs</th></tr></thead>
+      <tbody>${byDateStrain.map(r => `<tr>
+        <td class="num">${r.date}</td>
+        <td>${r.strain}</td>
+        <td>${r.farm}</td>
+        <td class="num">${r.count.toLocaleString()}</td>
+        <td class="num">${fmtLbs(r.forecastLbs)} lb</td>
+      </tr>`).join('')}</tbody>
+    </table></div>
+  </div>`;
+}
+
 function renderForecast() {
   const rows = [...HARVEST_PLANS]
     .sort((a, b) => a.planned_harvest_date.localeCompare(b.planned_harvest_date))
@@ -397,7 +471,30 @@ function renderForecast() {
         </tr>`).join('')}
       </tbody>
     </table></div>
-  </div>`;
+  </div>
+  ${renderStrainBreakdown()}`;
+
+  attachStrainFilterListener();
+}
+
+// Re-renders just the two strain-breakdown cards in place (not the whole
+// forecast page) so typing in the filter doesn't lose scroll position, and
+// re-attaches itself since the input element gets replaced each time.
+function attachStrainFilterListener() {
+  const el = $('strainFilter');
+  if (!el) return;
+  el.addEventListener('input', () => {
+    const cards = $('forecastView').querySelectorAll('.card');
+    const tmp = document.createElement('div');
+    tmp.innerHTML = renderStrainBreakdown();
+    const newCards = tmp.querySelectorAll('.card');
+    if (cards.length < 3 || newCards.length < 2) return;
+    cards[1].replaceWith(newCards[0]);
+    cards[2].replaceWith(newCards[1]);
+    const refocus = $('strainFilter');
+    if (refocus) { refocus.focus(); refocus.selectionStart = refocus.selectionEnd = refocus.value.length; }
+    attachStrainFilterListener();
+  });
 }
 
 document.getElementById('pageTabs').querySelectorAll('button').forEach(btn => {
