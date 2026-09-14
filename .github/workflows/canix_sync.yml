@@ -29,14 +29,15 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      # canix_sync.py's incremental-fetch state (packages/plant_batches/
-      # harvests/transfers history) is deliberately NOT committed to git —
-      # the packages history alone hit 137MB, over GitHub's 100MB file
-      # limit, the first time it was tried. This cache is what keeps
-      # incremental sync fast in CI across runs instead of every run being
-      # a full backfill. Not a permanent archive: entries evict after ~7
-      # days unused, or under cache-storage pressure. canix_sync.py treats
-      # a missing/empty history file as reason to backfill fully (not just
+      # canix_sync.py's incremental-fetch state for packages and transfers
+      # specifically (NOT plant_batches/harvests, which stay small enough to
+      # just git-commit normally) is deliberately not committed to git — the
+      # packages history alone hit 137MB, over GitHub's 100MB file limit,
+      # the first time it was tried. This cache is what keeps incremental
+      # sync fast in CI across runs instead of every run being a full
+      # backfill. Not a permanent archive: entries evict after ~7 days
+      # unused, or under cache-storage pressure. canix_sync.py treats a
+      # missing/empty history file as reason to backfill fully (not just
       # trust the last cutoff), so an evicted cache costs one slow run, not
       # incorrect data — see its is_backfill check.
       - name: Restore Canix history cache
@@ -44,8 +45,6 @@ jobs:
         with:
           path: |
             data/canix_packages_history.json
-            data/canix_plant_batches.json
-            data/canix_harvests.json
             data/canix_transfers.json
           key: canix-history-${{ github.run_id }}
           restore-keys: |
@@ -69,8 +68,6 @@ jobs:
         with:
           path: |
             data/canix_packages_history.json
-            data/canix_plant_batches.json
-            data/canix_harvests.json
             data/canix_transfers.json
           key: canix-history-${{ github.run_id }}
 

@@ -318,3 +318,69 @@ values
   (4924, 'CCL28-0000167', 'CCL25-0000167', 'active', 'Cultivation', 'Sulphur Bank Dr', 'Cultivation - Large Outdoor', 'Lake', 'All Good Properties, Inc.', '1111 Sulphur Bank Drive, Clearlake Oaks, CA 95423', false),
   (4923, 'CCL22-0001284', 'CCL22-0001284', 'active', 'Cultivation', 'Loasa Rd', 'Cultivation - Processor', 'Lake', '2CW Productions, Inc.', '4820 Loasa Rd, Kelseyville, CA 95451', false)
 on conflict (facility_id) do nothing;
+
+-- ── Canix yield forecasting ───────────────────────────────────────────────
+-- Backs canix_inventory.html's "Forecasted Flower" view: an estimated
+-- lbs/plant per farm, and a planned harvest date per farm. Forecast lbs for
+-- a farm = (flowering_count summed across that farm's plant_batches, from
+-- data/canix_plant_batches.json) x (that farm's most recent estimate as of
+-- the planned harvest date). Same write posture as canix_facilities:
+-- admin-only via netlify/functions/canix-forecast.js (reusing the same
+-- admin PIN/token as admin.js and canix-facilities.js — no new secret),
+-- anon read so the dashboard can show the forecast without its own login.
+--
+-- Estimates are a history, not a single overwritten value — "might change
+-- per harvest" means the estimate used for a past forecast needs to stay
+-- visible after a newer one is entered, e.g. for comparing forecast vs.
+-- what Canix's own harvest records later show as the actual
+-- average_plant_weight. Nothing here is ever updated in place; a new
+-- estimate is a new row.
+
+create table if not exists canix_yield_estimates (
+  id                       uuid primary key default gen_random_uuid(),
+  farm_group               text not null,      -- matches canix_facilities.farm_group
+  estimated_lbs_per_plant  numeric not null check (estimated_lbs_per_plant > 0),
+  effective_date           date not null default current_date,
+  notes                    text,
+  created_at               timestamptz not null default now()
+);
+
+create index if not exists idx_canix_yield_estimates_farm on canix_yield_estimates (farm_group, effective_date desc);
+
+alter table canix_yield_estimates enable row level security;
+
+drop policy if exists "anon read" on canix_yield_estimates;
+create policy "anon read" on canix_yield_estimates for select using (true);
+
+grant select, insert, update, delete on public.canix_yield_estimates to service_role;
+grant select on public.canix_yield_estimates to anon;
+
+-- Planned harvest date per farm. plant_count_override exists for planning
+-- ahead of when Canix's own plant_batches data is trustworthy/populated for
+-- a given season — leave null to use the live flowering_count sum instead.
+
+create table if not exists canix_harvest_plans (
+  id                     uuid primary key default gen_random_uuid(),
+  farm_group             text not null,
+  planned_harvest_date   date not null,
+  plant_count_override   integer,
+  status                 text not null default 'planned' check (status in ('planned', 'completed', 'canceled')),
+  notes                  text,
+  created_at             timestamptz not null default now(),
+  updated_at             timestamptz not null default now()
+);
+
+create index if not exists idx_canix_harvest_plans_farm on canix_harvest_plans (farm_group, planned_harvest_date);
+
+drop trigger if exists trg_touch_canix_harvest_plans on canix_harvest_plans;
+create trigger trg_touch_canix_harvest_plans
+  before update on canix_harvest_plans
+  for each row execute function touch_operations_forms();
+
+alter table canix_harvest_plans enable row level security;
+
+drop policy if exists "anon read" on canix_harvest_plans;
+create policy "anon read" on canix_harvest_plans for select using (true);
+
+grant select, insert, update, delete on public.canix_harvest_plans to service_role;
+grant select on public.canix_harvest_plans to anon;

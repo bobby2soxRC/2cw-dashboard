@@ -88,13 +88,25 @@
 </header>
 
 <main>
-  <div class="title">Canix Inventory</div>
+  <div class="title" id="pageTitle">Canix Inventory</div>
   <div class="sub" id="sub">Loading…</div>
 
-  <div class="kpis" id="kpis"></div>
-  <div class="tabs" id="tabs"></div>
-  <div class="search"><input type="text" id="search" placeholder="Search item, strain, or license…"></div>
-  <div id="view"><div class="loading">Loading inventory…</div></div>
+  <div class="tabs" id="pageTabs" style="margin-top:22px">
+    <button data-page="inventory" class="on">Inventory</button>
+    <button data-page="forecast">Forecasted Flower</button>
+  </div>
+
+  <div id="inventoryPage">
+    <div class="kpis" id="kpis"></div>
+    <div class="tabs" id="tabs"></div>
+    <div class="search"><input type="text" id="search" placeholder="Search item, strain, or license…"></div>
+    <div id="view"><div class="loading">Loading inventory…</div></div>
+  </div>
+
+  <div id="forecastPage" style="display:none">
+    <div class="kpis" id="forecastKpis"></div>
+    <div id="forecastView"><div class="loading">Loading forecast…</div></div>
+  </div>
 
   <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution</footer>
 </main>
@@ -112,15 +124,24 @@ const CONFIG_FALLBACK_URL = 'https://raw.githubusercontent.com/bobby2soxRC/2cw-d
 const INVENTORY_URL = BASE + 'canix_inventory.json?t=' + Date.now();
 const META_URL = BASE + 'canix_meta.json?t=' + Date.now();
 
+const PLANT_BATCHES_URL = BASE + 'canix_plant_batches.json?t=' + Date.now();
+
 function supabaseReady() {
   return typeof SUPABASE_URL === 'string' && SUPABASE_URL.startsWith('http') &&
     typeof SUPABASE_ANON_KEY === 'string' && SUPABASE_ANON_KEY.length > 10;
 }
 
+let _supaClient = null;
+function getSupabaseClient() {
+  if (!supabaseReady() || typeof supabase === 'undefined') return null;
+  if (!_supaClient) _supaClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  return _supaClient;
+}
+
 async function loadFacilityConfig() {
-  if (supabaseReady() && typeof supabase !== 'undefined') {
+  const client = getSupabaseClient();
+  if (client) {
     try {
-      const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       const { data, error } = await client.from('canix_facilities').select('*');
       if (error) throw error;
       if (data && data.length) {
@@ -136,13 +157,38 @@ async function loadFacilityConfig() {
   return Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_')));
 }
 
+// Yield estimates/harvest plans are admin-managed but anon-readable (see
+// supabase/schema.sql) — no static-JSON fallback since there's nothing to
+// fall back to (they only ever live in Supabase, no sync script produces
+// them). An empty array just means "nothing entered yet in admin.html."
+async function loadForecastInputs() {
+  const client = getSupabaseClient();
+  if (!client) return { estimates: [], plans: [] };
+  try {
+    const [{ data: estimates, error: e1 }, { data: plans, error: e2 }] = await Promise.all([
+      client.from('canix_yield_estimates').select('*'),
+      client.from('canix_harvest_plans').select('*'),
+    ]);
+    if (e1) throw e1;
+    if (e2) throw e2;
+    return { estimates: estimates || [], plans: plans || [] };
+  } catch (e) {
+    console.warn('Could not load yield forecast inputs:', e);
+    return { estimates: [], plans: [] };
+  }
+}
+
 const $ = id => document.getElementById(id);
 const STAGE_ORDER = ['Cultivation', 'Processing', 'Manufacturing', 'Distribution', 'Unclassified'];
 const STAGE_COLOR = { Cultivation: 'green', Processing: 'gold', Manufacturing: 'purple', Distribution: 'blue', Unclassified: '' };
 
 let ALL_PACKAGES = [];
+let PLANT_BATCHES = [];
+let YIELD_ESTIMATES = [];
+let HARVEST_PLANS = [];
 let FACILITY_CONFIG = {};
 let CURRENT_STAGE = 'All';
+let CURRENT_PAGE = 'inventory'; // 'inventory' | 'forecast'
 
 function fmtWeight(pkg) {
   if (pkg.weight == null) return '—';
@@ -281,21 +327,110 @@ function renderView() {
   </div>`;
 }
 
+// ── Forecasted Flower ────────────────────────────────────────────────────
+
+function statusPillGeneric(status) {
+  const cls = status === 'planned' ? 'blue' : status === 'completed' ? 'green' : '';
+  return `<span class="pill ${cls}">${status}</span>`;
+}
+
+function fmtLbs(n) {
+  return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
+}
+
+function latestEstimateForFarm(farm) {
+  return YIELD_ESTIMATES
+    .filter(e => e.farm_group === farm)
+    .reduce((best, e) => (!best || e.effective_date > best.effective_date) ? e : best, null);
+}
+
+function liveFloweringCount(farm) {
+  let total = 0;
+  PLANT_BATCHES.forEach(b => {
+    const fi = facilityInfo(b.facility_id);
+    if (fi.exclude) return;
+    if ((fi.farmGroup || fi.displayName) !== farm) return;
+    total += Number(b.flowering_count) || 0;
+  });
+  return total;
+}
+
+function renderForecast() {
+  const rows = [...HARVEST_PLANS]
+    .sort((a, b) => a.planned_harvest_date.localeCompare(b.planned_harvest_date))
+    .map(plan => {
+      const estimate = latestEstimateForFarm(plan.farm_group);
+      const liveCount = liveFloweringCount(plan.farm_group);
+      const hasOverride = plan.plant_count_override != null;
+      const count = hasOverride ? Number(plan.plant_count_override) : liveCount;
+      const forecastLbs = estimate ? count * Number(estimate.estimated_lbs_per_plant) : null;
+      return { plan, estimate, count, countSource: hasOverride ? 'override' : 'live', forecastLbs };
+    });
+
+  const plannedRows = rows.filter(r => r.plan.status === 'planned');
+  const totalForecast = plannedRows.reduce((s, r) => s + (r.forecastLbs || 0), 0);
+  const missingEstimate = plannedRows.filter(r => !r.estimate).length;
+
+  $('forecastKpis').innerHTML = `
+    <div class="kpi green"><div class="k">Forecasted Flower</div><div class="v">${fmtLbs(totalForecast)} lb</div><div class="n">${plannedRows.length} planned harvest(s)</div></div>
+    <div class="kpi ${missingEstimate ? 'gold' : 'blue'}"><div class="k">Missing Estimate</div><div class="v">${missingEstimate}</div><div class="n">planned harvest(s) with no lbs/plant set yet</div></div>
+  `;
+
+  if (!rows.length) {
+    $('forecastView').innerHTML = `<div class="card"><div class="empty">No harvest plans yet. Add planned harvest dates and lbs/plant estimates per farm from admin.html's "Yield Forecast" tab.</div></div>`;
+    return;
+  }
+
+  $('forecastView').innerHTML = `<div class="card">
+    <div class="card-hd"><h2>Forecasted Flower by Farm</h2></div>
+    <div class="note">Forecast = plant count (live flowering-plant count from Canix, or a manual override entered in admin) &times; that farm's most recent lbs/plant estimate.</div>
+    <div class="scroll"><table>
+      <thead><tr><th>Farm</th><th class="num">Harvest Date</th><th>Status</th><th class="num">Plant Count</th><th class="num">Est. Lbs/Plant</th><th class="num">Forecasted Lbs</th></tr></thead>
+      <tbody>
+        ${rows.map(r => `<tr>
+          <td>${r.plan.farm_group}</td>
+          <td class="num">${r.plan.planned_harvest_date}</td>
+          <td>${statusPillGeneric(r.plan.status)}</td>
+          <td class="num">${r.count.toLocaleString()} <span style="color:var(--muted);font-size:.7em">(${r.countSource})</span></td>
+          <td class="num">${r.estimate ? r.estimate.estimated_lbs_per_plant + ' ' : '<span style="color:var(--muted)">not set</span>'}${r.estimate ? `<span style="color:var(--muted);font-size:.7em">(${r.estimate.effective_date})</span>` : ''}</td>
+          <td class="num">${r.forecastLbs != null ? fmtLbs(r.forecastLbs) + ' lb' : '—'}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>
+  </div>`;
+}
+
+document.getElementById('pageTabs').querySelectorAll('button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    CURRENT_PAGE = btn.dataset.page;
+    document.getElementById('pageTabs').querySelectorAll('button').forEach(b => b.classList.toggle('on', b === btn));
+    document.getElementById('inventoryPage').style.display = CURRENT_PAGE === 'inventory' ? '' : 'none';
+    document.getElementById('forecastPage').style.display = CURRENT_PAGE === 'forecast' ? '' : 'none';
+    $('pageTitle').textContent = CURRENT_PAGE === 'inventory' ? 'Canix Inventory' : 'Forecasted Flower';
+  });
+});
+
 async function load() {
   try {
-    const [inv, cfg, meta] = await Promise.all([
+    const [inv, batches, cfg, meta, forecastInputs] = await Promise.all([
       fetch(INVENTORY_URL).then(r => r.json()),
+      fetch(PLANT_BATCHES_URL).then(r => r.json()).catch(() => []),
       loadFacilityConfig(),
       fetch(META_URL).then(r => r.json()).catch(() => null),
+      loadForecastInputs(),
     ]);
     ALL_PACKAGES = inv;
+    PLANT_BATCHES = batches;
     FACILITY_CONFIG = cfg;
+    YIELD_ESTIMATES = forecastInputs.estimates;
+    HARVEST_PLANS = forecastInputs.plans;
     $('sub').textContent = meta?.last_sync
       ? 'Last synced ' + new Date(meta.last_sync).toLocaleString()
       : 'Current on-hand inventory across all licenses';
     renderKpis();
     renderTabs();
     renderView();
+    renderForecast();
   } catch (e) {
     console.error(e);
     $('view').innerHTML = '<div class="empty">Could not load Canix data. Check that data/canix_inventory.json has been pushed to main, and that the canix_facilities Supabase table exists (see supabase/schema.sql).</div>';
