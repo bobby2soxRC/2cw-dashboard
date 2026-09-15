@@ -12,6 +12,8 @@
 <meta name="apple-mobile-web-app-title" content="2CW Ops">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/config/supabase_config.js"></script>
 <style>
   :root {
     --bg:#0f1117;--surface:#181c26;--surface2:#1e2333;--border:#2a2f42;
@@ -983,15 +985,42 @@ function showPage(id, el) {
 }
 
 // ─── PIN GATE ────────────────────────────────────────────────────────────────
-// Allowed PINs are drawn from the Users sheet — users with sales=TRUE.
-// Fetch the same directory the hub uses and verify the stored PIN.
+// Access is granted from admin.html's "Sales Dashboard" card toggle, which
+// lives in Supabase (app_users). Check that first — same source the hub
+// itself uses to decide whether to even show this card — and only fall back
+// to the legacy Users sheet if Supabase can't be reached. Checking the sheet
+// FIRST (the old behavior here) was the bug: a user granted access via the
+// admin panel would see the card on the hub, click through, and then get
+// bounced back a few seconds later once this check finished against the
+// sheet, which the admin panel doesn't write to and can be stale.
+async function checkSalesAccessSupabase(pin) {
+  try {
+    if (typeof SUPABASE_URL !== 'string' || !SUPABASE_URL ||
+        typeof SUPABASE_ANON_KEY !== 'string' || !SUPABASE_ANON_KEY ||
+        typeof supabase === 'undefined') return null;
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { data, error } = await client.from('app_users').select('pin,active,columns').eq('active', true);
+    if (error || !data) return null;
+    return data.some(row => row.pin === pin && (row.columns || {}).sales === 'TRUE');
+  } catch (e) {
+    console.warn('Supabase access check failed, falling back to sheet', e);
+    return null;
+  }
+}
+
 (async function pinGate() {
   const DIRECTORY_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTvUb2y2US1Qcyf12mngWEcvdCU3Yh9vgIzN_5-6x1psQRCIkG9Y4velrdcBB9zEw/pub?gid=165442896&single=true&output=csv';
-  const FALLBACK_PINS = ['1234','9876','8888','2121','3131','4141','5151','6161','3415','4200'];
 
   // PIN is stored in sessionStorage by the hub after login
   const storedPin = sessionStorage.getItem('2cw_pin') || '';
 
+  const viaSupabase = await checkSalesAccessSupabase(storedPin);
+  if (viaSupabase !== null) {
+    if (!viaSupabase) window.location.href = '/index.html';
+    return;
+  }
+
+  // Supabase unavailable — fall back to the legacy sheet check.
   try {
     const res = await fetch(DIRECTORY_URL + '&t=' + Date.now());
     const text = await res.text();
@@ -1013,8 +1042,8 @@ function showPage(id, el) {
       window.location.href = '/index.html';
     }
   } catch(e) {
-    // If directory fetch fails, allow anyone with a valid stored PIN through
-    // (they already authenticated at the hub level)
+    // If directory fetch fails too, allow anyone with a valid stored PIN
+    // through (they already authenticated at the hub level)
     if (!storedPin || storedPin.length !== 4) {
       window.location.href = '/index.html';
     }
