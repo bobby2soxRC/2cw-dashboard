@@ -683,9 +683,6 @@ const PR_AUTO_REFRESH_MS = 30000; // background poll while the page stays open
 // Deploy it from the Sheet: Extensions > Apps Script > Deploy > New deployment
 // > Web app (Execute as: Me, Who has access: Anyone) > paste the /exec URL here.
 const PRODUCTION_REQUESTS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxuJXC1kNtnZOTKWIDMDUNWtUwy3onNmsSJzCT8bfqSQA-jaxd-Pf0cih7khvn_jE6s/exec';
-// sessionStorage's 2cw_user_name (set at login by index.html) must contain one
-// of these, case-insensitive, for the Add PR button to appear.
-const PR_ALLOWED_USERS = ['robert', 'yali'];
 let _prData = { requests: [], slots: [] };
 
 function parsePrCsv(text) {
@@ -790,9 +787,10 @@ function startPrAutoRefresh() {
   }, PR_AUTO_REFRESH_MS);
 }
 
+// Set at login by index.html from the user's "pr access" directory column —
+// toggled per person in admin.html, not a hardcoded name list.
 function isPrAllowedUser() {
-  const name = (sessionStorage.getItem('2cw_user_name') || '').toLowerCase();
-  return !!name && PR_ALLOWED_USERS.some(u => name.includes(u));
+  return sessionStorage.getItem('2cw_pr_access') === 'true';
 }
 
 // "In process" = not finished and not abandoned. The Sheet's Status column

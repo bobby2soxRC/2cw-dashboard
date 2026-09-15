@@ -352,6 +352,7 @@ function cardSummary(u){
   if(anyForm) pills.push('Field forms');
   const comm = COMMISSION_COLS.filter(col => (cols[col]||'').toUpperCase()==='TRUE');
   if(comm.length) pills.push(comm.length===1 ? 'Commission: '+COMMISSION_REP_MAP[comm[0]] : 'Commission: all reps');
+  if((cols['pr access']||'').toUpperCase()==='TRUE') pills.push('Add PR');
   return pills;
 }
 
@@ -441,6 +442,11 @@ function openEditor(id){
     <div class="section-hd">Commission access</div>
     <div class="check-grid">
       ${COMMISSION_COLS.map(col => `<label class="check-item"><input type="checkbox" data-comm="${col}" ${commSet.has(col)?'checked':''}/> ${esc(COMMISSION_REP_MAP[col])}</label>`).join('')}
+    </div>
+
+    <div class="section-hd">Special access</div>
+    <div class="check-grid">
+      <label class="check-item"><input type="checkbox" data-card="pr access" ${(cols['pr access']||'').toUpperCase()==='TRUE'?'checked':''}/> Add PR button (Inventory)</label>
     </div>
 
     <div class="section-hd">Processing — edit access</div>

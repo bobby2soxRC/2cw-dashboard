@@ -14,8 +14,10 @@ const DIRECTORY_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTvUb2y2U
 // key must match column headers in the sheet (lowercase, spaces→ as-is)
 // ── DEPARTMENT TREE ───────────────────────────────────────
 // `dept` places a card in the new folder-structured hub (see index.html's
-// buildTree()/resolvePath()): 'executive' is pinned at the root and never
-// nested; everything else lives under its dept, optionally one level deeper
+// buildTree()/resolvePath()): a card with `pinned: true` (e.g. 'executive',
+// 'tasks_dashboard') sits at the root and is never nested — any number of
+// cards can be pinned, they all show up together; everything else lives
+// under its dept, optionally one level deeper
 // under `subdept` (Operations is the only department with subdepts today —
 // Cultivation/Processing/Manufacturing, matching operations_stations.js's
 // own `dept` field on each station, which buildTree() merges in alongside

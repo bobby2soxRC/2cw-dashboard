@@ -372,6 +372,11 @@ async function buildHub(user){
   sessionStorage.setItem('2cw_form_access', JSON.stringify(formAccess));
   user.field_forms = anyFormAccess ? 'TRUE' : 'FALSE';
 
+  // Read by inventory.html to show/hide the "+ Add PR" button — used to be
+  // a hardcoded name list in that page, moved here so it's a normal
+  // per-user toggle in the admin panel instead of a code change.
+  sessionStorage.setItem('2cw_pr_access', (user['pr access'] || '').toUpperCase() === 'TRUE' ? 'true' : 'false');
+
   // Operations access has two independent axes: EDIT (create/autosave/submit
   // forms for a station) and VIEW (see it on the live Today board without
   // being able to touch it — a plant manager watching bucking, say). Each is
@@ -468,13 +473,13 @@ async function buildTree(){
 
   const salesChildren = [], partnersChildren = [], opsDirect = [];
   const cultChildren = [], procChildren = [], mfgChildren = [];
-  let executiveLeaf = null;
+  const pinnedLeaves = []; // root-level cards like Executive and Ops Gameplan Tracker — any number can be pinned
 
   hubState.defaultOrder.forEach((key) => {
     const def = hubState.defsByKey[key];
     if(!def) return;
     const leaf = { type:'leaf', key, color:def.color, label:def.label, title:def.title, desc:def.desc, href:def.href, external:def.external, ambient:def.ambient };
-    if(def.pinned){ executiveLeaf = leaf; return; }
+    if(def.pinned){ pinnedLeaves.push(leaf); return; }
     if(def.dept === 'sales') salesChildren.push(leaf);
     else if(def.dept === 'partners') partnersChildren.push(leaf);
     else if(def.dept === 'operations'){
@@ -523,7 +528,7 @@ async function buildTree(){
   ].filter(Boolean);
 
   const rootChildren = [
-    ...(executiveLeaf ? [executiveLeaf] : []),
+    ...pinnedLeaves,
     mkFolder('sales', 'Sales', 'green', salesChildren),
     mkFolder('partners', 'Partners', 'mendo', partnersChildren),
     mkFolder('operations', 'Operations', 'blue', operationsChildren)
@@ -835,6 +840,7 @@ function doLogout(){
   sessionStorage.removeItem('2cw_pin');
   sessionStorage.removeItem('2cw_user_name');
   sessionStorage.removeItem('2cw_form_access');
+  sessionStorage.removeItem('2cw_pr_access');
   sessionStorage.removeItem('2cw_ops_edit_access');
   sessionStorage.removeItem('2cw_ops_view_access');
   sessionStorage.removeItem(LAST_FOLDER_KEY);
