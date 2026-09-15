@@ -609,9 +609,13 @@ async function saveCanixRow(facilityId, btn){
     const i = canixFacilities.findIndex(f => String(f.facility_id) === String(facilityId));
     if(i >= 0) canixFacilities[i] = j.facility;
     btn.disabled = false; btn.textContent = 'Save';
-    btn.insertAdjacentHTML('afterend', '<span class="row-saved">Saved</span>');
-    setTimeout(() => { const s = row.querySelector('.row-saved'); if(s) s.remove(); }, 2000);
+    const savedMsg = j.renamed
+      ? `Saved — also renamed "${esc(j.renamed.from)}" to "${esc(j.renamed.to)}" in Yield Forecast`
+      : 'Saved';
+    btn.insertAdjacentHTML('afterend', `<span class="row-saved">${savedMsg}</span>`);
+    setTimeout(() => { const s = row.querySelector('.row-saved'); if(s) s.remove(); }, j.renamed ? 5000 : 2000);
     renderCanixTable();
+    forecastLoaded = false; // farm_group may have changed underneath it
   }catch(e){
     alert('Could not save: ' + e.message);
     btn.disabled = false; btn.textContent = 'Save';

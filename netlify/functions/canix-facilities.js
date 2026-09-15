@@ -108,10 +108,22 @@ exports.handler = async (event) => {
       if (f.stage != null && f.stage !== '' && !STAGES.includes(f.stage)) {
         return json(400, { ok: false, error: `stage must be one of: ${STAGES.join(', ')}` });
       }
+
+      // canix_yield_estimates/canix_harvest_plans key off farm_group as plain
+      // text, not a foreign key to canix_facilities — so renaming a farm here
+      // silently orphans its existing estimates/plans unless we cascade the
+      // rename into both tables. Only safe to do when no other facility still
+      // uses the old name (if some do, this facility is splitting off from a
+      // shared farm, and blindly renaming everyone else's data would be wrong).
+      const beforeRes = await supaFetch(supaUrl, serviceKey, `canix_facilities?facility_id=eq.${encodeURIComponent(facilityId)}&select=farm_group`);
+      const beforeRows = beforeRes.ok ? await beforeRes.json() : [];
+      const oldFarmGroup = beforeRows[0]?.farm_group || null;
+      const newFarmGroup = f.farm_group || null;
+
       const body = {
         display_name: f.display_name || null,
         stage: f.stage || null,
-        farm_group: f.farm_group || null,
+        farm_group: newFarmGroup,
         exclude: !!f.exclude,
       };
       const res = await supaFetch(supaUrl, serviceKey, `canix_facilities?facility_id=eq.${encodeURIComponent(facilityId)}`, {
@@ -120,7 +132,23 @@ exports.handler = async (event) => {
       if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
       const rows = await res.json();
       if (!rows.length) return json(404, { ok: false, error: 'No facility with that id' });
-      return json(200, { ok: true, facility: rows[0] });
+
+      let renamed = null;
+      if (oldFarmGroup && newFarmGroup && oldFarmGroup !== newFarmGroup) {
+        const stillUsedRes = await supaFetch(supaUrl, serviceKey, `canix_facilities?farm_group=eq.${encodeURIComponent(oldFarmGroup)}&select=facility_id`);
+        const stillUsed = stillUsedRes.ok ? await stillUsedRes.json() : [{ facility_id: -1 }]; // fail safe: don't cascade if the check itself failed
+        if (stillUsed.length === 0) {
+          await supaFetch(supaUrl, serviceKey, `canix_yield_estimates?farm_group=eq.${encodeURIComponent(oldFarmGroup)}`, {
+            method: 'PATCH', body: JSON.stringify({ farm_group: newFarmGroup }), headers: { Prefer: 'return=minimal' }
+          });
+          await supaFetch(supaUrl, serviceKey, `canix_harvest_plans?farm_group=eq.${encodeURIComponent(oldFarmGroup)}`, {
+            method: 'PATCH', body: JSON.stringify({ farm_group: newFarmGroup }), headers: { Prefer: 'return=minimal' }
+          });
+          renamed = { from: oldFarmGroup, to: newFarmGroup };
+        }
+      }
+
+      return json(200, { ok: true, facility: rows[0], renamed });
     }
 
     return json(400, { ok: false, error: `Unknown action: ${action}` });
