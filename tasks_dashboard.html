@@ -124,7 +124,59 @@
   .editor-actions .right{display:flex;gap:10px}
 
   .import-log{font-family:'DM Mono',monospace;font-size:.72rem;line-height:1.7;max-height:220px;overflow-y:auto;background:#0c0d0f;border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin:12px 0}
-  #csv-input{display:none}
+  #csv-input, #resp-csv-input{display:none}
+
+  /* ── TABS ── */
+  .tabs-bar{display:flex;gap:6px;margin-bottom:22px;border-bottom:1px solid var(--border)}
+  .tab-btn{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;padding:.7rem 1rem;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+  .tab-btn:hover{color:var(--text)}
+  .tab-btn.active{color:var(--purple);border-bottom-color:var(--purple)}
+
+  /* ── RESPONSIBILITIES TAB ── */
+  .summary-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+  .summary-tile{flex:1;min-width:120px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px}
+  .summary-tile .n{font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1}
+  .summary-tile .lbl{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);margin-top:2px}
+  .summary-tile.unassigned .n{color:var(--red)}
+  .summary-tile.needs_backup .n{color:var(--gold)}
+  .summary-tile.assigned .n{color:var(--green)}
+  .area-section{margin-bottom:26px}
+  .area-hd{display:flex;align-items:center;gap:12px;margin-bottom:10px;cursor:pointer;user-select:none}
+  .area-hd h2{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.03em}
+  .area-hd .chev{color:var(--muted);font-size:.7rem;transition:transform .15s}
+  .area-hd.collapsed .chev{transform:rotate(-90deg)}
+  .area-progress{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--subtext);white-space:nowrap}
+  .area-bar{flex:1;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden;max-width:220px}
+  .area-bar-fill{height:100%;background:var(--green)}
+  .area-body.collapsed{display:none}
+  .resp-list{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface)}
+  .resp-row{border-bottom:1px solid var(--border)}
+  .resp-row:last-child{border-bottom:none}
+  .resp-main{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;cursor:pointer}
+  .resp-main:hover{background:var(--surface2)}
+  .status-dot.unassigned{background:transparent;border-color:var(--red)}
+  .status-dot.needs_backup{background:var(--gold);border-color:var(--gold)}
+  .status-dot.assigned{background:var(--green);border-color:var(--green)}
+  .resp-body{flex:1;min-width:0}
+  .resp-title-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .resp-title{font-size:.92rem;font-weight:500}
+  .resp-meta{display:flex;align-items:center;gap:10px;margin-top:4px;flex-wrap:wrap;font-family:'DM Mono',monospace;font-size:.68rem;color:var(--subtext)}
+  .tag.status-unassigned{color:var(--red);border-color:rgba(239,83,80,.35)}
+  .tag.status-needs_backup{color:var(--gold);border-color:rgba(212,168,67,.35)}
+  .tag.status-assigned{color:var(--green);border-color:rgba(61,184,122,.35)}
+  .owner-name{color:var(--text)}
+  .owner-missing{color:var(--red)}
+  .resp-actions{flex:none;display:flex;gap:6px;align-items:flex-start;padding-top:2px}
+  .resp-actions button{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.05em;text-transform:uppercase;background:transparent;border:1px solid var(--border);color:var(--subtext);padding:.28rem .55rem;border-radius:6px;cursor:pointer}
+  .resp-actions button:hover{border-color:var(--purple);color:var(--purple)}
+  .resp-detail{display:none;padding:0 14px 16px 37px;border-top:1px dashed var(--border)}
+  .resp-detail.open{display:block}
+  .resp-desc{font-size:.82rem;color:var(--subtext);margin:12px 0 8px;max-width:70ch;line-height:1.5}
+  .resp-notes{font-size:.8rem;color:var(--subtext);margin:8px 0;max-width:70ch;line-height:1.5}
+  .resp-notes b{color:var(--text)}
+  .resp-backup{font-size:.8rem;margin:8px 0}
+  .resp-backup b{color:var(--text)}
+  .hint{font-size:.72rem;color:var(--muted);margin:-8px 0 14px}
 
   @media (max-width:720px){
     .form-row{grid-template-columns:1fr}
@@ -140,46 +192,84 @@
 </header>
 
 <main>
-  <div class="toolbar">
-    <h1>Tasks</h1>
-    <div class="toolbar-actions">
-      <input type="file" id="csv-input" accept=".csv" onchange="handleCsvFile(event)"/>
-      <button class="btn btn-ghost" onclick="document.getElementById('csv-input').click()">Upload CSV</button>
-      <button class="btn btn-purple" onclick="openEditor(null)">+ Add Task</button>
+  <div class="tabs-bar">
+    <button class="tab-btn active" id="tab-btn-tasks" onclick="switchTab('tasks')">Tasks</button>
+    <button class="tab-btn" id="tab-btn-responsibilities" onclick="switchTab('responsibilities')">Responsibilities</button>
+  </div>
+
+  <section id="panel-tasks">
+    <div class="toolbar">
+      <h1>Tasks</h1>
+      <div class="toolbar-actions">
+        <input type="file" id="csv-input" accept=".csv" onchange="handleCsvFile(event)"/>
+        <button class="btn btn-ghost" onclick="document.getElementById('csv-input').click()">Upload CSV</button>
+        <button class="btn btn-purple" onclick="openEditor(null)">+ Add Task</button>
+      </div>
     </div>
-  </div>
-  <div class="status-line" id="status-line">Loading…</div>
-  <div id="import-result"></div>
+    <div class="status-line" id="status-line">Loading…</div>
+    <div id="import-result"></div>
 
-  <div class="filters">
-    <select id="f-phase" onchange="render()">
-      <option value="">All phases</option>
-      <option value="0-30">Day 1–30</option>
-      <option value="31-60">Day 31–60</option>
-      <option value="61-90">Day 61–90</option>
-      <option value="none">Unphased / backlog</option>
-    </select>
-    <select id="f-status" onchange="render()">
-      <option value="">All statuses</option>
-      <option value="not_started">Not started</option>
-      <option value="in_progress">In progress</option>
-      <option value="blocked">Blocked</option>
-      <option value="done">Done</option>
-    </select>
-    <select id="f-track" onchange="render()">
-      <option value="">All tracks</option>
-      <option value="compliance">Compliance</option>
-      <option value="systems">Systems</option>
-      <option value="facilities">Facilities</option>
-      <option value="people">People</option>
-    </select>
-    <label style="display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:.72rem;color:var(--subtext);text-transform:uppercase">
-      <input type="checkbox" id="f-hide-done" onchange="render()"/> Hide done
-    </label>
-    <div class="search-wrap"><input type="text" id="f-search" placeholder="Search tasks…" oninput="render()"/></div>
-  </div>
+    <div class="filters">
+      <select id="f-phase" onchange="render()">
+        <option value="">All phases</option>
+        <option value="0-30">Day 1–30</option>
+        <option value="31-60">Day 31–60</option>
+        <option value="61-90">Day 61–90</option>
+        <option value="none">Unphased / backlog</option>
+      </select>
+      <select id="f-status" onchange="render()">
+        <option value="">All statuses</option>
+        <option value="not_started">Not started</option>
+        <option value="in_progress">In progress</option>
+        <option value="blocked">Blocked</option>
+        <option value="done">Done</option>
+      </select>
+      <select id="f-track" onchange="render()">
+        <option value="">All tracks</option>
+        <option value="compliance">Compliance</option>
+        <option value="systems">Systems</option>
+        <option value="facilities">Facilities</option>
+        <option value="people">People</option>
+      </select>
+      <label style="display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:.72rem;color:var(--subtext);text-transform:uppercase">
+        <input type="checkbox" id="f-hide-done" onchange="render()"/> Hide done
+      </label>
+      <div class="search-wrap"><input type="text" id="f-search" placeholder="Search tasks…" oninput="render()"/></div>
+    </div>
 
-  <div id="list-wrap"></div>
+    <div id="list-wrap"></div>
+  </section>
+
+  <section id="panel-responsibilities" style="display:none">
+    <div class="toolbar">
+      <h1>Responsibilities</h1>
+      <div class="toolbar-actions">
+        <input type="file" id="resp-csv-input" accept=".csv" onchange="respHandleCsvFile(event)"/>
+        <button class="btn btn-ghost" onclick="document.getElementById('resp-csv-input').click()">Upload CSV</button>
+        <button class="btn btn-ghost" onclick="respDownloadCsv()">Download CSV</button>
+        <button class="btn btn-purple" onclick="respOpenEditor(null)">+ Add Responsibility</button>
+      </div>
+    </div>
+    <div class="status-line" id="resp-status-line">Loading…</div>
+    <div id="resp-import-result"></div>
+
+    <div class="summary-row" id="resp-summary-row"></div>
+
+    <div class="filters">
+      <select id="resp-f-area" onchange="respRender()">
+        <option value="">All areas</option>
+      </select>
+      <select id="resp-f-status" onchange="respRender()">
+        <option value="">All statuses</option>
+        <option value="unassigned">Unassigned</option>
+        <option value="assigned">Assigned</option>
+        <option value="needs_backup">Needs backup</option>
+      </select>
+      <div class="search-wrap"><input type="text" id="resp-f-search" placeholder="Search responsibilities or owners…" oninput="respRender()"/></div>
+    </div>
+
+    <div id="resp-list-wrap"></div>
+  </section>
 </main>
 
 <div id="editor-backdrop">
@@ -188,6 +278,7 @@
 
 <script src="/config/supabase_config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/hub_config.js"></script>
 <script>
 const STATUS_LABELS = { not_started: 'Not started', in_progress: 'In progress', blocked: 'Blocked', done: 'Done' };
 const PHASE_LABELS = { '0-30': 'Day 1–30', '31-60': 'Day 31–60', '61-90': 'Day 61–90', none: 'Unphased / backlog' };
@@ -647,7 +738,409 @@ async function handleCsvFile(event){
   }
 }
 
+// ── TAB SWITCHING ───────────────────────────────────────────────────────
+let activeTab = 'tasks';
+let respLoaded = false;
+function switchTab(tab){
+  activeTab = tab;
+  document.getElementById('tab-btn-tasks').classList.toggle('active', tab==='tasks');
+  document.getElementById('tab-btn-responsibilities').classList.toggle('active', tab==='responsibilities');
+  document.getElementById('panel-tasks').style.display = tab==='tasks' ? 'block' : 'none';
+  document.getElementById('panel-responsibilities').style.display = tab==='responsibilities' ? 'block' : 'none';
+  if(tab==='responsibilities'){
+    history.replaceState(null, '', '#responsibilities');
+    if(!respLoaded){ respLoaded = true; respInit(); }
+  } else {
+    history.replaceState(null, '', location.pathname);
+  }
+}
+
+async function respInit(){
+  respDirectoryUsers = await loadUserDirectory();
+  await respLoadAll();
+}
+
+// ── RESPONSIBILITIES MATRIX (tab) ───────────────────────────────────────
+// Shares esc(), requireClient(), parseCsvText(), and the #editor-backdrop
+// modal with the Tasks tab above — everything else is namespaced with a
+// resp/red- prefix so the two tabs' state and DOM ids never collide.
+const RESP_STATUS_LABELS = { unassigned: 'Unassigned', assigned: 'Assigned', needs_backup: 'Needs backup' };
+const RESP_STATUS_ORDER = ['unassigned', 'needs_backup', 'assigned'];
+const RESP_AREA_ORDER = [
+  'Land & Leases', 'Licensing & Compliance', 'Nursery', 'Cultivation',
+  'Harvest & Post-Harvest', 'Processing Facility (Adobe)', 'Transportation & Logistics',
+  'Manufacturing', 'Distribution (Airway)', 'Sales & Operations Planning', 'Systems & ERP (Canix)'
+];
+
+let respItems = [];
+let respOpenIds = new Set();
+let respCollapsedAreas = new Set();
+let respEditingId = null;
+let respDirectoryUsers = []; // [{user, ...}] from loadUserDirectory(), for owner/backup dropdowns
+
+function respAreaOrder(){
+  const seen = new Set(respItems.map(i => i.area || 'Unassigned Area'));
+  const known = RESP_AREA_ORDER.filter(a => seen.has(a));
+  const extra = [...seen].filter(a => !RESP_AREA_ORDER.includes(a)).sort();
+  return [...known, ...extra];
+}
+
+async function respLoadAll(){
+  const status = document.getElementById('resp-status-line');
+  status.textContent = 'Loading responsibilities…';
+  try{
+    const c = await requireClient();
+    const { data, error } = await c.from('responsibilities').select('*')
+      .order('sort_order', { ascending: true }).order('created_at', { ascending: true });
+    if(error) throw error;
+    respItems = data || [];
+    respPopulateAreaFilter();
+    respUpdateStatusLine();
+    respRender();
+  }catch(e){
+    status.textContent = 'Could not load responsibilities: ' + e.message;
+    document.getElementById('resp-list-wrap').innerHTML = '';
+  }
+}
+
+function respPopulateAreaFilter(){
+  const sel = document.getElementById('resp-f-area');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">All areas</option>' +
+    respAreaOrder().map(a => `<option value="${esc(a)}">${esc(a)}</option>`).join('');
+  sel.value = current;
+}
+
+function respUpdateStatusLine(){
+  const status = document.getElementById('resp-status-line');
+  status.innerHTML = `<b>${respItems.length}</b> responsibilities across <b>${respAreaOrder().length}</b> areas`;
+  const unassigned = respItems.filter(i=>i.status==='unassigned').length;
+  const needsBackup = respItems.filter(i=>i.status==='needs_backup').length;
+  const assigned = respItems.filter(i=>i.status==='assigned').length;
+  document.getElementById('resp-summary-row').innerHTML = `
+    <div class="summary-tile unassigned"><div class="n">${unassigned}</div><div class="lbl">Unassigned</div></div>
+    <div class="summary-tile needs_backup"><div class="n">${needsBackup}</div><div class="lbl">Needs backup</div></div>
+    <div class="summary-tile assigned"><div class="n">${assigned}</div><div class="lbl">Fully assigned</div></div>
+  `;
+}
+
+function respMatchesFilters(i){
+  const fArea = document.getElementById('resp-f-area').value;
+  const fStatus = document.getElementById('resp-f-status').value;
+  const q = document.getElementById('resp-f-search').value.trim().toLowerCase();
+  if(fArea && (i.area || '') !== fArea) return false;
+  if(fStatus && i.status !== fStatus) return false;
+  if(q){
+    const hay = (i.title+' '+(i.description||'')+' '+(i.owner||'')+' '+(i.backup_owner||'')+' '+(i.notes||'')).toLowerCase();
+    if(!hay.includes(q)) return false;
+  }
+  return true;
+}
+
+function respRender(){
+  const wrap = document.getElementById('resp-list-wrap');
+  if(!respItems.length){
+    wrap.innerHTML = '<div class="empty-note">No responsibilities yet. Add one, or upload a CSV to get started.</div>';
+    return;
+  }
+  const filtered = respItems.filter(respMatchesFilters);
+  const byArea = {};
+  respAreaOrder().forEach(a => byArea[a] = []);
+  filtered.forEach(i => {
+    const a = i.area || 'Unassigned Area';
+    (byArea[a] = byArea[a] || []).push(i);
+  });
+
+  let html = '';
+  Object.keys(byArea).forEach(a => {
+    const list = byArea[a];
+    if(!list.length) return;
+    const assigned = list.filter(i=>i.status==='assigned').length;
+    const pct = list.length ? Math.round(assigned/list.length*100) : 0;
+    const collapsed = respCollapsedAreas.has(a);
+    html += `
+      <div class="area-section">
+        <div class="area-hd ${collapsed?'collapsed':''}" onclick="respToggleArea('${a.replace(/'/g,"\\'")}')">
+          <span class="chev">▾</span>
+          <h2>${esc(a)}</h2>
+          <div class="area-bar"><div class="area-bar-fill" style="width:${pct}%"></div></div>
+          <div class="area-progress">${assigned}/${list.length} assigned</div>
+        </div>
+        <div class="area-body ${collapsed?'collapsed':''}">
+          <div class="resp-list">${list.map(respRowHtml).join('')}</div>
+        </div>
+      </div>`;
+  });
+  wrap.innerHTML = html || '<div class="empty-note">No responsibilities match these filters.</div>';
+}
+
+function respToggleArea(a){
+  if(respCollapsedAreas.has(a)) respCollapsedAreas.delete(a); else respCollapsedAreas.add(a);
+  respRender();
+}
+
+function respRowHtml(i){
+  const open = respOpenIds.has(i.id);
+  return `
+    <div class="resp-row" data-id="${i.id}">
+      <div class="resp-main" onclick="respToggleRow('${i.id}')">
+        <span class="chev-btn ${open?'open':''}">▸</span>
+        <span class="status-dot ${i.status}" title="${esc(RESP_STATUS_LABELS[i.status])}" onclick="event.stopPropagation();respCycleStatus('${i.id}')"></span>
+        <div class="resp-body">
+          <div class="resp-title-row">
+            <span class="resp-title">${esc(i.title)}</span>
+            <span class="tag status-${i.status}">${esc(RESP_STATUS_LABELS[i.status])}</span>
+            ${i.priority ? `<span class="tag prio-${i.priority}">${esc(i.priority)}</span>` : ''}
+          </div>
+          <div class="resp-meta">
+            <span class="${i.owner ? 'owner-name' : 'owner-missing'}">${i.owner ? esc(i.owner) : 'No owner assigned'}</span>
+            ${i.backup_owner ? `<span>Backup: ${esc(i.backup_owner)}</span>` : ''}
+          </div>
+        </div>
+        <div class="resp-actions" onclick="event.stopPropagation()">
+          <button onclick="respOpenEditor('${i.id}')">Edit</button>
+          <button onclick="respDeleteItem('${i.id}')">Delete</button>
+        </div>
+      </div>
+      <div class="resp-detail ${open?'open':''}">
+        ${i.description ? `<div class="resp-desc">${esc(i.description)}</div>` : ''}
+        <div class="resp-backup"><b>Owner:</b> ${i.owner ? esc(i.owner) : '—'} &nbsp;·&nbsp; <b>Backup:</b> ${i.backup_owner ? esc(i.backup_owner) : '—'}</div>
+        ${i.notes ? `<div class="resp-notes"><b>Notes:</b> ${esc(i.notes)}</div>` : ''}
+      </div>
+    </div>`;
+}
+
+function respToggleRow(id){
+  if(respOpenIds.has(id)) respOpenIds.delete(id); else respOpenIds.add(id);
+  respRender();
+}
+
+async function respCycleStatus(id){
+  const i = respItems.find(x=>x.id===id);
+  if(!i) return;
+  const next = RESP_STATUS_ORDER[(RESP_STATUS_ORDER.indexOf(i.status)+1) % RESP_STATUS_ORDER.length];
+  i.status = next;
+  respRender();
+  try{
+    const c = await requireClient();
+    const { error } = await c.from('responsibilities').update({ status: next }).eq('id', id);
+    if(error) throw error;
+    respUpdateStatusLine();
+  }catch(e){ alert('Could not update status: ' + e.message); respLoadAll(); }
+}
+
+async function respDeleteItem(id){
+  if(!confirm('Delete this responsibility?')) return;
+  try{
+    const c = await requireClient();
+    const { error } = await c.from('responsibilities').delete().eq('id', id);
+    if(error) throw error;
+    respItems = respItems.filter(i=>i.id!==id);
+    respPopulateAreaFilter();
+    respUpdateStatusLine();
+    respRender();
+  }catch(e){ alert('Could not delete: ' + e.message); }
+}
+
+// ── Responsibilities editor ─────────────────────────────────────────────
+// Owner/backup are <select> dropdowns sourced from the live app user
+// directory (same table that gates login) instead of free text, so an
+// assignment always matches a real login name — which is what lets
+// my_responsibilities.html find "my" rows with a plain string match.
+function respUserOptionsHtml(selected){
+  const names = [...new Set(respDirectoryUsers.map(u => (u.user||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  if(selected && !names.includes(selected)) names.push(selected); // keep a legacy/free-text value visible & selected
+  const opts = ['<option value="">— None —</option>'];
+  names.forEach(n => opts.push(`<option value="${esc(n)}" ${n===selected?'selected':''}>${esc(n)}</option>`));
+  return opts.join('');
+}
+
+function respStatusOptionsHtml(current){
+  return RESP_STATUS_ORDER.map(s => `<option value="${s}" ${current===s?'selected':''}>${RESP_STATUS_LABELS[s]}</option>`).join('');
+}
+
+function respOpenEditor(id){
+  respEditingId = id;
+  const i = id ? respItems.find(x=>x.id===id) : null;
+  const areaListId = 'resp-area-datalist';
+  document.getElementById('editor').innerHTML = `
+    <h2>${i ? 'Edit Responsibility' : 'Add Responsibility'}</h2>
+    <div class="form-row full"><div><label class="field-label">Title</label><input type="text" id="red-title" value="${esc(i?i.title:'')}"/></div></div>
+    <div class="form-row full">
+      <div>
+        <label class="field-label">Area</label>
+        <input type="text" id="red-area" list="${areaListId}" value="${esc(i?i.area:'')}" placeholder="e.g. Cultivation"/>
+        <datalist id="${areaListId}">${respAreaOrder().map(a=>`<option value="${esc(a)}">`).join('')}</datalist>
+      </div>
+    </div>
+    <div class="form-row full"><div><label class="field-label">Description</label><textarea id="red-desc">${esc(i?i.description:'')}</textarea></div></div>
+    <div class="form-row">
+      <div><label class="field-label">Owner</label>
+        <select id="red-owner">${respUserOptionsHtml(i?i.owner:'')}</select>
+      </div>
+      <div><label class="field-label">Backup owner</label>
+        <select id="red-backup">${respUserOptionsHtml(i?i.backup_owner:'')}</select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div><label class="field-label">Status</label>
+        <select id="red-status">${respStatusOptionsHtml(i?i.status:'unassigned')}</select>
+      </div>
+      <div><label class="field-label">Priority</label>
+        <select id="red-priority">
+          <option value="">None</option>
+          <option value="high" ${i&&i.priority==='high'?'selected':''}>High</option>
+          <option value="medium" ${i&&i.priority==='medium'?'selected':''}>Medium</option>
+          <option value="low" ${i&&i.priority==='low'?'selected':''}>Low</option>
+        </select>
+      </div>
+    </div>
+    <div class="hint">Status updates automatically once you pick an owner (and backup) — you can still override it above.</div>
+    <div class="form-row full"><div><label class="field-label">Notes</label><textarea id="red-notes">${esc(i?i.notes:'')}</textarea></div></div>
+    <div class="editor-actions">
+      <div>${i ? '<button class="btn btn-danger" onclick="respDeleteItem(\''+i.id+'\'); closeEditor();">Delete</button>' : ''}</div>
+      <div class="right">
+        <button class="btn btn-ghost" onclick="closeEditor()">Cancel</button>
+        <button class="btn btn-purple" onclick="respSaveEditor()">Save</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('editor-backdrop').style.display = 'block';
+  document.getElementById('editor-backdrop').scrollTop = 0;
+  setTimeout(()=>document.getElementById('red-title').focus(), 50);
+}
+
+async function respSaveEditor(){
+  const title = document.getElementById('red-title').value.trim();
+  const area = document.getElementById('red-area').value.trim();
+  if(!title){ alert('Enter a title.'); return; }
+  if(!area){ alert('Enter an area.'); return; }
+  const owner = document.getElementById('red-owner').value.trim() || null;
+  const backup_owner = document.getElementById('red-backup').value.trim() || null;
+  let status = document.getElementById('red-status').value;
+  // Nudge status toward reality: picking both names and leaving status on
+  // Unassigned almost always just means nobody touched the dropdown.
+  if(status === 'unassigned' && owner && backup_owner) status = 'assigned';
+  else if(status === 'unassigned' && owner && !backup_owner) status = 'needs_backup';
+  const payload = {
+    title, area,
+    description: document.getElementById('red-desc').value.trim() || null,
+    owner, backup_owner, status,
+    priority: document.getElementById('red-priority').value || null,
+    notes: document.getElementById('red-notes').value.trim() || null
+  };
+  const btn = document.querySelector('#editor .btn-purple');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try{
+    const c = await requireClient();
+    if(respEditingId){
+      const { error } = await c.from('responsibilities').update(payload).eq('id', respEditingId);
+      if(error) throw error;
+    }else{
+      payload.source = 'manual';
+      const { error } = await c.from('responsibilities').insert(payload);
+      if(error) throw error;
+    }
+    closeEditor();
+    await respLoadAll();
+  }catch(e){
+    alert('Could not save: ' + e.message);
+    btn.disabled = false; btn.textContent = 'Save';
+  }
+}
+
+// ── Responsibilities CSV upload/download ────────────────────────────────
+function respStatusFromCsv(raw, owner, backup){
+  const s = (raw||'').trim().toLowerCase().replace(/\s+/g,'_');
+  if(['assigned','done','complete'].includes(s)) return 'assigned';
+  if(s === 'needs_backup') return 'needs_backup';
+  if(s === 'unassigned') return 'unassigned';
+  if(owner && backup) return 'assigned';
+  if(owner && !backup) return 'needs_backup';
+  return 'unassigned';
+}
+function respPriorityFromCsv(raw){
+  const s = (raw||'').trim().toLowerCase();
+  if(s === 'high' || s === 'medium' || s === 'low') return s;
+  return null;
+}
+function respRowToItem(row){
+  const title = row['title'] || row['responsibility'] || '';
+  const area = row['area'] || '';
+  if(!title || !area) return null;
+  const owner = row['owner'] || null;
+  const backup_owner = row['backup_owner'] || row['backup owner'] || null;
+  return {
+    title, area,
+    description: row['description'] || null,
+    owner, backup_owner,
+    status: respStatusFromCsv(row['status'], owner, backup_owner),
+    priority: respPriorityFromCsv(row['priority']),
+    notes: row['notes'] || null
+  };
+}
+
+async function respHandleCsvFile(event){
+  const file = event.target.files[0];
+  event.target.value = '';
+  if(!file) return;
+  const out = document.getElementById('resp-import-result');
+  out.innerHTML = '<div class="import-log">Reading file…</div>';
+  const text = await file.text();
+  const rows = parseCsvText(text).map(respRowToItem).filter(Boolean);
+  if(!rows.length){ out.innerHTML = '<div class="import-log" style="color:var(--red)">No usable rows found — need at least "area" and "title" columns.</div>'; return; }
+  if(!confirm(`Import ${rows.length} responsibilit${rows.length===1?'y':'ies'}? Existing rows with a matching area + title will be updated, not duplicated.`)) { out.innerHTML=''; return; }
+
+  try{
+    const c = await requireClient();
+    const existingByKey = {};
+    respItems.forEach(i => { existingByKey[(i.area+'::'+i.title).trim().toLowerCase()] = i; });
+
+    let added = 0, updated = 0;
+    const failed = [];
+    for(const r of rows){
+      const key = (r.area+'::'+r.title).trim().toLowerCase();
+      const match = existingByKey[key];
+      try{
+        if(match){
+          const { error } = await c.from('responsibilities').update(r).eq('id', match.id);
+          if(error) throw error;
+          updated++;
+        }else{
+          const { error } = await c.from('responsibilities').insert({ ...r, source: 'csv_upload' });
+          if(error) throw error;
+          added++;
+        }
+      }catch(e){ failed.push(r.title + ' — ' + e.message); }
+    }
+    out.innerHTML = `<div class="import-log">Imported: ${added} added, ${updated} updated.${failed.length ? '<br>Failed: '+failed.map(esc).join('; ') : ''}</div>`;
+    await respLoadAll();
+  }catch(e){
+    out.innerHTML = `<div class="import-log" style="color:var(--red)">Import failed: ${esc(e.message)}</div>`;
+  }
+}
+
+function respCsvEscape(v){
+  const s = String(v==null?'':v);
+  return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+}
+function respDownloadCsv(){
+  const headers = ['area','title','description','owner','backup_owner','status','priority','notes'];
+  const lines = [headers.join(',')];
+  respItems.forEach(i => { lines.push(headers.map(h => respCsvEscape(i[h])).join(',')); });
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'responsibilities-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 loadAll();
+// Deep-link support: tasks_dashboard.html#responsibilities opens straight to
+// that tab — used by my_responsibilities.html's "Edit in matrix" links.
+if(location.hash === '#responsibilities') switchTab('responsibilities');
 </script>
 </body>
 </html>

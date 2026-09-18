@@ -187,18 +187,18 @@ const CARD_DEFS = [
     dept: 'executive',
     pinned: true,
     title: 'Ops Gameplan Tracker',
-    desc: 'The VP-of-Ops 30/60/90 plan as editable tasks and subtasks — status, owners, due dates, and CSV import.',
+    desc: 'The VP-of-Ops 30/60/90 plan as editable tasks and subtasks, plus the Responsibilities Matrix tab — every recurring responsibility with an owner and backup.',
     href: '/tasks_dashboard.html'
   },
   {
-    key: 'responsibilities',
-    color: 'purple',
-    label: 'Executive',
-    dept: 'executive',
+    key: 'my_responsibilities',
+    color: 'blue',
+    label: 'Operations',
+    dept: 'operations',
     pinned: true,
-    title: 'Responsibilities Matrix',
-    desc: 'Every recurring responsibility across the business, grouped by area, with an owner and backup — built for delegating.',
-    href: '/responsibilities.html'
+    title: 'My Responsibilities',
+    desc: 'What you personally own or back up, pulled live from the Responsibilities Matrix — updates the moment something gets assigned to you.',
+    href: '/my_responsibilities.html'
   }
   // Commission card is handled separately (see commCardDef in index.html) —
   // it's dept: 'sales' too.
@@ -246,6 +246,38 @@ const FORM_ACCESS_COLS = {
   staff_sample: 'staff sample form',
   store_visit: 'merchandising form'
 };
+
+// ── SHARED USER DIRECTORY (for owner/assignee dropdowns) ──────────────────
+// Same source/fallback story as index.html's login directory (Supabase
+// app_users first, legacy sheet second), but returns the full row list
+// rather than gating a login — used anywhere a page needs to let someone
+// pick a person by name (Responsibilities tab's owner/backup dropdowns,
+// my_responsibilities.html's "who am I" lookup). Kept separate from
+// index.html's own loadDirectorySupabase()/loadDirectory() so the login
+// path is never at risk of a change made for a dropdown.
+async function loadUserDirectory(){
+  try {
+    if (typeof SUPABASE_URL === 'string' && SUPABASE_URL &&
+        typeof SUPABASE_ANON_KEY === 'string' && SUPABASE_ANON_KEY &&
+        typeof supabase !== 'undefined') {
+      const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const { data, error } = await client.from('app_users').select('*').eq('active', true);
+      if (!error && data) {
+        return data.map(row => ({ ...(row.columns || {}), user: row.name, pin: row.pin }));
+      }
+    }
+  } catch(e) {
+    console.warn('Supabase directory fetch failed, falling back to sheet', e);
+  }
+  try {
+    const res = await fetch(DIRECTORY_URL + '&t=' + Date.now());
+    const text = await res.text();
+    return parseCSV(text);
+  } catch(e) {
+    console.warn('Directory fetch failed', e);
+    return [];
+  }
+}
 
 // ── PARSE CSV ────────────────────────────────────────────
 function parseCSV(text){

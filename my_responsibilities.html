@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>My Responsibilities — 2CW</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<meta name="theme-color" content="#0c0d0f">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0c0d0f;--surface:#13151a;--surface2:#181b21;--border:#1e2129;--border2:rgba(255,255,255,.11);
+    --green:#3db87a;--gold:#d4a843;--blue:#5a9fd4;--purple:#9b7fd4;--red:#ef5350;--slate:#7d8899;
+    --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;
+  }
+  html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:48px 48px;opacity:.35;pointer-events:none;z-index:0}
+  a{color:inherit}
+  .hdr{min-height:calc(54px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:12px;position:sticky;top:0;z-index:20}
+  .hdr-back{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
+  .hdr-div{width:1px;height:18px;background:var(--border)}
+  .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);flex:1}
+
+  main{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:28px 16px 100px}
+
+  .page-hd{margin-bottom:8px}
+  .page-hd h1{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:.03em}
+  .page-hd .who{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--subtext);margin-top:2px}
+  .status-line{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--subtext);margin:14px 0 20px}
+  .status-line b{color:var(--text)}
+
+  .summary-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px}
+  .summary-tile{flex:1;min-width:120px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px}
+  .summary-tile .n{font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1;color:var(--text)}
+  .summary-tile .lbl{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);margin-top:2px}
+  .summary-tile.primary .n{color:var(--blue)}
+  .summary-tile.backup .n{color:var(--gold)}
+  .summary-tile.needs_backup .n{color:var(--red)}
+
+  .group-hd{font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin:26px 0 10px}
+  .group-hd:first-of-type{margin-top:0}
+
+  .resp-list{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface);margin-bottom:6px}
+  .resp-row{border-bottom:1px solid var(--border);padding:14px 16px}
+  .resp-row:last-child{border-bottom:none}
+  .resp-title-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+  .resp-title{font-size:.95rem;font-weight:600}
+  .tag{display:inline-block;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);color:var(--subtext)}
+  .tag.role-primary{color:var(--blue);border-color:rgba(90,159,212,.35)}
+  .tag.role-backup{color:var(--gold);border-color:rgba(212,168,67,.35)}
+  .tag.status-unassigned{color:var(--red);border-color:rgba(239,83,80,.35)}
+  .tag.status-needs_backup{color:var(--gold);border-color:rgba(212,168,67,.35)}
+  .tag.status-assigned{color:var(--green);border-color:rgba(61,184,122,.35)}
+  .resp-area{font-family:'DM Mono',monospace;font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:var(--subtext);margin-bottom:8px}
+  .resp-desc{font-size:.82rem;color:var(--subtext);line-height:1.5;max-width:65ch;margin-bottom:8px}
+  .resp-pair{font-size:.78rem;color:var(--subtext);margin-bottom:8px}
+  .resp-pair b{color:var(--text)}
+  .resp-notes-wrap{margin-top:8px}
+  .resp-notes-wrap label{display:block;font-size:.62rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+  textarea.notes-field{width:100%;background:#0c0d0f;border:1px solid var(--border);color:var(--text);padding:.5rem .6rem;border-radius:8px;font-size:.8rem;font-family:'DM Sans',sans-serif;resize:vertical;min-height:44px;outline:none}
+  textarea.notes-field:focus{border-color:var(--blue)}
+  .notes-save-hint{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--muted);margin-top:4px;min-height:1em}
+  .resp-link{display:inline-block;margin-top:8px;font-family:'DM Mono',monospace;font-size:.66rem;letter-spacing:.05em;text-transform:uppercase;color:var(--blue);text-decoration:none}
+  .resp-link:hover{text-decoration:underline}
+
+  .empty-note{color:var(--subtext);font-size:.85rem;padding:40px 20px;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:12px;line-height:1.6}
+  .empty-note a{color:var(--blue)}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="/index.html">← Hub</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand">My Responsibilities</div>
+</header>
+
+<main>
+  <div class="page-hd">
+    <h1>My Responsibilities</h1>
+    <div class="who" id="who-line">—</div>
+  </div>
+  <div class="status-line" id="status-line">Loading…</div>
+
+  <div class="summary-row" id="summary-row"></div>
+
+  <div id="content-wrap"></div>
+</main>
+
+<script src="/config/supabase_config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/hub_config.js"></script>
+<script>
+const STATUS_LABELS = { unassigned: 'Unassigned', assigned: 'Assigned', needs_backup: 'Needs backup' };
+
+let client = null;
+if (typeof SUPABASE_URL !== 'undefined' && SUPABASE_URL) {
+  client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+function esc(str){ return String(str==null?'':str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+const currentUser = (sessionStorage.getItem('2cw_user_name') || '').trim();
+if(!currentUser){
+  window.location.href = '/index.html';
+}
+
+let allItems = [];
+
+async function loadMine(){
+  const status = document.getElementById('status-line');
+  document.getElementById('who-line').textContent = currentUser;
+  if(!client){
+    status.textContent = 'Supabase is not configured.';
+    return;
+  }
+  status.textContent = 'Loading…';
+  try{
+    const { data, error } = await client.from('responsibilities').select('*')
+      .order('sort_order', { ascending: true }).order('created_at', { ascending: true });
+    if(error) throw error;
+    allItems = data || [];
+    render();
+  }catch(e){
+    status.textContent = 'Could not load: ' + e.message;
+  }
+}
+
+function matchName(a, b){
+  return (a||'').trim().toLowerCase() === (b||'').trim().toLowerCase();
+}
+
+function render(){
+  const status = document.getElementById('status-line');
+  const primary = allItems.filter(i => matchName(i.owner, currentUser));
+  const backup = allItems.filter(i => matchName(i.backup_owner, currentUser) && !matchName(i.owner, currentUser));
+
+  status.innerHTML = `<b>${primary.length}</b> you own &nbsp;·&nbsp; <b>${backup.length}</b> you back up`;
+
+  const needsBackupCount = primary.filter(i => i.status === 'needs_backup').length;
+  document.getElementById('summary-row').innerHTML = `
+    <div class="summary-tile primary"><div class="n">${primary.length}</div><div class="lbl">You own</div></div>
+    <div class="summary-tile backup"><div class="n">${backup.length}</div><div class="lbl">You back up</div></div>
+    <div class="summary-tile needs_backup"><div class="n">${needsBackupCount}</div><div class="lbl">Yours, no backup yet</div></div>
+  `;
+
+  const wrap = document.getElementById('content-wrap');
+  if(!primary.length && !backup.length){
+    wrap.innerHTML = `<div class="empty-note">Nothing assigned to <b>${esc(currentUser)}</b> yet — check the <a href="/tasks_dashboard.html#responsibilities">Responsibilities Matrix</a> or ask whoever's delegating to assign you something.</div>`;
+    return;
+  }
+
+  let html = '';
+  if(primary.length){
+    html += '<div class="group-hd">You own</div>';
+    html += `<div class="resp-list">${primary.map(i => rowHtml(i, 'primary')).join('')}</div>`;
+  }
+  if(backup.length){
+    html += '<div class="group-hd">You back up</div>';
+    html += `<div class="resp-list">${backup.map(i => rowHtml(i, 'backup')).join('')}</div>`;
+  }
+  wrap.innerHTML = html;
+}
+
+function rowHtml(i, role){
+  return `
+    <div class="resp-row" data-id="${i.id}">
+      <div class="resp-title-row">
+        <span class="resp-title">${esc(i.title)}</span>
+        <span class="tag role-${role}">${role === 'primary' ? 'Primary' : 'Backup'}</span>
+        <span class="tag status-${i.status}">${esc(STATUS_LABELS[i.status] || i.status)}</span>
+      </div>
+      <div class="resp-area">${esc(i.area || '')}</div>
+      ${i.description ? `<div class="resp-desc">${esc(i.description)}</div>` : ''}
+      <div class="resp-pair"><b>Owner:</b> ${i.owner ? esc(i.owner) : '—'} &nbsp;·&nbsp; <b>Backup:</b> ${i.backup_owner ? esc(i.backup_owner) : '—'}</div>
+      <div class="resp-notes-wrap">
+        <label>Notes</label>
+        <textarea class="notes-field" data-id="${i.id}" onblur="saveNotes('${i.id}', this)" placeholder="Add a note for whoever covers this next…">${esc(i.notes)}</textarea>
+        <div class="notes-save-hint" id="notes-hint-${i.id}"></div>
+      </div>
+      <a class="resp-link" href="/tasks_dashboard.html#responsibilities">Edit in matrix →</a>
+    </div>`;
+}
+
+async function saveNotes(id, el){
+  const item = allItems.find(i => i.id === id);
+  const newVal = el.value.trim() || null;
+  if(item && item.notes === newVal) return; // unchanged, skip the write
+  const hint = document.getElementById('notes-hint-'+id);
+  hint.textContent = 'Saving…';
+  try{
+    const { error } = await client.from('responsibilities').update({ notes: newVal }).eq('id', id);
+    if(error) throw error;
+    if(item) item.notes = newVal;
+    hint.textContent = 'Saved';
+    setTimeout(() => { if(hint.textContent === 'Saved') hint.textContent = ''; }, 1500);
+  }catch(e){
+    hint.textContent = 'Could not save: ' + e.message;
+  }
+}
+
+loadMine();
+</script>
+<script src="/sw_register.js"></script>
+</body>
+</html>
