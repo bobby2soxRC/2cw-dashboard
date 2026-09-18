@@ -170,7 +170,7 @@ function rowHtml(i, role){
         <span class="tag role-${role}">${role === 'primary' ? 'Primary' : 'Backup'}</span>
         <span class="tag status-${i.status}">${esc(STATUS_LABELS[i.status] || i.status)}</span>
       </div>
-      <div class="resp-area">${esc(i.area || '')}</div>
+      <div class="resp-area">${i.department ? esc(i.department) + ' · ' : ''}${esc(i.area || '')}</div>
       ${i.description ? `<div class="resp-desc">${esc(i.description)}</div>` : ''}
       <div class="resp-pair"><b>Owner:</b> ${i.owner ? esc(i.owner) : '—'} &nbsp;·&nbsp; <b>Backup:</b> ${i.backup_owner ? esc(i.backup_owner) : '—'}</div>
       <div class="resp-notes-wrap">

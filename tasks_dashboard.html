@@ -161,6 +161,7 @@
   .resp-title-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .resp-title{font-size:.92rem;font-weight:500}
   .resp-meta{display:flex;align-items:center;gap:10px;margin-top:4px;flex-wrap:wrap;font-family:'DM Mono',monospace;font-size:.68rem;color:var(--subtext)}
+  .tag.dept{color:var(--blue);border-color:rgba(90,159,212,.35)}
   .tag.status-unassigned{color:var(--red);border-color:rgba(239,83,80,.35)}
   .tag.status-needs_backup{color:var(--gold);border-color:rgba(212,168,67,.35)}
   .tag.status-assigned{color:var(--green);border-color:rgba(61,184,122,.35)}
@@ -256,6 +257,9 @@
     <div class="summary-row" id="resp-summary-row"></div>
 
     <div class="filters">
+      <select id="resp-f-department" onchange="respRender()">
+        <option value="">All departments</option>
+      </select>
       <select id="resp-f-area" onchange="respRender()">
         <option value="">All areas</option>
       </select>
@@ -771,6 +775,12 @@ const RESP_AREA_ORDER = [
   'Harvest & Post-Harvest', 'Processing Facility (Adobe)', 'Transportation & Logistics',
   'Manufacturing', 'Distribution (Airway)', 'Sales & Operations Planning', 'Systems & ERP (Canix)'
 ];
+// Coarser roll-up than area — one department can span several areas (e.g.
+// Cultivation covers Nursery, Cultivation, and Harvest & Post-Harvest).
+const RESP_DEPARTMENT_ORDER = [
+  'Real Estate & Facilities', 'Compliance', 'Cultivation', 'Processing',
+  'Logistics', 'Manufacturing', 'Distribution', 'Sales & Planning', 'Systems & IT'
+];
 
 let respItems = [];
 let respOpenIds = new Set();
@@ -785,6 +795,13 @@ function respAreaOrder(){
   return [...known, ...extra];
 }
 
+function respDepartmentOrder(){
+  const seen = new Set(respItems.map(i => i.department || '').filter(Boolean));
+  const known = RESP_DEPARTMENT_ORDER.filter(d => seen.has(d));
+  const extra = [...seen].filter(d => !RESP_DEPARTMENT_ORDER.includes(d)).sort();
+  return [...known, ...extra];
+}
+
 async function respLoadAll(){
   const status = document.getElementById('resp-status-line');
   status.textContent = 'Loading responsibilities…';
@@ -795,6 +812,7 @@ async function respLoadAll(){
     if(error) throw error;
     respItems = data || [];
     respPopulateAreaFilter();
+    respPopulateDepartmentFilter();
     respUpdateStatusLine();
     respRender();
   }catch(e){
@@ -808,6 +826,14 @@ function respPopulateAreaFilter(){
   const current = sel.value;
   sel.innerHTML = '<option value="">All areas</option>' +
     respAreaOrder().map(a => `<option value="${esc(a)}">${esc(a)}</option>`).join('');
+  sel.value = current;
+}
+
+function respPopulateDepartmentFilter(){
+  const sel = document.getElementById('resp-f-department');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">All departments</option>' +
+    respDepartmentOrder().map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('');
   sel.value = current;
 }
 
@@ -825,9 +851,11 @@ function respUpdateStatusLine(){
 }
 
 function respMatchesFilters(i){
+  const fDept = document.getElementById('resp-f-department').value;
   const fArea = document.getElementById('resp-f-area').value;
   const fStatus = document.getElementById('resp-f-status').value;
   const q = document.getElementById('resp-f-search').value.trim().toLowerCase();
+  if(fDept && (i.department || '') !== fDept) return false;
   if(fArea && (i.area || '') !== fArea) return false;
   if(fStatus && i.status !== fStatus) return false;
   if(q){
@@ -889,6 +917,7 @@ function respRowHtml(i){
         <div class="resp-body">
           <div class="resp-title-row">
             <span class="resp-title">${esc(i.title)}</span>
+            ${i.department ? `<span class="tag dept">${esc(i.department)}</span>` : ''}
             <span class="tag status-${i.status}">${esc(RESP_STATUS_LABELS[i.status])}</span>
             ${i.priority ? `<span class="tag prio-${i.priority}">${esc(i.priority)}</span>` : ''}
           </div>
@@ -937,6 +966,7 @@ async function respDeleteItem(id){
     if(error) throw error;
     respItems = respItems.filter(i=>i.id!==id);
     respPopulateAreaFilter();
+    respPopulateDepartmentFilter();
     respUpdateStatusLine();
     respRender();
   }catch(e){ alert('Could not delete: ' + e.message); }
@@ -963,10 +993,16 @@ function respOpenEditor(id){
   respEditingId = id;
   const i = id ? respItems.find(x=>x.id===id) : null;
   const areaListId = 'resp-area-datalist';
+  const deptListId = 'resp-dept-datalist';
   document.getElementById('editor').innerHTML = `
     <h2>${i ? 'Edit Responsibility' : 'Add Responsibility'}</h2>
     <div class="form-row full"><div><label class="field-label">Title</label><input type="text" id="red-title" value="${esc(i?i.title:'')}"/></div></div>
-    <div class="form-row full">
+    <div class="form-row">
+      <div>
+        <label class="field-label">Department</label>
+        <input type="text" id="red-department" list="${deptListId}" value="${esc(i?i.department:'')}" placeholder="e.g. Cultivation"/>
+        <datalist id="${deptListId}">${RESP_DEPARTMENT_ORDER.map(d=>`<option value="${esc(d)}">`).join('')}</datalist>
+      </div>
       <div>
         <label class="field-label">Area</label>
         <input type="text" id="red-area" list="${areaListId}" value="${esc(i?i.area:'')}" placeholder="e.g. Cultivation"/>
@@ -1013,6 +1049,7 @@ function respOpenEditor(id){
 async function respSaveEditor(){
   const title = document.getElementById('red-title').value.trim();
   const area = document.getElementById('red-area').value.trim();
+  const department = document.getElementById('red-department').value.trim() || null;
   if(!title){ alert('Enter a title.'); return; }
   if(!area){ alert('Enter an area.'); return; }
   const owner = document.getElementById('red-owner').value.trim() || null;
@@ -1023,7 +1060,7 @@ async function respSaveEditor(){
   if(status === 'unassigned' && owner && backup_owner) status = 'assigned';
   else if(status === 'unassigned' && owner && !backup_owner) status = 'needs_backup';
   const payload = {
-    title, area,
+    title, area, department,
     description: document.getElementById('red-desc').value.trim() || null,
     owner, backup_owner, status,
     priority: document.getElementById('red-priority').value || null,
@@ -1072,6 +1109,7 @@ function respRowToItem(row){
   const backup_owner = row['backup_owner'] || row['backup owner'] || null;
   return {
     title, area,
+    department: row['department'] || null,
     description: row['description'] || null,
     owner, backup_owner,
     status: respStatusFromCsv(row['status'], owner, backup_owner),
@@ -1125,7 +1163,7 @@ function respCsvEscape(v){
   return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
 }
 function respDownloadCsv(){
-  const headers = ['area','title','description','owner','backup_owner','status','priority','notes'];
+  const headers = ['department','area','title','description','owner','backup_owner','status','priority','notes'];
   const lines = [headers.join(',')];
   respItems.forEach(i => { lines.push(headers.map(h => respCsvEscape(i[h])).join(',')); });
   const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
