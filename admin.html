@@ -96,6 +96,15 @@
   .row-saved{color:var(--green);font-size:.7rem;font-family:'DM Mono',monospace;margin-left:6px}
   .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .table-scroll table{min-width:760px}
+
+  /* org chart tree */
+  .org-tree{display:flex;flex-direction:column;gap:14px}
+  .org-node{display:flex;flex-direction:column}
+  .org-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .org-card.org-inactive{opacity:.45}
+  .org-name{font-size:.9rem;font-weight:600}
+  .org-title{color:var(--subtext);font-size:.78rem;margin-top:2px}
+  .org-children{margin:10px 0 0 18px;padding-left:18px;border-left:1px dashed var(--border);display:flex;flex-direction:column;gap:10px}
 </style>
 </head>
 <body>
@@ -121,6 +130,7 @@
   <div id="panel">
     <div class="top-tabs" id="top-tabs">
       <button data-tab="users" class="on" onclick="switchTab('users')">Users</button>
+      <button data-tab="orgchart" onclick="switchTab('orgchart')">Org Chart</button>
       <button data-tab="canix" onclick="switchTab('canix')">Canix Facilities</button>
       <button data-tab="forecast" onclick="switchTab('forecast')">Yield Forecast</button>
     </div>
@@ -136,6 +146,14 @@
       <div class="status-line" id="status-line"></div>
       <div id="import-result"></div>
       <div id="table-wrap"></div>
+    </div>
+
+    <div id="orgchart-view" class="view">
+      <div class="toolbar">
+        <h1>Org Chart</h1>
+      </div>
+      <div class="status-line">Every user in the app, nested by who reports to whom. Set a person's title and manager from their editor on the Users tab — this view just visualizes it.</div>
+      <div id="orgchart-wrap"></div>
     </div>
 
     <div id="canix-view" class="view">
@@ -217,8 +235,10 @@ async function loadPlantBatches(){
 function switchTab(tab){
   document.querySelectorAll('#top-tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   document.getElementById('users-view').classList.toggle('on', tab === 'users');
+  document.getElementById('orgchart-view').classList.toggle('on', tab === 'orgchart');
   document.getElementById('canix-view').classList.toggle('on', tab === 'canix');
   document.getElementById('forecast-view').classList.toggle('on', tab === 'forecast');
+  if(tab === 'orgchart') renderOrgChart();
   if(tab === 'canix' && !canixLoaded) refreshCanixFacilities();
   if(tab === 'forecast') refreshForecastTab();
 }
@@ -332,6 +352,7 @@ async function refreshUsers(){
     users = j.users || [];
     status.textContent = users.length + (users.length===1 ? ' user' : ' users') + ' · ' + users.filter(u=>u.active).length + ' active';
     renderTable();
+    if(document.getElementById('orgchart-view').classList.contains('on')) renderOrgChart();
   }catch(e){
     status.textContent = 'Could not load users: ' + e.message;
   }
@@ -364,11 +385,12 @@ function renderTable(){
   }
   const sorted = [...users].sort((a,b) => (b.active - a.active) || a.name.localeCompare(b.name));
   wrap.innerHTML = `<table>
-    <thead><tr><th>Name</th><th>PIN</th><th>Access</th><th></th></tr></thead>
+    <thead><tr><th>Name</th><th>Title</th><th>PIN</th><th>Access</th><th></th></tr></thead>
     <tbody>
       ${sorted.map(u => `
         <tr class="${u.active ? '' : 'inactive'}">
           <td>${esc(u.name)}${u.active ? '' : ' <span class="pill">inactive</span>'}</td>
+          <td class="muted">${esc(u.title || '—')}</td>
           <td>${esc(u.pin)}</td>
           <td>${cardSummary(u).map(p => `<span class="pill">${esc(p)}</span>`).join('') || '<span class="pill">no access</span>'}</td>
           <td><div class="row-actions">
@@ -378,6 +400,90 @@ function renderTable(){
         </tr>`).join('')}
     </tbody>
   </table>`;
+}
+
+// ── Org Chart tab ───────────────────────────────────────────────────────
+// Builds a parent(id) -> children[] map from users' reports_to. A user
+// whose reports_to is blank, or points at someone not in the (active or
+// inactive) user list, is treated as a root — same defensive fallback the
+// hub uses elsewhere for "shouldn't happen but don't break the page" data.
+function buildOrgTree(){
+  const byId = new Map(users.map(u => [u.id, u]));
+  const childrenOf = new Map();
+  users.forEach(u => {
+    const parentId = u.reports_to && byId.has(u.reports_to) ? u.reports_to : null;
+    if(!childrenOf.has(parentId)) childrenOf.set(parentId, []);
+    childrenOf.get(parentId).push(u);
+  });
+  childrenOf.forEach(list => list.sort((a,b) => a.name.localeCompare(b.name)));
+  return childrenOf;
+}
+
+// Everyone under `userId`, at any depth — used to keep the "Reports to"
+// dropdown from offering someone who'd create a reporting loop (the server
+// also rejects this on save; this just keeps the picker from offering a
+// bad choice in the first place).
+function descendantIds(userId){
+  const childrenOf = buildOrgTree();
+  const result = new Set();
+  const stack = [...(childrenOf.get(userId) || [])];
+  while(stack.length){
+    const u = stack.pop();
+    if(result.has(u.id)) continue;
+    result.add(u.id);
+    (childrenOf.get(u.id) || []).forEach(c => stack.push(c));
+  }
+  return result;
+}
+
+function renderOrgChart(){
+  const wrap = document.getElementById('orgchart-wrap');
+  if(!users.length){ wrap.innerHTML = '<div class="empty-note">No users yet — add some on the Users tab first.</div>'; return; }
+  const childrenOf = buildOrgTree();
+  const roots = childrenOf.get(null) || [];
+  if(!roots.length){ wrap.innerHTML = '<div class="empty-note">Nobody\'s at the top yet.</div>'; return; }
+  wrap.innerHTML = `<div class="org-tree">${roots.map(u => orgNodeHtml(u, childrenOf, new Set())).join('')}</div>`;
+}
+
+function orgNodeHtml(u, childrenOf, ancestors){
+  // `ancestors` guards against a cycle that somehow got into the data (the
+  // server rejects cycles on save, but this keeps a render from recursing
+  // forever if bad data ever slips in some other way).
+  const kids = (childrenOf.get(u.id) || []).filter(c => !ancestors.has(c.id));
+  const nextAncestors = new Set(ancestors);
+  nextAncestors.add(u.id);
+  return `
+    <div class="org-node">
+      <div class="org-card ${u.active ? '' : 'org-inactive'}">
+        <div>
+          <div class="org-name">${esc(u.name)}${u.active ? '' : ' <span class="pill">inactive</span>'}</div>
+          <div class="org-title">${esc(u.title || 'No title set')}</div>
+        </div>
+        <div class="row-actions"><button onclick="openEditor('${u.id}')">Edit</button></div>
+      </div>
+      ${kids.length ? `<div class="org-children">${kids.map(c => orgNodeHtml(c, childrenOf, nextAncestors)).join('')}</div>` : ''}
+    </div>`;
+}
+
+// Options for the "Reports to" dropdown on the user editor: active users
+// only, minus the person being edited and anyone already below them on the
+// chart (picking one of those would create a loop). If their current
+// manager got deactivated since being assigned, that value is kept visible
+// and selected rather than silently dropped.
+function reportsToOptionsHtml(u){
+  const excluded = new Set();
+  if(u){ excluded.add(u.id); descendantIds(u.id).forEach(id => excluded.add(id)); }
+  const options = users.filter(x => x.active && !excluded.has(x.id)).sort((a,b) => a.name.localeCompare(b.name));
+  let html = '<option value="">— None (top of chart) —</option>';
+  options.forEach(x => {
+    const selected = u && u.reports_to === x.id;
+    html += `<option value="${x.id}" ${selected?'selected':''}>${esc(x.name)}${x.title ? ' — '+esc(x.title) : ''}</option>`;
+  });
+  if(u && u.reports_to && !options.some(x => x.id === u.reports_to)){
+    const cur = users.find(x => x.id === u.reports_to);
+    if(cur) html += `<option value="${cur.id}" selected>${esc(cur.name)} (inactive)</option>`;
+  }
+  return html;
 }
 
 async function toggleActive(id, currentlyActive){
@@ -420,6 +526,12 @@ function openEditor(id){
       <div><label class="field-label">PIN</label><input type="tel" id="ed-pin" inputmode="numeric" value="${esc(u?u.pin:'')}"/></div>
     </div>
     <label class="active-toggle"><input type="checkbox" id="ed-active" ${(!u || u.active) ? 'checked' : ''}/> Active</label>
+
+    <div class="section-hd">Org Chart</div>
+    <div class="form-row">
+      <div><label class="field-label">Title</label><input type="text" id="ed-title" value="${esc(u?u.title:'')}" placeholder="e.g. VP of Operations"/></div>
+      <div><label class="field-label">Reports to</label><select id="ed-reports-to">${reportsToOptionsHtml(u)}</select></div>
+    </div>
 
     <div class="section-hd">Dashboard cards</div>
     <div class="check-grid">
@@ -515,7 +627,9 @@ async function saveEditor(){
   const viewStations = viewAll ? 'all' : Array.from(ed.querySelectorAll('[data-view-station]:checked')).map(cb => cb.dataset.viewStation).join(',');
   columns['production view stations'] = viewStations;
 
-  const user = { id: editingId, name, pin, active: document.getElementById('ed-active').checked, columns };
+  const title = document.getElementById('ed-title').value.trim();
+  const reportsTo = document.getElementById('ed-reports-to').value || null;
+  const user = { id: editingId, name, pin, active: document.getElementById('ed-active').checked, title, reports_to: reportsTo, columns };
   const btn = ed.querySelector('.btn-green');
   btn.disabled = true; btn.textContent = 'Saving…';
   try{

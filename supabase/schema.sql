@@ -119,12 +119,21 @@ create table if not exists app_users (
   name         text not null,
   pin          text not null,
   active       boolean not null default true,
+  title        text,               -- org chart job title, e.g. "VP of Operations"
+  reports_to   uuid references app_users(id) on delete set null,  -- org chart manager — nullable (top of the chart)
   columns      jsonb not null default '{}'::jsonb,
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );
 
+-- Added after the table's first release — `create table if not exists`
+-- above won't retrofit new columns onto an already-existing table, so this
+-- runs separately and is safe to re-run.
+alter table app_users add column if not exists title text;
+alter table app_users add column if not exists reports_to uuid references app_users(id) on delete set null;
+
 create unique index if not exists idx_app_users_pin_active on app_users (pin) where active;
+create index if not exists idx_app_users_reports_to on app_users (reports_to);
 
 drop trigger if exists trg_touch_app_users on app_users;
 create trigger trg_touch_app_users

@@ -25,8 +25,18 @@ treat it like a master key, not a login.
 
 ## How it fits together
 
-`app_users` is a Supabase table: `id`, `name`, `pin`, `active`, `columns`
-(jsonb), timestamps. The important design choice is that `columns` stores
+`app_users` is a Supabase table: `id`, `name`, `pin`, `active`, `title`,
+`reports_to` (self-referencing FK — that person's manager, null at the top
+of the chart), `columns` (jsonb), timestamps. `title`/`reports_to` back the
+**Org Chart** tab in `admin.html` — set from the same per-user editor as
+everything else, visualized as a nested tree there. The "Reports to"
+dropdown only offers active users, and excludes the person themself and
+anyone already below them on the chart; `netlify/functions/admin.js`
+double-checks the same thing server-side on save (walks the proposed
+manager's chain and rejects if it leads back to the person being edited),
+so a reporting loop can't get saved even via a direct API call.
+
+The important design choice for the rest of the row is that `columns` stores
 the **exact same flat shape** `parseCSV()` already produced from the sheet —
 lowercase column names, `'TRUE'`/`'FALSE'` strings, comma-list strings for
 `production edit stations` / `production view stations`. That means
