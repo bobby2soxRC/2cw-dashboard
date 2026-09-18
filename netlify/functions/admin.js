@@ -64,6 +64,26 @@ async function supaFetch(supaUrl, serviceKey, path, opts = {}) {
   });
 }
 
+// Walks the reports_to chain starting at `startId` and returns true if it
+// ever reaches `targetId` — used to reject an org-chart edit that would
+// make someone their own (possibly indirect) manager. Fetches the whole
+// id/reports_to graph in one call rather than N+1 lookups; app_users is
+// small (staff directory size), so this stays cheap.
+async function chainReaches(supaUrl, serviceKey, startId, targetId) {
+  const res = await supaFetch(supaUrl, serviceKey, 'app_users?select=id,reports_to');
+  if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+  const byId = new Map((await res.json()).map(u => [u.id, u.reports_to]));
+  let cur = startId;
+  const seen = new Set();
+  while (cur) {
+    if (cur === targetId) return true;
+    if (seen.has(cur)) break; // pre-existing cycle in the data — stop rather than loop forever
+    seen.add(cur);
+    cur = byId.get(cur) || null;
+  }
+  return false;
+}
+
 async function importRows(supaUrl, serviceKey, rows) {
   const results = [];
   for (const row of rows) {
@@ -142,7 +162,20 @@ exports.handler = async (event) => {
       const pin = String(u.pin || '').trim();
       if (!name || !pin) return json(400, { ok: false, error: 'Name and PIN are required' });
       if (!/^\d{4,}$/.test(pin)) return json(400, { ok: false, error: 'PIN must be numeric' });
-      const body = { name, pin, active: u.active !== false, columns: u.columns || {} };
+      const reportsTo = u.reports_to || null;
+      if (reportsTo && u.id) {
+        if (reportsTo === u.id) return json(400, { ok: false, error: 'Someone cannot report to themselves' });
+        // Reject if the proposed manager's own chain leads back to this
+        // user — that would make this user (indirectly) their own manager.
+        if (await chainReaches(supaUrl, serviceKey, reportsTo, u.id)) {
+          return json(400, { ok: false, error: 'That would create a reporting loop — pick a manager who isn\'t already below this person on the chart' });
+        }
+      }
+      const body = {
+        name, pin, active: u.active !== false, columns: u.columns || {},
+        title: (u.title || '').trim() || null,
+        reports_to: reportsTo
+      };
       if (u.id) {
         const res = await supaFetch(supaUrl, serviceKey, `app_users?id=eq.${encodeURIComponent(u.id)}`, {
           method: 'PATCH', body: JSON.stringify(body)

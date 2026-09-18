@@ -96,6 +96,78 @@
   .row-saved{color:var(--green);font-size:.7rem;font-family:'DM Mono',monospace;margin-left:6px}
   .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .table-scroll table{min-width:760px}
+
+  /* org chart tree */
+  .org-tree{display:flex;flex-direction:column;gap:14px}
+  .org-node{display:flex;flex-direction:column}
+  .org-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .org-card.org-inactive{opacity:.45}
+  .org-name{font-size:.9rem;font-weight:600}
+  .org-title{color:var(--subtext);font-size:.78rem;margin-top:2px}
+  .org-children{margin:10px 0 0 18px;padding-left:18px;border-left:1px dashed var(--border);display:flex;flex-direction:column;gap:10px}
+
+  /* Responsibilities tab */
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  select{background:#0c0d0f;border:1px solid var(--border);color:var(--text);padding:.55rem .7rem;border-radius:8px;font-size:.85rem;font-family:'DM Sans',sans-serif;outline:none}
+  select:focus{border-color:var(--gold)}
+  textarea{width:100%;background:#0c0d0f;border:1px solid var(--border);color:var(--text);padding:.6rem .75rem;border-radius:8px;font-size:.85rem;font-family:'DM Sans',sans-serif;outline:none;resize:vertical;min-height:64px}
+  textarea:focus{border-color:var(--gold)}
+  .form-row.full{grid-template-columns:1fr}
+  .hint{font-size:.72rem;color:var(--muted);margin:-8px 0 14px}
+  .search-wrap{flex:1;min-width:180px}
+  .search-wrap input{width:100%}
+  .summary-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+  .summary-tile{flex:1;min-width:120px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px}
+  .summary-tile .n{font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1}
+  .summary-tile .lbl{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);margin-top:2px}
+  .summary-tile.unassigned .n{color:var(--red)}
+  .summary-tile.needs_backup .n{color:var(--gold)}
+  .summary-tile.assigned .n{color:var(--green)}
+  .area-section{margin-bottom:26px}
+  .area-hd{display:flex;align-items:center;gap:12px;margin-bottom:10px;cursor:pointer;user-select:none}
+  .area-hd h2{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.03em}
+  .area-hd .chev{color:var(--muted);font-size:.7rem;transition:transform .15s}
+  .area-hd.collapsed .chev{transform:rotate(-90deg)}
+  .area-progress{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--subtext);white-space:nowrap}
+  .area-bar{flex:1;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden;max-width:220px}
+  .area-bar-fill{height:100%;background:var(--green)}
+  .area-body.collapsed{display:none}
+  .resp-list{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface)}
+  .resp-row{border-bottom:1px solid var(--border)}
+  .resp-row:last-child{border-bottom:none}
+  .resp-main{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;cursor:pointer}
+  .resp-main:hover{background:var(--surface2)}
+  .status-dot{flex:none;width:11px;height:11px;border-radius:50%;margin-top:4px;border:2px solid var(--border)}
+  .status-dot.unassigned{background:transparent;border-color:var(--red)}
+  .status-dot.needs_backup{background:var(--gold);border-color:var(--gold)}
+  .status-dot.assigned{background:var(--green);border-color:var(--green)}
+  .resp-body{flex:1;min-width:0}
+  .resp-title-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .resp-title{font-size:.92rem;font-weight:500}
+  .resp-meta{display:flex;align-items:center;gap:10px;margin-top:4px;flex-wrap:wrap;font-family:'DM Mono',monospace;font-size:.68rem;color:var(--subtext)}
+  .tag{display:inline-block;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);color:var(--subtext)}
+  .tag.dept{color:var(--blue);border-color:rgba(90,159,212,.35)}
+  .tag.status-unassigned{color:var(--red);border-color:rgba(239,83,80,.35)}
+  .tag.status-needs_backup{color:var(--gold);border-color:rgba(212,168,67,.35)}
+  .tag.status-assigned{color:var(--green);border-color:rgba(61,184,122,.35)}
+  .tag.prio-high{color:var(--red)}
+  .tag.prio-medium{color:var(--gold)}
+  .tag.prio-low{color:var(--subtext)}
+  .owner-name{color:var(--text)}
+  .owner-missing{color:var(--red)}
+  .resp-actions{flex:none;display:flex;gap:6px;align-items:flex-start;padding-top:2px}
+  .resp-actions button{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.05em;text-transform:uppercase;background:transparent;border:1px solid var(--border);color:var(--subtext);padding:.28rem .55rem;border-radius:6px;cursor:pointer}
+  .resp-actions button:hover{border-color:var(--gold);color:var(--gold)}
+  .chev-btn{color:var(--muted);font-size:.7rem;padding-top:6px;transition:transform .15s}
+  .chev-btn.open{transform:rotate(90deg)}
+  .resp-detail{display:none;padding:0 14px 16px 37px;border-top:1px dashed var(--border)}
+  .resp-detail.open{display:block}
+  .resp-desc{font-size:.82rem;color:var(--subtext);margin:12px 0 8px;max-width:70ch;line-height:1.5}
+  .resp-notes{font-size:.8rem;color:var(--subtext);margin:8px 0;max-width:70ch;line-height:1.5}
+  .resp-notes b{color:var(--text)}
+  .resp-backup{font-size:.8rem;margin:8px 0}
+  .resp-backup b{color:var(--text)}
+  #resp-csv-input{display:none}
 </style>
 </head>
 <body>
@@ -121,6 +193,8 @@
   <div id="panel">
     <div class="top-tabs" id="top-tabs">
       <button data-tab="users" class="on" onclick="switchTab('users')">Users</button>
+      <button data-tab="orgchart" onclick="switchTab('orgchart')">Org Chart</button>
+      <button data-tab="responsibilities" onclick="switchTab('responsibilities')">Responsibilities</button>
       <button data-tab="canix" onclick="switchTab('canix')">Canix Facilities</button>
       <button data-tab="forecast" onclick="switchTab('forecast')">Yield Forecast</button>
     </div>
@@ -136,6 +210,48 @@
       <div class="status-line" id="status-line"></div>
       <div id="import-result"></div>
       <div id="table-wrap"></div>
+    </div>
+
+    <div id="orgchart-view" class="view">
+      <div class="toolbar">
+        <h1>Org Chart</h1>
+      </div>
+      <div class="status-line">Every user in the app, nested by who reports to whom. Set a person's title and manager from their editor on the Users tab — this view just visualizes it.</div>
+      <div id="orgchart-wrap"></div>
+    </div>
+
+    <div id="responsibilities-view" class="view">
+      <div class="toolbar">
+        <h1>Responsibilities</h1>
+        <div class="toolbar-actions">
+          <input type="file" id="resp-csv-input" accept=".csv" onchange="respHandleCsvFile(event)"/>
+          <button class="btn btn-ghost" onclick="document.getElementById('resp-csv-input').click()">Upload CSV</button>
+          <button class="btn btn-ghost" onclick="respDownloadCsv()">Download CSV</button>
+          <button class="btn btn-green" onclick="respOpenEditor(null)">+ Add Responsibility</button>
+        </div>
+      </div>
+      <div class="status-line" id="resp-status-line">Loading…</div>
+      <div id="resp-import-result"></div>
+
+      <div class="summary-row" id="resp-summary-row"></div>
+
+      <div class="filters">
+        <select id="resp-f-department" onchange="respRender()">
+          <option value="">All departments</option>
+        </select>
+        <select id="resp-f-area" onchange="respRender()">
+          <option value="">All areas</option>
+        </select>
+        <select id="resp-f-status" onchange="respRender()">
+          <option value="">All statuses</option>
+          <option value="unassigned">Unassigned</option>
+          <option value="assigned">Assigned</option>
+          <option value="needs_backup">Needs backup</option>
+        </select>
+        <div class="search-wrap"><input type="text" id="resp-f-search" placeholder="Search responsibilities or owners…" oninput="respRender()"/></div>
+      </div>
+
+      <div id="resp-list-wrap"></div>
     </div>
 
     <div id="canix-view" class="view">
@@ -175,6 +291,8 @@
   <div id="editor"></div>
 </div>
 
+<script src="/config/supabase_config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/operations_stations.js"></script>
 <script src="/ops_common.js"></script>
 <script src="/hub_config.js"></script>
@@ -191,6 +309,22 @@ const CANIX_STAGES = ['Cultivation', 'Processing', 'Manufacturing', 'Distributio
 // field_forms).
 const DERIVED_CARD_KEYS = ['production_dashboard', 'production_today', 'field_forms'];
 const TOGGLE_CARDS = CARD_DEFS.filter(d => !DERIVED_CARD_KEYS.includes(d.key));
+
+// The Responsibilities tab talks to Supabase directly with the anon key,
+// unlike Users/Canix/Forecast which route through signed-token Netlify
+// functions — the `responsibilities` table already has an open anon
+// read/write/delete RLS policy (see supabase/schema.sql), the same posture
+// as `tasks`, because nothing in it is more sensitive than what's already
+// on the Ops Gameplan Tracker. The admin PIN gate here is about who can
+// *reach* this page, not an extra access layer on this particular table.
+let client = null;
+if (typeof SUPABASE_URL !== 'undefined' && SUPABASE_URL) {
+  client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+async function requireClient(){
+  if(!client) throw new Error('Supabase is not configured (config/supabase_config.js is blank).');
+  return client;
+}
 
 let users = [];
 let editingId = null; // null = new user
@@ -217,8 +351,17 @@ async function loadPlantBatches(){
 function switchTab(tab){
   document.querySelectorAll('#top-tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   document.getElementById('users-view').classList.toggle('on', tab === 'users');
+  document.getElementById('orgchart-view').classList.toggle('on', tab === 'orgchart');
+  document.getElementById('responsibilities-view').classList.toggle('on', tab === 'responsibilities');
   document.getElementById('canix-view').classList.toggle('on', tab === 'canix');
   document.getElementById('forecast-view').classList.toggle('on', tab === 'forecast');
+  if(tab === 'orgchart') renderOrgChart();
+  if(tab === 'responsibilities'){
+    history.replaceState(null, '', '#responsibilities');
+    if(!respLoaded){ respLoaded = true; respLoadAll(); }
+  } else {
+    history.replaceState(null, '', location.pathname);
+  }
   if(tab === 'canix' && !canixLoaded) refreshCanixFacilities();
   if(tab === 'forecast') refreshForecastTab();
 }
@@ -322,6 +465,10 @@ async function showPanel(){
   document.getElementById('panel').style.display = 'block';
   document.getElementById('signout-btn').style.display = 'inline-block';
   await refreshUsers();
+  // Deep-link support: admin.html#responsibilities opens straight to that
+  // tab once logged in — used by my_responsibilities.html's "Edit in
+  // matrix" links, which can't skip the PIN gate.
+  if(location.hash === '#responsibilities') switchTab('responsibilities');
 }
 
 async function refreshUsers(){
@@ -332,6 +479,7 @@ async function refreshUsers(){
     users = j.users || [];
     status.textContent = users.length + (users.length===1 ? ' user' : ' users') + ' · ' + users.filter(u=>u.active).length + ' active';
     renderTable();
+    if(document.getElementById('orgchart-view').classList.contains('on')) renderOrgChart();
   }catch(e){
     status.textContent = 'Could not load users: ' + e.message;
   }
@@ -364,11 +512,12 @@ function renderTable(){
   }
   const sorted = [...users].sort((a,b) => (b.active - a.active) || a.name.localeCompare(b.name));
   wrap.innerHTML = `<table>
-    <thead><tr><th>Name</th><th>PIN</th><th>Access</th><th></th></tr></thead>
+    <thead><tr><th>Name</th><th>Title</th><th>PIN</th><th>Access</th><th></th></tr></thead>
     <tbody>
       ${sorted.map(u => `
         <tr class="${u.active ? '' : 'inactive'}">
           <td>${esc(u.name)}${u.active ? '' : ' <span class="pill">inactive</span>'}</td>
+          <td class="muted">${esc(u.title || '—')}</td>
           <td>${esc(u.pin)}</td>
           <td>${cardSummary(u).map(p => `<span class="pill">${esc(p)}</span>`).join('') || '<span class="pill">no access</span>'}</td>
           <td><div class="row-actions">
@@ -378,6 +527,535 @@ function renderTable(){
         </tr>`).join('')}
     </tbody>
   </table>`;
+}
+
+// ── Org Chart tab ───────────────────────────────────────────────────────
+// Builds a parent(id) -> children[] map from users' reports_to. A user
+// whose reports_to is blank, or points at someone not in the (active or
+// inactive) user list, is treated as a root — same defensive fallback the
+// hub uses elsewhere for "shouldn't happen but don't break the page" data.
+function buildOrgTree(){
+  const byId = new Map(users.map(u => [u.id, u]));
+  const childrenOf = new Map();
+  users.forEach(u => {
+    const parentId = u.reports_to && byId.has(u.reports_to) ? u.reports_to : null;
+    if(!childrenOf.has(parentId)) childrenOf.set(parentId, []);
+    childrenOf.get(parentId).push(u);
+  });
+  childrenOf.forEach(list => list.sort((a,b) => a.name.localeCompare(b.name)));
+  return childrenOf;
+}
+
+// Everyone under `userId`, at any depth — used to keep the "Reports to"
+// dropdown from offering someone who'd create a reporting loop (the server
+// also rejects this on save; this just keeps the picker from offering a
+// bad choice in the first place).
+function descendantIds(userId){
+  const childrenOf = buildOrgTree();
+  const result = new Set();
+  const stack = [...(childrenOf.get(userId) || [])];
+  while(stack.length){
+    const u = stack.pop();
+    if(result.has(u.id)) continue;
+    result.add(u.id);
+    (childrenOf.get(u.id) || []).forEach(c => stack.push(c));
+  }
+  return result;
+}
+
+function renderOrgChart(){
+  const wrap = document.getElementById('orgchart-wrap');
+  if(!users.length){ wrap.innerHTML = '<div class="empty-note">No users yet — add some on the Users tab first.</div>'; return; }
+  const childrenOf = buildOrgTree();
+  const roots = childrenOf.get(null) || [];
+  if(!roots.length){ wrap.innerHTML = '<div class="empty-note">Nobody\'s at the top yet.</div>'; return; }
+  wrap.innerHTML = `<div class="org-tree">${roots.map(u => orgNodeHtml(u, childrenOf, new Set())).join('')}</div>`;
+}
+
+function orgNodeHtml(u, childrenOf, ancestors){
+  // `ancestors` guards against a cycle that somehow got into the data (the
+  // server rejects cycles on save, but this keeps a render from recursing
+  // forever if bad data ever slips in some other way).
+  const kids = (childrenOf.get(u.id) || []).filter(c => !ancestors.has(c.id));
+  const nextAncestors = new Set(ancestors);
+  nextAncestors.add(u.id);
+  return `
+    <div class="org-node">
+      <div class="org-card ${u.active ? '' : 'org-inactive'}">
+        <div>
+          <div class="org-name">${esc(u.name)}${u.active ? '' : ' <span class="pill">inactive</span>'}</div>
+          <div class="org-title">${esc(u.title || 'No title set')}</div>
+        </div>
+        <div class="row-actions"><button onclick="openEditor('${u.id}')">Edit</button></div>
+      </div>
+      ${kids.length ? `<div class="org-children">${kids.map(c => orgNodeHtml(c, childrenOf, nextAncestors)).join('')}</div>` : ''}
+    </div>`;
+}
+
+// Options for the "Reports to" dropdown on the user editor: active users
+// only, minus the person being edited and anyone already below them on the
+// chart (picking one of those would create a loop). If their current
+// manager got deactivated since being assigned, that value is kept visible
+// and selected rather than silently dropped.
+function reportsToOptionsHtml(u){
+  const excluded = new Set();
+  if(u){ excluded.add(u.id); descendantIds(u.id).forEach(id => excluded.add(id)); }
+  const options = users.filter(x => x.active && !excluded.has(x.id)).sort((a,b) => a.name.localeCompare(b.name));
+  let html = '<option value="">— None (top of chart) —</option>';
+  options.forEach(x => {
+    const selected = u && u.reports_to === x.id;
+    html += `<option value="${x.id}" ${selected?'selected':''}>${esc(x.name)}${x.title ? ' — '+esc(x.title) : ''}</option>`;
+  });
+  if(u && u.reports_to && !options.some(x => x.id === u.reports_to)){
+    const cur = users.find(x => x.id === u.reports_to);
+    if(cur) html += `<option value="${cur.id}" selected>${esc(cur.name)} (inactive)</option>`;
+  }
+  return html;
+}
+
+// ── Responsibilities tab ────────────────────────────────────────────────
+// Ported from the Ops Gameplan Tracker's Responsibilities tab — same table,
+// same behavior, moved here so delegation setup lives alongside the org
+// chart and user access instead of on the day-to-day tasks page. Shares
+// esc(), requireClient(), and the #editor-backdrop modal with the Users/Org
+// Chart editor above; everything else is namespaced with a resp/red-
+// prefix so state and DOM ids never collide with it.
+const RESP_STATUS_LABELS = { unassigned: 'Unassigned', assigned: 'Assigned', needs_backup: 'Needs backup' };
+const RESP_STATUS_ORDER = ['unassigned', 'needs_backup', 'assigned'];
+const RESP_AREA_ORDER = [
+  'Land & Leases', 'Licensing & Compliance', 'Nursery', 'Cultivation',
+  'Harvest & Post-Harvest', 'Processing Facility (Adobe)', 'Transportation & Logistics',
+  'Manufacturing', 'Distribution (Airway)', 'Sales & Operations Planning', 'Systems & ERP (Canix)'
+];
+// Coarser roll-up than area — one department can span several areas (e.g.
+// Cultivation covers Nursery, Cultivation, and Harvest & Post-Harvest).
+const RESP_DEPARTMENT_ORDER = [
+  'Real Estate & Facilities', 'Compliance', 'Cultivation', 'Processing',
+  'Logistics', 'Manufacturing', 'Distribution', 'Sales & Planning', 'Systems & IT'
+];
+
+let respItems = [];
+let respOpenIds = new Set();
+let respCollapsedAreas = new Set();
+let respEditingId = null;
+let respLoaded = false;
+
+function respAreaOrder(){
+  const seen = new Set(respItems.map(i => i.area || 'Unassigned Area'));
+  const known = RESP_AREA_ORDER.filter(a => seen.has(a));
+  const extra = [...seen].filter(a => !RESP_AREA_ORDER.includes(a)).sort();
+  return [...known, ...extra];
+}
+
+function respDepartmentOrder(){
+  const seen = new Set(respItems.map(i => i.department || '').filter(Boolean));
+  const known = RESP_DEPARTMENT_ORDER.filter(d => seen.has(d));
+  const extra = [...seen].filter(d => !RESP_DEPARTMENT_ORDER.includes(d)).sort();
+  return [...known, ...extra];
+}
+
+async function respLoadAll(){
+  const status = document.getElementById('resp-status-line');
+  status.textContent = 'Loading responsibilities…';
+  try{
+    const c = await requireClient();
+    const { data, error } = await c.from('responsibilities').select('*')
+      .order('sort_order', { ascending: true }).order('created_at', { ascending: true });
+    if(error) throw error;
+    respItems = data || [];
+    respPopulateAreaFilter();
+    respPopulateDepartmentFilter();
+    respUpdateStatusLine();
+    respRender();
+  }catch(e){
+    status.textContent = 'Could not load responsibilities: ' + e.message;
+    document.getElementById('resp-list-wrap').innerHTML = '';
+  }
+}
+
+function respPopulateAreaFilter(){
+  const sel = document.getElementById('resp-f-area');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">All areas</option>' +
+    respAreaOrder().map(a => `<option value="${esc(a)}">${esc(a)}</option>`).join('');
+  sel.value = current;
+}
+
+function respPopulateDepartmentFilter(){
+  const sel = document.getElementById('resp-f-department');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">All departments</option>' +
+    respDepartmentOrder().map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('');
+  sel.value = current;
+}
+
+function respUpdateStatusLine(){
+  const status = document.getElementById('resp-status-line');
+  status.innerHTML = `<b>${respItems.length}</b> responsibilities across <b>${respAreaOrder().length}</b> areas`;
+  const unassigned = respItems.filter(i=>i.status==='unassigned').length;
+  const needsBackup = respItems.filter(i=>i.status==='needs_backup').length;
+  const assigned = respItems.filter(i=>i.status==='assigned').length;
+  document.getElementById('resp-summary-row').innerHTML = `
+    <div class="summary-tile unassigned"><div class="n">${unassigned}</div><div class="lbl">Unassigned</div></div>
+    <div class="summary-tile needs_backup"><div class="n">${needsBackup}</div><div class="lbl">Needs backup</div></div>
+    <div class="summary-tile assigned"><div class="n">${assigned}</div><div class="lbl">Fully assigned</div></div>
+  `;
+}
+
+function respMatchesFilters(i){
+  const fDept = document.getElementById('resp-f-department').value;
+  const fArea = document.getElementById('resp-f-area').value;
+  const fStatus = document.getElementById('resp-f-status').value;
+  const q = document.getElementById('resp-f-search').value.trim().toLowerCase();
+  if(fDept && (i.department || '') !== fDept) return false;
+  if(fArea && (i.area || '') !== fArea) return false;
+  if(fStatus && i.status !== fStatus) return false;
+  if(q){
+    const hay = (i.title+' '+(i.description||'')+' '+(i.owner||'')+' '+(i.backup_owner||'')+' '+(i.notes||'')).toLowerCase();
+    if(!hay.includes(q)) return false;
+  }
+  return true;
+}
+
+function respRender(){
+  const wrap = document.getElementById('resp-list-wrap');
+  if(!respItems.length){
+    wrap.innerHTML = '<div class="empty-note">No responsibilities yet. Add one, or upload a CSV to get started.</div>';
+    return;
+  }
+  const filtered = respItems.filter(respMatchesFilters);
+  const byArea = {};
+  respAreaOrder().forEach(a => byArea[a] = []);
+  filtered.forEach(i => {
+    const a = i.area || 'Unassigned Area';
+    (byArea[a] = byArea[a] || []).push(i);
+  });
+
+  let html = '';
+  Object.keys(byArea).forEach(a => {
+    const list = byArea[a];
+    if(!list.length) return;
+    const assigned = list.filter(i=>i.status==='assigned').length;
+    const pct = list.length ? Math.round(assigned/list.length*100) : 0;
+    const collapsed = respCollapsedAreas.has(a);
+    html += `
+      <div class="area-section">
+        <div class="area-hd ${collapsed?'collapsed':''}" onclick="respToggleArea('${a.replace(/'/g,"\\'")}')">
+          <span class="chev">▾</span>
+          <h2>${esc(a)}</h2>
+          <div class="area-bar"><div class="area-bar-fill" style="width:${pct}%"></div></div>
+          <div class="area-progress">${assigned}/${list.length} assigned</div>
+        </div>
+        <div class="area-body ${collapsed?'collapsed':''}">
+          <div class="resp-list">${list.map(respRowHtml).join('')}</div>
+        </div>
+      </div>`;
+  });
+  wrap.innerHTML = html || '<div class="empty-note">No responsibilities match these filters.</div>';
+}
+
+function respToggleArea(a){
+  if(respCollapsedAreas.has(a)) respCollapsedAreas.delete(a); else respCollapsedAreas.add(a);
+  respRender();
+}
+
+function respRowHtml(i){
+  const open = respOpenIds.has(i.id);
+  return `
+    <div class="resp-row" data-id="${i.id}">
+      <div class="resp-main" onclick="respToggleRow('${i.id}')">
+        <span class="chev-btn ${open?'open':''}">▸</span>
+        <span class="status-dot ${i.status}" title="${esc(RESP_STATUS_LABELS[i.status])}" onclick="event.stopPropagation();respCycleStatus('${i.id}')"></span>
+        <div class="resp-body">
+          <div class="resp-title-row">
+            <span class="resp-title">${esc(i.title)}</span>
+            ${i.department ? `<span class="tag dept">${esc(i.department)}</span>` : ''}
+            <span class="tag status-${i.status}">${esc(RESP_STATUS_LABELS[i.status])}</span>
+            ${i.priority ? `<span class="tag prio-${i.priority}">${esc(i.priority)}</span>` : ''}
+          </div>
+          <div class="resp-meta">
+            <span class="${i.owner ? 'owner-name' : 'owner-missing'}">${i.owner ? esc(i.owner) : 'No owner assigned'}</span>
+            ${i.backup_owner ? `<span>Backup: ${esc(i.backup_owner)}</span>` : ''}
+          </div>
+        </div>
+        <div class="resp-actions" onclick="event.stopPropagation()">
+          <button onclick="respOpenEditor('${i.id}')">Edit</button>
+          <button onclick="respDeleteItem('${i.id}')">Delete</button>
+        </div>
+      </div>
+      <div class="resp-detail ${open?'open':''}">
+        ${i.description ? `<div class="resp-desc">${esc(i.description)}</div>` : ''}
+        <div class="resp-backup"><b>Owner:</b> ${i.owner ? esc(i.owner) : '—'} &nbsp;·&nbsp; <b>Backup:</b> ${i.backup_owner ? esc(i.backup_owner) : '—'}</div>
+        ${i.notes ? `<div class="resp-notes"><b>Notes:</b> ${esc(i.notes)}</div>` : ''}
+      </div>
+    </div>`;
+}
+
+function respToggleRow(id){
+  if(respOpenIds.has(id)) respOpenIds.delete(id); else respOpenIds.add(id);
+  respRender();
+}
+
+async function respCycleStatus(id){
+  const i = respItems.find(x=>x.id===id);
+  if(!i) return;
+  const next = RESP_STATUS_ORDER[(RESP_STATUS_ORDER.indexOf(i.status)+1) % RESP_STATUS_ORDER.length];
+  i.status = next;
+  respRender();
+  try{
+    const c = await requireClient();
+    const { error } = await c.from('responsibilities').update({ status: next }).eq('id', id);
+    if(error) throw error;
+    respUpdateStatusLine();
+  }catch(e){ alert('Could not update status: ' + e.message); respLoadAll(); }
+}
+
+async function respDeleteItem(id){
+  if(!confirm('Delete this responsibility?')) return;
+  try{
+    const c = await requireClient();
+    const { error } = await c.from('responsibilities').delete().eq('id', id);
+    if(error) throw error;
+    respItems = respItems.filter(i=>i.id!==id);
+    respPopulateAreaFilter();
+    respPopulateDepartmentFilter();
+    respUpdateStatusLine();
+    respRender();
+  }catch(e){ alert('Could not delete: ' + e.message); }
+}
+
+// ── Responsibilities editor ─────────────────────────────────────────────
+// Owner/backup are <select> dropdowns built straight from the already-
+// loaded `users` array (active users only) — the same directory the Org
+// Chart and Users tabs use — so an assignment always matches a real login
+// name, which is what lets my_responsibilities.html find "my" rows with a
+// plain string match.
+function respUserOptionsHtml(selected){
+  const names = [...new Set(users.filter(u => u.active).map(u => (u.name||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  if(selected && !names.includes(selected)) names.push(selected); // keep a legacy/free-text value visible & selected
+  const opts = ['<option value="">— None —</option>'];
+  names.forEach(n => opts.push(`<option value="${esc(n)}" ${n===selected?'selected':''}>${esc(n)}</option>`));
+  return opts.join('');
+}
+
+function respStatusOptionsHtml(current){
+  return RESP_STATUS_ORDER.map(s => `<option value="${s}" ${current===s?'selected':''}>${RESP_STATUS_LABELS[s]}</option>`).join('');
+}
+
+function respOpenEditor(id){
+  respEditingId = id;
+  const i = id ? respItems.find(x=>x.id===id) : null;
+  const areaListId = 'resp-area-datalist';
+  const deptListId = 'resp-dept-datalist';
+  document.getElementById('editor').innerHTML = `
+    <h2>${i ? 'Edit Responsibility' : 'Add Responsibility'}</h2>
+    <div class="form-row full"><div><label class="field-label">Title</label><input type="text" id="red-title" value="${esc(i?i.title:'')}"/></div></div>
+    <div class="form-row">
+      <div>
+        <label class="field-label">Department</label>
+        <input type="text" id="red-department" list="${deptListId}" value="${esc(i?i.department:'')}" placeholder="e.g. Cultivation"/>
+        <datalist id="${deptListId}">${RESP_DEPARTMENT_ORDER.map(d=>`<option value="${esc(d)}">`).join('')}</datalist>
+      </div>
+      <div>
+        <label class="field-label">Area</label>
+        <input type="text" id="red-area" list="${areaListId}" value="${esc(i?i.area:'')}" placeholder="e.g. Cultivation"/>
+        <datalist id="${areaListId}">${respAreaOrder().map(a=>`<option value="${esc(a)}">`).join('')}</datalist>
+      </div>
+    </div>
+    <div class="form-row full"><div><label class="field-label">Description</label><textarea id="red-desc">${esc(i?i.description:'')}</textarea></div></div>
+    <div class="form-row">
+      <div><label class="field-label">Owner</label>
+        <select id="red-owner">${respUserOptionsHtml(i?i.owner:'')}</select>
+      </div>
+      <div><label class="field-label">Backup owner</label>
+        <select id="red-backup">${respUserOptionsHtml(i?i.backup_owner:'')}</select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div><label class="field-label">Status</label>
+        <select id="red-status">${respStatusOptionsHtml(i?i.status:'unassigned')}</select>
+      </div>
+      <div><label class="field-label">Priority</label>
+        <select id="red-priority">
+          <option value="">None</option>
+          <option value="high" ${i&&i.priority==='high'?'selected':''}>High</option>
+          <option value="medium" ${i&&i.priority==='medium'?'selected':''}>Medium</option>
+          <option value="low" ${i&&i.priority==='low'?'selected':''}>Low</option>
+        </select>
+      </div>
+    </div>
+    <div class="hint">Status updates automatically once you pick an owner (and backup) — you can still override it above.</div>
+    <div class="form-row full"><div><label class="field-label">Notes</label><textarea id="red-notes">${esc(i?i.notes:'')}</textarea></div></div>
+    <div class="editor-actions">
+      <div>${i ? '<button class="btn btn-danger" onclick="respDeleteItem(\''+i.id+'\'); closeEditor();">Delete</button>' : ''}</div>
+      <div class="right" style="display:flex;gap:10px">
+        <button class="btn btn-ghost" onclick="closeEditor()">Cancel</button>
+        <button class="btn btn-green" onclick="respSaveEditor()">Save</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('editor-backdrop').style.display = 'block';
+  document.getElementById('editor-backdrop').scrollTop = 0;
+  setTimeout(()=>document.getElementById('red-title').focus(), 50);
+}
+
+async function respSaveEditor(){
+  const title = document.getElementById('red-title').value.trim();
+  const area = document.getElementById('red-area').value.trim();
+  const department = document.getElementById('red-department').value.trim() || null;
+  if(!title){ alert('Enter a title.'); return; }
+  if(!area){ alert('Enter an area.'); return; }
+  const owner = document.getElementById('red-owner').value.trim() || null;
+  const backup_owner = document.getElementById('red-backup').value.trim() || null;
+  let status = document.getElementById('red-status').value;
+  // Nudge status toward reality: picking both names and leaving status on
+  // Unassigned almost always just means nobody touched the dropdown.
+  if(status === 'unassigned' && owner && backup_owner) status = 'assigned';
+  else if(status === 'unassigned' && owner && !backup_owner) status = 'needs_backup';
+  const payload = {
+    title, area, department,
+    description: document.getElementById('red-desc').value.trim() || null,
+    owner, backup_owner, status,
+    priority: document.getElementById('red-priority').value || null,
+    notes: document.getElementById('red-notes').value.trim() || null
+  };
+  const btn = document.querySelector('#editor .btn-green');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try{
+    const c = await requireClient();
+    if(respEditingId){
+      const { error } = await c.from('responsibilities').update(payload).eq('id', respEditingId);
+      if(error) throw error;
+    }else{
+      payload.source = 'manual';
+      const { error } = await c.from('responsibilities').insert(payload);
+      if(error) throw error;
+    }
+    closeEditor();
+    await respLoadAll();
+  }catch(e){
+    alert('Could not save: ' + e.message);
+    btn.disabled = false; btn.textContent = 'Save';
+  }
+}
+
+// ── Responsibilities CSV upload/download ────────────────────────────────
+// Proper CSV parser (handles quoted fields with embedded commas/newlines) —
+// unlike hub_config.js's naive parseCSV(), used only for the legacy sheet
+// import above, which would misalign columns on a description with a comma.
+function parseCsvText(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for(let i=0; i<text.length; i++){
+    const c = text[i], next = text[i+1];
+    if(inQuotes){
+      if(c === '"' && next === '"'){ field += '"'; i++; }
+      else if(c === '"'){ inQuotes = false; }
+      else field += c;
+    }else{
+      if(c === '"') inQuotes = true;
+      else if(c === ','){ row.push(field); field=''; }
+      else if(c === '\r'){ /* skip */ }
+      else if(c === '\n'){ row.push(field); rows.push(row); row=[]; field=''; }
+      else field += c;
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  if(!rows.length) return [];
+  const headers = rows[0].map(h => h.trim().toLowerCase());
+  return rows.slice(1).filter(r => r.some(v => v.trim())).map(r => {
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = (r[i]||'').trim());
+    return obj;
+  });
+}
+
+function respStatusFromCsv(raw, owner, backup){
+  const s = (raw||'').trim().toLowerCase().replace(/\s+/g,'_');
+  if(['assigned','done','complete'].includes(s)) return 'assigned';
+  if(s === 'needs_backup') return 'needs_backup';
+  if(s === 'unassigned') return 'unassigned';
+  if(owner && backup) return 'assigned';
+  if(owner && !backup) return 'needs_backup';
+  return 'unassigned';
+}
+function respPriorityFromCsv(raw){
+  const s = (raw||'').trim().toLowerCase();
+  if(s === 'high' || s === 'medium' || s === 'low') return s;
+  return null;
+}
+function respRowToItem(row){
+  const title = row['title'] || row['responsibility'] || '';
+  const area = row['area'] || '';
+  if(!title || !area) return null;
+  const owner = row['owner'] || null;
+  const backup_owner = row['backup_owner'] || row['backup owner'] || null;
+  return {
+    title, area,
+    department: row['department'] || null,
+    description: row['description'] || null,
+    owner, backup_owner,
+    status: respStatusFromCsv(row['status'], owner, backup_owner),
+    priority: respPriorityFromCsv(row['priority']),
+    notes: row['notes'] || null
+  };
+}
+
+async function respHandleCsvFile(event){
+  const file = event.target.files[0];
+  event.target.value = '';
+  if(!file) return;
+  const out = document.getElementById('resp-import-result');
+  out.innerHTML = '<div class="import-log">Reading file…</div>';
+  const text = await file.text();
+  const rows = parseCsvText(text).map(respRowToItem).filter(Boolean);
+  if(!rows.length){ out.innerHTML = '<div class="import-log" style="color:var(--red)">No usable rows found — need at least "area" and "title" columns.</div>'; return; }
+  if(!confirm(`Import ${rows.length} responsibilit${rows.length===1?'y':'ies'}? Existing rows with a matching area + title will be updated, not duplicated.`)) { out.innerHTML=''; return; }
+
+  try{
+    const c = await requireClient();
+    const existingByKey = {};
+    respItems.forEach(i => { existingByKey[(i.area+'::'+i.title).trim().toLowerCase()] = i; });
+
+    let added = 0, updated = 0;
+    const failed = [];
+    for(const r of rows){
+      const key = (r.area+'::'+r.title).trim().toLowerCase();
+      const match = existingByKey[key];
+      try{
+        if(match){
+          const { error } = await c.from('responsibilities').update(r).eq('id', match.id);
+          if(error) throw error;
+          updated++;
+        }else{
+          const { error } = await c.from('responsibilities').insert({ ...r, source: 'csv_upload' });
+          if(error) throw error;
+          added++;
+        }
+      }catch(e){ failed.push(r.title + ' — ' + e.message); }
+    }
+    out.innerHTML = `<div class="import-log">Imported: ${added} added, ${updated} updated.${failed.length ? '<br>Failed: '+failed.map(esc).join('; ') : ''}</div>`;
+    await respLoadAll();
+  }catch(e){
+    out.innerHTML = `<div class="import-log" style="color:var(--red)">Import failed: ${esc(e.message)}</div>`;
+  }
+}
+
+function respCsvEscape(v){
+  const s = String(v==null?'':v);
+  return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+}
+function respDownloadCsv(){
+  const headers = ['department','area','title','description','owner','backup_owner','status','priority','notes'];
+  const lines = [headers.join(',')];
+  respItems.forEach(i => { lines.push(headers.map(h => respCsvEscape(i[h])).join(',')); });
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'responsibilities-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 async function toggleActive(id, currentlyActive){
@@ -420,6 +1098,12 @@ function openEditor(id){
       <div><label class="field-label">PIN</label><input type="tel" id="ed-pin" inputmode="numeric" value="${esc(u?u.pin:'')}"/></div>
     </div>
     <label class="active-toggle"><input type="checkbox" id="ed-active" ${(!u || u.active) ? 'checked' : ''}/> Active</label>
+
+    <div class="section-hd">Org Chart</div>
+    <div class="form-row">
+      <div><label class="field-label">Title</label><input type="text" id="ed-title" value="${esc(u?u.title:'')}" placeholder="e.g. VP of Operations"/></div>
+      <div><label class="field-label">Reports to</label><select id="ed-reports-to">${reportsToOptionsHtml(u)}</select></div>
+    </div>
 
     <div class="section-hd">Dashboard cards</div>
     <div class="check-grid">
@@ -515,7 +1199,9 @@ async function saveEditor(){
   const viewStations = viewAll ? 'all' : Array.from(ed.querySelectorAll('[data-view-station]:checked')).map(cb => cb.dataset.viewStation).join(',');
   columns['production view stations'] = viewStations;
 
-  const user = { id: editingId, name, pin, active: document.getElementById('ed-active').checked, columns };
+  const title = document.getElementById('ed-title').value.trim();
+  const reportsTo = document.getElementById('ed-reports-to').value || null;
+  const user = { id: editingId, name, pin, active: document.getElementById('ed-active').checked, title, reports_to: reportsTo, columns };
   const btn = ed.querySelector('.btn-green');
   btn.disabled = true; btn.textContent = 'Saving…';
   try{
