@@ -236,6 +236,141 @@ create policy "anon delete" on task_subtasks for delete using (true);
 
 grant select, insert, update, delete on public.task_subtasks to anon;
 
+-- ── Responsibilities Matrix ──────────────────────────────────────────────
+-- Backs responsibilities.html — every recurring responsibility across the
+-- business (leases, licensing, cultivation, processing, manufacturing,
+-- distribution, S&OP, systems) with a named owner/backup, so delegation
+-- gaps are visible instead of living in someone's head. Same posture as
+-- tasks/task_subtasks above: visibility is gated by the hub card (see
+-- hub_config.js's 'responsibilities' card, toggled per person in
+-- admin.html), and the table itself stays open to anon read/write since
+-- there's nothing here more sensitive than what's already on tasks.
+
+create table if not exists responsibilities (
+  id            uuid primary key default gen_random_uuid(),
+  area          text not null,   -- e.g. 'Land & Leases', 'Cultivation' — free text, grouped in the UI by whatever values exist
+  title         text not null,
+  description   text,
+  owner         text,
+  backup_owner  text,
+  status        text not null default 'unassigned' check (status in ('unassigned', 'assigned', 'needs_backup')),
+  priority      text check (priority in ('low', 'medium', 'high')),
+  notes         text,
+  source        text not null default 'manual' check (source in ('seed', 'manual', 'csv_upload')),
+  sort_order    integer not null default 0,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+
+create index if not exists idx_responsibilities_area on responsibilities (area);
+create index if not exists idx_responsibilities_status on responsibilities (status);
+create unique index if not exists idx_responsibilities_area_title on responsibilities (area, title);
+
+drop trigger if exists trg_touch_responsibilities on responsibilities;
+create trigger trg_touch_responsibilities
+  before update on responsibilities
+  for each row execute function touch_operations_forms();
+
+alter table responsibilities enable row level security;
+
+drop policy if exists "anon read" on responsibilities;
+create policy "anon read" on responsibilities for select using (true);
+drop policy if exists "anon write" on responsibilities;
+create policy "anon write" on responsibilities for insert with check (true);
+drop policy if exists "anon update" on responsibilities;
+create policy "anon update" on responsibilities for update using (true) with check (true);
+drop policy if exists "anon delete" on responsibilities;
+create policy "anon delete" on responsibilities for delete using (true);
+
+grant select, insert, update, delete on public.responsibilities to anon;
+
+-- Seed with the first pass at the full responsibility list (unowned —
+-- assign owner/backup_owner from the UI). sort_order keeps each area in
+-- the order it was drafted rather than alphabetical. Safe to re-run: the
+-- unique (area, title) index above makes this an upsert-free no-op on
+-- rows that already exist, and it never touches owner/status/notes you've
+-- since edited in the UI.
+insert into responsibilities (area, title, description, sort_order, source) values
+  ('Land & Leases', 'Landlord relationships', 'Primary point of contact with each land owner — day-to-day communication and issue resolution.', 1, 'seed'),
+  ('Land & Leases', 'Lease negotiation & renewal', 'Negotiating new leases and renewing/amending existing ones before they lapse.', 2, 'seed'),
+  ('Land & Leases', 'Lease payment scheduling', 'Tracking lease payment amounts and due dates across every property, making sure they''re paid on time.', 3, 'seed'),
+  ('Land & Leases', 'Property capital upgrades', 'Scoping and approving upgrades — power drops, shade cloths, pump upgrades, water tanks — per property.', 4, 'seed'),
+  ('Land & Leases', 'Upgrade project & contractor management', 'Running the actual upgrade projects — scheduling contractors, tracking completion.', 5, 'seed'),
+
+  ('Licensing & Compliance', 'DCC license applications', 'Applying for new cultivation/processing/manufacturing/distribution licenses as needed.', 1, 'seed'),
+  ('Licensing & Compliance', 'DCC license renewals & maintenance', 'Keeping every existing license current — renewal deadlines, fee payments, amendments.', 2, 'seed'),
+  ('Licensing & Compliance', 'DCC inspections', 'Scheduling and being present for DCC inspections, and closing out any findings.', 3, 'seed'),
+  ('Licensing & Compliance', 'DCC relationship management', 'The primary point of contact with the Department of Cannabis Control.', 4, 'seed'),
+  ('Licensing & Compliance', 'Metrc compliance — cultivation', 'Plant tags, plant counts, and Metrc recordkeeping at the farms.', 5, 'seed'),
+  ('Licensing & Compliance', 'Metrc compliance — processing', 'Metrc recordkeeping at the processing facility (Adobe).', 6, 'seed'),
+  ('Licensing & Compliance', 'Metrc compliance — distribution', 'Metrc recordkeeping at the distribution facility (Airway).', 7, 'seed'),
+  ('Licensing & Compliance', 'Compliance SOPs & recordkeeping', 'Maintaining written SOPs and the compliance paper trail across all licenses.', 8, 'seed'),
+
+  ('Nursery', 'Nursery build-out', 'Project-managing construction of the nursery — design, contractors, timeline.', 1, 'seed'),
+  ('Nursery', 'Nursery licensing', 'Getting DCC licensing in place for the nursery once built.', 2, 'seed'),
+  ('Nursery', 'Nursery operations', 'Running the nursery once live — mother plants, clone production for internal use.', 3, 'seed'),
+
+  ('Cultivation', 'Clone sourcing', 'Sourcing clones from outside vendors until the nursery is online.', 1, 'seed'),
+  ('Cultivation', 'Planting schedule', 'Building and maintaining the planting calendar across all farms.', 2, 'seed'),
+  ('Cultivation', 'Cultivation labor scheduling', 'Scheduling crews for planting, maintenance, and general farm labor.', 3, 'seed'),
+  ('Cultivation', 'Materials & supplies procurement', 'Buying soil, nutrients, and other cultivation materials — making sure farms don''t run out.', 4, 'seed'),
+  ('Cultivation', 'Cultivation transportation scheduling', 'Scheduling crew, equipment, and material transport between farms.', 5, 'seed'),
+  ('Cultivation', 'Farm equipment maintenance', 'Maintaining tractors, pumps, and other cultivation equipment.', 6, 'seed'),
+  ('Cultivation', 'Farm equipment transport', 'Moving farm equipment between farms as needed.', 7, 'seed'),
+  ('Cultivation', 'Pest management / IPM program', 'Running the integrated pest management program across all farms.', 8, 'seed'),
+  ('Cultivation', 'Spray scheduling & application', 'Scheduling and executing spray applications.', 9, 'seed'),
+  ('Cultivation', 'Fertilizer / nutrient program', 'Planning and executing the fertilizer/nutrient program through the grow cycle.', 10, 'seed'),
+  ('Cultivation', 'Irrigation & water systems', 'Managing irrigation systems and water supply across all farms.', 11, 'seed'),
+
+  ('Harvest & Post-Harvest', 'Harvest forecasting', 'Forecasting expected yield by farm and strain ahead of harvest.', 1, 'seed'),
+  ('Harvest & Post-Harvest', 'Harvest scheduling', 'Scheduling harvest dates by farm and strain.', 2, 'seed'),
+  ('Harvest & Post-Harvest', 'Harvest labor scheduling', 'Staffing harvest crews.', 3, 'seed'),
+  ('Harvest & Post-Harvest', 'Harvest equipment & truck rentals', 'Arranging truck rentals and equipment needed for harvest.', 4, 'seed'),
+  ('Harvest & Post-Harvest', 'Fresh-frozen vs. dried allocation', 'Deciding per-lot what goes fresh-frozen (concentrates) vs. dried (flower/pre-rolls).', 5, 'seed'),
+  ('Harvest & Post-Harvest', 'Farm-to-processing transport', 'Transporting harvested material from the farms to the processing facility.', 6, 'seed'),
+  ('Harvest & Post-Harvest', 'Drying process management', 'Managing the drying process once material arrives at processing.', 7, 'seed'),
+
+  ('Processing Facility (Adobe)', 'Facility lease management', 'Lease payments and annual balloon payments on the processing facility.', 1, 'seed'),
+  ('Processing Facility (Adobe)', 'Processing license & DCC relationship', 'Maintaining the processing license and the DCC relationship for this facility.', 2, 'seed'),
+  ('Processing Facility (Adobe)', 'Processing Metrc & intake scheduling', 'Metrc compliance and scheduling of incoming material at processing.', 3, 'seed'),
+  ('Processing Facility (Adobe)', 'HVAC maintenance', 'Maintaining and servicing the facility HVAC system.', 4, 'seed'),
+  ('Processing Facility (Adobe)', 'Trimming machine maintenance', 'Maintaining and servicing the trimming machines.', 5, 'seed'),
+  ('Processing Facility (Adobe)', 'Pre-roll machine maintenance', 'Maintaining and servicing the pre-roll machine.', 6, 'seed'),
+  ('Processing Facility (Adobe)', 'Dehumidifier maintenance', 'Maintaining and servicing dehumidifiers.', 7, 'seed'),
+  ('Processing Facility (Adobe)', 'General facility maintenance', 'General building upkeep and repairs.', 8, 'seed'),
+  ('Processing Facility (Adobe)', 'Facility sanitation', 'Cleaning schedule — bathrooms, common areas, production spaces.', 9, 'seed'),
+  ('Processing Facility (Adobe)', 'Trim scheduling & lot decisions', 'Deciding what gets trimmed, when, and what happens to it afterward.', 10, 'seed'),
+  ('Processing Facility (Adobe)', 'Bulk sales coordination', 'Coordinating bulk sales of output that comes out of processing.', 11, 'seed'),
+  ('Processing Facility (Adobe)', 'Processing facility inventory', 'Tracking on-hand inventory at the processing facility.', 12, 'seed'),
+
+  ('Transportation & Logistics', 'Adobe → Airway transfer planning', 'Deciding what gets transferred to distribution — strain, lot size, timing.', 1, 'seed'),
+  ('Transportation & Logistics', 'Adobe → Airway transfer execution', 'Scheduling and executing the actual transport between facilities.', 2, 'seed'),
+
+  ('Manufacturing', 'Pre-roll production planning', 'Deciding how many pre-rolls to make, in what sizes and flavors.', 1, 'seed'),
+  ('Manufacturing', 'Manufacturing labor scheduling', 'Staffing pre-roll and manufacturing production runs.', 2, 'seed'),
+  ('Manufacturing', 'Vape & concentrate production planning', 'Deciding how much to manufacture and when, and staffing it.', 3, 'seed'),
+  ('Manufacturing', 'Hash-infused pre-roll production planning', 'Deciding how much to manufacture and when, and staffing it.', 4, 'seed'),
+  ('Manufacturing', 'Packaging materials inventory', 'Tracking on-hand packaging material inventory and making sure production runs deplete it correctly in Canix.', 5, 'seed'),
+  ('Manufacturing', 'Packaging materials & supplies ordering', 'Placing orders for packaging materials and production supplies (e.g. pre-roll cones), timed to lead times and volume price breaks.', 6, 'seed'),
+
+  ('Distribution (Airway)', 'Pack-out planning', 'Deciding what flower gets packed into which pouches/sizes.', 1, 'seed'),
+  ('Distribution (Airway)', 'Product testing coordination', 'Scheduling and coordinating required lab testing.', 2, 'seed'),
+  ('Distribution (Airway)', 'Distribution Metrc compliance', 'Metrc recordkeeping at the distribution facility.', 3, 'seed'),
+  ('Distribution (Airway)', 'Distribution inventory counts', 'Regular inventory counts at the distribution facility.', 4, 'seed'),
+  ('Distribution (Airway)', 'Scheduling to KFS/KSS (last-mile)', 'Scheduling delivery of finished inventory to Kiva/KSS, the last-mile distributor.', 5, 'seed'),
+  ('Distribution (Airway)', 'Distribution facility inventory management', 'Overall inventory management at the distribution facility.', 6, 'seed'),
+
+  ('Sales & Operations Planning', 'S&OP planning', 'Building the sales & operations plan — what needs to be produced, when, based on demand and inventory.', 1, 'seed'),
+  ('Sales & Operations Planning', 'KSS inventory monitoring', 'Watching inventory levels at KSS to inform production planning.', 2, 'seed'),
+  ('Sales & Operations Planning', 'Cross-functional production coordination', 'Coordinating the production plan across cultivation, processing, manufacturing, and distribution.', 3, 'seed'),
+
+  ('Systems & ERP (Canix)', 'Canix batch entry — cultivation', 'Creating/updating batches and recording cultivation activity in Canix.', 1, 'seed'),
+  ('Systems & ERP (Canix)', 'Canix batch entry — processing', 'Creating/updating batches and recording processing activity in Canix.', 2, 'seed'),
+  ('Systems & ERP (Canix)', 'Canix batch entry — manufacturing', 'Creating/updating batches and recording manufacturing production runs in Canix.', 3, 'seed'),
+  ('Systems & ERP (Canix)', 'Canix batch entry — distribution', 'Creating/updating batches and recording distribution activity in Canix.', 4, 'seed'),
+  ('Systems & ERP (Canix)', 'Canix/Metrc data integrity oversight', 'Making sure what''s entered in Canix syncs correctly to Metrc and stays accurate across all stages.', 5, 'seed')
+on conflict (area, title) do nothing;
+
 -- ── Canix facility nicknames ─────────────────────────────────────────────
 -- Backs canix_inventory.html's facility labeling/grouping (stage, farm
 -- group, a human nickname) for the licenses pulled by scripts/canix_sync.py.

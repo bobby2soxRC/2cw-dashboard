@@ -189,6 +189,16 @@ const CARD_DEFS = [
     title: 'Ops Gameplan Tracker',
     desc: 'The VP-of-Ops 30/60/90 plan as editable tasks and subtasks — status, owners, due dates, and CSV import.',
     href: '/tasks_dashboard.html'
+  },
+  {
+    key: 'responsibilities',
+    color: 'purple',
+    label: 'Executive',
+    dept: 'executive',
+    pinned: true,
+    title: 'Responsibilities Matrix',
+    desc: 'Every recurring responsibility across the business, grouped by area, with an owner and backup — built for delegating.',
+    href: '/responsibilities.html'
   }
   // Commission card is handled separately (see commCardDef in index.html) —
   // it's dept: 'sales' too.
