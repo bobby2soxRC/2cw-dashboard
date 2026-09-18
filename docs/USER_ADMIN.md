@@ -36,6 +36,21 @@ double-checks the same thing server-side on save (walks the proposed
 manager's chain and rejects if it leads back to the person being edited),
 so a reporting loop can't get saved even via a direct API call.
 
+`admin.html` also has a **Responsibilities** tab — the delegation matrix
+(every recurring responsibility, grouped by department/area, with an owner
+and backup) that used to live on the Ops Gameplan Tracker. It talks to the
+`responsibilities` Supabase table directly with the anon key (not through
+`admin.js`), because that table already has an open anon read/write/delete
+RLS policy — same posture as `tasks` — so there's nothing extra to lock
+down there; the admin PIN gate is what controls who can *reach* the tab,
+not the table's own permissions. One side effect worth knowing: moving it
+here means only people with the admin PIN can edit responsibilities now
+(previously it was gated by the same per-user hub card as the rest of the
+Ops Gameplan Tracker, which could be a wider group). `my_responsibilities.html`
+still reads the same table with no PIN required — anyone can see what's
+assigned to them — it's only editing assignments that now requires the
+admin PIN.
+
 The important design choice for the rest of the row is that `columns` stores
 the **exact same flat shape** `parseCSV()` already produced from the sheet —
 lowercase column names, `'TRUE'`/`'FALSE'` strings, comma-list strings for

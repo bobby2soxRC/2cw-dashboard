@@ -187,7 +187,7 @@ const CARD_DEFS = [
     dept: 'executive',
     pinned: true,
     title: 'Ops Gameplan Tracker',
-    desc: 'The VP-of-Ops 30/60/90 plan as editable tasks and subtasks, plus the Responsibilities Matrix tab — every recurring responsibility with an owner and backup.',
+    desc: 'The VP-of-Ops 30/60/90 plan as editable tasks and subtasks — status, owners, due dates, and CSV import.',
     href: '/tasks_dashboard.html'
   },
   {

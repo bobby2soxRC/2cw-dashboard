@@ -146,7 +146,7 @@ function render(){
 
   const wrap = document.getElementById('content-wrap');
   if(!primary.length && !backup.length){
-    wrap.innerHTML = `<div class="empty-note">Nothing assigned to <b>${esc(currentUser)}</b> yet — check the <a href="/tasks_dashboard.html#responsibilities">Responsibilities Matrix</a> or ask whoever's delegating to assign you something.</div>`;
+    wrap.innerHTML = `<div class="empty-note">Nothing assigned to <b>${esc(currentUser)}</b> yet — check the <a href="/admin.html#responsibilities">Responsibilities Matrix</a> (admin panel) or ask whoever's delegating to assign you something.</div>`;
     return;
   }
 
@@ -178,7 +178,7 @@ function rowHtml(i, role){
         <textarea class="notes-field" data-id="${i.id}" onblur="saveNotes('${i.id}', this)" placeholder="Add a note for whoever covers this next…">${esc(i.notes)}</textarea>
         <div class="notes-save-hint" id="notes-hint-${i.id}"></div>
       </div>
-      <a class="resp-link" href="/tasks_dashboard.html#responsibilities">Edit in matrix →</a>
+      <a class="resp-link" href="/admin.html#responsibilities">Edit in matrix →</a>
     </div>`;
 }
 
