@@ -119,12 +119,16 @@ Both `my_tasks.html` and `task_oversight.html` have **Download template**,
 **Download … (CSV)**, and **Upload CSV** buttons — available to everyone on
 `my_tasks.html` (no PIN or special access needed, same as the rest of that
 page), and to whoever has the Task Activity card on `task_oversight.html`.
-All three read/write the same columns: `id, title, description, assignee,
-assigned_by, priority, status, due_date, follow_up_date, link_url`.
+All three read/write the same columns: `id, title, description,
+assigned_to, assigned_by, priority, status, due_date, follow_up_date,
+link_url`. (`assigned_to` is the CSV's name for the underlying
+`personal_tasks.assignee` column — friendlier heading, same field. Import
+still accepts a column literally named `assignee` too, so older exported
+files keep working.)
 
 - **Download template** gives a one-row example CSV for creating tasks from
   scratch — `id` is blank, so every row becomes a new task on upload. Only
-  `title` is required; `assignee` defaults to whoever uploads it on
+  `title` is required; `assigned_to` defaults to whoever uploads it on
   `my_tasks.html` (on `task_oversight.html` it's required, since there's no
   "current person" to default to there).
 - **Download my tasks / Download all tasks** exports the tasks already
@@ -133,10 +137,10 @@ assigned_by, priority, status, due_date, follow_up_date, link_url`.
 - **Upload CSV** re-imports either kind of file: a row whose `id` matches an
   existing task updates it in place (including logging a status-change note
   if `status` differs, same as editing it directly); a row with no
-  `id`, or one that doesn't match, falls back to matching by title+assignee,
-  and failing that is inserted as a brand-new task. This is what makes the
-  round trip work — download, edit in a spreadsheet, re-upload, and the same
-  tasks update instead of duplicating.
+  `id`, or one that doesn't match, falls back to matching by
+  title+assigned_to, and failing that is inserted as a brand-new task. This
+  is what makes the round trip work — download, edit in a spreadsheet,
+  re-upload, and the same tasks update instead of duplicating.
 
 Dates accept `YYYY-MM-DD` (what the app itself exports and what `<input
 type=date>` produces) or anything else JavaScript's `Date` parser accepts
@@ -152,8 +156,8 @@ import.
 field on both pages now, not something the app decides for you: the task
 editor has an "Assigned by" dropdown next to "Assign to" (defaults to you,
 but pick anyone), and `assigned_by` is a real column in the CSV template,
-export, and import — same as `assignee`. Importing a row with that column
-blank still falls back to whoever uploads the file, so old-style
+export, and import — same as `assigned_to`. Importing a row with that
+column blank still falls back to whoever uploads the file, so old-style
 templates/exports without the column keep working, but nothing forces it
 anymore. The "Assigned to you" section on `my_tasks.html` shows "assigned
 by X" whenever that's someone other than you, and `task_oversight.html`

@@ -169,7 +169,7 @@
     </div>
   </div>
   <div class="subline">Every My Tasks assignment across the team — visible only to people granted the "Task Activity" card in the admin panel.</div>
-  <div class="csv-hint">CSV columns: <code>title</code> (required), <code>description</code>, <code>assignee</code> (required — who it's for), <code>assigned_by</code> (defaults to you if left blank), <code>priority</code> (high/medium/low), <code>status</code> (not_started/in_progress/blocked/done), <code>due_date</code>, <code>follow_up_date</code> (YYYY-MM-DD), <code>link_url</code> (a link to anywhere — Google Sheet, Smartsheet, source email, etc.). Re-uploading a file downloaded from here updates those same tasks by their <code>id</code> column. New rows with no matching id become new tasks. The language dropdown translates <code>title</code>/<code>description</code> in the exported file (needs translation set up — see the Translate buttons on each task).</div>
+  <div class="csv-hint">CSV columns: <code>title</code> (required), <code>description</code>, <code>assigned_to</code> (required — who it's for), <code>assigned_by</code> (defaults to you if left blank), <code>priority</code> (high/medium/low), <code>status</code> (not_started/in_progress/blocked/done), <code>due_date</code>, <code>follow_up_date</code> (YYYY-MM-DD), <code>link_url</code> (a link to anywhere — Google Sheet, Smartsheet, source email, etc.). Re-uploading a file downloaded from here updates those same tasks by their <code>id</code> column. New rows with no matching id become new tasks. The language dropdown translates <code>title</code>/<code>description</code> in the exported file (needs translation set up — see the Translate buttons on each task).</div>
   <div id="import-result"></div>
   <div class="status-line" id="status-line">Loading…</div>
 
@@ -681,12 +681,24 @@ function downloadCsv(filename, csvText){
   URL.revokeObjectURL(url);
 }
 
-const PERSONAL_TASK_CSV_HEADERS = ['id','title','description','assignee','assigned_by','priority','status','due_date','follow_up_date','link_url'];
+const PERSONAL_TASK_CSV_HEADERS = ['id','title','description','assigned_to','assigned_by','priority','status','due_date','follow_up_date','link_url'];
+
+// personal_tasks' actual column is `assignee` (matches the Supabase schema)
+// — this just renames it to assigned_to for the CSV, which is the only
+// place the distinction is user-facing.
+function toExportRow(t){
+  return {
+    id: t.id, title: t.title, description: t.description,
+    assigned_to: t.assignee, assigned_by: t.assigned_by,
+    priority: t.priority, status: t.status,
+    due_date: t.due_date, follow_up_date: t.follow_up_date, link_url: t.link_url
+  };
+}
 
 function downloadTemplate(){
   const example = {
     id: '', title: 'Example: Replace dehumidifier filter', description: 'Optional — longer detail on what needs to happen',
-    assignee: currentUser, assigned_by: currentUser, priority: 'medium', status: 'not_started', due_date: todayStr(), follow_up_date: '', link_url: ''
+    assigned_to: currentUser, assigned_by: currentUser, priority: 'medium', status: 'not_started', due_date: todayStr(), follow_up_date: '', link_url: ''
   };
   downloadCsv('task_template.csv', toCsv([example], PERSONAL_TASK_CSV_HEADERS));
 }
@@ -717,7 +729,7 @@ async function downloadAllTasksCsv(){
     catch(e){ alert('Could not translate for export: ' + e.message); btn.disabled = false; btn.textContent = 'Download all tasks (CSV)'; return; }
     btn.disabled = false; btn.textContent = 'Download all tasks (CSV)';
   }
-  downloadCsv('all_tasks.csv', toCsv(rows, PERSONAL_TASK_CSV_HEADERS));
+  downloadCsv('all_tasks.csv', toCsv(rows.map(toExportRow), PERSONAL_TASK_CSV_HEADERS));
 }
 
 function statusFromCsv(raw){
@@ -747,7 +759,7 @@ function rowToPersonalTask(row){
     id: (row['id']||'').trim() || null,
     title,
     description: row['description'] ? row['description'].trim() : null,
-    assignee: (row['assignee']||'').trim(),
+    assignee: (row['assigned_to'] || row['assigned to'] || row['assignee'] || '').trim(),
     assigned_by: (row['assigned_by'] || row['assigned by'] || '').trim() || currentUser,
     priority: priorityFromCsv(row['priority']),
     status: statusFromCsv(row['status']),
@@ -767,7 +779,7 @@ async function handleCsvFile(event){
   const rows = parseCsvText(text).map(rowToPersonalTask).filter(Boolean);
   if(!rows.length){ out.innerHTML = '<div class="import-log" style="color:var(--red)">No usable rows found — need at least a "title" column.</div>'; return; }
   const missingAssignee = rows.filter(r => !r.assignee);
-  if(missingAssignee.length){ out.innerHTML = `<div class="import-log" style="color:var(--red)">${missingAssignee.length} row(s) have no "assignee" — every row needs to say who the task is for. Fix the file and try again.</div>`; return; }
+  if(missingAssignee.length){ out.innerHTML = `<div class="import-log" style="color:var(--red)">${missingAssignee.length} row(s) have no "assigned_to" — every row needs to say who the task is for. Fix the file and try again.</div>`; return; }
   if(!confirm(`Import ${rows.length} task${rows.length===1?'':'s'}? Rows whose id matches an existing task will update it; the rest will be added as new tasks.`)) { out.innerHTML=''; return; }
 
   try{
