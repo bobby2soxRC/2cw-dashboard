@@ -119,8 +119,8 @@ Both `my_tasks.html` and `task_oversight.html` have **Download template**,
 **Download … (CSV)**, and **Upload CSV** buttons — available to everyone on
 `my_tasks.html` (no PIN or special access needed, same as the rest of that
 page), and to whoever has the Task Activity card on `task_oversight.html`.
-All three read/write the same eight columns: `id, title, description,
-assignee, priority, status, due_date, follow_up_date`.
+All three read/write the same columns: `id, title, description, assignee,
+assigned_by, priority, status, due_date, follow_up_date, link_url`.
 
 - **Download template** gives a one-row example CSV for creating tasks from
   scratch — `id` is blank, so every row becomes a new task on upload. Only
@@ -148,11 +148,16 @@ import.
 
 ## Who assigned it, and linking a task out to another project
 
-`personal_tasks.assigned_by` (who created/assigned the task) was always
-stored, but wasn't shown anywhere on `my_tasks.html` — the "Assigned to
-you" section now shows "assigned by X" whenever that's someone other than
-you, and "You've handed out" already showed the assignee. `task_oversight.html`
-always showed "from X" since it isn't obvious there otherwise.
+`personal_tasks.assigned_by` (who created/assigned the task) is a full
+field on both pages now, not something the app decides for you: the task
+editor has an "Assigned by" dropdown next to "Assign to" (defaults to you,
+but pick anyone), and `assigned_by` is a real column in the CSV template,
+export, and import — same as `assignee`. Importing a row with that column
+blank still falls back to whoever uploads the file, so old-style
+templates/exports without the column keep working, but nothing forces it
+anymore. The "Assigned to you" section on `my_tasks.html` shows "assigned
+by X" whenever that's someone other than you, and `task_oversight.html`
+always shows "from X" since it isn't obvious there otherwise.
 
 `personal_tasks.link_url` is a free-form optional URL — a Google Sheet, a
 Smartsheet link, a source email, anywhere — set from the editor's "Link"
