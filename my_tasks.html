@@ -96,6 +96,10 @@
   .task-detail{display:none;padding:0 14px 16px 37px;border-top:1px dashed var(--border)}
   .task-detail.open{display:block}
   .task-desc{font-size:.82rem;color:var(--subtext);margin:12px 0 14px;max-width:70ch;line-height:1.5}
+  .translate-row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .translate-block{margin:0 0 14px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px}
+  .translate-label{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .note-translated{margin-top:4px;padding-top:4px;border-top:1px dashed var(--border);color:var(--subtext);font-style:italic}
   .notes-hd{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
   .note-row{padding:8px 0;border-top:1px solid var(--border);font-size:.82rem;line-height:1.45}
   .note-row:first-child{border-top:none}
@@ -178,13 +182,18 @@
       <div class="status-line" id="status-line" style="margin-bottom:0">Loading…</div>
       <div class="toolbar-actions">
         <input type="file" id="csv-input" accept=".csv" onchange="handleCsvFile(event)"/>
+        <select id="csv-lang" title="Language to export titles/descriptions in">
+          <option value="original">Original language</option>
+          <option value="en">Translate to English</option>
+          <option value="es">Translate to Spanish</option>
+        </select>
         <button class="btn btn-ghost btn-sm" onclick="downloadTemplate()">Download template</button>
-        <button class="btn btn-ghost btn-sm" onclick="downloadMyTasksCsv()">Download my tasks (CSV)</button>
+        <button class="btn btn-ghost btn-sm" id="btn-download-mine" onclick="downloadMyTasksCsv()">Download my tasks (CSV)</button>
         <button class="btn btn-ghost btn-sm" onclick="document.getElementById('csv-input').click()">Upload CSV</button>
         <button class="btn btn-blue" onclick="openEditor(null)">+ New Task</button>
       </div>
     </div>
-    <div class="csv-hint">CSV columns: <code>title</code> (required), <code>description</code>, <code>assignee</code> (defaults to you), <code>priority</code> (high/medium/low), <code>status</code> (not_started/in_progress/blocked/done), <code>due_date</code>, <code>follow_up_date</code> (YYYY-MM-DD), <code>link_url</code> (a link to anywhere — Google Sheet, Smartsheet, source email, etc.). Re-uploading a file you downloaded from here updates those same tasks by their <code>id</code> column — don't delete or edit that column. New rows with no matching id become new tasks.</div>
+    <div class="csv-hint">CSV columns: <code>title</code> (required), <code>description</code>, <code>assignee</code> (defaults to you), <code>priority</code> (high/medium/low), <code>status</code> (not_started/in_progress/blocked/done), <code>due_date</code>, <code>follow_up_date</code> (YYYY-MM-DD), <code>link_url</code> (a link to anywhere — Google Sheet, Smartsheet, source email, etc.). Re-uploading a file you downloaded from here updates those same tasks by their <code>id</code> column — don't delete or edit that column. New rows with no matching id become new tasks. The language dropdown translates <code>title</code>/<code>description</code> in the exported file (needs translation set up — see the Translate buttons on each task).</div>
     <div id="import-result"></div>
     <div id="tasks-wrap"></div>
   </div>
@@ -335,8 +344,18 @@ function taskRowHtml(t, section){
       <div class="task-detail ${open?'open':''}">
         ${t.description ? `<div class="task-desc">${esc(t.description)}</div>` : ''}
         ${t.link_url ? `<a class="resp-link" href="${esc(t.link_url)}" target="_blank" rel="noopener">Open linked project →</a>` : ''}
+        <div class="translate-row">
+          <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();toggleTranslate('${t.id}','es')">🌐 ${t.translation&&t.translation.lang==='es'?'Hide translation':'Translate to Spanish'}</button>
+          <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();toggleTranslate('${t.id}','en')">🌐 ${t.translation&&t.translation.lang==='en'?'Hide translation':'Translate to English'}</button>
+        </div>
+        ${t.translation ? `
+        <div class="translate-block">
+          <div class="translate-label">Translated to ${t.translation.lang==='es'?'Spanish':'English'}</div>
+          <div class="task-title" style="margin-bottom:4px">${esc(t.translation.title)}</div>
+          ${t.translation.description ? `<div class="task-desc">${esc(t.translation.description)}</div>` : ''}
+        </div>` : ''}
         <div class="notes-hd">Progress updates &amp; comments</div>
-        ${t.notes.map(noteRowHtml).join('') || '<div class="empty-note">No updates yet.</div>'}
+        ${t.notes.map((n,i) => noteRowHtml(n, t.translation ? t.translation.notes[i] : null)).join('') || '<div class="empty-note">No updates yet.</div>'}
         <div class="add-note-row">
           <textarea placeholder="Log a progress update or comment…" id="new-note-${t.id}"></textarea>
           <button class="btn btn-sm btn-ghost" onclick="addNote('${t.id}')">+ Add update</button>
@@ -345,13 +364,43 @@ function taskRowHtml(t, section){
     </div>`;
 }
 
-function noteRowHtml(n){
+function noteRowHtml(n, translated){
   const system = n.kind === 'system';
   return `
     <div class="note-row${system?' note-system':''}">
       <div class="note-meta">${n.author ? esc(n.author) + ' · ' : ''}${fmtDateTime(n.created_at)}</div>
       <div>${esc(n.note)}</div>
+      ${translated ? `<div class="note-translated">${esc(translated)}</div>` : ''}
     </div>`;
+}
+
+// ── Translation (DeepL, via netlify/functions/translate.js) ────────────
+async function translateTexts(texts, target){
+  const res = await fetch('/.netlify/functions/translate', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ texts, target })
+  });
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok || !data.ok) throw new Error(data.error || 'Translation failed');
+  return data.translations;
+}
+
+async function toggleTranslate(taskId, lang){
+  const t = tasks.find(x=>x.id===taskId);
+  if(!t) return;
+  if(t.translation && t.translation.lang === lang){
+    t.translation = null;
+    renderTasks();
+    return;
+  }
+  try{
+    const texts = [t.title, t.description||'', ...t.notes.map(n=>n.note)];
+    const translations = await translateTexts(texts, lang);
+    t.translation = { lang, title: translations[0], description: translations[1], notes: translations.slice(2) };
+  }catch(e){
+    alert('Could not translate: ' + e.message);
+  }
+  renderTasks();
 }
 
 // Auto-logged whenever status changes, on top of whatever the person types
@@ -574,11 +623,34 @@ function downloadTemplate(){
   downloadCsv('task_template.csv', toCsv([example], PERSONAL_TASK_CSV_HEADERS));
 }
 
-function downloadMyTasksCsv(){
+// Batches title+description through translateTexts (max 50 strings per
+// call, so 25 rows per batch) and returns new row objects with those two
+// fields swapped for the translation — everything else passes through
+// unchanged.
+async function translateRowsForExport(rows, lang){
+  if(lang === 'original') return rows;
+  const texts = [];
+  rows.forEach(r => { texts.push(r.title||''); texts.push(r.description||''); });
+  const translations = [];
+  for(let i=0; i<texts.length; i+=50){
+    translations.push(...await translateTexts(texts.slice(i, i+50), lang));
+  }
+  return rows.map((r,i) => ({ ...r, title: translations[i*2] || r.title, description: translations[i*2+1] || r.description }));
+}
+
+async function downloadMyTasksCsv(){
   const mine = tasks.filter(t => matchName(t.assignee, currentUser));
   const byMe = tasks.filter(t => matchName(t.assigned_by, currentUser) && !matchName(t.assignee, currentUser));
-  const rows = [...mine, ...byMe];
+  let rows = [...mine, ...byMe];
   if(!rows.length){ alert('No tasks to export yet.'); return; }
+  const lang = document.getElementById('csv-lang').value;
+  const btn = document.getElementById('btn-download-mine');
+  if(lang !== 'original'){
+    btn.disabled = true; btn.textContent = 'Translating…';
+    try{ rows = await translateRowsForExport(rows, lang); }
+    catch(e){ alert('Could not translate for export: ' + e.message); btn.disabled = false; btn.textContent = 'Download my tasks (CSV)'; return; }
+    btn.disabled = false; btn.textContent = 'Download my tasks (CSV)';
+  }
   downloadCsv('my_tasks.csv', toCsv(rows, PERSONAL_TASK_CSV_HEADERS));
 }
 

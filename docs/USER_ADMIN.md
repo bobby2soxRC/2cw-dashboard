@@ -253,3 +253,48 @@ change), and a leaked `ADMIN_SIGNING_SECRET` lets anyone mint tokens without
 knowing the PIN. Both are acceptable for a small ops team today and both
 are the kind of thing real SSO (see `OPERATIONS_APP.md`) would clean up —
 rotate `ADMIN_SIGNING_SECRET` in Netlify if you ever suspect it leaked.
+
+## Task translation (English ↔ Spanish)
+
+Both `my_tasks.html` and `task_oversight.html` can machine-translate task
+content — titles, descriptions, and every note/progress update — between
+English and Spanish, via [DeepL](https://www.deepl.com/pro-api). This is
+separate from `ops_common.js`'s `{en, es}` static-label translation used on
+the station forms; that covers the app's own fixed UI text, while this
+translates whatever people actually typed into a task.
+
+**Setup (one time):**
+1. Sign up for the free **DeepL API Free** plan at
+   [deepl.com/pro-api](https://www.deepl.com/pro-api) (500,000
+   characters/month free). Copy the **Authentication Key** from your DeepL
+   account page — it ends in `:fx`.
+2. In Netlify (Site configuration → Environment variables), add
+   `DEEPL_API_KEY` set to that key. Nothing else to configure — the
+   function auto-detects a free-plan key (`:fx` suffix) vs. a paid Pro key
+   and hits the matching DeepL host.
+3. Redeploy. Until `DEEPL_API_KEY` is set, the Translate buttons show
+   "Translation is not set up yet" instead of failing silently.
+
+**How it's wired:** `netlify/functions/translate.js` proxies translation
+requests to DeepL so the key never reaches the browser — same reasoning as
+every other server-side secret in this doc. It takes `{texts: [...],
+target: 'en'|'es'}` and returns translations in the same order, skipping
+(and not billing for) any blank strings.
+
+**Where it shows up:**
+- Each task's expanded detail has **Translate to Spanish** / **Translate
+  to English** buttons. Translating shows the title, description, and
+  every note inline below the originals — it never overwrites what
+  someone actually typed, and toggling the same button again hides the
+  translation. Translations aren't cached beyond the current page load.
+- The CSV export toolbar has a language dropdown (**Original language** /
+  **Translate to English** / **Translate to Spanish**) that, when set,
+  translates the `title`/`description` columns of the exported file before
+  download. Uploaded CSVs are never auto-translated on import — translate
+  before you edit and re-upload if you want the working copy in a
+  different language.
+
+DeepL's free tier is plenty for a small team's task volume; if you ever
+outgrow it, upgrading to a paid DeepL plan and swapping in the new key is
+the only change needed — the function already auto-detects which DeepL
+host to use from the key format.
