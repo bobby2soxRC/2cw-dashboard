@@ -557,3 +557,79 @@ create policy "anon read" on canix_harvest_plans for select using (true);
 
 grant select, insert, update, delete on public.canix_harvest_plans to service_role;
 grant select on public.canix_harvest_plans to anon;
+
+-- ── Personal Tasks (My Tasks) ────────────────────────────────────────────
+-- Backs my_tasks.html — one-on-one task delegation between people (assign
+-- someone a task, they update status/notes/dates as they work it), as
+-- opposed to the org-wide 30/60/90 gameplan in `tasks`/`task_subtasks`
+-- above. Kept as its own table rather than folded into `tasks` so the
+-- Gameplan Tracker's phase/track/CSV-import machinery stays untouched by
+-- day-to-day task assignment between coworkers. Same open posture as
+-- tasks/responsibilities: visibility is gated by the 'my_tasks' hub card
+-- (toggled per person in admin.html), and the table itself stays open to
+-- anon read/write since there's nothing here more sensitive than what's
+-- already on the Ops Gameplan Tracker. `assignee` is who the task is for
+-- (matched against sessionStorage's login name, same string-match approach
+-- as `responsibilities.owner`); `assigned_by` is who created it, for the
+-- "tasks I handed out" view.
+
+create table if not exists personal_tasks (
+  id             uuid primary key default gen_random_uuid(),
+  title          text not null,
+  description    text,
+  assignee       text not null,
+  assigned_by    text,
+  status         text not null default 'not_started' check (status in ('not_started', 'in_progress', 'blocked', 'done')),
+  priority       text check (priority in ('low', 'medium', 'high')),
+  due_date       date,
+  follow_up_date date,
+  sort_order     integer not null default 0,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+
+create index if not exists idx_personal_tasks_assignee on personal_tasks (lower(assignee));
+create index if not exists idx_personal_tasks_status on personal_tasks (status);
+
+drop trigger if exists trg_touch_personal_tasks on personal_tasks;
+create trigger trg_touch_personal_tasks
+  before update on personal_tasks
+  for each row execute function touch_operations_forms();
+
+alter table personal_tasks enable row level security;
+
+drop policy if exists "anon read" on personal_tasks;
+create policy "anon read" on personal_tasks for select using (true);
+drop policy if exists "anon write" on personal_tasks;
+create policy "anon write" on personal_tasks for insert with check (true);
+drop policy if exists "anon update" on personal_tasks;
+create policy "anon update" on personal_tasks for update using (true) with check (true);
+drop policy if exists "anon delete" on personal_tasks;
+create policy "anon delete" on personal_tasks for delete using (true);
+
+grant select, insert, update, delete on public.personal_tasks to anon;
+
+-- Notes are a running log (not a single overwritten field like
+-- responsibilities.notes) — every status update, follow-up, or comment gets
+-- its own timestamped row, since the point of "create notes" here is a
+-- visible history for whoever's following up, not just the latest note.
+create table if not exists personal_task_notes (
+  id          uuid primary key default gen_random_uuid(),
+  task_id     uuid not null references personal_tasks(id) on delete cascade,
+  author      text,
+  note        text not null,
+  created_at  timestamptz not null default now()
+);
+
+create index if not exists idx_personal_task_notes_task on personal_task_notes (task_id, created_at);
+
+alter table personal_task_notes enable row level security;
+
+drop policy if exists "anon read" on personal_task_notes;
+create policy "anon read" on personal_task_notes for select using (true);
+drop policy if exists "anon write" on personal_task_notes;
+create policy "anon write" on personal_task_notes for insert with check (true);
+drop policy if exists "anon delete" on personal_task_notes;
+create policy "anon delete" on personal_task_notes for delete using (true);
+
+grant select, insert, delete on public.personal_task_notes to anon;

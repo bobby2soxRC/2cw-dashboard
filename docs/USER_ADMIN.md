@@ -51,6 +51,35 @@ still reads the same table with no PIN required — anyone can see what's
 assigned to them — it's only editing assignments that now requires the
 admin PIN.
 
+## My Tasks — personal task assignment
+
+`my_tasks.html` is a two-tab personal page (no admin PIN needed, gated only
+by the `my_tasks` hub card, toggled per person in `admin.html` like any
+other card): a **Tasks** tab and a **Job Description & Responsibilities**
+tab (the latter is the same data/UI as `my_responsibilities.html`, just
+embedded as a second tab so both live in one place).
+
+The Tasks tab is one-on-one task delegation between coworkers — separate
+from the org-wide 30/60/90 gameplan on `tasks_dashboard.html` — backed by
+two new Supabase tables (`personal_tasks`, `personal_task_notes`), both
+with the same open anon read/write/delete RLS as `tasks`/`responsibilities`:
+nothing here is more sensitive than what's already on the Gameplan
+Tracker, and any logged-in person can create a task and assign it to
+anyone else (matched by login name, same string-match approach as
+`responsibilities.owner`). The page shows two sections: **Assigned to
+you** (tasks where you're the assignee — status, priority, due date,
+follow-up date, and a running notes log you can add to) and **You've
+handed out** (tasks you created for someone else, so you can follow their
+progress). Unlike `responsibilities.notes` (a single overwritten field),
+`personal_task_notes` is an append-only log — every note is its own
+timestamped row with an author, so a task keeps a visible history instead
+of just the latest comment.
+
+If you're setting this up for the first time, re-run `supabase/schema.sql`
+in the Supabase SQL editor (idempotent, safe to re-run) to create the two
+new tables, then turn on the `my_tasks` card for whoever should have it in
+`admin.html`'s per-user editor.
+
 The important design choice for the rest of the row is that `columns` stores
 the **exact same flat shape** `parseCSV()` already produced from the sheet —
 lowercase column names, `'TRUE'`/`'FALSE'` strings, comma-list strings for

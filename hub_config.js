@@ -199,6 +199,16 @@ const CARD_DEFS = [
     title: 'My Responsibilities',
     desc: 'What you personally own or back up, pulled live from the Responsibilities Matrix — updates the moment something gets assigned to you.',
     href: '/my_responsibilities.html'
+  },
+  {
+    key: 'my_tasks',
+    color: 'blue',
+    label: 'Operations',
+    dept: 'operations',
+    pinned: true,
+    title: 'My Tasks',
+    desc: 'Tasks assigned to you and tasks you\'ve handed out — statuses, notes, due dates, and follow-up dates. Plus your job description & responsibilities.',
+    href: '/my_tasks.html'
   }
   // Commission card is handled separately (see commCardDef in index.html) —
   // it's dept: 'sales' too.
