@@ -45,8 +45,13 @@
   .btn-sm{padding:.32rem .6rem;font-size:.62rem}
 
   .toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+  .toolbar-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .status-line{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--subtext);margin-bottom:16px;min-height:1.2em}
   .status-line b{color:var(--text)}
+  .csv-hint{font-size:.72rem;color:var(--subtext);line-height:1.5;margin-bottom:14px}
+  .csv-hint code{font-family:'DM Mono',monospace;font-size:.7rem;background:var(--surface2);padding:1px 5px;border-radius:4px}
+  .import-log{font-family:'DM Mono',monospace;font-size:.72rem;line-height:1.7;max-height:220px;overflow-y:auto;background:#0c0d0f;border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin:12px 0}
+  #csv-input{display:none}
 
   select, input[type=text], input[type=date], textarea{
     background:#0c0d0f;border:1px solid var(--border);color:var(--text);
@@ -169,8 +174,15 @@
   <div class="tab-panel active" id="tab-tasks">
     <div class="toolbar">
       <div class="status-line" id="status-line" style="margin-bottom:0">Loading…</div>
-      <button class="btn btn-blue" onclick="openEditor(null)">+ New Task</button>
+      <div class="toolbar-actions">
+        <input type="file" id="csv-input" accept=".csv" onchange="handleCsvFile(event)"/>
+        <button class="btn btn-ghost btn-sm" onclick="downloadTemplate()">Download template</button>
+        <button class="btn btn-ghost btn-sm" onclick="downloadMyTasksCsv()">Download my tasks (CSV)</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('csv-input').click()">Upload CSV</button>
+        <button class="btn btn-blue" onclick="openEditor(null)">+ New Task</button>
+      </div>
     </div>
+    <div class="csv-hint">CSV columns: <code>title</code> (required), <code>description</code>, <code>assignee</code> (defaults to you), <code>priority</code> (high/medium/low), <code>status</code> (not_started/in_progress/blocked/done), <code>due_date</code>, <code>follow_up_date</code> (YYYY-MM-DD). Re-uploading a file you downloaded from here updates those same tasks by their <code>id</code> column — don't delete or edit that column. New rows with no matching id become new tasks.</div>
     <div id="import-result"></div>
     <div id="tasks-wrap"></div>
   </div>
@@ -489,6 +501,156 @@ async function saveEditor(){
   }catch(e){
     alert('Could not save task: ' + e.message);
     btn.disabled = false; btn.textContent = 'Save';
+  }
+}
+
+// ── CSV template / export / import ─────────────────────────────────────
+// Proper CSV parser (handles quoted fields with embedded commas/newlines) —
+// same one tasks_dashboard.html uses, since a naive split(',') misaligns
+// columns the moment a description has a comma in it.
+function parseCsvText(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for(let i=0; i<text.length; i++){
+    const c = text[i], next = text[i+1];
+    if(inQuotes){
+      if(c === '"' && next === '"'){ field += '"'; i++; }
+      else if(c === '"'){ inQuotes = false; }
+      else field += c;
+    }else{
+      if(c === '"') inQuotes = true;
+      else if(c === ','){ row.push(field); field=''; }
+      else if(c === '\r'){ /* skip */ }
+      else if(c === '\n'){ row.push(field); rows.push(row); row=[]; field=''; }
+      else field += c;
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  if(!rows.length) return [];
+  const headers = rows[0].map(h => h.trim().toLowerCase());
+  return rows.slice(1).filter(r => r.some(v => v.trim())).map(r => {
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = (r[i]||'').trim());
+    return obj;
+  });
+}
+
+function csvEscape(v){
+  if(v==null) return '';
+  const s = String(v);
+  return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+}
+function toCsv(rows, headers){
+  const lines = [headers.join(',')];
+  rows.forEach(r => lines.push(headers.map(h => csvEscape(r[h])).join(',')));
+  return lines.join('\r\n');
+}
+function downloadCsv(filename, csvText){
+  const blob = new Blob([csvText], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+const PERSONAL_TASK_CSV_HEADERS = ['id','title','description','assignee','priority','status','due_date','follow_up_date'];
+
+function downloadTemplate(){
+  const example = {
+    id: '', title: 'Example: Replace dehumidifier filter', description: 'Optional — longer detail on what needs to happen',
+    assignee: currentUser, priority: 'medium', status: 'not_started', due_date: todayStr(), follow_up_date: ''
+  };
+  downloadCsv('task_template.csv', toCsv([example], PERSONAL_TASK_CSV_HEADERS));
+}
+
+function downloadMyTasksCsv(){
+  const mine = tasks.filter(t => matchName(t.assignee, currentUser));
+  const byMe = tasks.filter(t => matchName(t.assigned_by, currentUser) && !matchName(t.assignee, currentUser));
+  const rows = [...mine, ...byMe];
+  if(!rows.length){ alert('No tasks to export yet.'); return; }
+  downloadCsv('my_tasks.csv', toCsv(rows, PERSONAL_TASK_CSV_HEADERS));
+}
+
+function statusFromCsv(raw){
+  const s = (raw||'').trim().toLowerCase().replace(/[\s-]+/g,'_');
+  if(STATUS_CYCLE.includes(s)) return s;
+  if(s === 'complete' || s === 'completed') return 'done';
+  if(s === 'inprogress') return 'in_progress';
+  if(s === 'unsure') return 'blocked';
+  return 'not_started';
+}
+function priorityFromCsv(raw){
+  const s = (raw||'').trim().toLowerCase();
+  return ['high','medium','low'].includes(s) ? s : null;
+}
+// Accepts ISO (yyyy-mm-dd, what the date-picker and our own exports use) or
+// whatever else Date can parse (e.g. Excel's 9/25/2026), so a round-tripped
+// file and a freshly-typed one both work.
+function normalizeDateForCsv(raw){
+  const s = (raw||'').trim();
+  if(!s) return null;
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const d = new Date(s);
+  return isNaN(d) ? null : d.toISOString().slice(0,10);
+}
+
+function rowToPersonalTask(row){
+  const title = (row['title']||'').trim();
+  if(!title) return null;
+  return {
+    id: (row['id']||'').trim() || null,
+    title,
+    description: row['description'] ? row['description'].trim() : null,
+    assignee: (row['assignee']||'').trim() || currentUser,
+    priority: priorityFromCsv(row['priority']),
+    status: statusFromCsv(row['status']),
+    due_date: normalizeDateForCsv(row['due_date'] || row['due date']),
+    follow_up_date: normalizeDateForCsv(row['follow_up_date'] || row['follow up date'] || row['followup date'])
+  };
+}
+
+async function handleCsvFile(event){
+  const file = event.target.files[0];
+  event.target.value = '';
+  if(!file) return;
+  const out = document.getElementById('import-result');
+  out.innerHTML = '<div class="import-log">Reading file…</div>';
+  const text = await file.text();
+  const rows = parseCsvText(text).map(rowToPersonalTask).filter(Boolean);
+  if(!rows.length){ out.innerHTML = '<div class="import-log" style="color:var(--red)">No usable rows found — need at least a "title" column.</div>'; return; }
+  if(!confirm(`Import ${rows.length} task${rows.length===1?'':'s'}? Rows whose id matches an existing task will update it; the rest will be added as new tasks.`)) { out.innerHTML=''; return; }
+
+  try{
+    const c = await requireClient();
+    const byId = {};
+    tasks.forEach(t => { byId[t.id] = t; });
+    const byTitleAssignee = {};
+    tasks.forEach(t => { byTitleAssignee[(t.title.trim()+'|'+(t.assignee||'').trim()).toLowerCase()] = t; });
+
+    let added = 0, updated = 0;
+    const failed = [];
+    for(const r of rows){
+      const { id, ...fields } = r;
+      let match = (id && byId[id]) ? byId[id] : byTitleAssignee[(fields.title.trim()+'|'+fields.assignee.trim()).toLowerCase()];
+      try{
+        if(match){
+          const prevStatus = match.status;
+          const { error } = await c.from('personal_tasks').update(fields).eq('id', match.id);
+          if(error) throw error;
+          if(prevStatus !== fields.status) await logStatusChange(match.id, prevStatus, fields.status);
+          updated++;
+        }else{
+          const { error } = await c.from('personal_tasks').insert({ ...fields, assigned_by: currentUser });
+          if(error) throw error;
+          added++;
+        }
+      }catch(e){ failed.push(fields.title + ' — ' + e.message); }
+    }
+    out.innerHTML = `<div class="import-log">Imported: ${added} added, ${updated} updated.${failed.length ? '<br>Failed: '+failed.map(esc).join('; ') : ''}</div>`;
+    await loadTasks();
+  }catch(e){
+    out.innerHTML = `<div class="import-log" style="color:var(--red)">Import failed: ${esc(e.message)}</div>`;
   }
 }
 

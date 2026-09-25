@@ -113,6 +113,39 @@ Turn it on for whoever should have visibility (ops leads, managers) the
 same way you'd turn on any other card — no extra setup beyond the schema
 already required for My Tasks.
 
+## Task CSV template, export, and re-import
+
+Both `my_tasks.html` and `task_oversight.html` have **Download template**,
+**Download … (CSV)**, and **Upload CSV** buttons — available to everyone on
+`my_tasks.html` (no PIN or special access needed, same as the rest of that
+page), and to whoever has the Task Activity card on `task_oversight.html`.
+All three read/write the same eight columns: `id, title, description,
+assignee, priority, status, due_date, follow_up_date`.
+
+- **Download template** gives a one-row example CSV for creating tasks from
+  scratch — `id` is blank, so every row becomes a new task on upload. Only
+  `title` is required; `assignee` defaults to whoever uploads it on
+  `my_tasks.html` (on `task_oversight.html` it's required, since there's no
+  "current person" to default to there).
+- **Download my tasks / Download all tasks** exports the tasks already
+  visible on that page (yours + handed-out on `my_tasks.html`; everyone's on
+  `task_oversight.html`) with their `id` filled in.
+- **Upload CSV** re-imports either kind of file: a row whose `id` matches an
+  existing task updates it in place (including logging a status-change note
+  if `status` differs, same as editing it directly); a row with no
+  `id`, or one that doesn't match, falls back to matching by title+assignee,
+  and failing that is inserted as a brand-new task. This is what makes the
+  round trip work — download, edit in a spreadsheet, re-upload, and the same
+  tasks update instead of duplicating.
+
+Dates accept `YYYY-MM-DD` (what the app itself exports and what `<input
+type=date>` produces) or anything else JavaScript's `Date` parser accepts
+(e.g. Excel's `9/25/2026`). `status` accepts the raw values
+(`not_started`/`in_progress`/`blocked`/`done`) plus a few common spellings
+(`Complete`, `In Progress`, `Unsure`→blocked); anything unrecognized falls
+back to `not_started`, so a garbled status column never fails the whole
+import.
+
 The important design choice for the rest of the row is that `columns` stores
 the **exact same flat shape** `parseCSV()` already produced from the sheet —
 lowercase column names, `'TRUE'`/`'FALSE'` strings, comma-list strings for
