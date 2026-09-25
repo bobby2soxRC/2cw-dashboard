@@ -82,6 +82,8 @@
   .tag.prio-high{color:var(--red)}
   .tag.prio-medium{color:var(--gold)}
   .tag.prio-low{color:var(--subtext)}
+  .tag.link-tag{color:var(--blue);border-color:rgba(90,159,212,.35);text-decoration:none;cursor:pointer}
+  .tag.link-tag:hover{text-decoration:underline}
   .due{white-space:nowrap}
   .due.overdue{color:var(--red);font-weight:700}
   .followup{white-space:nowrap;color:var(--purple)}
@@ -182,7 +184,7 @@
         <button class="btn btn-blue" onclick="openEditor(null)">+ New Task</button>
       </div>
     </div>
-    <div class="csv-hint">CSV columns: <code>title</code> (required), <code>description</code>, <code>assignee</code> (defaults to you), <code>priority</code> (high/medium/low), <code>status</code> (not_started/in_progress/blocked/done), <code>due_date</code>, <code>follow_up_date</code> (YYYY-MM-DD). Re-uploading a file you downloaded from here updates those same tasks by their <code>id</code> column — don't delete or edit that column. New rows with no matching id become new tasks.</div>
+    <div class="csv-hint">CSV columns: <code>title</code> (required), <code>description</code>, <code>assignee</code> (defaults to you), <code>priority</code> (high/medium/low), <code>status</code> (not_started/in_progress/blocked/done), <code>due_date</code>, <code>follow_up_date</code> (YYYY-MM-DD), <code>link_url</code> (a link to anywhere — Google Sheet, Smartsheet, source email, etc.). Re-uploading a file you downloaded from here updates those same tasks by their <code>id</code> column — don't delete or edit that column. New rows with no matching id become new tasks.</div>
     <div id="import-result"></div>
     <div id="tasks-wrap"></div>
   </div>
@@ -290,19 +292,22 @@ function renderTasks(){
   let html = '';
   html += `<div class="group-hd">Assigned to you <span class="n">(${mine.length})</span></div>`;
   html += mine.length
-    ? `<div class="task-list">${mine.map(t => taskRowHtml(t, false)).join('')}</div>`
+    ? `<div class="task-list">${mine.map(t => taskRowHtml(t, 'mine')).join('')}</div>`
     : `<div class="empty-state">Nothing assigned to you right now.</div>`;
 
   if(byMe.length){
     html += `<div class="group-hd">You've handed out <span class="n">(${byMe.length})</span></div>`;
-    html += `<div class="task-list">${byMe.map(t => taskRowHtml(t, true)).join('')}</div>`;
+    html += `<div class="task-list">${byMe.map(t => taskRowHtml(t, 'byMe')).join('')}</div>`;
   }
   wrap.innerHTML = html;
 }
 
-function taskRowHtml(t, showAssignee){
+// section: 'mine' (assigned to you — shows who assigned it, if not you) or
+// 'byMe' (you handed it out — shows who it's assigned to).
+function taskRowHtml(t, section){
   const open = openTaskIds.has(t.id);
   const overdue = isOverdue(t.due_date, t.status);
+  const assignedByOther = section==='mine' && t.assigned_by && !matchName(t.assigned_by, currentUser);
   return `
     <div class="task-row" data-id="${t.id}">
       <div class="task-main" onclick="toggleTask('${t.id}')">
@@ -312,12 +317,14 @@ function taskRowHtml(t, showAssignee){
           <div class="task-title-row">
             <span class="task-title ${t.status==='done'?'done':''}">${esc(t.title)}</span>
             ${t.priority ? `<span class="tag prio-${t.priority}">${esc(t.priority)}</span>` : ''}
+            ${t.link_url ? `<a class="tag link-tag" href="${esc(t.link_url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔗 Link</a>` : ''}
           </div>
           <div class="task-meta">
-            ${showAssignee && t.assignee ? `<span>${esc(t.assignee)}</span>` : ''}
+            ${section==='byMe' && t.assignee ? `<span>${esc(t.assignee)}</span>` : ''}
+            ${assignedByOther ? `<span>assigned by ${esc(t.assigned_by)}</span>` : ''}
             ${t.due_date ? `<span class="due ${overdue?'overdue':''}">Due ${fmtDate(t.due_date)}</span>` : ''}
             ${t.follow_up_date ? `<span class="followup">Follow up ${fmtDate(t.follow_up_date)}</span>` : ''}
-            ${t.notes.length ? `<span>${t.notes.length} note${t.notes.length===1?'':'s'}</span>` : ''}
+            ${t.notes.length ? `<span>${t.notes.length} update${t.notes.length===1?'':'s'}</span>` : ''}
           </div>
         </div>
         <div class="task-actions" onclick="event.stopPropagation()">
@@ -327,11 +334,12 @@ function taskRowHtml(t, showAssignee){
       </div>
       <div class="task-detail ${open?'open':''}">
         ${t.description ? `<div class="task-desc">${esc(t.description)}</div>` : ''}
-        <div class="notes-hd">Notes</div>
-        ${t.notes.map(noteRowHtml).join('') || '<div class="empty-note">No notes yet.</div>'}
+        ${t.link_url ? `<a class="resp-link" href="${esc(t.link_url)}" target="_blank" rel="noopener">Open linked project →</a>` : ''}
+        <div class="notes-hd">Progress updates &amp; comments</div>
+        ${t.notes.map(noteRowHtml).join('') || '<div class="empty-note">No updates yet.</div>'}
         <div class="add-note-row">
-          <textarea placeholder="Add a note…" id="new-note-${t.id}"></textarea>
-          <button class="btn btn-sm btn-ghost" onclick="addNote('${t.id}')">+ Add note</button>
+          <textarea placeholder="Log a progress update or comment…" id="new-note-${t.id}"></textarea>
+          <button class="btn btn-sm btn-ghost" onclick="addNote('${t.id}')">+ Add update</button>
         </div>
       </div>
     </div>`;
@@ -449,6 +457,7 @@ function openEditor(id){
       <div><label class="field-label">Due date</label><input type="date" id="ed-due" value="${t&&t.due_date?t.due_date:''}"/></div>
       <div><label class="field-label">Follow-up date</label><input type="date" id="ed-followup" value="${t&&t.follow_up_date?t.follow_up_date:''}"/></div>
     </div>
+    <div class="form-row full"><div><label class="field-label">Link (optional)</label><input type="text" id="ed-link" placeholder="Google Sheet, Smartsheet, source email — any URL" value="${esc(t?t.link_url:'')}"/></div></div>
     <div class="editor-actions">
       <div>${t ? '<button class="btn btn-danger" onclick="deleteTask(\''+t.id+'\'); closeEditor();">Delete</button>' : ''}</div>
       <div class="right">
@@ -479,7 +488,8 @@ async function saveEditor(){
     priority: document.getElementById('ed-priority').value || null,
     status: document.getElementById('ed-status').value,
     due_date: document.getElementById('ed-due').value || null,
-    follow_up_date: document.getElementById('ed-followup').value || null
+    follow_up_date: document.getElementById('ed-followup').value || null,
+    link_url: document.getElementById('ed-link').value.trim() || null
   };
   const btn = document.querySelector('#editor .btn-blue');
   btn.disabled = true; btn.textContent = 'Saving…';
@@ -554,12 +564,12 @@ function downloadCsv(filename, csvText){
   URL.revokeObjectURL(url);
 }
 
-const PERSONAL_TASK_CSV_HEADERS = ['id','title','description','assignee','priority','status','due_date','follow_up_date'];
+const PERSONAL_TASK_CSV_HEADERS = ['id','title','description','assignee','priority','status','due_date','follow_up_date','link_url'];
 
 function downloadTemplate(){
   const example = {
     id: '', title: 'Example: Replace dehumidifier filter', description: 'Optional — longer detail on what needs to happen',
-    assignee: currentUser, priority: 'medium', status: 'not_started', due_date: todayStr(), follow_up_date: ''
+    assignee: currentUser, priority: 'medium', status: 'not_started', due_date: todayStr(), follow_up_date: '', link_url: ''
   };
   downloadCsv('task_template.csv', toCsv([example], PERSONAL_TASK_CSV_HEADERS));
 }
@@ -606,7 +616,8 @@ function rowToPersonalTask(row){
     priority: priorityFromCsv(row['priority']),
     status: statusFromCsv(row['status']),
     due_date: normalizeDateForCsv(row['due_date'] || row['due date']),
-    follow_up_date: normalizeDateForCsv(row['follow_up_date'] || row['follow up date'] || row['followup date'])
+    follow_up_date: normalizeDateForCsv(row['follow_up_date'] || row['follow up date'] || row['followup date']),
+    link_url: (row['link_url'] || row['link'] || row['url'] || '').trim() || null
   };
 }
 

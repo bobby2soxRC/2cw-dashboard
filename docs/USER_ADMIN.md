@@ -146,6 +146,30 @@ type=date>` produces) or anything else JavaScript's `Date` parser accepts
 back to `not_started`, so a garbled status column never fails the whole
 import.
 
+## Who assigned it, and linking a task out to another project
+
+`personal_tasks.assigned_by` (who created/assigned the task) was always
+stored, but wasn't shown anywhere on `my_tasks.html` — the "Assigned to
+you" section now shows "assigned by X" whenever that's someone other than
+you, and "You've handed out" already showed the assignee. `task_oversight.html`
+always showed "from X" since it isn't obvious there otherwise.
+
+`personal_tasks.link_url` is a free-form optional URL — a Google Sheet, a
+Smartsheet link, a source email, anywhere — set from the editor's "Link"
+field, shown as a 🔗 tag on the row and an "Open linked project →" link in
+the expanded detail, and included as a `link_url` column in the CSV
+template/export/import on both pages. It's never fetched or validated
+server-side, just stored and linked.
+
+The notes log (`personal_task_notes`) already serves as both a progress
+log and a comment thread — anyone who can see a task (which, given the
+open RLS posture described above, is anyone with the My Tasks or Task
+Activity card) can add an update, and it's labeled "Progress updates &
+comments" in the UI to make that explicit. Automatic status-change entries
+(`kind:'system'`) and manual ones (`kind:'note'`) share the same list, so a
+task's full history — status changes and comments together — reads as one
+timeline.
+
 The important design choice for the rest of the row is that `columns` stores
 the **exact same flat shape** `parseCSV()` already produced from the sheet —
 lowercase column names, `'TRUE'`/`'FALSE'` strings, comma-list strings for

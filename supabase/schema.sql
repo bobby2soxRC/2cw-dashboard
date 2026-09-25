@@ -584,6 +584,7 @@ create table if not exists personal_tasks (
   due_date       date,
   follow_up_date date,
   completed_at   timestamptz,   -- auto-set/cleared by trigger below on every status change into/out of 'done' — powers "days to complete" on task_oversight.html
+  link_url       text,          -- optional outside reference — Google Sheet, Smartsheet, source email, anything — shown as a link, never validated/fetched
   sort_order     integer not null default 0,
   created_at     timestamptz not null default now(),
   updated_at     timestamptz not null default now()
@@ -593,6 +594,7 @@ create table if not exists personal_tasks (
 -- above won't retrofit a new column onto an already-existing table, so this
 -- runs separately and is safe to re-run.
 alter table personal_tasks add column if not exists completed_at timestamptz;
+alter table personal_tasks add column if not exists link_url text;
 
 create index if not exists idx_personal_tasks_assignee on personal_tasks (lower(assignee));
 create index if not exists idx_personal_tasks_status on personal_tasks (status);
