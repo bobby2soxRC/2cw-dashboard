@@ -583,10 +583,16 @@ create table if not exists personal_tasks (
   priority       text check (priority in ('low', 'medium', 'high')),
   due_date       date,
   follow_up_date date,
+  completed_at   timestamptz,   -- auto-set/cleared by trigger below on every status change into/out of 'done' — powers "days to complete" on task_oversight.html
   sort_order     integer not null default 0,
   created_at     timestamptz not null default now(),
   updated_at     timestamptz not null default now()
 );
+
+-- Added after the table's first release — `create table if not exists`
+-- above won't retrofit a new column onto an already-existing table, so this
+-- runs separately and is safe to re-run.
+alter table personal_tasks add column if not exists completed_at timestamptz;
 
 create index if not exists idx_personal_tasks_assignee on personal_tasks (lower(assignee));
 create index if not exists idx_personal_tasks_status on personal_tasks (status);
@@ -595,6 +601,27 @@ drop trigger if exists trg_touch_personal_tasks on personal_tasks;
 create trigger trg_touch_personal_tasks
   before update on personal_tasks
   for each row execute function touch_operations_forms();
+
+-- Tracks completion at the database level rather than trusting the app to
+-- set it — every writer (my_tasks.html's status dot, the editor modal,
+-- task_oversight.html) goes through the same `update ... set status = ...`,
+-- so this is the one place completed_at can't get missed or double-set.
+-- Clears itself if a task gets reopened, so "done" always means "done now."
+create or replace function touch_personal_task_completion() returns trigger as $$
+begin
+  if new.status = 'done' and old.status is distinct from 'done' then
+    new.completed_at = now();
+  elsif new.status <> 'done' and old.status = 'done' then
+    new.completed_at = null;
+  end if;
+  return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists trg_personal_tasks_completion on personal_tasks;
+create trigger trg_personal_tasks_completion
+  before update on personal_tasks
+  for each row execute function touch_personal_task_completion();
 
 alter table personal_tasks enable row level security;
 
@@ -613,13 +640,23 @@ grant select, insert, update, delete on public.personal_tasks to anon;
 -- responsibilities.notes) — every status update, follow-up, or comment gets
 -- its own timestamped row, since the point of "create notes" here is a
 -- visible history for whoever's following up, not just the latest note.
+-- `kind` separates a person's own note ('note') from an automatic entry the
+-- app writes on every status change ('system', e.g. "Status: Not started ->
+-- In progress") — together these make the log double as the activity trail
+-- task_oversight.html shows per task, with no separate audit table needed.
 create table if not exists personal_task_notes (
   id          uuid primary key default gen_random_uuid(),
   task_id     uuid not null references personal_tasks(id) on delete cascade,
   author      text,
   note        text not null,
+  kind        text not null default 'note' check (kind in ('note', 'system')),
   created_at  timestamptz not null default now()
 );
+
+-- Added after the table's first release — safe to re-run.
+alter table personal_task_notes add column if not exists kind text not null default 'note';
+alter table personal_task_notes drop constraint if exists personal_task_notes_kind_check;
+alter table personal_task_notes add constraint personal_task_notes_kind_check check (kind in ('note', 'system'));
 
 create index if not exists idx_personal_task_notes_task on personal_task_notes (task_id, created_at);
 

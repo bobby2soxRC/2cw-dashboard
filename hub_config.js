@@ -191,6 +191,16 @@ const CARD_DEFS = [
     href: '/tasks_dashboard.html'
   },
   {
+    key: 'task_oversight',
+    color: 'purple',
+    label: 'Executive',
+    dept: 'executive',
+    pinned: true,
+    title: 'Task Activity (All Staff)',
+    desc: 'Every My Tasks assignment across the whole team — who has what, status, overdue, and how long tasks take to close. Grant per person in the admin panel.',
+    href: '/task_oversight.html'
+  },
+  {
     key: 'my_responsibilities',
     color: 'blue',
     label: 'Operations',

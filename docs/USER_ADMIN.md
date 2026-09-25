@@ -80,6 +80,39 @@ in the Supabase SQL editor (idempotent, safe to re-run) to create the two
 new tables, then turn on the `my_tasks` card for whoever should have it in
 `admin.html`'s per-user editor.
 
+`personal_tasks.completed_at` is set/cleared by a database trigger the
+moment `status` flips into or out of `'done'` — not by the app — so it
+stays correct no matter which page changed the status. Both `my_tasks.html`
+and `task_oversight.html` also write an automatic `kind:'system'` row to
+`personal_task_notes` on every status change (e.g. "Status: Not started →
+In progress"), so the notes log doubles as a per-task activity trail
+alongside whatever people type themselves (`kind:'note'`).
+
+## Task Activity — admin oversight of everyone's tasks
+
+`task_oversight.html` is the manager's-eye view of the same
+`personal_tasks`/`personal_task_notes` data behind My Tasks, across every
+person at once — not just your own. It's gated by its own hub card
+(`task_oversight`, pinned alongside the Ops Gameplan Tracker), toggled per
+person in `admin.html`'s per-user editor exactly like every other card —
+there's no separate admin PIN for it, so whoever you check the box for can
+open it. It shows:
+
+- Org-wide summary tiles (open/blocked/done counts, overdue, average days
+  to close).
+- An **Activity by person** table — assigned/open/overdue counts and
+  average completion time per person, so you can see at a glance who's
+  overloaded or falling behind.
+- The full task list across everyone, filterable by person/status/priority/
+  overdue, with the same expand-to-see-notes, add-note, edit, and delete
+  capabilities as `my_tasks.html` — an admin can act on anyone's task since
+  the table has no per-row access control (same open-RLS posture as
+  everywhere else in this doc).
+
+Turn it on for whoever should have visibility (ops leads, managers) the
+same way you'd turn on any other card — no extra setup beyond the schema
+already required for My Tasks.
+
 The important design choice for the rest of the row is that `columns` stores
 the **exact same flat shape** `parseCSV()` already produced from the sheet —
 lowercase column names, `'TRUE'`/`'FALSE'` strings, comma-list strings for

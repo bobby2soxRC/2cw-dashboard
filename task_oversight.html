@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>My Tasks — 2CW</title>
+<title>Task Activity — 2CW</title>
 <link rel="icon" type="image/png" href="/favicon.png">
 <meta name="theme-color" content="#0c0d0f">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
@@ -20,23 +20,17 @@
   .hdr{min-height:calc(54px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:12px;position:sticky;top:0;z-index:20}
   .hdr-back{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
   .hdr-div{width:1px;height:18px;background:var(--border)}
-  .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);flex:1}
+  .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--purple);flex:1}
 
-  main{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:28px 16px 100px}
+  main{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:28px 16px 100px}
 
-  .page-hd{margin-bottom:8px}
-  .page-hd h1{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:.03em}
-  .page-hd .who{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--subtext);margin-top:2px}
-
-  .tabs{display:flex;gap:6px;margin:18px 0 20px;border-bottom:1px solid var(--border)}
-  .tab-btn{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;padding:10px 4px;margin-right:18px;cursor:pointer;border-bottom:2px solid transparent}
-  .tab-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
-  .tab-panel{display:none}
-  .tab-panel.active{display:block}
+  .toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px;flex-wrap:wrap}
+  .toolbar h1{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:.03em}
+  .subline{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--subtext);margin-bottom:20px}
 
   .btn{padding:.6rem 1rem;border:1px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer;background:transparent;color:var(--text)}
-  .btn-blue{background:var(--blue);color:#000;border-color:var(--blue)}
-  .btn-blue:hover{opacity:.88}
+  .btn-purple{background:var(--purple);color:#000;border-color:var(--purple)}
+  .btn-purple:hover{opacity:.88}
   .btn-ghost{color:var(--subtext)}
   .btn-ghost:hover{border-color:var(--muted);color:var(--text)}
   .btn-danger{color:var(--red);border-color:rgba(239,83,80,.35)}
@@ -44,19 +38,37 @@
   .btn:disabled{opacity:.5;cursor:not-allowed}
   .btn-sm{padding:.32rem .6rem;font-size:.62rem}
 
-  .toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
-  .status-line{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--subtext);margin-bottom:16px;min-height:1.2em}
-  .status-line b{color:var(--text)}
-
   select, input[type=text], input[type=date], textarea{
     background:#0c0d0f;border:1px solid var(--border);color:var(--text);
     padding:.55rem .7rem;border-radius:8px;font-size:.85rem;font-family:'DM Sans',sans-serif;outline:none;
   }
-  select:focus, input:focus, textarea:focus{border-color:var(--blue)}
+  select:focus, input:focus, textarea:focus{border-color:var(--purple)}
 
-  .group-hd{font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin:26px 0 10px;display:flex;align-items:center;gap:8px}
-  .group-hd:first-of-type{margin-top:0}
-  .group-hd .n{color:var(--subtext)}
+  .status-line{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--subtext);margin-bottom:16px;min-height:1.2em}
+  .status-line b{color:var(--text)}
+
+  .summary-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px}
+  .summary-tile{flex:1;min-width:110px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px}
+  .summary-tile .n{font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1;color:var(--text)}
+  .summary-tile .lbl{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);margin-top:2px}
+  .summary-tile.overdue .n{color:var(--red)}
+  .summary-tile.done .n{color:var(--green)}
+  .summary-tile.avg .n{color:var(--purple)}
+
+  .section-hd{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.03em;margin:28px 0 10px}
+
+  table.people-table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:.82rem}
+  table.people-table th, table.people-table td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--border)}
+  table.people-table tr:last-child td{border-bottom:none}
+  table.people-table th{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--surface2)}
+  table.people-table td.num{font-family:'DM Mono',monospace;text-align:right}
+  table.people-table td.num.overdue{color:var(--red);font-weight:700}
+  table.people-table tbody tr:hover{background:var(--surface2)}
+
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;align-items:center}
+  .filters select{font-family:'DM Mono',monospace;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em}
+  .search-wrap{flex:1;min-width:180px}
+  .search-wrap input{width:100%}
 
   .task-list{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface)}
   .task-row{border-bottom:1px solid var(--border)}
@@ -74,15 +86,17 @@
   .task-title.done{color:var(--subtext);text-decoration:line-through}
   .task-meta{display:flex;align-items:center;gap:10px;margin-top:4px;flex-wrap:wrap;font-family:'DM Mono',monospace;font-size:.68rem;color:var(--subtext)}
   .tag{display:inline-block;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);color:var(--subtext)}
+  .tag.assignee-tag{color:var(--blue);border-color:rgba(90,159,212,.35)}
   .tag.prio-high{color:var(--red)}
   .tag.prio-medium{color:var(--gold)}
   .tag.prio-low{color:var(--subtext)}
   .due{white-space:nowrap}
   .due.overdue{color:var(--red);font-weight:700}
   .followup{white-space:nowrap;color:var(--purple)}
+  .completed{white-space:nowrap;color:var(--green)}
   .task-actions{flex:none;display:flex;gap:6px;align-items:flex-start;padding-top:2px}
   .task-actions button{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.05em;text-transform:uppercase;background:transparent;border:1px solid var(--border);color:var(--subtext);padding:.28rem .55rem;border-radius:6px;cursor:pointer}
-  .task-actions button:hover{border-color:var(--blue);color:var(--blue)}
+  .task-actions button:hover{border-color:var(--purple);color:var(--purple)}
   .chev-btn{color:var(--muted);font-size:.7rem;padding-top:6px;transition:transform .15s}
   .chev-btn.open{transform:rotate(90deg)}
 
@@ -100,7 +114,6 @@
 
   .empty-state{color:var(--subtext);font-size:.85rem;padding:40px 20px;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:12px;line-height:1.6}
 
-  /* editor overlay */
   #editor-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;padding:24px;overflow-y:auto}
   #editor{background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:560px;margin:0 auto;padding:28px}
   #editor h2{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.03em;margin-bottom:18px}
@@ -112,39 +125,10 @@
   .editor-actions{display:flex;justify-content:space-between;gap:10px;margin-top:22px}
   .editor-actions .right{display:flex;gap:10px}
 
-  /* Job description / responsibilities tab (mirrors my_responsibilities.html) */
-  .summary-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px}
-  .summary-tile{flex:1;min-width:120px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px}
-  .summary-tile .n{font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1;color:var(--text)}
-  .summary-tile .lbl{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);margin-top:2px}
-  .summary-tile.primary .n{color:var(--blue)}
-  .summary-tile.backup .n{color:var(--gold)}
-  .summary-tile.needs_backup .n{color:var(--red)}
-  .resp-list{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface);margin-bottom:6px}
-  .resp-row{border-bottom:1px solid var(--border);padding:14px 16px}
-  .resp-row:last-child{border-bottom:none}
-  .resp-title-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}
-  .resp-title{font-size:.95rem;font-weight:600}
-  .tag.role-primary{color:var(--blue);border-color:rgba(90,159,212,.35)}
-  .tag.role-backup{color:var(--gold);border-color:rgba(212,168,67,.35)}
-  .tag.status-unassigned{color:var(--red);border-color:rgba(239,83,80,.35)}
-  .tag.status-needs_backup{color:var(--gold);border-color:rgba(212,168,67,.35)}
-  .tag.status-assigned{color:var(--green);border-color:rgba(61,184,122,.35)}
-  .resp-area{font-family:'DM Mono',monospace;font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:var(--subtext);margin-bottom:8px}
-  .resp-desc{font-size:.82rem;color:var(--subtext);line-height:1.5;max-width:65ch;margin-bottom:8px}
-  .resp-pair{font-size:.78rem;color:var(--subtext);margin-bottom:8px}
-  .resp-pair b{color:var(--text)}
-  .resp-notes-wrap{margin-top:8px}
-  .resp-notes-wrap label{display:block;font-size:.62rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
-  textarea.notes-field{width:100%;background:#0c0d0f;border:1px solid var(--border);color:var(--text);padding:.5rem .6rem;border-radius:8px;font-size:.8rem;font-family:'DM Sans',sans-serif;resize:vertical;min-height:44px;outline:none}
-  textarea.notes-field:focus{border-color:var(--blue)}
-  .notes-save-hint{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--muted);margin-top:4px;min-height:1em}
-  .resp-link{display:inline-block;margin-top:8px;font-family:'DM Mono',monospace;font-size:.66rem;letter-spacing:.05em;text-transform:uppercase;color:var(--blue);text-decoration:none}
-  .resp-link:hover{text-decoration:underline}
-
   @media (max-width:720px){
     .form-row{grid-template-columns:1fr}
     .task-meta{gap:6px}
+    table.people-table{font-size:.72rem}
   }
 </style>
 </head>
@@ -152,34 +136,45 @@
 <header class="hdr">
   <a class="hdr-back" href="/index.html">← Hub</a>
   <div class="hdr-div"></div>
-  <div class="hdr-brand">My Tasks</div>
+  <div class="hdr-brand">Task Activity</div>
 </header>
 
 <main>
-  <div class="page-hd">
-    <h1>My Tasks</h1>
-    <div class="who" id="who-line">—</div>
+  <div class="toolbar">
+    <h1>Task Activity</h1>
+    <button class="btn btn-purple" onclick="openEditor(null)">+ New Task</button>
+  </div>
+  <div class="subline">Every My Tasks assignment across the team — visible only to people granted the "Task Activity" card in the admin panel.</div>
+  <div class="status-line" id="status-line">Loading…</div>
+
+  <div class="summary-row" id="summary-row"></div>
+
+  <div class="section-hd">Activity by person</div>
+  <div id="people-wrap"></div>
+
+  <div class="section-hd">All Tasks</div>
+  <div class="filters">
+    <select id="f-assignee" onchange="render()"><option value="">All people</option></select>
+    <select id="f-status" onchange="render()">
+      <option value="">All statuses</option>
+      <option value="not_started">Not started</option>
+      <option value="in_progress">In progress</option>
+      <option value="blocked">Blocked</option>
+      <option value="done">Done</option>
+    </select>
+    <select id="f-priority" onchange="render()">
+      <option value="">All priorities</option>
+      <option value="high">High</option>
+      <option value="medium">Medium</option>
+      <option value="low">Low</option>
+    </select>
+    <label style="display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:.72rem;color:var(--subtext);text-transform:uppercase">
+      <input type="checkbox" id="f-overdue" onchange="render()"/> Overdue only
+    </label>
+    <div class="search-wrap"><input type="text" id="f-search" placeholder="Search tasks…" oninput="render()"/></div>
   </div>
 
-  <div class="tabs">
-    <button class="tab-btn active" id="tab-btn-tasks" onclick="switchTab('tasks')">Tasks</button>
-    <button class="tab-btn" id="tab-btn-resp" onclick="switchTab('resp')">Job Description &amp; Responsibilities</button>
-  </div>
-
-  <div class="tab-panel active" id="tab-tasks">
-    <div class="toolbar">
-      <div class="status-line" id="status-line" style="margin-bottom:0">Loading…</div>
-      <button class="btn btn-blue" onclick="openEditor(null)">+ New Task</button>
-    </div>
-    <div id="import-result"></div>
-    <div id="tasks-wrap"></div>
-  </div>
-
-  <div class="tab-panel" id="tab-resp">
-    <div class="status-line" id="resp-status-line">Loading…</div>
-    <div class="summary-row" id="resp-summary-row"></div>
-    <div id="resp-content-wrap"></div>
-  </div>
+  <div id="list-wrap"></div>
 </main>
 
 <div id="editor-backdrop">
@@ -192,7 +187,6 @@
 <script>
 const STATUS_LABELS = { not_started: 'Not started', in_progress: 'In progress', blocked: 'Blocked', done: 'Done' };
 const STATUS_CYCLE = ['not_started','in_progress','blocked','done'];
-const RESP_STATUS_LABELS = { unassigned: 'Unassigned', assigned: 'Assigned', needs_backup: 'Needs backup' };
 
 let client = null;
 if (typeof SUPABASE_URL !== 'undefined' && SUPABASE_URL) {
@@ -204,19 +198,11 @@ function todayStr(){ return new Date().toISOString().slice(0,10); }
 function fmtDate(d){ if(!d) return ''; const dt = new Date(d+'T00:00:00'); return dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
 function fmtDateTime(d){ if(!d) return ''; const dt = new Date(d); return dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' ' + dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}); }
 function isOverdue(due, status){ return due && status !== 'done' && due < todayStr(); }
-function matchName(a, b){ return (a||'').trim().toLowerCase() === (b||'').trim().toLowerCase(); }
+function daysBetween(a, b){ return (new Date(b) - new Date(a)) / 86400000; }
 
 const currentUser = (sessionStorage.getItem('2cw_user_name') || '').trim();
 if(!currentUser){
   window.location.href = '/index.html';
-}
-
-function switchTab(which){
-  document.getElementById('tab-tasks').classList.toggle('active', which==='tasks');
-  document.getElementById('tab-resp').classList.toggle('active', which==='resp');
-  document.getElementById('tab-btn-tasks').classList.toggle('active', which==='tasks');
-  document.getElementById('tab-btn-resp').classList.toggle('active', which==='resp');
-  if(which==='resp' && !respLoaded){ loadResp(); }
 }
 
 async function requireClient(){
@@ -224,27 +210,19 @@ async function requireClient(){
   return client;
 }
 
-// ── Directory (for assignee dropdown) ───────────────────────────────────
 let directory = [];
-async function loadDirectoryNames(){
-  try{ directory = await loadUserDirectory(); }catch(e){ directory = []; }
-}
-
-// ══════════════════════════════════════════════════════════════════════
-// TASKS TAB
-// ══════════════════════════════════════════════════════════════════════
-let tasks = [];       // [{...task, notes:[...]}]
+let tasks = [];        // [{...task, notes:[...]}]
 let openTaskIds = new Set();
 let editingId = null;
 
-async function loadTasks(){
+async function loadAll(){
   const status = document.getElementById('status-line');
-  document.getElementById('who-line').textContent = currentUser;
   status.textContent = 'Loading…';
   try{
+    directory = await loadUserDirectory().catch(()=>[]);
     const c = await requireClient();
     const [{ data: taskRows, error: e1 }, { data: noteRows, error: e2 }] = await Promise.all([
-      c.from('personal_tasks').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
+      c.from('personal_tasks').select('*').order('created_at', { ascending: false }),
       c.from('personal_task_notes').select('*').order('created_at', { ascending: false })
     ]);
     if(e1) throw e1;
@@ -252,45 +230,132 @@ async function loadTasks(){
     const byTask = {};
     (noteRows||[]).forEach(n => { (byTask[n.task_id] = byTask[n.task_id]||[]).push(n); });
     tasks = (taskRows||[]).map(t => ({ ...t, notes: byTask[t.id] || [] }));
-    renderTasks();
+    populateAssigneeFilter();
+    updateStatusLine();
+    renderSummary();
+    renderPeople();
+    render();
   }catch(e){
     status.textContent = 'Could not load: ' + e.message;
-    document.getElementById('tasks-wrap').innerHTML = '';
+    document.getElementById('list-wrap').innerHTML = '';
   }
 }
 
-function renderTasks(){
+function updateStatusLine(){
   const status = document.getElementById('status-line');
-  const mine = tasks.filter(t => matchName(t.assignee, currentUser));
-  const byMe = tasks.filter(t => matchName(t.assigned_by, currentUser) && !matchName(t.assignee, currentUser));
+  status.innerHTML = `<b>${tasks.length}</b> tasks across <b>${new Set(tasks.map(t=>(t.assignee||'').trim().toLowerCase()).filter(Boolean)).size}</b> people`;
+}
 
-  const mineOpen = mine.filter(t => t.status !== 'done').length;
-  const overdue = mine.filter(t => isOverdue(t.due_date, t.status)).length;
-  status.innerHTML = `<b>${mine.length}</b> assigned to you (${mineOpen} open) &nbsp;·&nbsp; <b>${byMe.length}</b> you've handed out` +
-    (overdue ? ` &nbsp;·&nbsp; <b style="color:var(--red)">${overdue} overdue</b>` : '');
+function populateAssigneeFilter(){
+  const sel = document.getElementById('f-assignee');
+  const current = sel.value;
+  const names = [...new Set([
+    ...tasks.map(t => (t.assignee||'').trim()).filter(Boolean),
+    ...directory.map(u => (u.user||'').trim()).filter(Boolean)
+  ])].sort((a,b)=>a.localeCompare(b));
+  sel.innerHTML = '<option value="">All people</option>' + names.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  sel.value = current;
+}
 
-  const wrap = document.getElementById('tasks-wrap');
-  if(!mine.length && !byMe.length){
-    wrap.innerHTML = `<div class="empty-state">Nothing here yet. Use <b>+ New Task</b> to assign yourself or someone else a task.</div>`;
+// ── Summary tiles ────────────────────────────────────────────────────────
+function renderSummary(){
+  const byStatus = { not_started: 0, in_progress: 0, blocked: 0, done: 0 };
+  let overdue = 0;
+  const durations = [];
+  tasks.forEach(t => {
+    byStatus[t.status] = (byStatus[t.status]||0) + 1;
+    if(isOverdue(t.due_date, t.status)) overdue++;
+    if(t.status === 'done' && t.completed_at) durations.push(daysBetween(t.created_at, t.completed_at));
+  });
+  const avg = durations.length ? (durations.reduce((a,b)=>a+b,0) / durations.length) : null;
+  document.getElementById('summary-row').innerHTML = `
+    <div class="summary-tile"><div class="n">${tasks.length}</div><div class="lbl">Total tasks</div></div>
+    <div class="summary-tile"><div class="n">${byStatus.not_started}</div><div class="lbl">Not started</div></div>
+    <div class="summary-tile"><div class="n">${byStatus.in_progress}</div><div class="lbl">In progress</div></div>
+    <div class="summary-tile"><div class="n">${byStatus.blocked}</div><div class="lbl">Blocked</div></div>
+    <div class="summary-tile done"><div class="n">${byStatus.done}</div><div class="lbl">Done</div></div>
+    <div class="summary-tile overdue"><div class="n">${overdue}</div><div class="lbl">Overdue</div></div>
+    <div class="summary-tile avg"><div class="n">${avg==null ? '—' : avg.toFixed(1)}</div><div class="lbl">Avg days to close</div></div>
+  `;
+}
+
+// ── Activity by person ──────────────────────────────────────────────────
+function renderPeople(){
+  const byPerson = {};
+  tasks.forEach(t => {
+    const name = (t.assignee||'').trim();
+    if(!name) return;
+    if(!byPerson[name]) byPerson[name] = { name, not_started:0, in_progress:0, blocked:0, done:0, overdue:0, durations:[] };
+    const p = byPerson[name];
+    p[t.status] = (p[t.status]||0) + 1;
+    if(isOverdue(t.due_date, t.status)) p.overdue++;
+    if(t.status === 'done' && t.completed_at) p.durations.push(daysBetween(t.created_at, t.completed_at));
+  });
+  const rows = Object.values(byPerson).sort((a,b)=>a.name.localeCompare(b.name));
+  const wrap = document.getElementById('people-wrap');
+  if(!rows.length){
+    wrap.innerHTML = '<div class="empty-state">No tasks assigned to anyone yet.</div>';
     return;
   }
-
-  let html = '';
-  html += `<div class="group-hd">Assigned to you <span class="n">(${mine.length})</span></div>`;
-  html += mine.length
-    ? `<div class="task-list">${mine.map(t => taskRowHtml(t, false)).join('')}</div>`
-    : `<div class="empty-state">Nothing assigned to you right now.</div>`;
-
-  if(byMe.length){
-    html += `<div class="group-hd">You've handed out <span class="n">(${byMe.length})</span></div>`;
-    html += `<div class="task-list">${byMe.map(t => taskRowHtml(t, true)).join('')}</div>`;
-  }
-  wrap.innerHTML = html;
+  wrap.innerHTML = `
+    <table class="people-table">
+      <thead><tr>
+        <th>Person</th><th class="num">Assigned</th><th class="num">Not started</th><th class="num">In progress</th>
+        <th class="num">Blocked</th><th class="num">Done</th><th class="num">Overdue</th><th class="num">Avg days to close</th>
+      </tr></thead>
+      <tbody>
+        ${rows.map(p => {
+          const total = p.not_started + p.in_progress + p.blocked + p.done;
+          const avg = p.durations.length ? (p.durations.reduce((a,b)=>a+b,0)/p.durations.length).toFixed(1) : '—';
+          return `<tr>
+            <td>${esc(p.name)}</td>
+            <td class="num">${total}</td>
+            <td class="num">${p.not_started}</td>
+            <td class="num">${p.in_progress}</td>
+            <td class="num">${p.blocked}</td>
+            <td class="num">${p.done}</td>
+            <td class="num ${p.overdue?'overdue':''}">${p.overdue}</td>
+            <td class="num">${avg}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
 }
 
-function taskRowHtml(t, showAssignee){
+// ── Task list ────────────────────────────────────────────────────────────
+function matchesFilters(t){
+  const fAssignee = document.getElementById('f-assignee').value;
+  const fStatus = document.getElementById('f-status').value;
+  const fPriority = document.getElementById('f-priority').value;
+  const overdueOnly = document.getElementById('f-overdue').checked;
+  const q = document.getElementById('f-search').value.trim().toLowerCase();
+  if(fAssignee && (t.assignee||'').trim() !== fAssignee) return false;
+  if(fStatus && t.status !== fStatus) return false;
+  if(fPriority && t.priority !== fPriority) return false;
+  if(overdueOnly && !isOverdue(t.due_date, t.status)) return false;
+  if(q){
+    const hay = (t.title+' '+(t.description||'')+' '+(t.assignee||'')+' '+(t.assigned_by||'')).toLowerCase();
+    if(!hay.includes(q)) return false;
+  }
+  return true;
+}
+
+function render(){
+  const wrap = document.getElementById('list-wrap');
+  if(!tasks.length){
+    wrap.innerHTML = '<div class="empty-state">No tasks have been created yet.</div>';
+    return;
+  }
+  const filtered = tasks.filter(matchesFilters);
+  wrap.innerHTML = filtered.length
+    ? `<div class="task-list">${filtered.map(taskRowHtml).join('')}</div>`
+    : '<div class="empty-state">No tasks match these filters.</div>';
+}
+
+function taskRowHtml(t){
   const open = openTaskIds.has(t.id);
   const overdue = isOverdue(t.due_date, t.status);
+  const daysToClose = (t.status === 'done' && t.completed_at) ? daysBetween(t.created_at, t.completed_at).toFixed(1) : null;
   return `
     <div class="task-row" data-id="${t.id}">
       <div class="task-main" onclick="toggleTask('${t.id}')">
@@ -299,12 +364,14 @@ function taskRowHtml(t, showAssignee){
         <div class="task-body">
           <div class="task-title-row">
             <span class="task-title ${t.status==='done'?'done':''}">${esc(t.title)}</span>
+            <span class="tag assignee-tag">${esc(t.assignee||'Unassigned')}</span>
             ${t.priority ? `<span class="tag prio-${t.priority}">${esc(t.priority)}</span>` : ''}
           </div>
           <div class="task-meta">
-            ${showAssignee && t.assignee ? `<span>${esc(t.assignee)}</span>` : ''}
+            ${t.assigned_by ? `<span>from ${esc(t.assigned_by)}</span>` : ''}
             ${t.due_date ? `<span class="due ${overdue?'overdue':''}">Due ${fmtDate(t.due_date)}</span>` : ''}
             ${t.follow_up_date ? `<span class="followup">Follow up ${fmtDate(t.follow_up_date)}</span>` : ''}
+            ${daysToClose ? `<span class="completed">Done in ${daysToClose}d</span>` : ''}
             ${t.notes.length ? `<span>${t.notes.length} note${t.notes.length===1?'':'s'}</span>` : ''}
           </div>
         </div>
@@ -315,7 +382,7 @@ function taskRowHtml(t, showAssignee){
       </div>
       <div class="task-detail ${open?'open':''}">
         ${t.description ? `<div class="task-desc">${esc(t.description)}</div>` : ''}
-        <div class="notes-hd">Notes</div>
+        <div class="notes-hd">Activity &amp; notes</div>
         ${t.notes.map(noteRowHtml).join('') || '<div class="empty-note">No notes yet.</div>'}
         <div class="add-note-row">
           <textarea placeholder="Add a note…" id="new-note-${t.id}"></textarea>
@@ -334,9 +401,6 @@ function noteRowHtml(n){
     </div>`;
 }
 
-// Auto-logged whenever status changes, on top of whatever the person types
-// themselves — gives task_oversight.html a full activity trail per task
-// with no separate audit table.
 async function logStatusChange(taskId, oldStatus, newStatus){
   if(oldStatus === newStatus) return;
   try{
@@ -352,7 +416,7 @@ async function logStatusChange(taskId, oldStatus, newStatus){
 
 function toggleTask(id){
   if(openTaskIds.has(id)) openTaskIds.delete(id); else openTaskIds.add(id);
-  renderTasks();
+  render();
 }
 
 async function cycleStatus(id){
@@ -361,14 +425,15 @@ async function cycleStatus(id){
   const prev = t.status;
   const next = STATUS_CYCLE[(STATUS_CYCLE.indexOf(t.status)+1) % STATUS_CYCLE.length];
   t.status = next;
-  renderTasks();
+  render();
   try{
     const c = await requireClient();
-    const { error } = await c.from('personal_tasks').update({ status: next }).eq('id', id);
+    const { data, error } = await c.from('personal_tasks').update({ status: next }).eq('id', id).select().single();
     if(error) throw error;
+    if(data) { t.completed_at = data.completed_at; }
     await logStatusChange(id, prev, next);
-    renderTasks();
-  }catch(e){ alert('Could not update status: ' + e.message); loadTasks(); }
+    renderSummary(); renderPeople(); render();
+  }catch(e){ alert('Could not update status: ' + e.message); loadAll(); }
 }
 
 async function addNote(taskId){
@@ -382,7 +447,7 @@ async function addNote(taskId){
     const t = tasks.find(x=>x.id===taskId);
     t.notes.unshift(data);
     openTaskIds.add(taskId);
-    renderTasks();
+    render();
   }catch(e){ alert('Could not add note: ' + e.message); }
 }
 
@@ -393,16 +458,18 @@ async function deleteTask(id){
     const { error } = await c.from('personal_tasks').delete().eq('id', id);
     if(error) throw error;
     tasks = tasks.filter(t=>t.id!==id);
-    renderTasks();
+    updateStatusLine(); renderSummary(); renderPeople(); render();
   }catch(e){ alert('Could not delete task: ' + e.message); }
 }
 
 // ── Editor ────────────────────────────────────────────────────────────────
 function assigneeOptionsHtml(selected){
-  const names = [...new Set(directory.map(u => (u.user||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
-  if(currentUser && !names.includes(currentUser)) names.unshift(currentUser);
+  const names = [...new Set([
+    ...directory.map(u => (u.user||'').trim()).filter(Boolean),
+    ...tasks.map(t => (t.assignee||'').trim()).filter(Boolean)
+  ])].sort((a,b)=>a.localeCompare(b));
   if(selected && !names.includes(selected)) names.push(selected);
-  return names.map(n => `<option value="${esc(n)}" ${n===selected?'selected':''}>${esc(n)}${n===currentUser?' (you)':''}</option>`).join('');
+  return names.map(n => `<option value="${esc(n)}" ${n===selected?'selected':''}>${esc(n)}</option>`).join('');
 }
 
 function openEditor(id){
@@ -414,7 +481,7 @@ function openEditor(id){
     <div class="form-row full"><div><label class="field-label">Description</label><textarea id="ed-desc">${esc(t?t.description:'')}</textarea></div></div>
     <div class="form-row">
       <div><label class="field-label">Assign to</label>
-        <select id="ed-assignee">${assigneeOptionsHtml(t ? t.assignee : currentUser)}</select>
+        <select id="ed-assignee">${assigneeOptionsHtml(t ? t.assignee : '')}</select>
       </div>
       <div><label class="field-label">Priority</label>
         <select id="ed-priority">
@@ -441,7 +508,7 @@ function openEditor(id){
       <div>${t ? '<button class="btn btn-danger" onclick="deleteTask(\''+t.id+'\'); closeEditor();">Delete</button>' : ''}</div>
       <div class="right">
         <button class="btn btn-ghost" onclick="closeEditor()">Cancel</button>
-        <button class="btn btn-blue" onclick="saveEditor()">Save</button>
+        <button class="btn btn-purple" onclick="saveEditor()">Save</button>
       </div>
     </div>
   `;
@@ -469,7 +536,7 @@ async function saveEditor(){
     due_date: document.getElementById('ed-due').value || null,
     follow_up_date: document.getElementById('ed-followup').value || null
   };
-  const btn = document.querySelector('#editor .btn-blue');
+  const btn = document.querySelector('#editor .btn-purple');
   btn.disabled = true; btn.textContent = 'Saving…';
   try{
     const c = await requireClient();
@@ -485,107 +552,14 @@ async function saveEditor(){
       if(error) throw error;
     }
     closeEditor();
-    await loadTasks();
+    await loadAll();
   }catch(e){
     alert('Could not save task: ' + e.message);
     btn.disabled = false; btn.textContent = 'Save';
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════
-// JOB DESCRIPTION & RESPONSIBILITIES TAB (same data/logic as my_responsibilities.html)
-// ══════════════════════════════════════════════════════════════════════
-let respItems = [];
-let respLoaded = false;
-
-async function loadResp(){
-  const status = document.getElementById('resp-status-line');
-  status.textContent = 'Loading…';
-  try{
-    const c = await requireClient();
-    const { data, error } = await c.from('responsibilities').select('*')
-      .order('sort_order', { ascending: true }).order('created_at', { ascending: true });
-    if(error) throw error;
-    respItems = data || [];
-    respLoaded = true;
-    renderResp();
-  }catch(e){
-    status.textContent = 'Could not load: ' + e.message;
-  }
-}
-
-function renderResp(){
-  const status = document.getElementById('resp-status-line');
-  const primary = respItems.filter(i => matchName(i.owner, currentUser));
-  const backup = respItems.filter(i => matchName(i.backup_owner, currentUser) && !matchName(i.owner, currentUser));
-
-  status.innerHTML = `<b>${primary.length}</b> you own &nbsp;·&nbsp; <b>${backup.length}</b> you back up`;
-
-  const needsBackupCount = primary.filter(i => i.status === 'needs_backup').length;
-  document.getElementById('resp-summary-row').innerHTML = `
-    <div class="summary-tile primary"><div class="n">${primary.length}</div><div class="lbl">You own</div></div>
-    <div class="summary-tile backup"><div class="n">${backup.length}</div><div class="lbl">You back up</div></div>
-    <div class="summary-tile needs_backup"><div class="n">${needsBackupCount}</div><div class="lbl">Yours, no backup yet</div></div>
-  `;
-
-  const wrap = document.getElementById('resp-content-wrap');
-  if(!primary.length && !backup.length){
-    wrap.innerHTML = `<div class="empty-state">Nothing assigned to <b>${esc(currentUser)}</b> yet — check the <a href="/admin.html#responsibilities">Responsibilities Matrix</a> (admin panel) or ask whoever's delegating to assign you something.</div>`;
-    return;
-  }
-
-  let html = '';
-  if(primary.length){
-    html += '<div class="group-hd">You own</div>';
-    html += `<div class="resp-list">${primary.map(i => respRowHtml(i, 'primary')).join('')}</div>`;
-  }
-  if(backup.length){
-    html += '<div class="group-hd">You back up</div>';
-    html += `<div class="resp-list">${backup.map(i => respRowHtml(i, 'backup')).join('')}</div>`;
-  }
-  wrap.innerHTML = html;
-}
-
-function respRowHtml(i, role){
-  return `
-    <div class="resp-row" data-id="${i.id}">
-      <div class="resp-title-row">
-        <span class="resp-title">${esc(i.title)}</span>
-        <span class="tag role-${role}">${role === 'primary' ? 'Primary' : 'Backup'}</span>
-        <span class="tag status-${i.status}">${esc(RESP_STATUS_LABELS[i.status] || i.status)}</span>
-      </div>
-      <div class="resp-area">${i.department ? esc(i.department) + ' · ' : ''}${esc(i.area || '')}</div>
-      ${i.description ? `<div class="resp-desc">${esc(i.description)}</div>` : ''}
-      <div class="resp-pair"><b>Owner:</b> ${i.owner ? esc(i.owner) : '—'} &nbsp;·&nbsp; <b>Backup:</b> ${i.backup_owner ? esc(i.backup_owner) : '—'}</div>
-      <div class="resp-notes-wrap">
-        <label>Notes</label>
-        <textarea class="notes-field" data-id="${i.id}" onblur="saveRespNotes('${i.id}', this)" placeholder="Add a note for whoever covers this next…">${esc(i.notes)}</textarea>
-        <div class="notes-save-hint" id="resp-notes-hint-${i.id}"></div>
-      </div>
-      <a class="resp-link" href="/admin.html#responsibilities">Edit in matrix →</a>
-    </div>`;
-}
-
-async function saveRespNotes(id, el){
-  const item = respItems.find(i => i.id === id);
-  const newVal = el.value.trim() || null;
-  if(item && item.notes === newVal) return;
-  const hint = document.getElementById('resp-notes-hint-'+id);
-  hint.textContent = 'Saving…';
-  try{
-    const c = await requireClient();
-    const { error } = await c.from('responsibilities').update({ notes: newVal }).eq('id', id);
-    if(error) throw error;
-    if(item) item.notes = newVal;
-    hint.textContent = 'Saved';
-    setTimeout(() => { if(hint.textContent === 'Saved') hint.textContent = ''; }, 1500);
-  }catch(e){
-    hint.textContent = 'Could not save: ' + e.message;
-  }
-}
-
-// ── Init ─────────────────────────────────────────────────────────────────
-loadDirectoryNames().then(loadTasks);
+loadAll();
 </script>
 <script src="/sw_register.js"></script>
 </body>
