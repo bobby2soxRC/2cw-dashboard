@@ -120,6 +120,9 @@
   .form-row.full{grid-template-columns:1fr}
   .form-row select, .form-row input, .form-row textarea{width:100%}
   textarea{resize:vertical;min-height:64px;font-family:'DM Sans',sans-serif}
+  .check-list{max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:#0c0d0f}
+  .check-item{display:block;font-size:.85rem;padding:4px 0;cursor:pointer}
+  .check-item input{margin-right:8px}
   .editor-actions{display:flex;justify-content:space-between;gap:10px;margin-top:22px}
   .editor-actions .right{display:flex;gap:10px}
 
@@ -193,7 +196,7 @@
         <button class="btn btn-blue" onclick="openEditor(null)">+ New Task</button>
       </div>
     </div>
-    <div class="csv-hint">CSV columns: <code>title</code> (required), <code>description</code>, <code>assigned_to</code> (defaults to you), <code>assigned_by</code> (defaults to you if left blank), <code>priority</code> (high/medium/low), <code>status</code> (not_started/in_progress/blocked/done), <code>due_date</code>, <code>follow_up_date</code> (YYYY-MM-DD), <code>link_url</code> (a link to anywhere — Google Sheet, Smartsheet, source email, etc.). Re-uploading a file you downloaded from here updates those same tasks by their <code>id</code> column — don't delete or edit that column. New rows with no matching id become new tasks. The language dropdown translates <code>title</code>/<code>description</code> in the exported file (needs translation set up — see the Translate buttons on each task).</div>
+    <div class="csv-hint">CSV columns: <code>title</code> (required), <code>description</code>, <code>assigned_to</code> (defaults to you — separate multiple people with commas, e.g. "Robert, Ned"), <code>assigned_by</code> (defaults to you if left blank), <code>priority</code> (high/medium/low), <code>status</code> (not_started/in_progress/blocked/done), <code>due_date</code>, <code>follow_up_date</code> (YYYY-MM-DD), <code>link_url</code> (a link to anywhere — Google Sheet, Smartsheet, source email, etc.). Re-uploading a file you downloaded from here updates those same tasks by their <code>id</code> column — don't delete or edit that column. New rows with no matching id become new tasks. The language dropdown translates <code>title</code>/<code>description</code> in the exported file (needs translation set up — see the Translate buttons on each task).</div>
     <div id="import-result"></div>
     <div id="tasks-wrap"></div>
   </div>
@@ -282,10 +285,14 @@ async function loadTasks(){
   }
 }
 
+function hasAssignee(t, name){
+  return (t.assignees||[]).some(a => matchName(a, name));
+}
+
 function renderTasks(){
   const status = document.getElementById('status-line');
-  const mine = tasks.filter(t => matchName(t.assignee, currentUser));
-  const byMe = tasks.filter(t => matchName(t.assigned_by, currentUser) && !matchName(t.assignee, currentUser));
+  const mine = tasks.filter(t => hasAssignee(t, currentUser));
+  const byMe = tasks.filter(t => matchName(t.assigned_by, currentUser) && !hasAssignee(t, currentUser));
 
   const mineOpen = mine.filter(t => t.status !== 'done').length;
   const overdue = mine.filter(t => isOverdue(t.due_date, t.status)).length;
@@ -329,7 +336,7 @@ function taskRowHtml(t, section){
             ${t.link_url ? `<a class="tag link-tag" href="${esc(t.link_url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔗 Link</a>` : ''}
           </div>
           <div class="task-meta">
-            ${section==='byMe' && t.assignee ? `<span>${esc(t.assignee)}</span>` : ''}
+            ${section==='byMe' && t.assignees && t.assignees.length ? `<span>${esc(t.assignees.join(', '))}</span>` : ''}
             ${assignedByOther ? `<span>assigned by ${esc(t.assigned_by)}</span>` : ''}
             ${t.due_date ? `<span class="due ${overdue?'overdue':''}">Due ${fmtDate(t.due_date)}</span>` : ''}
             ${t.follow_up_date ? `<span class="followup">Follow up ${fmtDate(t.follow_up_date)}</span>` : ''}
@@ -474,6 +481,17 @@ function assigneeOptionsHtml(selected){
   return names.map(n => `<option value="${esc(n)}" ${n===selected?'selected':''}>${esc(n)}${n===currentUser?' (you)':''}</option>`).join('');
 }
 
+// Multiple people can own one task (a shared status/notes thread, not one
+// row per person) — checkboxes rather than a native multi-select since
+// that's easier to use on a touchscreen and to scan at a glance.
+function assigneeCheckboxesHtml(selectedArr){
+  const names = [...new Set(directory.map(u => (u.user||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  if(currentUser && !names.includes(currentUser)) names.unshift(currentUser);
+  (selectedArr||[]).forEach(n => { if(n && !names.includes(n)) names.push(n); });
+  const sel = new Set(selectedArr||[]);
+  return names.map(n => `<label class="check-item"><input type="checkbox" class="ed-assignee-cb" value="${esc(n)}" ${sel.has(n)?'checked':''}/> ${esc(n)}${n===currentUser?' (you)':''}</label>`).join('');
+}
+
 function openEditor(id){
   editingId = id;
   const t = id ? tasks.find(x=>x.id===id) : null;
@@ -481,13 +499,16 @@ function openEditor(id){
     <h2>${t ? 'Edit Task' : 'New Task'}</h2>
     <div class="form-row full"><div><label class="field-label">Title</label><input type="text" id="ed-title" value="${esc(t?t.title:'')}"/></div></div>
     <div class="form-row full"><div><label class="field-label">Description</label><textarea id="ed-desc">${esc(t?t.description:'')}</textarea></div></div>
-    <div class="form-row">
-      <div><label class="field-label">Assign to</label>
-        <select id="ed-assignee">${assigneeOptionsHtml(t ? t.assignee : currentUser)}</select>
+    <div class="form-row full">
+      <div><label class="field-label">Assign to (select one or more)</label>
+        <div class="check-list">${assigneeCheckboxesHtml(t ? t.assignees : [currentUser])}</div>
       </div>
+    </div>
+    <div class="form-row">
       <div><label class="field-label">Assigned by</label>
         <select id="ed-assigned-by">${assigneeOptionsHtml(t ? t.assigned_by : currentUser)}</select>
       </div>
+      <div></div>
     </div>
     <div class="form-row">
       <div><label class="field-label">Status</label>
@@ -530,12 +551,12 @@ function closeEditor(){
 async function saveEditor(){
   const title = document.getElementById('ed-title').value.trim();
   if(!title){ alert('Enter a title.'); return; }
-  const assignee = document.getElementById('ed-assignee').value.trim();
-  if(!assignee){ alert('Pick who this is assigned to.'); return; }
+  const assignees = Array.from(document.querySelectorAll('.ed-assignee-cb:checked')).map(cb=>cb.value);
+  if(!assignees.length){ alert('Pick at least one person to assign this to.'); return; }
   const payload = {
     title,
     description: document.getElementById('ed-desc').value.trim() || null,
-    assignee,
+    assignees,
     assigned_by: document.getElementById('ed-assigned-by').value.trim() || currentUser,
     priority: document.getElementById('ed-priority').value || null,
     status: document.getElementById('ed-status').value,
@@ -617,13 +638,12 @@ function downloadCsv(filename, csvText){
 
 const PERSONAL_TASK_CSV_HEADERS = ['id','title','description','assigned_to','assigned_by','priority','status','due_date','follow_up_date','link_url'];
 
-// personal_tasks' actual column is `assignee` (matches the Supabase schema)
-// — this just renames it to assigned_to for the CSV, which is the only
-// place the distinction is user-facing.
+// personal_tasks' actual column is `assignees` (a text[] — a task can have
+// several owners) — the CSV flattens it to a comma-separated assigned_to.
 function toExportRow(t){
   return {
     id: t.id, title: t.title, description: t.description,
-    assigned_to: t.assignee, assigned_by: t.assigned_by,
+    assigned_to: (t.assignees||[]).join(', '), assigned_by: t.assigned_by,
     priority: t.priority, status: t.status,
     due_date: t.due_date, follow_up_date: t.follow_up_date, link_url: t.link_url
   };
@@ -653,8 +673,8 @@ async function translateRowsForExport(rows, lang){
 }
 
 async function downloadMyTasksCsv(){
-  const mine = tasks.filter(t => matchName(t.assignee, currentUser));
-  const byMe = tasks.filter(t => matchName(t.assigned_by, currentUser) && !matchName(t.assignee, currentUser));
+  const mine = tasks.filter(t => hasAssignee(t, currentUser));
+  const byMe = tasks.filter(t => matchName(t.assigned_by, currentUser) && !hasAssignee(t, currentUser));
   let rows = [...mine, ...byMe];
   if(!rows.length){ alert('No tasks to export yet.'); return; }
   const lang = document.getElementById('csv-lang').value;
@@ -680,6 +700,12 @@ function priorityFromCsv(raw){
   const s = (raw||'').trim().toLowerCase();
   return ['high','medium','low'].includes(s) ? s : null;
 }
+// Comma-separated "assigned_to" -> array, e.g. "Robert, Ned" -> ['Robert','Ned'].
+// Falls back when blank so a stray empty cell never produces an unassigned task.
+function assigneesFromCsv(raw, fallback){
+  const arr = (raw||'').split(',').map(s=>s.trim()).filter(Boolean);
+  return arr.length ? arr : fallback;
+}
 // Accepts ISO (yyyy-mm-dd, what the date-picker and our own exports use) or
 // whatever else Date can parse (e.g. Excel's 9/25/2026), so a round-tripped
 // file and a freshly-typed one both work.
@@ -698,7 +724,7 @@ function rowToPersonalTask(row){
     id: (row['id']||'').trim() || null,
     title,
     description: row['description'] ? row['description'].trim() : null,
-    assignee: (row['assigned_to'] || row['assigned to'] || row['assignee'] || '').trim() || currentUser,
+    assignees: assigneesFromCsv(row['assigned_to'] || row['assigned to'] || row['assignee'], [currentUser]),
     assigned_by: (row['assigned_by'] || row['assigned by'] || '').trim() || currentUser,
     priority: priorityFromCsv(row['priority']),
     status: statusFromCsv(row['status']),
@@ -723,14 +749,15 @@ async function handleCsvFile(event){
     const c = await requireClient();
     const byId = {};
     tasks.forEach(t => { byId[t.id] = t; });
+    const dedupKey = (title, assignees) => (title.trim()+'|'+[...assignees].sort().join(',').trim()).toLowerCase();
     const byTitleAssignee = {};
-    tasks.forEach(t => { byTitleAssignee[(t.title.trim()+'|'+(t.assignee||'').trim()).toLowerCase()] = t; });
+    tasks.forEach(t => { byTitleAssignee[dedupKey(t.title, t.assignees||[])] = t; });
 
     let added = 0, updated = 0;
     const failed = [];
     for(const r of rows){
       const { id, ...fields } = r;
-      let match = (id && byId[id]) ? byId[id] : byTitleAssignee[(fields.title.trim()+'|'+fields.assignee.trim()).toLowerCase()];
+      let match = (id && byId[id]) ? byId[id] : byTitleAssignee[dedupKey(fields.title, fields.assignees)];
       try{
         if(match){
           const prevStatus = match.status;

@@ -577,7 +577,8 @@ create table if not exists personal_tasks (
   id             uuid primary key default gen_random_uuid(),
   title          text not null,
   description    text,
-  assignee       text not null,
+  assignee       text,          -- deprecated single-owner column, kept for history — see `assignees` below
+  assignees      text[] not null default '{}',  -- one task can have several owners; a shared status/notes thread (see personal_task_notes) rather than one row per person
   assigned_by    text,
   status         text not null default 'not_started' check (status in ('not_started', 'in_progress', 'blocked', 'done')),
   priority       text check (priority in ('low', 'medium', 'high')),
@@ -596,7 +597,18 @@ create table if not exists personal_tasks (
 alter table personal_tasks add column if not exists completed_at timestamptz;
 alter table personal_tasks add column if not exists link_url text;
 
-create index if not exists idx_personal_tasks_assignee on personal_tasks (lower(assignee));
+-- Multi-assignee migration: add the array column, backfill it from the old
+-- single-value `assignee` for any row that predates this (the `assignees is
+-- null or '{}'` guard makes this idempotent — re-running never clobbers an
+-- assignees list someone's already edited), then relax `assignee` from
+-- not-null to nullable now that it's no longer the source of truth. The
+-- column itself isn't dropped, so nothing that still reads it breaks.
+alter table personal_tasks add column if not exists assignees text[] not null default '{}';
+update personal_tasks set assignees = array[assignee]
+  where assignee is not null and (assignees is null or assignees = '{}');
+alter table personal_tasks alter column assignee drop not null;
+
+create index if not exists idx_personal_tasks_assignees on personal_tasks using gin (assignees);
 create index if not exists idx_personal_tasks_status on personal_tasks (status);
 
 drop trigger if exists trg_touch_personal_tasks on personal_tasks;

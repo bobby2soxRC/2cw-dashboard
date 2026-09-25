@@ -121,10 +121,10 @@ Both `my_tasks.html` and `task_oversight.html` have **Download template**,
 page), and to whoever has the Task Activity card on `task_oversight.html`.
 All three read/write the same columns: `id, title, description,
 assigned_to, assigned_by, priority, status, due_date, follow_up_date,
-link_url`. (`assigned_to` is the CSV's name for the underlying
-`personal_tasks.assignee` column — friendlier heading, same field. Import
-still accepts a column literally named `assignee` too, so older exported
-files keep working.)
+link_url`. `assigned_to` can hold more than one name, comma-separated
+(`"Robert, Ned"`) — see the multi-assignee section below. Import still
+accepts a column literally named `assignee` too, so older exported files
+keep working.
 
 - **Download template** gives a one-row example CSV for creating tasks from
   scratch — `id` is blank, so every row becomes a new task on upload. Only
@@ -162,6 +162,27 @@ templates/exports without the column keep working, but nothing forces it
 anymore. The "Assigned to you" section on `my_tasks.html` shows "assigned
 by X" whenever that's someone other than you, and `task_oversight.html`
 always shows "from X" since it isn't obvious there otherwise.
+
+## Assigning a task to multiple people
+
+A task can have more than one owner — it's **one shared task** (one
+status, one notes/progress thread everyone reads and writes to), not a
+separate copy per person. If Robert and Ned are both assigned, marking it
+"Done" marks it done for both; a note either of them adds shows up for
+both; it counts toward both of their "Assigned to you" lists and both
+their rows in Task Activity's "Activity by person" table.
+
+- **In the editor**: "Assign to" is a checklist (check as many people as
+  apply), not a single dropdown — "Assigned by" is still one person, since
+  only one person actually created/handed out the task.
+- **In CSV**: separate names with commas in `assigned_to` (`"Robert,
+  Ned"`). Order doesn't matter for matching an existing task on re-upload.
+- **Under the hood**: `personal_tasks.assignees` is a Postgres `text[]`
+  (array) column — the real source of truth. The old single-value
+  `assignee` column still exists for history but is no longer written to;
+  nothing reads it either. If you're querying the table directly (SQL
+  editor, a script), use `assignees` and array operators (`'Robert' =
+  any(assignees)`), not `assignee`.
 
 `personal_tasks.link_url` is a free-form optional URL — a Google Sheet, a
 Smartsheet link, a source email, anywhere — set from the editor's "Link"
