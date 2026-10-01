@@ -786,3 +786,26 @@ drop policy if exists "anon delete" on drying_intakes;
 create policy "anon delete" on drying_intakes for delete using (true);
 
 grant select, insert, update, delete on public.drying_intakes to anon;
+
+-- Drying schedule v2: a client's season can have several harvest windows
+-- (e.g. Oct 7 for 3 days, then Oct 17 for 3 days), the services they want
+-- from the 2026 pricing sheet, and the dates/crew size for farm support.
+--   harvests      [{ "start": "2026-10-07", "days": 3, "lb": 12000 }, …]
+--                 lb is optional per window; est_wet_lb stays the client's
+--                 total, spread over the windows without their own lb.
+--   services      service keys, e.g. {drying,farm_labor,machine_trim} —
+--                 the list lives in drying_schedule.html (SERVICES).
+--   farm_support  [{ "start": "2026-10-06", "days": 2, "people": 4 }, …]
+-- est_start/est_end are kept up to date by the page as the first harvest's
+-- start and the last one's end, so ordering by est_start still works.
+-- Rows from v1 get their single start/end turned into one harvest window;
+-- the guard means a re-run never touches rows the page has saved since.
+alter table drying_intakes add column if not exists harvests jsonb not null default '[]';
+alter table drying_intakes add column if not exists services text[] not null default '{drying}';
+alter table drying_intakes add column if not exists farm_support jsonb not null default '[]';
+
+update drying_intakes
+   set harvests = jsonb_build_array(jsonb_build_object(
+         'start', coalesce(est_start, est_end),
+         'days',  greatest(1, coalesce(est_end, est_start) - coalesce(est_start, est_end) + 1)))
+ where harvests = '[]'::jsonb and coalesce(est_start, est_end) is not null;

@@ -72,17 +72,27 @@ A request is late if its plan finishes after the Sheet's Ready Date, or the
 Ready Date has passed. English/Spanish via the shared `2cw_lang` toggle.
 
 **Drying Schedule** (`drying_schedule.html`, hub card `drying_schedule` under
-Processing) plans intakes from outside client farms we dry for. Each row in
-the `drying_intakes` Supabase table is one planned intake: farm name, license
-#, contact, farm size (sq ft / acres / plants), strains, estimated intake
-start/end, estimated total wet lbs, and a status (tentative → confirmed →
-receiving → complete, or cancelled). A returning farm gets a new row; picking
-its name in a new intake copies its license, size and contact from its last
-one. The Timeline view draws each intake as a bar by week (tentative bars are
-dashed) with an "Est. wet lb / week" row underneath that spreads each
-estimate evenly over its days, so the busiest weeks stand out; the Table view
-is sortable. Estimates only — actual weights still come in through Harvest
-Intake — Wet. English only (office-facing).
+Processing) plans the outside client farms we dry for. Each row in the
+`drying_intakes` Supabase table is one client's season: farm name, license #,
+contact, farm size (sq ft / acres / plants), strains, status (tentative →
+confirmed → receiving → complete, or cancelled), plus three lists:
+- `harvests` — harvest windows as start date + days ("Oct 7 for 3 days"),
+  each with optional wet lbs. `est_wet_lb` is the client's total; windows
+  without their own lbs share whatever's left of it in proportion to days.
+  The page keeps `est_start`/`est_end` set to the first and last harvest day.
+- `services` — keys from the 2026 Post-Harvest Services pricing sheet
+  (`SERVICES` in the page, with rates shown next to each checkbox). Add new
+  keys freely but don't rename existing ones.
+- `farm_support` — only when Farm labor is ticked: start date + days + how
+  many people.
+
+A returning farm gets a new row; picking its name copies its license, size,
+contact and services from its last one. The Timeline view draws each harvest
+window as a bar (tentative ones dashed) and farm support as a thin green bar
+under it, with an "Est. wet lb / week" row and a "Farm crew (peak / day)" row
+underneath; the Table view is sortable and there's a service filter.
+Estimates only — actual weights still come in through Harvest Intake — Wet.
+English only (office-facing).
 
 Each stage pulls its input weight forward from the stage before it: type the
 last 4 of the Metrc tag and bucking fills in the dry weight the post-dry check
