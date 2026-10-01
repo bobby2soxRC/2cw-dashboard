@@ -519,7 +519,9 @@ async function buildTree(){
         href: s.customHref || `/ops_form.html?station=${s.key}`,
         today:n, drafts
       };
-      const deptName = t(s.dept);
+      // Bucket by the English name — t() follows the EN/ES toggle, and in
+      // Spanish "Procesamiento" would match no folder and drop the station.
+      const deptName = (s.dept && s.dept.en) || t(s.dept);
       if(deptName === 'Cultivation') cultChildren.push(leaf);
       else if(deptName === 'Processing') procChildren.push(leaf);
       else if(deptName === 'Manufacturing') mfgChildren.push(leaf);
