@@ -23,6 +23,7 @@
 const crypto = require('crypto');
 
 const TOKEN_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function json(statusCode, body) {
   return { statusCode, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
@@ -171,20 +172,25 @@ exports.handler = async (event) => {
           return json(400, { ok: false, error: 'That would create a reporting loop — pick a manager who isn\'t already below this person on the chart' });
         }
       }
+      const email = String(u.email || '').trim().toLowerCase();
+      if (email && !EMAIL_RE.test(email)) return json(400, { ok: false, error: 'That email address doesn\'t look right' });
       const body = {
         name, pin, active: u.active !== false, columns: u.columns || {},
+        last_name: String(u.last_name || '').trim() || null,
+        email: email || null,
         title: (u.title || '').trim() || null,
         reports_to: reportsTo
       };
-      if (u.id) {
-        const res = await supaFetch(supaUrl, serviceKey, `app_users?id=eq.${encodeURIComponent(u.id)}`, {
-          method: 'PATCH', body: JSON.stringify(body)
-        });
-        if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
-        return json(200, { ok: true, user: (await res.json())[0] });
+      const res = u.id
+        ? await supaFetch(supaUrl, serviceKey, `app_users?id=eq.${encodeURIComponent(u.id)}`, { method: 'PATCH', body: JSON.stringify(body) })
+        : await supaFetch(supaUrl, serviceKey, 'app_users', { method: 'POST', body: JSON.stringify(body) });
+      if (!res.ok) {
+        const text = await res.text();
+        // 23505 = unique violation on one of the "where active" indexes.
+        if (text.includes('23505') && text.includes('email')) return json(409, { ok: false, error: 'Another active user already has that email address' });
+        if (text.includes('23505') && text.includes('pin')) return json(409, { ok: false, error: 'Another active user already has that PIN' });
+        throw new Error(`${res.status} ${text}`);
       }
-      const res = await supaFetch(supaUrl, serviceKey, 'app_users', { method: 'POST', body: JSON.stringify(body) });
-      if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
       return json(200, { ok: true, user: (await res.json())[0] });
     }
 

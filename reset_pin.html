@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Reset PIN — 2CW Productions</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <meta name="theme-color" content="#0c0d0f">
+  <meta name="referrer" content="no-referrer">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#0c0d0f;--surface:#13151a;--border:#1e2129;--green:#3db87a;--red:#ef5350;--text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0}
+    html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif}
+    body{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem 16px}
+    .wordmark{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,5vw,48px);letter-spacing:.06em;line-height:1;background:linear-gradient(135deg,#fff 30%,var(--muted) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center;margin-bottom:2rem}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem;width:100%;max-width:400px}
+    h1{font-size:1.25rem;font-weight:700;margin-bottom:.35rem}
+    .hint{color:var(--subtext);font-size:.88rem;line-height:1.45;margin-bottom:1.5rem}
+    label{display:block;font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem}
+    input{width:100%;background:#0c0d0f;border:1px solid var(--border);color:var(--text);padding:.8rem 1rem;border-radius:10px;font-size:1rem;font-family:inherit;outline:none;margin-bottom:1.1rem}
+    input:focus{border-color:var(--green)}
+    input.pin{font-family:'DM Mono',monospace;font-size:1.4rem;letter-spacing:.5em;text-align:center}
+    button{width:100%;background:var(--green);color:#0c0d0f;border:none;border-radius:10px;padding:.85rem;font-size:.95rem;font-weight:700;font-family:inherit;cursor:pointer}
+    button:disabled{opacity:.5;cursor:default}
+    .msg{margin-top:1rem;font-size:.88rem;line-height:1.45;display:none}
+    .msg.err{display:block;color:var(--red)}
+    .msg.ok{display:block;color:var(--green)}
+    .back{display:block;margin-top:1.4rem;text-align:center;color:var(--subtext);font-size:.85rem}
+    .hidden{display:none}
+  </style>
+</head>
+<body>
+  <div class="wordmark">2CW Productions</div>
+
+  <!-- Step 1: ask for the email (no token in the URL) -->
+  <div class="card hidden" id="request-card">
+    <h1>Forgot your PIN?</h1>
+    <div class="hint">Enter the email address on your account and we'll send you a link to choose a new PIN.</div>
+    <form id="request-form">
+      <label for="email">Email</label>
+      <input type="email" id="email" autocomplete="email" required/>
+      <button type="submit" id="request-btn">Send reset link</button>
+    </form>
+    <div class="msg" id="request-msg"></div>
+    <a class="back" href="/index.html">Back to sign in</a>
+  </div>
+
+  <!-- Step 2: choose a new PIN (arrived from the emailed link) -->
+  <div class="card hidden" id="reset-card">
+    <h1 id="reset-title">Choose a new PIN</h1>
+    <div class="hint">Pick 4 digits you'll remember. You'll use it to sign in from now on.</div>
+    <form id="reset-form">
+      <label for="pin1">New PIN</label>
+      <input class="pin" type="password" id="pin1" inputmode="numeric" maxlength="4" autocomplete="new-password" required/>
+      <label for="pin2">Confirm new PIN</label>
+      <input class="pin" type="password" id="pin2" inputmode="numeric" maxlength="4" autocomplete="new-password" required/>
+      <button type="submit" id="reset-btn">Save new PIN</button>
+    </form>
+    <div class="msg" id="reset-msg"></div>
+    <a class="back" href="/index.html">Back to sign in</a>
+  </div>
+
+<script>
+const ENDPOINT = '/.netlify/functions/pin-reset';
+const token = new URLSearchParams(location.search).get('token');
+
+async function call(body){
+  try{
+    const res = await fetch(ENDPOINT, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const j = await res.json().catch(() => ({ ok:false, error:'Something went wrong — try again.' }));
+    return res.ok && j.ok ? j : { ok:false, error: j.error || 'Something went wrong — try again.' };
+  }catch{
+    return { ok:false, error:'No connection — check your signal and try again.' };
+  }
+}
+
+function show(el, kind, text){ el.className = 'msg ' + kind; el.textContent = text; }
+
+if(!token){
+  document.getElementById('request-card').classList.remove('hidden');
+  document.getElementById('email').focus();
+  document.getElementById('request-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = document.getElementById('request-btn');
+    const msg = document.getElementById('request-msg');
+    btn.disabled = true; btn.textContent = 'Sending…';
+    const r = await call({ action:'request', email: document.getElementById('email').value });
+    btn.disabled = false; btn.textContent = 'Send reset link';
+    if(r.ok){
+      show(msg, 'ok', 'If that email is on an account, a reset link is on its way. It expires in 30 minutes — check your spam folder if you don\'t see it.');
+      document.getElementById('request-form').reset();
+    } else {
+      show(msg, 'err', r.error);
+    }
+  });
+} else {
+  // Keep the token out of the address bar (and browser history) once read.
+  history.replaceState(null, '', location.pathname);
+  const card = document.getElementById('reset-card');
+  const msg = document.getElementById('reset-msg');
+  const form = document.getElementById('reset-form');
+  card.classList.remove('hidden');
+  form.classList.add('hidden');
+  (async () => {
+    const r = await call({ action:'check', token });
+    if(!r.ok){
+      document.getElementById('reset-title').textContent = 'Link not valid';
+      card.querySelector('.hint').innerHTML = 'This link has expired or was already used. <a href="/reset_pin.html" style="color:var(--green)">Send a new one</a>.';
+      return;
+    }
+    document.getElementById('reset-title').textContent = `Hi ${r.name} — choose a new PIN`;
+    form.classList.remove('hidden');
+    document.getElementById('pin1').focus();
+  })();
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const p1 = document.getElementById('pin1').value.trim();
+    const p2 = document.getElementById('pin2').value.trim();
+    if(!/^\d{4}$/.test(p1)) return show(msg, 'err', 'Your PIN must be exactly 4 digits.');
+    if(p1 !== p2) return show(msg, 'err', 'The two PINs don\'t match.');
+    const btn = document.getElementById('reset-btn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    const r = await call({ action:'reset', token, pin: p1 });
+    btn.disabled = false; btn.textContent = 'Save new PIN';
+    if(!r.ok) return show(msg, 'err', r.error);
+    form.classList.add('hidden');
+    card.querySelector('.hint').textContent = '';
+    document.getElementById('reset-title').textContent = 'PIN updated';
+    show(msg, 'ok', 'Your new PIN is saved. Use it to sign in.');
+    // A device still signed in with the old PIN shouldn't keep working.
+    sessionStorage.removeItem('2cw_pin');
+  });
+}
+</script>
+</body>
+</html>

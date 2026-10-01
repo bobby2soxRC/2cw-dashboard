@@ -32,7 +32,7 @@
   .gate-title{font-size:1.2rem;font-weight:700;margin-bottom:.3rem}
   .gate-hint{color:var(--subtext);font-size:.85rem;margin-bottom:1.75rem;line-height:1.5}
   .field-label{display:block;font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.4rem}
-  input[type=password],input[type=text],input[type=tel]{width:100%;background:#0c0d0f;border:1px solid var(--border);color:var(--text);padding:.7rem .85rem;border-radius:8px;font-size:1rem;font-family:'DM Mono',monospace;outline:none}
+  input[type=password],input[type=text],input[type=tel],input[type=email]{width:100%;background:#0c0d0f;border:1px solid var(--border);color:var(--text);padding:.7rem .85rem;border-radius:8px;font-size:1rem;font-family:'DM Mono',monospace;outline:none}
   input:focus{border-color:var(--gold)}
   .btn{padding:.7rem 1.1rem;border:1px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer;background:transparent;color:var(--text)}
   .btn-gold{background:var(--gold);color:#000;border-color:var(--gold)}
@@ -406,6 +406,7 @@ function currentPlanForFarm(farm){
   return planned.reduce((best, p) => (!best || p.planned_harvest_date < best.planned_harvest_date) ? p : best, null);
 }
 
+function fullName(u){ return [u.name, u.last_name].filter(Boolean).join(' '); }
 function esc(str){ return String(str==null?'':str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 function getToken(){ return sessionStorage.getItem(TOKEN_KEY); }
@@ -512,11 +513,12 @@ function renderTable(){
   }
   const sorted = [...users].sort((a,b) => (b.active - a.active) || a.name.localeCompare(b.name));
   wrap.innerHTML = `<table>
-    <thead><tr><th>Name</th><th>Title</th><th>PIN</th><th>Access</th><th></th></tr></thead>
+    <thead><tr><th>Name</th><th>Email</th><th>Title</th><th>PIN</th><th>Access</th><th></th></tr></thead>
     <tbody>
       ${sorted.map(u => `
         <tr class="${u.active ? '' : 'inactive'}">
-          <td>${esc(u.name)}${u.active ? '' : ' <span class="pill">inactive</span>'}</td>
+          <td>${esc(fullName(u))}${u.active ? '' : ' <span class="pill">inactive</span>'}</td>
+          <td class="muted">${esc(u.email || '—')}</td>
           <td class="muted">${esc(u.title || '—')}</td>
           <td>${esc(u.pin)}</td>
           <td>${cardSummary(u).map(p => `<span class="pill">${esc(p)}</span>`).join('') || '<span class="pill">no access</span>'}</td>
@@ -583,7 +585,7 @@ function orgNodeHtml(u, childrenOf, ancestors){
     <div class="org-node">
       <div class="org-card ${u.active ? '' : 'org-inactive'}">
         <div>
-          <div class="org-name">${esc(u.name)}${u.active ? '' : ' <span class="pill">inactive</span>'}</div>
+          <div class="org-name">${esc(fullName(u))}${u.active ? '' : ' <span class="pill">inactive</span>'}</div>
           <div class="org-title">${esc(u.title || 'No title set')}</div>
         </div>
         <div class="row-actions"><button onclick="openEditor('${u.id}')">Edit</button></div>
@@ -1094,9 +1096,14 @@ function openEditor(id){
   document.getElementById('editor').innerHTML = `
     <h2>${u ? 'Edit User' : 'Add User'}</h2>
     <div class="form-row">
-      <div><label class="field-label">Name</label><input type="text" id="ed-name" value="${esc(u?u.name:'')}"/></div>
+      <div><label class="field-label">First name</label><input type="text" id="ed-name" value="${esc(u?u.name:'')}"/></div>
+      <div><label class="field-label">Last name</label><input type="text" id="ed-last-name" value="${esc(u?u.last_name:'')}"/></div>
+    </div>
+    <div class="form-row">
+      <div><label class="field-label">Email (for PIN resets)</label><input type="email" id="ed-email" autocomplete="off" value="${esc(u?u.email:'')}"/></div>
       <div><label class="field-label">PIN</label><input type="tel" id="ed-pin" inputmode="numeric" value="${esc(u?u.pin:'')}"/></div>
     </div>
+    <div class="status-line" style="margin:-4px 0 10px">First name is what everyone sees and what tasks/responsibilities are matched on — changing it on an existing user can orphan their assignments.</div>
     <label class="active-toggle"><input type="checkbox" id="ed-active" ${(!u || u.active) ? 'checked' : ''}/> Active</label>
 
     <div class="section-hd">Org Chart</div>
@@ -1201,7 +1208,10 @@ async function saveEditor(){
 
   const title = document.getElementById('ed-title').value.trim();
   const reportsTo = document.getElementById('ed-reports-to').value || null;
-  const user = { id: editingId, name, pin, active: document.getElementById('ed-active').checked, title, reports_to: reportsTo, columns };
+  const last_name = document.getElementById('ed-last-name').value.trim();
+  const email = document.getElementById('ed-email').value.trim();
+  if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ alert("That email address doesn't look right."); return; }
+  const user = { id: editingId, name, last_name, email, pin, active: document.getElementById('ed-active').checked, title, reports_to: reportsTo, columns };
   const btn = ed.querySelector('.btn-green');
   btn.disabled = true; btn.textContent = 'Saving…';
   try{

@@ -132,7 +132,16 @@ create table if not exists app_users (
 alter table app_users add column if not exists title text;
 alter table app_users add column if not exists reports_to uuid references app_users(id) on delete set null;
 
+-- Last name and email (email is what the "Forgot PIN?" reset link is sent
+-- to — see netlify/functions/pin-reset.js). Email is stored lowercased by
+-- admin.js, so the unique index and the reset lookup can use plain equality.
+-- pin_reset_sent_at throttles reset emails to one a minute per person.
+alter table app_users add column if not exists last_name text;
+alter table app_users add column if not exists email text;
+alter table app_users add column if not exists pin_reset_sent_at timestamptz;
+
 create unique index if not exists idx_app_users_pin_active on app_users (pin) where active;
+create unique index if not exists idx_app_users_email_active on app_users (email) where active and email is not null;
 create index if not exists idx_app_users_reports_to on app_users (reports_to);
 
 drop trigger if exists trg_touch_app_users on app_users;
