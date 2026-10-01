@@ -1,9 +1,9 @@
 name: Canix Sync
 
 on:
-  workflow_dispatch:       # Manual trigger only, for now — enable a cron
-                            # schedule (like nightly_sync.yml) once this has
-                            # been run and verified against real data.
+  schedule:
+    - cron: '30 */3 * * *'  # Every 3 hours, 30 past (offset from the hourly syncs at :00 and :15)
+  workflow_dispatch:       # Allows manual trigger from the Actions tab
 
 concurrency:
   group: canix-sync
