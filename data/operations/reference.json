@@ -1,5 +1,5 @@
 {
-  "_comment": "Reference lists for the operations app. Edit here (or via the Admin card) \u2014 every form picker reads from this file. Codes were seeded from the Cannabis_Processing_Inventory_Workbook; rename `label` fields to the real farm/room/machine names.",
+  "_comment": "Reference lists for the operations app. Edit here (or via the Admin card) — every form picker reads from this file. Codes were seeded from the Cannabis_Processing_Inventory_Workbook; rename `label` fields to the real farm/room/machine names.",
   "updatedAt": "2026-08-28",
   "sites": [
     {
@@ -35,33 +35,81 @@
   ],
   "properties": [
     {
-      "pid": "071",
-      "label": "PID 071",
-      "active": true
-    },
-    {
-      "pid": "073",
-      "label": "PID 073",
-      "active": true
-    },
-    {
-      "pid": "075",
-      "label": "PID 075",
+      "pid": "027",
+      "label": "Comstock: PID 027",
+      "farm": "Comstock",
       "active": true
     },
     {
       "pid": "309",
-      "label": "PID 309",
+      "label": "Highland Springs Rd: PID 309",
+      "farm": "Highland Springs Rd",
       "active": true
     },
     {
       "pid": "310",
-      "label": "PID 310",
+      "label": "Highland Springs Rd: PID 310",
+      "farm": "Highland Springs Rd",
       "active": true
     },
     {
       "pid": "540",
-      "label": "PID 540",
+      "label": "Highland Springs Rd: PID 540",
+      "farm": "Highland Springs Rd",
+      "active": true
+    },
+    {
+      "pid": "071",
+      "label": "Lucern: PID 071",
+      "farm": "Lucern",
+      "active": true
+    },
+    {
+      "pid": "073",
+      "label": "Lucern: PID 073",
+      "farm": "Lucern",
+      "active": true
+    },
+    {
+      "pid": "075",
+      "label": "Lucern: PID 075",
+      "farm": "Lucern",
+      "active": true
+    },
+    {
+      "pid": "167",
+      "label": "Sulphur Bank: PID 167",
+      "farm": "Sulphur Bank",
+      "active": true
+    },
+    {
+      "pid": "179",
+      "label": "Wildcat: PID 179",
+      "farm": "Wildcat",
+      "active": true
+    },
+    {
+      "pid": "180",
+      "label": "Wildcat: PID 180",
+      "farm": "Wildcat",
+      "active": true
+    },
+    {
+      "pid": "181",
+      "label": "Wildcat: PID 181",
+      "farm": "Wildcat",
+      "active": true
+    },
+    {
+      "pid": "182",
+      "label": "Wildcat: PID 182",
+      "farm": "Wildcat",
+      "active": true
+    },
+    {
+      "pid": "183",
+      "label": "Wildcat: PID 183",
+      "farm": "Wildcat",
       "active": true
     }
   ],
