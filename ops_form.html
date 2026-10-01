@@ -182,7 +182,7 @@
     history.replaceState(null, '', url);
   }
 
-  const PERSON_FIELDS = new Set(['teamLead', 'checkedBy', 'requestedBy']);
+  const PERSON_FIELDS = new Set(['teamLead', 'checkedBy', 'requestedBy', 'completedBy']);
   const reference = await loadReference();
   const form = document.getElementById('form');
   const values = {};          // live form state, keyed by field key
@@ -373,15 +373,17 @@
     inp.addEventListener('change', onChange);
     if (other) other.addEventListener('input', () => { values[f.k] = read(); recompute(); markDirty(); });
 
-    if (f.t === 'uid') inp.addEventListener('change', () => tryPrefill(inp.value.trim()));
+    // Only the uid marked prefill: 'lookup' names the upstream package — Take
+    // Down also has the on-stem UID, a brand-new tag nothing upstream knows.
+    if (f.t === 'uid' && f.prefill === 'lookup') inp.addEventListener('change', () => tryPrefill(inp.value.trim(), f.k));
   });
 
   // ── Prefill from the upstream stage ───────────────────────────────────────
   // Bucking should not have to re-weigh what the post-dry check already
   // recorded; typing the last 4 of the tag pulls it forward.
-  async function tryPrefill(uid) {
+  async function tryPrefill(uid, key) {
     const spec = PREFILL_MAP[station.key];
-    const note = document.getElementById('m_sourceUid');
+    const note = document.getElementById(`m_${key}`);
     if (!spec || !uid || uid.length < 4) return;
     const upstream = await findUpstream(spec.from, uid);
     if (!upstream) {

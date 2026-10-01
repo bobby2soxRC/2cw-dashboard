@@ -23,7 +23,7 @@
 //                     variance calc, and the dashboard don't need to know
 //                     any of this event-sourcing happened.
 //
-// A "batch" itself is never created here — it's whatever Post-Dry Check
+// A "batch" itself is never created here — it's whatever Take Down (dry_check)
 // already produced (a 'pass' result). Bucking just watches for dry_check
 // records that don't have a matching buck_batch_close yet.
 // ─────────────────────────────────────────────────────────────────────────────

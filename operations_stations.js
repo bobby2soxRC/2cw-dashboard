@@ -248,93 +248,138 @@ const OPERATIONS_STATIONS = [
     flow: { lossKind: 'origin', outputs: [{ field: 'wetWeightLb', category: 'wet_whole_plant' }] }
   },
 
-  // ── PROCESSING: FRESH PLANT INTAKE ────────────────────────────────────────
-  // Matches the real paper log: one truck, one license, unloaded a few
-  // containers at a time — each weigh-in gets its own line with its own UID,
-  // strain, and format, since a truck can carry more than one of each.
+  // ── PROCESSING: HARVEST INTAKE — WET ──────────────────────────────────────
+  // The intake half of the paper "Harvest Intake & Take Down Log" — one form
+  // per incoming farm package (one UID, one strain), filled out the day the
+  // truck is unloaded. The take-down half happens 5–10 days later, once the
+  // material is dry, and is its own form (dry_check, below).
+  //
+  // Each weigh-in row is a group of bins on the scale: the row's Weight is the
+  // gross scale reading, and # of Bins × Tare Each comes off it, so the Total
+  // Wet Weight Received is net of the bins.
   {
     key: 'intake_wet',
     dept: { en: 'Processing', es: 'Procesamiento' },
-    title: { en: 'Fresh Plant Intake', es: 'Recepción de Planta Fresca' },
-    desc: { en: 'Log a truck as it comes off the farm — one line per group of containers weighed as it’s unloaded.',
-            es: 'Registre un camión que llega del rancho — una línea por cada grupo de contenedores pesado al descargar.' },
+    title: { en: 'Harvest Intake — Wet', es: 'Recepción de cosecha — húmeda' },
+    desc: { en: 'Receive fresh/wet material off a farm truck — one form per incoming package, weighed in bins as it’s unloaded.',
+            es: 'Reciba material fresco/húmedo de un camión del rancho — un formulario por paquete entrante, pesado en bins al descargar.' },
     color: 'blue',
     headline: 'totalWetLb',
     fields: [
       F.date(),
+      { k: 'sourceUid', t: 'uid', req: true,
+        l: { en: 'Incoming Package UID — Farm', es: 'UID del paquete entrante — rancho' },
+        hint: { en: 'Metrc tag on the package from the farm (the last 5 is fine).',
+                es: 'Etiqueta Metrc del paquete del rancho (los últimos 5 son suficientes).' } },
       { k: 'pid', t: 'select', ref: 'properties', allowOther: true, req: true,
-        l: { en: 'License / PID', es: 'Licencia / PID' },
-        hint: { en: 'Which license this truck is coming from.', es: 'De qué licencia proviene este camión.' } },
+        l: { en: 'PID', es: 'PID' } },
+      F.strain(),
+      { k: 'cid', t: 'text', l: { en: 'CID', es: 'CID' } },
+      { k: 'manifestNo', t: 'text', req: true, l: { en: 'Manifest #', es: 'N.º de manifiesto' } },
+      { k: 'truckNo', t: 'text', l: { en: 'Truck #', es: 'N.º de camión' } },
+      { k: 'driver', t: 'text', l: { en: 'Driver', es: 'Conductor' } },
+      { k: 'completedBy', t: 'text', req: true,
+        l: { en: 'Person Completing Form', es: 'Persona que llena el formulario' } },
+      { k: 'weighmaster', t: 'text', req: true,
+        l: { en: '2CW Deputy Weighmaster', es: 'Pesador oficial adjunto de 2CW' } },
+      { k: 'dryRoom', t: 'select', ref: 'dryRooms', allowOther: true, req: true,
+        l: { en: 'Drying Location(s)', es: 'Ubicación(es) de secado' } },
+      { k: 'lines', t: 'lineitems', req: true,
+        l: { en: 'Weigh-In — Bins', es: 'Pesaje — bins' },
+        hint: { en: 'One row per group of bins on the scale. Weight is the scale reading; the bins’ tare is subtracted for you.',
+                es: 'Una fila por cada grupo de bins en la báscula. El peso es la lectura de la báscula; la tara de los bins se resta automáticamente.' },
+        cols: [
+          { k: 'binCount', t: 'number', l: { en: '# of Bins', es: 'N.º de bins' }, min: 0, step: 1, inputmode: 'numeric' },
+          { k: 'tareEachLb', t: 'number', l: { en: 'Tare Each (lbs)', es: 'Tara c/u (lbs)' }, min: 0, step: 0.01 },
+          { k: 'weight', t: 'number', l: { en: 'Weight (lbs)', es: 'Peso (lbs)' }, min: 0, step: 0.01 }
+        ],
+        totalCol: 'weight' },
+      { k: 'binCount', t: 'calc', dp: 0, calc: (v) => (v.lines || []).reduce((a, r) => a + num(r.binCount), 0),
+        l: { en: 'Total Bins', es: 'Bins totales' } },
+      { k: 'totalTareLb', t: 'calc', calc: (v) => (v.lines || []).reduce((a, r) => a + num(r.binCount) * num(r.tareEachLb), 0),
+        l: { en: 'Total Tare (lbs)', es: 'Tara total (lbs)' } },
+      { k: 'totalWetLb', t: 'calc',
+        calc: (v) => (v.lines || []).reduce((a, r) => a + num(r.weight) - num(r.binCount) * num(r.tareEachLb), 0),
+        l: { en: 'Total Wet Weight Received (lbs)', es: 'Peso húmedo total recibido (lbs)' },
+        hint: { en: 'Scale weight minus bin tare.', es: 'Peso de báscula menos la tara de los bins.' } },
+      { k: 'metrcAdjusted', t: 'select',
+        l: { en: 'Weight Adjusted in METRC', es: 'Peso ajustado en METRC' },
+        opts: [
+          { v: 'yes', l: { en: 'Yes — done', es: 'Sí — hecho' } },
+          { v: 'no', l: { en: 'Not yet', es: 'Todavía no' } }
+        ] },
       { k: 'manifestPhoto', t: 'photo',
         l: { en: 'Metrc Manifest Photo', es: 'Foto del manifiesto de Metrc' },
         hint: { en: 'Photo of the manifest that came with this truck.',
                 es: 'Foto del manifiesto que llegó con este camión.' } },
-      { k: 'lines', t: 'lineitems', req: true,
-        l: { en: 'Unloaded Containers', es: 'Contenedores descargados' },
-        hint: { en: 'One row per weigh-in as the truck is unloaded — e.g. 3 bins weighed, then another 3 or 4.',
-                es: 'Una fila por cada pesaje al descargar el camión — p. ej. 3 bins pesados, luego otros 3 o 4.' },
-        cols: [
-          { k: 'containerType', t: 'select', def: 'bins',
-            l: { en: 'Container', es: 'Contenedor' },
-            opts: [
-              { v: 'bins', l: { en: 'Bins (Venes)', es: 'Venes' } },
-              { v: 'totes', l: { en: 'Totes', es: 'Totes' } },
-              { v: 'crates', l: { en: 'Crates', es: 'Cajas de campo' } },
-              { v: 'boxes', l: { en: 'Boxes', es: 'Cajas' } }
-            ] },
-          { k: 'containerCount', t: 'number', l: { en: '#', es: '#' }, min: 0, step: 1, inputmode: 'numeric' },
-          { k: 'weight', t: 'number', l: { en: 'Weight (lbs)', es: 'Peso (lbs)' }, min: 0, step: 0.01 },
-          { k: 'sourceUid', t: 'text', l: { en: 'UID', es: 'UID' }, inputmode: 'latin' },
-          { k: 'strain', t: 'text', l: { en: 'Strain', es: 'Variedad' } },
-          { k: 'intakeFormat', t: 'select', def: 'wet_on_stem',
-            l: { en: 'Format', es: 'Formato' },
-            opts: [
-              { v: 'wet_on_stem', l: { en: 'Wet on Stem', es: 'Húmedo en tallo' } },
-              { v: 'fresh_frozen', l: { en: 'Fresh Frozen', es: 'Fresco congelado' } }
-            ] }
-        ],
-        totalCol: 'weight' },
-      { k: 'totalWetLb', t: 'calc', calc: (v) => (v.lines || []).reduce((a, r) => a + num(r.weight), 0),
-        l: { en: 'Total Wet Weight (lbs)', es: 'Peso húmedo total (lbs)' } },
-      { k: 'binCount', t: 'calc', dp: 0, calc: (v) => (v.lines || []).reduce((a, r) => a + num(r.containerCount), 0),
-        l: { en: 'Total Containers', es: 'Contenedores totales' } },
-      // One room for the whole load — the crew hangs a truck together in
-      // whichever room has space, not split by strain/line. Flag if that
-      // turns out wrong and a truck really does get split across rooms.
-      { k: 'dryRoom', t: 'select', ref: 'dryRooms', allowOther: true, req: true,
-        l: { en: 'Dry Room / Area', es: 'Sala / área de secado' } },
-      F.teamLead(), F.crewSize(), F.laborHours(), F.crew(), F.notes()
+      F.notes()
     ],
-    flow: {
-      // buildLots/findUpstream read this to walk into `lines` instead of a
-      // single top-level UID — a truck can carry more than one batch, so its
-      // intake record has to split across lots/prefill by line, not as one.
-      perLine: { arrayField: 'lines', uidCol: 'sourceUid', strainCol: 'strain', weightCol: 'weight', category: 'wet_whole_plant' },
-      outputs: [{ field: 'totalWetLb', category: 'wet_whole_plant', pending: true }]
-    }
+    flow: { outputs: [{ field: 'totalWetLb', category: 'wet_whole_plant', pending: true }] }
   },
 
-  // ── PROCESSING: POST-DRY CHECK ────────────────────────────────────────────
+  // ── PROCESSING: TAKE DOWN — DRY ───────────────────────────────────────────
+  // The take-down half of the paper log: the dried material comes down 5–10
+  // days after intake, gets boxed and weighed, and goes into Metrc under a
+  // new on-stem package UID. The key stays 'dry_check' (it was "Post-Dry
+  // Check") because Bucking opens a batch off every dry_check record with a
+  // 'pass' result, keyed on its sourceUid — which is the on-stem UID here.
+  // `incomingUid` is the farm package from Wet Intake; ops_analytics aliases
+  // the on-stem UID back to it, so the dashboard sees one lot.
   {
     key: 'dry_check',
     dept: { en: 'Processing', es: 'Procesamiento' },
-    title: { en: 'Post-Dry Check', es: 'Verificación post-secado' },
-    desc: { en: 'Weigh the dried batch and record moisture before it moves to bucking.',
-            es: 'Pese el lote seco y registre la humedad antes de pasar a desvarado.' },
+    title: { en: 'Take Down — Dry', es: 'Bajada — seca' },
+    desc: { en: 'Take dried material down off the stem racks — box it, weigh it, and tag the on-stem package for bucking.',
+            es: 'Baje el material seco de los racks — empáquelo en cajas, péselo y etiquete el paquete en tallo para desvarado.' },
     color: 'blue',
     headline: 'dryWeightLb',
     fields: [
       F.date(),
-      F.sourceUid(),
-      { k: 'strain', t: 'select', ref: 'strains', allowOther: true, prefill: 'lookup',
+      { k: 'incomingUid', t: 'uid', req: true, prefill: 'lookup',
+        l: { en: 'Incoming Package UID — Farm', es: 'UID del paquete entrante — rancho' },
+        hint: { en: 'The farm package from Wet Intake. Type the last 4–5 to pull in the intake details.',
+                es: 'El paquete del rancho de la recepción húmeda. Escriba los últimos 4–5 para traer los datos de recepción.' } },
+      { k: 'sourceUid', t: 'uid', req: true,
+        l: { en: 'Package UID — On Stem', es: 'UID del paquete — en tallo' },
+        hint: { en: 'The new Metrc tag for the dried, on-stem package. This is the batch Bucking will see.',
+                es: 'La nueva etiqueta Metrc del paquete seco en tallo. Este es el lote que verá Desvarado.' } },
+      { k: 'strain', t: 'select', ref: 'strains', allowOther: true, req: true, prefill: 'lookup',
         l: { en: 'Strain', es: 'Variedad (cepa)' } },
+      { k: 'pid', t: 'select', ref: 'properties', allowOther: true, prefill: 'lookup',
+        l: { en: 'PID', es: 'PID' } },
+      { k: 'cid', t: 'text', prefill: 'lookup', l: { en: 'CID', es: 'CID' } },
       { k: 'dryRoom', t: 'select', ref: 'dryRooms', allowOther: true, prefill: 'lookup',
-        l: { en: 'Dry Room / Area', es: 'Sala / área de secado' } },
+        l: { en: 'Dried In', es: 'Secado en' } },
+      { k: 'completedBy', t: 'text', req: true,
+        l: { en: 'Person Completing Form', es: 'Persona que llena el formulario' } },
+      { k: 'weighmaster', t: 'text', req: true,
+        l: { en: 'Deputy Weighmaster', es: 'Pesador oficial adjunto' } },
+      { k: 'storageLocation', t: 'text', req: true,
+        l: { en: 'Storage Location(s)', es: 'Ubicación(es) de almacenamiento' } },
+      { k: 'boxes', t: 'lineitems', req: true,
+        l: { en: 'Boxes', es: 'Cajas' },
+        hint: { en: 'One row per box. Weight is the scale reading; the box tare is subtracted for you.',
+                es: 'Una fila por caja. El peso es la lectura de la báscula; la tara de la caja se resta automáticamente.' },
+        cols: [
+          { k: 'boxNo', t: 'text', l: { en: 'Box #', es: 'Caja #' }, inputmode: 'numeric' },
+          { k: 'tareLb', t: 'number', l: { en: 'Tare (lbs)', es: 'Tara (lbs)' }, min: 0, step: 0.01 },
+          { k: 'weight', t: 'number', l: { en: 'Weight (lbs)', es: 'Peso (lbs)' }, min: 0, step: 0.01 }
+        ],
+        totalCol: 'weight' },
+      { k: 'boxCount', t: 'calc', dp: 0,
+        calc: (v) => (v.boxes || []).filter((r) => num(r.weight) > 0).length,
+        l: { en: 'Total Boxes', es: 'Cajas totales' } },
+      { k: 'totalTareLb', t: 'calc', calc: (v) => (v.boxes || []).reduce((a, r) => a + num(r.tareLb), 0),
+        l: { en: 'Total Tare (lbs)', es: 'Tara total (lbs)' } },
+      { k: 'dryWeightLb', t: 'calc',
+        calc: (v) => (v.boxes || []).reduce((a, r) => a + num(r.weight) - num(r.tareLb), 0),
+        l: { en: 'Total Dry Weight (lbs)', es: 'Peso seco total (lbs)' },
+        hint: { en: 'Scale weight minus box tare.', es: 'Peso de báscula menos la tara de las cajas.' } },
       { k: 'wetIntakeLb', t: 'number', min: 0, step: 0.01, prefill: 'lookup',
-        l: { en: 'Wet Intake Weight (lbs)', es: 'Peso húmedo de entrada (lbs)' } },
-      { k: 'dryWeightLb', t: 'number', req: true, min: 0, step: 0.01,
-        l: { en: 'Dry Weight (lbs)', es: 'Peso seco (lbs)' } },
-      { k: 'moistureLossLb', t: 'calc', calc: (v) => num(v.wetIntakeLb) - num(v.dryWeightLb),
+        l: { en: 'Wet Intake Weight (lbs)', es: 'Peso húmedo de entrada (lbs)' },
+        hint: { en: 'Filled in from Wet Intake when the farm UID matches.',
+                es: 'Se llena desde la recepción húmeda cuando coincide el UID del rancho.' } },
+      { k: 'moistureLossLb', t: 'calc', calc: (v) => (num(v.wetIntakeLb) > 0 ? num(v.wetIntakeLb) - num(v.dryWeightLb) : null),
         l: { en: 'Moisture Loss (lbs)', es: 'Pérdida de humedad (lbs)' } },
       { k: 'moistureLossPct', t: 'calc', fmt: 'pct',
         calc: (v) => pct(num(v.wetIntakeLb) - num(v.dryWeightLb), v.wetIntakeLb),
@@ -346,14 +391,21 @@ const OPERATIONS_STATIONS = [
         l: { en: 'Moisture Meter Reading (%)', es: 'Lectura del medidor de humedad (%)' } },
       { k: 'waterActivity', t: 'number', min: 0, max: 1, step: 0.01, dp: 2,
         l: { en: 'Water Activity (aw)', es: 'Actividad de agua (aw)' } },
-      { k: 'result', t: 'select', req: true,
-        l: { en: 'Result', es: 'Resultado' },
+      { k: 'metrcAdjusted', t: 'select',
+        l: { en: 'Weight Adjusted in METRC', es: 'Peso ajustado en METRC' },
         opts: [
-          { v: 'pass', l: { en: 'Pass — release to bucking', es: 'Aprobado — liberar a desvarado' } },
+          { v: 'yes', l: { en: 'Yes — done', es: 'Sí — hecho' } },
+          { v: 'no', l: { en: 'Not yet', es: 'Todavía no' } }
+        ] },
+      // Bucking only opens a batch for a 'pass' record — a normal take down
+      // goes straight to bucking, so it defaults there.
+      { k: 'result', t: 'select', req: true, def: 'pass',
+        l: { en: 'Release', es: 'Liberación' },
+        opts: [
+          { v: 'pass', l: { en: 'Release to bucking', es: 'Liberar a desvarado' } },
           { v: 'hold', l: { en: 'Hold — needs more dry time', es: 'En espera — necesita más secado' } },
           { v: 'rework', l: { en: 'Rework — quality issue', es: 'Reproceso — problema de calidad' } }
         ] },
-      { k: 'checkedBy', t: 'text', req: true, l: { en: 'Checked By', es: 'Verificado por' } },
       F.notes(), F.photo()
     ],
     flow: { lossKind: 'moisture',
@@ -710,10 +762,9 @@ const OPERATIONS_STATIONS = [
 // Which stage a station pulls its `prefill: 'lookup'` values from, and which
 // field on that stage supplies each prefilled key.
 const PREFILL_MAP = {
-  // Fresh Plant Intake has no single top-level UID to type in (a truck can
-  // carry several), so it no longer offers an incoming prefill from harvest —
-  // the operator types the strain/UID per line off the manifest instead.
-  dry_check:   { from: 'intake_wet',   map: { strain: 'strain', dryRoom: 'dryRoom', wetIntakeLb: 'weight' } },
+  // Take Down looks up the farm package by its `incomingUid` (the only uid
+  // field there with prefill: 'lookup' — the on-stem UID is a new tag).
+  dry_check:   { from: 'intake_wet',   map: { strain: 'strain', pid: 'pid', cid: 'cid', dryRoom: 'dryRoom', wetIntakeLb: 'totalWetLb' } },
   // Bucking has its own custom page (buck_station.html) now, not the generic
   // form, so it does its own upstream lookups directly rather than through
   // this table — no 'buck' entry needed here.

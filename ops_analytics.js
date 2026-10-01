@@ -29,6 +29,12 @@ const dayOf = (r) => String(r.date || r.submittedAt || '').slice(0, 10);
 // the tag it created, which is the link we follow back to the root.
 function buildAliasMap(stages) {
   const alias = {};
+  // Take Down retags the farm package as a new on-stem package.
+  (stages.dry_check || []).forEach((r) => {
+    const src = normUid(r.incomingUid);
+    const n = normUid(r.sourceUid);
+    if (src && n && n !== src) alias[n] = src;
+  });
   (stages.buck || []).forEach((r) => {
     const src = normUid(r.sourceUid);
     if (!src) return;
@@ -52,9 +58,11 @@ function rootUid(alias, uid) {
 function resolveKey(roots, uid) {
   const u = normUid(uid);
   if (!u) return '';
-  if (roots.has(u)) return u;
+  // A short key is itself a root when the short form was all a record had
+  // (e.g. Take Down's farm UID written as the last 5) — still prefer the
+  // full tag it abbreviates, so both halves land on one lot.
   if (u.length < 8) {
-    const hit = [...roots].find((r) => r.endsWith(u));
+    const hit = [...roots].find((r) => r !== u && r.endsWith(u));
     if (hit) return hit;
   }
   return u;

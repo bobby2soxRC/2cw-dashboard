@@ -33,13 +33,13 @@ check('lot sits at hand_trim', lcg.currentStage, 'hand_trim');
 check('days since last touch', lcg.daysInStage, 1);
 check('dry-check output carried through', lcg.stages.dry_check.outputs.dry_whole_plant, 102);
 
-// The truck in Fresh Plant Intake carries two batches on one manifest — its
-// two Lemon Cherry Gelato lines should land on the LCG lot (310 = 155+155),
-// and the Zoap line on a lot of its own, not lumped into either.
-check('the mixed truck\'s two LCG lines both land on the LCG lot', lcg.stages.intake_wet.outputLb, 310);
-check('the mixed truck\'s two LCG lines count as two runs', lcg.stages.intake_wet.runs, 2);
+// Wet Intake is one record per farm package; Take Down retags it as a new
+// on-stem package (and the fixture gives the farm UID as only its last 5) —
+// harvest, intake, take down and everything downstream should still be one lot.
+check('intake lands on the LCG lot net of bin tare', lcg.stages.intake_wet.outputLb, 310);
+check('the lot is keyed on the full farm UID', lcg.id, '1A4060300032386000000777');
 const zoapLot = lots.find((l) => l.strain === 'Zoap');
-check('the same truck\'s Zoap line becomes its own lot, not merged into LCG', !!zoapLot, true);
+check('the Zoap package from the same truck becomes its own lot', !!zoapLot, true);
 check('the Zoap lot only touched intake — no downstream stages for it in this fixture', Object.keys(zoapLot.stages), ['intake_wet']);
 
 console.log('\nstage yields');

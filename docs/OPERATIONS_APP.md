@@ -33,9 +33,17 @@ the existing Operations Hub — same login, same Netlify deploy.
 
 **Cultivation** *(placeholder — see below)* — Plant Batch Log · IPM / Feed Log · Pre-Harvest Inspection
 **Harvest** — Harvest · Fresh Frozen
-**Drying** — Fresh Plant Intake · Post-Dry Check
+**Drying** — Harvest Intake — Wet · Take Down — Dry
 **Processing** — Bucking · Machine Trim · Hand Trim / Hand Touch
 **Manufacturing** — Biomass Request · Manufacturing Run
+
+Wet Intake and Take Down are the two halves of the paper "Harvest Intake &
+Take Down Log", 5–10 days apart: Wet Intake is one form per incoming farm
+package (bins weighed net of tare), and Take Down (station key `dry_check`)
+boxes the dried material under a new on-stem package UID. Take Down's
+`incomingUid` pulls strain/PID/CID/wet weight from the intake record, and
+`ops_analytics` aliases the on-stem UID back to the farm UID so it stays one
+lot. Bucking opens a batch for every Take Down released to bucking.
 
 Each stage pulls its input weight forward from the stage before it: type the
 last 4 of the Metrc tag and bucking fills in the dry weight the post-dry check
@@ -56,7 +64,7 @@ page, `buck_station.html` (linked via `customHref` on the `buck` entry in
   leads use all day, plus a live roster grid — employees × strains, exactly
   the paper "Miercoles" tally sheet — built automatically from every
   submission, not filled in by hand.
-- **Batches** — pick a batch (a dried UID Post-Dry Check already produced;
+- **Batches** — pick a batch (the on-stem UID a Take Down already produced;
   Bucking never creates one, just watches for `dry_check` "pass" records
   with no closing record yet) to see every submission against it, log
   starting weight / waste / stems / big leaf / A+ / A / B trim **per box**,
@@ -276,14 +284,14 @@ stored record all pick it up. Field types: `text`, `number`, `date`, `select`
 (with `ref` for a reference list, `opts` for inline options, `allowOther`),
 `textarea`, `uid`, `photo`, `calc` (a function of the other values), and
 `lineitems` (the repeating grid the weighing worksheet and Fresh Plant
-Intake's container table both use — a `lineitems` column can itself be
+Intake's bin weigh-in and Take Down's box table use — a `lineitems` column can itself be
 `number`/`text` or `select` with inline `opts` and a `def` default). `headline`
 names the one field worth showing on a card or the live board without
 opening the form — the running total in the form's sticky footer follows it
 too.
 
-**A record that represents more than one batch** (Fresh Plant Intake: one
-truck, several UIDs) declares `flow.perLine: { arrayField, uidCol, strainCol,
+**A record that represents more than one batch** (none today — Wet Intake
+used to be one truck with several UIDs, and is now one form per package) declares `flow.perLine: { arrayField, uidCol, strainCol,
 weightCol, category }` alongside its normal `flow.outputs`. `outputs` still
 feeds the dashboard's stage-total and biomass numbers off one flat top-level
 field on the record (`totalWetLb`, a `calc` summing the lines); `perLine` is

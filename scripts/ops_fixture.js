@@ -8,27 +8,35 @@
 
 const { G_PER_LB } = require('../operations_stations.js');
 
+const FARM_UID = '1A4060300032386000000777';
 const DRY_UID = '1A4060300032386000001008';
 
 const stages = {
   harvest: [
-    { id: 'h1', date: '2026-08-05', sourceUid: DRY_UID, strain: 'Lemon Cherry Gelato', site: 'BG',
+    { id: 'h1', date: '2026-08-05', sourceUid: FARM_UID, strain: 'Lemon Cherry Gelato', site: 'BG',
       harvestBatchName: 'BG-0309-Lemon Cherry Gelato-216-T4', wetWeightLb: 310, plantCount: 40 }
   ],
-  // A single truck (Fresh Plant Intake) carrying more than one batch — the
-  // real paper log unloads a few bins at a time, weighing each group, and a
-  // truck can be mixed (two strains/UIDs on one manifest).
+  // Harvest Intake — Wet: one record per incoming farm package. Each line is
+  // a group of bins on the scale; totalWetLb is net of the bins' tare. The
+  // Zoap package came in on the same truck but is its own lot.
   intake_wet: [
-    { id: 'i1', date: '2026-08-05', pid: '540', site: 'BG',
+    { id: 'i1', date: '2026-08-05', sourceUid: FARM_UID, pid: '540', strain: 'Lemon Cherry Gelato',
+      manifestNo: '0001234567', completedBy: 'Ops', weighmaster: 'Ops', dryRoom: 'DRY1',
       lines: [
-        { containerType: 'bins', containerCount: 3, weight: 155, sourceUid: DRY_UID, strain: 'Lemon Cherry Gelato', intakeFormat: 'wet_on_stem' },
-        { containerType: 'bins', containerCount: 3, weight: 155, sourceUid: DRY_UID, strain: 'Lemon Cherry Gelato', intakeFormat: 'wet_on_stem' },
-        { containerType: 'totes', containerCount: 2, weight: 92, sourceUid: '1A9999', strain: 'Zoap', intakeFormat: 'wet_on_stem' }
+        { binCount: 3, tareEachLb: 5, weight: 170 },
+        { binCount: 3, tareEachLb: 5, weight: 170 }
       ],
-      totalWetLb: 402, binCount: 8, dryRoom: 'DRY1' }
+      binCount: 6, totalTareLb: 30, totalWetLb: 310 },
+    { id: 'i2', date: '2026-08-05', sourceUid: '1A9999', pid: '540', strain: 'Zoap',
+      manifestNo: '0001234567', completedBy: 'Ops', weighmaster: 'Ops', dryRoom: 'DRY1',
+      lines: [{ binCount: 2, tareEachLb: 5, weight: 102 }],
+      binCount: 2, totalTareLb: 10, totalWetLb: 92 }
   ],
+  // Take Down — Dry retags the farm package (written as just its last 5 here,
+  // the way the paper form asks for it) as a new on-stem package, DRY_UID.
   dry_check: [
-    { id: 'd1', date: '2026-08-17', sourceUid: DRY_UID, strain: 'Lemon Cherry Gelato',
+    { id: 'd1', date: '2026-08-17', incomingUid: FARM_UID.slice(-5), sourceUid: DRY_UID, strain: 'Lemon Cherry Gelato',
+      boxes: [{ boxNo: '1', tareLb: 2, weight: 53 }, { boxNo: '2', tareLb: 2, weight: 53 }],
       wetIntakeLb: 310, dryWeightLb: 102, result: 'pass' }
   ],
   // Bucking no longer mints a new UID when it finishes — the summary record
