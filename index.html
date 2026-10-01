@@ -433,7 +433,13 @@ async function buildHub(user){
   hubState = { userName, defaultOrder, defsByKey, savedPrefs };
 
   treeRoot = await buildTree();
-  const { landing } = computeHome(treeRoot);
+  let { landing, skipped } = computeHome(treeRoot);
+  // Arriving from the very page we'd auto-forward to (its "← Hub" link) means
+  // the person wants the menu — forwarding again would bounce them straight
+  // back and the hub could never be reached. Show that card's folder instead.
+  if(landing.type === 'leaf' && cameFrom(landing.href)){
+    landing = (skipped.length && findFolderByKey(treeRoot, skipped[skipped.length - 1])) || treeRoot;
+  }
   // backStack must reflect the true root→landing path, not just the folders
   // skipped by collapseFrom() — computeHome() may start its collapse from a
   // remembered sub-folder (LAST_FOLDER_KEY), which would otherwise strand the
@@ -585,11 +591,26 @@ function findPath(node, targetKey){
 
 // Where this login lands: try to restore the folder the user was last in
 // (so a "back" click from a leaf page returns them to the right place),
-// falling back to a fresh collapse from the root.
+// falling back to a fresh collapse from the root. A remembered folder is only
+// restored as a menu: if it now collapses to a single card (e.g. Partners →
+// Mendo), auto-forwarding there would trap the person on that card, so start
+// from the root instead.
 function computeHome(root){
   const savedKey = sessionStorage.getItem(LAST_FOLDER_KEY);
   const savedFolder = savedKey ? findFolderByKey(root, savedKey) : null;
-  return collapseFrom(savedFolder || root);
+  if(savedFolder){
+    const fromSaved = collapseFrom(savedFolder);
+    if(fromSaved.landing.type === 'folder') return fromSaved;
+  }
+  return collapseFrom(root);
+}
+
+// True when the page that sent us here is `href` (same site, same path).
+function cameFrom(href){
+  try {
+    const ref = new URL(document.referrer);
+    return ref.origin === location.origin && ref.pathname === new URL(href, location.href).pathname;
+  } catch(e){ return false; }
 }
 
 function escHtml(s){ return String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
