@@ -35,7 +35,7 @@ the existing Operations Hub — same login, same Netlify deploy.
 **Harvest** — Harvest · Fresh Frozen
 **Drying** — Harvest Intake — Wet · Take Down — Dry
 **Processing** — Bucking · Machine Trim · Hand Trim / Hand Touch
-**Manufacturing** — Biomass Request · Manufacturing Run
+**Manufacturing** — Biomass Request · Pre-Roll Production · Manufacturing Run
 
 Wet Intake and Take Down are the two halves of the paper "Harvest Intake &
 Take Down Log", 5–10 days apart: Wet Intake is one form per incoming farm
@@ -44,6 +44,17 @@ boxes the dried material under a new on-stem package UID. Take Down's
 `incomingUid` pulls strain/PID/CID/wet weight from the intake record, and
 `ops_analytics` aliases the on-stem UID back to the farm UID so it stays one
 lot. Bucking opens a batch for every Take Down released to bucking.
+
+Pre-Roll Production (`preroll_production`) follows the paper pre-roll sheet
+and is the one form that stays open across days: its station entry sets
+`multiDay: true`, so the form's switcher lists every open draft on that
+station (anyone's, any start date) instead of just your own from today.
+People add rows to its Workforce Log (employee ID, date, start, end; hours
+are worked out per row) each day they work the batch, and it's submitted
+once QC and the secondary verification are done. The log is the station's
+`crew` field, so `crewLaborLog` reports each shift on the day it was worked.
+Two people editing the same open batch at the same moment can overwrite each
+other's rows (last save wins), so one tablet per batch is safest.
 
 Each stage pulls its input weight forward from the stage before it: type the
 last 4 of the Metrc tag and bucking fills in the dry weight the post-dry check

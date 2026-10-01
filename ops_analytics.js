@@ -289,8 +289,10 @@ function biomassLedger(stages, filter) {
       if (flow.input) {
         const cat = flow.input.categoryField ? r[flow.input.categoryField] : flow.input.category;
         const v = num(r[flow.input.field]);
-        if (station.key === 'mfg_output') { add(manufacturing, cat, -v); add(consumed, cat, v); }
-        else { add(processing, cat, -v); add(consumed, cat, v); }
+        // Manufacturing stations (Manufacturing Run, Pre-Roll Production) draw
+        // on material already transferred to manufacturing.
+        if (cat && station.dept.en === 'Manufacturing') { add(manufacturing, cat, -v); add(consumed, cat, v); }
+        else if (cat) { add(processing, cat, -v); add(consumed, cat, v); }
       }
       if (flow.transfer && r.status === flow.transfer.whenStatus) {
         const cat = r[flow.transfer.categoryField];
@@ -371,9 +373,10 @@ function crewLaborLog(stages, filter) {
         (r.crew || []).forEach((c) => {
           const emp = String(c.employeeNo || '').trim();
           if (!emp || !num(c.hours)) return;
-          out.push({ employeeNo: emp, hours: num(c.hours), date: dayOf(r), stationKey: station.key,
+          // A multi-day batch logs each shift with its own date (workDate).
+          out.push({ employeeNo: emp, hours: num(c.hours), date: c.workDate || dayOf(r), stationKey: station.key,
                      stationTitle: station.title, uid: r.sourceUid || r.batchTag || '',
-                     batch: r.harvestBatchName || '', strain: r.strain || '' });
+                     batch: r.harvestBatchName || r.batchId || '', strain: r.strain || '' });
         });
       }
       if (station.key === 'hand_trim') {

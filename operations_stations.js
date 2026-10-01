@@ -51,6 +51,14 @@ const SELLABLE = ['flower_a', 'smalls_b', 'sugar_trim', 'trim', 'trim_a_plus', '
 const num = (x) => { const n = parseFloat(x); return Number.isFinite(n) ? n : 0; };
 const sum = (v, keys) => keys.reduce((a, k) => a + num(v[k]), 0);
 const pct = (part, whole) => (num(whole) > 0 ? num(part) / num(whole) : null);
+// "HH:MM" → "HH:MM" in hours; an end earlier than the start is a shift that
+// ran past midnight.
+const hoursBetween = (start, end) => {
+  const m = (s) => { const [h, mi] = String(s || '').split(':').map(Number); return Number.isFinite(h) && Number.isFinite(mi) ? h * 60 + mi : null; };
+  const a = m(start), b = m(end);
+  if (a === null || b === null) return null;
+  return Math.round((((b - a) + 1440) % 1440) / 60 * 100) / 100;
+};
 
 // Shared field builders ------------------------------------------------------
 const F = {
@@ -709,6 +717,112 @@ const OPERATIONS_STATIONS = [
       F.notes()
     ],
     flow: { transfer: { field: 'transferredLb', categoryField: 'category', whenStatus: 'transferred' } }
+  },
+
+  // ── MANUFACTURING: PRE-ROLL PRODUCTION ────────────────────────────────────
+  // Matches the paper pre-roll production sheet. A batch can run several
+  // days, so the form stays open as a draft (multiDay: the switcher lists
+  // every open batch, not just today's) until QC signs it off and someone
+  // submits it. The workforce log is `crew` so ops_analytics' labor log
+  // picks each employee's hours up by the day they worked.
+  {
+    key: 'preroll_production',
+    dept: { en: 'Manufacturing', es: 'Manufactura' },
+    title: { en: 'Pre-Roll Production', es: 'Producción de prerolls' },
+    desc: { en: 'One batch of pre-rolls from start to finish — output, waste, and who worked on it each day. Stays open across days until submitted.',
+            es: 'Un lote de prerolls de principio a fin — producción, desecho y quién trabajó cada día. Queda abierto varios días hasta enviarlo.' },
+    color: 'purple',
+    headline: 'totalPrerolls',
+    multiDay: true,
+    fields: [
+      { ...F.date(), l: { en: 'Start Date', es: 'Fecha de inicio' } },
+      { k: 'batchId', t: 'text', req: true, l: { en: 'Batch ID', es: 'ID de lote' } },
+      F.strain(),
+      { k: 'sourceUid', t: 'uid', req: true, l: { en: 'Source UID', es: 'UID de origen' },
+        hint: { en: 'Metrc tag of the material going into the pre-rolls.',
+                es: 'Etiqueta Metrc del material que entra en los prerolls.' } },
+      { k: 'inputCategory', t: 'select', refConst: 'BIOMASS', req: true,
+        l: { en: 'Input Material', es: 'Material de entrada' } },
+      { k: 'startingWtG', t: 'number', req: true, min: 0, step: 0.1, dp: 1,
+        l: { en: 'Starting Weight (grams)', es: 'Peso inicial (gramos)' } },
+      { k: 'startingLb', t: 'calc', calc: (v) => (num(v.startingWtG) > 0 ? num(v.startingWtG) / G_PER_LB : null),
+        l: { en: 'Starting Weight (lbs)', es: 'Peso inicial (lbs)' } },
+      { k: 'humidityPct', t: 'number', min: 0, max: 100, step: 0.1, dp: 1,
+        l: { en: 'Humidity %', es: '% de humedad' } },
+      { k: 'unitSizeG', t: 'number', min: 0, step: 0.01,
+        l: { en: 'Pre-Roll Size (grams each)', es: 'Tamaño del preroll (gramos c/u)' },
+        hint: { en: 'e.g. 1 or 0.5 — used for the yield check below.', es: 'p. ej. 1 o 0.5 — se usa para el rendimiento abajo.' } },
+
+      { k: 'output', t: 'lineitems', req: true,
+        l: { en: 'Pre-Roll Output', es: 'Producción de prerolls' },
+        hint: { en: 'Add a row each time a count is taken — pre-rolls made and waste weighed out.',
+                es: 'Agregue una fila cada vez que se cuente — prerolls hechos y desecho pesado.' },
+        cols: [
+          { k: 'count', t: 'number', l: { en: 'Pre-Rolls (each)', es: 'Prerolls (c/u)' }, min: 0, step: 1, inputmode: 'numeric' },
+          { k: 'wasteG', t: 'number', l: { en: 'Waste (grams)', es: 'Desecho (gramos)' }, min: 0, step: 0.1 },
+          { k: 'notes', t: 'text', l: { en: 'Notes', es: 'Notas' } }
+        ],
+        totalCol: 'count' },
+      { k: 'totalPrerolls', t: 'calc', dp: 0, calc: (v) => (v.output || []).reduce((a, r) => a + num(r.count), 0),
+        l: { en: 'Total Pre-Rolls', es: 'Total de prerolls' } },
+      { k: 'totalWasteG', t: 'calc', dp: 1, calc: (v) => (v.output || []).reduce((a, r) => a + num(r.wasteG), 0),
+        l: { en: 'Total Waste (grams)', es: 'Desecho total (gramos)' } },
+      { k: 'accountedPct', t: 'calc', fmt: 'pct',
+        calc: (v) => {
+          if (!(num(v.unitSizeG) > 0)) return null;
+          const made = (v.output || []).reduce((a, r) => a + num(r.count), 0) * num(v.unitSizeG);
+          const waste = (v.output || []).reduce((a, r) => a + num(r.wasteG), 0);
+          return pct(made + waste, v.startingWtG);
+        },
+        l: { en: 'Starting Weight Accounted For', es: 'Peso inicial contabilizado' },
+        hint: { en: '(pre-rolls × size + waste) ÷ starting weight. Should land near 100%.',
+                es: '(prerolls × tamaño + desecho) ÷ peso inicial. Debe acercarse al 100%.' },
+        flag: (x) => x < 0.95 || x > 1.05 },
+      { k: 'newPrerollUid', t: 'uid', l: { en: 'New UID — Pre-Rolls', es: 'UID nuevo — prerolls' } },
+      { k: 'newWasteUid', t: 'uid', l: { en: 'New UID — Waste', es: 'UID nuevo — desecho' } },
+
+      { k: 'crew', t: 'lineitems',
+        l: { en: 'Workforce Log', es: 'Registro de personal' },
+        hint: { en: 'One row per person per shift on this batch — add rows on each day it’s worked.',
+                es: 'Una fila por persona por turno en este lote — agregue filas cada día que se trabaje.' },
+        cols: [
+          { k: 'employeeNo', t: 'text', l: { en: 'Employee ID', es: 'ID de empleado' }, inputmode: 'numeric' },
+          { k: 'workDate', t: 'date', today: true, l: { en: 'Date', es: 'Fecha' } },
+          { k: 'startTime', t: 'time', l: { en: 'Start', es: 'Inicio' } },
+          { k: 'endTime', t: 'time', l: { en: 'End', es: 'Fin' } },
+          { k: 'hours', t: 'calc', dp: 2, l: { en: 'Hours', es: 'Horas' }, calc: (r) => hoursBetween(r.startTime, r.endTime) }
+        ],
+        totalCol: 'hours' },
+      { k: 'laborHours', t: 'calc', calc: (v) => (v.crew || []).reduce((a, r) => a + num(r.hours), 0),
+        l: { en: 'Total Labor Hours', es: 'Horas de trabajo totales' } },
+      { k: 'crewSize', t: 'calc', dp: 0,
+        calc: (v) => new Set((v.crew || []).map((r) => String(r.employeeNo || '').trim()).filter(Boolean)).size,
+        l: { en: 'People on this Batch', es: 'Personas en este lote' } },
+      { k: 'prerollsPerHour', t: 'calc', dp: 0,
+        calc: (v) => {
+          const hrs = (v.crew || []).reduce((a, r) => a + num(r.hours), 0);
+          return hrs > 0 ? (v.output || []).reduce((a, r) => a + num(r.count), 0) / hrs : null;
+        },
+        l: { en: 'Pre-Rolls per Labor Hour', es: 'Prerolls por hora de trabajo' } },
+
+      { k: 'finishDate', t: 'date', today: false, l: { en: 'Finish Date', es: 'Fecha de terminación' } },
+      { k: 'qcComplete', t: 'select', req: true,
+        l: { en: 'Q.C. Complete', es: 'Control de calidad completo' },
+        opts: [
+          { v: 'yes', l: { en: 'Yes', es: 'Sí' } },
+          { v: 'no', l: { en: 'Not yet', es: 'Todavía no' } }
+        ] },
+      { k: 'verifiedBy', t: 'text', req: true,
+        l: { en: 'Secondary Verification — Name', es: 'Verificación secundaria — nombre' },
+        hint: { en: 'The second person who checked the counts. Typing your name here is your sign-off.',
+                es: 'La segunda persona que revisó los conteos. Escribir su nombre aquí es su firma.' } },
+      { k: 'verifiedDate', t: 'date', today: false, l: { en: 'Verification Date', es: 'Fecha de verificación' } },
+      F.notes(), F.photo()
+    ],
+    // Pre-rolls are made from material already moved to manufacturing (a
+    // Biomass Request), so the input comes off the manufacturing side of the
+    // ledger, like a Manufacturing Run.
+    flow: { lossKind: 'transform', input: { field: 'startingLb', categoryField: 'inputCategory' }, outputs: [] }
   },
 
   // ── MANUFACTURING OUTPUT ──────────────────────────────────────────────────

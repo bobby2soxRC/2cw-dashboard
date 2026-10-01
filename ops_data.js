@@ -51,6 +51,19 @@ async function listMyDrafts(stationKey, owner, date) {
   return data || [];
 }
 
+// Every open draft on a station, from anyone, any day — for stations whose
+// batches run across several days (multiDay in operations_stations.js), so
+// whoever picks the batch up tomorrow can find it.
+async function listOpenDrafts(stationKey) {
+  const client = getClient();
+  if (!client) return [];
+  const { data, error } = await client.from(TABLE).select('*')
+    .eq('station_key', stationKey).eq('status', 'draft')
+    .order('work_date', { ascending: false });
+  if (error) { console.error('listOpenDrafts', error); return []; }
+  return data || [];
+}
+
 // One draft by id, for `?draft=<id>` deep links (what makes cross-device
 // resume work — the id is the only state that needs to travel).
 async function getDraft(id) {

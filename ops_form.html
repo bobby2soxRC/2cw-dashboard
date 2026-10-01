@@ -85,6 +85,10 @@
     .li-table td{padding:0 6px 8px 0;vertical-align:middle}
     .li-table td:last-child{padding-right:0;width:52px}
     .li-table input{min-height:48px;padding:.6rem .7rem}
+    .li-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .li-table input[type=date]{min-width:150px}
+    .li-table input[type=time]{min-width:120px}
+    .li-calc{font-family:'DM Mono',monospace;color:var(--subtext);white-space:nowrap}
     .li-del{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;width:100%;min-height:48px;font-size:20px;line-height:1;cursor:pointer}
     .li-del:hover{border-color:var(--red);color:var(--red)}
     .li-add{width:100%;margin-top:4px;background:transparent;border:1px dashed var(--border);color:var(--subtext);border-radius:10px;min-height:52px;font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer}
@@ -231,6 +235,8 @@
                 (f.min !== undefined ? ` min="${f.min}"` : '') + (f.max !== undefined ? ` max="${f.max}"` : '') + `>`;
     } else if (f.t === 'date') {
       control = `<input type="date" id="f_${f.k}">`;
+    } else if (f.t === 'time') {
+      control = `<input type="time" id="f_${f.k}">`;
     } else if (f.t === 'uid') {
       control = `<input type="text" id="f_${f.k}" class="uid" inputmode="latin" autocapitalize="characters" placeholder="1A40603…  ${t(UI.other) === 'Otro…' ? 'o' : 'or'} 1008">` +
                 `<div class="match" id="m_${f.k}"></div>`;
@@ -249,8 +255,8 @@
     values[f.k] = [];
     wrap.innerHTML = labelHtml(f) +
       (f.hint ? `<div class="hint" style="margin-top:0;margin-bottom:10px">${t(f.hint)}</div>` : '') +
-      `<table class="li-table"><thead><tr>` +
-      f.cols.map((c) => `<th>${t(c.l)}</th>`).join('') + `<th></th></tr></thead><tbody id="li_${f.k}"></tbody></table>` +
+      `<div class="li-scroll"><table class="li-table"><thead><tr>` +
+      f.cols.map((c) => `<th>${t(c.l)}</th>`).join('') + `<th></th></tr></thead><tbody id="li_${f.k}"></tbody></table></div>` +
       `<button type="button" class="li-add" id="add_${f.k}">${t(UI.addRow)}</button>` +
       `<div class="li-total"><span class="k">${t(UI.subtotal)}</span><span class="v" id="lit_${f.k}">0</span></div>`;
 
@@ -260,8 +266,24 @@
         const row = {};
         values[f.k].push(row);
         const tr = document.createElement('tr');
+        // Calc columns (e.g. hours from start/end) are read-only, worked out
+        // from the rest of the row and stored on it like any other value.
+        const calcCells = [];
+        const recalcRow = () => calcCells.forEach(({ c, el }) => {
+          let out = null;
+          try { out = c.calc(row); } catch { out = null; }
+          row[c.k] = (out === null || !Number.isFinite(Number(out))) ? null : out;
+          el.textContent = row[c.k] === null ? '—' : fmtNum(row[c.k], c.dp === undefined ? 2 : c.dp);
+        });
         f.cols.forEach((c) => {
           const td = document.createElement('td');
+          if (c.t === 'calc') {
+            const el = document.createElement('span');
+            el.className = 'li-calc';
+            calcCells.push({ c, el });
+            td.appendChild(el); tr.appendChild(td);
+            return;
+          }
           let inp;
           if (c.t === 'select') {
             inp = document.createElement('select');
@@ -272,20 +294,22 @@
             });
           } else {
             inp = document.createElement('input');
-            inp.type = c.t === 'number' ? 'number' : 'text';
+            inp.type = ['number', 'date', 'time'].includes(c.t) ? c.t : 'text';
             if (c.t === 'number') { inp.inputMode = 'decimal'; inp.step = c.step || 'any'; if (c.min !== undefined) inp.min = c.min; }
             if (c.inputmode) inp.inputMode = c.inputmode;
           }
           // A prefilled value (resuming a draft) wins; otherwise a column can
           // declare a default so every fresh row starts sensible (e.g. the
           // container type defaulting to "Bins" instead of blank).
-          const initial = (prefill && prefill[c.k] !== undefined && prefill[c.k] !== null) ? prefill[c.k] : c.def;
+          const initial = (prefill && prefill[c.k] !== undefined && prefill[c.k] !== null) ? prefill[c.k]
+            : (c.t === 'date' && c.today ? new Date().toISOString().slice(0, 10) : c.def);
           if (initial !== undefined && initial !== null) {
             inp.value = initial;
             row[c.k] = c.t === 'number' ? Number(initial) : initial;
           }
           const onCellChange = () => {
             row[c.k] = c.t === 'number' ? (inp.value === '' ? null : Number(inp.value)) : inp.value;
+            recalcRow();
             recompute();
             markDirty();
           };
@@ -304,6 +328,7 @@
         };
         tdDel.appendChild(del); tr.appendChild(tdDel);
         tbody.appendChild(tr);
+        recalcRow();
         if (!prefill) { const first = tr.querySelector('input, select'); if (first) first.focus(); }
       };
       lineitemAdders[f.k] = addRow;
@@ -312,6 +337,17 @@
     }, 0);
 
     return wrap;
+  }
+
+  // A worksheet row counts once someone typed into it — a column's default
+  // (container type, today's date) or a calc result alone doesn't make it real.
+  function rowHasData(f, r) {
+    return f.cols.some((c) => {
+      if (c.t === 'calc') return false;
+      const x = r[c.k];
+      if (x === '' || x === null || x === undefined) return false;
+      return !(c.def !== undefined && String(x) === String(c.def)) && !(c.t === 'date' && c.today);
+    });
   }
 
   const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -460,7 +496,8 @@
       if (f.t === 'lineitems') {
         const total = (values[f.k] || []).reduce((a, r) => a + (Number(r[f.totalCol]) || 0), 0);
         const el = document.getElementById(`lit_${f.k}`);
-        if (el) el.textContent = fmtNum(total, 0);
+        const totalCol = f.cols.find((c) => c.k === f.totalCol);
+        if (el) el.textContent = fmtNum(total, totalCol && totalCol.dp !== undefined ? totalCol.dp : 0);
         return;
       }
       if (f.t !== 'calc') return;
@@ -473,7 +510,7 @@
         ? '—'
         : (f.fmt === 'pct' ? fmtPct(out) : fmtNum(out, f.dp === undefined ? 2 : f.dp));
       box.querySelector('.v').textContent = (f.signed && Number(out) > 0 ? '+' : '') + text;
-      box.classList.toggle('neg', f.signed && Number(out) < 0);
+      box.classList.toggle('neg', !!(f.signed && Number(out) < 0));
       box.classList.toggle('flagged', !!(f.flag && Number.isFinite(Number(out)) && f.flag(Number(out))));
     });
 
@@ -540,17 +577,25 @@
   }
 
   // ── Strain switcher ──────────────────────────────────────────────────────
-  const SW = { newForm: { en: '+ New', es: '+ Nuevo' }, untitled: { en: 'Untitled', es: 'Sin título' } };
+  const SW = { newForm: { en: '+ New', es: '+ Nuevo' }, untitled: { en: 'Untitled', es: 'Sin título' }, started: { en: 'Started', es: 'Inicio' } };
   async function renderSwitcher() {
     if (!draftsOn || !owner) return;
-    const drafts = await listMyDrafts(station.key, owner, todayStr());
+    // A multi-day batch has to be findable by whoever works it next, on any
+    // day — so those stations list every open batch, not just yours today.
+    const drafts = station.multiDay
+      ? await listOpenDrafts(station.key)
+      : await listMyDrafts(station.key, owner, todayStr());
     const el = document.getElementById('switcher');
     if (!drafts.length) { el.style.display = 'none'; return; }
     el.style.display = 'flex';
+    const chipTop = (d) => station.multiDay
+      ? `${t(SW.started)} ${new Date(`${d.work_date}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' })}`
+      : new Date(d.updated_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const chipLabel = (d) => [d.fields && d.fields.batchId, d.strain].filter(Boolean).join(' · ') || t(SW.untitled);
     el.innerHTML = drafts.map((d) => `
       <a class="chip ${d.id === draftId ? 'on' : ''}" href="/ops_form.html?station=${station.key}&draft=${d.id}">
-        <span class="cs">${new Date(d.updated_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</span>
-        <span class="cv">${escapeHtml(d.strain || t(SW.untitled))}</span>
+        <span class="cs">${escapeHtml(chipTop(d))}</span>
+        <span class="cv">${escapeHtml(chipLabel(d))}</span>
       </a>`).join('') +
       `<a class="chip new" href="/ops_form.html?station=${station.key}">${t(SW.newForm)}</a>`;
   }
@@ -581,7 +626,7 @@
       if (!f.req || f.t === 'calc') return false;
       if (f.showIf && !f.showIf(values)) return false;
       const v = values[f.k];
-      if (f.t === 'lineitems') return !(v || []).some((r) => Object.values(r).some((x) => x !== '' && x !== null && x !== undefined));
+      if (f.t === 'lineitems') return !(v || []).some((r) => rowHasData(f, r));
       return v === undefined || v === null || v === '';
     });
     if (missing.length) {
@@ -599,7 +644,7 @@
     // Drop empty worksheet rows before sending.
     const payload = { ...values };
     station.fields.filter((f) => f.t === 'lineitems').forEach((f) => {
-      payload[f.k] = (payload[f.k] || []).filter((r) => Object.values(r).some((x) => x !== '' && x !== null && x !== undefined));
+      payload[f.k] = (payload[f.k] || []).filter((r) => rowHasData(f, r));
     });
 
     let result;
