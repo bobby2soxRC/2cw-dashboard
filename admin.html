@@ -513,12 +513,13 @@ function renderTable(){
   }
   const sorted = [...users].sort((a,b) => (b.active - a.active) || a.name.localeCompare(b.name));
   wrap.innerHTML = `<table>
-    <thead><tr><th>Name</th><th>Email</th><th>Title</th><th>PIN</th><th>Access</th><th></th></tr></thead>
+    <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Title</th><th>PIN</th><th>Access</th><th></th></tr></thead>
     <tbody>
       ${sorted.map(u => `
         <tr class="${u.active ? '' : 'inactive'}">
           <td>${esc(fullName(u))}${u.active ? '' : ' <span class="pill">inactive</span>'}</td>
           <td class="muted">${esc(u.email || '—')}</td>
+          <td class="muted">${esc(u.phone || '—')}</td>
           <td class="muted">${esc(u.title || '—')}</td>
           <td>${esc(u.pin)}</td>
           <td>${cardSummary(u).map(p => `<span class="pill">${esc(p)}</span>`).join('') || '<span class="pill">no access</span>'}</td>
@@ -1100,7 +1101,10 @@ function openEditor(id){
       <div><label class="field-label">Last name</label><input type="text" id="ed-last-name" value="${esc(u?u.last_name:'')}"/></div>
     </div>
     <div class="form-row">
-      <div><label class="field-label">Email (for PIN resets)</label><input type="email" id="ed-email" autocomplete="off" value="${esc(u?u.email:'')}"/></div>
+      <div><label class="field-label">Email</label><input type="email" id="ed-email" autocomplete="off" value="${esc(u?u.email:'')}"/></div>
+      <div><label class="field-label">Phone</label><input type="tel" id="ed-phone" autocomplete="off" value="${esc(u?u.phone:'')}" placeholder="(707) 555-0123"/></div>
+    </div>
+    <div class="form-row">
       <div><label class="field-label">PIN</label><input type="tel" id="ed-pin" inputmode="numeric" value="${esc(u?u.pin:'')}"/></div>
     </div>
     <div class="status-line" style="margin:-4px 0 10px">First name is what everyone sees and what tasks/responsibilities are matched on — changing it on an existing user can orphan their assignments.</div>
@@ -1211,7 +1215,8 @@ async function saveEditor(){
   const last_name = document.getElementById('ed-last-name').value.trim();
   const email = document.getElementById('ed-email').value.trim();
   if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ alert("That email address doesn't look right."); return; }
-  const user = { id: editingId, name, last_name, email, pin, active: document.getElementById('ed-active').checked, title, reports_to: reportsTo, columns };
+  const phone = document.getElementById('ed-phone').value.trim();
+  const user = { id: editingId, name, last_name, email, phone, pin, active: document.getElementById('ed-active').checked, title, reports_to: reportsTo, columns };
   const btn = ed.querySelector('.btn-green');
   btn.disabled = true; btn.textContent = 'Saving…';
   try{

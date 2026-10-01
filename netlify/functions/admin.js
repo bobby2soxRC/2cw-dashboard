@@ -178,6 +178,7 @@ exports.handler = async (event) => {
         name, pin, active: u.active !== false, columns: u.columns || {},
         last_name: String(u.last_name || '').trim() || null,
         email: email || null,
+        phone: String(u.phone || '').trim() || null,
         title: (u.title || '').trim() || null,
         reports_to: reportsTo
       };

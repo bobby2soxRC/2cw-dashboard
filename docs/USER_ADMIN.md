@@ -249,38 +249,42 @@ sheet row or a database row.
    the project gets torn down, login degrades back to the sheet instead of
    locking everyone out) — it isn't something you need to keep maintaining.
 
-## Last name, email, and "Forgot your PIN?"
+## Contact info: last name, email, phone
 
-Each user has an optional `last_name` and `email`, set from the per-user
-editor in `admin.html`. `name` stays the first name — it's what the hub
-shows and what tasks/responsibilities are matched on, so don't fold the last
-name into it. Emails are stored lowercased and must be unique among active
-users.
+Each user has an optional `last_name`, `email`, and `phone`, set from the
+per-user editor in `admin.html` and shown on the Users list. `name` stays
+the first name — it's what the hub shows and what tasks/responsibilities
+are matched on, so don't fold the last name into it. Emails are stored
+lowercased and must be unique among active users; phone is stored as typed.
+Emailed reports can read recipients straight from `app_users.email`.
 
-The sign-in screen has a **Forgot your PIN?** link to `reset_pin.html`. The
-person enters their email; if it matches an active user,
-`netlify/functions/pin-reset.js` emails them a link (via
-[Resend](https://resend.com)) that expires in 30 minutes. The link opens the
-same page, where they choose a new 4-digit PIN. The link is signed over the
-user's *current* PIN, so it stops working once used, or if an admin changes
-the PIN first. The form always answers "if that email is on an account…", so
-it can't be used to check who has one, and it sends at most one email a
-minute per person.
+### PIN reset by email — built, not turned on
+
+`reset_pin.html` and `netlify/functions/pin-reset.js` are in place but
+nothing links to them yet (it's on hold until there's a sending address).
+To turn it on, add this under the login button in `index.html`:
+`<a class="forgot-link" href="/reset_pin.html">Forgot your PIN?</a>` (the
+`.forgot-link` style is already there), and do the setup below.
+
+The person enters their email; if it matches an active user,
+`pin-reset.js` emails them a link (via [Resend](https://resend.com)) that
+expires in 30 minutes. The link opens the same page, where they choose a new
+4-digit PIN. The link is signed over the user's *current* PIN, so it stops
+working once used, or if an admin changes the PIN first. The form always
+answers "if that email is on an account…", so it can't be used to check who
+has one, and it sends at most one email a minute per person.
 
 **Setup:**
-1. Re-run `supabase/schema.sql` (adds `last_name`, `email`,
-   `pin_reset_sent_at`). Do this **before** deploying — the admin panel
-   saves those columns, and saves fail until they exist.
-2. Create a Resend account, verify a domain you own (Resend → Domains, add
+1. Create a Resend account, verify a domain you own (Resend → Domains, add
    the DNS records it shows), and create an API key.
-3. Add two Netlify env vars: `RESEND_API_KEY`, and `RESEND_FROM` — e.g.
+2. Add two Netlify env vars: `RESEND_API_KEY`, and `RESEND_FROM` — e.g.
    `2CW Productions <noreply@yourdomain.com>`, on the verified domain. The
    function also needs `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and
    `ADMIN_SIGNING_SECRET`, which are already set for `admin.js`.
-4. Add each person's email in `admin.html`.
+3. Make sure each person has an email in `admin.html`.
 
-**Known limit:** `app_users` is still anon-readable (see below), so PINs —
-and now emails — can be read by anyone who opens the site's developer
+**Known limit:** `app_users` is still anon-readable (see below), so PINs, emails
+and phone numbers can be read by anyone who opens the site's developer
 tools. Moving the PIN check server-side would close that; it hasn't been
 done yet.
 
