@@ -74,6 +74,19 @@
     .farm-hd .rollup{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--subtext)}
     .facility-label{font-size:.72rem;color:var(--muted);margin:10px 0 6px}
 
+    .subtabs{display:flex;gap:6px;margin:-6px 0 18px;flex-wrap:wrap}
+    .subtabs button{background:transparent;border:1px solid var(--border);color:var(--subtext);border-radius:99px;padding:.45rem .95rem;
+      font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;min-height:38px}
+    .subtabs button.on{border-color:var(--gold);color:var(--gold)}
+    .subtabs button .ct{color:var(--muted);margin-left:6px}
+
+    .bar{position:relative;height:8px;min-width:120px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;overflow:hidden}
+    .bar > span{position:absolute;left:0;top:0;bottom:0;background:var(--green);border-radius:99px}
+    .bar.gold > span{background:var(--gold)}
+    .bar.red > span{background:var(--red)}
+    tr.total td{font-weight:700;border-top:2px solid var(--border)}
+    .muted{color:var(--muted)}
+
     .empty{color:var(--muted);font-size:.9rem;padding:32px 0;text-align:center}
     .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
     .loading{color:var(--muted);font-family:'DM Mono',monospace;font-size:.8rem;padding:40px 0;text-align:center}
@@ -189,6 +202,25 @@ let HARVEST_PLANS = [];
 let FACILITY_CONFIG = {};
 let CURRENT_STAGE = 'All';
 let CURRENT_PAGE = 'inventory'; // 'inventory' | 'forecast'
+let PROCESSING_VIEW = 'packages'; // 'packages' | 'drying' — sub-page within the Processing tab
+
+// Drying room capacity, from "Rooms capacity.xlsx" (Rooms Capacity Adobe,
+// hoops-based estimate at 3-4 lb/plant). 1 truck ≈ 42 macro-bins ≈ 2,100 lb;
+// 1 macro-bin ≈ 50 lb. Edit here if rooms are added or re-measured.
+const DRYING_ROOMS = [
+  { room: '1A', trellis: 10, trucks: 6.6,   lbs: 13860, bins: 277.2 },
+  { room: '1B', trellis: 17, trucks: 11.33, lbs: 23793, bins: 475.86 },
+  { room: '1C', trellis: 21, trucks: 14,    lbs: 29400, bins: 588 },
+  { room: '2',  trellis: 92, trucks: 13.4,  lbs: 28140, bins: 562.8 },
+  { room: '3A', trellis: 56, trucks: 8,     lbs: 16800, bins: 336 },
+  { room: '3B', trellis: 56, trucks: 8,     lbs: 16800, bins: 336 },
+  { room: '3C', trellis: 56, trucks: 8,     lbs: 16800, bins: 336 },
+  { room: '3D', trellis: 56, trucks: 8,     lbs: 16800, bins: 336 },
+  { room: '4A', trellis: 62, trucks: 8.8,   lbs: 18480, bins: 369.6 },
+  { room: '4B', trellis: 94, trucks: 13.4,  lbs: 28140, bins: 562.8 },
+];
+const LBS_PER_BIN = 50;
+const LBS_PER_TRUCK = 2100;
 
 function fmtWeight(pkg) {
   if (pkg.weight == null) return '—';
@@ -287,12 +319,169 @@ function applySearch(pkgs) {
   });
 }
 
+// ── Currently Drying (sub-page of Processing) ────────────────────────────
+// Anything drying comes through Canix as a package whose item name includes
+// "Wet Flower" — taken from every non-excluded facility, not just
+// Processing-stage ones, since the wet packages are created at the farm
+// licenses. Rooms are matched from the package's Canix location (or its
+// parent location) by name, e.g. "Room 1A" / "Dry Room 1A" / "1A" → 1A.
+
+function isDrying(p) {
+  return /wet flower/i.test(p.item?.name || '');
+}
+
+function dryingPackages() {
+  return visiblePackages().filter(isDrying);
+}
+
+function toLbs(pkg) {
+  const n = Number(pkg.weight) || 0;
+  const unit = (pkg.weight_unit || '').toLowerCase();
+  if (unit.startsWith('gram')) return n / 453.592;
+  if (unit.startsWith('kilogram')) return n * 2.20462;
+  if (unit.startsWith('ounce')) return n / 16;
+  return n; // Pounds
+}
+
+function roomKey(name) {
+  return String(name || '').toUpperCase().replace(/DRYING|DRY|ROOM|[^A-Z0-9]/g, '');
+}
+
+const ROOM_BY_KEY = Object.fromEntries(DRYING_ROOMS.map(r => [roomKey(r.room), r.room]));
+
+// Returns the drying-room id ("1A") or null, plus the raw location label.
+function packageRoom(p) {
+  const loc = p.location || null;
+  const label = loc ? (loc.parent_location?.name ? `${loc.parent_location.name} › ${loc.name}` : loc.name) : null;
+  const room = loc ? (ROOM_BY_KEY[roomKey(loc.name)] || ROOM_BY_KEY[roomKey(loc.parent_location?.name)] || null) : null;
+  return { room, label };
+}
+
+function daysSince(iso) {
+  if (!iso) return null;
+  const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  return d >= 0 ? d : null;
+}
+
+function fmtNum(n, digits = 0) {
+  return Number(n).toLocaleString(undefined, { maximumFractionDigits: digits });
+}
+
+function processingSubtabs() {
+  const views = [['packages', 'Packages', visiblePackages().filter(p => facilityInfo(p.facility_id).stage === 'Processing').length],
+                 ['drying', 'Currently Drying', dryingPackages().length]];
+  return `<div class="subtabs" id="subtabs">${views.map(([v, label, ct]) =>
+    `<button data-view="${v}" class="${v === PROCESSING_VIEW ? 'on' : ''}">${label}<span class="ct">${ct}</span></button>`
+  ).join('')}</div>`;
+}
+
+function attachSubtabListeners() {
+  $('subtabs')?.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => { PROCESSING_VIEW = btn.dataset.view; renderView(); });
+  });
+}
+
+function renderDrying() {
+  const all = dryingPackages();
+  const pkgs = applySearch(all);
+
+  // Capacity is a property of the rooms, so it's always computed from every
+  // drying package — the search box only filters the package list below.
+  const usedByRoom = {};
+  let unassignedLbs = 0;
+  const unassignedLocs = new Set();
+  all.forEach(p => {
+    const { room, label } = packageRoom(p);
+    if (room) usedByRoom[room] = (usedByRoom[room] || 0) + toLbs(p);
+    else { unassignedLbs += toLbs(p); unassignedLocs.add(label || 'No location set'); }
+  });
+
+  const totalCap = DRYING_ROOMS.reduce((s, r) => s + r.lbs, 0);
+  const totalUsed = all.reduce((s, p) => s + toLbs(p), 0);
+  const roomsInUse = Object.keys(usedByRoom).length;
+  const pct = totalCap ? totalUsed / totalCap * 100 : 0;
+  const free = Math.max(totalCap - totalUsed, 0);
+
+  const barCls = pct => pct >= 100 ? 'red' : pct >= 85 ? 'gold' : '';
+  const bar = pct => `<div class="bar ${barCls(pct)}"><span style="width:${Math.min(pct, 100).toFixed(1)}%"></span></div>`;
+
+  const kpis = `<div class="kpis" style="margin-top:0">
+    <div class="kpi gold"><div class="k">Wet Flower Drying</div><div class="v">${fmtNum(totalUsed)} lb</div><div class="n">${all.length} package(s) · ≈ ${fmtNum(totalUsed / LBS_PER_BIN, 1)} macro-bins</div></div>
+    <div class="kpi ${barCls(pct) === 'red' ? '' : 'green'}"><div class="k">Capacity Used</div><div class="v">${fmtNum(pct, 1)}%</div><div class="n">of ${fmtNum(totalCap)} lb across ${DRYING_ROOMS.length} rooms</div></div>
+    <div class="kpi blue"><div class="k">Space Available</div><div class="v">${fmtNum(free)} lb</div><div class="n">≈ ${fmtNum(free / LBS_PER_TRUCK, 1)} trucks · ${fmtNum(free / LBS_PER_BIN)} macro-bins</div></div>
+    <div class="kpi purple"><div class="k">Rooms In Use</div><div class="v">${roomsInUse} / ${DRYING_ROOMS.length}</div><div class="n">${unassignedLbs ? fmtNum(unassignedLbs) + ' lb not matched to a room' : 'all drying lbs matched to a room'}</div></div>
+  </div>`;
+
+  const roomRows = DRYING_ROOMS.map(r => {
+    const used = usedByRoom[r.room] || 0;
+    const p = used / r.lbs * 100;
+    return `<tr>
+      <td><b>Room ${r.room}</b></td>
+      <td class="num">${fmtNum(used)} lb</td>
+      <td class="num">${fmtNum(r.lbs)} lb</td>
+      <td>${bar(p)}</td>
+      <td class="num">${fmtNum(p, 1)}%</td>
+      <td class="num">${fmtNum(Math.max(r.lbs - used, 0))} lb</td>
+      <td class="num muted">${r.trellis}</td>
+      <td class="num muted">${fmtNum(r.trucks, 2)}</td>
+      <td class="num muted">${fmtNum(r.bins, 1)}</td>
+    </tr>`;
+  }).join('');
+
+  const capacityCard = `<div class="card">
+    <div class="card-hd"><h2>Drying Room Capacity</h2><div class="rollup"><b>${fmtNum(totalUsed)}</b> / ${fmtNum(totalCap)} lb</div></div>
+    <div class="note">Capacity from the Rooms Capacity sheet (hoops-based estimate, 3–4 lb/plant). 1 truck ≈ 42 macro-bins ≈ 2,100 lb; 1 macro-bin ≈ 50 lb. Wet Flower packages are assigned to a room by their Canix location name.</div>
+    <div class="scroll"><table>
+      <thead><tr><th>Room</th><th class="num">Drying</th><th class="num">Capacity</th><th>Fill</th><th class="num">Used</th><th class="num">Free</th><th class="num">Trellis (Mallas)</th><th class="num">Trucks</th><th class="num">Macro-Bins</th></tr></thead>
+      <tbody>${roomRows}
+        ${unassignedLbs ? `<tr><td class="muted">Not matched to a room</td><td class="num">${fmtNum(unassignedLbs)} lb</td><td colspan="7" class="muted" style="white-space:normal">${[...unassignedLocs].join(', ')}</td></tr>` : ''}
+        <tr class="total"><td>Total</td><td class="num">${fmtNum(totalUsed)} lb</td><td class="num">${fmtNum(totalCap)} lb</td><td>${bar(pct)}</td><td class="num">${fmtNum(pct, 1)}%</td><td class="num">${fmtNum(free)} lb</td>
+          <td class="num muted">${DRYING_ROOMS.reduce((s, r) => s + r.trellis, 0)}</td><td class="num muted">${fmtNum(DRYING_ROOMS.reduce((s, r) => s + r.trucks, 0), 2)}</td><td class="num muted">${fmtNum(DRYING_ROOMS.reduce((s, r) => s + r.bins, 0), 1)}</td></tr>
+      </tbody>
+    </table></div>
+  </div>`;
+
+  const sorted = [...pkgs].sort((a, b) => (a.packaged_date || '').localeCompare(b.packaged_date || ''));
+  const listCard = `<div class="card">
+    <div class="card-hd"><h2>Currently Drying</h2><div class="rollup"><b>${pkgs.length}</b> package(s)</div></div>
+    ${!all.length ? '<div class="empty">Nothing drying right now. Wet Flower packages from Canix show up here as soon as they are created.</div>'
+      : !pkgs.length ? '<div class="empty">No drying packages match the search.</div>'
+      : `<div class="scroll"><table>
+      <thead><tr><th>Item</th><th>Strain</th><th class="num">Wet Weight</th><th>Room</th><th>Facility (License)</th><th class="num">Started</th><th class="num">Days</th><th>Source Harvest</th></tr></thead>
+      <tbody>${sorted.map(p => {
+        const fi = facilityInfo(p.facility_id);
+        const { room, label } = packageRoom(p);
+        const days = daysSince(p.packaged_date);
+        return `<tr>
+          <td class="wide">${p.item?.name || '—'}</td>
+          <td>${p.item?.strain?.name || '—'}</td>
+          <td class="num">${fmtWeight(p)}</td>
+          <td>${room ? `<span class="pill gold">Room ${room}</span>` : `<span class="muted">${label || '—'}</span>`}</td>
+          <td>${fi.displayName}${fi.license ? ` <span class="muted">(${fi.license})</span>` : ''}</td>
+          <td class="num">${(p.packaged_date || '').slice(0, 10) || '—'}</td>
+          <td class="num">${days ?? '—'}</td>
+          <td class="wide muted">${p.source_harvests || '—'}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>`}
+  </div>`;
+
+  $('view').innerHTML = processingSubtabs() + kpis + capacityCard + listCard;
+  attachSubtabListeners();
+}
+
 function renderView() {
+  if (CURRENT_STAGE === 'Processing' && PROCESSING_VIEW === 'drying') { renderDrying(); return; }
+
   const pkgs = applySearch(visiblePackages().filter(p =>
     CURRENT_STAGE === 'All' || facilityInfo(p.facility_id).stage === CURRENT_STAGE
   ));
 
-  if (!pkgs.length) { $('view').innerHTML = '<div class="empty">No packages for this view.</div>'; return; }
+  if (!pkgs.length) {
+    $('view').innerHTML = (CURRENT_STAGE === 'Processing' ? processingSubtabs() : '') + '<div class="empty">No packages for this view.</div>';
+    attachSubtabListeners();
+    return;
+  }
 
   // Cultivation (and only Cultivation) gets the farm-group roll-up view the
   // user asked for — other stages are usually a single facility, so a flat
@@ -321,10 +510,11 @@ function renderView() {
   }
 
   const label = CURRENT_STAGE === 'All' ? 'All facilities' : CURRENT_STAGE;
-  $('view').innerHTML = `<div class="card">
+  $('view').innerHTML = `${CURRENT_STAGE === 'Processing' ? processingSubtabs() : ''}<div class="card">
     <div class="card-hd"><h2>${label}</h2><div class="rollup"><b>${pkgs.length}</b> package(s)</div></div>
     ${tableHtml(pkgs)}
   </div>`;
+  attachSubtabListeners();
 }
 
 // ── Forecasted Flower ────────────────────────────────────────────────────
