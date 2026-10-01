@@ -71,6 +71,19 @@ submitted one means done, and the total pre-rolls made shows as progress.
 A request is late if its plan finishes after the Sheet's Ready Date, or the
 Ready Date has passed. English/Spanish via the shared `2cw_lang` toggle.
 
+**Drying Schedule** (`drying_schedule.html`, hub card `drying_schedule` under
+Processing) plans intakes from outside client farms we dry for. Each row in
+the `drying_intakes` Supabase table is one planned intake: farm name, license
+#, contact, farm size (sq ft / acres / plants), strains, estimated intake
+start/end, estimated total wet lbs, and a status (tentative → confirmed →
+receiving → complete, or cancelled). A returning farm gets a new row; picking
+its name in a new intake copies its license, size and contact from its last
+one. The Timeline view draws each intake as a bar by week (tentative bars are
+dashed) with an "Est. wet lb / week" row underneath that spreads each
+estimate evenly over its days, so the busiest weeks stand out; the Table view
+is sortable. Estimates only — actual weights still come in through Harvest
+Intake — Wet. English only (office-facing).
+
 Each stage pulls its input weight forward from the stage before it: type the
 last 4 of the Metrc tag and bucking fills in the dry weight the post-dry check
 recorded. Every stage totals its own outputs and shows the variance against

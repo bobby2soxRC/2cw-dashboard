@@ -737,3 +737,52 @@ drop policy if exists "anon delete" on preroll_plans;
 create policy "anon delete" on preroll_plans for delete using (true);
 
 grant select, insert, update, delete on public.preroll_plans to anon;
+
+-- ── Drying schedule (drying_schedule.html) ───────────────────────────────
+-- Outside clients whose wet material we take in to dry. One row per planned
+-- intake: who it's from (farm, license, contact), how big the farm is, and
+-- when and how much we expect to receive. A farm coming back next season
+-- gets a new row; the page offers to copy the farm details from its last
+-- one. Same open anon posture as preroll_plans.
+
+create table if not exists drying_intakes (
+  id              uuid primary key default gen_random_uuid(),
+  farm_name       text not null,
+  license_number  text,
+  contact_name    text,
+  contact_phone   text,
+  contact_email   text,
+  farm_size       numeric,
+  farm_size_unit  text not null default 'sq ft',   -- 'sq ft' | 'acres' | 'plants'
+  strains         text,
+  est_start       date,
+  est_end         date,
+  est_wet_lb      numeric,
+  status          text not null default 'tentative',
+                  -- tentative | confirmed | receiving | complete | cancelled
+  notes           text,
+  created_by      text,
+  updated_by      text,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
+);
+
+create index if not exists idx_drying_intakes_start on drying_intakes (est_start);
+
+drop trigger if exists trg_touch_drying_intakes on drying_intakes;
+create trigger trg_touch_drying_intakes
+  before update on drying_intakes
+  for each row execute function touch_operations_forms();
+
+alter table drying_intakes enable row level security;
+
+drop policy if exists "anon read" on drying_intakes;
+create policy "anon read" on drying_intakes for select using (true);
+drop policy if exists "anon write" on drying_intakes;
+create policy "anon write" on drying_intakes for insert with check (true);
+drop policy if exists "anon update" on drying_intakes;
+create policy "anon update" on drying_intakes for update using (true) with check (true);
+drop policy if exists "anon delete" on drying_intakes;
+create policy "anon delete" on drying_intakes for delete using (true);
+
+grant select, insert, update, delete on public.drying_intakes to anon;

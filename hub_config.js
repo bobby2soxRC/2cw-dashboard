@@ -162,6 +162,16 @@ const CARD_DEFS = [
     href: '/operations_dashboard.html'
   },
   {
+    key: 'drying_schedule',
+    color: 'blue',
+    label: 'Processing',
+    dept: 'operations',
+    subdept: 'processing',
+    title: 'Drying Schedule',
+    desc: 'Outside farms we dry for — farm, license, size, estimated intake dates and wet weight, on a timeline with the weekly load.',
+    href: '/drying_schedule.html'
+  },
+  {
     key: 'production_today',
     color: 'gold',
     label: 'Operations',
