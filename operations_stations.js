@@ -736,6 +736,9 @@ const OPERATIONS_STATIONS = [
     multiDay: true,
     fields: [
       { ...F.date(), l: { en: 'Start Date', es: 'Fecha de inicio' } },
+      { k: 'prNum', t: 'text', l: { en: 'Production Request #', es: 'N.º de solicitud de producción' },
+        hint: { en: 'e.g. PR-1003 — links this batch to the request on the Pre-Roll Dashboard.',
+                es: 'p. ej. PR-1003 — vincula este lote con la solicitud en el tablero de prerolls.' } },
       { k: 'batchId', t: 'text', req: true, l: { en: 'Batch ID', es: 'ID de lote' } },
       F.strain(),
       { k: 'sourceUid', t: 'uid', req: true, l: { en: 'Source UID', es: 'UID de origen' },

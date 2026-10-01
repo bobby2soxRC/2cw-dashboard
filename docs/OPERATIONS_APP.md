@@ -56,6 +56,21 @@ once QC and the secondary verification are done. The log is the station's
 Two people editing the same open batch at the same moment can overwrite each
 other's rows (last save wins), so one tablet per batch is safest.
 
+**Pre-Roll Dashboard** (`preroll_dashboard.html`, hub card `preroll_dashboard`
+under Manufacturing) is the pre-roll team's queue. It reads the Production
+Requests Sheet live (same published CSV as `production.html`) and keeps only
+pre-roll products: the BSKU's 2-digit category code is `02` (no BSKU → the
+product name says pre-roll). The Sheet's Crew column is ignored, because flower
+packouts can be crewed by the pre-roll team. For each request the team saves a
+plan in the `preroll_plans` Supabase table (keyed by PR#): strain, optional
+source UID, estimated start/completion, lead, on-hold, notes. "Start batch"
+opens Pre-Roll Production with `?set_prNum=…&set_strain=…` (any form accepts
+`set_<fieldKey>` starting values on a brand-new form), and the dashboard
+reads those forms back by `prNum`: an open draft means in production, a
+submitted one means done, and the total pre-rolls made shows as progress.
+A request is late if its plan finishes after the Sheet's Ready Date, or the
+Ready Date has passed. English/Spanish via the shared `2cw_lang` toggle.
+
 Each stage pulls its input weight forward from the stage before it: type the
 last 4 of the Metrc tag and bucking fills in the dry weight the post-dry check
 recorded. Every stage totals its own outputs and shows the variance against

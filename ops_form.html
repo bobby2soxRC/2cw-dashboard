@@ -762,9 +762,28 @@
             markDirty();
           }
         } catch { /* corrupt mirror, ignore */ }
+      } else {
+        applyLinkPrefill();
       }
     }
     renderSwitcher();
+  } else {
+    applyLinkPrefill();
+  }
+
+  // Starting values carried in the link as ?set_<fieldKey>=value — e.g. the
+  // Pre-Roll Dashboard's "Start batch" fills in the PR#, strain and source
+  // UID. Only ever applied to a brand-new form, never over a saved draft.
+  function applyLinkPrefill() {
+    const fields = {};
+    station.fields.forEach((f) => {
+      if (['calc', 'lineitems', 'photo'].includes(f.t)) return;
+      const v = params.get(`set_${f.k}`);
+      if (v !== null && v !== '') fields[f.k] = f.t === 'number' ? Number(v) : v;
+    });
+    if (!Object.keys(fields).length) return;
+    hydrate(fields);
+    markDirty();
   }
 })();
 </script>

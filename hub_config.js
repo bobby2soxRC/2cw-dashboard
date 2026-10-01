@@ -130,6 +130,16 @@ const CARD_DEFS = [
     href: '/production.html'
   },
   {
+    key: 'preroll_dashboard',
+    color: 'purple',
+    label: 'Manufacturing',
+    dept: 'operations',
+    subdept: 'manufacturing',
+    title: 'Pre-Roll Dashboard',
+    desc: 'Pre-roll production requests from the Sheet — assign the strain, schedule start and finish dates, and see each batch’s progress.',
+    href: '/preroll_dashboard.html'
+  },
+  {
     key: 'menu',
     color: 'green',
     label: 'Sales',

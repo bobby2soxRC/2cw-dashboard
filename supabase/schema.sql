@@ -695,3 +695,45 @@ drop policy if exists "anon delete" on personal_task_notes;
 create policy "anon delete" on personal_task_notes for delete using (true);
 
 grant select, insert, delete on public.personal_task_notes to anon;
+
+-- ── Pre-roll plans (preroll_dashboard.html) ─────────────────────────────
+-- The pre-roll team's plan for each pre-roll production request. The
+-- requests themselves stay in the Production Requests Google Sheet (read
+-- live by the dashboard); this table only holds what the team adds on top,
+-- one row per PR#: which strain goes in, and when they expect to start and
+-- finish. Progress isn't stored here — the dashboard reads it from the
+-- Pre-Roll Production forms (operations_forms, station preroll_production)
+-- whose prNum field names the request. Same open anon posture as tasks:
+-- nothing here is more sensitive than operations_forms.
+
+create table if not exists preroll_plans (
+  pr_num         text primary key,
+  strain         text,
+  source_uid     text,
+  est_start      date,
+  est_completion date,
+  assigned_to    text,
+  on_hold        boolean not null default false,
+  notes          text,
+  updated_by     text,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+
+drop trigger if exists trg_touch_preroll_plans on preroll_plans;
+create trigger trg_touch_preroll_plans
+  before update on preroll_plans
+  for each row execute function touch_operations_forms();
+
+alter table preroll_plans enable row level security;
+
+drop policy if exists "anon read" on preroll_plans;
+create policy "anon read" on preroll_plans for select using (true);
+drop policy if exists "anon write" on preroll_plans;
+create policy "anon write" on preroll_plans for insert with check (true);
+drop policy if exists "anon update" on preroll_plans;
+create policy "anon update" on preroll_plans for update using (true) with check (true);
+drop policy if exists "anon delete" on preroll_plans;
+create policy "anon delete" on preroll_plans for delete using (true);
+
+grant select, insert, update, delete on public.preroll_plans to anon;

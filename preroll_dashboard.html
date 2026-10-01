@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Pre-Roll Dashboard — 2CW</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<meta name="theme-color" content="#0c0d0f">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0c0d0f;--surface:#13151a;--surface2:#181b21;--border:#1e2129;--border2:rgba(255,255,255,.11);
+    --green:#3db87a;--gold:#d4a843;--blue:#5a9fd4;--purple:#9b7fd4;--red:#ef5350;--slate:#7d8899;
+    --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;
+  }
+  html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:48px 48px;opacity:.3;pointer-events:none;z-index:0}
+  a{color:inherit}
+  .hdr{min-height:calc(54px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:12px;position:sticky;top:0;z-index:20}
+  .hdr-back{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
+  .hdr-div{width:1px;height:18px;background:var(--border)}
+  .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--purple);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hdr-sync{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);white-space:nowrap}
+  .lang{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .lang button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:12px;font-weight:600;padding:7px 11px;cursor:pointer}
+  .lang button.on{background:var(--purple);color:#000}
+  @media (max-width:560px){ .hdr-sync{display:none} }
+
+  main{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:24px 16px 80px}
+  h1{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:.03em}
+  .sub{color:var(--subtext);font-size:.88rem;margin:2px 0 20px}
+
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px}
+  .tile{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;cursor:pointer;text-align:left;color:inherit;font-family:inherit}
+  .tile:hover{border-color:var(--border2)}
+  .tile .k{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .tile .v{font-family:'DM Mono',monospace;font-size:1.5rem;margin-top:4px}
+  .tile.warn .v{color:var(--gold)} .tile.bad .v{color:var(--red)} .tile.go .v{color:var(--blue)}
+
+  .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:18px}
+  .chip{background:transparent;border:1px solid var(--border);color:var(--subtext);border-radius:999px;padding:.4rem .8rem;font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+  .chip.on{border-color:var(--purple);color:var(--purple);background:rgba(155,127,212,.1)}
+  .search{flex:1;min-width:180px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:.5rem .75rem;font-family:inherit;font-size:.9rem;outline:none}
+  .search:focus{border-color:var(--purple)}
+
+  .group{margin-bottom:22px}
+  .group-hd{display:flex;align-items:baseline;gap:10px;margin-bottom:8px;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext)}
+  .group-hd .n{color:var(--muted)}
+  .group-hd.warn{color:var(--gold)}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:grid;grid-template-columns:1fr auto;gap:8px 14px}
+  .card.late{border-color:rgba(239,83,80,.45)}
+  .card.hold{opacity:.65}
+  .c-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+  .pr{font-family:'DM Mono',monospace;font-size:.8rem;color:var(--purple);font-weight:500}
+  .prod{font-weight:600}
+  .pill{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;border:1px solid var(--border);color:var(--subtext);white-space:nowrap}
+  .pill.indica{color:#a78bfa;border-color:rgba(167,139,250,.4)}
+  .pill.sativa{color:var(--gold);border-color:rgba(212,168,67,.4)}
+  .pill.hybrid{color:var(--green);border-color:rgba(61,184,122,.4)}
+  .pill.stage-needs_strain,.pill.stage-needs_schedule{color:var(--gold);border-color:rgba(212,168,67,.4)}
+  .pill.stage-in_production{color:var(--blue);border-color:rgba(90,159,212,.4)}
+  .pill.stage-done{color:var(--green);border-color:rgba(61,184,122,.4)}
+  .pill.late{color:var(--red);border-color:rgba(239,83,80,.45)}
+  .c-meta{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 18px;font-size:.82rem;color:var(--subtext)}
+  .c-meta b{color:var(--text);font-weight:500}
+  .c-meta .none{color:var(--gold)}
+  .c-actions{display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap;justify-content:flex-end}
+  .progress{grid-column:1/-1;height:6px;background:var(--surface2);border-radius:999px;overflow:hidden}
+  .progress i{display:block;height:100%;background:var(--blue)}
+  .progress.done i{background:var(--green)}
+  .c-notes{grid-column:1/-1;font-size:.8rem;color:var(--muted);white-space:pre-wrap}
+
+  .btn{padding:.5rem .85rem;border:1px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer;background:transparent;color:var(--text);text-decoration:none;white-space:nowrap;display:inline-block}
+  .btn:hover{border-color:var(--muted)}
+  .btn-purple{background:var(--purple);color:#0c0d0f;border-color:var(--purple)}
+  .btn:disabled{opacity:.5;cursor:default}
+
+  .empty,.err{color:var(--subtext);font-size:.9rem;padding:24px;text-align:center;background:var(--surface);border:1px dashed var(--border);border-radius:12px}
+  .err{color:var(--red)}
+
+  .backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;overflow-y:auto;padding:24px 16px}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;max-width:520px;margin:4vh auto;padding:20px}
+  .modal h2{font-size:1.1rem;margin-bottom:2px}
+  .modal .m-sub{color:var(--subtext);font-size:.82rem;margin-bottom:16px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  label.lbl{display:block;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+  .fld{margin-bottom:12px}
+  .modal input,.modal select,.modal textarea{width:100%;background:#0c0d0f;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:.6rem .7rem;font-family:inherit;font-size:.92rem;outline:none}
+  .modal input:focus,.modal select:focus,.modal textarea:focus{border-color:var(--purple)}
+  .check{display:flex;gap:8px;align-items:center;font-size:.88rem;color:var(--subtext);margin-bottom:12px}
+  .check input{width:auto}
+  .m-err{color:var(--red);font-size:.85rem;margin-bottom:10px;display:none}
+  .m-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+  @media (max-width:560px){ .card{grid-template-columns:1fr} .c-actions{justify-content:flex-start} .row2{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="hdr">
+  <a class="hdr-back" href="/index.html" id="back">← Hub</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand" id="brand">Pre-Roll Dashboard</div>
+  <div class="hdr-sync" id="sync"></div>
+  <div class="lang" id="lang"></div>
+</div>
+
+<main>
+  <h1 id="h1"></h1>
+  <div class="sub" id="intro"></div>
+
+  <div class="tiles" id="tiles"></div>
+
+  <div class="bar" id="bar">
+    <button class="chip on" data-f="open"></button>
+    <button class="chip" data-f="needs"></button>
+    <button class="chip" data-f="in_production"></button>
+    <button class="chip" data-f="late"></button>
+    <button class="chip" data-f="done"></button>
+    <button class="chip" data-f="all"></button>
+    <input class="search" id="search" type="search"/>
+  </div>
+
+  <div id="list"></div>
+</main>
+
+<div class="backdrop" id="backdrop">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script src="/config/supabase_config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/hub_config.js"></script>
+<script src="/ops_common.js"></script>
+<script>
+// Requests come live from the same published Sheet tab production.html and
+// inventory.html read. The team's plan for each one is the preroll_plans
+// table (see supabase/schema.sql); progress comes from Pre-Roll Production
+// forms (operations_forms, station preroll_production) carrying its prNum.
+const PRODUCTION_REQUESTS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQkx0gxPTulAOv3WMXayY8HOqcoYByZ_kOXrLvd84-9ReSwGa-6Or-KTx4SdPfT0rC5_qOCE3LHz_mT/pub?gid=1857304423&single=true&output=csv';
+const REFRESH_MS = 60 * 1000;
+
+// Every on-screen string, English and Spanish side by side (t() and the
+// EN/ES toggle come from ops_common.js — same language setting as the forms).
+const L = {
+  title: { en: 'Pre-Roll Dashboard', es: 'Tablero de prerolls' },
+  hub: { en: '← Hub', es: '← Inicio' },
+  h1: { en: 'Pre-Roll Production', es: 'Producción de prerolls' },
+  intro: { en: 'Pre-roll requests from the Production Requests Sheet. Assign the strain, schedule it, then start the batch — progress fills in from the Pre-Roll Production form.',
+           es: 'Solicitudes de prerolls de la hoja de solicitudes de producción. Asigne la variedad, prográmela y luego inicie el lote — el avance se llena desde el formulario de producción de prerolls.' },
+  loading: { en: 'Loading…', es: 'Cargando…' },
+  updated: { en: 'Updated', es: 'Actualizado' },
+  search: { en: 'Search PR#, product, strain…', es: 'Buscar PR#, producto, variedad…' },
+  f_open: { en: 'Open', es: 'Abiertas' },
+  f_needs: { en: 'Needs planning', es: 'Por planear' },
+  f_in_production: { en: 'In production', es: 'En producción' },
+  f_late: { en: 'Running late', es: 'Atrasadas' },
+  f_done: { en: 'Done', es: 'Terminadas' },
+  f_all: { en: 'All', es: 'Todas' },
+  t_open: { en: 'Open requests', es: 'Solicitudes abiertas' },
+  t_qty: { en: 'Pre-rolls requested', es: 'Prerolls solicitados' },
+  t_needs: { en: 'Needs planning', es: 'Por planear' },
+  t_prod: { en: 'In production', es: 'En producción' },
+  t_late: { en: 'Running late', es: 'Atrasadas' },
+  g_needs_strain: { en: 'Needs a strain', es: 'Falta variedad' },
+  g_needs_schedule: { en: 'Not scheduled yet', es: 'Sin programar' },
+  g_on_hold: { en: 'On hold', es: 'En espera' },
+  g_done: { en: 'Done', es: 'Terminadas' },
+  g_in_production: { en: 'In production', es: 'En producción' },
+  g_week: { en: 'Week of', es: 'Semana del' },
+  g_past: { en: '(past)', es: '(pasada)' },
+  none_requests: { en: 'No pre-roll requests in the Production Requests Sheet right now.', es: 'No hay solicitudes de prerolls en la hoja de solicitudes de producción por ahora.' },
+  none_match: { en: 'Nothing matches this filter.', es: 'Nada coincide con este filtro.' },
+  late: { en: 'Late', es: 'Atrasada' },
+  plan: { en: 'Plan', es: 'Planear' },
+  plan_lbl: { en: 'Plan', es: 'Plan' },
+  edit_plan: { en: 'Edit plan', es: 'Editar plan' },
+  start_batch: { en: 'Start batch', es: 'Iniciar lote' },
+  open_batch: { en: 'Open batch', es: 'Abrir lote' },
+  qty: { en: 'Qty', es: 'Cant.' },
+  strain: { en: 'Strain', es: 'Variedad' },
+  not_assigned: { en: 'not assigned', es: 'sin asignar' },
+  not_scheduled: { en: 'not scheduled', es: 'sin programar' },
+  ready_by: { en: 'Ready by', es: 'Lista para' },
+  ship: { en: 'Ship', es: 'Envío' },
+  lead: { en: 'Lead', es: 'Encargado' },
+  made: { en: 'Made', es: 'Hechos' },
+  any_type: { en: 'Any type', es: 'Cualquier tipo' },
+  prerolls: { en: 'pre-rolls', es: 'prerolls' },
+  ready_by_lc: { en: 'ready by', es: 'lista para' },
+  e_strain_ph: { en: 'Pick or type a strain', es: 'Elija o escriba una variedad' },
+  e_uid: { en: 'Source UID (optional)', es: 'UID de origen (opcional)' },
+  e_uid_ph: { en: 'Metrc tag of the flower going in', es: 'Etiqueta Metrc de la flor que entra' },
+  e_start: { en: 'Est. start', es: 'Inicio estimado' },
+  e_done: { en: 'Est. completion', es: 'Terminación estimada' },
+  e_hold: { en: 'On hold', es: 'En espera' },
+  e_notes: { en: 'Notes', es: 'Notas' },
+  cancel: { en: 'Cancel', es: 'Cancelar' },
+  save: { en: 'Save plan', es: 'Guardar plan' },
+  saving: { en: 'Saving…', es: 'Guardando…' },
+  err_dates: { en: 'Completion can’t be before the start date.', es: 'La terminación no puede ser antes de la fecha de inicio.' },
+  err_save: { en: 'Could not save:', es: 'No se pudo guardar:' },
+  err_nosupa: { en: 'Supabase is not configured, so plans can’t be saved.', es: 'Supabase no está configurado, así que no se pueden guardar planes.' },
+  err_sheet: { en: 'Could not read the Production Requests Sheet', es: 'No se pudo leer la hoja de solicitudes de producción' },
+  err_plans: { en: 'Could not load plans — has supabase/schema.sql been re-run?', es: 'No se pudieron cargar los planes — ¿se volvió a ejecutar supabase/schema.sql?' }
+};
+const STAGE_LABELS = {
+  needs_strain: { en: 'Needs strain', es: 'Falta variedad' },
+  needs_schedule: { en: 'Not scheduled', es: 'Sin programar' },
+  scheduled: { en: 'Scheduled', es: 'Programada' },
+  in_production: { en: 'In production', es: 'En producción' },
+  done: { en: 'Done', es: 'Terminada' },
+  on_hold: { en: 'On hold', es: 'En espera' }
+};
+const TYPE_LABELS = { indica: 'Indica', sativa: 'Sativa', hybrid: { en: 'Hybrid', es: 'Híbrida' } };
+const locale = () => (getLang() === 'es' ? 'es-US' : 'en-US');
+
+const currentUser = (sessionStorage.getItem('2cw_user_name') || '').trim();
+if (!sessionStorage.getItem('2cw_pin')) location.replace('/index.html');
+
+let client = null;
+if (typeof SUPABASE_URL !== 'undefined' && SUPABASE_URL) client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let requests = [];      // from the Sheet, pre-roll crew only
+let plans = {};         // pr_num -> preroll_plans row
+let batches = {};       // pr_num -> [operations_forms rows]
+let strains = [];
+let people = [];
+let filter = 'open';
+let editingPr = null;
+
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const todayStr = () => new Date().toISOString().slice(0, 10);
+const fmtDate = (d) => d ? new Date(d + 'T12:00:00').toLocaleDateString(locale(), { month: 'short', day: 'numeric' }) : '';
+const num = (x) => { const n = parseFloat(x); return Number.isFinite(n) ? n : 0; };
+
+// Quote-aware CSV — the Notes column can hold commas.
+function parseCsv(text) {
+  const rows = []; let row = []; let cell = ''; let q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+      else if (c === '"') q = false;
+      else cell += c;
+    } else if (c === '"') q = true;
+    else if (c === ',') { row.push(cell); cell = ''; }
+    else if (c === '\n' || c === '\r') {
+      if (c === '\r' && text[i + 1] === '\n') i++;
+      row.push(cell); rows.push(row); row = []; cell = '';
+    } else cell += c;
+  }
+  if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+  const [hdr, ...body] = rows;
+  if (!hdr) return [];
+  const keys = hdr.map((h) => h.trim());
+  return body.filter((r) => r.some((v) => v.trim())).map((r) => Object.fromEntries(keys.map((k, i) => [k, (r[i] || '').trim()])));
+}
+
+// Monday of the week a date falls in, as YYYY-MM-DD.
+function weekOf(d) {
+  const dt = new Date(d + 'T12:00:00');
+  dt.setDate(dt.getDate() - ((dt.getDay() + 6) % 7));
+  return dt.toISOString().slice(0, 10);
+}
+
+// Pre-roll products only — decided by what's being made, not the Sheet's
+// Crew column (a flower packout can be crewed by the pre-roll team). A BSKU
+// is brand code + 2-digit category, and 02 is Preroll (SRF021004 28pk,
+// SRF020701 single, MDO021107 10pk; 01 is flower). No BSKU → go by the name.
+function isPrerollRequest(r) {
+  const bsku = (r['BSKU'] || '').trim().toUpperCase();
+  if (/^[A-Z]{3}\d{2}/.test(bsku)) return bsku.slice(3, 5) === '02';
+  return /pre-?roll/i.test(r['Product'] || '');
+}
+
+// ── Load ─────────────────────────────────────────────────────────────────
+async function loadRequests() {
+  const res = await fetch(PRODUCTION_REQUESTS_CSV_URL + '&t=' + Date.now());
+  if (!res.ok) throw new Error(`${t(L.err_sheet)} (HTTP ${res.status})`);
+  return parseCsv(await res.text())
+    .filter(isPrerollRequest)
+    .map((r) => ({
+      pr: r['PR#'], product: r['Product'], bsku: r['BSKU'], asku: r['ASKU'],
+      type: r['Strain Type'], outputStrain: r['Output Strain'],
+      batchSize: num(r['Batch Size']), readyDate: r['Ready Date'], shipDate: r['Ship Date'],
+      sheetStatus: r['Status'], sheetNotes: r['Notes']
+    }))
+    .filter((r) => r.pr);
+}
+
+async function loadPlans() {
+  if (!client) return {};
+  const { data, error } = await client.from('preroll_plans').select('*');
+  if (error) throw new Error(`${t(L.err_plans)} (${error.message})`);
+  return Object.fromEntries((data || []).map((p) => [p.pr_num, p]));
+}
+
+async function loadBatches() {
+  if (!client) return {};
+  const { data, error } = await client.from('operations_forms')
+    .select('id,status,work_date,submitted_at,fields').eq('station_key', 'preroll_production');
+  if (error) { console.error('loadBatches', error); return {}; }
+  const out = {};
+  (data || []).forEach((r) => {
+    const pr = String((r.fields && r.fields.prNum) || '').trim().toUpperCase();
+    if (pr) (out[pr] = out[pr] || []).push(r);
+  });
+  return out;
+}
+
+async function loadStrains() {
+  try {
+    const ref = await (await fetch('/data/operations/reference.json')).json();
+    return (ref.strains || []).filter((s) => s.active !== false).map((s) => s.label || s.name || s.id).filter(Boolean);
+  } catch { return []; }
+}
+
+async function refresh() {
+  try {
+    const [r, p, b] = await Promise.all([loadRequests(), loadPlans(), loadBatches()]);
+    requests = r; plans = p; batches = b;
+    document.getElementById('sync').textContent = `${t(L.updated)} ${new Date().toLocaleTimeString(locale(), { hour: 'numeric', minute: '2-digit' })}`;
+    render();
+  } catch (e) {
+    console.error(e);
+    document.getElementById('list').innerHTML = `<div class="err">${esc(e.message)}</div>`;
+  }
+}
+
+// ── Derive ───────────────────────────────────────────────────────────────
+function view(r) {
+  const plan = plans[r.pr] || {};
+  const runs = batches[r.pr.toUpperCase()] || [];
+  const submitted = runs.filter((b) => b.status === 'submitted');
+  const draft = runs.find((b) => b.status === 'draft');
+  const made = runs.reduce((a, b) => a + num(b.fields && b.fields.totalPrerolls), 0);
+  const strain = plan.strain || r.outputStrain || '';
+  let stage;
+  if (submitted.length) stage = 'done';
+  else if (draft) stage = 'in_production';
+  else if (plan.on_hold) stage = 'on_hold';
+  else if (!strain) stage = 'needs_strain';
+  else if (!plan.est_completion) stage = 'needs_schedule';
+  else stage = 'scheduled';
+  const open = stage !== 'done';
+  // Late: the plan finishes after the Sheet's Ready Date, or the Ready Date
+  // has already passed and it isn't done.
+  const late = open && !!r.readyDate &&
+    ((plan.est_completion && plan.est_completion > r.readyDate) || r.readyDate < todayStr());
+  return { ...r, plan, strain, stage, open, late, made, draft, submitted };
+}
+
+function passes(v, q) {
+  if (filter === 'open' && !v.open) return false;
+  if (filter === 'needs' && !['needs_strain', 'needs_schedule'].includes(v.stage)) return false;
+  if (filter === 'in_production' && v.stage !== 'in_production') return false;
+  if (filter === 'late' && !v.late) return false;
+  if (filter === 'done' && v.stage !== 'done') return false;
+  if (!q) return true;
+  return [v.pr, v.product, v.bsku, v.type, v.strain, v.plan.assigned_to].join(' ').toLowerCase().includes(q);
+}
+
+// ── Render ───────────────────────────────────────────────────────────────
+function render() {
+  const all = requests.map(view);
+  const open = all.filter((v) => v.open);
+  const tiles = [
+    { k: t(L.t_open), v: open.length, f: 'open' },
+    { k: t(L.t_qty), v: open.reduce((a, v) => a + v.batchSize, 0).toLocaleString(locale()), f: 'open' },
+    { k: t(L.t_needs), v: open.filter((v) => ['needs_strain', 'needs_schedule'].includes(v.stage)).length, f: 'needs', cls: 'warn' },
+    { k: t(L.t_prod), v: open.filter((v) => v.stage === 'in_production').length, f: 'in_production', cls: 'go' },
+    { k: t(L.t_late), v: open.filter((v) => v.late).length, f: 'late', cls: 'bad' }
+  ];
+  document.getElementById('tiles').innerHTML = tiles.map((t) =>
+    `<button class="tile ${t.cls || ''}" onclick="setFilter('${t.f}')"><div class="k">${t.k}</div><div class="v">${t.v}</div></button>`).join('');
+
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  const shown = all.filter((v) => passes(v, q));
+  const list = document.getElementById('list');
+  if (!requests.length) { list.innerHTML = `<div class="empty">${t(L.none_requests)}</div>`; return; }
+  if (!shown.length) { list.innerHTML = `<div class="empty">${t(L.none_match)}</div>`; return; }
+
+  // Groups: what still needs planning first, then the schedule week by week
+  // (by planned start, falling back to planned finish), then on hold / done.
+  const groups = new Map();
+  const put = (key, title, v, warn) => {
+    if (!groups.has(key)) groups.set(key, { title, warn, items: [] });
+    groups.get(key).items.push(v);
+  };
+  shown.forEach((v) => {
+    if (v.stage === 'needs_strain') return put('0', t(L.g_needs_strain), v, true);
+    if (v.stage === 'needs_schedule') return put('1', t(L.g_needs_schedule), v, true);
+    if (v.stage === 'on_hold') return put('8', t(L.g_on_hold), v);
+    if (v.stage === 'done') return put('9', t(L.g_done), v);
+    const d = v.plan.est_start || v.plan.est_completion;
+    const wk = d ? weekOf(d) : '';
+    put('5-' + wk, wk ? `${t(L.g_week)} ${fmtDate(wk)}${wk < weekOf(todayStr()) ? ' ' + t(L.g_past) : ''}` : t(L.g_in_production), v);
+  });
+  const byNeed = (a, b) => (a.readyDate || '9999').localeCompare(b.readyDate || '9999') || a.pr.localeCompare(b.pr);
+  list.innerHTML = [...groups.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([, g]) => `
+    <div class="group">
+      <div class="group-hd ${g.warn ? 'warn' : ''}">${esc(g.title)} <span class="n">${g.items.length}</span></div>
+      ${g.items.sort(byNeed).map(cardHtml).join('')}
+    </div>`).join('');
+}
+
+function cardHtml(v) {
+  const p = v.plan;
+  const typeCls = (v.type || '').toLowerCase();
+  const pctMade = v.batchSize > 0 ? Math.min(100, Math.round(v.made / v.batchSize * 100)) : 0;
+  const startHref = '/ops_form.html?' + new URLSearchParams({
+    station: 'preroll_production', set_prNum: v.pr, set_batchId: v.pr,
+    ...(v.strain ? { set_strain: v.strain } : {}), ...(p.source_uid ? { set_sourceUid: p.source_uid } : {})
+  }).toString();
+  const sched = p.est_start || p.est_completion
+    ? `${p.est_start ? fmtDate(p.est_start) : '?'} → ${p.est_completion ? fmtDate(p.est_completion) : '?'}`
+    : `<span class="none">${t(L.not_scheduled)}</span>`;
+  return `
+  <div class="card ${v.late ? 'late' : ''} ${v.stage === 'on_hold' ? 'hold' : ''}">
+    <div class="c-top">
+      <span class="pr">${esc(v.pr)}</span>
+      <span class="prod">${esc(v.product || v.bsku)}</span>
+      ${v.type ? `<span class="pill ${esc(typeCls)}">${esc(t(TYPE_LABELS[typeCls]) || v.type)}</span>` : ''}
+      <span class="pill stage-${v.stage}">${t(STAGE_LABELS[v.stage])}</span>
+      ${v.late ? `<span class="pill late">${t(L.late)}</span>` : ''}
+    </div>
+    <div class="c-actions">
+      <button class="btn" onclick="openEditor('${esc(v.pr)}')">${t(v.strain || p.est_completion ? L.edit_plan : L.plan)}</button>
+      ${v.draft ? `<a class="btn btn-purple" href="/ops_form.html?station=preroll_production&draft=${esc(v.draft.id)}">${t(L.open_batch)}</a>`
+        : v.stage !== 'done' ? `<a class="btn btn-purple" href="${esc(startHref)}">${t(L.start_batch)}</a>` : ''}
+    </div>
+    <div class="c-meta">
+      <span>${t(L.qty)} <b>${v.batchSize.toLocaleString(locale())}</b></span>
+      <span>${t(L.strain)} ${v.strain ? `<b>${esc(v.strain)}</b>` : `<span class="none">${t(L.not_assigned)}</span>`}</span>
+      <span>${t(L.plan_lbl)} ${sched}</span>
+      <span>${t(L.ready_by)} <b>${esc(fmtDate(v.readyDate) || '—')}</b></span>
+      ${v.shipDate ? `<span>${t(L.ship)} <b>${esc(fmtDate(v.shipDate))}</b></span>` : ''}
+      ${p.assigned_to ? `<span>${t(L.lead)} <b>${esc(p.assigned_to)}</b></span>` : ''}
+      ${v.made ? `<span>${t(L.made)} <b>${v.made.toLocaleString(locale())}</b> / ${v.batchSize.toLocaleString(locale())}</span>` : ''}
+      <span>${esc(v.bsku)}</span>
+    </div>
+    ${v.made || v.stage === 'in_production' ? `<div class="progress ${v.stage === 'done' ? 'done' : ''}"><i style="width:${pctMade}%"></i></div>` : ''}
+    ${p.notes ? `<div class="c-notes">${esc(p.notes)}</div>` : ''}
+  </div>`;
+}
+
+function setFilter(f) {
+  filter = f;
+  document.querySelectorAll('#bar .chip').forEach((c) => c.classList.toggle('on', c.dataset.f === f));
+  render();
+}
+document.querySelectorAll('#bar .chip').forEach((c) => c.addEventListener('click', () => setFilter(c.dataset.f)));
+document.getElementById('search').addEventListener('input', render);
+
+// ── Plan editor ──────────────────────────────────────────────────────────
+function openEditor(pr) {
+  if (!client) { alert(t(L.err_nosupa)); return; }
+  editingPr = pr;
+  const r = requests.find((x) => x.pr === pr);
+  const p = plans[pr] || {};
+  const strain = p.strain || r.outputStrain || '';
+  const opt = (v, cur) => `<option value="${esc(v)}" ${v === cur ? 'selected' : ''}>${esc(v)}</option>`;
+  const names = [...new Set(people.concat(p.assigned_to ? [p.assigned_to] : []))].sort((a, b) => a.localeCompare(b));
+  document.getElementById('modal').innerHTML = `
+    <h2>${esc(pr)} — ${esc(r.product || r.bsku)}</h2>
+    <div class="m-sub">${esc(t(TYPE_LABELS[(r.type || '').toLowerCase()]) || r.type || t(L.any_type))} · ${r.batchSize.toLocaleString(locale())} ${t(L.prerolls)} · ${t(L.ready_by_lc)} ${esc(fmtDate(r.readyDate) || '—')}</div>
+    <div class="fld"><label class="lbl" for="e-strain">${t(L.strain)}</label>
+      <input id="e-strain" list="strain-list" value="${esc(strain)}" placeholder="${esc(t(L.e_strain_ph))}"/>
+      <datalist id="strain-list">${strains.map((s) => `<option value="${esc(s)}">`).join('')}</datalist></div>
+    <div class="fld"><label class="lbl" for="e-uid">${t(L.e_uid)}</label>
+      <input id="e-uid" value="${esc(p.source_uid || '')}" autocapitalize="characters" placeholder="${esc(t(L.e_uid_ph))}"/></div>
+    <div class="row2">
+      <div class="fld"><label class="lbl" for="e-start">${t(L.e_start)}</label><input id="e-start" type="date" value="${esc(p.est_start || '')}"/></div>
+      <div class="fld"><label class="lbl" for="e-done">${t(L.e_done)}</label><input id="e-done" type="date" value="${esc(p.est_completion || '')}"/></div>
+    </div>
+    <div class="fld"><label class="lbl" for="e-lead">${t(L.lead)}</label>
+      <select id="e-lead"><option value=""></option>${names.map((n) => opt(n, p.assigned_to || '')).join('')}</select></div>
+    <label class="check"><input type="checkbox" id="e-hold" ${p.on_hold ? 'checked' : ''}/> ${t(L.e_hold)}</label>
+    <div class="fld"><label class="lbl" for="e-notes">${t(L.e_notes)}</label><textarea id="e-notes" rows="3">${esc(p.notes || '')}</textarea></div>
+    <div class="m-err" id="e-err"></div>
+    <div class="m-actions">
+      <button class="btn" onclick="closeEditor()">${t(L.cancel)}</button>
+      <button class="btn btn-purple" id="e-save" onclick="saveEditor()">${t(L.save)}</button>
+    </div>`;
+  document.getElementById('backdrop').style.display = 'block';
+  setTimeout(() => document.getElementById('e-strain').focus(), 30);
+}
+
+function closeEditor() {
+  document.getElementById('backdrop').style.display = 'none';
+  editingPr = null;
+}
+document.getElementById('backdrop').addEventListener('click', (e) => { if (e.target.id === 'backdrop') closeEditor(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && editingPr) closeEditor(); });
+
+async function saveEditor() {
+  const val = (id) => document.getElementById(id).value.trim();
+  const err = document.getElementById('e-err');
+  const row = {
+    pr_num: editingPr,
+    strain: val('e-strain') || null,
+    source_uid: val('e-uid').toUpperCase() || null,
+    est_start: val('e-start') || null,
+    est_completion: val('e-done') || null,
+    assigned_to: val('e-lead') || null,
+    on_hold: document.getElementById('e-hold').checked,
+    notes: val('e-notes') || null,
+    updated_by: currentUser || null
+  };
+  if (row.est_start && row.est_completion && row.est_completion < row.est_start) {
+    err.textContent = t(L.err_dates); err.style.display = 'block'; return;
+  }
+  const btn = document.getElementById('e-save');
+  btn.disabled = true; btn.textContent = t(L.saving);
+  const { data, error } = await client.from('preroll_plans').upsert(row).select().single();
+  if (error) {
+    err.textContent = `${t(L.err_save)} ${error.message}`; err.style.display = 'block';
+    btn.disabled = false; btn.textContent = t(L.save);
+    return;
+  }
+  plans[editingPr] = data;
+  closeEditor();
+  render();
+}
+
+// ── Boot ─────────────────────────────────────────────────────────────────
+function paintStatic() {
+  mountLangToggle('lang');
+  document.title = `${t(L.title)} — 2CW`;
+  document.getElementById('back').textContent = t(L.hub);
+  document.getElementById('brand').textContent = t(L.title);
+  document.getElementById('h1').textContent = t(L.h1);
+  document.getElementById('intro').textContent = t(L.intro);
+  document.getElementById('search').placeholder = t(L.search);
+  document.querySelectorAll('#bar .chip').forEach((c) => { c.textContent = t(L['f_' + c.dataset.f]); });
+  document.getElementById('list').innerHTML = `<div class="empty">${t(L.loading)}</div>`;
+}
+paintStatic();
+
+(async () => {
+  const [s, dir] = await Promise.all([
+    loadStrains(),
+    typeof loadUserDirectory === 'function' ? loadUserDirectory().catch(() => []) : []
+  ]);
+  strains = s;
+  people = [...new Set((dir || []).map((u) => (u.user || '').trim()).filter(Boolean))];
+  await refresh();
+  // Keep up with new requests landing in the Sheet and batches being
+  // logged — but never re-render underneath an open editor.
+  setInterval(() => { if (!editingPr) refresh(); }, REFRESH_MS);
+})();
+</script>
+<script src="/sw_register.js"></script>
+</body>
+</html>
