@@ -68,7 +68,7 @@ import json
 import os
 import time
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 # ── CONFIG ───────────────────────────────────────────────────────────────────
@@ -332,7 +332,9 @@ def sync_for_license(label, api_key, cutoff, histories):
 
 
 def main():
-    started = datetime.now()
+    # UTC with an explicit offset — CI runners are on UTC, and a naive
+    # timestamp gets read as local time by canix_inventory.html.
+    started = datetime.now(timezone.utc)
     meta = load_meta()
     previous_cutoff = meta.get("last_incremental_cutoff")
 
@@ -397,7 +399,7 @@ def main():
     current_inventory = [r for r in histories["packages"].values() if r.get("is_active")]
     save("canix_inventory.json", current_inventory)
 
-    next_cutoff = compute_next_cutoff(newest_overall) or previous_cutoff or started.isoformat()
+    next_cutoff = compute_next_cutoff(newest_overall) or previous_cutoff or started.strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
     meta = {
         "last_sync": started.isoformat(),
@@ -417,7 +419,7 @@ def main():
     with open(META_PATH, "w") as f:
         json.dump(meta, f, indent=2)
 
-    elapsed = (datetime.now() - started).total_seconds()
+    elapsed = (datetime.now(timezone.utc) - started).total_seconds()
 
     print("\n" + "=" * 55)
     print("  Sync Complete")
