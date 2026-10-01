@@ -92,7 +92,21 @@ window as a bar (tentative ones dashed) and farm support as a thin green bar
 under it, with an "Est. wet lb / week" row and a "Farm crew (peak / day)" row
 underneath; the Table view is sortable and there's a service filter.
 Estimates only — actual weights still come in through Harvest Intake — Wet.
-English only (office-facing).
+English only (office-facing). The service list itself lives in
+`drying_services.js`, shared with the client form below.
+
+**Client request form** (`drying_request.html`) is the public, no-PIN page
+clients fill out to ask to get on the schedule — "Copy client form link" on
+the Drying Schedule copies its URL. It asks for the same things as the
+editor (farm, license, contact, size, harvest dates, services, farm-support
+dates/crew) and posts to `netlify/functions/drying-request.js`, which
+re-checks every field, keeps only known service keys, and inserts a row with
+status `requested` and `created_by` "Client form" using the service-role key
+(the page itself never touches Supabase). A hidden honeypot field and a cap of
+30 form submissions an hour keep junk out. Requested rows don't count toward
+totals or the weekly load; a banner on the schedule shows how many are
+waiting, and setting one to Tentative or Confirmed puts it on the schedule.
+If you add a service, add its key to `ALLOWED_SERVICES` in the function too.
 
 Each stage pulls its input weight forward from the stage before it: type the
 last 4 of the Metrc tag and bucking fills in the dry weight the post-dry check

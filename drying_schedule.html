@@ -56,6 +56,12 @@
   .err{color:var(--red)}
 
   /* Status colours, shared by pills and timeline bars */
+  .st-requested{--c:#e8885a}
+  .tl-bar.st-requested{border-style:dotted}
+  .req-banner{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:rgba(232,136,90,.1);border:1px solid rgba(232,136,90,.45);border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:.9rem}
+  .req-banner b{color:#e8885a}
+  .req-note{background:rgba(232,136,90,.1);border:1px solid rgba(232,136,90,.45);border-radius:10px;padding:10px 12px;font-size:.84rem;color:var(--subtext);margin-bottom:12px;line-height:1.45}
+  .top-btns{display:flex;gap:8px;flex-wrap:wrap}
   .st-tentative{--c:var(--gold)} .st-confirmed{--c:var(--blue)} .st-receiving{--c:var(--purple)}
   .st-complete{--c:var(--green)} .st-cancelled{--c:var(--slate)}
   .pill{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;border:1px solid color-mix(in srgb,var(--c,var(--border)) 45%,transparent);color:var(--c,var(--subtext));white-space:nowrap}
@@ -162,9 +168,13 @@
       <h1>Drying Schedule — Clients</h1>
       <div class="sub">Outside farms we dry for. Add the farm and its license, its harvest dates and rough wet weight, the services it wants, and any farm-support crew — then watch the weekly load.</div>
     </div>
-    <button class="btn btn-blue" onclick="openEditor()">+ Add client</button>
+    <div class="top-btns">
+      <button class="btn" id="copy-link" onclick="copyFormLink()" title="A blank request form clients can fill out — no PIN needed">Copy client form link</button>
+      <button class="btn btn-blue" onclick="openEditor()">+ Add client</button>
+    </div>
   </div>
 
+  <div id="req-banner"></div>
   <div class="tiles" id="tiles"></div>
 
   <div class="bar">
@@ -186,6 +196,7 @@
 
 <script src="/config/supabase_config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/drying_services.js"></script>
 <script>
 // One row per client per season, in the drying_intakes table (see
 // supabase/schema.sql): farm details, a list of harvest windows, the
@@ -194,7 +205,11 @@
 // Harvest Intake — Wet form.
 const REFRESH_MS = 2 * 60 * 1000;
 
+// 'requested' rows come from the client form (drying_request.html via the
+// drying-request function). They stay out of the active totals and weekly
+// load until someone reviews them and moves them to tentative/confirmed.
 const STATUSES = [
+  { v: 'requested', l: 'Requested' },
   { v: 'tentative', l: 'Tentative' },
   { v: 'confirmed', l: 'Confirmed' },
   { v: 'receiving', l: 'Receiving' },
@@ -206,32 +221,12 @@ const ACTIVE = ['tentative', 'confirmed', 'receiving'];
 const FILTERS = [
   { v: 'active', l: 'Active' }, ...STATUSES.filter((s) => s.v !== 'cancelled'), { v: 'all', l: 'All' }
 ];
+const FORM_URL = location.origin + '/drying_request.html';
 const UNITS = ['sq ft', 'acres', 'plants'];
 
-// Services and rates from the 2026 Post-Harvest Services pricing sheet. The
-// keys are what's stored in drying_intakes.services — add new ones freely,
-// but don't rename a key once clients have it saved.
-const SERVICES = [
-  { group: 'Drying', items: [
-    { k: 'drying', l: 'Drying', short: 'Drying', rate: '$3.00 / wet lb' }] },
-  { group: 'Harvest labor', items: [
-    { k: 'farm_labor', l: 'Farm labor / farm support', short: 'Farm support', rate: '$25 / hr / person' }] },
-  { group: 'Trimming & processing', items: [
-    { k: 'hand_bucking', l: 'Hand bucking', short: 'Bucking', rate: '$7 / lb' },
-    { k: 'hand_trim', l: '100% hand trim', short: 'Hand trim', rate: '$75 / lb' },
-    { k: 'machine_trim', l: 'Machine trim, 2 passes w/ hand finish', short: 'Machine trim', rate: '$65 / lb' },
-    { k: 'trim_smalls', l: 'Trim to smalls', short: 'Smalls', rate: '$35 / lb' },
-    { k: 'batching', l: 'Batching, 1 lb turkey bags', short: 'Batching', rate: '$3 / bag + labor' }] },
-  { group: 'Storage', items: [
-    { k: 'dry_storage', l: 'Dry storage (on-stem)', short: 'Storage', rate: '$15 / box / mo, 30 days free' }] },
-  { group: 'Transportation', items: [
-    { k: 'cargo_van', l: 'Cargo van', short: 'Van', rate: '$125 / hr' },
-    { k: 'box_truck', l: '24′–26′ box truck w/ liftgate', short: 'Box truck', rate: '$175 / hr' },
-    { k: 'reefer', l: '40′ reefer trailer', short: 'Reefer', rate: '$300 / hr' }] },
-  { group: 'Testing (pass-through)', items: [
-    { k: 'rd_potency', l: 'R&D potency', short: 'Potency test', rate: '$100 / batch' },
-    { k: 'rd_full_panel', l: 'R&D full panel w/ terpenes', short: 'Full panel', rate: '$420 / batch' }] }
-];
+// Services and rates live in drying_services.js, shared with the client
+// request form (drying_request.html).
+const SERVICES = DRYING_SERVICES;
 const SVC = Object.fromEntries(SERVICES.flatMap((g) => g.items).map((s) => [s.k, s]));
 
 const currentUser = (sessionStorage.getItem('2cw_user_name') || '').trim();
@@ -340,8 +335,16 @@ function crewByDay(list) {
   return out;
 }
 
+// Counts toward weekly load and totals: not cancelled, and not an
+// unreviewed client request.
+const isLive = (r) => r.status !== 'cancelled' && r.status !== 'requested';
+
 function render() {
   renderTiles();
+  const reqs = rows.filter((r) => r.status === 'requested').length;
+  document.getElementById('req-banner').innerHTML = reqs && filter !== 'requested'
+    ? `<div class="req-banner"><span><b>${reqs} new request${reqs === 1 ? '' : 's'}</b> from the client form — not on the schedule until you review ${reqs === 1 ? 'it' : 'them'}.</span><button class="btn btn-sm" onclick="setFilter('requested')">Review</button></div>`
+    : '';
   document.querySelectorAll('#views button').forEach((b) => b.classList.toggle('on', b.dataset.v === view));
   document.getElementById('chips').innerHTML = FILTERS.map((f) =>
     `<button class="chip ${f.v === filter ? 'on' : ''}" onclick="setFilter('${f.v}')">${f.l}</button>`).join('');
@@ -420,7 +423,7 @@ function timelineHtml(list) {
         <div class="tl-track ${sup.length ? 'sup' : ''}">${grid}${todayLine}${bars}${supBars}</div></div>`;
     }).join('');
 
-    const live = dated.filter((r) => r.status !== 'cancelled');
+    const live = dated.filter(isLive);
     const load = weeklyLoad(live);
     const max = Math.max(1, ...weeks.map((w) => load.get(w) || 0));
     const loadRow = `<div class="tl-row tl-load"><div class="tl-lbl">Est. wet lb / week</div><div class="tl-track">${weeks.map((w) => {
@@ -479,7 +482,7 @@ function tableHtml(list) {
     if (b === null) return -1;
     return (a < b ? -1 : a > b ? 1 : 0) * sort.dir;
   });
-  const live = list.filter((r) => r.status !== 'cancelled');
+  const live = list.filter(isLive);
   return `<div class="tbl-wrap"><table>
     <thead><tr>${COLS.map((c) => `<th class="${c.num ? 'num' : ''}" onclick="setSort('${c.key}')">${c.l}${sort.key === c.key ? ` <span class="arr">${sort.dir > 0 ? '▲' : '▼'}</span>` : ''}</th>`).join('')}</tr></thead>
     <tbody>${sorted.map((r) => {
@@ -504,6 +507,17 @@ function tableHtml(list) {
 }
 
 function setFilter(f) { filter = f; render(); }
+
+async function copyFormLink() {
+  const btn = document.getElementById('copy-link');
+  try {
+    await navigator.clipboard.writeText(FORM_URL);
+    btn.textContent = 'Link copied ✓';
+  } catch {
+    prompt('Copy this link and send it to the client:', FORM_URL);
+  }
+  setTimeout(() => { btn.textContent = 'Copy client form link'; }, 2500);
+}
 function setSort(k) { sort = sort.key === k ? { key: k, dir: -sort.dir } : { key: k, dir: 1 }; render(); }
 document.querySelectorAll('#views button').forEach((b) => b.addEventListener('click', () => { view = b.dataset.v; localSet('drying_view', view); render(); }));
 document.getElementById('search').addEventListener('input', render);
@@ -575,6 +589,7 @@ function openEditor(id) {
   const svc = servicesOf(r);
   document.getElementById('modal').innerHTML = `
     <h2>${id ? esc(r.farm_name) : 'New client'}</h2>
+    ${r.status === 'requested' ? `<div class="req-note">Sent in by the client through the request form on ${esc(new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }))}. Check the details with them, then set the status to <b>Tentative</b> or <b>Confirmed</b> to put it on the schedule.</div>` : ''}
     <div class="sect">Farm</div>
     <div class="fld"><label class="lbl" for="e-farm">Farm name *</label>
       ${inp('e-farm', r.farm_name, 'list="farm-list" autocomplete="off"')}

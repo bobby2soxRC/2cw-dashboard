@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Post-Harvest Services Request — 2CW Productions</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<meta name="theme-color" content="#0c0d0f">
+<meta name="robots" content="noindex">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0c0d0f;--surface:#13151a;--surface2:#181b21;--border:#1e2129;
+    --green:#3db87a;--gold:#d4a843;--blue:#5a9fd4;--red:#ef5350;
+    --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;
+  }
+  html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:48px 48px;opacity:.3;pointer-events:none;z-index:0}
+  main{position:relative;z-index:1;max-width:720px;margin:0 auto;padding:36px 16px 80px}
+  .brand{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin-bottom:6px}
+  h1{font-family:'Bebas Neue',sans-serif;font-size:38px;letter-spacing:.03em;line-height:1.05}
+  .lead{color:var(--subtext);font-size:.95rem;margin:8px 0 24px;line-height:1.5}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:14px}
+  .card h2{font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin-bottom:4px}
+  .card .sub{color:var(--subtext);font-size:.84rem;margin-bottom:14px;line-height:1.45}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  .fld{margin-bottom:12px}
+  label.lbl{display:block;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+  label.lbl b{color:var(--gold);font-weight:500}
+  input,select,textarea{width:100%;background:#0c0d0f;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:.65rem .75rem;font-family:inherit;font-size:.95rem;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--blue)}
+  .hint{font-size:.76rem;color:var(--muted);margin-top:4px}
+  .win-hd,.win-row{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,.6fr) minmax(0,1fr) 70px 34px;gap:8px;align-items:center}
+  .win-hd{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .win-row{margin-bottom:8px}
+  .win-end{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--subtext);white-space:nowrap}
+  .win-x{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;width:34px;height:34px;cursor:pointer;font-size:1rem}
+  .win-x:hover{color:var(--red)}
+  .btn{padding:.6rem 1rem;border:1px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer;background:transparent;color:var(--text)}
+  .btn:hover{border-color:var(--muted)}
+  .btn-sm{padding:.45rem .75rem;font-size:.64rem}
+  .btn-blue{background:var(--blue);color:#0c0d0f;border-color:var(--blue)}
+  .btn-blue:disabled{opacity:.6;cursor:default}
+  .svc-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 22px}
+  .svc-grp{margin-bottom:12px}
+  .svc-grp .gh{font-size:.76rem;color:var(--subtext);font-weight:600;margin-bottom:4px}
+  .svc{display:flex;gap:9px;align-items:flex-start;font-size:.9rem;padding:4px 0;cursor:pointer}
+  .svc input{width:auto;margin-top:4px;accent-color:var(--blue)}
+  .svc .rate{display:block;font-family:'DM Mono',monospace;font-size:.68rem;color:var(--muted)}
+  .support{display:none;background:rgba(61,184,122,.06);border:1px solid rgba(61,184,122,.3);border-radius:10px;padding:14px;margin-top:6px}
+  .support h3{font-size:.88rem;margin-bottom:2px}
+  .policies{font-size:.8rem;color:var(--subtext);line-height:1.6;padding-left:18px}
+  .err{color:var(--red);font-size:.9rem;margin:6px 0 12px;display:none}
+  .submit-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+  .done{text-align:center;padding:40px 20px}
+  .done h2{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:.03em;color:var(--green);margin-bottom:8px}
+  .done p{color:var(--subtext);line-height:1.5;max-width:460px;margin:0 auto 18px}
+  footer{margin-top:28px;text-align:center;font-family:'DM Mono',monospace;font-size:.66rem;letter-spacing:.06em;color:var(--muted)}
+  @media (max-width:600px){
+    .row2,.row3,.svc-cols{grid-template-columns:1fr}
+    .win-hd,.win-row{grid-template-columns:minmax(0,1.3fr) minmax(0,.55fr) minmax(0,1fr) 34px}
+    .win-end{display:none}
+    .win-row input{padding:.6rem .45rem;font-size:.88rem}
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="brand">2CW Productions · Post-Harvest Services</div>
+  <h1>Drying &amp; Processing Request</h1>
+  <p class="lead">Tell us about your farm and harvest and we'll get you on our schedule. Estimates are fine — we'll follow up to confirm dates and details before anything is booked.</p>
+
+  <form id="form" novalidate>
+    <div class="card">
+      <h2>Your farm</h2>
+      <div class="sub">Who you are and how to reach you.</div>
+      <div class="row2">
+        <div class="fld"><label class="lbl" for="farm_name">Farm name <b>*</b></label><input id="farm_name" autocomplete="organization" required/></div>
+        <div class="fld"><label class="lbl" for="license_number">License # <b>*</b></label><input id="license_number" autocapitalize="characters" placeholder="e.g. CCL21-0001234" required/></div>
+      </div>
+      <div class="row3">
+        <div class="fld"><label class="lbl" for="contact_name">Contact name <b>*</b></label><input id="contact_name" autocomplete="name" required/></div>
+        <div class="fld"><label class="lbl" for="contact_phone">Phone</label><input id="contact_phone" type="tel" autocomplete="tel"/></div>
+        <div class="fld"><label class="lbl" for="contact_email">Email</label><input id="contact_email" type="email" autocomplete="email"/></div>
+      </div>
+      <div class="hint" style="margin:-4px 0 12px">A phone number or email is required.</div>
+      <div class="row2">
+        <div class="fld"><label class="lbl" for="farm_size">Farm size</label>
+          <div style="display:flex;gap:8px"><input id="farm_size" type="number" min="0" step="any" inputmode="decimal" style="flex:1"/>
+            <select id="farm_size_unit" style="width:110px"><option>sq ft</option><option>acres</option><option>plants</option></select></div></div>
+        <div class="fld"><label class="lbl" for="strains">Strains</label><input id="strains" placeholder="What you'll be bringing, if known"/></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Harvest dates</h2>
+      <div class="sub">When you expect to harvest and bring material to us. Add a row for each harvest — for example Oct 7 for 3 days, then Oct 17 for 3 days.</div>
+      <div class="win-hd"><span>Start date</span><span>Days</span><span>Wet lbs (optional)</span><span class="win-end"></span><span></span></div>
+      <div id="harv"></div>
+      <button type="button" class="btn btn-sm" onclick="addWin('h')">+ Add another harvest</button>
+      <div class="fld" style="margin-top:16px"><label class="lbl" for="est_wet_lb">Estimated total wet weight (lbs)</label>
+        <input id="est_wet_lb" type="number" min="0" step="any" inputmode="decimal"/>
+        <div class="hint">Your best guess for the whole season. If you've put weights on each harvest above, you can leave this blank.</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Services you need</h2>
+      <div class="sub">Check everything you're interested in — 2026 rates shown. Drying includes facility space and standard labor for METRC compliance; the typical drying cycle is 7–10 days.</div>
+      <div class="svc-cols" id="svc"></div>
+      <div class="support" id="support">
+        <h3>Farm support</h3>
+        <div class="sub" style="margin-bottom:10px">Which days you'd like our crew on your farm, and how many people.</div>
+        <div class="win-hd"><span>Start date</span><span>Days</span><span>People</span><span class="win-end"></span><span></span></div>
+        <div id="sup"></div>
+        <button type="button" class="btn btn-sm" onclick="addWin('s')">+ Add more dates</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Anything else?</h2>
+      <div class="fld" style="margin:8px 0 0"><textarea id="notes" rows="4" placeholder="Access, timing flexibility, questions…"></textarea></div>
+      <div class="hp" aria-hidden="true"><label for="website">Website</label><input id="website" tabindex="-1" autocomplete="off"/></div>
+    </div>
+
+    <div class="card">
+      <h2>Good to know</h2>
+      <ul class="policies" style="margin-top:8px">
+        <li>Please give at least two weeks' notice for trim/processing requests.</li>
+        <li>Full payment is due before any product leaves the facility.</li>
+        <li>Trim byproduct is returned to you unless we agree otherwise.</li>
+        <li>Product and packaging materials are provided by you unless otherwise specified.</li>
+      </ul>
+    </div>
+
+    <div class="err" id="err"></div>
+    <div class="submit-row">
+      <button type="submit" class="btn btn-blue" id="submit">Send request</button>
+      <span class="hint" style="margin:0">This is a request, not a booking — we'll be in touch to confirm.</span>
+    </div>
+  </form>
+
+  <div class="card done" id="done" style="display:none">
+    <h2>Thanks — request received</h2>
+    <p>We've got your details and will reach out to confirm dates and services. If anything changes in the meantime, just let us know.</p>
+    <button class="btn" onclick="location.reload()">Send another request</button>
+  </div>
+
+  <footer>2CW Productions, Inc. · (707) 234-5027 · services@2cwproductions.com</footer>
+</main>
+
+<script src="/drying_services.js"></script>
+<script>
+// Public client form — no PIN. Submissions go to the drying-request Netlify
+// function, which checks them and adds a 'requested' row to the Drying
+// Schedule for the office to review. This page never touches Supabase.
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const DAY = 864e5;
+const fmtEnd = (start, days) => {
+  const n = Math.round(Number(days));
+  if (!start || !(n > 1)) return '';
+  const [y, m, d] = start.split('-').map(Number);
+  return '→ ' + new Date(Date.UTC(y, m - 1, d) + (n - 1) * DAY).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
+};
+
+document.getElementById('svc').innerHTML = DRYING_SERVICES.map((g) => `<div class="svc-grp"><div class="gh">${esc(g.group)}</div>${g.items.map((s) =>
+  `<label class="svc"><input type="checkbox" value="${s.k}" ${s.k === 'drying' ? 'checked' : ''}/><span>${esc(s.l)}<span class="rate">${esc(s.rate)}</span></span></label>`).join('')}</div>`).join('');
+
+function winRow(kind) {
+  const third = kind === 'h'
+    ? '<input class="w-x3" type="number" min="0" step="any" inputmode="decimal" placeholder="lbs"/>'
+    : '<input class="w-x3" type="number" min="1" step="1" inputmode="numeric" placeholder="people"/>';
+  return `<div class="win-row">
+    <input class="w-start" type="date"/>
+    <input class="w-days" type="number" min="1" step="1" inputmode="numeric" placeholder="days"/>
+    ${third}
+    <span class="win-end"></span>
+    <button type="button" class="win-x" title="Remove" onclick="this.parentElement.remove()">×</button>
+  </div>`;
+}
+function addWin(kind, focus = true) {
+  const box = document.getElementById(kind === 'h' ? 'harv' : 'sup');
+  box.insertAdjacentHTML('beforeend', winRow(kind));
+  if (focus) box.lastElementChild.querySelector('.w-start').focus();
+}
+addWin('h', false);
+addWin('s', false);
+
+const supBox = document.getElementById('support');
+const laborBox = document.querySelector('#svc input[value="farm_labor"]');
+laborBox.addEventListener('change', () => { supBox.style.display = laborBox.checked ? 'block' : 'none'; });
+
+document.getElementById('form').addEventListener('input', (e) => {
+  const row = e.target.closest('.win-row');
+  if (row) row.querySelector('.win-end').textContent = fmtEnd(row.querySelector('.w-start').value, row.querySelector('.w-days').value);
+});
+
+function readWins(boxId, key) {
+  return [...document.querySelectorAll(`#${boxId} .win-row`)].map((r) => ({
+    start: r.querySelector('.w-start').value,
+    days: r.querySelector('.w-days').value,
+    [key]: r.querySelector('.w-x3').value
+  })).filter((w) => w.start || w.days || w[key]);
+}
+
+function showErr(msg) {
+  const el = document.getElementById('err');
+  el.textContent = msg; el.style.display = 'block';
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+document.getElementById('form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  document.getElementById('err').style.display = 'none';
+  const v = (id) => document.getElementById(id).value.trim();
+  const services = [...document.querySelectorAll('#svc input:checked')].map((c) => c.value);
+  const harvests = readWins('harv', 'lb');
+  const farm_support = services.includes('farm_labor') ? readWins('sup', 'people') : [];
+  // Quick checks here for a friendlier message; the function re-checks everything.
+  if (!v('farm_name')) return showErr('Please enter your farm name.');
+  if (!v('license_number')) return showErr('Please enter your license number.');
+  if (!v('contact_name')) return showErr('Please enter a contact name.');
+  if (!v('contact_phone') && !v('contact_email')) return showErr('Please enter a phone number or email so we can reach you.');
+  if (!services.length) return showErr('Please pick at least one service.');
+  if (harvests.some((h) => !h.start)) return showErr('Each harvest row needs a start date.');
+  if (farm_support.some((s) => !s.start)) return showErr('Each farm support row needs a start date.');
+  if (farm_support.some((s) => !s.people)) return showErr('Please add how many people you need for each farm support date.');
+
+  const btn = document.getElementById('submit');
+  btn.disabled = true; btn.textContent = 'Sending…';
+  try {
+    const res = await fetch('/.netlify/functions/drying-request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        farm_name: v('farm_name'), license_number: v('license_number'),
+        contact_name: v('contact_name'), contact_phone: v('contact_phone'), contact_email: v('contact_email'),
+        farm_size: v('farm_size'), farm_size_unit: v('farm_size_unit'), strains: v('strains'),
+        est_wet_lb: v('est_wet_lb'), harvests, services, farm_support, notes: v('notes'),
+        website: document.getElementById('website').value
+      })
+    });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok || !j.ok) throw new Error(j.error || 'Something went wrong. Please try again, or call or email us.');
+    document.getElementById('form').style.display = 'none';
+    document.getElementById('done').style.display = 'block';
+    window.scrollTo(0, 0);
+  } catch (err) {
+    showErr(err.message);
+    btn.disabled = false; btn.textContent = 'Send request';
+  }
+});
+</script>
+</body>
+</html>
