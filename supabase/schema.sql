@@ -786,6 +786,10 @@ drop policy if exists "anon delete" on drying_intakes;
 create policy "anon delete" on drying_intakes for delete using (true);
 
 grant select, insert, update, delete on public.drying_intakes to anon;
+-- netlify/functions/drying-request.js (the public client form) inserts with
+-- the service-role key, which this project doesn't grant on new tables by
+-- default — without this the insert is refused.
+grant select, insert, update, delete on public.drying_intakes to service_role;
 
 -- Drying schedule v2: a client's season can have several harvest windows
 -- (e.g. Oct 7 for 3 days, then Oct 17 for 3 days), the services they want
