@@ -172,6 +172,19 @@ const CARD_DEFS = [
     href: '/drying_schedule.html'
   },
   {
+    key: 'harvest_intakes',
+    color: 'blue',
+    label: 'Processing',
+    dept: 'operations',
+    subdept: 'processing',
+    // Gated by the admin panel's "Harvest Intakes" view/edit checkboxes
+    // ('harvest_intakes' / 'harvest intakes edit' — edit implies view; see
+    // buildHub in index.html). Edit lets someone change a submitted intake.
+    title: 'Harvest Intakes',
+    desc: 'Every wet harvest intake — open one to see the full record, or fix it and record the Metrc adjustment if you have edit access.',
+    href: '/harvest_intakes.html'
+  },
+  {
     key: 'production_today',
     color: 'gold',
     label: 'Operations',
@@ -271,6 +284,7 @@ const CARD_ES = {
   menu:                { title: 'Menú', desc: 'El menú de esta semana de Howie Roll, Soma Rosa y Mendo — cambia entre NorCal (Alameda) y SoCal (Van Nuys) para ver qué hay en cada almacén.' },
   production_dashboard:{ title: 'Panel de Procesamiento', desc: 'Dónde está cada lote, rendimiento y merma por etapa y cepa, biomasa disponible y producción de los trimmers.' },
   drying_schedule:     { title: 'Calendario de Secado', desc: 'Granjas externas para las que secamos — granja, licencia, tamaño, fechas estimadas de entrada y peso húmedo, con la carga semanal.' },
+  harvest_intakes:     { title: 'Recepciones de Cosecha', desc: 'Todas las recepciones de cosecha húmeda — abre una para ver el registro completo, o corrígela y registra el ajuste en Metrc si tienes acceso de edición.' },
   production_today:    { title: 'Hoy — En Vivo', desc: 'Cada formulario en progreso o terminado hoy, actualizado en vivo — para quien tenga acceso de vista, pueda editarlo o no.' },
   brand_assets:        { title: 'Recursos de Marca', desc: 'Logotipos, fotografía y guías de marca de 2CW y marcas socias — carpeta compartida de Drive.' },
   staff_hours:         { title: 'Horas del Personal', desc: 'Quién está marcado en este momento, horas diarias/semanales y cumplimiento del horario — sincronizado cada hora desde Connecteam.' },

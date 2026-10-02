@@ -70,7 +70,32 @@ async function loadJson(path, fallback) {
     return fallback;
   }
 }
-const loadReference = () => loadJson('/data/operations/reference.json', { strains: [], sites: [] });
+// PIDs and CIDs are managed in the admin panel ("PIDs & CIDs" tab, Supabase
+// table ref_codes) and replace the file's `properties` list when they load;
+// the file's list is the fallback when Supabase isn't reachable. Shared by
+// the forms and harvest_intakes.html (getRefCodes) for the code → name label.
+async function getRefCodes() {
+  const client = typeof getClient === 'function' ? getClient() : null;
+  if (!client) return null;
+  try {
+    const { data, error } = await client.from('ref_codes').select('*').order('code');
+    return error ? null : (data || []);
+  } catch { return null; }
+}
+const refCodeLabel = (r) => r.name ? `${r.name}: ${r.kind.toUpperCase()} ${r.code}` : r.code;
+async function loadReference() {
+  const [ref, codes] = await Promise.all([
+    loadJson('/data/operations/reference.json', { strains: [], sites: [] }),
+    getRefCodes()
+  ]);
+  if (codes && codes.length) {
+    const pick = (kind, idKey) => codes.filter((r) => r.kind === kind)
+      .map((r) => ({ [idKey]: r.code, label: refCodeLabel(r), active: r.active }));
+    ref.properties = pick('pid', 'pid');
+    ref.customers = pick('cid', 'id');
+  }
+  return ref;
+}
 const loadStage = (key) => loadJson(`/data/operations/${key}.json`, []);
 
 // Reference lists are objects ({id,label}) or bare strains ({name}); normalise

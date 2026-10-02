@@ -467,6 +467,13 @@ async function buildHub(user){
   user.production_dashboard = (hasEdit || hasView) ? 'TRUE' : 'FALSE';  // historical yields/biomass
   user.production_today = (hasEdit || hasView) ? 'TRUE' : 'FALSE';       // live board
 
+  // Harvest Intakes page: view, or view + edit submitted intakes. Edit
+  // implies view. Read by harvest_intakes.html and ops_form.html's edit mode.
+  const intakeEdit = (user['harvest intakes edit'] || '').toUpperCase() === 'TRUE';
+  const intakeView = intakeEdit || (user['harvest_intakes'] || '').toUpperCase() === 'TRUE';
+  user.harvest_intakes = intakeView ? 'TRUE' : 'FALSE';
+  sessionStorage.setItem('2cw_intake_access', intakeEdit ? 'edit' : intakeView ? 'view' : '');
+
   // Standard cards this user is authorized for (per-user order override applied, if any)
   const orderOverride = CARD_ORDER_OVERRIDES[userName.trim().toLowerCase()];
   const orderedDefs = orderOverride
@@ -941,6 +948,7 @@ function doLogout(){
   sessionStorage.removeItem('2cw_pr_access');
   sessionStorage.removeItem('2cw_ops_edit_access');
   sessionStorage.removeItem('2cw_ops_view_access');
+  sessionStorage.removeItem('2cw_intake_access');
   sessionStorage.removeItem(LAST_FOLDER_KEY);
   document.getElementById('pin-input').value = '';
   for(let i = 0; i < 4; i++) document.getElementById('dot'+i).classList.remove('filled');

@@ -71,6 +71,26 @@ submitted one means done, and the total pre-rolls made shows as progress.
 A request is late if its plan finishes after the Sheet's Ready Date, or the
 Ready Date has passed. English/Spanish via the shared `2cw_lang` toggle.
 
+**Harvest Intakes** (`harvest_intakes.html`, hub card `harvest_intakes` under
+Processing) lists every Wet Intake, drafts and submitted, newest first, with
+a "Metrc not adjusted" filter. Clicking one shows the whole record. Access is
+two checkboxes in the admin user editor: View (`harvest_intakes` column) and
+Edit (`harvest intakes edit`, implies view), turned into `2cw_intake_access`
+at hub login. Edit reopens a submitted intake in `ops_form.html?edit=<id>`:
+no autosave, and Save goes through `updateSubmitted()` in `ops_data.js`,
+which only touches rows still `submitted`. The original submitter and
+`submitted_at` stay; `updated_by` and `fields.lastEditedBy/lastEditedAt`
+record who changed it. This is how a second person records the Metrc
+adjustment (`metrcAdjusted` + `metrcAdjustedLb`) after someone else did
+the intake.
+
+**PIDs & CIDs** live in the Supabase table `ref_codes` (kind `pid`/`cid`,
+code, name, notes, active), managed on the admin panel's "PIDs & CIDs" tab.
+`loadReference()` in `ops_common.js` swaps them in for the `properties` and
+`customers` dropdown lists; `reference.json`'s `properties` is only the
+fallback. Values typed via "Other" on a form are not added automatically —
+the tab lists them so an admin can add them with one click.
+
 **Drying Schedule** (`drying_schedule.html`, hub card `drying_schedule` under
 Processing) plans the outside client farms we dry for. Each row in the
 `drying_intakes` Supabase table is one client's season: farm name, license #,
@@ -389,10 +409,9 @@ Deliberately out of this pass, roughly in the order I'd add them:
   would remove most of the typing and all of the transcription risk.
 - **Barcode / tag scanning.** The UID fields accept the last 4 by hand; a camera
   scan on the tablet would be faster and eliminate mis-keys.
-- **Editing a submitted (finalized) form.** Drafts are fully editable up to
-  Submit; after that, a correction still needs a new record rather than a fix
-  in place, the same as before. Straightforward to add now that everything
-  lives in one Supabase table — mainly a question of who should be allowed to.
+- **Editing other submitted forms.** Only Wet Intake can be corrected after
+  Submit (see Harvest Intakes above). Another station opts in with one entry
+  in `EDITABLE_SUBMITTED` in `ops_form.html` plus its own access flag.
 - **Payroll/timeclock cost join.** The data model is ready (see Employee /
   Crew tracking above) but nothing pulls in a $/hour to turn hours into cost
   — waiting on which system you're actually on.

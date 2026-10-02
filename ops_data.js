@@ -105,6 +105,33 @@ async function submitDraft(id, { stationKey, owner, strain, date, fields }) {
   return { ok: true, id };
 }
 
+// Saves a correction to an already-submitted form (harvest_intakes.html →
+// ops_form.html?edit=<id>). Only touches rows that are still 'submitted', so
+// it can never turn a draft into a record or a record back into a draft;
+// submitted_at and owner_user stay as they were.
+async function updateSubmitted(id, { strain, date, fields, editor }) {
+  const client = getClient();
+  if (!client) return { ok: false, reason: 'not-configured' };
+  const { data, error } = await client.from(TABLE).update({
+    strain: strain || null, work_date: date || todayStr(), fields, updated_by: editor
+  }).eq('id', id).eq('status', 'submitted').select('id');
+  if (error) { console.error('updateSubmitted', error); return { ok: false, reason: error.message }; }
+  if (!data || !data.length) return { ok: false, reason: 'Record not found.' };
+  return { ok: true };
+}
+
+// Every form on one station, drafts and submitted, newest first — the list
+// on harvest_intakes.html.
+async function listStationForms(stationKey) {
+  const client = getClient();
+  if (!client) return null;
+  const { data, error } = await client.from(TABLE).select('*')
+    .eq('station_key', stationKey)
+    .order('work_date', { ascending: false }).order('updated_at', { ascending: false });
+  if (error) { console.error('listStationForms', error); return null; }
+  return data || [];
+}
+
 async function deleteDraft(id) {
   const client = getClient();
   if (!client || !id) return;

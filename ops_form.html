@@ -155,9 +155,23 @@
   const station = STATION_BY_KEY[params.get('station')];
   if (!station) { location.replace('/index.html'); return; }
 
+  // ?edit=<id> reopens an already-submitted record to correct it — only for
+  // stations listed here, and only with that page's edit access (set at hub
+  // login from the admin panel). Saves go through updateSubmitted, never the
+  // draft autosave, so the record stays submitted the whole time.
+  const EDITABLE_SUBMITTED = { intake_wet: { access: '2cw_intake_access', back: '/harvest_intakes.html' } };
+  const editId = params.get('edit');
+  const editCfg = editId ? EDITABLE_SUBMITTED[station.key] : null;
+  if (editId && (!editCfg || sessionStorage.getItem(editCfg.access) !== 'edit')) {
+    location.replace(editCfg ? editCfg.back : '/index.html');
+    return;
+  }
+  const editMode = !!editCfg;
+  let editRec = null;   // the submitted row being corrected, once loaded
+
   // Per-station edit access, set at hub login from the directory sheet.
   const allowed = JSON.parse(sessionStorage.getItem('2cw_ops_edit_access') || 'null');
-  if (allowed && allowed !== 'all' && !allowed.includes(station.key)) {
+  if (!editMode && allowed && allowed !== 'all' && !allowed.includes(station.key)) {
     location.replace('/index.html');
     return;
   }
@@ -178,7 +192,7 @@
   // The draft id is the only thing that has to travel for cross-device
   // resume to work — put it in the URL the moment one exists so a reload
   // (or a link shared with a teammate) lands back on the same form.
-  let draftId = params.get('draft');
+  let draftId = editMode ? editId : params.get('draft');
   if (draftsOn && !draftId) {
     draftId = crypto.randomUUID();
     const url = new URL(location.href);
@@ -553,7 +567,7 @@
   }
 
   function markDirty() {
-    if (!draftsOn) return;
+    if (!draftsOn || editMode) return;
     localStorage.setItem(mirrorKey(), JSON.stringify({ ...draftPayload(), savedAt: Date.now() }));
     autosaveEl.style.display = 'flex';
     autosaveEl.className = 'autosave saving';
@@ -602,6 +616,13 @@
 
   // ── Submit ────────────────────────────────────────────────────────────────
   const banner = document.getElementById('banner');
+  const ED = {
+    save:     { en: 'Save changes', es: 'Guardar cambios' },
+    saved:    { en: '✓ Changes saved', es: '✓ Cambios guardados' },
+    back:     { en: '← Intakes', es: '← Recepciones' },
+    editing:  { en: 'Editing a submitted form from', es: 'Editando un formulario enviado del' },
+    notFound: { en: 'This record could not be found, or it hasn’t been submitted yet.', es: 'No se encontró este registro, o aún no se ha enviado.' }
+  };
   const btn = document.getElementById('submit-btn');
   btn.textContent = t(UI.submit);
 
@@ -648,7 +669,33 @@
     });
 
     let result;
-    if (draftsOn) {
+    if (editMode) {
+      for (const f of station.fields) {
+        if (f.t === 'photo' && payload[f.k] && payload[f.k].dataUrl) {
+          payload[f.k] = await uploadPhotoDirect(f.k, payload[f.k]);
+        }
+      }
+      // Start from the stored record so anything the form doesn't show
+      // (older fields, extra keys) survives the save.
+      Object.keys(editRec && editRec.fields || {}).forEach((k) => { if (!(k in payload)) payload[k] = editRec.fields[k]; });
+      payload.lastEditedBy = owner;
+      payload.lastEditedAt = new Date().toISOString();
+      const ures = await updateSubmitted(editId, {
+        strain: payload.strain || null, date: payload.date || todayStr(), fields: payload, editor: owner
+      });
+      btn.disabled = false;
+      btn.textContent = t(ED.save);
+      if (ures.ok) {
+        banner.className = 'banner success';
+        banner.textContent = t(ED.saved);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(() => { location.href = `${editCfg.back}?id=${editId}`; }, 1000);
+      } else {
+        banner.className = 'banner error';
+        banner.textContent = ures.reason || t(UI.failed);
+      }
+      return;
+    } else if (draftsOn) {
       for (const f of station.fields) {
         if (f.t === 'photo' && payload[f.k] && payload[f.k].dataUrl) {
           payload[f.k] = await uploadPhotoDirect(f.k, payload[f.k]);
@@ -737,8 +784,36 @@
   // ── Boot ─────────────────────────────────────────────────────────────────
   updateVisibility();
   recompute();
+  // buildLineItems() wires its addRow on a setTimeout(0); let that run before
+  // hydrate() needs it, or a fast-loading record drops its worksheet rows.
+  await new Promise((r) => setTimeout(r, 0));
 
-  if (draftsOn) {
+  if (editMode) {
+    document.getElementById('back').href = `${editCfg.back}?id=${editId}`;
+    document.getElementById('back').textContent = t(ED.back);
+    btn.textContent = t(ED.save);
+    const rec = await getDraft(editId);
+    editRec = rec;
+    if (!rec || rec.status !== 'submitted') {
+      banner.className = 'banner error';
+      banner.textContent = t(ED.notFound);
+      btn.disabled = true;
+      return;
+    }
+    hydrate(rec.fields || {});
+    // hydrate() skips photos (drafts never carry them); a submitted record
+    // has the uploaded photo's URL — keep it unless a new photo is picked.
+    station.fields.filter((f) => f.t === 'photo').forEach((f) => {
+      const url = rec.fields && rec.fields[f.k];
+      if (typeof url !== 'string' || !url) return;
+      values[f.k] = url;
+      const img = document.getElementById(`p_${f.k}`);
+      if (img) { img.src = url; img.style.display = 'block'; }
+    });
+    const subtitle = document.getElementById('subtitle');
+    subtitle.textContent = `${t(ED.editing)} ${rec.work_date || ''}${rec.owner_user ? ' — ' + rec.owner_user : ''}`;
+    subtitle.style.color = 'var(--gold)';
+  } else if (draftsOn) {
     // Prefer whatever is on the server; if this exact draft never made it
     // there (tablet died before the first autosave landed), fall back to
     // this browser's local mirror so nothing typed gets lost.

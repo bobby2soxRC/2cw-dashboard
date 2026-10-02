@@ -813,3 +813,55 @@ update drying_intakes
          'start', coalesce(est_start, est_end),
          'days',  greatest(1, coalesce(est_end, est_start) - coalesce(est_start, est_end) + 1)))
  where harvests = '[]'::jsonb and coalesce(est_start, est_end) is not null;
+
+-- ── PIDs & CIDs (admin panel "PIDs & CIDs" tab) ─────────────────────────────
+-- Property IDs (farm properties) and Customer IDs, with a name and notes for
+-- each. The station forms' PID and CID dropdowns read the active rows (see
+-- loadReference in ops_common.js); data/operations/reference.json's
+-- `properties` list is only the fallback when Supabase can't be reached.
+-- Same open anon posture as `responsibilities` — the admin PIN gate is what
+-- keeps people out of the editor.
+create table if not exists ref_codes (
+  id          uuid primary key default gen_random_uuid(),
+  kind        text not null check (kind in ('pid', 'cid')),
+  code        text not null,          -- e.g. '027' — what the forms store
+  name        text,                   -- farm/property or customer name
+  notes       text,
+  active      boolean not null default true,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+create unique index if not exists idx_ref_codes_kind_code on ref_codes (kind, code);
+
+drop trigger if exists trg_touch_ref_codes on ref_codes;
+create trigger trg_touch_ref_codes
+  before update on ref_codes
+  for each row execute function touch_operations_forms();
+
+alter table ref_codes enable row level security;
+drop policy if exists "anon read" on ref_codes;
+create policy "anon read" on ref_codes for select using (true);
+drop policy if exists "anon write" on ref_codes;
+create policy "anon write" on ref_codes for insert with check (true);
+drop policy if exists "anon update" on ref_codes;
+create policy "anon update" on ref_codes for update using (true) with check (true);
+drop policy if exists "anon delete" on ref_codes;
+create policy "anon delete" on ref_codes for delete using (true);
+grant select, insert, update, delete on public.ref_codes to anon;
+
+-- Seed with the PIDs that were in reference.json; a re-run leaves edits alone.
+insert into ref_codes (kind, code, name) values
+  ('pid', '027', 'Comstock'),
+  ('pid', '309', 'Highland Springs Rd'),
+  ('pid', '310', 'Highland Springs Rd'),
+  ('pid', '540', 'Highland Springs Rd'),
+  ('pid', '071', 'Lucern'),
+  ('pid', '073', 'Lucern'),
+  ('pid', '075', 'Lucern'),
+  ('pid', '167', 'Sulphur Bank'),
+  ('pid', '179', 'Wildcat'),
+  ('pid', '180', 'Wildcat'),
+  ('pid', '181', 'Wildcat'),
+  ('pid', '182', 'Wildcat'),
+  ('pid', '183', 'Wildcat')
+on conflict (kind, code) do nothing;
