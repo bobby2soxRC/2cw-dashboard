@@ -83,11 +83,25 @@ async function getRefCodes() {
   } catch { return null; }
 }
 const refCodeLabel = (r) => r.name ? `${r.name}: ${r.kind.toUpperCase()} ${r.code}` : r.code;
+// Strains are managed on strain_library.html (Supabase table strains) and
+// replace the file's `strains` list the same way.
+async function getStrains() {
+  const client = typeof getClient === 'function' ? getClient() : null;
+  if (!client) return null;
+  try {
+    const { data, error } = await client.from('strains').select('*').order('name');
+    return error ? null : (data || []);
+  } catch { return null; }
+}
 async function loadReference() {
-  const [ref, codes] = await Promise.all([
+  const [ref, codes, strains] = await Promise.all([
     loadJson('/data/operations/reference.json', { strains: [], sites: [] }),
-    getRefCodes()
+    getRefCodes(),
+    getStrains()
   ]);
+  if (strains && strains.length) {
+    ref.strains = strains.map((s) => ({ name: s.name, sources: s.sources, aliases: s.aliases, active: s.active }));
+  }
   if (codes && codes.length) {
     const pick = (kind, idKey) => codes.filter((r) => r.kind === kind)
       .map((r) => ({ [idKey]: r.code, label: refCodeLabel(r), active: r.active }));

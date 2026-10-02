@@ -474,6 +474,13 @@ async function buildHub(user){
   user.harvest_intakes = intakeView ? 'TRUE' : 'FALSE';
   sessionStorage.setItem('2cw_intake_access', intakeEdit ? 'edit' : intakeView ? 'view' : '');
 
+  // Strain Library: view, or view + add/change strains. Same pattern; read
+  // by strain_library.html.
+  const strainEdit = (user['strain library edit'] || '').toUpperCase() === 'TRUE';
+  const strainView = strainEdit || (user['strain_library'] || '').toUpperCase() === 'TRUE';
+  user.strain_library = strainView ? 'TRUE' : 'FALSE';
+  sessionStorage.setItem('2cw_strain_access', strainEdit ? 'edit' : strainView ? 'view' : '');
+
   // Standard cards this user is authorized for (per-user order override applied, if any)
   const orderOverride = CARD_ORDER_OVERRIDES[userName.trim().toLowerCase()];
   const orderedDefs = orderOverride
@@ -949,6 +956,7 @@ function doLogout(){
   sessionStorage.removeItem('2cw_ops_edit_access');
   sessionStorage.removeItem('2cw_ops_view_access');
   sessionStorage.removeItem('2cw_intake_access');
+  sessionStorage.removeItem('2cw_strain_access');
   sessionStorage.removeItem(LAST_FOLDER_KEY);
   document.getElementById('pin-input').value = '';
   for(let i = 0; i < 4; i++) document.getElementById('dot'+i).classList.remove('filled');

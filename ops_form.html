@@ -270,7 +270,7 @@
     wrap.innerHTML = labelHtml(f) +
       (f.hint ? `<div class="hint" style="margin-top:0;margin-bottom:10px">${t(f.hint)}</div>` : '') +
       `<div class="li-scroll"><table class="li-table"><thead><tr>` +
-      f.cols.map((c) => `<th>${t(c.l)}</th>`).join('') + `<th></th></tr></thead><tbody id="li_${f.k}"></tbody></table></div>` +
+      f.cols.map((c) => `<th>${t(c.l)}${c.req ? '<span class="req">*</span>' : ''}</th>`).join('') + `<th></th></tr></thead><tbody id="li_${f.k}"></tbody></table></div>` +
       `<button type="button" class="li-add" id="add_${f.k}">${t(UI.addRow)}</button>` +
       `<div class="li-total"><span class="k">${t(UI.subtotal)}</span><span class="v" id="lit_${f.k}">0</span></div>`;
 
@@ -278,6 +278,7 @@
       const tbody = wrap.querySelector(`#li_${f.k}`);
       const addRow = (prefill) => {
         const row = {};
+        const above = values[f.k][values[f.k].length - 1];
         values[f.k].push(row);
         const tr = document.createElement('tr');
         // Calc columns (e.g. hours from start/end) are read-only, worked out
@@ -298,38 +299,69 @@
             td.appendChild(el); tr.appendChild(td);
             return;
           }
-          let inp;
+          let inp, other = null;
           if (c.t === 'select') {
             inp = document.createElement('select');
-            (c.opts || []).forEach((o) => {
+            // A ref list (strains, …) starts blank like a top-level select; an
+            // inline opts list keeps its first option as the default.
+            const opts = c.ref ? [{ v: '', label: '' }, ...refOptions(reference, c.ref)]
+              : (c.opts || []).map((o) => ({ v: o.v, label: t(o.l) }));
+            if (c.allowOther) opts.push({ v: '__other__', label: t(UI.other) });
+            opts.forEach((o) => {
               const opt = document.createElement('option');
-              opt.value = o.v; opt.textContent = t(o.l);
+              opt.value = o.v; opt.textContent = o.label;
               inp.appendChild(opt);
             });
+            if (c.allowOther) {
+              other = document.createElement('input');
+              other.type = 'text'; other.placeholder = t(UI.otherPrompt);
+              other.style.cssText = 'display:none;margin-top:6px';
+            }
           } else {
             inp = document.createElement('input');
             inp.type = ['number', 'date', 'time'].includes(c.t) ? c.t : 'text';
             if (c.t === 'number') { inp.inputMode = 'decimal'; inp.step = c.step || 'any'; if (c.min !== undefined) inp.min = c.min; }
+            if (c.t === 'uid') { inp.className = 'uid'; inp.autocapitalize = 'characters'; }
             if (c.inputmode) inp.inputMode = c.inputmode;
           }
-          // A prefilled value (resuming a draft) wins; otherwise a column can
-          // declare a default so every fresh row starts sensible (e.g. the
-          // container type defaulting to "Bins" instead of blank).
+          // A prefilled value (resuming a draft) wins; then a `carry` column
+          // copies the row above; otherwise a column can declare a default so
+          // every fresh row starts sensible (e.g. the container type
+          // defaulting to "Bins" instead of blank).
           const initial = (prefill && prefill[c.k] !== undefined && prefill[c.k] !== null) ? prefill[c.k]
+            : (!prefill && c.carry && above && above[c.k] !== undefined && above[c.k] !== null && above[c.k] !== '') ? above[c.k]
             : (c.t === 'date' && c.today ? new Date().toISOString().slice(0, 10) : c.def);
           if (initial !== undefined && initial !== null) {
             inp.value = initial;
+            // A saved value that isn't on the list (an "Other…" strain) still
+            // has to show up.
+            if (c.t === 'select' && inp.value !== String(initial)) {
+              const opt = document.createElement('option');
+              opt.value = initial; opt.textContent = initial;
+              inp.insertBefore(opt, other ? inp.lastChild : null); inp.value = initial;
+            }
             row[c.k] = c.t === 'number' ? Number(initial) : initial;
           }
+          const read = () => {
+            if (c.t === 'number') return inp.value === '' ? null : Number(inp.value);
+            if (other && inp.value === '__other__') return other.value.trim();
+            if (c.t === 'uid') return inp.value.trim().toUpperCase();
+            return inp.value;
+          };
           const onCellChange = () => {
-            row[c.k] = c.t === 'number' ? (inp.value === '' ? null : Number(inp.value)) : inp.value;
+            if (other) other.style.display = inp.value === '__other__' ? 'block' : 'none';
+            row[c.k] = read();
             recalcRow();
             recompute();
+            updateVisibility();
             markDirty();
           };
           inp.addEventListener('input', onCellChange);
           inp.addEventListener('change', onCellChange);
-          td.appendChild(inp); tr.appendChild(td);
+          if (other) other.addEventListener('input', onCellChange);
+          td.appendChild(inp);
+          if (other) td.appendChild(other);
+          tr.appendChild(td);
         });
         const tdDel = document.createElement('td');
         const del = document.createElement('button');
@@ -338,7 +370,7 @@
         del.onclick = () => {
           const i = values[f.k].indexOf(row);
           if (i > -1) values[f.k].splice(i, 1);
-          tr.remove(); recompute(); markDirty();
+          tr.remove(); recompute(); updateVisibility(); markDirty();
         };
         tdDel.appendChild(del); tr.appendChild(tdDel);
         tbody.appendChild(tr);
@@ -354,13 +386,61 @@
   }
 
   // A worksheet row counts once someone typed into it — a column's default
-  // (container type, today's date) or a calc result alone doesn't make it real.
+  // (container type, today's date), a value carried down from the row above
+  // (UID, strain, tare) or a calc result alone doesn't make it real.
   function rowHasData(f, r) {
     return f.cols.some((c) => {
-      if (c.t === 'calc') return false;
+      if (c.t === 'calc' || c.carry) return false;
       const x = r[c.k];
       if (x === '' || x === null || x === undefined) return false;
       return !(c.def !== undefined && String(x) === String(c.def)) && !(c.t === 'date' && c.today);
+    });
+  }
+
+  // What's wrong with a worksheet's filled-in rows, as a message for the
+  // banner — or null if nothing is.
+  const LI = {
+    needs:    { en: 'Every filled-in row needs:', es: 'Cada fila llena necesita:' },
+    twoStrains: { en: 'is listed with more than one strain — check the rows.', es: 'aparece con más de una variedad — revise las filas.' }
+  };
+  function lineProblem(f) {
+    const rows = (values[f.k] || []).filter((r) => rowHasData(f, r));
+    const blank = (x) => x === undefined || x === null || x === '';
+    const short = f.cols.filter((c) => c.req && rows.some((r) => blank(r[c.k])));
+    if (short.length) return `${t(LI.needs)} ${short.map((c) => t(c.l)).join(', ')}`;
+    if (station.splitBy === f.k) {
+      const seen = {};
+      for (const r of rows) {
+        if (seen[r.sourceUid] !== undefined && seen[r.sourceUid] !== r.strain) return `UID ${r.sourceUid} ${t(LI.twoStrains)}`;
+        seen[r.sourceUid] = r.strain;
+      }
+    }
+    return null;
+  }
+
+  // Stations with `splitBy` save one record per UID in that worksheet: each
+  // gets only its own rows, the UID and strain at the top, and its calc
+  // fields (totals) worked out again from just those rows. Fields hidden on
+  // the whole form (the Metrc adjustment, once there's more than one UID)
+  // aren't copied onto the pieces. The first record keeps `firstId`; the
+  // rest get ids that stay fixed for this page, so a retried submit
+  // overwrites them instead of duplicating.
+  const splitIds = {};
+  function splitRecords(payload, firstId) {
+    if (!station.splitBy) return [{ id: firstId, fields: payload }];
+    const base = { ...payload };
+    station.fields.forEach((f) => { if (f.showIf && !f.showIf(payload)) delete base[f.k]; });
+    const groups = new Map();
+    (payload[station.splitBy] || []).forEach((r) => {
+      if (!groups.has(r.sourceUid)) groups.set(r.sourceUid, []);
+      groups.get(r.sourceUid).push(r);
+    });
+    return [...groups.entries()].map(([uid, rows], i) => {
+      const g = { ...base, [station.splitBy]: rows, sourceUid: uid, strain: rows[0].strain };
+      station.fields.filter((f) => f.t === 'calc').forEach((f) => {
+        try { g[f.k] = f.calc(g); } catch { g[f.k] = null; }
+      });
+      return { id: i === 0 ? firstId : (splitIds[uid] = splitIds[uid] || crypto.randomUUID()), fields: g };
     });
   }
 
@@ -492,7 +572,10 @@
         // Clear the blank starter rows, then rebuild from the saved data.
         document.getElementById(`li_${f.k}`).innerHTML = '';
         values[f.k] = [];
-        rows.forEach((r) => lineitemAdders[f.k] && lineitemAdders[f.k](r));
+        // Records from before the UID/strain moved into the rows carry them
+        // once at the top — put them on each row so the split keeps them.
+        const lift = station.splitBy === f.k ? { sourceUid: fields.sourceUid, strain: fields.strain } : {};
+        rows.forEach((r) => lineitemAdders[f.k] && lineitemAdders[f.k]({ ...lift, ...r }));
         return;
       }
       setFieldValue(f, fields[f.k]);
@@ -563,7 +646,9 @@
   function draftPayload() {
     const fields = { ...values };
     station.fields.filter((f) => f.t === 'photo').forEach((f) => { delete fields[f.k]; });
-    return { stationKey: station.key, owner, strain: values.strain || null, date: values.date || todayStr(), fields };
+    const strain = values.strain || (station.splitBy
+      ? [...new Set((values[station.splitBy] || []).map((r) => r.strain).filter(Boolean))].join(', ') : '');
+    return { stationKey: station.key, owner, strain: strain || null, date: values.date || todayStr(), fields };
   }
 
   function markDirty() {
@@ -647,13 +732,14 @@
       if (!f.req || f.t === 'calc') return false;
       if (f.showIf && !f.showIf(values)) return false;
       const v = values[f.k];
-      if (f.t === 'lineitems') return !(v || []).some((r) => rowHasData(f, r));
+      if (f.t === 'lineitems') return !(v || []).some((r) => rowHasData(f, r)) || !!lineProblem(f);
       return v === undefined || v === null || v === '';
     });
     if (missing.length) {
       missing.forEach((f) => els[f.k] && els[f.k].classList.add('invalid'));
       banner.className = 'banner error';
-      banner.textContent = t(UI.required);
+      const lp = missing.map((f) => f.t === 'lineitems' && lineProblem(f)).find(Boolean);
+      banner.textContent = lp || t(UI.required);
       els[missing[0].k].scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
@@ -680,9 +766,16 @@
       Object.keys(editRec && editRec.fields || {}).forEach((k) => { if (!(k in payload)) payload[k] = editRec.fields[k]; });
       payload.lastEditedBy = owner;
       payload.lastEditedAt = new Date().toISOString();
-      const ures = await updateSubmitted(editId, {
-        strain: payload.strain || null, date: payload.date || todayStr(), fields: payload, editor: owner
-      });
+      // A correction can add rows for another UID — those become new records
+      // of their own (saved first, so a failure leaves the original as it was).
+      let ures = { ok: true };
+      for (const r of splitRecords(payload, editId).reverse()) {
+        ures = r.id === editId
+          ? await updateSubmitted(editId, { strain: r.fields.strain || null, date: r.fields.date || todayStr(), fields: r.fields, editor: owner })
+          : await submitDraft(r.id, { stationKey: station.key, owner: (editRec && editRec.owner_user) || owner,
+              strain: r.fields.strain || null, date: r.fields.date || todayStr(), fields: r.fields });
+        if (!ures.ok) break;
+      }
       btn.disabled = false;
       btn.textContent = t(ED.save);
       if (ures.ok) {
@@ -701,11 +794,13 @@
           payload[f.k] = await uploadPhotoDirect(f.k, payload[f.k]);
         }
       }
-      const submitFields = {
-        stationKey: station.key, owner, strain: payload.strain || null,
-        date: payload.date || todayStr(), fields: payload
-      };
-      const sres = await submitDraft(draftId, submitFields);
+      // The draft's own row goes last, so a submit that fails partway leaves
+      // it a draft rather than half-submitted.
+      pendingSubmits = splitRecords(payload, draftId).reverse().map((r) => ({
+        id: r.id,
+        submitFields: { stationKey: station.key, owner, strain: r.fields.strain || null, date: r.fields.date || todayStr(), fields: r.fields }
+      }));
+      const sres = await flushPending();
       if (sres.ok) {
         result = { ok: true };
         localStorage.removeItem(mirrorKey());
@@ -713,14 +808,16 @@
         // No signal right now — the values are already safe in the local
         // mirror; mark it as a pending submit (not just a pending autosave)
         // so reconnecting finishes the submit instead of leaving it a draft.
-        pendingSubmitFields = submitFields;
-        localStorage.setItem(mirrorKey(), JSON.stringify({ ...submitFields, pendingSubmit: true, savedAt: Date.now() }));
+        localStorage.setItem(mirrorKey(), JSON.stringify({ ...draftPayload(), fields: payload, pendingSubmit: true, pending: pendingSubmits, savedAt: Date.now() }));
         result = { ok: true, queued: true };
       } else {
         result = { ok: false, error: sres.reason };
       }
     } else {
-      result = await submitOperations(station.key, payload);
+      for (const r of splitRecords(payload, draftId)) {
+        result = await submitOperations(station.key, r.fields);
+        if (!result.ok) break;
+      }
     }
 
     btn.disabled = false;
@@ -745,12 +842,21 @@
   // A submit that couldn't reach the server while offline retries here —
   // on reconnect, and as a periodic safety net in case the 'online' event
   // doesn't fire (some tablets are unreliable about it).
-  let pendingSubmitFields = null;
+  // Each pending record has a fixed id, so retrying one that already landed
+  // just overwrites it with the same values.
+  let pendingSubmits = [];
+  async function flushPending() {
+    while (pendingSubmits.length) {
+      const sres = await submitDraft(pendingSubmits[0].id, pendingSubmits[0].submitFields);
+      if (!sres.ok) return sres;
+      pendingSubmits.shift();
+    }
+    return { ok: true };
+  }
   async function attemptPendingSubmit() {
-    if (!pendingSubmitFields || !draftsOn) return;
-    const sres = await submitDraft(draftId, pendingSubmitFields);
+    if (!pendingSubmits.length || !draftsOn) return;
+    const sres = await flushPending();
     if (!sres.ok) return;
-    pendingSubmitFields = null;
     localStorage.removeItem(mirrorKey());
     banner.className = 'banner success';
     banner.textContent = t(UI.submitted);
@@ -831,7 +937,7 @@
             // confirmation back. Retry now; if it still can't reach Supabase,
             // the 'online' listener and the 20s interval below keep trying
             // until it lands — the values are safe in this mirror either way.
-            pendingSubmitFields = { stationKey: station.key, owner, strain: m.strain, date: m.work_date || m.date, fields: m.fields };
+            pendingSubmits = m.pending || [{ id: draftId, submitFields: { stationKey: station.key, owner, strain: m.strain, date: m.work_date || m.date, fields: m.fields } }];
             attemptPendingSubmit();
           } else {
             markDirty();

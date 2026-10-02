@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Strain Library — 2CW Operations</title>
+  <script>
+    (function(){ if (!sessionStorage.getItem('2cw_pin')) window.location.replace('/index.html'); })();
+  </script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0c0d0f">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0c0d0f;--surface:#13151a;--surface2:#181b21;--border:#1e2129;
+      --green:#3db87a;--gold:#d4a843;--blue:#5a9fd4;--purple:#9b7fd4;--red:#ef5350;
+      --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;
+    }
+    html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-text-size-adjust:100%}
+
+    .hdr{min-height:calc(54px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:12px;position:sticky;top:0;z-index:20}
+    .hdr-back{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
+    .hdr-div{width:1px;height:18px;background:var(--border)}
+    .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--green);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .lang{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;flex:0 0 auto}
+    .lang button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:12px;font-weight:600;padding:8px 12px;cursor:pointer;min-height:36px}
+    .lang button.on{background:var(--green);color:#000}
+
+    main{padding:28px 16px 60px;max-width:1100px;margin:0 auto}
+    .title-row{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+    .title{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,6vw,46px);letter-spacing:.04em;line-height:1}
+    .sub{margin-top:6px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+
+    .filters{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0}
+    .filters button{background:var(--surface);border:1px solid var(--border);color:var(--subtext);border-radius:10px;padding:.6rem 1rem;
+      font-family:'DM Mono',monospace;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;min-height:44px}
+    .filters button.on{background:var(--green);border-color:var(--green);color:#000;font-weight:700}
+    .filters input{flex:1 1 220px;min-width:0;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .9rem;font-size:.95rem;min-height:44px;outline:none}
+    .filters input:focus{border-color:var(--green)}
+
+    .tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:14px;background:var(--surface)}
+    table.lib{width:100%;border-collapse:collapse;font-size:.9rem}
+    .lib th{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:left;font-weight:500;padding:12px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+    .lib td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+    .lib tr:last-child td{border-bottom:none}
+    .lib tbody tr.click{cursor:pointer}
+    .lib tbody tr.click:hover td{background:var(--surface2)}
+    .lib tr.retired td{color:var(--muted)}
+    .lib .nm{font-weight:700;white-space:nowrap}
+    .lib .mono{font-family:'DM Mono',monospace;font-size:.8rem;color:var(--subtext)}
+    .lib .notes{color:var(--subtext);font-size:.85rem;max-width:340px}
+    .pill{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border-radius:99px;border:1px solid var(--border);white-space:nowrap}
+    .pill.ok{border-color:var(--green);color:var(--green)}
+    .pill.off{color:var(--muted)}
+
+    .empty{color:var(--muted);text-align:center;padding:60px 0;font-size:.9rem}
+    .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
+
+    .btn{padding:.65rem 1rem;border:1px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer;background:transparent;color:var(--text);text-decoration:none;display:inline-block;min-height:44px}
+    .btn-green{background:var(--green);border-color:var(--green);color:#000}
+    .btn:disabled{opacity:.5;cursor:default}
+
+    /* Editor sheet */
+    #ed-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:calc(20px + env(safe-area-inset-top)) 12px 40px}
+    #ed-bg.on{display:flex}
+    #ed{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:560px;padding:22px 20px}
+    .ed-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.03em;line-height:1.05;margin-bottom:16px}
+    .fld{margin-bottom:16px}
+    .lbl{display:block;font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);margin-bottom:6px}
+    .fld input[type=text],.fld textarea,.fld select{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.7rem .85rem;font-family:inherit;font-size:1rem;min-height:48px;outline:none}
+    .fld textarea{min-height:80px;resize:vertical}
+    .fld input:focus,.fld textarea:focus,.fld select:focus{border-color:var(--green)}
+    .hint{font-size:.78rem;color:var(--muted);margin-top:6px;line-height:1.45}
+    .check{display:flex;align-items:center;gap:10px;font-size:.95rem;cursor:pointer;min-height:44px}
+    .check input{width:20px;height:20px;accent-color:var(--green)}
+    .ed-err{color:var(--red);font-size:.85rem;margin-bottom:12px;display:none}
+    .ed-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
+  </style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="/index.html" id="back">← Hub</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand" id="brand">Strain Library</div>
+  <div class="lang" id="lang"></div>
+</header>
+
+<main>
+  <div class="title-row">
+    <div>
+      <div class="title" id="title">Strain Library</div>
+      <div class="sub" id="sub">—</div>
+    </div>
+    <button type="button" class="btn btn-green" id="add" style="display:none"></button>
+  </div>
+  <div class="filters" id="filters"></div>
+  <div id="board"></div>
+  <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution</footer>
+</main>
+
+<div id="ed-bg"><div id="ed"></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/config/supabase_config.js"></script>
+<script src="/operations_stations.js"></script>
+<script src="/ops_common.js"></script>
+<script src="/ops_data.js"></script>
+<script>
+// The strains every station form's Strain dropdown offers (Supabase table
+// strains — see supabase/schema.sql). Anyone with view access can browse;
+// edit access (admin panel → Strain Library → Edit) can add strains, rename
+// them, and retire them off the dropdowns. Access comes from
+// 2cw_strain_access, set at hub login. There's no delete: a strain that's
+// been used is on records, so retiring it is the safe way to drop it.
+(async function () {
+  mountLangToggle('lang');
+  const access = sessionStorage.getItem('2cw_strain_access') || '';
+  const canEdit = access === 'edit';
+
+  const L = {
+    title:    { en: 'Strain Library', es: 'Biblioteca de Variedades' },
+    back:     { en: '← Hub', es: '← Inicio' },
+    active:   { en: 'Active', es: 'Activas' },
+    retired:  { en: 'Retired', es: 'Retiradas' },
+    all:      { en: 'All', es: 'Todas' },
+    search:   { en: 'Search strain, source, spelling…', es: 'Buscar variedad, origen, ortografía…' },
+    strain:   { en: 'Strain', es: 'Variedad' },
+    strains:  { en: 'strains', es: 'variedades' },
+    sources:  { en: 'Genetics ID', es: 'ID de genética' },
+    dominance:{ en: 'Dominance', es: 'Dominancia' },
+    aliases:  { en: 'Other spellings', es: 'Otras ortografías' },
+    notes:    { en: 'Notes', es: 'Notas' },
+    status:   { en: 'Status', es: 'Estado' },
+    onLists:  { en: 'Active', es: 'Activa' },
+    offLists: { en: 'Retired', es: 'Retirada' },
+    add:      { en: '+ Add strain', es: '+ Agregar variedad' },
+    newT:     { en: 'New strain', es: 'Nueva variedad' },
+    name:     { en: 'Strain name', es: 'Nombre de la variedad' },
+    nameHint: { en: 'Exactly as it should appear on the forms. Renaming doesn’t change records already submitted under the old name — add the old name to Other spellings so they still match.',
+                es: 'Exactamente como debe aparecer en los formularios. Cambiar el nombre no cambia los registros ya enviados con el nombre anterior — agregue el nombre anterior a Otras ortografías para que sigan coincidiendo.' },
+    srcHint:  { en: 'Comma-separated, e.g. PH, CUS', es: 'Separados por comas, p. ej. PH, CUS' },
+    alsHint:  { en: 'Comma-separated spellings seen on old records or paperwork.', es: 'Ortografías separadas por comas vistas en registros o papeles anteriores.' },
+    activeCb: { en: 'Active — shows in the forms’ Strain dropdown', es: 'Activa — aparece en la lista de Variedad de los formularios' },
+    save:     { en: 'Save', es: 'Guardar' },
+    saving:   { en: 'Saving…', es: 'Guardando…' },
+    cancel:   { en: 'Cancel', es: 'Cancelar' },
+    needName: { en: 'Enter a strain name.', es: 'Ingrese el nombre de la variedad.' },
+    dup:      { en: 'There’s already a strain with that name.', es: 'Ya existe una variedad con ese nombre.' },
+    empty:    { en: 'No strains match.', es: 'Ninguna variedad coincide.' },
+    noAccess: { en: 'You don’t have access to the Strain Library yet. Ask your manager to turn it on in the admin panel.',
+                es: 'Aún no tiene acceso a la Biblioteca de Variedades. Pida a su gerente que lo active en el panel de administración.' },
+    noData:   { en: 'Could not load the strain library. Check your connection and reload.', es: 'No se pudo cargar la biblioteca de variedades. Revise su conexión y recargue.' }
+  };
+  document.getElementById('title').textContent = t(L.title);
+  document.getElementById('brand').textContent = t(L.title);
+  document.getElementById('back').textContent = t(L.back);
+  document.title = `${t(L.title)} — 2CW`;
+
+  const board = document.getElementById('board');
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  if (!access) { board.innerHTML = `<div class="empty">${esc(t(L.noAccess))}</div>`; return; }
+
+  const client = getClient();
+  let rows = [];
+  async function load() {
+    if (!client) return false;
+    const { data, error } = await client.from('strains').select('*').order('name');
+    if (error) { console.error('strains', error); return false; }
+    rows = data || [];
+    return true;
+  }
+  if (!(await load())) { board.innerHTML = `<div class="empty">${esc(t(L.noData))}</div>`; return; }
+
+  // ── Filters ────────────────────────────────────────────────────────────────
+  let mode = 'active', query = '';
+  const FILTERS = [['active', L.active], ['retired', L.retired], ['all', L.all]];
+  const filtersEl = document.getElementById('filters');
+  filtersEl.innerHTML = FILTERS.map(([k, l]) => `<button data-k="${k}" class="${k === mode ? 'on' : ''}">${t(l)}</button>`).join('') +
+    `<input type="search" id="q" placeholder="${esc(t(L.search))}">`;
+  filtersEl.querySelectorAll('button').forEach((b) => {
+    b.onclick = () => { mode = b.dataset.k; filtersEl.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); render(); };
+  });
+  document.getElementById('q').addEventListener('input', (e) => { query = e.target.value.trim().toLowerCase(); render(); });
+
+  const list = (a) => (a || []).join(', ');
+  // Stored as the code; shown in the viewer's language.
+  const DOMINANCE = [
+    { v: 'indica',        l: { en: 'Indica', es: 'Índica' } },
+    { v: 'indica_hybrid', l: { en: 'Indica-dominant hybrid', es: 'Híbrida dominante índica' } },
+    { v: 'hybrid',        l: { en: 'Hybrid', es: 'Híbrida' } },
+    { v: 'sativa_hybrid', l: { en: 'Sativa-dominant hybrid', es: 'Híbrida dominante sativa' } },
+    { v: 'sativa',        l: { en: 'Sativa', es: 'Sativa' } }
+  ];
+  const domLabel = (v) => { const d = DOMINANCE.find((x) => x.v === v); return d ? t(d.l) : (v || ''); };
+  function matches(r) {
+    if (mode === 'active' && !r.active) return false;
+    if (mode === 'retired' && r.active) return false;
+    if (!query) return true;
+    return [r.name, list(r.sources), domLabel(r.dominance), list(r.aliases), r.notes].join(' ').toLowerCase().includes(query);
+  }
+
+  function render() {
+    const shown = rows.filter(matches);
+    document.getElementById('sub').textContent = `${shown.length} ${t(L.strains)}`;
+    if (!shown.length) { board.innerHTML = `<div class="empty">${t(L.empty)}</div>`; return; }
+    board.innerHTML = `<div class="tbl-wrap"><table class="lib"><thead><tr>
+        <th>${t(L.strain)}</th><th>${t(L.sources)}</th><th>${t(L.dominance)}</th><th>${t(L.aliases)}</th><th>${t(L.notes)}</th><th>${t(L.status)}</th>
+      </tr></thead><tbody>${shown.map((r) => `
+        <tr class="${canEdit ? 'click' : ''} ${r.active ? '' : 'retired'}" data-id="${r.id}">
+          <td class="nm">${esc(r.name)}</td>
+          <td class="mono">${esc(list(r.sources)) || '—'}</td>
+          <td>${esc(domLabel(r.dominance)) || '—'}</td>
+          <td class="mono">${esc(list(r.aliases)) || '—'}</td>
+          <td class="notes">${esc(r.notes) || '—'}</td>
+          <td>${r.active ? `<span class="pill ok">${t(L.onLists)}</span>` : `<span class="pill off">${t(L.offLists)}</span>`}</td>
+        </tr>`).join('')}</tbody></table></div>`;
+    if (canEdit) board.querySelectorAll('tr.click').forEach((tr) => { tr.onclick = () => openEditor(tr.dataset.id); });
+  }
+
+  // ── Editor (edit access only) ─────────────────────────────────────────────
+  const bg = document.getElementById('ed-bg');
+  const ed = document.getElementById('ed');
+  bg.addEventListener('click', (e) => { if (e.target === bg) closeEditor(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeEditor(); });
+  const addBtn = document.getElementById('add');
+  if (canEdit) { addBtn.style.display = ''; addBtn.textContent = t(L.add); addBtn.onclick = () => openEditor(null); }
+
+  const splitList = (s) => [...new Set(s.split(',').map((x) => x.trim()).filter(Boolean))];
+
+  function openEditor(id) {
+    const r = id ? rows.find((x) => x.id === id) : { name: '', sources: [], dominance: '', aliases: [], notes: '', active: true };
+    if (!r) return;
+    ed.innerHTML = `
+      <div class="ed-title">${esc(id ? r.name : t(L.newT))}</div>
+      <div class="fld"><label class="lbl" for="e-name">${t(L.name)}</label>
+        <input type="text" id="e-name" value="${esc(r.name)}"><div class="hint">${t(L.nameHint)}</div></div>
+      <div class="fld"><label class="lbl" for="e-src">${t(L.sources)}</label>
+        <input type="text" id="e-src" value="${esc(list(r.sources))}" autocapitalize="characters"><div class="hint">${t(L.srcHint)}</div></div>
+      <div class="fld"><label class="lbl" for="e-dom">${t(L.dominance)}</label>
+        <select id="e-dom"><option value=""></option>${DOMINANCE.map((d) => `<option value="${d.v}" ${r.dominance === d.v ? 'selected' : ''}>${esc(t(d.l))}</option>`).join('')}</select></div>
+      <div class="fld"><label class="lbl" for="e-als">${t(L.aliases)}</label>
+        <input type="text" id="e-als" value="${esc(list(r.aliases))}"><div class="hint">${t(L.alsHint)}</div></div>
+      <div class="fld"><label class="lbl" for="e-notes">${t(L.notes)}</label>
+        <textarea id="e-notes">${esc(r.notes || '')}</textarea></div>
+      <label class="check"><input type="checkbox" id="e-active" ${r.active ? 'checked' : ''}> ${t(L.activeCb)}</label>
+      <div class="ed-err" id="e-err"></div>
+      <div class="ed-actions">
+        <button type="button" class="btn" id="e-cancel">${t(L.cancel)}</button>
+        <button type="button" class="btn btn-green" id="e-save">${t(L.save)}</button>
+      </div>`;
+    document.getElementById('e-cancel').onclick = closeEditor;
+    document.getElementById('e-save').onclick = () => save(id);
+    bg.classList.add('on');
+    document.body.style.overflow = 'hidden';
+    if (!id) document.getElementById('e-name').focus();
+  }
+  function closeEditor() {
+    if (!bg.classList.contains('on')) return;
+    bg.classList.remove('on');
+    document.body.style.overflow = '';
+  }
+
+  async function save(id) {
+    const err = document.getElementById('e-err');
+    const btn = document.getElementById('e-save');
+    const showErr = (msg) => { err.textContent = msg; err.style.display = 'block'; };
+    const row = {
+      name: document.getElementById('e-name').value.trim().replace(/\s+/g, ' '),
+      sources: splitList(document.getElementById('e-src').value.toUpperCase()),
+      dominance: document.getElementById('e-dom').value || null,
+      aliases: splitList(document.getElementById('e-als').value),
+      notes: document.getElementById('e-notes').value.trim() || null,
+      active: document.getElementById('e-active').checked
+    };
+    if (!row.name) return showErr(t(L.needName));
+    if (rows.some((x) => x.id !== id && x.name.toLowerCase() === row.name.toLowerCase())) return showErr(t(L.dup));
+    btn.disabled = true; btn.textContent = t(L.saving);
+    const { error } = id
+      ? await client.from('strains').update(row).eq('id', id)
+      : await client.from('strains').insert(row);
+    btn.disabled = false; btn.textContent = t(L.save);
+    if (error) return showErr(/duplicate|unique/i.test(error.message) ? t(L.dup) : error.message);
+    await load();
+    closeEditor();
+    render();
+  }
+
+  render();
+})();
+</script>
+<script src="/sw_register.js"></script>
+</body>
+</html>

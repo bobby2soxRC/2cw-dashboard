@@ -168,6 +168,10 @@
     return String(v);
   }
   const val = (r, k) => (r.fields || {})[k];
+  // A submitted intake is one UID; a draft still in progress can have
+  // several on its weigh-in rows (it's split per UID on submit).
+  const uids = (r) => val(r, 'sourceUid') ||
+    [...new Set((val(r, 'lines') || []).map((x) => x.sourceUid).filter(Boolean))].join(', ');
   const shown = (r, k) => fieldByKey[k] ? display(fieldByKey[k], val(r, k)) : (val(r, k) || '—');
   const fmtDate = (d) => d ? new Date(`${d}T12:00:00`).toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
 
@@ -195,7 +199,7 @@
     if (mode === 'metrc' && !(r.status === 'submitted' && val(r, 'metrcAdjusted') !== 'yes')) return false;
     if (mode === 'draft' && r.status !== 'draft') return false;
     if (!query) return true;
-    const hay = [r.strain, val(r, 'sourceUid'), val(r, 'pid'), shown(r, 'pid'), val(r, 'cid'), shown(r, 'cid'),
+    const hay = [r.strain, uids(r), val(r, 'pid'), shown(r, 'pid'), val(r, 'cid'), shown(r, 'cid'),
       val(r, 'manifestNo'), val(r, 'truckNo'), val(r, 'driver'), val(r, 'completedBy'), r.owner_user].join(' ').toLowerCase();
     return hay.includes(query);
   }
@@ -215,7 +219,7 @@
           <div class="pills">${metrcPill(r)}</div>
         </div>
         <dl class="row-facts">
-          <dt>UID</dt><dd>${esc(val(r, 'sourceUid') || '—')}</dd>
+          <dt>UID</dt><dd>${esc(uids(r) || '—')}</dd>
           <dt>PID</dt><dd>${esc(shown(r, 'pid'))}</dd>
           <dt>CID</dt><dd>${esc(shown(r, 'cid'))}</dd>
           <dt>${t(fieldByKey.manifestNo.l)}</dt><dd>${esc(val(r, 'manifestNo') || '—')}</dd>

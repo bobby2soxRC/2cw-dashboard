@@ -185,6 +185,18 @@ const CARD_DEFS = [
     href: '/harvest_intakes.html'
   },
   {
+    key: 'strain_library',
+    color: 'green',
+    label: 'Operations',
+    dept: 'operations',
+    // Gated by the admin panel's "Strain Library" view/edit checkboxes
+    // ('strain_library' / 'strain library edit' — edit implies view; see
+    // buildHub in index.html). Edit lets someone add and change strains.
+    title: 'Strain Library',
+    desc: 'Every strain the station forms offer in their Strain dropdown — with Genetics ID, dominance, other spellings and notes. Add or retire strains if you have edit access.',
+    href: '/strain_library.html'
+  },
+  {
     key: 'production_today',
     color: 'gold',
     label: 'Operations',
@@ -285,6 +297,7 @@ const CARD_ES = {
   production_dashboard:{ title: 'Panel de Procesamiento', desc: 'Dónde está cada lote, rendimiento y merma por etapa y cepa, biomasa disponible y producción de los trimmers.' },
   drying_schedule:     { title: 'Calendario de Secado', desc: 'Granjas externas para las que secamos — granja, licencia, tamaño, fechas estimadas de entrada y peso húmedo, con la carga semanal.' },
   harvest_intakes:     { title: 'Recepciones de Cosecha', desc: 'Todas las recepciones de cosecha húmeda — abre una para ver el registro completo, o corrígela y registra el ajuste en Metrc si tienes acceso de edición.' },
+  strain_library:      { title: 'Biblioteca de Variedades', desc: 'Todas las variedades que ofrecen los formularios en su lista de Variedad — con ID de genética, dominancia, otras ortografías y notas. Agrega o retira variedades si tienes acceso de edición.' },
   production_today:    { title: 'Hoy — En Vivo', desc: 'Cada formulario en progreso o terminado hoy, actualizado en vivo — para quien tenga acceso de vista, pueda editarlo o no.' },
   brand_assets:        { title: 'Recursos de Marca', desc: 'Logotipos, fotografía y guías de marca de 2CW y marcas socias — carpeta compartida de Drive.' },
   staff_hours:         { title: 'Horas del Personal', desc: 'Quién está marcado en este momento, horas diarias/semanales y cumplimiento del horario — sincronizado cada hora desde Connecteam.' },

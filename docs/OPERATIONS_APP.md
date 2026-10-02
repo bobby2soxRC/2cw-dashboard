@@ -24,7 +24,7 @@ the existing Operations Hub — same login, same Netlify deploy.
 | `config/supabase_config.js` | Your project's URL + anon key go here |
 | `netlify/functions/upload-operations-photo.js` | Photo storage (stays in GitHub, alongside the field-form photos) |
 | `netlify/functions/submit-operations.js` | The old single-shot submit path — kept as the fallback when Supabase isn't configured |
-| `data/operations/reference.json` | Farms, strains, dry rooms, machines, brands |
+| `data/operations/reference.json` | Farms, dry rooms, machines, brands; fallback strain list (the live one is the Strain Library) |
 | `data/operations/<station>.json` | Fallback data source when Supabase isn't configured; otherwise unused |
 | `scripts/test_ops_analytics.js` | `node scripts/test_ops_analytics.js` |
 | `scripts/seed_demo_operations.js` | Demo data for the static-fallback dashboard; `--clear` to empty |
@@ -38,8 +38,13 @@ the existing Operations Hub — same login, same Netlify deploy.
 **Manufacturing** — Biomass Request · Pre-Roll Production · Manufacturing Run
 
 Wet Intake and Take Down are the two halves of the paper "Harvest Intake &
-Take Down Log", 5–10 days apart: Wet Intake is one form per incoming farm
-package (bins weighed net of tare), and Take Down (station key `dry_check`)
+Take Down Log", 5–10 days apart: Wet Intake is one form per truck, with the
+farm package UID and strain on each bin weigh-in row (bins weighed net of
+tare). On submit it's split into one record per UID (`splitBy: 'lines'` on
+the station; `splitRecords` in `ops_form.html`), each holding only its own
+rows and totals, so everything downstream still sees one package per
+record. With more than one UID on the form the Metrc-adjustment fields hide;
+they're filled in per intake afterwards from Harvest Intakes. Take Down (station key `dry_check`)
 boxes the dried material under a new on-stem package UID. Take Down's
 `incomingUid` pulls strain/PID/CID/wet weight from the intake record, and
 `ops_analytics` aliases the on-stem UID back to the farm UID so it stays one
@@ -83,6 +88,17 @@ which only touches rows still `submitted`. The original submitter and
 record who changed it. This is how a second person records the Metrc
 adjustment (`metrcAdjusted` + `metrcAdjustedLb`) after someone else did
 the intake.
+
+**Strain Library** (`strain_library.html`, hub card `strain_library` under
+Operations) is the list every Strain dropdown offers. It lives in the
+Supabase table `strains` (name, sources = Genetics ID, dominance, aliases, notes, active), seeded
+from `reference.json`; `loadReference()` swaps it in for the file's `strains`
+list, which is only the fallback when Supabase can't be reached. Access is
+the same View/Edit pair as Harvest Intakes: `strain_library` and
+`strain library edit` columns → `2cw_strain_access`. Edit can add, rename
+and retire strains (retired = off the dropdowns, kept in the library);
+there's no delete. Renaming doesn't rewrite records already submitted under
+the old name, so the old name goes in `aliases`.
 
 **PIDs & CIDs** live in the Supabase table `ref_codes` (kind `pid`/`cid`,
 code, name, notes, active), managed on the admin panel's "PIDs & CIDs" tab.
@@ -368,13 +384,16 @@ stored record all pick it up. Field types: `text`, `number`, `date`, `select`
 `textarea`, `uid`, `photo`, `calc` (a function of the other values), and
 `lineitems` (the repeating grid the weighing worksheet and Fresh Plant
 Intake's bin weigh-in and Take Down's box table use — a `lineitems` column can itself be
-`number`/`text` or `select` with inline `opts` and a `def` default). `headline`
+`number`/`text`/`uid` or `select` with inline `opts` or a `ref` list (plus
+`allowOther`) and a `def` default; `carry: true` copies a column down from the
+row above on "+ Add row", and `req: true` makes it required on any filled-in
+row). `headline`
 names the one field worth showing on a card or the live board without
 opening the form — the running total in the form's sticky footer follows it
 too.
 
 **A record that represents more than one batch** (none today — Wet Intake
-used to be one truck with several UIDs, and is now one form per package) declares `flow.perLine: { arrayField, uidCol, strainCol,
+takes several UIDs per form but splits into one record per UID on submit) declares `flow.perLine: { arrayField, uidCol, strainCol,
 weightCol, category }` alongside its normal `flow.outputs`. `outputs` still
 feeds the dashboard's stage-total and biomass numbers off one flat top-level
 field on the record (`totalWetLb`, a `calc` summing the lines); `perLine` is

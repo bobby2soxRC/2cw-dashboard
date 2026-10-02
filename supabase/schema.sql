@@ -865,3 +865,87 @@ insert into ref_codes (kind, code, name) values
   ('pid', '182', 'Wildcat'),
   ('pid', '183', 'Wildcat')
 on conflict (kind, code) do nothing;
+
+-- ── Strain Library (strain_library.html) ────────────────────────────────────
+-- The strain list every station form's Strain dropdown offers (see
+-- loadReference in ops_common.js); data/operations/reference.json's
+-- `strains` list is only the fallback when Supabase can't be reached.
+-- `name` is exactly what the forms store, so renaming one doesn't touch
+-- records already submitted under the old name — keep the old spelling in
+-- `aliases`. Inactive strains stay in the library but drop off the
+-- dropdowns. Who can open or edit the page is set per user in the admin
+-- panel (app_users.columns 'strain_library' / 'strain library edit'); the
+-- table itself has the same open anon posture as ref_codes.
+create table if not exists strains (
+  id          uuid primary key default gen_random_uuid(),
+  name        text not null,
+  sources     text[] not null default '{}',   -- Genetics ID(s), e.g. CUS, HVN
+  dominance   text,                       -- indica | indica_hybrid | hybrid | sativa_hybrid | sativa
+  aliases     text[] not null default '{}',   -- other spellings seen in old records
+  notes       text,
+  active      boolean not null default true,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+create unique index if not exists idx_strains_name on strains (lower(name));
+-- Added after the table's first version — a no-op on a fresh install.
+alter table strains add column if not exists dominance text;
+
+drop trigger if exists trg_touch_strains on strains;
+create trigger trg_touch_strains
+  before update on strains
+  for each row execute function touch_operations_forms();
+
+alter table strains enable row level security;
+drop policy if exists "anon read" on strains;
+create policy "anon read" on strains for select using (true);
+drop policy if exists "anon write" on strains;
+create policy "anon write" on strains for insert with check (true);
+drop policy if exists "anon update" on strains;
+create policy "anon update" on strains for update using (true) with check (true);
+drop policy if exists "anon delete" on strains;
+create policy "anon delete" on strains for delete using (true);
+grant select, insert, update, delete on public.strains to anon;
+
+-- Seed with the strains that were in reference.json; a re-run leaves edits alone.
+insert into strains (name, sources, aliases, active) values
+  ('Applescotti', array['CUS'], array['Applescotti [CUS]'], true),
+  ('Banana Punch', array['HVN'], array['Banana Punch [HVN]'], true),
+  ('Black Maple Zuava', array['RC'], array['Black Maple Zuava [RC]'], true),
+  ('Blue Nerdz', '{}', array['Blue Nerds'], true),
+  ('Blue Taffeze', array['CUS'], array['Blue Taffeze [CUS]'], true),
+  ('Blue Z', '{}', '{}', true),
+  ('Galactic Warheadz', array['PH'], array['Galactic Warheadz [PH]'], true),
+  ('Gelato 33', array['RC'], array['Gelato 33 [RC]'], true),
+  ('Gelato Pop', '{}', '{}', true),
+  ('Glitter Bomb', array['PH'], array['Glitter Bomb [PH]'], true),
+  ('Grape Gas', '{}', array['Grape Gas - AF'], true),
+  ('Guava Tart', '{}', '{}', true),
+  ('Hashburger', '{}', '{}', true),
+  ('High Society 132', array['PH'], array['High Society 132 [PH]'], true),
+  ('Ice Cream Pie', '{}', array['Ice cream pie'], true),
+  ('It''z Pluto', '{}', array['It''z Pluto - AF', 'Itz Pluto'], true),
+  ('Kept Secret', '{}', '{}', true),
+  ('Lemon Cherry Gelato', array['RC'], array['Lemon Cherry Gelato - AF', 'Lemon Cherry Gelato 2', 'Lemon Cherry Gelato [RC]'], true),
+  ('Mad Fruit', '{}', '{}', true),
+  ('Mule Fuel', array['HVN'], array['Mule Fuel [HVN]'], true),
+  ('Nimbus Snacks', array['CUS'], array['Nimbus Snacks [CUS]'], true),
+  ('Pack Mule #3', array['HVN'], array['Pack Mule #3 [HVN]'], true),
+  ('Pack Mule #4', array['HVN'], array['Pack Mule #4 [HVN]'], true),
+  ('Papaya', '{}', '{}', true),
+  ('Peanut Butter Breath', '{}', '{}', true),
+  ('Permanent Marker', array['HVN'], array['Permanent Marker [HVN]'], true),
+  ('Pink Certs', array['HVN'], array['Pink Certs [HVN]'], true),
+  ('Pinyatti', array['CUS'], array['Pinyatti [CUS]'], true),
+  ('Ron Burgandy', array['CUS'], array['Ron Burgandy [CUS]'], true),
+  ('Runtz', '{}', '{}', true),
+  ('Super Buff Cherry', array['HVN'], array['Super Bluff Cherry', 'Super Buff Cherry [HVN]'], true),
+  ('Super Runtz', array['PH'], array['Super Runtz [PH]'], true),
+  ('Tahiti Twist', '{}', '{}', true),
+  ('Total Eclipse', array['PH'], array['Total Eclipse [PH]'], true),
+  ('Wedding Cake', '{}', '{}', true),
+  ('White Runtz', '{}', array['White Runtz - AF'], true),
+  ('Wimbledon', '{}', '{}', true),
+  ('ZClair', array['PH'], array['ZClair [PH]'], true),
+  ('Zoap', array['PH'], array['Zoap - AF', 'Zoap [PH]'], true)
+on conflict ((lower(name))) do nothing;

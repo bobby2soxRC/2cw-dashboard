@@ -21,6 +21,11 @@
 //   hint   {en, es} helper text under the field
 //   showIf (v) => bool
 //   prefill 'lookup' — pull from the upstream stage record matching sourceUid
+//
+// Station option:
+//   splitBy  key of a lineitems field whose rows carry sourceUid/strain — on
+//            submit the form is saved as one record per distinct UID+strain
+//            (see splitRecords in ops_form.html)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const G_PER_LB = 453.59237;
@@ -257,10 +262,14 @@ const OPERATIONS_STATIONS = [
   },
 
   // ── PROCESSING: HARVEST INTAKE — WET ──────────────────────────────────────
-  // The intake half of the paper "Harvest Intake & Take Down Log" — one form
-  // per incoming farm package (one UID, one strain), filled out the day the
-  // truck is unloaded. The take-down half happens 5–10 days later, once the
-  // material is dry, and is its own form (dry_check, below).
+  // The intake half of the paper "Harvest Intake & Take Down Log", filled out
+  // the day the truck is unloaded. The take-down half happens 5–10 days
+  // later, once the material is dry, and is its own form (dry_check, below).
+  //
+  // One form covers the whole truck: each weigh-in row carries its own farm
+  // package UID and strain, and on submit the form is split into one record
+  // per UID (`splitBy`), each with that UID's rows and its own totals — so
+  // every record downstream is still one package, one strain.
   //
   // Each weigh-in row is a group of bins on the scale: the row's Weight is the
   // gross scale reading, and # of Bins × Tare Each comes off it, so the Total
@@ -269,19 +278,15 @@ const OPERATIONS_STATIONS = [
     key: 'intake_wet',
     dept: { en: 'Processing', es: 'Procesamiento' },
     title: { en: 'Harvest Intake — Wet', es: 'Recepción de cosecha — húmeda' },
-    desc: { en: 'Receive fresh/wet material off a farm truck — one form per incoming package, weighed in bins as it’s unloaded.',
-            es: 'Reciba material fresco/húmedo de un camión del rancho — un formulario por paquete entrante, pesado en bins al descargar.' },
+    desc: { en: 'Receive fresh/wet material off a farm truck — one form per truck, weighed in bins as it’s unloaded, with the package UID and strain on each row.',
+            es: 'Reciba material fresco/húmedo de un camión del rancho — un formulario por camión, pesado en bins al descargar, con el UID del paquete y la variedad en cada fila.' },
     color: 'blue',
     headline: 'totalWetLb',
+    splitBy: 'lines',
     fields: [
       F.date(),
-      { k: 'sourceUid', t: 'uid', req: true,
-        l: { en: 'Incoming Package UID — Farm', es: 'UID del paquete entrante — rancho' },
-        hint: { en: 'Metrc tag on the package from the farm (the last 5 is fine).',
-                es: 'Etiqueta Metrc del paquete del rancho (los últimos 5 son suficientes).' } },
       { k: 'pid', t: 'select', ref: 'properties', allowOther: true, req: true,
         l: { en: 'Property ID (PID)', es: 'ID de propiedad (PID)' } },
-      F.strain(),
       { k: 'cid', t: 'select', ref: 'customers', allowOther: true, l: { en: 'Customer ID (CID)', es: 'ID de cliente (CID)' } },
       { k: 'manifestNo', t: 'text', req: true, l: { en: 'Manifest #', es: 'N.º de manifiesto' } },
       { k: 'truckNo', t: 'text', l: { en: 'Truck #', es: 'N.º de camión' } },
@@ -294,11 +299,17 @@ const OPERATIONS_STATIONS = [
         l: { en: 'Drying Location(s)', es: 'Ubicación(es) de secado' } },
       { k: 'lines', t: 'lineitems', req: true,
         l: { en: 'Weigh-In — Bins', es: 'Pesaje — bins' },
-        hint: { en: 'One row per group of bins on the scale. Weight is the scale reading; the bins’ tare is subtracted for you.',
-                es: 'Una fila por cada grupo de bins en la báscula. El peso es la lectura de la báscula; la tara de los bins se resta automáticamente.' },
+        hint: { en: 'One row per group of bins on the scale, with the farm package UID (the last 5 is fine) and strain. Weight is the scale reading; the bins’ tare is subtracted for you. Each UID is saved as its own intake.',
+                es: 'Una fila por cada grupo de bins en la báscula, con el UID del paquete del rancho (los últimos 5 son suficientes) y la variedad. El peso es la lectura de la báscula; la tara de los bins se resta automáticamente. Cada UID se guarda como su propia recepción.' },
+        // `carry` columns copy down into a new row from the one above (most
+        // trucks are several bin groups per package) and don't by themselves
+        // make a row count as filled in; `req` columns must be filled on any
+        // row that does count.
         cols: [
+          { k: 'sourceUid', t: 'uid', req: true, carry: true, l: { en: 'Package UID', es: 'UID del paquete' } },
+          { k: 'strain', t: 'select', ref: 'strains', allowOther: true, req: true, carry: true, l: { en: 'Strain', es: 'Variedad' } },
           { k: 'binCount', t: 'number', l: { en: '# of Bins', es: 'N.º de bins' }, min: 0, step: 1, inputmode: 'numeric' },
-          { k: 'tareEachLb', t: 'number', l: { en: 'Tare Each (lbs)', es: 'Tara c/u (lbs)' }, min: 0, step: 0.01 },
+          { k: 'tareEachLb', t: 'number', carry: true, l: { en: 'Tare Each (lbs)', es: 'Tara c/u (lbs)' }, min: 0, step: 0.01 },
           { k: 'weight', t: 'number', l: { en: 'Weight (lbs)', es: 'Peso (lbs)' }, min: 0, step: 0.01 }
         ],
         totalCol: 'weight' },
@@ -310,14 +321,17 @@ const OPERATIONS_STATIONS = [
         calc: (v) => (v.lines || []).reduce((a, r) => a + num(r.weight) - num(r.binCount) * num(r.tareEachLb), 0),
         l: { en: 'Total Wet Weight Received (lbs)', es: 'Peso húmedo total recibido (lbs)' },
         hint: { en: 'Scale weight minus bin tare.', es: 'Peso de báscula menos la tara de los bins.' } },
+      // A Metrc adjustment is per package, so with more than one UID on the
+      // form it's recorded on each intake afterwards (Harvest Intakes → Edit).
       { k: 'metrcAdjusted', t: 'select',
+        showIf: (v) => new Set((v.lines || []).map((r) => r.sourceUid).filter(Boolean)).size <= 1,
         l: { en: 'Weight Adjusted in METRC', es: 'Peso ajustado en METRC' },
         opts: [
           { v: 'yes', l: { en: 'Yes — done', es: 'Sí — hecho' } },
           { v: 'no', l: { en: 'Not yet', es: 'Todavía no' } }
         ] },
       { k: 'metrcAdjustedLb', t: 'number', step: 0.01,
-        showIf: (v) => v.metrcAdjusted === 'yes',
+        showIf: (v) => v.metrcAdjusted === 'yes' && new Set((v.lines || []).map((r) => r.sourceUid).filter(Boolean)).size <= 1,
         l: { en: 'Total Pounds Adjusted in METRC (lbs)', es: 'Libras totales ajustadas en METRC (lbs)' },
         hint: { en: 'The adjustment amount entered in Metrc — use a minus sign if the weight went down.',
                 es: 'La cantidad del ajuste ingresada en Metrc — use un signo de menos si el peso bajó.' } },

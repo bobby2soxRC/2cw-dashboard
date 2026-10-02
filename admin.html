@@ -316,8 +316,9 @@ const CANIX_STAGES = ['Cultivation', 'Processing', 'Manufacturing', 'Distributio
 // ones derived from other settings (production access derives
 // production_dashboard / production_today; FORM_ACCESS_COLS derives
 // field_forms).
-// harvest_intakes has its own View/Edit pair in the editor instead.
-const DERIVED_CARD_KEYS = ['production_dashboard', 'production_today', 'field_forms', 'harvest_intakes'];
+// harvest_intakes and strain_library have their own View/Edit pairs in the
+// editor instead.
+const DERIVED_CARD_KEYS = ['production_dashboard', 'production_today', 'field_forms', 'harvest_intakes', 'strain_library'];
 const TOGGLE_CARDS = CARD_DEFS.filter(d => !DERIVED_CARD_KEYS.includes(d.key));
 
 // The Responsibilities tab talks to Supabase directly with the anon key,
@@ -622,6 +623,8 @@ function cardSummary(u){
   if((cols['pr access']||'').toUpperCase()==='TRUE') pills.push('Add PR');
   if((cols['harvest intakes edit']||'').toUpperCase()==='TRUE') pills.push('Harvest Intakes: edit');
   else if((cols['harvest_intakes']||'').toUpperCase()==='TRUE') pills.push('Harvest Intakes: view');
+  if((cols['strain library edit']||'').toUpperCase()==='TRUE') pills.push('Strain Library: edit');
+  else if((cols['strain_library']||'').toUpperCase()==='TRUE') pills.push('Strain Library: view');
   return pills;
 }
 
@@ -1270,6 +1273,12 @@ function openEditor(id){
       <label class="check-item"><input type="checkbox" data-card="harvest intakes edit" id="hi-edit" ${(cols['harvest intakes edit']||'').toUpperCase()==='TRUE'?'checked':''}/> Edit (fix submitted intakes, record Metrc adjustments)</label>
     </div>
 
+    <div class="section-hd">Strain Library</div>
+    <div class="check-grid">
+      <label class="check-item"><input type="checkbox" data-card="strain_library" id="sl-view" ${(cols['strain_library']||'').toUpperCase()==='TRUE' || (cols['strain library edit']||'').toUpperCase()==='TRUE' ?'checked':''}/> View</label>
+      <label class="check-item"><input type="checkbox" data-card="strain library edit" id="sl-edit" ${(cols['strain library edit']||'').toUpperCase()==='TRUE'?'checked':''}/> Edit (add, rename and retire strains)</label>
+    </div>
+
     <div class="section-hd">Processing — edit access</div>
     <label class="check-item" style="margin-bottom:10px"><input type="checkbox" id="ed-all" ${editAll?'checked':''}/> All stations</label>
     <div id="ed-station-list"></div>
@@ -1305,6 +1314,8 @@ function openEditor(id){
   // Edit implies view: ticking Edit ticks View, unticking View unticks Edit.
   document.getElementById('hi-edit').addEventListener('change', e => { if(e.target.checked) document.getElementById('hi-view').checked = true; });
   document.getElementById('hi-view').addEventListener('change', e => { if(!e.target.checked) document.getElementById('hi-edit').checked = false; });
+  document.getElementById('sl-edit').addEventListener('change', e => { if(e.target.checked) document.getElementById('sl-view').checked = true; });
+  document.getElementById('sl-view').addEventListener('change', e => { if(!e.target.checked) document.getElementById('sl-edit').checked = false; });
   document.getElementById('view-all').addEventListener('change', syncViewListDisabled);
   syncStationListDisabled();
   syncViewListDisabled();
