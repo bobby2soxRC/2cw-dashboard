@@ -370,8 +370,12 @@ static `data/operations/*.json` files. Nothing breaks on a fresh checkout.
    - `sites` — `AF`, `BG`, `HSR`, `AHD`, `WC` came out of the batch names.
      Rename `label` to the actual farm names.
    - `properties` — PIDs `071`, `073`, `075`, `309`, `310`, `540`.
-   - `dryRooms`, `trimMachines`, `freezers` — guesses. Replace with your real
-     rooms, your Mobius units, and your freezers.
+   - `dryRooms` — the drying rooms (Room 1A … Room 4B, same rooms as the
+     Drying Room Capacity table in `canix_inventory.html`). The old
+     placeholder "Dry Area 1/2" entries are kept `active: false` so past
+     records still show a label.
+   - `trimMachines`, `freezers` — guesses. Replace with your Mobius units and
+     your freezers.
    - `employees` — empty. Not required (the forms take an employee number
      directly), but filling it lets the dashboard show names instead of numbers.
    - `strains` — 39 canonical names, with the workbook's spelling variants kept
