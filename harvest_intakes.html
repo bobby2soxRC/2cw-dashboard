@@ -121,7 +121,7 @@
     all:       { en: 'All', es: 'Todas' },
     metrcTodo: { en: 'Metrc not adjusted', es: 'Metrc sin ajustar' },
     drafts:    { en: 'In progress', es: 'En curso' },
-    search:    { en: 'Search strain, UID, PID, CID, manifest…', es: 'Buscar variedad, UID, PID, CID, manifiesto…' },
+    search:    { en: 'Search strain, UID, farm license, CID, manifest…', es: 'Buscar variedad, UID, licencia, CID, manifiesto…' },
     submitted: { en: 'Submitted', es: 'Enviado' },
     metrcYes:  { en: 'Metrc adjusted', es: 'Metrc ajustado' },
     metrcNo:   { en: 'Metrc: not yet', es: 'Metrc: todavía no' },
@@ -156,7 +156,7 @@
   const fieldByKey = Object.fromEntries(station.fields.map((f) => [f.k, f]));
 
   // A stored value as people read it: select codes become their label
-  // ("Wildcat: PID 179"), numbers get formatted, blanks become —.
+  // ("Wildcat: CCL21-0001234"), numbers get formatted, blanks become —.
   function display(f, v) {
     if (v === undefined || v === null || v === '') return '—';
     if (f.t === 'select') {
@@ -220,7 +220,7 @@
         </div>
         <dl class="row-facts">
           <dt>UID</dt><dd>${esc(uids(r) || '—')}</dd>
-          <dt>PID</dt><dd>${esc(shown(r, 'pid'))}</dd>
+          <dt>${getLang() === 'es' ? 'Licencia' : 'License'}</dt><dd>${esc(shown(r, 'pid'))}</dd>
           <dt>CID</dt><dd>${esc(shown(r, 'cid'))}</dd>
           <dt>${t(fieldByKey.manifestNo.l)}</dt><dd>${esc(val(r, 'manifestNo') || '—')}</dd>
         </dl>

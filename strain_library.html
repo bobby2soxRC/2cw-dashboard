@@ -130,6 +130,9 @@
     strains:  { en: 'strains', es: 'variedades' },
     sources:  { en: 'Genetics ID', es: 'ID de genética' },
     dominance:{ en: 'Dominance', es: 'Dominancia' },
+    abbr:     { en: 'Abbreviation', es: 'Abreviatura' },
+    abbrHint: { en: 'Short code for the strain, usually 2–4 letters (e.g. LCG). Must be unique.', es: 'Código corto de la variedad, normalmente de 2 a 4 letras (p. ej. LCG). Debe ser único.' },
+    dupAbbr:  { en: 'Another strain already uses that abbreviation:', es: 'Otra variedad ya usa esa abreviatura:' },
     aliases:  { en: 'Other spellings', es: 'Otras ortografías' },
     notes:    { en: 'Notes', es: 'Notas' },
     status:   { en: 'Status', es: 'Estado' },
@@ -198,7 +201,7 @@
     if (mode === 'active' && !r.active) return false;
     if (mode === 'retired' && r.active) return false;
     if (!query) return true;
-    return [r.name, list(r.sources), domLabel(r.dominance), list(r.aliases), r.notes].join(' ').toLowerCase().includes(query);
+    return [r.name, r.abbreviation, list(r.sources), domLabel(r.dominance), list(r.aliases), r.notes].join(' ').toLowerCase().includes(query);
   }
 
   function render() {
@@ -206,10 +209,11 @@
     document.getElementById('sub').textContent = `${shown.length} ${t(L.strains)}`;
     if (!shown.length) { board.innerHTML = `<div class="empty">${t(L.empty)}</div>`; return; }
     board.innerHTML = `<div class="tbl-wrap"><table class="lib"><thead><tr>
-        <th>${t(L.strain)}</th><th>${t(L.sources)}</th><th>${t(L.dominance)}</th><th>${t(L.aliases)}</th><th>${t(L.notes)}</th><th>${t(L.status)}</th>
+        <th>${t(L.strain)}</th><th>${t(L.abbr)}</th><th>${t(L.sources)}</th><th>${t(L.dominance)}</th><th>${t(L.aliases)}</th><th>${t(L.notes)}</th><th>${t(L.status)}</th>
       </tr></thead><tbody>${shown.map((r) => `
         <tr class="${canEdit ? 'click' : ''} ${r.active ? '' : 'retired'}" data-id="${r.id}">
           <td class="nm">${esc(r.name)}</td>
+          <td class="mono">${esc(r.abbreviation) || '—'}</td>
           <td class="mono">${esc(list(r.sources)) || '—'}</td>
           <td>${esc(domLabel(r.dominance)) || '—'}</td>
           <td class="mono">${esc(list(r.aliases)) || '—'}</td>
@@ -230,12 +234,14 @@
   const splitList = (s) => [...new Set(s.split(',').map((x) => x.trim()).filter(Boolean))];
 
   function openEditor(id) {
-    const r = id ? rows.find((x) => x.id === id) : { name: '', sources: [], dominance: '', aliases: [], notes: '', active: true };
+    const r = id ? rows.find((x) => x.id === id) : { name: '', abbreviation: '', sources: [], dominance: '', aliases: [], notes: '', active: true };
     if (!r) return;
     ed.innerHTML = `
       <div class="ed-title">${esc(id ? r.name : t(L.newT))}</div>
       <div class="fld"><label class="lbl" for="e-name">${t(L.name)}</label>
         <input type="text" id="e-name" value="${esc(r.name)}"><div class="hint">${t(L.nameHint)}</div></div>
+      <div class="fld"><label class="lbl" for="e-abbr">${t(L.abbr)}</label>
+        <input type="text" id="e-abbr" value="${esc(r.abbreviation || '')}" maxlength="8" autocapitalize="characters" style="max-width:160px;text-transform:uppercase"><div class="hint">${t(L.abbrHint)}</div></div>
       <div class="fld"><label class="lbl" for="e-src">${t(L.sources)}</label>
         <input type="text" id="e-src" value="${esc(list(r.sources))}" autocapitalize="characters"><div class="hint">${t(L.srcHint)}</div></div>
       <div class="fld"><label class="lbl" for="e-dom">${t(L.dominance)}</label>
@@ -268,6 +274,7 @@
     const showErr = (msg) => { err.textContent = msg; err.style.display = 'block'; };
     const row = {
       name: document.getElementById('e-name').value.trim().replace(/\s+/g, ' '),
+      abbreviation: document.getElementById('e-abbr').value.replace(/\s+/g, '').toUpperCase() || null,
       sources: splitList(document.getElementById('e-src').value.toUpperCase()),
       dominance: document.getElementById('e-dom').value || null,
       aliases: splitList(document.getElementById('e-als').value),
@@ -276,6 +283,8 @@
     };
     if (!row.name) return showErr(t(L.needName));
     if (rows.some((x) => x.id !== id && x.name.toLowerCase() === row.name.toLowerCase())) return showErr(t(L.dup));
+    const abbrTaken = row.abbreviation && rows.find((x) => x.id !== id && (x.abbreviation || '').toUpperCase() === row.abbreviation);
+    if (abbrTaken) return showErr(`${t(L.dupAbbr)} ${abbrTaken.name}`);
     btn.disabled = true; btn.textContent = t(L.saving);
     const { error } = id
       ? await client.from('strains').update(row).eq('id', id)

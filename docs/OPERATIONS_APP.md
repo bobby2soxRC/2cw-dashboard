@@ -46,7 +46,7 @@ rows and totals, so everything downstream still sees one package per
 record. With more than one UID on the form the Metrc-adjustment fields hide;
 they're filled in per intake afterwards from Harvest Intakes. Take Down (station key `dry_check`)
 boxes the dried material under a new on-stem package UID. Take Down's
-`incomingUid` pulls strain/PID/CID/wet weight from the intake record, and
+`incomingUid` pulls strain/farm license/CID/wet weight from the intake record, and
 `ops_analytics` aliases the on-stem UID back to the farm UID so it stays one
 lot. Bucking opens a batch for every Take Down released to bucking.
 
@@ -91,7 +91,7 @@ the intake.
 
 **Strain Library** (`strain_library.html`, hub card `strain_library` under
 Operations) is the list every Strain dropdown offers. It lives in the
-Supabase table `strains` (name, sources = Genetics ID, dominance, aliases, notes, active), seeded
+Supabase table `strains` (name, abbreviation, sources = Genetics ID, dominance, aliases, notes, active), seeded
 from `reference.json`; `loadReference()` swaps it in for the file's `strains`
 list, which is only the fallback when Supabase can't be reached. Access is
 the same View/Edit pair as Harvest Intakes: `strain_library` and
@@ -100,8 +100,12 @@ and retire strains (retired = off the dropdowns, kept in the library);
 there's no delete. Renaming doesn't rewrite records already submitted under
 the old name, so the old name goes in `aliases`.
 
-**PIDs & CIDs** live in the Supabase table `ref_codes` (kind `pid`/`cid`,
-code, name, notes, active), managed on the admin panel's "PIDs & CIDs" tab.
+**Farm Licenses & CIDs** live in the Supabase table `ref_codes` (kind
+`pid`/`cid`, code, name, notes, active), managed on the admin panel's "Farm
+Licenses & CIDs" tab. Farm licenses replaced Property IDs (PIDs): they're
+still stored as kind `pid`, and the form field is still `pid`, so records
+from before the switch keep reading — only the labels changed. The code is
+the license number and the name is the farm; dropdowns show "Farm: license".
 `loadReference()` in `ops_common.js` swaps them in for the `properties` and
 `customers` dropdown lists; `reference.json`'s `properties` is only the
 fallback. Values typed via "Other" on a form are not added automatically —

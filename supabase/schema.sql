@@ -890,6 +890,7 @@ create table if not exists strains (
 create unique index if not exists idx_strains_name on strains (lower(name));
 -- Added after the table's first version — a no-op on a fresh install.
 alter table strains add column if not exists dominance text;
+alter table strains add column if not exists abbreviation text;   -- short code, usually 2–4 letters, e.g. LCG
 
 drop trigger if exists trg_touch_strains on strains;
 create trigger trg_touch_strains

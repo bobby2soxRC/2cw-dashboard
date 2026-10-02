@@ -197,7 +197,7 @@
       <button data-tab="responsibilities" onclick="switchTab('responsibilities')">Responsibilities</button>
       <button data-tab="canix" onclick="switchTab('canix')">Canix Facilities</button>
       <button data-tab="forecast" onclick="switchTab('forecast')">Yield Forecast</button>
-      <button data-tab="codes" onclick="switchTab('codes')">PIDs &amp; CIDs</button>
+      <button data-tab="codes" onclick="switchTab('codes')">Farm Licenses &amp; CIDs</button>
     </div>
 
     <div id="users-view" class="view on">
@@ -288,9 +288,9 @@
 
     <div id="codes-view" class="view">
       <div class="toolbar">
-        <h1>PIDs &amp; CIDs</h1>
+        <h1>Farm Licenses &amp; CIDs</h1>
       </div>
-      <div class="status-line">Property IDs and Customer IDs for the station forms' dropdowns (Wet Intake, Take Down, …). Edits go live immediately — no deploy needed. Untick Active to hide one from the dropdowns while keeping old forms readable.</div>
+      <div class="status-line">Farm licenses and Customer IDs for the station forms' dropdowns (Wet Intake, Take Down, …). Edits go live immediately — no deploy needed. Untick Active to hide one from the dropdowns while keeping old forms readable.</div>
       <div id="codes-wrap"></div>
     </div>
   </div>
@@ -379,14 +379,16 @@ function switchTab(tab){
   if(tab === 'forecast') refreshForecastTab();
 }
 
-// ── PIDs & CIDs (Supabase table ref_codes — see supabase/schema.sql) ───────
+// ── Farm Licenses & CIDs (Supabase table ref_codes — see supabase/schema.sql)
+// Farm licenses are stored as kind 'pid' (they replaced Property IDs, and the
+// form field kept its old key so past records still read).
 // Read by the station forms through loadReference() in ops_common.js. Talks
 // to Supabase directly with the anon key, same as the Responsibilities tab.
 let refCodes = [];
 let codesSeen = { pid: [], cid: [] };   // values typed via "Other" on forms that aren't on the list
 const CODE_KINDS = [
-  { kind: 'pid', title: 'Property IDs (PID)', nameLabel: 'Farm / property' },
-  { kind: 'cid', title: 'Customer IDs (CID)', nameLabel: 'Customer' }
+  { kind: 'pid', title: 'Farm Licenses', short: 'License', nameLabel: 'Farm' },
+  { kind: 'cid', title: 'Customer IDs (CID)', short: 'CID', nameLabel: 'Customer' }
 ];
 
 async function refreshCodes(){
@@ -409,7 +411,7 @@ async function refreshCodes(){
   }catch(e){
     const msg = String(e.message || e);
     document.getElementById('codes-wrap').innerHTML = /ref_codes/.test(msg)
-      ? '<div class="empty-note">The PIDs &amp; CIDs table isn&#39;t set up yet — run the "PIDs &amp; CIDs" section of supabase/schema.sql in the Supabase SQL editor.</div>'
+      ? '<div class="empty-note">The Farm Licenses &amp; CIDs table isn&#39;t set up yet — run the "PIDs &amp; CIDs" section of supabase/schema.sql in the Supabase SQL editor.</div>'
       : `<div class="empty-note">Could not load: ${esc(msg)}</div>`;
   }
 }
@@ -423,7 +425,7 @@ function renderCodes(){
     <div class="section-hd" style="font-size:.8rem;color:var(--text)">${k.title}</div>
     ${seen.length ? `<div class="status-line" style="color:var(--gold)">Typed in with "Other" on forms but not on this list — click to add: ${seen.map(v => `<button class="btn btn-ghost" style="padding:.25rem .55rem;margin:2px" data-v="${esc(v)}" onclick="codeAddSeen('${k.kind}', this.dataset.v)">+ ${esc(v)}</button>`).join('')}</div>` : ''}
     <div class="table-scroll"><table>
-      <thead><tr><th style="width:110px">${k.kind.toUpperCase()}</th><th style="width:200px">${k.nameLabel}</th><th>Notes</th><th style="width:70px">Active</th><th style="width:150px"></th></tr></thead>
+      <thead><tr><th style="width:170px">${k.short}</th><th style="width:200px">${k.nameLabel}</th><th>Notes</th><th style="width:70px">Active</th><th style="width:150px"></th></tr></thead>
       <tbody>
         ${rows.map(r => `
           <tr data-code-id="${r.id}" class="${r.active ? '' : 'inactive'}">
@@ -434,7 +436,7 @@ function renderCodes(){
             <td><div class="row-actions"><button onclick="codeSave('${k.kind}', this)">Save</button><button onclick="codeDelete(this)">Delete</button></div></td>
           </tr>`).join('')}
         <tr data-code-new="${k.kind}">
-          <td><input type="text" data-field="code" placeholder="New ${k.kind.toUpperCase()}"/></td>
+          <td><input type="text" data-field="code" placeholder="New ${k.short.toLowerCase() === 'cid' ? 'CID' : 'license #'}"/></td>
           <td><input type="text" data-field="name" placeholder="${k.nameLabel}"/></td>
           <td><textarea data-field="notes" rows="2" style="min-height:38px" placeholder="Notes"></textarea></td>
           <td style="text-align:center"><input type="checkbox" data-field="active" checked/></td>
@@ -449,7 +451,8 @@ async function codeSave(kind, btn){
   const tr = btn.closest('tr');
   const get = (f) => tr.querySelector(`[data-field=${f}]`);
   const row = { kind, code: get('code').value.trim(), name: get('name').value.trim() || null, notes: get('notes').value.trim() || null, active: get('active').checked };
-  if(!row.code){ alert(`Enter the ${kind.toUpperCase()}.`); return; }
+  const short = CODE_KINDS.find(k => k.kind === kind).short;
+  if(!row.code){ alert(`Enter the ${short === 'CID' ? 'CID' : 'license number'}.`); return; }
   const id = tr.dataset.codeId;
   const label = btn.textContent;
   btn.disabled = true; btn.textContent = 'Saving…';
@@ -460,7 +463,7 @@ async function codeSave(kind, btn){
     await refreshCodes();
   }catch(e){
     const msg = String(e.message || e);
-    alert(/duplicate|unique/i.test(msg) ? `${kind.toUpperCase()} ${row.code} is already on the list.` : 'Could not save: ' + msg);
+    alert(/duplicate|unique/i.test(msg) ? `${short} ${row.code} is already on the list.` : 'Could not save: ' + msg);
     btn.disabled = false; btn.textContent = label;
   }
 }

@@ -70,8 +70,8 @@ async function loadJson(path, fallback) {
     return fallback;
   }
 }
-// PIDs and CIDs are managed in the admin panel ("PIDs & CIDs" tab, Supabase
-// table ref_codes) and replace the file's `properties` list when they load;
+// Farm licenses (kind 'pid') and CIDs are managed in the admin panel ("Farm
+// Licenses & CIDs" tab, Supabase table ref_codes) and replace the file's `properties` list when they load;
 // the file's list is the fallback when Supabase isn't reachable. Shared by
 // the forms and harvest_intakes.html (getRefCodes) for the code → name label.
 async function getRefCodes() {
@@ -82,7 +82,9 @@ async function getRefCodes() {
     return error ? null : (data || []);
   } catch { return null; }
 }
-const refCodeLabel = (r) => r.name ? `${r.name}: ${r.kind.toUpperCase()} ${r.code}` : r.code;
+// kind 'pid' rows are farm licenses now (the field kept its old key so past
+// records still read): "Wildcat: CCL21-0001234". CIDs keep "Name: CID 012".
+const refCodeLabel = (r) => !r.name ? r.code : r.kind === 'pid' ? `${r.name}: ${r.code}` : `${r.name}: ${r.kind.toUpperCase()} ${r.code}`;
 // Strains are managed on strain_library.html (Supabase table strains) and
 // replace the file's `strains` list the same way.
 async function getStrains() {
