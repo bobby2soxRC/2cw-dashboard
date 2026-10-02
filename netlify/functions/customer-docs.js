@@ -115,7 +115,8 @@ exports.handler = async (event) => {
       if (!TYPES.includes(content_type)) return json(400, { ok: false, error: 'Upload a PDF or a photo (JPG, PNG, HEIC, WebP).' });
       if (!(Number(size_bytes) > 0) || Number(size_bytes) > MAX_BYTES) return json(400, { ok: false, error: 'Files must be under 25 MB.' });
       const cust = await supa(supaUrl, serviceKey, `/rest/v1/ref_codes?id=eq.${ref_code_id}&kind=eq.cid&select=id`);
-      if (!cust.ok || !(await cust.json()).length) return json(404, { ok: false, error: 'No customer with that id' });
+      if (!cust.ok) throw new Error(`Customer lookup failed: ${cust.status} ${await cust.text()}`);
+      if (!(await cust.json()).length) return json(404, { ok: false, error: 'No customer with that id' });
       const path = `${ref_code_id}/${doc_type}/${crypto.randomUUID()}-${cleanName(file_name)}`;
       const res = await supa(supaUrl, serviceKey, `/storage/v1/object/upload/sign/${BUCKET}/${path}`, { method: 'POST', body: '{}' });
       if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);

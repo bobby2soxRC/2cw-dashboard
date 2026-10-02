@@ -848,6 +848,10 @@ create policy "anon update" on ref_codes for update using (true) with check (tru
 drop policy if exists "anon delete" on ref_codes;
 create policy "anon delete" on ref_codes for delete using (true);
 grant select, insert, update, delete on public.ref_codes to anon;
+-- netlify/functions/customer-docs.js looks the customer up here with the
+-- service role key before issuing an upload URL; like app_users, the service
+-- role needs the table GRANT or that lookup fails with "permission denied".
+grant select on public.ref_codes to service_role;
 
 -- Seed with the PIDs that were in reference.json; a re-run leaves edits alone.
 insert into ref_codes (kind, code, name) values
