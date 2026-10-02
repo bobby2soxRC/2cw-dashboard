@@ -119,6 +119,21 @@ by `id` (or name, for new rows), is previewed (new / changed / problems)
 before saving, and never deletes — strains missing from the file are left
 alone.
 
+**Customer documents** — each customer (CID) can have a signed MSA, any
+number of licenses (with license # and expiry; expired ones show red), and a
+W-9, attached from the Customer IDs tab's Documents column. Access is its own
+Information Hub pair, `customer documents` / `customer documents edit` (key
+`custdocs`, `tab: false` — it opens the Customer IDs tab read-only if the
+person can't otherwise see it), kept apart from CIDs because a W-9 carries a
+tax ID. Files are in the private Storage bucket `customer-docs`, metadata in
+`customer_documents`; neither has an anon policy, so all of it goes through
+`netlify/functions/customer-docs.js`, which checks the caller's PIN against
+`app_users` first. Uploads go browser → Storage on a one-time signed upload
+URL the function issues (Netlify's ~6 MB body cap), then `save` records the
+row; downloads are signed URLs good for two minutes. A customer with
+documents can't be deleted (FK `on delete restrict`) — remove the documents
+or untick Active.
+
 **Farm Licenses & CIDs** live in the Supabase table `ref_codes` (kind
 `pid`/`cid`, code, name, notes, active), managed on the Information Hub's
 Farm Licenses and Customer IDs tabs. Farm licenses replaced Property IDs (PIDs): they're

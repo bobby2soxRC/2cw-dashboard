@@ -346,7 +346,13 @@ const INFO_HUB_SECTIONS = [
   { key: 'licenses', view: 'farm licenses',    edit: 'farm licenses edit',
     title: { en: 'Farm Licenses', es: 'Licencias de Ranchos' }, editNote: 'the forms’ Farm License list' },
   { key: 'cids',     view: 'customer ids',     edit: 'customer ids edit',
-    title: { en: 'Customer IDs (CIDs)', es: 'IDs de Clientes (CIDs)' }, editNote: 'the forms’ CID list' }
+    title: { en: 'Customer IDs (CIDs)', es: 'IDs de Clientes (CIDs)' }, editNote: 'the forms’ CID list' },
+  // Not a tab of its own: the signed MSA / licenses / W-9 attached to each
+  // customer, shown inside the Customer IDs tab (which it opens up read-only
+  // if the person can't otherwise see it). Separate from CIDs because a W-9
+  // carries a tax ID. Enforced server-side in netlify/functions/customer-docs.js.
+  { key: 'custdocs', view: 'customer documents', edit: 'customer documents edit', tab: false,
+    title: { en: 'Customer Documents', es: 'Documentos de Clientes' }, editNote: 'upload and remove MSA, licenses, W-9' }
 ];
 
 // Card keys whose sheet column name doesn't match the key verbatim (e.g. has

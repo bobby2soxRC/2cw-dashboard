@@ -950,3 +950,38 @@ insert into strains (name, sources, aliases, active) values
   ('ZClair', array['PH'], array['ZClair [PH]'], true),
   ('Zoap', array['PH'], array['Zoap - AF', 'Zoap [PH]'], true)
 on conflict ((lower(name))) do nothing;
+
+-- ── Customer documents (Information Hub → Customer IDs) ─────────────────────
+-- Signed MSA, license(s) and W-9 per customer (a ref_codes row of kind
+-- 'cid'). The files live in the PRIVATE storage bucket `customer-docs` — a
+-- W-9 carries a tax ID, so unlike operation photos these never go to the
+-- (public) GitHub repo. Neither the table nor the bucket gets any anon
+-- policy: every list / upload / download / delete goes through
+-- netlify/functions/customer-docs.js with the service role key, which checks
+-- the user's 'customer documents' / 'customer documents edit' columns in
+-- app_users first. Downloads are signed URLs that expire in two minutes.
+create table if not exists customer_documents (
+  id            uuid primary key default gen_random_uuid(),
+  ref_code_id   uuid not null references ref_codes(id) on delete restrict,  -- the customer (kind 'cid')
+  doc_type      text not null check (doc_type in ('msa', 'license', 'w9')),
+  label         text,          -- license number, or a short note
+  doc_date      date,          -- MSA signed / W-9 dated
+  expires_on    date,          -- license expiry
+  file_name     text not null,
+  storage_path  text not null unique,
+  content_type  text,
+  size_bytes    bigint,
+  uploaded_by   text,
+  created_at    timestamptz not null default now()
+);
+create index if not exists idx_customer_documents_customer on customer_documents (ref_code_id, doc_type);
+
+alter table customer_documents enable row level security;   -- no policies: service role only
+revoke all on public.customer_documents from anon;
+grant select, insert, update, delete on public.customer_documents to service_role;
+
+-- Private bucket, 25 MB per file, PDFs and images (phone photos of paper copies).
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('customer-docs', 'customer-docs', false, 26214400,
+        array['application/pdf', 'image/jpeg', 'image/png', 'image/heic', 'image/heif', 'image/webp'])
+on conflict (id) do nothing;

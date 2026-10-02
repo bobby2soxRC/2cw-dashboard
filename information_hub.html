@@ -171,7 +171,10 @@
   document.getElementById('back').textContent = t(C.back);
   document.title = `${t(C.title)} — 2CW`;
 
-  const sections = INFO_HUB_SECTIONS.filter((s) => ACCESS[s.key]);
+  // Customer Documents isn't a tab — it lives in Customer IDs, so having it
+  // alone still opens that tab (read-only for the CID list itself).
+  if (ACCESS.custdocs && !ACCESS.cids) ACCESS.cids = 'view';
+  const sections = INFO_HUB_SECTIONS.filter((s) => s.tab !== false && ACCESS[s.key]);
   if (!sections.length) { pane.innerHTML = `<div class="empty">${esc(t(C.noAccess))}</div>`; return; }
 
   // A save button's brief "Saved" tick.
@@ -542,12 +545,53 @@
       empty:    { en: 'Nothing on this list yet.', es: 'Aún no hay nada en esta lista.' }
     };
 
+    // Customer documents (CIDs only, 'custdocs' access): signed MSA, licenses,
+    // W-9. Private bucket — every list/upload/download goes through the
+    // customer-docs function, which re-checks access server-side.
+    const D = {
+      docs:    { en: 'Documents', es: 'Documentos' },
+      open:    { en: 'Documents', es: 'Documentos' },
+      msa:     { en: 'Signed MSA', es: 'MSA firmado' },
+      license: { en: 'Licenses', es: 'Licencias' },
+      w9:      { en: 'W-9', es: 'W-9' },
+      none:    { en: 'None on file', es: 'Nada en archivo' },
+      missing: { en: 'missing', es: 'falta' },
+      expired: { en: 'expired', es: 'vencida' },
+      signed:  { en: 'Signed', es: 'Firmado' },
+      dated:   { en: 'Dated', es: 'Fecha' },
+      licNo:   { en: 'License #', es: 'N.º de licencia' },
+      expires: { en: 'Expires', es: 'Vence' },
+      file:    { en: 'File (PDF or photo, up to 25 MB)', es: 'Archivo (PDF o foto, hasta 25 MB)' },
+      upload:  { en: 'Upload', es: 'Subir' },
+      uploading: { en: 'Uploading…', es: 'Subiendo…' },
+      pickFile:{ en: 'Choose a file first.', es: 'Elija un archivo primero.' },
+      tooBig:  { en: 'That file is over 25 MB.', es: 'Ese archivo pasa de 25 MB.' },
+      badType: { en: 'Upload a PDF or a photo (JPG, PNG, HEIC, WebP).', es: 'Suba un PDF o una foto (JPG, PNG, HEIC, WebP).' },
+      by:      { en: 'by', es: 'por' },
+      close:   { en: 'Close', es: 'Cerrar' },
+      delDoc:  { en: 'Delete this document? The file is removed for good.', es: '¿Eliminar este documento? El archivo se borra definitivamente.' },
+      private: { en: 'These files are private — links open for two minutes, then expire.', es: 'Estos archivos son privados — los enlaces funcionan dos minutos y luego vencen.' },
+      noLoad:  { en: 'Couldn’t load customer documents:', es: 'No se pudieron cargar los documentos:' },
+      hasDocs: { en: 'This customer has documents attached — delete those first (Documents), or untick Active instead.',
+                 es: 'Este cliente tiene documentos — elimínelos primero (Documentos), o desmarque Activo.' }
+    };
+    const DOC_TYPES = ['msa', 'license', 'w9'];
+    const MIME_BY_EXT = { pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', heic: 'image/heic', heif: 'image/heif', webp: 'image/webp' };
+
     return async function (el, canEdit) {
-      let rows = [], seen = [];
+      let rows = [], seen = [], docs = [], docsErr = '';
+      const docsOn = kind === 'cid' && !!ACCESS.custdocs;
+      const docsEdit = ACCESS.custdocs === 'edit';
+      async function loadDocs() {
+        if (!docsOn) return;
+        try { docs = (await callFn('customer-docs', { action: 'list' })).docs || []; docsErr = ''; }
+        catch (e) { docs = []; docsErr = `${t(D.noLoad)} ${e.message}`; }
+      }
       async function load() {
         const [{ data, error }, used] = await Promise.all([
           client.from('ref_codes').select('*').eq('kind', kind).order('code'),
-          canEdit ? client.from('operations_forms').select(`v:fields->>${kind}`) : Promise.resolve({ data: [] })
+          canEdit ? client.from('operations_forms').select(`v:fields->>${kind}`) : Promise.resolve({ data: [] }),
+          loadDocs()
         ]);
         if (error) throw error;
         rows = (data || []).sort((a, b) => (b.active - a.active) || String(a.name || '').localeCompare(String(b.name || '')) || a.code.localeCompare(b.code));
@@ -556,18 +600,129 @@
       }
       await load();
 
+      const today = new Date().toISOString().slice(0, 10);
+      const docsFor = (id, type) => docs.filter((d) => d.ref_code_id === id && (!type || d.doc_type === type));
+      // At-a-glance: MSA ✓/✗, licenses count (red if any expired), W-9 ✓/✗.
+      function docCell(r) {
+        const msa = docsFor(r.id, 'msa').length, lic = docsFor(r.id, 'license'), w9 = docsFor(r.id, 'w9').length;
+        const expired = lic.some((d) => d.expires_on && d.expires_on < today);
+        const pill = (ok, txt) => `<span class="pill ${ok ? 'ok' : 'off'}" style="margin-right:4px">${txt}</span>`;
+        return `<td><div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center">
+          ${pill(msa, `MSA ${msa ? '✓' : '—'}`)}${expired ? `<span class="pill bad" style="margin-right:4px">${t(D.license)} ${lic.length} · ${t(D.expired)}</span>` : pill(lic.length, `${t(D.license)} ${lic.length}`)}${pill(w9, `W-9 ${w9 ? '✓' : '—'}`)}
+          <button type="button" class="mini" data-docs="${r.id}">${t(D.open)}</button></div></td>`;
+      }
+
+      // The documents sheet for one customer (shares #ed-bg with the strain editor).
+      function openDocs(r) {
+        if (!r) return;
+        const bg = document.getElementById('ed-bg'), ed = document.getElementById('ed');
+        const fmtSize = (n) => n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round((n || 0) / 1024))} KB`;
+        const docLine = (d) => `
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--border)">
+            <div style="min-width:0">
+              <a href="#" data-get="${d.id}" style="color:var(--green);font-weight:700;word-break:break-word">${esc(d.file_name)}</a>
+              <div class="hint" style="margin-top:3px">
+                ${[d.label && (d.doc_type === 'license' ? `${t(D.licNo)} ${esc(d.label)}` : esc(d.label)),
+                   d.doc_date && `${t(d.doc_type === 'msa' ? D.signed : D.dated)} ${esc(d.doc_date)}`,
+                   d.expires_on && `<span style="color:${d.expires_on < today ? 'var(--red)' : 'inherit'}">${t(D.expires)} ${esc(d.expires_on)}${d.expires_on < today ? ` · ${t(D.expired)}` : ''}</span>`,
+                   `${fmtSize(d.size_bytes)} · ${new Date(d.created_at).toLocaleDateString()}${d.uploaded_by ? ` ${t(D.by)} ${esc(d.uploaded_by)}` : ''}`]
+                  .filter(Boolean).join(' · ')}
+              </div>
+            </div>
+            ${docsEdit ? `<button type="button" class="mini del" data-rm="${d.id}">${t(C.del)}</button>` : ''}
+          </div>`;
+        const uploadForm = (type) => !docsEdit ? '' : `
+          <div class="tbl-wrap" style="padding:12px;margin:8px 0 4px" data-up="${type}">
+            <div class="fld" style="margin-bottom:10px"><label class="lbl">${t(D.file)}</label>
+              <input type="file" data-f="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.webp,application/pdf,image/*" style="color:var(--subtext);max-width:100%"></div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+              ${type === 'license' ? `<div class="fld" style="margin:0;flex:1 1 160px"><label class="lbl">${t(D.licNo)}</label><input type="text" data-f="label"></div>
+                <div class="fld" style="margin:0;flex:0 1 170px"><label class="lbl">${t(D.expires)}</label><input type="text" data-f="expires_on" placeholder="YYYY-MM-DD" onfocus="this.type='date'"></div>`
+              : `<div class="fld" style="margin:0;flex:0 1 170px"><label class="lbl">${t(type === 'msa' ? D.signed : D.dated)}</label><input type="text" data-f="doc_date" placeholder="YYYY-MM-DD" onfocus="this.type='date'"></div>`}
+              <button type="button" class="btn btn-green" data-act="up">${t(D.upload)}</button>
+            </div>
+            <div class="ed-err" data-f="err"></div>
+          </div>`;
+        const draw = () => {
+          ed.innerHTML = `
+            <div class="ed-title">${esc(r.name || r.code)} <span class="mono" style="font-size:.9rem;color:var(--muted)">CID ${esc(r.code)}</span></div>
+            <div class="hint" style="margin:-8px 0 14px">${t(D.private)}</div>
+            ${DOC_TYPES.map((type) => {
+              const list = docsFor(r.id, type);
+              return `<div style="margin-bottom:18px">
+                <div class="lbl" style="font-size:.75rem;color:var(--text)">${t(D[type])}</div>
+                ${list.length ? list.map(docLine).join('') : `<div class="hint" style="color:${type === 'license' ? 'var(--muted)' : 'var(--gold)'}">${t(D.none)}</div>`}
+                ${uploadForm(type)}
+              </div>`;
+            }).join('')}
+            <div class="ed-actions"><button type="button" class="btn" id="d-close">${t(D.close)}</button></div>`;
+          ed.querySelector('#d-close').onclick = close;
+          ed.querySelectorAll('[data-get]').forEach((a) => { a.onclick = (e) => { e.preventDefault(); getDoc(a.dataset.get); }; });
+          ed.querySelectorAll('[data-rm]').forEach((b) => { b.onclick = () => removeDoc(b); });
+          ed.querySelectorAll('[data-act=up]').forEach((b) => { b.onclick = () => upload(b); });
+        };
+        const close = () => { bg.classList.remove('on'); document.body.style.overflow = ''; render(); };
+        bg.onclick = (e) => { if (e.target === bg) close(); };
+
+        async function getDoc(id) {
+          // Open the tab now, while it still counts as the click — a popup
+          // opened after the await would be blocked.
+          const win = window.open('', '_blank');
+          try {
+            const j = await callFn('customer-docs', { action: 'download_url', id });
+            if (win) win.location = j.url; else location.href = j.url;
+          } catch (e) { if (win) win.close(); alert(e.message); }
+        }
+        async function removeDoc(btn) {
+          if (!confirm(t(D.delDoc))) return;
+          btn.disabled = true;
+          try { await callFn('customer-docs', { action: 'delete', id: btn.dataset.rm }); await loadDocs(); draw(); }
+          catch (e) { alert(e.message); btn.disabled = false; }
+        }
+        async function upload(btn) {
+          const box = btn.closest('[data-up]'), type = box.dataset.up;
+          const get = (f) => box.querySelector(`[data-f=${f}]`);
+          const err = get('err'); err.style.display = 'none';
+          const showErr = (m) => { err.textContent = m; err.style.display = 'block'; };
+          const file = get('file').files[0];
+          if (!file) return showErr(t(D.pickFile));
+          // Windows often gives HEIC/PDF files an empty type — go by extension.
+          const ext = (file.name.split('.').pop() || '').toLowerCase();
+          const contentType = MIME_BY_EXT[ext] || file.type;
+          if (!Object.values(MIME_BY_EXT).includes(contentType)) return showErr(t(D.badType));
+          if (file.size > 25 * 1024 * 1024) return showErr(t(D.tooBig));
+          btn.disabled = true; btn.textContent = t(D.uploading);
+          try {
+            const u = await callFn('customer-docs', { action: 'upload_url', ref_code_id: r.id, doc_type: type, file_name: file.name, content_type: contentType, size_bytes: file.size });
+            const { error } = await client.storage.from(u.bucket).uploadToSignedUrl(u.path, u.token, file, { contentType });
+            if (error) throw error;
+            await callFn('customer-docs', { action: 'save', doc: {
+              ref_code_id: r.id, doc_type: type, storage_path: u.path, file_name: file.name, content_type: contentType, size_bytes: file.size,
+              label: get('label') ? get('label').value : '', doc_date: get('doc_date') ? get('doc_date').value : '', expires_on: get('expires_on') ? get('expires_on').value : ''
+            } });
+            await loadDocs(); draw();
+          } catch (e) {
+            showErr(`${t(C.couldNot)} ${e.message}`);
+            btn.disabled = false; btn.textContent = t(D.upload);
+          }
+        }
+        draw();
+        bg.classList.add('on');
+        document.body.style.overflow = 'hidden';
+      }
+
       function render() {
         const ro = (r) => `
           <tr class="${r.active ? '' : 'dim'}">
             <td class="nm mono">${esc(r.code)}</td><td>${esc(r.name) || '—'}</td><td class="small">${esc(r.notes) || '—'}</td>
-            <td>${r.active ? `<span class="pill ok">${t(C.active)}</span>` : `<span class="pill off">—</span>`}</td>
+            <td>${r.active ? `<span class="pill ok">${t(C.active)}</span>` : `<span class="pill off">—</span>`}</td>${docsOn ? docCell(r) : ''}
           </tr>`;
         const rw = (r) => `
           <tr data-id="${r ? r.id : ''}" class="${r ? (r.active ? '' : 'dim') : 'new'}">
             <td><input type="text" data-f="code" value="${esc(r ? r.code : '')}" placeholder="${r ? '' : esc(t(K.code))}"></td>
             <td><input type="text" data-f="name" value="${esc(r ? r.name || '' : '')}" placeholder="${r ? '' : esc(t(K.name))}"></td>
             <td><textarea data-f="notes" rows="1" placeholder="${r ? '' : esc(t(C.notes))}">${esc(r ? r.notes || '' : '')}</textarea></td>
-            <td style="text-align:center"><input type="checkbox" data-f="active" ${!r || r.active ? 'checked' : ''}></td>
+            <td style="text-align:center"><input type="checkbox" data-f="active" ${!r || r.active ? 'checked' : ''}></td>${docsOn ? (r ? docCell(r) : '<td></td>') : ''}
             <td><div class="row-btns">
               <button type="button" class="mini" data-act="save">${r ? t(C.save) : t(C.add)}</button>
               ${r ? `<button type="button" class="mini del" data-act="del">${t(C.del)}</button>` : ''}
@@ -579,9 +734,11 @@
           ${canEdit && seen.length ? `<div class="note warn" style="margin-bottom:0">${t(L.seen)}</div><div class="chips">${seen.map((v) => `<button type="button" class="mini" data-seen="${esc(v)}">+ ${esc(v)}</button>`).join('')}</div>` : ''}
           ${!rows.length && !canEdit ? `<div class="empty">${t(L.empty)}</div>` : `
           <div class="tbl-wrap"><table class="lib">
-            <thead><tr><th>${t(K.code)}</th><th>${t(K.name)}</th><th>${t(C.notes)}</th><th>${t(C.active)}</th>${canEdit ? '<th></th>' : ''}</tr></thead>
+            <thead><tr><th>${t(K.code)}</th><th>${t(K.name)}</th><th>${t(C.notes)}</th><th>${t(C.active)}</th>${docsOn ? `<th>${t(D.docs)}</th>` : ''}${canEdit ? '<th></th>' : ''}</tr></thead>
             <tbody>${canEdit ? rows.map(rw).join('') + rw(null) : rows.map(ro).join('')}</tbody>
           </table></div>`}`;
+        if (docsErr) el.querySelector('.note').insertAdjacentHTML('afterend', `<div class="note warn">${esc(docsErr)}</div>`);
+        el.querySelectorAll('[data-docs]').forEach((b) => { b.onclick = () => openDocs(rows.find((r) => r.id === b.dataset.docs)); });
         if (!canEdit) return;
         el.querySelectorAll('[data-seen]').forEach((b) => {
           b.onclick = () => {
@@ -613,7 +770,7 @@
       async function del(btn) {
         if (!confirm(t(L.confirmDel))) return;
         const { error } = await client.from('ref_codes').delete().eq('id', btn.closest('tr').dataset.id);
-        if (error) { alert(error.message); return; }
+        if (error) { alert(/foreign key|customer_documents/i.test(error.message) ? t(D.hasDocs) : error.message); return; }
         await load(); render();
       }
       render();
