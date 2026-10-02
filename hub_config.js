@@ -249,6 +249,51 @@ const CARD_DEFS = [
   // natively, so a separate flat "station picker" card would just duplicate it.
 ];
 
+// ── SPANISH HUB TEXT ──────────────────────────────────────
+// The hub's EN/ES toggle (index.html) swaps card titles/descriptions, the
+// small dept labels, and folder names from these maps. CARD_DEFS above stays
+// the English source of truth (admin.html reads it); a card missing here just
+// shows in English. Station cards already carry {en, es} in
+// operations_stations.js and don't need entries.
+const CARD_ES = {
+  kss_dashboard:       { title: 'Clasificación KSS', desc: 'Rendimiento de cuentas KSS, cobertura de territorio y actividad de ventas en toda la red de distribución.' },
+  twocw_dashboard:     { title: 'Clasificación de Ventas', desc: 'Rendimiento por vendedor, estado de cuentas, oportunidades de venta adicional y cobertura en todas las cuentas de 2CW.' },
+  pipeline:            { title: 'Producción en Curso', desc: 'Vista en vivo de lo que está en producción — por etapa, marca y cepa. Actualizado desde la hoja de producción.' },
+  inventory:           { title: 'Inventario y Producción', desc: 'Niveles de inventario actuales, días de suministro y recomendaciones de producción por grupo de producto.' },
+  canix_inventory:     { title: 'Inventario Canix', desc: 'Inventario en vivo de cultivo/manufactura/distribución en las 16 licencias de Canix, por granja y etapa.' },
+  sales:               { title: 'Panel de Ventas', desc: 'Ingresos mensuales por marca, ritmo y tendencia del mes, mezcla de productos y análisis de 12 meses.' },
+  mendo:               { title: 'Panel de Mendo', desc: 'Ventas, inventario y producción de la marca Mendo — vista dedicada para el socio.' },
+  executive:           { title: 'Panel Ejecutivo', desc: 'Ritmo de ventas, salud del inventario y clasificación de vendedores — la vista de una página para la dirección.' },
+  field_forms:         { title: 'Formularios de Campo', desc: 'Registra capacitaciones de budtenders, reuniones con compradores, muestras al personal y visitas a tiendas.' },
+  menu_health:         { title: 'Salud del Menú', desc: 'Puntajes de mezcla, frescura y volumen de T-SKU a B-SKU a Marca — con la tendencia en el tiempo.' },
+  production_requests: { title: 'Solicitudes de Producción', desc: 'Solicitudes semanales de producción y espacios de abastecimiento para Howie Roll, Soma Rosa Farms y Mendo — solo lectura, sincronizado cada hora.' },
+  preroll_dashboard:   { title: 'Panel de Pre-Rolls', desc: 'Solicitudes de producción de pre-rolls — asigna la cepa, programa fechas de inicio y fin, y ve el avance de cada lote.' },
+  menu:                { title: 'Menú', desc: 'El menú de esta semana de Howie Roll, Soma Rosa y Mendo — cambia entre NorCal (Alameda) y SoCal (Van Nuys) para ver qué hay en cada almacén.' },
+  production_dashboard:{ title: 'Panel de Procesamiento', desc: 'Dónde está cada lote, rendimiento y merma por etapa y cepa, biomasa disponible y producción de los trimmers.' },
+  drying_schedule:     { title: 'Calendario de Secado', desc: 'Granjas externas para las que secamos — granja, licencia, tamaño, fechas estimadas de entrada y peso húmedo, con la carga semanal.' },
+  production_today:    { title: 'Hoy — En Vivo', desc: 'Cada formulario en progreso o terminado hoy, actualizado en vivo — para quien tenga acceso de vista, pueda editarlo o no.' },
+  brand_assets:        { title: 'Recursos de Marca', desc: 'Logotipos, fotografía y guías de marca de 2CW y marcas socias — carpeta compartida de Drive.' },
+  staff_hours:         { title: 'Horas del Personal', desc: 'Quién está marcado en este momento, horas diarias/semanales y cumplimiento del horario — sincronizado cada hora desde Connecteam.' },
+  tasks_dashboard:     { title: 'Plan de Operaciones', desc: 'El plan 30/60/90 del VP de Operaciones como tareas y subtareas editables — estado, responsables, fechas y carga de CSV.' },
+  task_oversight:      { title: 'Actividad de Tareas (Todo el Personal)', desc: 'Todas las tareas asignadas en el equipo — quién tiene qué, estado, vencidas y cuánto tardan en cerrarse.' },
+  my_responsibilities: { title: 'Mis Responsabilidades', desc: 'Lo que te toca a ti o lo que respaldas, en vivo desde la Matriz de Responsabilidades.' },
+  my_tasks:            { title: 'Mis Tareas', desc: 'Tareas asignadas a ti y las que tú asignaste — estados, notas y fechas. Además tu descripción de puesto y responsabilidades.' },
+  commission_mine:     { title: 'Mis Comisiones', desc: 'Tu reporte de comisiones — selecciona las cuentas que trabajaste para generar el resumen de tu periodo de pago.' },
+  commission_all:      { title: 'Comisiones', desc: 'Reportes de comisiones de todos los vendedores. Selecciona vendedor y periodo para generar el resumen.' }
+};
+
+// Small dept labels on cards, and folder names, English → Spanish.
+const HUB_WORDS_ES = {
+  'Sales': 'Ventas',
+  'Partners': 'Socios',
+  'Operations': 'Operaciones',
+  'Executive': 'Ejecutivo',
+  'Cultivation': 'Cultivo',
+  'Processing': 'Procesamiento',
+  'Manufacturing': 'Manufactura',
+  'Folder': 'Carpeta'
+};
+
 // Per-user override: force a specific card order on the hub screen for
 // that person (matched against the "user" column, case-insensitive).
 // Cards the user doesn't have access to are skipped automatically;

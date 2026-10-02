@@ -57,6 +57,16 @@
     .hub-topbar-actions{display:flex;align-items:center;gap:.6rem}
     .logout-btn{font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;background:transparent;border:1px solid var(--border);color:var(--muted);padding:.3rem .75rem;border-radius:6px;cursor:pointer;transition:all .2s}
     .logout-btn:hover{border-color:var(--red);color:var(--red)}
+    .lang{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden}
+    .lang button{background:transparent;border:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:.68rem;font-weight:600;letter-spacing:.1em;padding:.3rem .6rem;cursor:pointer}
+    .lang button.on{background:var(--green);color:#000}
+    @media (max-width:480px){
+      .hub-topbar{padding-left:1rem;padding-right:1rem}
+      .hub-topbar-actions{gap:.35rem}
+      .hub-topbar-actions .logout-btn{padding:.3rem .5rem;letter-spacing:.05em}
+      .lang button{padding:.3rem .45rem}
+    }
+    .login-lang{position:absolute;top:calc(1rem + env(safe-area-inset-top));right:1.25rem}
     #customize-btn.active{border-color:var(--green);color:var(--green)}
 
     /* ── CUSTOMIZE MODE ── */
@@ -139,11 +149,12 @@
 
 <!-- ── LOGIN SCREEN ── -->
 <div id="login-screen">
+  <div class="lang login-lang" id="login-lang"></div>
   <div class="login-wordmark">2CW Productions</div>
-  <div class="login-sub">Internal Dashboard Suite</div>
+  <div class="login-sub" data-i18n="suite">Internal Dashboard Suite</div>
   <div class="login-card">
-    <div class="login-title">Enter your PIN</div>
-    <div class="login-hint">Your dashboard will load based on your access level.</div>
+    <div class="login-title" data-i18n="enterPin">Enter your PIN</div>
+    <div class="login-hint" data-i18n="loginHint">Your dashboard will load based on your access level.</div>
     <label class="form-label">PIN</label>
     <div class="pin-wrap">
       <input class="pin-input" id="pin-input" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="····"/>
@@ -154,9 +165,9 @@
         <div class="pin-dot" id="dot3"></div>
       </div>
     </div>
-    <button class="login-btn" onclick="doLogin()">Access Dashboard</button>
+    <button class="login-btn" onclick="doLogin()" data-i18n="access">Access Dashboard</button>
     <div class="login-err" id="login-err"></div>
-    <div class="loading-msg" id="loading-msg" style="display:none">Loading directory…</div>
+    <div class="loading-msg" id="loading-msg" style="display:none" data-i18n="loadingDir">Loading directory…</div>
   </div>
 </div>
 
@@ -165,27 +176,28 @@
   <div class="hub-topbar">
     <div class="hub-user"><div class="user-dot"></div><span id="user-label">—</span></div>
     <div class="hub-topbar-actions">
+      <div class="lang" id="hub-lang"></div>
       <button class="logout-btn" id="customize-btn" onclick="toggleCustomize()">Customize</button>
-      <a class="logout-btn" href="/admin.html" style="text-decoration:none;display:inline-block">Admin</a>
-      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+      <a class="logout-btn" href="/admin.html" style="text-decoration:none;display:inline-block" data-i18n="admin">Admin</a>
+      <button class="logout-btn" onclick="doLogout()" data-i18n="signOut">Sign Out</button>
     </div>
   </div>
   <div class="header">
     <div class="wordmark">2CW Productions</div>
-    <div class="tagline">Internal Dashboard Suite</div>
+    <div class="tagline" data-i18n="suite">Internal Dashboard Suite</div>
   </div>
 
   <div class="customize-toolbar hidden" id="customize-toolbar">
-    <div class="customize-hint">Drag nothing — use ▲▼ to reorder, 🙈 to hide. Changes only apply to dashboards you already have access to.</div>
+    <div class="customize-hint" data-i18n="customizeHint">Drag nothing — use ▲▼ to reorder, 🙈 to hide. Changes only apply to dashboards you already have access to.</div>
     <div class="customize-actions">
-      <button class="btn-reset" onclick="resetCustomize()">Reset to Default</button>
-      <button class="btn-cancel" onclick="cancelCustomize()">Cancel</button>
-      <button class="btn-save" onclick="saveCustomize()" id="customize-save-btn">Save</button>
+      <button class="btn-reset" onclick="resetCustomize()" data-i18n="reset">Reset to Default</button>
+      <button class="btn-cancel" onclick="cancelCustomize()" data-i18n="cancel">Cancel</button>
+      <button class="btn-save" onclick="saveCustomize()" id="customize-save-btn" data-i18n="save">Save</button>
     </div>
   </div>
 
   <div class="crumb-bar hidden" id="crumb-bar">
-    <button class="crumb-back" id="crumb-back-btn" onclick="goBack()">← Back</button>
+    <button class="crumb-back" id="crumb-back-btn" onclick="goBack()" data-i18n="back">← Back</button>
     <div class="crumb-trail" id="crumb-trail"></div>
   </div>
 
@@ -193,7 +205,7 @@
   <div class="empty" id="hub-empty" style="display:none;text-align:center;color:var(--subtext);padding:40px 0;max-width:520px"></div>
 
   <div class="hidden-panel hidden" id="hidden-panel">
-    <div class="hidden-panel-label">Hidden — click to restore</div>
+    <div class="hidden-panel-label" data-i18n="hiddenLabel">Hidden — click to restore</div>
     <div class="hidden-chip-row" id="hidden-chip-row"></div>
   </div>
 
@@ -210,6 +222,61 @@
 // DIRECTORY_URL, CARD_DEFS, CARD_ORDER_OVERRIDES, CARD_SHEET_COLS,
 // COMMISSION_COLS, COMMISSION_REP_MAP, FORM_ACCESS_COLS, and parseCSV()
 // now live in hub_config.js, shared with admin.html.
+
+// ── LANGUAGE (EN/ES) ─────────────────────────────────────
+// Same '2cw_lang' setting the station forms use (getLang/setLang in
+// ops_common.js), so choosing Spanish here carries into every form and back.
+// Switching reloads the page; the saved PIN auto-logs back in to the same
+// folder. Card/folder Spanish lives in hub_config.js (CARD_ES, HUB_WORDS_ES).
+const HUB_ES = getLang() === 'es';
+const UI_ES = {
+  suite: 'Suite de Paneles Internos',
+  enterPin: 'Ingresa tu PIN',
+  loginHint: 'Tu panel se cargará según tu nivel de acceso.',
+  access: 'Entrar al Panel',
+  loadingDir: 'Cargando directorio…',
+  admin: 'Admin',
+  signOut: 'Salir',
+  customize: 'Personalizar',
+  editing: 'Editando…',
+  customizeHint: 'Usa ▲▼ para reordenar y 🙈 para ocultar. Los cambios solo aplican a los paneles a los que ya tienes acceso.',
+  reset: 'Restablecer',
+  cancel: 'Cancelar',
+  save: 'Guardar',
+  saving: 'Guardando…',
+  back: '← Atrás',
+  hiddenLabel: 'Ocultos — toca para restaurar',
+  show: 'Mostrar',
+  nothingHere: 'Aún no hay nada aquí.',
+  live: '● En vivo',
+  pinShort: 'Ingresa tu PIN de 4 dígitos.',
+  pinWrong: 'PIN incorrecto. Inténtalo de nuevo.',
+  noDirectory: 'No se pudo cargar el directorio. Revisa tu conexión.'
+};
+const UI_EN = {
+  customize: 'Customize', editing: 'Editing…', save: 'Save', saving: 'Saving…',
+  show: 'Show', nothingHere: 'Nothing here yet.', live: '● Live',
+  pinShort: 'Please enter your 4-digit PIN.',
+  pinWrong: 'Incorrect PIN. Please try again.',
+  noDirectory: 'Could not load directory. Please check your connection.'
+};
+function ui(k){ return (HUB_ES && UI_ES[k]) || UI_EN[k] || ''; }
+function hubWord(en){ return (HUB_ES && HUB_WORDS_ES[en]) || en; }
+// Spanish title/desc for a hub card, keyed by card key (falls back to English).
+function cardText(key, def){
+  const es = HUB_ES && CARD_ES[key];
+  return { title: (es && es.title) || def.title, desc: (es && es.desc) || def.desc };
+}
+function applyStaticLang(){
+  mountLangToggle('login-lang');
+  mountLangToggle('hub-lang');
+  if(!HUB_ES) return;
+  document.querySelectorAll('[data-i18n]').forEach((el) => {
+    const s = UI_ES[el.dataset.i18n];
+    if(s) el.textContent = s;
+  });
+}
+applyStaticLang();
 
 // ── STATE ────────────────────────────────────────────────
 let directory = null; // loaded from CSV
@@ -316,7 +383,7 @@ async function doLogin(){
 
   if(pin.length < 4){
     err.style.display = 'block';
-    err.textContent = 'Please enter your 4-digit PIN.';
+    err.textContent = ui('pinShort');
     return;
   }
 
@@ -334,7 +401,7 @@ async function doLogin(){
 
   if(!directory){
     err.style.display = 'block';
-    err.textContent = 'Could not load directory. Please check your connection.';
+    err.textContent = ui('noDirectory');
     return;
   }
 
@@ -342,7 +409,7 @@ async function doLogin(){
   const user = directory.find(u => String(u.pin).padStart(4,'0') === String(pin).padStart(4,'0'));
   if(!user){
     err.style.display = 'block';
-    err.textContent = 'Incorrect PIN. Please try again.';
+    err.textContent = ui('pinWrong');
     document.getElementById('pin-input').value = '';
     for(let i = 0; i < 4; i++) document.getElementById('dot'+i).classList.remove('filled');
     document.getElementById('pin-input').focus();
@@ -422,10 +489,10 @@ async function buildHub(user){
   const commTrue = COMMISSION_COLS.filter(col => (user[col] || '').toUpperCase() === 'TRUE');
   if(commTrue.length === 1){
     const repKey = COMMISSION_REP_MAP[commTrue[0]];
-    defsByKey.commission = commCardDef('My Commissions', `/commission.html?rep=${repKey}`);
+    defsByKey.commission = commCardDef('My Commissions', `/commission.html?rep=${repKey}`, 'commission_mine');
     defaultOrder.push('commission');
   } else if(commTrue.length > 1){
-    defsByKey.commission = commCardDef('Commissions', '/commission.html?rep=niki');
+    defsByKey.commission = commCardDef('Commissions', '/commission.html?rep=niki', 'commission_all');
     defaultOrder.push('commission');
   }
 
@@ -460,9 +527,9 @@ async function buildHub(user){
   hub.classList.add('visible');
 }
 
-function commCardDef(title, href){
+function commCardDef(title, href, esKey){
   return {
-    key: 'commission', color: 'purple', label: 'Sales', dept: 'sales', title, href,
+    key: 'commission', esKey, color: 'purple', label: 'Sales', dept: 'sales', title, href,
     desc: title === 'My Commissions'
       ? 'Your commission report — select the accounts you worked to generate your pay period summary.'
       : 'Commission reports for all reps. Select rep and period to generate full summary.'
@@ -486,7 +553,8 @@ async function buildTree(){
   hubState.defaultOrder.forEach((key) => {
     const def = hubState.defsByKey[key];
     if(!def) return;
-    const leaf = { type:'leaf', key, color:def.color, label:def.label, title:def.title, desc:def.desc, href:def.href, external:def.external, ambient:def.ambient };
+    const { title, desc } = cardText(def.esKey || key, def);
+    const leaf = { type:'leaf', key, color:def.color, label:hubWord(def.label), title, desc, href:def.href, external:def.external, ambient:def.ambient };
     if(def.pinned){ pinnedLeaves.push(leaf); return; }
     if(def.dept === 'sales') salesChildren.push(leaf);
     else if(def.dept === 'partners') partnersChildren.push(leaf);
@@ -532,16 +600,16 @@ async function buildTree(){
 
   const operationsChildren = [
     ...opsDirect,
-    mkFolder('cultivation', 'Cultivation', 'green', cultChildren),
-    mkFolder('processing', 'Processing', 'gold', procChildren),
-    mkFolder('manufacturing', 'Manufacturing', 'purple', mfgChildren)
+    mkFolder('cultivation', hubWord('Cultivation'), 'green', cultChildren),
+    mkFolder('processing', hubWord('Processing'), 'gold', procChildren),
+    mkFolder('manufacturing', hubWord('Manufacturing'), 'purple', mfgChildren)
   ].filter(Boolean);
 
   const rootChildren = [
     ...pinnedLeaves,
-    mkFolder('sales', 'Sales', 'green', salesChildren),
-    mkFolder('partners', 'Partners', 'mendo', partnersChildren),
-    mkFolder('operations', 'Operations', 'blue', operationsChildren)
+    mkFolder('sales', hubWord('Sales'), 'green', salesChildren),
+    mkFolder('partners', hubWord('Partners'), 'mendo', partnersChildren),
+    mkFolder('operations', hubWord('Operations'), 'blue', operationsChildren)
   ].filter(Boolean);
 
   return { type:'folder', key:'root', title:'2CW Productions', children:rootChildren };
@@ -666,7 +734,7 @@ function renderFolder(folder){
   emptyEl.style.display = 'none';
 
   customizeBtn.classList.toggle('active', customizeMode);
-  customizeBtn.textContent = customizeMode ? 'Editing…' : 'Customize';
+  customizeBtn.textContent = ui(customizeMode ? 'editing' : 'customize');
 
   if(backStack.length){
     crumbBar.classList.remove('hidden');
@@ -681,7 +749,7 @@ function renderFolder(folder){
     toolbar.classList.add('hidden');
     hiddenPanel.classList.add('hidden');
     emptyEl.style.display = 'block';
-    emptyEl.textContent = 'Nothing here yet.';
+    emptyEl.textContent = ui('nothingHere');
     return;
   }
 
@@ -714,12 +782,17 @@ function renderFolder(folder){
     chipRow.innerHTML = hiddenNsKeys.map((k) => {
       const child = childByNsKey(k);
       if(!child) return '';
-      return `<div class="hidden-chip"><span>${escHtml(child.title)}</span><button onclick="showCard('${k}')">Show</button></div>`;
+      return `<div class="hidden-chip"><span>${escHtml(child.title)}</span><button onclick="showCard('${k}')">${ui('show')}</button></div>`;
     }).join('');
   } else {
     hiddenPanel.classList.add('hidden');
     chipRow.innerHTML = '';
   }
+}
+
+function todayText(n){
+  if(HUB_ES) return n === 0 ? 'Sin registros hoy' : n === 1 ? '1 registro hoy' : n + ' registros hoy';
+  return n === 0 ? 'No entries today' : n === 1 ? '1 entry today' : n + ' entries today';
 }
 
 function makeLeafCard(child, idx){
@@ -731,14 +804,14 @@ function makeLeafCard(child, idx){
   if(child.external){ a.target = '_blank'; a.rel = 'noopener'; }
   a.style.animationDelay = delays[idx] || '.08s';
   const todayHtml = child.today !== undefined
-    ? `<div class="card-today">${child.today === 0 ? 'No entries today' : child.today === 1 ? '1 entry today' : child.today + ' entries today'}</div>` : '';
+    ? `<div class="card-today">${todayText(child.today)}</div>` : '';
   a.innerHTML = `
     <div class="card-dot"></div>
     <div class="card-label">${escHtml(child.label || '')}</div>
     <div class="card-title">${escHtml(child.title)}</div>
     <div class="card-desc">${escHtml(child.desc || '')}</div>
     ${todayHtml}
-    <span class="card-badge ${badgeClass}">● Live</span>
+    <span class="card-badge ${badgeClass}">${ui('live')}</span>
   `;
   if(child.drafts && child.drafts.length){
     const wrap = document.createElement('div');
@@ -761,7 +834,7 @@ function makeFolderCard(child, idx){
     <div class="card-dot"></div>
     <div class="card-title">${escHtml(child.title)}</div>
     <div class="card-desc">${escHtml(child.desc || '')}</div>
-    <span class="card-badge badge-folder">→ ${n} ${n===1?'item':'items'}</span>
+    <span class="card-badge badge-folder">→ ${n} ${HUB_ES ? (n===1?'elemento':'elementos') : (n===1?'item':'items')}</span>
   `;
   return div;
 }
@@ -775,7 +848,7 @@ function makeCustomizeCard(child, nsKeyStr, idx, isFirst, isLast){
       <button ${isLast?'disabled':''} onclick="moveCard('${nsKeyStr}',1)" title="Move down">▼</button>
       <button class="hide-btn" onclick="hideCard('${nsKeyStr}')" title="Hide">🙈</button>
     </div>
-    <div class="card-label">${escHtml(child.label || (child.type==='folder' ? 'Folder' : ''))}</div>
+    <div class="card-label">${escHtml(child.label || (child.type==='folder' ? hubWord('Folder') : ''))}</div>
     <div class="card-title">${escHtml(child.title)}</div>
     <div class="card-desc">${escHtml(child.desc || '')}</div>
   `;
@@ -836,7 +909,7 @@ function showCard(nsKeyStr){
 
 async function saveCustomize(){
   const btn = document.getElementById('customize-save-btn');
-  btn.disabled = true; btn.textContent = 'Saving…';
+  btn.disabled = true; btn.textContent = ui('saving');
   try{
     const res = await fetch(PREFS_ENDPOINT, {
       method: 'POST',
@@ -851,7 +924,7 @@ async function saveCustomize(){
     renderFolder(currentFolder);
   }catch(err){
     alert('Could not save your dashboard layout: ' + err.message);
-    btn.disabled = false; btn.textContent = 'Save';
+    btn.disabled = false; btn.textContent = ui('save');
   }
 }
 
