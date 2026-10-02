@@ -607,6 +607,18 @@ function openEditor(id) {
       <div class="fld"><label class="lbl" for="e-cemail">Email</label>${inp('e-cemail', r.contact_email, 'type="email"')}</div>
     </div>
 
+    <div class="sect">Business &amp; Service Agreement</div>
+    <div class="row2">
+      <div class="fld"><label class="lbl" for="e-legal">Legal business name</label>${inp('e-legal', r.legal_business_name)}</div>
+      <div class="fld"><label class="lbl" for="e-state">State incorporated</label>${inp('e-state', r.state_incorporated, 'maxlength="2" autocapitalize="characters" placeholder="e.g. CA"')}</div>
+    </div>
+    <div class="row3">
+      <div class="fld"><label class="lbl" for="e-sfirst">Signer first name</label>${inp('e-sfirst', r.signer_first_name)}</div>
+      <div class="fld"><label class="lbl" for="e-slast">Signer last name</label>${inp('e-slast', r.signer_last_name)}</div>
+      <div class="fld"><label class="lbl" for="e-semail">Signer email</label>${inp('e-semail', r.signer_email, 'type="email"')}</div>
+    </div>
+    ${id ? '<div class="fld" id="e-docs"></div>' : ''}
+
     <div class="sect">Harvest dates</div>
     <div class="win-hd win-row" style="margin-bottom:4px"><span>Start</span><span>Days</span><span>Wet lbs (opt.)</span><span></span><span></span></div>
     <div class="wins" id="e-harv">${harv.map((h) => winRowHtml('h', h)).join('')}</div>
@@ -656,7 +668,45 @@ function openEditor(id) {
       toggleSupport();
     });
   }
+  if (id) loadRequestDocs(id);
   setTimeout(() => document.getElementById('e-farm').focus(), 30);
+}
+
+// The cultivation license / W-9 a client attached on the request form. They
+// are in a private bucket, so this goes through customer-docs.js, which
+// checks the user's 'customer documents' access.
+const DOC_LABELS = { license: 'Cultivation license', w9: 'W-9' };
+async function callDocs(body) {
+  const res = await fetch('/.netlify/functions/customer-docs', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...body, pin: sessionStorage.getItem('2cw_pin') })
+  });
+  let j; try { j = await res.json(); } catch { j = { ok: false, error: `HTTP ${res.status}` }; }
+  if (!res.ok || !j.ok) throw new Error(j.error || `HTTP ${res.status}`);
+  return j;
+}
+async function loadRequestDocs(id) {
+  const box = () => (editingId === id ? document.getElementById('e-docs') : null);
+  let html;
+  try {
+    const { docs } = await callDocs({ action: 'request_docs', intake_id: id });
+    html = docs.length
+      ? docs.map((d) => `<div style="margin-bottom:4px">${esc(DOC_LABELS[d.doc_type] || d.doc_type)}: <a href="#" onclick="openRequestDoc('${d.id}');return false">${esc(d.file_name)}</a></div>`).join('')
+      : '';
+  } catch (e) {
+    html = `<div class="hint">Couldn’t load the attached documents: ${esc(e.message)}</div>`;
+  }
+  const el = box();
+  if (el) el.innerHTML = html ? `<label class="lbl">Documents from the request form</label>${html}` : '';
+}
+async function openRequestDoc(docId) {
+  // Open the tab now, while it still counts as the click — a popup opened
+  // after the await would be blocked.
+  const win = window.open('', '_blank');
+  try {
+    const j = await callDocs({ action: 'request_doc_url', id: docId });
+    if (win) win.location = j.url; else location.href = j.url;
+  } catch (e) { if (win) win.close(); alert(e.message); }
 }
 
 function closeEditor() {
@@ -709,6 +759,11 @@ async function saveEditor() {
     contact_name: val('e-cname') || null,
     contact_phone: val('e-cphone') || null,
     contact_email: val('e-cemail') || null,
+    legal_business_name: val('e-legal') || null,
+    state_incorporated: val('e-state').toUpperCase() || null,
+    signer_first_name: val('e-sfirst') || null,
+    signer_last_name: val('e-slast') || null,
+    signer_email: val('e-semail').toLowerCase() || null,
     harvests,
     services,
     farm_support: support,

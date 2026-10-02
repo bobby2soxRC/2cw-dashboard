@@ -81,6 +81,10 @@
         <div class="fld"><label class="lbl" for="farm_name">Farm name <b>*</b></label><input id="farm_name" autocomplete="organization" required/></div>
         <div class="fld"><label class="lbl" for="license_number">License # <b>*</b></label><input id="license_number" autocapitalize="characters" placeholder="e.g. CCL21-0001234" required/></div>
       </div>
+      <div class="row2">
+        <div class="fld"><label class="lbl" for="legal_business_name">Legal business name <b>*</b></label><input id="legal_business_name" autocomplete="organization" placeholder="As it appears on your W-9" required/></div>
+        <div class="fld"><label class="lbl" for="state_incorporated">State incorporated <b>*</b></label><select id="state_incorporated" required></select></div>
+      </div>
       <div class="row3">
         <div class="fld"><label class="lbl" for="contact_name">Contact name <b>*</b></label><input id="contact_name" autocomplete="name" required/></div>
         <div class="fld"><label class="lbl" for="contact_phone">Phone</label><input id="contact_phone" type="tel" autocomplete="tel"/></div>
@@ -92,6 +96,25 @@
           <div style="display:flex;gap:8px"><input id="farm_size" type="number" min="0" step="any" inputmode="decimal" style="flex:1"/>
             <select id="farm_size_unit" style="width:110px"><option>sq ft</option><option>acres</option><option>plants</option></select></div></div>
         <div class="fld"><label class="lbl" for="strains">Strains</label><input id="strains" placeholder="What you'll be bringing, if known"/></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Service Agreement</h2>
+      <div class="sub">The person who will sign the Service Agreement for your business.</div>
+      <div class="row3">
+        <div class="fld"><label class="lbl" for="signer_first_name">First name <b>*</b></label><input id="signer_first_name" autocomplete="off" required/></div>
+        <div class="fld"><label class="lbl" for="signer_last_name">Last name <b>*</b></label><input id="signer_last_name" autocomplete="off" required/></div>
+        <div class="fld"><label class="lbl" for="signer_email">Email <b>*</b></label><input id="signer_email" type="email" autocomplete="off" required/></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Documents</h2>
+      <div class="sub">PDF or a clear photo, up to 25 MB each. These are kept private and only shared with our office.</div>
+      <div class="row2">
+        <div class="fld"><label class="lbl" for="doc_license">Cultivation license <b>*</b></label><input id="doc_license" type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.webp,application/pdf,image/*" required/></div>
+        <div class="fld"><label class="lbl" for="doc_w9">W-9 <b>*</b></label><input id="doc_w9" type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.webp,application/pdf,image/*" required/></div>
       </div>
     </div>
 
@@ -151,13 +174,27 @@
   <footer>2CW Productions, Inc. · (707) 234-5027 · services@2cwproductions.com</footer>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/config/supabase_config.js"></script>
 <script src="/drying_services.js"></script>
 <script>
 // Public client form — no PIN. Submissions go to the drying-request Netlify
 // function, which checks them and adds a 'requested' row to the Drying
-// Schedule for the office to review. This page never touches Supabase.
+// Schedule for the office to review. The only thing this page does with
+// Supabase directly is PUT the license / W-9 to a one-time signed upload URL
+// the function hands out (private bucket); it never reads or writes tables.
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const DAY = 864e5;
+const STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME',
+  'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+  'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'];
+document.getElementById('state_incorporated').innerHTML = '<option value="">Pick a state…</option>' + STATES.map((s) => `<option>${s}</option>`).join('');
+
+// Windows often gives HEIC/PDF files an empty type — go by extension.
+const MIME_BY_EXT = { pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', heic: 'image/heic', heif: 'image/heif', webp: 'image/webp' };
+const DOCS = [{ k: 'license', id: 'doc_license', name: 'your cultivation license' }, { k: 'w9', id: 'doc_w9', name: 'your W-9' }];
+const storage = (typeof supabase !== 'undefined' && typeof SUPABASE_URL !== 'undefined' && SUPABASE_URL) ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY).storage : null;
+const uploaded = {};   // doc type -> { file, path } so a retry doesn't re-upload the same file
 const fmtEnd = (start, days) => {
   const n = Math.round(Number(days));
   if (!start || !(n > 1)) return '';
@@ -221,22 +258,54 @@ document.getElementById('form').addEventListener('submit', async (e) => {
   // Quick checks here for a friendlier message; the function re-checks everything.
   if (!v('farm_name')) return showErr('Please enter your farm name.');
   if (!v('license_number')) return showErr('Please enter your license number.');
+  if (!v('legal_business_name')) return showErr('Please enter your legal business name.');
+  if (!v('state_incorporated')) return showErr('Please pick the state your business is incorporated in.');
   if (!v('contact_name')) return showErr('Please enter a contact name.');
   if (!v('contact_phone') && !v('contact_email')) return showErr('Please enter a phone number or email so we can reach you.');
+  if (!v('signer_first_name') || !v('signer_last_name')) return showErr('Please enter the first and last name of the person signing the Service Agreement.');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v('signer_email'))) return showErr('Please enter a valid email for the person signing the Service Agreement.');
+  for (const d of DOCS) {
+    const file = document.getElementById(d.id).files[0];
+    if (!file) return showErr(`Please attach ${d.name}.`);
+    const type = MIME_BY_EXT[(file.name.split('.').pop() || '').toLowerCase()] || file.type;
+    if (!Object.values(MIME_BY_EXT).includes(type)) return showErr(`Please attach ${d.name} as a PDF or a photo (JPG, PNG, HEIC, WebP).`);
+    if (file.size > 25 * 1024 * 1024) return showErr(`${d.name[0].toUpperCase()}${d.name.slice(1)} is over 25 MB — please attach a smaller file.`);
+  }
   if (!services.length) return showErr('Please pick at least one service.');
   if (harvests.some((h) => !h.start)) return showErr('Each harvest row needs a start date.');
   if (farm_support.some((s) => !s.start)) return showErr('Each farm support row needs a start date.');
   if (farm_support.some((s) => !s.people)) return showErr('Please add how many people you need for each farm support date.');
 
   const btn = document.getElementById('submit');
-  btn.disabled = true; btn.textContent = 'Sending…';
+  btn.disabled = true; btn.textContent = 'Uploading…';
   try {
+    if (!storage) throw new Error('Couldn’t load the file uploader — please refresh the page, or call or email us.');
+    const docs = {};
+    for (const d of DOCS) {
+      const file = document.getElementById(d.id).files[0];
+      if (!uploaded[d.k] || uploaded[d.k].file !== file) {
+        const content_type = MIME_BY_EXT[(file.name.split('.').pop() || '').toLowerCase()] || file.type;
+        const ures = await fetch('/.netlify/functions/drying-request', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'upload_url', doc_type: d.k, file_name: file.name, content_type, size_bytes: file.size })
+        });
+        const u = await ures.json().catch(() => ({}));
+        if (!ures.ok || !u.ok) throw new Error(u.error || 'Couldn’t upload your documents. Please try again, or call or email us.');
+        const { error } = await storage.from(u.bucket).uploadToSignedUrl(u.path, u.token, file, { contentType: content_type });
+        if (error) throw new Error(`Couldn’t upload ${d.name} (${error.message}). Please try again.`);
+        uploaded[d.k] = { file, path: u.path, content_type };
+      }
+      docs[d.k] = { path: uploaded[d.k].path, file_name: file.name, content_type: uploaded[d.k].content_type, size_bytes: file.size };
+    }
+    btn.textContent = 'Sending…';
     const res = await fetch('/.netlify/functions/drying-request', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         farm_name: v('farm_name'), license_number: v('license_number'),
+        legal_business_name: v('legal_business_name'), state_incorporated: v('state_incorporated'),
         contact_name: v('contact_name'), contact_phone: v('contact_phone'), contact_email: v('contact_email'),
+        signer_first_name: v('signer_first_name'), signer_last_name: v('signer_last_name'), signer_email: v('signer_email'), docs,
         farm_size: v('farm_size'), farm_size_unit: v('farm_size_unit'), strains: v('strains'),
         est_wet_lb: v('est_wet_lb'), harvests, services, farm_support, notes: v('notes'),
         website: document.getElementById('website').value

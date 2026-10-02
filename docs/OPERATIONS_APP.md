@@ -182,6 +182,17 @@ totals or the weekly load; a banner on the schedule shows how many are
 waiting, and setting one to Tentative or Confirmed puts it on the schedule.
 If you add a service, add its key to `ALLOWED_SERVICES` in the function too.
 
+The form also requires the legal business name, state incorporated, the
+Service Agreement signer (first/last name, email) — columns on
+`drying_intakes`, editable in the schedule editor — and two attachments: the
+cultivation license and a W-9. Those go to the private `customer-docs` bucket
+under `requests/` (the function hands out a one-time signed upload URL, the
+page uploads straight to Storage, and the submit checks both files are there)
+and are recorded in `drying_request_docs`, which has no anon policy. The
+schedule editor lists them for users with `customer documents` access, via
+`customer-docs.js` (`request_docs` / `request_doc_url`). Uploads are capped at
+100 an hour; files from a form that's never submitted stay in `requests/`.
+
 Each stage pulls its input weight forward from the stage before it: type the
 last 4 of the Metrc tag and bucking fills in the dry weight the post-dry check
 recorded. Every stage totals its own outputs and shows the variance against

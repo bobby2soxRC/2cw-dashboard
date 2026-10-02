@@ -164,6 +164,29 @@ exports.handler = async (event) => {
       return json(200, { ok: true, url: `${supaUrl}/storage/v1${signedURL}${dl}` });
     }
 
+    // The cultivation license / W-9 a client attached on the public drying
+    // request form (drying_request.html -> drying-request.js), shown on the
+    // Drying Schedule. Read-only here; same view permission as above.
+    if (action === 'request_docs') {
+      if (!UUID_RE.test(String(payload.intake_id || ''))) return json(400, { ok: false, error: 'Missing request' });
+      const res = await supa(supaUrl, serviceKey, `/rest/v1/drying_request_docs?intake_id=eq.${payload.intake_id}&select=id,doc_type,file_name,size_bytes,created_at&order=doc_type.asc,created_at.desc`);
+      if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+      return json(200, { ok: true, docs: await res.json() });
+    }
+
+    if (action === 'request_doc_url') {
+      if (!UUID_RE.test(String(payload.id || ''))) return json(400, { ok: false, error: 'Missing id' });
+      const r = await supa(supaUrl, serviceKey, `/rest/v1/drying_request_docs?id=eq.${payload.id}&select=storage_path,file_name`);
+      const doc = r.ok ? (await r.json())[0] : null;
+      if (!doc) return json(404, { ok: false, error: 'Document not found' });
+      const res = await supa(supaUrl, serviceKey, `/storage/v1/object/sign/${BUCKET}/${doc.storage_path}`, {
+        method: 'POST', body: JSON.stringify({ expiresIn: 120 })
+      });
+      if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+      const { signedURL } = await res.json();
+      return json(200, { ok: true, url: `${supaUrl}/storage/v1${signedURL}` });
+    }
+
     if (action === 'delete') {
       if (!UUID_RE.test(String(payload.id || ''))) return json(400, { ok: false, error: 'Missing id' });
       const r = await supa(supaUrl, serviceKey, `/rest/v1/customer_documents?id=eq.${payload.id}&select=storage_path`);

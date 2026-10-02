@@ -814,6 +814,36 @@ update drying_intakes
          'days',  greatest(1, coalesce(est_end, est_start) - coalesce(est_start, est_end) + 1)))
  where harvests = '[]'::jsonb and coalesce(est_start, est_end) is not null;
 
+-- Drying schedule v3: the client form also asks for the business details the
+-- Service Agreement needs, and who will sign it.
+alter table drying_intakes add column if not exists legal_business_name text;
+alter table drying_intakes add column if not exists state_incorporated  text;   -- two-letter code, e.g. CA
+alter table drying_intakes add column if not exists signer_first_name   text;
+alter table drying_intakes add column if not exists signer_last_name    text;
+alter table drying_intakes add column if not exists signer_email        text;
+
+-- The cultivation license and W-9 the client form requires. The files go in
+-- the PRIVATE `customer-docs` bucket under requests/ (a W-9 carries a tax
+-- ID), and this table has no anon policy — unlike drying_intakes, which is
+-- anon-readable. netlify/functions/drying-request.js writes it;
+-- netlify/functions/customer-docs.js lists / opens the files for users with
+-- 'customer documents' access.
+create table if not exists drying_request_docs (
+  id            uuid primary key default gen_random_uuid(),
+  intake_id     uuid not null references drying_intakes(id) on delete cascade,
+  doc_type      text not null check (doc_type in ('license', 'w9')),
+  file_name     text not null,
+  storage_path  text not null unique,
+  content_type  text,
+  size_bytes    bigint,
+  created_at    timestamptz not null default now()
+);
+create index if not exists idx_drying_request_docs_intake on drying_request_docs (intake_id);
+
+alter table drying_request_docs enable row level security;   -- no policies: service role only
+revoke all on public.drying_request_docs from anon;
+grant select, insert, update, delete on public.drying_request_docs to service_role;
+
 -- ── PIDs & CIDs (admin panel "PIDs & CIDs" tab) ─────────────────────────────
 -- Property IDs (farm properties) and Customer IDs, with a name and notes for
 -- each. The station forms' PID and CID dropdowns read the active rows (see
