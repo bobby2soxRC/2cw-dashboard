@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Information Hub — 2CW Operations</title>
+  <script>
+    (function(){ if (!sessionStorage.getItem('2cw_pin')) window.location.replace('/index.html'); })();
+  </script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0c0d0f">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0c0d0f;--surface:#13151a;--surface2:#181b21;--border:#1e2129;
+      --green:#3db87a;--gold:#d4a843;--blue:#5a9fd4;--purple:#9b7fd4;--red:#ef5350;
+      --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;
+    }
+    html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-text-size-adjust:100%}
+
+    .hdr{min-height:calc(54px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:12px;position:sticky;top:0;z-index:20}
+    .hdr-back{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
+    .hdr-div{width:1px;height:18px;background:var(--border)}
+    .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--green);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .lang{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;flex:0 0 auto}
+    .lang button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:12px;font-weight:600;padding:8px 12px;cursor:pointer;min-height:36px}
+    .lang button.on{background:var(--green);color:#000}
+
+    main{padding:28px 16px 60px;max-width:1200px;margin:0 auto}
+    .title{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,6vw,46px);letter-spacing:.04em;line-height:1}
+
+    .tabs{display:flex;gap:8px;margin:20px 0 6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+    .tabs button{flex:0 0 auto;background:var(--surface);border:1px solid var(--border);color:var(--subtext);border-radius:10px;padding:.6rem 1rem;
+      font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;min-height:44px;white-space:nowrap}
+    .tabs button.on{background:var(--green);border-color:var(--green);color:#000;font-weight:700}
+    .tabs .ro{opacity:.6;font-size:.62rem;margin-left:6px}
+    .tabs{scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+    .tabs::-webkit-scrollbar{height:6px}
+    .tabs::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+    .sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-top:18px}
+    .sec-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.03em;line-height:1}
+    .sub{margin-top:4px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+    .note{color:var(--subtext);font-size:.85rem;line-height:1.5;margin:10px 0 14px;max-width:820px}
+    .note.warn{color:var(--gold)}
+    .h2{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.03em;margin:26px 0 4px}
+
+    .filters{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}
+    .filters button{background:var(--surface);border:1px solid var(--border);color:var(--subtext);border-radius:10px;padding:.6rem 1rem;
+      font-family:'DM Mono',monospace;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;min-height:44px}
+    .filters button.on{background:var(--surface2);border-color:var(--green);color:var(--green);font-weight:700}
+    .filters input{flex:1 1 220px;min-width:0;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .9rem;font-size:.95rem;min-height:44px;outline:none}
+    .filters input:focus{border-color:var(--green)}
+
+    .tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:14px;background:var(--surface)}
+    table.lib{width:100%;border-collapse:collapse;font-size:.9rem}
+    .lib th{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:left;font-weight:500;padding:12px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
+    .lib td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+    .lib tr:last-child td{border-bottom:none}
+    .lib tbody tr.click{cursor:pointer}
+    .lib tbody tr.click:hover td{background:var(--surface2)}
+    .lib tr.dim td{color:var(--muted)}
+    .lib .nm{font-weight:700;white-space:nowrap}
+    .lib .mono{font-family:'DM Mono',monospace;font-size:.8rem;color:var(--subtext)}
+    .lib .small{font-size:.75rem;color:var(--muted);line-height:1.4}
+    .lib .num{text-align:right;font-family:'DM Mono',monospace}
+    .lib input[type=text],.lib input[type=date],.lib input[type=number],.lib select,.lib textarea{width:100%;min-width:110px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:.5rem .6rem;font-family:inherit;font-size:.9rem;min-height:40px;outline:none}
+    .lib textarea{min-height:40px;resize:vertical}
+    .lib input:focus,.lib select:focus,.lib textarea:focus{border-color:var(--green)}
+    .lib input[type=checkbox]{width:20px;height:20px;accent-color:var(--green)}
+    .lib tr.new td{background:rgba(61,184,122,.04)}
+    .row-btns{display:flex;gap:6px;white-space:nowrap}
+    .mini{background:transparent;border:1px solid var(--border);color:var(--subtext);border-radius:8px;padding:.45rem .7rem;font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;min-height:38px}
+    .mini:hover{border-color:var(--green);color:var(--green)}
+    .mini.del:hover{border-color:var(--red);color:var(--red)}
+    .mini:disabled{opacity:.5;cursor:default}
+    .saved{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--green);margin-left:6px}
+    .pill{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border-radius:99px;border:1px solid var(--border);white-space:nowrap}
+    .pill.ok{border-color:var(--green);color:var(--green)}
+    .pill.off{color:var(--muted)}
+    .pill.bad{border-color:var(--red);color:var(--red)}
+    .chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 14px}
+
+    .empty{color:var(--muted);text-align:center;padding:50px 0;font-size:.9rem}
+    .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
+
+    .btn{padding:.65rem 1rem;border:1px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer;background:transparent;color:var(--text);text-decoration:none;display:inline-block;min-height:44px}
+    .btn-green{background:var(--green);border-color:var(--green);color:#000}
+    .btn:disabled{opacity:.5;cursor:default}
+
+    /* Strain editor sheet */
+    #ed-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:calc(20px + env(safe-area-inset-top)) 12px 40px}
+    #ed-bg.on{display:flex}
+    #ed{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:560px;padding:22px 20px}
+    .ed-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.03em;line-height:1.05;margin-bottom:16px}
+    .fld{margin-bottom:16px}
+    .lbl{display:block;font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);margin-bottom:6px}
+    .fld input[type=text],.fld textarea,.fld select{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.7rem .85rem;font-family:inherit;font-size:1rem;min-height:48px;outline:none}
+    .fld textarea{min-height:80px;resize:vertical}
+    .fld input:focus,.fld textarea:focus,.fld select:focus{border-color:var(--green)}
+    .hint{font-size:.78rem;color:var(--muted);margin-top:6px;line-height:1.45}
+    .check{display:flex;align-items:center;gap:10px;font-size:.95rem;cursor:pointer;min-height:44px}
+    .check input{width:20px;height:20px;accent-color:var(--green)}
+    .ed-err{color:var(--red);font-size:.85rem;margin-bottom:12px;display:none}
+    .ed-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
+  </style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="/index.html" id="back">← Hub</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand" id="brand">Information Hub</div>
+  <div class="lang" id="lang"></div>
+</header>
+
+<main>
+  <div class="title" id="title">Information Hub</div>
+  <div class="tabs" id="tabs"></div>
+  <div id="pane"></div>
+  <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution</footer>
+</main>
+
+<div id="ed-bg"><div id="ed"></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/config/supabase_config.js"></script>
+<script src="/operations_stations.js"></script>
+<script src="/ops_common.js"></script>
+<script src="/ops_data.js"></script>
+<script src="/hub_config.js"></script>
+<script>
+// Information Hub — the reference lists the rest of the app runs on, one tab
+// per INFO_HUB_SECTIONS entry (hub_config.js). Which tabs show, and whether
+// each is read-only or editable, comes from sessionStorage '2cw_info_access'
+// (set at hub login from the admin panel's Information Hub checkboxes).
+//
+// Strains, Farm Licenses and CIDs read and write Supabase directly (their
+// tables have open anon policies, like before). Canix Facilities and Yield
+// Forecasts are read directly but saved through the canix-facilities /
+// canix-forecast functions, which re-check this user's edit access
+// server-side from their login PIN — those tables aren't anon-writable.
+(async function () {
+  mountLangToggle('lang');
+  const ACCESS = JSON.parse(sessionStorage.getItem('2cw_info_access') || '{}');
+  const PIN = sessionStorage.getItem('2cw_pin') || '';
+  const client = getClient();
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const pane = document.getElementById('pane');
+
+  const C = {
+    title:    { en: 'Information Hub', es: 'Centro de Información' },
+    back:     { en: '← Hub', es: '← Inicio' },
+    viewOnly: { en: 'view', es: 'ver' },
+    noAccess: { en: 'You don’t have access to anything in the Information Hub yet. Ask your manager to turn it on in the admin panel.',
+                es: 'Aún no tiene acceso a nada en el Centro de Información. Pida a su gerente que lo active en el panel de administración.' },
+    noData:   { en: 'Could not load this list. Check your connection and reload.', es: 'No se pudo cargar esta lista. Revise su conexión y recargue.' },
+    save:     { en: 'Save', es: 'Guardar' },
+    saving:   { en: 'Saving…', es: 'Guardando…' },
+    saved:    { en: 'Saved', es: 'Guardado' },
+    del:      { en: 'Delete', es: 'Eliminar' },
+    add:      { en: '+ Add', es: '+ Agregar' },
+    cancel:   { en: 'Cancel', es: 'Cancelar' },
+    notes:    { en: 'Notes', es: 'Notas' },
+    active:   { en: 'Active', es: 'Activo' },
+    couldNot: { en: 'Could not save:', es: 'No se pudo guardar:' }
+  };
+  document.getElementById('title').textContent = t(C.title);
+  document.getElementById('brand').textContent = t(C.title);
+  document.getElementById('back').textContent = t(C.back);
+  document.title = `${t(C.title)} — 2CW`;
+
+  const sections = INFO_HUB_SECTIONS.filter((s) => ACCESS[s.key]);
+  if (!sections.length) { pane.innerHTML = `<div class="empty">${esc(t(C.noAccess))}</div>`; return; }
+
+  // A save button's brief "Saved" tick.
+  function flashSaved(btn) {
+    const s = document.createElement('span');
+    s.className = 'saved'; s.textContent = t(C.saved);
+    btn.after(s); setTimeout(() => s.remove(), 1800);
+  }
+
+  // Canix / forecast writes: as this hub user, by PIN (see the functions).
+  async function callFn(name, body) {
+    const res = await fetch(`/.netlify/functions/${name}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, pin: PIN })
+    });
+    let j; try { j = await res.json(); } catch { j = { ok: false, error: `HTTP ${res.status}` }; }
+    if (!res.ok || !j.ok) throw new Error(j.error || `HTTP ${res.status}`);
+    return j;
+  }
+
+  // ════ Strain Library ═══════════════════════════════════════════════════════
+  const DOMINANCE = [
+    { v: 'indica',        l: { en: 'Indica', es: 'Índica' } },
+    { v: 'indica_hybrid', l: { en: 'Indica-dominant hybrid', es: 'Híbrida dominante índica' } },
+    { v: 'hybrid',        l: { en: 'Hybrid', es: 'Híbrida' } },
+    { v: 'sativa_hybrid', l: { en: 'Sativa-dominant hybrid', es: 'Híbrida dominante sativa' } },
+    { v: 'sativa',        l: { en: 'Sativa', es: 'Sativa' } }
+  ];
+  async function strainsSection(el, canEdit) {
+    const L = {
+      active:   { en: 'Active', es: 'Activas' },
+      retired:  { en: 'Retired', es: 'Retiradas' },
+      all:      { en: 'All', es: 'Todas' },
+      search:   { en: 'Search strain, abbreviation, genetics, spelling…', es: 'Buscar variedad, abreviatura, genética, ortografía…' },
+      strain:   { en: 'Strain', es: 'Variedad' },
+      strains:  { en: 'strains', es: 'variedades' },
+      sources:  { en: 'Genetics ID', es: 'ID de genética' },
+      dominance:{ en: 'Dominance', es: 'Dominancia' },
+      abbr:     { en: 'Abbreviation', es: 'Abreviatura' },
+      abbrHint: { en: 'Short code for the strain, usually 2–4 letters (e.g. LCG). Must be unique.', es: 'Código corto de la variedad, normalmente de 2 a 4 letras (p. ej. LCG). Debe ser único.' },
+      dupAbbr:  { en: 'Another strain already uses that abbreviation:', es: 'Otra variedad ya usa esa abreviatura:' },
+      aliases:  { en: 'Other spellings', es: 'Otras ortografías' },
+      status:   { en: 'Status', es: 'Estado' },
+      onLists:  { en: 'Active', es: 'Activa' },
+      offLists: { en: 'Retired', es: 'Retirada' },
+      add:      { en: '+ Add strain', es: '+ Agregar variedad' },
+      newT:     { en: 'New strain', es: 'Nueva variedad' },
+      name:     { en: 'Strain name', es: 'Nombre de la variedad' },
+      nameHint: { en: 'Exactly as it should appear on the forms. Renaming doesn’t change records already submitted under the old name — add the old name to Other spellings so they still match.',
+                  es: 'Exactamente como debe aparecer en los formularios. Cambiar el nombre no cambia los registros ya enviados con el nombre anterior — agregue el nombre anterior a Otras ortografías para que sigan coincidiendo.' },
+      srcHint:  { en: 'Comma-separated, e.g. PH, CUS', es: 'Separados por comas, p. ej. PH, CUS' },
+      alsHint:  { en: 'Comma-separated spellings seen on old records or paperwork.', es: 'Ortografías separadas por comas vistas en registros o papeles anteriores.' },
+      activeCb: { en: 'Active — shows in the forms’ Strain dropdown', es: 'Activa — aparece en la lista de Variedad de los formularios' },
+      needName: { en: 'Enter a strain name.', es: 'Ingrese el nombre de la variedad.' },
+      dup:      { en: 'There’s already a strain with that name.', es: 'Ya existe una variedad con ese nombre.' },
+      empty:    { en: 'No strains match.', es: 'Ninguna variedad coincide.' },
+      intro:    { en: 'Every strain the station forms offer in their Strain dropdown. Retired strains drop off the dropdowns but stay here.',
+                  es: 'Todas las variedades que ofrecen los formularios en su lista de Variedad. Las retiradas salen de las listas pero se quedan aquí.' },
+      dlCsv:    { en: 'Download CSV', es: 'Descargar CSV' },
+      upCsv:    { en: 'Upload CSV', es: 'Subir CSV' },
+      csvTitle: { en: 'Review CSV changes', es: 'Revisar cambios del CSV' },
+      csvHow:   { en: 'Rows are matched by id (or by name for new rows without one). Strains missing from the file are left as they are — nothing is deleted. To retire one, set active to FALSE.',
+                  es: 'Las filas se emparejan por id (o por nombre si son nuevas sin id). Las variedades que no estén en el archivo se quedan igual — no se elimina nada. Para retirar una, ponga active en FALSE.' },
+      csvNew:   { en: 'new', es: 'nuevas' },
+      csvChg:   { en: 'changed', es: 'con cambios' },
+      csvSame:  { en: 'unchanged', es: 'sin cambios' },
+      csvErr:   { en: 'with problems — fix these in the file and upload again', es: 'con problemas — corríjalos en el archivo y vuelva a subirlo' },
+      csvApply: { en: 'Apply changes', es: 'Aplicar cambios' },
+      csvNone:  { en: 'Nothing to change — the file matches the library.', es: 'Nada que cambiar — el archivo coincide con la biblioteca.' },
+      csvDone:  { en: 'CSV changes applied.', es: 'Cambios del CSV aplicados.' },
+      csvBad:   { en: 'Couldn’t read that file. It needs a header row with at least a “name” column.', es: 'No se pudo leer ese archivo. Necesita una fila de encabezado con al menos una columna “name”.' },
+      errName:  { en: 'no name', es: 'sin nombre' },
+      errDupN:  { en: 'name used twice', es: 'nombre repetido' },
+      errDupA:  { en: 'abbreviation used twice', es: 'abreviatura repetida' },
+      errDom:   { en: 'unknown dominance', es: 'dominancia desconocida' },
+      errId:    { en: 'id not found', es: 'id no encontrado' },
+      row:      { en: 'Row', es: 'Fila' }
+    };
+    const list = (a) => (a || []).join(', ');
+    const domLabel = (v) => { const d = DOMINANCE.find((x) => x.v === v); return d ? t(d.l) : (v || ''); };
+    const splitList = (s) => [...new Set(s.split(',').map((x) => x.trim()).filter(Boolean))];
+
+    let rows = [];
+    async function load() {
+      const { data, error } = await client.from('strains').select('*').order('name');
+      if (error) throw error;
+      rows = data || [];
+    }
+    await load();
+
+    let mode = 'active', query = '';
+    el.innerHTML = `
+      <div class="sec-head"><div><div class="sec-title">${t(INFO_HUB_SECTIONS[0].title)}</div><div class="sub" id="s-sub">—</div></div>
+        ${canEdit ? `<div class="row-btns">
+          <button type="button" class="btn" id="s-dl">${t(L.dlCsv)}</button>
+          <button type="button" class="btn" id="s-up">${t(L.upCsv)}</button>
+          <input type="file" id="s-file" accept=".csv,text/csv" style="display:none">
+          <button type="button" class="btn btn-green" id="s-add">${t(L.add)}</button></div>` : ''}</div>
+      <div class="note">${t(L.intro)}</div>
+      <div id="s-import"></div>
+      <div class="filters" id="s-filters">
+        ${[['active', L.active], ['retired', L.retired], ['all', L.all]].map(([k, l]) => `<button data-k="${k}" class="${k === mode ? 'on' : ''}">${t(l)}</button>`).join('')}
+        <input type="search" id="s-q" placeholder="${esc(t(L.search))}">
+      </div>
+      <div id="s-board"></div>`;
+    el.querySelectorAll('#s-filters button').forEach((b) => {
+      b.onclick = () => { mode = b.dataset.k; el.querySelectorAll('#s-filters button').forEach((x) => x.classList.toggle('on', x === b)); render(); };
+    });
+    el.querySelector('#s-q').addEventListener('input', (e) => { query = e.target.value.trim().toLowerCase(); render(); });
+    if (canEdit) {
+      el.querySelector('#s-add').onclick = () => openEditor(null);
+      el.querySelector('#s-dl').onclick = downloadCsv;
+      el.querySelector('#s-up').onclick = () => el.querySelector('#s-file').click();
+      el.querySelector('#s-file').onchange = (e) => {
+        const f = e.target.files && e.target.files[0];
+        e.target.value = '';
+        if (f) f.text().then(previewCsv);
+      };
+    }
+
+    // ── CSV round trip (edit access) ──────────────────────────────────────────
+    // Download the whole library, adjust it in Excel/Sheets, upload it back.
+    // Lists (genetics_id, other_spellings) are comma-separated inside their
+    // cell; dominance is written as its English label and read back as label
+    // or code; active is TRUE/FALSE. The upload is previewed before anything
+    // is saved, and never deletes — a strain missing from the file is left
+    // alone.
+    const CSV_COLS = ['id', 'name', 'abbreviation', 'genetics_id', 'dominance', 'other_spellings', 'notes', 'active'];
+    const csvCell = (v) => { const s = String(v == null ? '' : v); return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+    function downloadCsv() {
+      const lines = [CSV_COLS.join(',')].concat(rows.map((r) => [
+        r.id, r.name, r.abbreviation || '', list(r.sources), (DOMINANCE.find((d) => d.v === r.dominance) || { l: { en: r.dominance || '' } }).l.en,
+        list(r.aliases), r.notes || '', r.active ? 'TRUE' : 'FALSE'
+      ].map(csvCell).join(',')));
+      // BOM so Excel opens it as UTF-8 (accents, the dashes in notes).
+      const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `strain_library_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }
+    function parseCsv(text) {
+      const out = []; let row = [], cell = '', q = false;
+      text = text.replace(/^﻿/, '');
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        if (q) {
+          if (ch === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+          else if (ch === '"') q = false;
+          else cell += ch;
+        } else if (ch === '"') q = true;
+        else if (ch === ',') { row.push(cell); cell = ''; }
+        else if (ch === '\n' || ch === '\r') {
+          if (ch === '\r' && text[i + 1] === '\n') i++;
+          row.push(cell); out.push(row); row = []; cell = '';
+        } else cell += ch;
+      }
+      if (cell !== '' || row.length) { row.push(cell); out.push(row); }
+      return out.filter((r) => r.some((c) => c.trim() !== ''));
+    }
+    const sameList = (a, b) => (a || []).join('|') === (b || []).join('|');
+    function previewCsv(text) {
+      const box = el.querySelector('#s-import');
+      const grid = parseCsv(text);
+      const head = (grid[0] || []).map((h) => h.trim().toLowerCase().replace(/\s+/g, '_'));
+      if (!head.includes('name')) { box.innerHTML = `<div class="note warn">${t(L.csvBad)}</div>`; return; }
+      const col = (r, k) => { const i = head.indexOf(k); return i < 0 ? undefined : (r[i] || '').trim(); };
+      const has = (k) => head.includes(k);
+      const byId = new Map(rows.map((r) => [r.id, r]));
+      const byName = new Map(rows.map((r) => [r.name.toLowerCase(), r]));
+
+      const items = grid.slice(1).map((r, i) => {
+        const id = col(r, 'id');
+        const cur = id ? byId.get(id) : byName.get((col(r, 'name') || '').toLowerCase());
+        const errs = [];
+        if (id && !cur) errs.push(t(L.errId));
+        // A column left out of the file keeps the strain's current value.
+        const pick = (k, parse, curVal) => has(k) ? parse(col(r, k)) : curVal;
+        const domRaw = col(r, 'dominance');
+        const dom = !has('dominance') ? (cur ? cur.dominance : null)
+          : !domRaw ? null
+          : (DOMINANCE.find((d) => d.v === domRaw.toLowerCase() || d.l.en.toLowerCase() === domRaw.toLowerCase() || d.l.es.toLowerCase() === domRaw.toLowerCase()) || {}).v;
+        if (has('dominance') && domRaw && !dom) errs.push(`${t(L.errDom)} “${domRaw}”`);
+        const next = {
+          name: (col(r, 'name') || '').replace(/\s+/g, ' '),
+          abbreviation: pick('abbreviation', (v) => (v || '').replace(/\s+/g, '').toUpperCase() || null, cur ? cur.abbreviation : null),
+          sources: pick('genetics_id', (v) => splitList((v || '').toUpperCase()), cur ? cur.sources : []),
+          dominance: dom || null,
+          aliases: pick('other_spellings', (v) => splitList(v || ''), cur ? cur.aliases : []),
+          notes: pick('notes', (v) => v || null, cur ? cur.notes : null),
+          active: pick('active', (v) => !/^(false|no|0|retired|n)$/i.test(v || ''), cur ? cur.active : true)
+        };
+        if (!next.name) errs.push(t(L.errName));
+        const changes = !cur ? null : ['name', 'abbreviation', 'dominance', 'notes', 'active'].filter((k) => (cur[k] ?? null) !== (next[k] ?? null))
+          .concat(sameList(cur.sources, next.sources) ? [] : ['genetics_id'], sameList(cur.aliases, next.aliases) ? [] : ['other_spellings']);
+        return { line: i + 2, cur, next, errs, changes };
+      });
+
+      // Names and abbreviations must stay unique across the library as it
+      // will be after the upload (file rows plus strains the file leaves alone).
+      const touched = new Set(items.filter((x) => x.cur).map((x) => x.cur.id));
+      const finalRows = rows.filter((r) => !touched.has(r.id)).map((r) => ({ name: r.name, abbreviation: r.abbreviation, item: null }))
+        .concat(items.map((x) => ({ name: x.next.name, abbreviation: x.next.abbreviation, item: x })));
+      const count = (k) => finalRows.reduce((m, r) => { const v = (r[k] || '').toLowerCase(); if (v) m[v] = (m[v] || 0) + 1; return m; }, {});
+      const nameN = count('name'), abbrN = count('abbreviation');
+      items.forEach((x) => {
+        if (x.next.name && nameN[x.next.name.toLowerCase()] > 1) x.errs.push(t(L.errDupN));
+        if (x.next.abbreviation && abbrN[x.next.abbreviation.toLowerCase()] > 1) x.errs.push(`${t(L.errDupA)} (${x.next.abbreviation})`);
+      });
+
+      const bad = items.filter((x) => x.errs.length);
+      const adds = items.filter((x) => !x.errs.length && !x.cur);
+      const chg = items.filter((x) => !x.errs.length && x.cur && x.changes.length);
+      const same = items.filter((x) => !x.errs.length && x.cur && !x.changes.length);
+      const li = (x, what) => `<tr><td class="mono">${t(L.row)} ${x.line}</td><td class="nm">${esc(x.next.name || (x.cur && x.cur.name) || '—')}</td><td class="small">${esc(what)}</td></tr>`;
+      box.innerHTML = `
+        <div class="tbl-wrap" style="padding:16px 16px 6px;margin-bottom:16px">
+          <div class="h2" style="margin-top:0">${t(L.csvTitle)}</div>
+          <div class="note">${t(L.csvHow)}</div>
+          <div class="note"><b>${adds.length}</b> ${t(L.csvNew)} · <b>${chg.length}</b> ${t(L.csvChg)} · ${same.length} ${t(L.csvSame)}${bad.length ? ` · <span style="color:var(--red)"><b>${bad.length}</b> ${t(L.csvErr)}</span>` : ''}</div>
+          ${bad.length || adds.length || chg.length ? `<table class="lib" style="margin-bottom:12px"><tbody>
+            ${bad.map((x) => li(x, '⚠ ' + x.errs.join('; '))).join('')}
+            ${adds.map((x) => li(x, '+ ' + t(L.csvNew))).join('')}
+            ${chg.map((x) => li(x, x.changes.join(', '))).join('')}
+          </tbody></table>` : `<div class="note">${t(L.csvNone)}</div>`}
+          <div class="ed-actions" style="margin-bottom:10px">
+            <button type="button" class="btn" id="s-csv-cancel">${t(C.cancel)}</button>
+            ${!bad.length && (adds.length || chg.length) ? `<button type="button" class="btn btn-green" id="s-csv-apply">${t(L.csvApply)}</button>` : ''}
+          </div>
+        </div>`;
+      box.querySelector('#s-csv-cancel').onclick = () => { box.innerHTML = ''; };
+      const apply = box.querySelector('#s-csv-apply');
+      if (apply) apply.onclick = async () => {
+        apply.disabled = true; apply.textContent = t(C.saving);
+        try {
+          for (const x of chg) {
+            const { error } = await client.from('strains').update(x.next).eq('id', x.cur.id);
+            if (error) throw error;
+          }
+          if (adds.length) {
+            const { error } = await client.from('strains').insert(adds.map((x) => x.next));
+            if (error) throw error;
+          }
+          await load(); render();
+          box.innerHTML = `<div class="note" style="color:var(--green)">✓ ${t(L.csvDone)}</div>`;
+        } catch (e) {
+          await load(); render();
+          box.innerHTML = `<div class="note warn">${t(C.couldNot)} ${esc(e.message)}</div>`;
+        }
+      };
+    }
+
+    function matches(r) {
+      if (mode === 'active' && !r.active) return false;
+      if (mode === 'retired' && r.active) return false;
+      if (!query) return true;
+      return [r.name, r.abbreviation, list(r.sources), domLabel(r.dominance), list(r.aliases), r.notes].join(' ').toLowerCase().includes(query);
+    }
+    function render() {
+      const shown = rows.filter(matches);
+      el.querySelector('#s-sub').textContent = `${shown.length} ${t(L.strains)}`;
+      const board = el.querySelector('#s-board');
+      if (!shown.length) { board.innerHTML = `<div class="empty">${t(L.empty)}</div>`; return; }
+      board.innerHTML = `<div class="tbl-wrap"><table class="lib"><thead><tr>
+          <th>${t(L.strain)}</th><th>${t(L.abbr)}</th><th>${t(L.sources)}</th><th>${t(L.dominance)}</th><th>${t(L.aliases)}</th><th>${t(C.notes)}</th><th>${t(L.status)}</th>
+        </tr></thead><tbody>${shown.map((r) => `
+          <tr class="${canEdit ? 'click' : ''} ${r.active ? '' : 'dim'}" data-id="${r.id}">
+            <td class="nm">${esc(r.name)}</td>
+            <td class="mono">${esc(r.abbreviation) || '—'}</td>
+            <td class="mono">${esc(list(r.sources)) || '—'}</td>
+            <td>${esc(domLabel(r.dominance)) || '—'}</td>
+            <td class="mono">${esc(list(r.aliases)) || '—'}</td>
+            <td class="small">${esc(r.notes) || '—'}</td>
+            <td>${r.active ? `<span class="pill ok">${t(L.onLists)}</span>` : `<span class="pill off">${t(L.offLists)}</span>`}</td>
+          </tr>`).join('')}</tbody></table></div>`;
+      if (canEdit) board.querySelectorAll('tr.click').forEach((tr) => { tr.onclick = () => openEditor(tr.dataset.id); });
+    }
+
+    const bg = document.getElementById('ed-bg');
+    const ed = document.getElementById('ed');
+    function openEditor(id) {
+      const r = id ? rows.find((x) => x.id === id) : { name: '', abbreviation: '', sources: [], dominance: '', aliases: [], notes: '', active: true };
+      if (!r) return;
+      ed.innerHTML = `
+        <div class="ed-title">${esc(id ? r.name : t(L.newT))}</div>
+        <div class="fld"><label class="lbl" for="e-name">${t(L.name)}</label>
+          <input type="text" id="e-name" value="${esc(r.name)}"><div class="hint">${t(L.nameHint)}</div></div>
+        <div class="fld"><label class="lbl" for="e-abbr">${t(L.abbr)}</label>
+          <input type="text" id="e-abbr" value="${esc(r.abbreviation || '')}" maxlength="8" autocapitalize="characters" style="max-width:160px;text-transform:uppercase"><div class="hint">${t(L.abbrHint)}</div></div>
+        <div class="fld"><label class="lbl" for="e-src">${t(L.sources)}</label>
+          <input type="text" id="e-src" value="${esc(list(r.sources))}" autocapitalize="characters"><div class="hint">${t(L.srcHint)}</div></div>
+        <div class="fld"><label class="lbl" for="e-dom">${t(L.dominance)}</label>
+          <select id="e-dom"><option value=""></option>${DOMINANCE.map((d) => `<option value="${d.v}" ${r.dominance === d.v ? 'selected' : ''}>${esc(t(d.l))}</option>`).join('')}</select></div>
+        <div class="fld"><label class="lbl" for="e-als">${t(L.aliases)}</label>
+          <input type="text" id="e-als" value="${esc(list(r.aliases))}"><div class="hint">${t(L.alsHint)}</div></div>
+        <div class="fld"><label class="lbl" for="e-notes">${t(C.notes)}</label>
+          <textarea id="e-notes">${esc(r.notes || '')}</textarea></div>
+        <label class="check"><input type="checkbox" id="e-active" ${r.active ? 'checked' : ''}> ${t(L.activeCb)}</label>
+        <div class="ed-err" id="e-err"></div>
+        <div class="ed-actions">
+          <button type="button" class="btn" id="e-cancel">${t(C.cancel)}</button>
+          <button type="button" class="btn btn-green" id="e-save">${t(C.save)}</button>
+        </div>`;
+      document.getElementById('e-cancel').onclick = closeEditor;
+      document.getElementById('e-save').onclick = () => save(id);
+      bg.classList.add('on');
+      document.body.style.overflow = 'hidden';
+      if (!id) document.getElementById('e-name').focus();
+    }
+    function closeEditor() {
+      if (!bg.classList.contains('on')) return;
+      bg.classList.remove('on');
+      document.body.style.overflow = '';
+    }
+    bg.addEventListener('click', (e) => { if (e.target === bg) closeEditor(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeEditor(); });
+
+    async function save(id) {
+      const err = document.getElementById('e-err');
+      const btn = document.getElementById('e-save');
+      const showErr = (msg) => { err.textContent = msg; err.style.display = 'block'; };
+      const row = {
+        name: document.getElementById('e-name').value.trim().replace(/\s+/g, ' '),
+        abbreviation: document.getElementById('e-abbr').value.replace(/\s+/g, '').toUpperCase() || null,
+        sources: splitList(document.getElementById('e-src').value.toUpperCase()),
+        dominance: document.getElementById('e-dom').value || null,
+        aliases: splitList(document.getElementById('e-als').value),
+        notes: document.getElementById('e-notes').value.trim() || null,
+        active: document.getElementById('e-active').checked
+      };
+      if (!row.name) return showErr(t(L.needName));
+      if (rows.some((x) => x.id !== id && x.name.toLowerCase() === row.name.toLowerCase())) return showErr(t(L.dup));
+      const abbrTaken = row.abbreviation && rows.find((x) => x.id !== id && (x.abbreviation || '').toUpperCase() === row.abbreviation);
+      if (abbrTaken) return showErr(`${t(L.dupAbbr)} ${abbrTaken.name}`);
+      btn.disabled = true; btn.textContent = t(C.saving);
+      const { error } = id
+        ? await client.from('strains').update(row).eq('id', id)
+        : await client.from('strains').insert(row);
+      btn.disabled = false; btn.textContent = t(C.save);
+      if (error) return showErr(/duplicate|unique/i.test(error.message) ? t(L.dup) : error.message);
+      await load();
+      closeEditor();
+      render();
+    }
+
+    render();
+  }
+
+  // ════ Farm Licenses / CIDs (ref_codes, kind 'pid' / 'cid') ═════════════════
+  // Farm licenses are stored as kind 'pid' — they replaced Property IDs, and
+  // the form field kept its old key so past records still read.
+  function codesSection(kind) {
+    const K = kind === 'pid'
+      ? { title: INFO_HUB_SECTIONS.find((s) => s.key === 'licenses').title,
+          code: { en: 'License #', es: 'N.º de licencia' }, name: { en: 'Farm', es: 'Rancho' }, noun: { en: 'licenses', es: 'licencias' },
+          intro: { en: 'The Farm License dropdown on the station forms (Harvest, Wet Intake, Take Down …). Untick Active to drop one off the dropdowns while keeping old forms readable.',
+                   es: 'La lista de Licencia del rancho en los formularios (Cosecha, Recepción húmeda, Bajada …). Desmarque Activo para quitarla de las listas sin afectar formularios anteriores.' } }
+      : { title: INFO_HUB_SECTIONS.find((s) => s.key === 'cids').title,
+          code: { en: 'CID', es: 'CID' }, name: { en: 'Customer', es: 'Cliente' }, noun: { en: 'customer IDs', es: 'IDs de clientes' },
+          intro: { en: 'The Customer ID dropdown on the station forms. Untick Active to drop one off the dropdowns while keeping old forms readable.',
+                   es: 'La lista de ID de cliente en los formularios. Desmarque Activo para quitarlo de las listas sin afectar formularios anteriores.' } };
+    const L = {
+      seen:     { en: 'Typed in with “Other” on forms but not on this list — tap to add:', es: 'Escritos con “Otro” en formularios pero no en esta lista — toque para agregar:' },
+      needCode: { en: 'Enter the', es: 'Ingrese el' },
+      dupCode:  { en: 'is already on the list.', es: 'ya está en la lista.' },
+      confirmDel: { en: 'Delete this? Forms that already used it keep the value but won’t show a name any more. To just hide it from the dropdowns, untick Active instead.',
+                    es: '¿Eliminar? Los formularios que ya lo usaron conservan el valor pero ya no mostrarán un nombre. Para solo ocultarlo de las listas, desmarque Activo.' },
+      empty:    { en: 'Nothing on this list yet.', es: 'Aún no hay nada en esta lista.' }
+    };
+
+    return async function (el, canEdit) {
+      let rows = [], seen = [];
+      async function load() {
+        const [{ data, error }, used] = await Promise.all([
+          client.from('ref_codes').select('*').eq('kind', kind).order('code'),
+          canEdit ? client.from('operations_forms').select(`v:fields->>${kind}`) : Promise.resolve({ data: [] })
+        ]);
+        if (error) throw error;
+        rows = (data || []).sort((a, b) => (b.active - a.active) || String(a.name || '').localeCompare(String(b.name || '')) || a.code.localeCompare(b.code));
+        const known = new Set(rows.map((r) => r.code));
+        seen = [...new Set((used.data || []).map((r) => (r.v || '').trim()).filter((v) => v && !known.has(v)))].sort();
+      }
+      await load();
+
+      function render() {
+        const ro = (r) => `
+          <tr class="${r.active ? '' : 'dim'}">
+            <td class="nm mono">${esc(r.code)}</td><td>${esc(r.name) || '—'}</td><td class="small">${esc(r.notes) || '—'}</td>
+            <td>${r.active ? `<span class="pill ok">${t(C.active)}</span>` : `<span class="pill off">—</span>`}</td>
+          </tr>`;
+        const rw = (r) => `
+          <tr data-id="${r ? r.id : ''}" class="${r ? (r.active ? '' : 'dim') : 'new'}">
+            <td><input type="text" data-f="code" value="${esc(r ? r.code : '')}" placeholder="${r ? '' : esc(t(K.code))}"></td>
+            <td><input type="text" data-f="name" value="${esc(r ? r.name || '' : '')}" placeholder="${r ? '' : esc(t(K.name))}"></td>
+            <td><textarea data-f="notes" rows="1" placeholder="${r ? '' : esc(t(C.notes))}">${esc(r ? r.notes || '' : '')}</textarea></td>
+            <td style="text-align:center"><input type="checkbox" data-f="active" ${!r || r.active ? 'checked' : ''}></td>
+            <td><div class="row-btns">
+              <button type="button" class="mini" data-act="save">${r ? t(C.save) : t(C.add)}</button>
+              ${r ? `<button type="button" class="mini del" data-act="del">${t(C.del)}</button>` : ''}
+            </div></td>
+          </tr>`;
+        el.innerHTML = `
+          <div class="sec-head"><div><div class="sec-title">${t(K.title)}</div><div class="sub">${rows.length} ${t(K.noun)}</div></div></div>
+          <div class="note">${t(K.intro)}</div>
+          ${canEdit && seen.length ? `<div class="note warn" style="margin-bottom:0">${t(L.seen)}</div><div class="chips">${seen.map((v) => `<button type="button" class="mini" data-seen="${esc(v)}">+ ${esc(v)}</button>`).join('')}</div>` : ''}
+          ${!rows.length && !canEdit ? `<div class="empty">${t(L.empty)}</div>` : `
+          <div class="tbl-wrap"><table class="lib">
+            <thead><tr><th>${t(K.code)}</th><th>${t(K.name)}</th><th>${t(C.notes)}</th><th>${t(C.active)}</th>${canEdit ? '<th></th>' : ''}</tr></thead>
+            <tbody>${canEdit ? rows.map(rw).join('') + rw(null) : rows.map(ro).join('')}</tbody>
+          </table></div>`}`;
+        if (!canEdit) return;
+        el.querySelectorAll('[data-seen]').forEach((b) => {
+          b.onclick = () => {
+            const tr = el.querySelector('tr.new');
+            tr.querySelector('[data-f=code]').value = b.dataset.seen;
+            tr.querySelector('[data-f=name]').focus();
+          };
+        });
+        el.querySelectorAll('[data-act=save]').forEach((b) => { b.onclick = () => save(b); });
+        el.querySelectorAll('[data-act=del]').forEach((b) => { b.onclick = () => del(b); });
+      }
+
+      async function save(btn) {
+        const tr = btn.closest('tr');
+        const get = (f) => tr.querySelector(`[data-f=${f}]`);
+        const row = { kind, code: get('code').value.trim(), name: get('name').value.trim() || null, notes: get('notes').value.trim() || null, active: get('active').checked };
+        if (!row.code) { alert(`${t(L.needCode)} ${t(K.code)}.`); return; }
+        const id = tr.dataset.id;
+        const label = btn.textContent;
+        btn.disabled = true; btn.textContent = t(C.saving);
+        const { error } = id ? await client.from('ref_codes').update(row).eq('id', id) : await client.from('ref_codes').insert(row);
+        if (error) {
+          alert(/duplicate|unique/i.test(error.message) ? `${row.code} ${t(L.dupCode)}` : `${t(C.couldNot)} ${error.message}`);
+          btn.disabled = false; btn.textContent = label;
+          return;
+        }
+        await load(); render();
+      }
+      async function del(btn) {
+        if (!confirm(t(L.confirmDel))) return;
+        const { error } = await client.from('ref_codes').delete().eq('id', btn.closest('tr').dataset.id);
+        if (error) { alert(error.message); return; }
+        await load(); render();
+      }
+      render();
+    };
+  }
+
+  // ════ Canix Facilities ═════════════════════════════════════════════════════
+  const CANIX_STAGES = ['Cultivation', 'Processing', 'Manufacturing', 'Distribution'];
+  async function loadCanixFacilities() {
+    const { data, error } = await client.from('canix_facilities').select('*').order('facility_id');
+    if (error) throw error;
+    return data || [];
+  }
+  async function canixSection(el, canEdit) {
+    const L = {
+      intro:    { en: 'Nicknames and stage/farm grouping shown on Canix Inventory and used by Yield Forecasts. Changes go live immediately.',
+                  es: 'Apodos y agrupación por etapa/rancho que se muestran en Inventario Canix y que usan los Pronósticos de Rendimiento. Los cambios aplican de inmediato.' },
+      license:  { en: 'License', es: 'Licencia' },
+      status:   { en: 'Status', es: 'Estado' },
+      type:     { en: 'Type / County / Held by', es: 'Tipo / Condado / Titular' },
+      nick:     { en: 'Nickname', es: 'Apodo' },
+      stage:    { en: 'Stage', es: 'Etapa' },
+      farm:     { en: 'Farm group', es: 'Grupo de rancho' },
+      exclude:  { en: 'Exclude', es: 'Excluir' },
+      archived: { en: 'archived', es: 'archivada' },
+      activeP:  { en: 'active', es: 'activa' },
+      archNote: { en: 'archived — Canix no longer reports these licenses, but historical packages keep the label.', es: 'archivadas — Canix ya no reporta estas licencias, pero los paquetes históricos conservan la etiqueta.' },
+      renamed:  { en: 'Saved — also renamed the farm in Yield Forecasts', es: 'Guardado — también se renombró el rancho en Pronósticos' },
+      facilities: { en: 'facilities', es: 'instalaciones' }
+    };
+    let rows = await loadCanixFacilities();
+
+    function render() {
+      const sorted = [...rows].sort((a, b) => (a.status === 'archived') - (b.status === 'archived') || (a.exclude - b.exclude) ||
+        String(a.stage || 'zzz').localeCompare(String(b.stage || 'zzz')) || String(a.farm_group || '').localeCompare(String(b.farm_group || '')));
+      const archived = rows.filter((f) => f.status === 'archived').length;
+      el.innerHTML = `
+        <div class="sec-head"><div><div class="sec-title">${t(INFO_HUB_SECTIONS.find((s) => s.key === 'canix').title)}</div><div class="sub">${rows.length} ${t(L.facilities)}</div></div></div>
+        <div class="note">${t(L.intro)}</div>
+        ${archived ? `<div class="note warn">${archived} ${t(L.archNote)}</div>` : ''}
+        <div class="tbl-wrap"><table class="lib">
+          <thead><tr><th>${t(L.license)}</th><th>${t(L.status)}</th><th>${t(L.type)}</th><th>${t(L.nick)}</th><th>${t(L.stage)}</th><th>${t(L.farm)}</th><th>${t(L.exclude)}</th>${canEdit ? '<th></th>' : ''}</tr></thead>
+          <tbody>${sorted.map((f) => `
+            <tr class="${f.exclude || f.status === 'archived' ? 'dim' : ''}" data-id="${esc(f.facility_id)}">
+              <td><span class="mono">${esc(f.license_number || f.canix_name)}</span>${f.canix_name && f.canix_name !== f.license_number ? `<div class="small">${esc(f.canix_name)}</div>` : ''}</td>
+              <td>${f.status === 'archived' ? `<span class="pill bad">${t(L.archived)}</span>` : `<span class="pill ok">${t(L.activeP)}</span>`}</td>
+              <td class="small">${esc(f.dcc_license_type || '—')}<br>${esc(f.dcc_county || '—')} · ${esc(f.held_by || '—')}</td>
+              ${canEdit ? `
+                <td><input type="text" data-f="display_name" value="${esc(f.display_name || '')}" placeholder="${esc(f.canix_name || '')}"></td>
+                <td><select data-f="stage"><option value="">—</option>${CANIX_STAGES.map((s) => `<option ${f.stage === s ? 'selected' : ''}>${s}</option>`).join('')}</select></td>
+                <td><input type="text" data-f="farm_group" value="${esc(f.farm_group || '')}"></td>
+                <td style="text-align:center"><input type="checkbox" data-f="exclude" ${f.exclude ? 'checked' : ''}></td>
+                <td><div class="row-btns"><button type="button" class="mini" data-act="save">${t(C.save)}</button></div></td>` : `
+                <td>${esc(f.display_name) || '—'}</td><td>${esc(f.stage) || '—'}</td><td>${esc(f.farm_group) || '—'}</td><td>${f.exclude ? '✓' : ''}</td>`}
+            </tr>`).join('')}</tbody>
+        </table></div>`;
+      if (canEdit) el.querySelectorAll('[data-act=save]').forEach((b) => { b.onclick = () => save(b); });
+    }
+
+    async function save(btn) {
+      const tr = btn.closest('tr');
+      const get = (f) => tr.querySelector(`[data-f=${f}]`);
+      const facility = {
+        facility_id: tr.dataset.id,
+        display_name: get('display_name').value.trim(),
+        stage: get('stage').value,
+        farm_group: get('farm_group').value.trim(),
+        exclude: get('exclude').checked
+      };
+      btn.disabled = true; btn.textContent = t(C.saving);
+      try {
+        const j = await callFn('canix-facilities', { action: 'update', facility });
+        const i = rows.findIndex((f) => String(f.facility_id) === String(tr.dataset.id));
+        if (i >= 0) rows[i] = j.facility;
+        render();
+        const again = el.querySelector(`tr[data-id="${CSS.escape(String(tr.dataset.id))}"] [data-act=save]`);
+        if (again) { if (j.renamed) { again.title = t(L.renamed); } flashSaved(again); }
+        forecastCache = null;   // farm groups may have changed underneath it
+      } catch (e) {
+        alert(`${t(C.couldNot)} ${e.message}`);
+        btn.disabled = false; btn.textContent = t(C.save);
+      }
+    }
+    render();
+  }
+
+  // ════ Yield Forecasts ══════════════════════════════════════════════════════
+  // Feeds the "Forecasted Flower" view on canix_inventory.html: (flowering
+  // plant count per farm) × (that farm's latest lbs/plant estimate).
+  const CANIX_DATA_BASE = 'https://raw.githubusercontent.com/bobby2soxRC/2cw-dashboard/main/data/';
+  let forecastCache = null;
+  async function forecastSection(el, canEdit) {
+    const L = {
+      intro:   { en: 'Feeds the “Forecasted Flower” view on Canix Inventory: flowering plant count per farm × that farm’s latest lbs/plant estimate.',
+                 es: 'Alimenta la vista “Flor pronosticada” de Inventario Canix: plantas en floración por rancho × la estimación más reciente de lbs/planta de ese rancho.' },
+      est:     { en: 'Yield estimates', es: 'Estimaciones de rendimiento' },
+      estNote: { en: 'One row per active Cultivation farm. Saving a changed value logs a new dated entry rather than overwriting, so past estimates stay in the history.',
+                 es: 'Una fila por rancho de Cultivo activo. Guardar un valor nuevo agrega una entrada con fecha en vez de sobrescribir, así las estimaciones anteriores quedan en el historial.' },
+      plans:   { en: 'Harvest plans', es: 'Planes de cosecha' },
+      planNote:{ en: 'Each farm’s current planned harvest. Leave the count override blank to use the live flowering count from Canix.',
+                 es: 'La cosecha planeada actual de cada rancho. Deje el conteo vacío para usar el conteo de floración en vivo de Canix.' },
+      history: { en: 'History', es: 'Historial' },
+      other:   { en: 'Other / past plans', es: 'Otros / planes anteriores' },
+      farm:    { en: 'Farm', es: 'Rancho' },
+      live:    { en: 'Live flowering', es: 'Floración en vivo' },
+      lbs:     { en: 'Lbs / plant', es: 'Lbs / planta' },
+      eff:     { en: 'Effective', es: 'Vigente desde' },
+      date:    { en: 'Harvest date', es: 'Fecha de cosecha' },
+      count:   { en: 'Count override', es: 'Conteo manual' },
+      status:  { en: 'Status', es: 'Estado' },
+      needs:   { en: 'needs assignment', es: 'falta asignar' },
+      liveP:   { en: 'live', es: 'en vivo' },
+      noFarms: { en: 'No Cultivation-stage farms yet — set a farm’s stage under Canix Facilities first.', es: 'Aún no hay ranchos en etapa de Cultivo — asigne la etapa en Instalaciones de Canix primero.' },
+      none:    { en: 'Nothing here yet.', es: 'Aún no hay nada aquí.' },
+      needLbs: { en: 'Enter a lbs/plant value first.', es: 'Ingrese primero un valor de lbs/planta.' },
+      needDate:{ en: 'Enter a planned harvest date first.', es: 'Ingrese primero una fecha de cosecha.' },
+      delEst:  { en: 'Delete this estimate? Only for a mistaken entry — to update one, save a new value above instead.', es: '¿Eliminar esta estimación? Solo si fue un error — para actualizar, guarde un valor nuevo arriba.' },
+      delPlan: { en: 'Delete this harvest plan?', es: '¿Eliminar este plan de cosecha?' }
+    };
+    const STATUS = { planned: { en: 'planned', es: 'planeado' }, completed: { en: 'completed', es: 'completado' }, canceled: { en: 'canceled', es: 'cancelado' } };
+
+    async function load() {
+      const [facilities, est, plans, batches] = await Promise.all([
+        loadCanixFacilities(),
+        client.from('canix_yield_estimates').select('*').order('effective_date', { ascending: false }),
+        client.from('canix_harvest_plans').select('*').order('planned_harvest_date'),
+        fetch(CANIX_DATA_BASE + 'canix_plant_batches.json?t=' + Date.now()).then((r) => r.json()).catch(() => [])
+      ]);
+      if (est.error) throw est.error;
+      if (plans.error) throw plans.error;
+      forecastCache = { facilities, estimates: est.data || [], plans: plans.data || [], batches: Array.isArray(batches) ? batches : [] };
+    }
+    if (!forecastCache) await load();
+
+    const farms = () => [...new Set(forecastCache.facilities
+      .filter((f) => f.stage === 'Cultivation' && !f.exclude && f.status !== 'archived' && f.farm_group).map((f) => f.farm_group))].sort();
+    const liveCount = (farm) => {
+      const ids = new Set(forecastCache.facilities.filter((f) => f.farm_group === farm).map((f) => String(f.facility_id)));
+      return forecastCache.batches.filter((b) => ids.has(String(b.facility_id))).reduce((s, b) => s + (Number(b.flowering_count) || 0), 0);
+    };
+    const latestEst = (farm) => forecastCache.estimates.filter((e) => e.farm_group === farm)
+      .reduce((best, e) => (!best || e.effective_date > best.effective_date) ? e : best, null);
+    const currentPlan = (farm) => forecastCache.plans.filter((p) => p.farm_group === farm && p.status === 'planned')
+      .reduce((best, p) => (!best || p.planned_harvest_date < best.planned_harvest_date) ? p : best, null);
+    const today = () => new Date().toISOString().slice(0, 10);
+
+    function render() {
+      const fs = farms();
+      const estRows = fs.map((farm) => {
+        const cur = latestEst(farm);
+        return `<tr data-farm="${esc(farm)}" class="${cur ? '' : 'dim'}">
+          <td class="nm">${esc(farm)}</td><td class="num">${liveCount(farm).toLocaleString()}</td>
+          ${canEdit ? `
+            <td><input type="number" step="any" min="0" inputmode="decimal" data-f="lbs" value="${cur ? esc(cur.estimated_lbs_per_plant) : ''}" placeholder="${cur ? '' : esc(t(L.needs))}"></td>
+            <td><input type="date" data-f="date" value="${cur ? esc(cur.effective_date) : today()}"></td>
+            <td><div class="row-btns"><button type="button" class="mini" data-act="est">${t(C.save)}</button></div></td>` : `
+            <td class="num">${cur ? esc(cur.estimated_lbs_per_plant) : `<span class="small">${t(L.needs)}</span>`}</td><td class="mono">${cur ? esc(cur.effective_date) : '—'}</td>`}
+        </tr>`;
+      }).join('');
+      const estHist = [...forecastCache.estimates].sort((a, b) => a.farm_group.localeCompare(b.farm_group) || b.effective_date.localeCompare(a.effective_date));
+
+      const planRows = fs.map((farm) => {
+        const cur = currentPlan(farm);
+        return `<tr data-farm="${esc(farm)}" data-plan="${cur ? cur.id : ''}" class="${cur ? '' : 'dim'}">
+          <td class="nm">${esc(farm)}</td><td class="num">${liveCount(farm).toLocaleString()}</td>
+          ${canEdit ? `
+            <td><input type="date" data-f="date" value="${cur ? esc(cur.planned_harvest_date) : ''}"></td>
+            <td><input type="number" step="1" min="0" data-f="count" value="${cur && cur.plant_count_override != null ? esc(cur.plant_count_override) : ''}" placeholder="${esc(t(L.liveP))}"></td>
+            <td><select data-f="status">${Object.keys(STATUS).map((s) => `<option value="${s}" ${(cur ? cur.status : 'planned') === s ? 'selected' : ''}>${t(STATUS[s])}</option>`).join('')}</select></td>
+            <td><input type="text" data-f="notes" value="${cur ? esc(cur.notes || '') : ''}"></td>
+            <td><div class="row-btns"><button type="button" class="mini" data-act="plan">${t(C.save)}</button></div></td>` : `
+            <td class="mono">${cur ? esc(cur.planned_harvest_date) : `<span class="small">${t(L.needs)}</span>`}</td>
+            <td class="num">${cur && cur.plant_count_override != null ? esc(cur.plant_count_override) : t(L.liveP)}</td>
+            <td>${cur ? t(STATUS[cur.status] || { en: cur.status, es: cur.status }) : '—'}</td><td class="small">${cur ? esc(cur.notes || '') || '—' : '—'}</td>`}
+        </tr>`;
+      }).join('');
+      const currentIds = new Set(fs.map((f) => (currentPlan(f) || {}).id).filter(Boolean));
+      const planHist = forecastCache.plans.filter((p) => !currentIds.has(p.id)).sort((a, b) => a.planned_harvest_date.localeCompare(b.planned_harvest_date));
+
+      const table = (heads, body) => `<div class="tbl-wrap"><table class="lib"><thead><tr>${heads.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div>`;
+      el.innerHTML = `
+        <div class="sec-head"><div><div class="sec-title">${t(INFO_HUB_SECTIONS.find((s) => s.key === 'forecast').title)}</div></div></div>
+        <div class="note">${t(L.intro)}</div>
+        <div class="h2">${t(L.est)}</div><div class="note">${t(L.estNote)}</div>
+        ${fs.length ? table([t(L.farm), t(L.live), t(L.lbs), t(L.eff)].concat(canEdit ? [''] : []), estRows) : `<div class="empty">${t(L.noFarms)}</div>`}
+        <div class="h2">${t(L.history)}</div>
+        ${estHist.length ? table([t(L.farm), t(L.lbs), t(L.eff), t(C.notes)].concat(canEdit ? [''] : []), estHist.map((e) => `
+          <tr data-id="${e.id}"><td>${esc(e.farm_group)}</td><td class="num">${esc(e.estimated_lbs_per_plant)}</td><td class="mono">${esc(e.effective_date)}</td><td class="small">${esc(e.notes || '') || '—'}</td>
+          ${canEdit ? `<td><button type="button" class="mini del" data-act="delEst">${t(C.del)}</button></td>` : ''}</tr>`).join('')) : `<div class="empty">${t(L.none)}</div>`}
+        <div class="h2">${t(L.plans)}</div><div class="note">${t(L.planNote)}</div>
+        ${fs.length ? table([t(L.farm), t(L.live), t(L.date), t(L.count), t(L.status), t(C.notes)].concat(canEdit ? [''] : []), planRows) : `<div class="empty">${t(L.noFarms)}</div>`}
+        <div class="h2">${t(L.other)}</div>
+        ${planHist.length ? table([t(L.farm), t(L.date), t(L.count), t(L.status), t(C.notes)].concat(canEdit ? [''] : []), planHist.map((p) => `
+          <tr data-id="${p.id}" class="${p.status !== 'planned' ? 'dim' : ''}"><td>${esc(p.farm_group)}</td><td class="mono">${esc(p.planned_harvest_date)}</td>
+          <td class="num">${p.plant_count_override != null ? esc(p.plant_count_override) : t(L.liveP)}</td><td>${t(STATUS[p.status] || { en: p.status, es: p.status })}</td><td class="small">${esc(p.notes || '') || '—'}</td>
+          ${canEdit ? `<td><button type="button" class="mini del" data-act="delPlan">${t(C.del)}</button></td>` : ''}</tr>`).join('')) : `<div class="empty">${t(L.none)}</div>`}`;
+
+      if (!canEdit) return;
+      el.querySelectorAll('[data-act=est]').forEach((b) => { b.onclick = () => saveEst(b); });
+      el.querySelectorAll('[data-act=plan]').forEach((b) => { b.onclick = () => savePlan(b); });
+      el.querySelectorAll('[data-act=delEst]').forEach((b) => { b.onclick = () => remove(b, 'delete_estimate', L.delEst); });
+      el.querySelectorAll('[data-act=delPlan]').forEach((b) => { b.onclick = () => remove(b, 'delete_harvest_plan', L.delPlan); });
+    }
+
+    async function run(btn, body) {
+      btn.disabled = true; btn.textContent = t(C.saving);
+      try {
+        await callFn('canix-forecast', body);
+        await load(); render();
+      } catch (e) {
+        alert(`${t(C.couldNot)} ${e.message}`);
+        btn.disabled = false; btn.textContent = t(C.save);
+      }
+    }
+    function saveEst(btn) {
+      const tr = btn.closest('tr');
+      const lbs = tr.querySelector('[data-f=lbs]').value.trim();
+      const date = tr.querySelector('[data-f=date]').value || today();
+      if (!lbs) { alert(t(L.needLbs)); return; }
+      const cur = latestEst(tr.dataset.farm);
+      if (cur && Number(cur.estimated_lbs_per_plant) === Number(lbs) && cur.effective_date === date) { flashSaved(btn); return; }
+      run(btn, { action: 'add_estimate', estimate: { farm_group: tr.dataset.farm, estimated_lbs_per_plant: lbs, effective_date: date } });
+    }
+    function savePlan(btn) {
+      const tr = btn.closest('tr');
+      const date = tr.querySelector('[data-f=date]').value;
+      if (!date) { alert(t(L.needDate)); return; }
+      run(btn, { action: 'upsert_harvest_plan', plan: {
+        id: tr.dataset.plan || null, farm_group: tr.dataset.farm, planned_harvest_date: date,
+        plant_count_override: tr.querySelector('[data-f=count]').value.trim(),
+        status: tr.querySelector('[data-f=status]').value,
+        notes: tr.querySelector('[data-f=notes]').value.trim()
+      } });
+    }
+    function remove(btn, action, msg) {
+      if (!confirm(t(msg))) return;
+      run(btn, { action, id: btn.closest('tr').dataset.id });
+    }
+    render();
+  }
+
+  // ════ Tabs ═════════════════════════════════════════════════════════════════
+  const MOUNT = { strains: strainsSection, canix: canixSection, forecast: forecastSection, licenses: codesSection('pid'), cids: codesSection('cid') };
+  const tabsEl = document.getElementById('tabs');
+  tabsEl.innerHTML = sections.map((s) => `<button type="button" data-k="${s.key}">${esc(t(s.title))}${ACCESS[s.key] === 'edit' ? '' : `<span class="ro">· ${t(C.viewOnly)}</span>`}</button>`).join('');
+  tabsEl.querySelectorAll('button').forEach((b) => { b.onclick = () => open(b.dataset.k); });
+
+  async function open(key) {
+    tabsEl.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.k === key));
+    try { history.replaceState(null, '', `#${key}`); } catch { /* not worth failing the tab over */ }
+    pane.innerHTML = '<div class="empty">…</div>';
+    if (!client) { pane.innerHTML = `<div class="empty">${esc(t(C.noData))}</div>`; return; }
+    try { await MOUNT[key](pane, ACCESS[key] === 'edit'); }
+    catch (e) { console.error(key, e); pane.innerHTML = `<div class="empty">${esc(t(C.noData))}</div>`; }
+  }
+  const start = location.hash.slice(1);
+  open(sections.some((s) => s.key === start) ? start : sections[0].key);
+})();
+</script>
+<script src="/sw_register.js"></script>
+</body>
+</html>

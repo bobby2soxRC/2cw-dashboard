@@ -52,6 +52,20 @@ async function supaFetch(supaUrl, serviceKey, path, opts = {}) {
   });
 }
 
+// Information Hub (information_hub.html) calls this too, as a hub user rather
+// than the admin — same scheme as canix-facilities.js: the user's login PIN
+// is looked up in app_users here and their 'yield forecasts edit' column
+// checked server-side.
+async function hubUserColumns(supaUrl, serviceKey, pin) {
+  const p = String(pin || '').trim();
+  if (!p) return null;
+  const res = await supaFetch(supaUrl, serviceKey, 'app_users?active=eq.true&select=pin,columns');
+  if (!res.ok) return null;
+  const u = (await res.json()).find((x) => String(x.pin).padStart(4, '0') === p.padStart(4, '0'));
+  return u ? (u.columns || {}) : null;
+}
+const granted = (cols, key) => String((cols || {})[key] || '').toUpperCase() === 'TRUE';
+
 const PLAN_STATUSES = ['planned', 'completed', 'canceled'];
 
 exports.handler = async (event) => {
@@ -79,7 +93,12 @@ exports.handler = async (event) => {
   // No separate login here — a token from admin.js's or canix-facilities.js's
   // login already verifies, since all three share the same signing secret.
   if (!verifyToken(signingSecret, payload.token)) {
-    return json(401, { ok: false, error: 'Session expired — please sign in again' });
+    if (!payload.pin) return json(401, { ok: false, error: 'Session expired — please sign in again' });
+    const cols = await hubUserColumns(supaUrl, serviceKey, payload.pin);
+    const ok = String(action || '').startsWith('list_')
+      ? granted(cols, 'yield forecasts') || granted(cols, 'yield forecasts edit')
+      : granted(cols, 'yield forecasts edit');
+    if (!ok) return json(403, { ok: false, error: 'You don’t have edit access to Yield Forecasts.' });
   }
 
   try {

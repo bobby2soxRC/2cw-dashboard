@@ -185,16 +185,16 @@ const CARD_DEFS = [
     href: '/harvest_intakes.html'
   },
   {
-    key: 'strain_library',
+    key: 'information_hub',
     color: 'green',
     label: 'Operations',
     dept: 'operations',
-    // Gated by the admin panel's "Strain Library" view/edit checkboxes
-    // ('strain_library' / 'strain library edit' — edit implies view; see
-    // buildHub in index.html). Edit lets someone add and change strains.
-    title: 'Strain Library',
-    desc: 'Every strain the station forms offer in their Strain dropdown — with Genetics ID, dominance, other spellings and notes. Add or retire strains if you have edit access.',
-    href: '/strain_library.html'
+    // Shown to anyone with View on at least one INFO_HUB_SECTIONS entry
+    // (admin panel → Information Hub; see buildHub in index.html). Each
+    // section inside has its own View/Edit.
+    title: 'Information Hub',
+    desc: 'Reference lists the rest of the app runs on — strains, Canix facilities, yield forecasts, farm licenses and customer IDs.',
+    href: '/information_hub.html'
   },
   {
     key: 'production_today',
@@ -297,7 +297,7 @@ const CARD_ES = {
   production_dashboard:{ title: 'Panel de Procesamiento', desc: 'Dónde está cada lote, rendimiento y merma por etapa y cepa, biomasa disponible y producción de los trimmers.' },
   drying_schedule:     { title: 'Calendario de Secado', desc: 'Granjas externas para las que secamos — granja, licencia, tamaño, fechas estimadas de entrada y peso húmedo, con la carga semanal.' },
   harvest_intakes:     { title: 'Recepciones de Cosecha', desc: 'Todas las recepciones de cosecha húmeda — abre una para ver el registro completo, o corrígela y registra el ajuste en Metrc si tienes acceso de edición.' },
-  strain_library:      { title: 'Biblioteca de Variedades', desc: 'Todas las variedades que ofrecen los formularios en su lista de Variedad — con ID de genética, dominancia, otras ortografías y notas. Agrega o retira variedades si tienes acceso de edición.' },
+  information_hub:     { title: 'Centro de Información', desc: 'Las listas de referencia que usa el resto de la app — variedades, instalaciones de Canix, pronósticos de rendimiento, licencias de ranchos e IDs de clientes.' },
   production_today:    { title: 'Hoy — En Vivo', desc: 'Cada formulario en progreso o terminado hoy, actualizado en vivo — para quien tenga acceso de vista, pueda editarlo o no.' },
   brand_assets:        { title: 'Recursos de Marca', desc: 'Logotipos, fotografía y guías de marca de 2CW y marcas socias — carpeta compartida de Drive.' },
   staff_hours:         { title: 'Horas del Personal', desc: 'Quién está marcado en este momento, horas diarias/semanales y cumplimiento del horario — sincronizado cada hora desde Connecteam.' },
@@ -328,6 +328,26 @@ const HUB_WORDS_ES = {
 const CARD_ORDER_OVERRIDES = {
   'ned': ['executive', 'sales', 'inventory', 'twocw_dashboard', 'kss_dashboard', 'pipeline', 'mendo']
 };
+
+// The sections of information_hub.html, each with its own View / Edit
+// columns in app_users.columns (edit implies view). index.html turns them
+// into sessionStorage '2cw_info_access' ({ strains: 'edit', canix: 'view' …})
+// at login; admin.html draws the checkboxes from this list; and the
+// canix-facilities / canix-forecast functions re-check the edit column
+// server-side before saving for a non-admin. Strain Library keeps the column
+// names it had as its own card, so existing grants carry over.
+const INFO_HUB_SECTIONS = [
+  { key: 'strains',  view: 'strain_library',  edit: 'strain library edit',
+    title: { en: 'Strain Library', es: 'Biblioteca de Variedades' }, editNote: 'add, rename and retire strains' },
+  { key: 'canix',    view: 'canix facilities', edit: 'canix facilities edit',
+    title: { en: 'Canix Facilities', es: 'Instalaciones de Canix' }, editNote: 'nicknames, stage, farm group' },
+  { key: 'forecast', view: 'yield forecasts',  edit: 'yield forecasts edit',
+    title: { en: 'Yield Forecasts', es: 'Pronósticos de Rendimiento' }, editNote: 'lbs/plant estimates and harvest plans' },
+  { key: 'licenses', view: 'farm licenses',    edit: 'farm licenses edit',
+    title: { en: 'Farm Licenses', es: 'Licencias de Ranchos' }, editNote: 'the forms’ Farm License list' },
+  { key: 'cids',     view: 'customer ids',     edit: 'customer ids edit',
+    title: { en: 'Customer IDs (CIDs)', es: 'IDs de Clientes (CIDs)' }, editNote: 'the forms’ CID list' }
+];
 
 // Card keys whose sheet column name doesn't match the key verbatim (e.g. has
 // spaces). Card keys not listed here are looked up as-is.

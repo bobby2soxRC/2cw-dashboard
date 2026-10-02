@@ -84,7 +84,7 @@
   .import-log{font-family:'DM Mono',monospace;font-size:.72rem;line-height:1.7;max-height:220px;overflow-y:auto;background:#0c0d0f;border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-top:12px}
   .empty-note{color:var(--subtext);font-size:.85rem;padding:24px;text-align:center}
 
-  /* top-level panel tabs (Users / Canix Facilities) */
+  /* top-level panel tabs (Users / Org Chart / Responsibilities) */
   .top-tabs{display:flex;gap:8px;margin-bottom:20px}
   .top-tabs button{background:transparent;border:1px solid var(--border);color:var(--subtext);border-radius:8px;padding:.5rem 1rem;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
   .top-tabs button.on{background:var(--gold);border-color:var(--gold);color:#000;font-weight:700}
@@ -195,9 +195,6 @@
       <button data-tab="users" class="on" onclick="switchTab('users')">Users</button>
       <button data-tab="orgchart" onclick="switchTab('orgchart')">Org Chart</button>
       <button data-tab="responsibilities" onclick="switchTab('responsibilities')">Responsibilities</button>
-      <button data-tab="canix" onclick="switchTab('canix')">Canix Facilities</button>
-      <button data-tab="forecast" onclick="switchTab('forecast')">Yield Forecast</button>
-      <button data-tab="codes" onclick="switchTab('codes')">Farm Licenses &amp; CIDs</button>
     </div>
 
     <div id="users-view" class="view on">
@@ -254,45 +251,6 @@
 
       <div id="resp-list-wrap"></div>
     </div>
-
-    <div id="canix-view" class="view">
-      <div class="toolbar">
-        <h1>Canix Facilities</h1>
-      </div>
-      <div class="status-line" id="canix-status-line">Nicknames and stage/farm grouping shown on canix_inventory.html. Edits here go live immediately — no deploy needed.</div>
-      <div id="canix-table-wrap"></div>
-    </div>
-
-    <div id="forecast-view" class="view">
-      <div class="toolbar">
-        <h1>Yield Forecast</h1>
-      </div>
-      <div class="status-line">Feeds the "Forecasted Flower" view on canix_inventory.html: (flowering plant count per farm) &times; (that farm's latest lbs/plant estimate).</div>
-
-      <div class="card" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:20px">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;margin-bottom:4px">Yield Estimates</div>
-        <div class="status-line" style="margin-bottom:14px">One row per active Cultivation farm, with today's live flowering-plant count for reference. Blank Lbs/Plant means nothing's been assigned yet. Saving a changed value logs a new dated entry rather than overwriting — so a past forecast's estimate stays visible in the history below.</div>
-        <div id="estimates-checklist-wrap"></div>
-        <div class="section-hd">History</div>
-        <div id="estimates-history-wrap"></div>
-      </div>
-
-      <div class="card" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;margin-bottom:4px">Harvest Plans</div>
-        <div class="status-line" style="margin-bottom:14px">One row per active Cultivation farm — its current planned harvest. Leave plant count override blank to use the live flowering-plant count from Canix instead.</div>
-        <div id="plans-checklist-wrap"></div>
-        <div class="section-hd">Other / Past Plans</div>
-        <div id="plans-history-wrap"></div>
-      </div>
-    </div>
-
-    <div id="codes-view" class="view">
-      <div class="toolbar">
-        <h1>Farm Licenses &amp; CIDs</h1>
-      </div>
-      <div class="status-line">Farm licenses and Customer IDs for the station forms' dropdowns (Wet Intake, Take Down, …). Edits go live immediately — no deploy needed. Untick Active to hide one from the dropdowns while keeping old forms readable.</div>
-      <div id="codes-wrap"></div>
-    </div>
   </div>
 </main>
 
@@ -307,22 +265,20 @@
 <script src="/hub_config.js"></script>
 <script>
 const ADMIN_ENDPOINT = '/.netlify/functions/admin';
-const CANIX_ENDPOINT = '/.netlify/functions/canix-facilities';
-const FORECAST_ENDPOINT = '/.netlify/functions/canix-forecast';
 const TOKEN_KEY = '2cw_admin_token';
-const CANIX_STAGES = ['Cultivation', 'Processing', 'Manufacturing', 'Distribution'];
 
 // Cards toggled directly in the editor — everything in CARD_DEFS except the
 // ones derived from other settings (production access derives
 // production_dashboard / production_today; FORM_ACCESS_COLS derives
 // field_forms).
-// harvest_intakes and strain_library have their own View/Edit pairs in the
+// harvest_intakes has its own View/Edit pair, and information_hub a View/Edit
+// pair per INFO_HUB_SECTIONS entry (hub_config.js), in the
 // editor instead.
-const DERIVED_CARD_KEYS = ['production_dashboard', 'production_today', 'field_forms', 'harvest_intakes', 'strain_library'];
+const DERIVED_CARD_KEYS = ['production_dashboard', 'production_today', 'field_forms', 'harvest_intakes', 'information_hub'];
 const TOGGLE_CARDS = CARD_DEFS.filter(d => !DERIVED_CARD_KEYS.includes(d.key));
 
 // The Responsibilities tab talks to Supabase directly with the anon key,
-// unlike Users/Canix/Forecast which route through signed-token Netlify
+// unlike Users which routes through the signed-token admin Netlify
 // functions — the `responsibilities` table already has an open anon
 // read/write/delete RLS policy (see supabase/schema.sql), the same posture
 // as `tasks`, because nothing in it is more sensitive than what's already
@@ -339,35 +295,11 @@ async function requireClient(){
 
 let users = [];
 let editingId = null; // null = new user
-let canixFacilities = [];
-let canixLoaded = false;
-let yieldEstimates = [];
-let harvestPlans = [];
-let forecastLoaded = false;
-let plantBatches = [];
-let plantBatchesLoaded = false;
-
-const CANIX_DATA_BASE = 'https://raw.githubusercontent.com/bobby2soxRC/2cw-dashboard/main/data/';
-
-async function loadPlantBatches(){
-  try{
-    plantBatches = await fetch(CANIX_DATA_BASE + 'canix_plant_batches.json?t=' + Date.now()).then(r => r.json());
-  }catch(e){
-    console.warn('Could not load plant batches (live plant counts will show as 0):', e);
-    plantBatches = [];
-  }
-  plantBatchesLoaded = true;
-}
-
 function switchTab(tab){
   document.querySelectorAll('#top-tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   document.getElementById('users-view').classList.toggle('on', tab === 'users');
   document.getElementById('orgchart-view').classList.toggle('on', tab === 'orgchart');
   document.getElementById('responsibilities-view').classList.toggle('on', tab === 'responsibilities');
-  document.getElementById('canix-view').classList.toggle('on', tab === 'canix');
-  document.getElementById('forecast-view').classList.toggle('on', tab === 'forecast');
-  document.getElementById('codes-view').classList.toggle('on', tab === 'codes');
-  if(tab === 'codes') refreshCodes();
   if(tab === 'orgchart') renderOrgChart();
   if(tab === 'responsibilities'){
     history.replaceState(null, '', '#responsibilities');
@@ -375,157 +307,6 @@ function switchTab(tab){
   } else {
     history.replaceState(null, '', location.pathname);
   }
-  if(tab === 'canix' && !canixLoaded) refreshCanixFacilities();
-  if(tab === 'forecast') refreshForecastTab();
-}
-
-// ── Farm Licenses & CIDs (Supabase table ref_codes — see supabase/schema.sql)
-// Farm licenses are stored as kind 'pid' (they replaced Property IDs, and the
-// form field kept its old key so past records still read).
-// Read by the station forms through loadReference() in ops_common.js. Talks
-// to Supabase directly with the anon key, same as the Responsibilities tab.
-let refCodes = [];
-let codesSeen = { pid: [], cid: [] };   // values typed via "Other" on forms that aren't on the list
-const CODE_KINDS = [
-  { kind: 'pid', title: 'Farm Licenses', short: 'License', nameLabel: 'Farm' },
-  { kind: 'cid', title: 'Customer IDs (CID)', short: 'CID', nameLabel: 'Customer' }
-];
-
-async function refreshCodes(){
-  try{
-    const c = await requireClient();
-    const [{ data, error }, seen] = await Promise.all([
-      c.from('ref_codes').select('*').order('code'),
-      c.from('operations_forms').select('pid:fields->>pid, cid:fields->>cid')
-    ]);
-    if(error) throw error;
-    refCodes = data || [];
-    codesSeen = { pid: [], cid: [] };
-    if(!seen.error){
-      ['pid','cid'].forEach(kind => {
-        const known = new Set(refCodes.filter(r => r.kind === kind).map(r => r.code));
-        codesSeen[kind] = [...new Set((seen.data || []).map(r => (r[kind] || '').trim()).filter(v => v && !known.has(v)))].sort();
-      });
-    }
-    renderCodes();
-  }catch(e){
-    const msg = String(e.message || e);
-    document.getElementById('codes-wrap').innerHTML = /ref_codes/.test(msg)
-      ? '<div class="empty-note">The Farm Licenses &amp; CIDs table isn&#39;t set up yet — run the "PIDs &amp; CIDs" section of supabase/schema.sql in the Supabase SQL editor.</div>'
-      : `<div class="empty-note">Could not load: ${esc(msg)}</div>`;
-  }
-}
-
-function renderCodes(){
-  document.getElementById('codes-wrap').innerHTML = CODE_KINDS.map(k => {
-    const rows = refCodes.filter(r => r.kind === k.kind)
-      .sort((a,b) => (b.active - a.active) || String(a.name||'').localeCompare(String(b.name||'')) || a.code.localeCompare(b.code));
-    const seen = codesSeen[k.kind];
-    return `
-    <div class="section-hd" style="font-size:.8rem;color:var(--text)">${k.title}</div>
-    ${seen.length ? `<div class="status-line" style="color:var(--gold)">Typed in with "Other" on forms but not on this list — click to add: ${seen.map(v => `<button class="btn btn-ghost" style="padding:.25rem .55rem;margin:2px" data-v="${esc(v)}" onclick="codeAddSeen('${k.kind}', this.dataset.v)">+ ${esc(v)}</button>`).join('')}</div>` : ''}
-    <div class="table-scroll"><table>
-      <thead><tr><th style="width:170px">${k.short}</th><th style="width:200px">${k.nameLabel}</th><th>Notes</th><th style="width:70px">Active</th><th style="width:150px"></th></tr></thead>
-      <tbody>
-        ${rows.map(r => `
-          <tr data-code-id="${r.id}" class="${r.active ? '' : 'inactive'}">
-            <td><input type="text" data-field="code" value="${esc(r.code)}"/></td>
-            <td><input type="text" data-field="name" value="${esc(r.name || '')}"/></td>
-            <td><textarea data-field="notes" rows="2" style="min-height:38px">${esc(r.notes || '')}</textarea></td>
-            <td style="text-align:center"><input type="checkbox" data-field="active" ${r.active ? 'checked' : ''}/></td>
-            <td><div class="row-actions"><button onclick="codeSave('${k.kind}', this)">Save</button><button onclick="codeDelete(this)">Delete</button></div></td>
-          </tr>`).join('')}
-        <tr data-code-new="${k.kind}">
-          <td><input type="text" data-field="code" placeholder="New ${k.short.toLowerCase() === 'cid' ? 'CID' : 'license #'}"/></td>
-          <td><input type="text" data-field="name" placeholder="${k.nameLabel}"/></td>
-          <td><textarea data-field="notes" rows="2" style="min-height:38px" placeholder="Notes"></textarea></td>
-          <td style="text-align:center"><input type="checkbox" data-field="active" checked/></td>
-          <td><div class="row-actions"><button onclick="codeSave('${k.kind}', this)">+ Add</button></div></td>
-        </tr>
-      </tbody>
-    </table></div>`;
-  }).join('');
-}
-
-async function codeSave(kind, btn){
-  const tr = btn.closest('tr');
-  const get = (f) => tr.querySelector(`[data-field=${f}]`);
-  const row = { kind, code: get('code').value.trim(), name: get('name').value.trim() || null, notes: get('notes').value.trim() || null, active: get('active').checked };
-  const short = CODE_KINDS.find(k => k.kind === kind).short;
-  if(!row.code){ alert(`Enter the ${short === 'CID' ? 'CID' : 'license number'}.`); return; }
-  const id = tr.dataset.codeId;
-  const label = btn.textContent;
-  btn.disabled = true; btn.textContent = 'Saving…';
-  try{
-    const c = await requireClient();
-    const { error } = id ? await c.from('ref_codes').update(row).eq('id', id) : await c.from('ref_codes').insert(row);
-    if(error) throw error;
-    await refreshCodes();
-  }catch(e){
-    const msg = String(e.message || e);
-    alert(/duplicate|unique/i.test(msg) ? `${short} ${row.code} is already on the list.` : 'Could not save: ' + msg);
-    btn.disabled = false; btn.textContent = label;
-  }
-}
-
-async function codeDelete(btn){
-  const tr = btn.closest('tr');
-  const code = tr.querySelector('[data-field=code]').value;
-  if(!confirm(`Delete ${code}? Forms that already used it keep the code, but it won't show a name any more. To just hide it from the dropdowns, untick Active instead.`)) return;
-  try{
-    const c = await requireClient();
-    const { error } = await c.from('ref_codes').delete().eq('id', tr.dataset.codeId);
-    if(error) throw error;
-    await refreshCodes();
-  }catch(e){ alert('Could not delete: ' + (e.message || e)); }
-}
-
-// Pre-fills the add row with a value someone typed via "Other" on a form.
-function codeAddSeen(kind, value){
-  const tr = document.querySelector(`tr[data-code-new="${kind}"]`);
-  tr.querySelector('[data-field=code]').value = value;
-  tr.querySelector('[data-field=name]').focus();
-  tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-async function refreshForecastTab(){
-  await Promise.all([
-    canixLoaded ? Promise.resolve() : refreshCanixFacilities(),
-    plantBatchesLoaded ? Promise.resolve() : loadPlantBatches(),
-    forecastLoaded ? Promise.resolve() : refreshYieldForecast(),
-  ]);
-  renderEstimatesChecklist();
-  renderPlansChecklist();
-}
-
-// Farms yield forecasting applies to — Cultivation-stage, not excluded/
-// archived. A farm_group counts as Cultivation if any of its facilities
-// are (in practice every facility on a given farm shares one stage).
-function cultivationFarmGroups(){
-  const farms = new Set();
-  canixFacilities.forEach(f => {
-    if(f.stage === 'Cultivation' && !f.exclude && f.status !== 'archived' && f.farm_group) farms.add(f.farm_group);
-  });
-  return [...farms].sort();
-}
-
-function liveFloweringCountForFarm(farm){
-  const facilityIds = new Set(canixFacilities.filter(f => f.farm_group === farm).map(f => String(f.facility_id)));
-  return plantBatches
-    .filter(b => facilityIds.has(String(b.facility_id)))
-    .reduce((sum, b) => sum + (Number(b.flowering_count) || 0), 0);
-}
-
-function latestEstimateForFarm(farm){
-  return yieldEstimates
-    .filter(e => e.farm_group === farm)
-    .reduce((best, e) => (!best || e.effective_date > best.effective_date) ? e : best, null);
-}
-
-function currentPlanForFarm(farm){
-  const planned = harvestPlans.filter(p => p.farm_group === farm && p.status === 'planned');
-  if(!planned.length) return null;
-  return planned.reduce((best, p) => (!best || p.planned_harvest_date < best.planned_harvest_date) ? p : best, null);
 }
 
 function fullName(u){ return [u.name, u.last_name].filter(Boolean).join(' '); }
@@ -547,12 +328,7 @@ async function callApi(endpoint, body){
   return j;
 }
 
-// Both endpoints verify tokens against the same ADMIN_SIGNING_SECRET (see
-// netlify/functions/canix-facilities.js), so one admin login covers both —
-// no separate sign-in for the Canix tab.
 function callAdmin(body){ return callApi(ADMIN_ENDPOINT, body); }
-function callCanix(body){ return callApi(CANIX_ENDPOINT, body); }
-function callForecast(body){ return callApi(FORECAST_ENDPOINT, body); }
 
 async function doAdminLogin(){
   const pin = document.getElementById('admin-pin').value.trim();
@@ -626,8 +402,9 @@ function cardSummary(u){
   if((cols['pr access']||'').toUpperCase()==='TRUE') pills.push('Add PR');
   if((cols['harvest intakes edit']||'').toUpperCase()==='TRUE') pills.push('Harvest Intakes: edit');
   else if((cols['harvest_intakes']||'').toUpperCase()==='TRUE') pills.push('Harvest Intakes: view');
-  if((cols['strain library edit']||'').toUpperCase()==='TRUE') pills.push('Strain Library: edit');
-  else if((cols['strain_library']||'').toUpperCase()==='TRUE') pills.push('Strain Library: view');
+  const infoEdit = INFO_HUB_SECTIONS.filter(s => (cols[s.edit]||'').toUpperCase()==='TRUE').length;
+  const infoView = INFO_HUB_SECTIONS.filter(s => (cols[s.edit]||'').toUpperCase()!=='TRUE' && (cols[s.view]||'').toUpperCase()==='TRUE').length;
+  if(infoEdit || infoView) pills.push('Info Hub: ' + [infoEdit ? infoEdit+' edit' : '', infoView ? infoView+' view' : ''].filter(Boolean).join(', '));
   return pills;
 }
 
@@ -1276,11 +1053,18 @@ function openEditor(id){
       <label class="check-item"><input type="checkbox" data-card="harvest intakes edit" id="hi-edit" ${(cols['harvest intakes edit']||'').toUpperCase()==='TRUE'?'checked':''}/> Edit (fix submitted intakes, record Metrc adjustments)</label>
     </div>
 
-    <div class="section-hd">Strain Library</div>
-    <div class="check-grid">
-      <label class="check-item"><input type="checkbox" data-card="strain_library" id="sl-view" ${(cols['strain_library']||'').toUpperCase()==='TRUE' || (cols['strain library edit']||'').toUpperCase()==='TRUE' ?'checked':''}/> View</label>
-      <label class="check-item"><input type="checkbox" data-card="strain library edit" id="sl-edit" ${(cols['strain library edit']||'').toUpperCase()==='TRUE'?'checked':''}/> Edit (add, rename and retire strains)</label>
-    </div>
+    <div class="section-hd">Information Hub</div>
+    ${INFO_HUB_SECTIONS.map(s => {
+      const ed = (cols[s.edit]||'').toUpperCase()==='TRUE';
+      const vw = ed || (cols[s.view]||'').toUpperCase()==='TRUE';
+      return `<div class="dept-block">
+        <div class="dept-name">${esc(s.title.en)}</div>
+        <div class="check-grid">
+          <label class="check-item"><input type="checkbox" data-card="${esc(s.view)}" data-info-view="${s.key}" ${vw?'checked':''}/> View</label>
+          <label class="check-item"><input type="checkbox" data-card="${esc(s.edit)}" data-info-edit="${s.key}" ${ed?'checked':''}/> Edit (${esc(s.editNote)})</label>
+        </div>
+      </div>`;
+    }).join('')}
 
     <div class="section-hd">Processing — edit access</div>
     <label class="check-item" style="margin-bottom:10px"><input type="checkbox" id="ed-all" ${editAll?'checked':''}/> All stations</label>
@@ -1317,8 +1101,11 @@ function openEditor(id){
   // Edit implies view: ticking Edit ticks View, unticking View unticks Edit.
   document.getElementById('hi-edit').addEventListener('change', e => { if(e.target.checked) document.getElementById('hi-view').checked = true; });
   document.getElementById('hi-view').addEventListener('change', e => { if(!e.target.checked) document.getElementById('hi-edit').checked = false; });
-  document.getElementById('sl-edit').addEventListener('change', e => { if(e.target.checked) document.getElementById('sl-view').checked = true; });
-  document.getElementById('sl-view').addEventListener('change', e => { if(!e.target.checked) document.getElementById('sl-edit').checked = false; });
+  INFO_HUB_SECTIONS.forEach(s => {
+    const v = document.querySelector(`[data-info-view="${s.key}"]`), e = document.querySelector(`[data-info-edit="${s.key}"]`);
+    e.addEventListener('change', () => { if(e.checked) v.checked = true; });
+    v.addEventListener('change', () => { if(!v.checked) e.checked = false; });
+  });
   document.getElementById('view-all').addEventListener('change', syncViewListDisabled);
   syncStationListDisabled();
   syncViewListDisabled();
@@ -1394,267 +1181,6 @@ async function doImport(){
     out.innerHTML = `<div class="import-log" style="color:var(--red)">Import failed: ${esc(e.message)}</div>`;
   }
   btn.disabled = false; btn.textContent = 'Import from Sheet';
-}
-
-// ── Canix Facilities tab ───────────────────────────────────────────────
-async function refreshCanixFacilities(){
-  const status = document.getElementById('canix-status-line');
-  const prevNote = status.textContent;
-  try{
-    const j = await callCanix({ action: 'list', token: getToken() });
-    canixFacilities = j.facilities || [];
-    canixLoaded = true;
-    renderCanixTable();
-  }catch(e){
-    document.getElementById('canix-table-wrap').innerHTML =
-      `<div class="empty-note">Could not load Canix facilities: ${esc(e.message)}<br><br>` +
-      `If this says the table or function is missing, run the latest supabase/schema.sql in the Supabase SQL editor ` +
-      `and make sure netlify/functions/canix-facilities.js has deployed.</div>`;
-  }
-  status.textContent = prevNote;
-}
-
-function renderCanixTable(){
-  const wrap = document.getElementById('canix-table-wrap');
-  if(!canixFacilities.length){ wrap.innerHTML = '<div class="empty-note">No Canix facilities yet — run the seed in supabase/schema.sql.</div>'; return; }
-
-  const sorted = [...canixFacilities].sort((a,b) => (a.status==='archived') - (b.status==='archived') || (a.exclude - b.exclude) || String(a.stage||'zzz').localeCompare(String(b.stage||'zzz')) || String(a.farm_group||'').localeCompare(String(b.farm_group||'')));
-  const archivedCount = canixFacilities.filter(f => f.status === 'archived').length;
-
-  wrap.innerHTML = `
-    ${archivedCount ? `<div class="status-line" style="color:var(--gold)">${archivedCount} archived — Canix no longer reports ${archivedCount===1?'this license':'these licenses'}, but historical packages/batches keep the label. Nicknames stay editable in case it comes back.</div>` : ''}
-    <div class="table-scroll"><table>
-    <thead><tr><th>License</th><th>Status</th><th>Type / County / Held By</th><th>Nickname</th><th>Stage</th><th>Farm Group</th><th>Exclude</th><th></th></tr></thead>
-    <tbody>
-      ${sorted.map(f => `
-        <tr class="${f.exclude || f.status==='archived' ? 'inactive' : ''}" data-facility-id="${f.facility_id}">
-          <td>${esc(f.license_number || f.canix_name)}${f.canix_name && f.canix_name !== f.license_number ? `<br><span class="td muted" style="color:var(--muted);font-size:.72rem">${esc(f.canix_name)}</span>` : ''}</td>
-          <td>${f.status === 'archived' ? '<span class="pill" style="border-color:var(--red);color:var(--red)">archived</span>' : '<span class="pill" style="border-color:var(--green);color:var(--green)">active</span>'}</td>
-          <td class="muted">${esc(f.dcc_license_type || '—')}<br>${esc(f.dcc_county || '—')} · ${esc(f.held_by || '—')}</td>
-          <td><input type="text" data-field="display_name" value="${esc(f.display_name || '')}" placeholder="${esc(f.canix_name || '')}"/></td>
-          <td><select data-field="stage">
-            <option value="">—</option>
-            ${CANIX_STAGES.map(s => `<option value="${s}" ${f.stage===s?'selected':''}>${s}</option>`).join('')}
-          </select></td>
-          <td><input type="text" data-field="farm_group" value="${esc(f.farm_group || '')}"/></td>
-          <td style="text-align:center"><input type="checkbox" data-field="exclude" ${f.exclude?'checked':''}/></td>
-          <td><div class="row-actions"><button onclick="saveCanixRow('${f.facility_id}', this)">Save</button></div></td>
-        </tr>`).join('')}
-    </tbody>
-  </table></div>`;
-}
-
-async function saveCanixRow(facilityId, btn){
-  const row = btn.closest('tr');
-  const facility = {
-    facility_id: facilityId,
-    display_name: row.querySelector('[data-field=display_name]').value.trim(),
-    stage: row.querySelector('[data-field=stage]').value,
-    farm_group: row.querySelector('[data-field=farm_group]').value.trim(),
-    exclude: row.querySelector('[data-field=exclude]').checked,
-  };
-  btn.disabled = true; btn.textContent = 'Saving…';
-  try{
-    const j = await callCanix({ action: 'update', token: getToken(), facility });
-    const i = canixFacilities.findIndex(f => String(f.facility_id) === String(facilityId));
-    if(i >= 0) canixFacilities[i] = j.facility;
-    btn.disabled = false; btn.textContent = 'Save';
-    const savedMsg = j.renamed
-      ? `Saved — also renamed "${esc(j.renamed.from)}" to "${esc(j.renamed.to)}" in Yield Forecast`
-      : 'Saved';
-    btn.insertAdjacentHTML('afterend', `<span class="row-saved">${savedMsg}</span>`);
-    setTimeout(() => { const s = row.querySelector('.row-saved'); if(s) s.remove(); }, j.renamed ? 5000 : 2000);
-    renderCanixTable();
-    forecastLoaded = false; // farm_group may have changed underneath it
-  }catch(e){
-    alert('Could not save: ' + e.message);
-    btn.disabled = false; btn.textContent = 'Save';
-  }
-}
-
-// ── Yield Forecast tab ─────────────────────────────────────────────────
-async function refreshYieldForecast(){
-  try{
-    const [e, p] = await Promise.all([
-      callForecast({ action: 'list_estimates', token: getToken() }),
-      callForecast({ action: 'list_harvest_plans', token: getToken() }),
-    ]);
-    yieldEstimates = e.estimates || [];
-    harvestPlans = p.plans || [];
-    forecastLoaded = true;
-    renderEstimatesHistory();
-    renderPlansHistory();
-  }catch(e){
-    document.getElementById('estimates-checklist-wrap').innerHTML = `<div class="empty-note">Could not load: ${esc(e.message)}<br><br>If this says the table or function is missing, run the latest supabase/schema.sql and confirm netlify/functions/canix-forecast.js has deployed.</div>`;
-  }
-}
-
-function todayStr(){ return new Date().toISOString().slice(0, 10); }
-
-// ── Estimates: checklist (one row per Cultivation farm, blank = unassigned) ──
-function renderEstimatesChecklist(){
-  const wrap = document.getElementById('estimates-checklist-wrap');
-  const farms = cultivationFarmGroups();
-  if(!farms.length){ wrap.innerHTML = '<div class="empty-note">No Cultivation-stage farms yet — set a farm\'s stage on the Canix Facilities tab first.</div>'; return; }
-
-  wrap.innerHTML = `<div class="table-scroll"><table>
-    <thead><tr><th>Farm</th><th class="num">Live Flowering Count</th><th>Lbs / Plant</th><th>Effective Date</th><th></th></tr></thead>
-    <tbody>
-      ${farms.map(farm => {
-        const current = latestEstimateForFarm(farm);
-        const needsAssignment = !current;
-        return `<tr data-farm="${esc(farm)}" class="${needsAssignment ? 'inactive' : ''}">
-          <td>${esc(farm)}</td>
-          <td class="num">${liveFloweringCountForFarm(farm).toLocaleString()}</td>
-          <td><input type="text" data-field="lbs" inputmode="decimal" value="${current ? esc(current.estimated_lbs_per_plant) : ''}" placeholder="${needsAssignment ? 'needs assignment' : ''}"/></td>
-          <td><input type="text" data-field="date" value="${current ? esc(current.effective_date) : todayStr()}"/></td>
-          <td><div class="row-actions"><button onclick="saveEstimateChecklistRow(this)">Save</button></div></td>
-        </tr>`;
-      }).join('')}
-    </tbody>
-  </table></div>`;
-}
-
-async function saveEstimateChecklistRow(btn){
-  const row = btn.closest('tr');
-  const farm = row.dataset.farm;
-  const lbs = row.querySelector('[data-field=lbs]').value.trim();
-  const date = row.querySelector('[data-field=date]').value.trim();
-  if(!lbs){ alert('Enter a lbs/plant value first.'); return; }
-  const current = latestEstimateForFarm(farm);
-  if(current && Number(current.estimated_lbs_per_plant) === Number(lbs) && current.effective_date === date){
-    return; // unchanged — no need to log a duplicate history entry
-  }
-  btn.disabled = true; btn.textContent = 'Saving…';
-  try{
-    await callForecast({ action: 'add_estimate', token: getToken(), estimate: { farm_group: farm, estimated_lbs_per_plant: lbs, effective_date: date } });
-    await refreshYieldForecast();
-    renderEstimatesChecklist();
-  }catch(e){
-    alert('Could not save: ' + e.message);
-    btn.disabled = false; btn.textContent = 'Save';
-  }
-}
-
-function renderEstimatesHistory(){
-  const wrap = document.getElementById('estimates-history-wrap');
-  if(!yieldEstimates.length){ wrap.innerHTML = '<div class="empty-note">No estimates logged yet.</div>'; return; }
-  const sorted = [...yieldEstimates].sort((a,b) => a.farm_group.localeCompare(b.farm_group) || b.effective_date.localeCompare(a.effective_date));
-  wrap.innerHTML = `<div class="table-scroll"><table>
-    <thead><tr><th>Farm Group</th><th>Lbs / Plant</th><th>Effective</th><th>Notes</th><th></th></tr></thead>
-    <tbody>
-      ${sorted.map(e => `
-        <tr>
-          <td>${esc(e.farm_group)}</td>
-          <td>${esc(e.estimated_lbs_per_plant)}</td>
-          <td class="muted">${esc(e.effective_date)}</td>
-          <td class="muted">${esc(e.notes || '—')}</td>
-          <td><div class="row-actions"><button onclick="deleteYieldEstimate('${e.id}')">Delete</button></div></td>
-        </tr>`).join('')}
-    </tbody>
-  </table></div>`;
-}
-
-async function deleteYieldEstimate(id){
-  if(!confirm('Delete this estimate? This removes it from history — only do this for a mistaken entry, not just to "update" it (save a new value in the checklist instead).')) return;
-  try{
-    await callForecast({ action: 'delete_estimate', token: getToken(), id });
-    await refreshYieldForecast();
-    renderEstimatesChecklist();
-  }catch(e){
-    alert('Could not delete: ' + e.message);
-  }
-}
-
-// ── Harvest plans: checklist (one row per Cultivation farm) ─────────────
-function renderPlansChecklist(){
-  const wrap = document.getElementById('plans-checklist-wrap');
-  const farms = cultivationFarmGroups();
-  if(!farms.length){ wrap.innerHTML = '<div class="empty-note">No Cultivation-stage farms yet — set a farm\'s stage on the Canix Facilities tab first.</div>'; return; }
-
-  wrap.innerHTML = `<div class="table-scroll"><table>
-    <thead><tr><th>Farm</th><th class="num">Live Flowering Count</th><th>Harvest Date</th><th>Count Override</th><th>Status</th><th>Notes</th><th></th></tr></thead>
-    <tbody>
-      ${farms.map(farm => {
-        const current = currentPlanForFarm(farm);
-        const needsAssignment = !current;
-        return `<tr data-farm="${esc(farm)}" data-plan-id="${current ? current.id : ''}" class="${needsAssignment ? 'inactive' : ''}">
-          <td>${esc(farm)}</td>
-          <td class="num">${liveFloweringCountForFarm(farm).toLocaleString()}</td>
-          <td><input type="text" data-field="date" value="${current ? esc(current.planned_harvest_date) : ''}" placeholder="${needsAssignment ? 'needs assignment' : ''}"/></td>
-          <td><input type="text" data-field="count" value="${current && current.plant_count_override != null ? esc(current.plant_count_override) : ''}" placeholder="live"/></td>
-          <td><select data-field="status">
-            <option value="planned" ${!current || current.status==='planned' ? 'selected' : ''}>planned</option>
-            <option value="completed" ${current && current.status==='completed' ? 'selected' : ''}>completed</option>
-            <option value="canceled" ${current && current.status==='canceled' ? 'selected' : ''}>canceled</option>
-          </select></td>
-          <td><input type="text" data-field="notes" value="${current ? esc(current.notes || '') : ''}"/></td>
-          <td><div class="row-actions"><button onclick="savePlanChecklistRow(this)">Save</button></div></td>
-        </tr>`;
-      }).join('')}
-    </tbody>
-  </table></div>`;
-}
-
-async function savePlanChecklistRow(btn){
-  const row = btn.closest('tr');
-  const farm = row.dataset.farm;
-  const id = row.dataset.planId || null;
-  const date = row.querySelector('[data-field=date]').value.trim();
-  if(!date){ alert('Enter a planned harvest date first.'); return; }
-  const plan = {
-    id,
-    farm_group: farm,
-    planned_harvest_date: date,
-    plant_count_override: row.querySelector('[data-field=count]').value.trim(),
-    status: row.querySelector('[data-field=status]').value,
-    notes: row.querySelector('[data-field=notes]').value.trim(),
-  };
-  btn.disabled = true; btn.textContent = 'Saving…';
-  try{
-    await callForecast({ action: 'upsert_harvest_plan', token: getToken(), plan });
-    await refreshYieldForecast();
-    renderPlansChecklist();
-  }catch(e){
-    alert('Could not save: ' + e.message);
-    btn.disabled = false; btn.textContent = 'Save';
-  }
-}
-
-// History shows everything NOT currently surfaced in the checklist above
-// (a farm's "current" planned entry) — completed/canceled plans, or a
-// second concurrent plan for a farm with more than one harvest tracked.
-function renderPlansHistory(){
-  const wrap = document.getElementById('plans-history-wrap');
-  const currentIds = new Set(cultivationFarmGroups().map(f => currentPlanForFarm(f)?.id).filter(Boolean));
-  const rest = harvestPlans.filter(p => !currentIds.has(p.id));
-  if(!rest.length){ wrap.innerHTML = '<div class="empty-note">Nothing else here.</div>'; return; }
-  const sorted = [...rest].sort((a,b) => a.planned_harvest_date.localeCompare(b.planned_harvest_date));
-  wrap.innerHTML = `<div class="table-scroll"><table>
-    <thead><tr><th>Farm Group</th><th>Harvest Date</th><th>Count Override</th><th>Status</th><th>Notes</th><th></th></tr></thead>
-    <tbody>
-      ${sorted.map(p => `
-        <tr class="${p.status!=='planned' ? 'inactive' : ''}">
-          <td>${esc(p.farm_group)}</td>
-          <td class="muted">${esc(p.planned_harvest_date)}</td>
-          <td class="muted">${esc(p.plant_count_override ?? 'live')}</td>
-          <td class="muted">${esc(p.status)}</td>
-          <td class="muted">${esc(p.notes || '—')}</td>
-          <td><div class="row-actions"><button onclick="deleteHarvestPlan('${p.id}')">Delete</button></div></td>
-        </tr>`).join('')}
-    </tbody>
-  </table></div>`;
-}
-
-async function deleteHarvestPlan(id){
-  if(!confirm('Delete this harvest plan?')) return;
-  try{
-    await callForecast({ action: 'delete_harvest_plan', token: getToken(), id });
-    await refreshYieldForecast();
-    renderPlansChecklist();
-  }catch(e){
-    alert('Could not delete: ' + e.message);
-  }
 }
 
 document.getElementById('admin-pin').addEventListener('keydown', e => { if(e.key==='Enter') doAdminLogin(); });

@@ -89,27 +89,46 @@ record who changed it. This is how a second person records the Metrc
 adjustment (`metrcAdjusted` + `metrcAdjustedLb`) after someone else did
 the intake.
 
-**Strain Library** (`strain_library.html`, hub card `strain_library` under
-Operations) is the list every Strain dropdown offers. It lives in the
-Supabase table `strains` (name, abbreviation, sources = Genetics ID, dominance, aliases, notes, active), seeded
-from `reference.json`; `loadReference()` swaps it in for the file's `strains`
-list, which is only the fallback when Supabase can't be reached. Access is
-the same View/Edit pair as Harvest Intakes: `strain_library` and
-`strain library edit` columns → `2cw_strain_access`. Edit can add, rename
-and retire strains (retired = off the dropdowns, kept in the library);
-there's no delete. Renaming doesn't rewrite records already submitted under
-the old name, so the old name goes in `aliases`.
+**Information Hub** (`information_hub.html`, hub card `information_hub`
+under Operations) holds the reference lists the rest of the app runs on, one
+tab each: Strain Library, Canix Facilities, Yield Forecasts, Farm Licenses,
+Customer IDs. The last four used to be admin-panel tabs. `INFO_HUB_SECTIONS`
+in `hub_config.js` lists the sections and their `app_users.columns` View/Edit
+pair (edit implies view); the admin user editor draws its "Information Hub"
+checkboxes from it, and hub login turns them into `2cw_info_access`
+(`{ strains: 'edit', canix: 'view', … }`). The card shows if any section is
+viewable; each tab is read-only or editable to match. Strains, licenses and
+CIDs read/write Supabase directly (open anon policies). Canix facilities and
+yield forecasts are read directly but saved through `canix-facilities.js` /
+`canix-forecast.js`, which accept either the admin token or a hub user's
+login PIN — the PIN is looked up in `app_users` server-side and the
+section's edit column checked there. `strain_library.html` just redirects to
+`information_hub.html#strains`.
+
+**Strain Library** (Information Hub tab) is the list every Strain dropdown
+offers. It lives in the Supabase table `strains` (name, abbreviation,
+sources = Genetics ID, dominance, aliases, notes, active), seeded from
+`reference.json`; `loadReference()` swaps it in for the file's `strains`
+list, which is only the fallback when Supabase can't be reached. Access
+columns are `strain_library` / `strain library edit` (kept from when it was
+its own card). Edit can add, rename and retire strains (retired = off the
+dropdowns, kept in the library); there's no delete. Renaming doesn't rewrite
+records already submitted under the old name, so the old name goes in
+`aliases`. Edit also gets Download CSV / Upload CSV: the upload matches rows
+by `id` (or name, for new rows), is previewed (new / changed / problems)
+before saving, and never deletes — strains missing from the file are left
+alone.
 
 **Farm Licenses & CIDs** live in the Supabase table `ref_codes` (kind
-`pid`/`cid`, code, name, notes, active), managed on the admin panel's "Farm
-Licenses & CIDs" tab. Farm licenses replaced Property IDs (PIDs): they're
+`pid`/`cid`, code, name, notes, active), managed on the Information Hub's
+Farm Licenses and Customer IDs tabs. Farm licenses replaced Property IDs (PIDs): they're
 still stored as kind `pid`, and the form field is still `pid`, so records
 from before the switch keep reading — only the labels changed. The code is
 the license number and the name is the farm; dropdowns show "Farm: license".
 `loadReference()` in `ops_common.js` swaps them in for the `properties` and
 `customers` dropdown lists; `reference.json`'s `properties` is only the
 fallback. Values typed via "Other" on a form are not added automatically —
-the tab lists them so an admin can add them with one click.
+the tab lists them so someone with edit access can add them with one click.
 
 **Drying Schedule** (`drying_schedule.html`, hub card `drying_schedule` under
 Processing) plans the outside client farms we dry for. Each row in the
