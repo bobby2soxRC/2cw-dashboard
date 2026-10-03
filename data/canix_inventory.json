@@ -110727,7 +110727,7 @@
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
-    "status": "In Progress",
+    "status": "Available To Sell",
     "item": {
       "id": 3435343,
       "name": "Soma Rosa 1g Pre-Pre-Roll - Galactic Warheadz",
@@ -110765,10 +110765,10 @@
       "dutchie_product": null,
       "bills_of_materials": [],
       "phenotype": null,
-      "total_for_sale": 0.0,
+      "total_for_sale": 2879.0,
       "ordered": 0.0,
       "backordered": 0.0,
-      "unordered": 0.0,
+      "unordered": 2879.0,
       "updated_at": "2026-09-30T18:30:55.806Z"
     },
     "facility_id": 4929,
@@ -110783,7 +110783,7 @@
     "production_batch": null,
     "lot_id": null,
     "cultivation_tax": null,
-    "available_for_sale": false,
+    "available_for_sale": true,
     "cannabis_cogs": null,
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
@@ -110843,13 +110843,424 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-09-30T18:30:58.140Z",
-    "test_results": null,
+    "updated_at": "2026-10-03T15:04:04.691Z",
+    "test_results": {
+      "thc": [
+        {
+          "value": null,
+          "measure": "mg"
+        },
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "cbd": [
+        {
+          "value": null,
+          "measure": "mg"
+        },
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 0.0,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "thca": [
+        {
+          "value": 276.558,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 27.6558,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbda": [
+        {
+          "value": 0.6419999999999999,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 0.0642,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbn": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbg": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbc": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        }
+      ],
+      "cbca": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        }
+      ],
+      "cbga": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "delta_8_thc": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "delta_8_thca": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "delta_9_thc": [
+        {
+          "value": 15.026,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 1.5026,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "delta_9_thca": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "delta_10_thc": [
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "thcv": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "thcva": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "total_cbd": [
+        {
+          "value": 0.5630000000000001,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 0.0563,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "total_cbg": [
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        }
+      ],
+      "total_delta_9_thc": [
+        {
+          "value": 257.567,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 25.7567,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "total_thc": [
+        {
+          "value": 257.567366,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 25.7567366,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "total_cannabinoid": [
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 29.2226,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbdv": [
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "cbdva": [
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "test_status": "TestPassed",
+      "tested_package_tag": "1A4060300047D39000015435",
+      "test_date": "2026-10-03",
+      "terpenes": {
+        "measure": "percent",
+        "top_three": {},
+        "values": {}
+      }
+    },
     "lab_test_url": null,
-    "coa_url": null,
+    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/1ac939f1/Package5435_COAfromMetrc_1ac939f1.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261003%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261003T163618Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=7e091f0c98ec4abccda95e0cb62528c45276317d661858e82e103f8fd2f9d786",
     "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
+      "testing_facility_name": "SC LABORATORIES CALIFORNIA, LLC",
+      "testing_facility_license": "C8-0000013-LIC"
     },
     "_license_key_label": "All Facilities",
     "_facility_name": "Airway: C11-0001652-LIC",
@@ -136170,117 +136581,6 @@
     "_facility_license_number": "C11-0001652-LIC"
   },
   {
-    "id": 34313311,
-    "tag": "1A4060300047D39000015458",
-    "is_active": true,
-    "is_testing_package": true,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3434691,
-      "name": "AGP | Flower Pluto",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4929,
-      "type": {
-        "id": 119331,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 722812,
-        "name": "Pluto"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 1.3036,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 1.3036,
-      "updated_at": "2026-10-02T18:46:04.202Z"
-    },
-    "facility_id": 4929,
-    "weight": 80.0,
-    "original_weight": 80.0,
-    "weight_unit": "Grams",
-    "implied_weight": "",
-    "packaged_date": "2026-10-02T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 34001159,
-        "tag": "1A4060300047D39000015385",
-        "weight": 80.0,
-        "weight_unit": "Grams",
-        "pulled_weight": 80.0,
-        "pulled_weight_unit": "Grams",
-        "item": {
-          "id": 3434691,
-          "name": "AGP | Flower Pluto",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "AF-071-Galactic Warheadz-224-T2., AF-071-Grape Gas-224-T2, AF-073-Glitter Bomb-232-T2, AF-073-Grape Gas-231-T1, AF-073-Grape Gas-232-T2, AF-073-Itz Pluto-238-T2, AF-073-Obama Runtz-224-T1-8-21-26, AF-073-Tahiti Twist-224-T5-8-25-26, AF-073-Tahiti Twist-224-T6-8-25-26, AF-075-Grape Gas-224-T6., AF-075-GRP-224-T4-09-01-26, AF-075-Lemon Cherry Gelato-233-T5, AF-075-Tahiti Twist-224-T3-09-01-26, AF-075-Tahiti Twist-244-T2, AF-075-Total Eclipse-224-T3-09-01-26, AF-075-Zoap-237-T1, AHD-2180-PackMule#4[HVN]-AGP-196-T2, BG-0309-Itz Pluto-217-T1, BG-0309-Zoap-216-T4, BG-0540-Gelato 33-216-T3, HSR-0540-Super Bluff Cherry-224-T1",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-10-02T22:24:54.447Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Airway: C11-0001652-LIC",
-    "_facility_license_number": "C11-0001652-LIC"
-  },
-  {
     "id": 34313922,
     "tag": "1A406030005E0B2000003474",
     "is_active": true,
@@ -137923,7 +138223,7 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-10-03T03:22:07.787Z"
+      "updated_at": "2026-10-03T14:37:13.746Z"
     },
     "facility_id": 4923,
     "weight": 2046.0,
@@ -139017,117 +139317,6 @@
     "_facility_license_number": "C11-0001652-LIC"
   },
   {
-    "id": 34317087,
-    "tag": "1A4060300047D39000015465",
-    "is_active": true,
-    "is_testing_package": true,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3365579,
-      "name": "AGP Flower - Galactic Warheadz",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4929,
-      "type": {
-        "id": 119331,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 711927,
-        "name": "Galactic Warheadz"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 4.9471,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 4.9471,
-      "updated_at": "2026-10-02T22:24:53.276Z"
-    },
-    "facility_id": 4929,
-    "weight": 69.0,
-    "original_weight": 69.0,
-    "weight_unit": "Grams",
-    "implied_weight": "",
-    "packaged_date": "2026-10-02T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 34028296,
-        "tag": "1A4060300047D39000015389",
-        "weight": 69.0,
-        "weight_unit": "Grams",
-        "pulled_weight": 69.0,
-        "pulled_weight_unit": "Grams",
-        "item": {
-          "id": 3365579,
-          "name": "AGP Flower - Galactic Warheadz",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "AF-071-Galactic Warheadz-224-T1., AF-071-Galactic Warheadz-224-T2., AF-071-Grape Gas-224-T2, AF-073-Galactic Warheads-253-T1, AF-073-Glitter Bomb-232-T2, AF-073-Grape Gas-231-T1, AF-073-Grape Gas-232-T2, AF-073-Obama Runtz-224-T1-8-21-26, AF-073-Tahiti Twist-224-T5-8-25-26, AF-073-Tahiti Twist-224-T6-8-25-26, AF-075-Grape Gas-224-T6., AF-075-GRP-224-T4-09-01-26, AF-075-Lemon Cherry Gelato-233-T5, AF-075-Tahiti Twist-224-T3-09-01-26, AF-075-Tahiti Twist-244-T2, AF-075-Total Eclipse-224-T3-09-01-26, AF-075-Zoap-237-T1, AHD-2180-PackMule#4[HVN]-AGP-196-T2, BG-0309-Itz Pluto-217-T1, BG-0309-Zoap-216-T4, BG-0540-Gelato 33-216-T3, HSR-0540-Super Bluff Cherry-224-T1",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-10-02T22:24:54.772Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Airway: C11-0001652-LIC",
-    "_facility_license_number": "C11-0001652-LIC"
-  },
-  {
     "id": 34317291,
     "tag": "1A406030005D4FB000010216",
     "is_active": true,
@@ -139175,7 +139364,7 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-10-03T03:22:07.787Z"
+      "updated_at": "2026-10-03T14:37:13.746Z"
     },
     "facility_id": 4923,
     "weight": 2086.0,
@@ -139213,6 +139402,511 @@
     },
     "harvests": [],
     "updated_at": "2026-10-03T03:22:07.883Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 34319625,
+    "tag": "1A406030007975D000000430",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Transit",
+    "item": {
+      "id": 3472818,
+      "name": "Wet Flower - Gelato #41",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4924,
+      "type": {
+        "id": 119117,
+        "name": "Fresh Cannabis Plant",
+        "quantity_type": "WeightBased",
+        "product_category": "Plants"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 703910,
+        "name": "Gelato #41 (HVN)"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-03T15:48:44.546Z"
+    },
+    "facility_id": 4924,
+    "weight": 1847.5,
+    "original_weight": 1847.5,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-03T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [],
+    "destination_packages": [],
+    "source_harvests": "Gelato #41 (HVN) 10-03-26",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [
+      {
+        "id": 357500,
+        "name": "Gelato #41 (HVN) 10-03-26"
+      }
+    ],
+    "updated_at": "2026-10-03T15:48:46.851Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Sulphur Bank: CCL28-0000167",
+    "_facility_license_number": "CCL25-0000167"
+  },
+  {
+    "id": 34319377,
+    "tag": "1A406030007975D000000429",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Transit",
+    "item": {
+      "id": 3472818,
+      "name": "Wet Flower - Gelato #41",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4924,
+      "type": {
+        "id": 119117,
+        "name": "Fresh Cannabis Plant",
+        "quantity_type": "WeightBased",
+        "product_category": "Plants"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 703910,
+        "name": "Gelato #41 (HVN)"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-03T15:48:44.546Z"
+    },
+    "facility_id": 4924,
+    "weight": 1732.5,
+    "original_weight": 1732.5,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-03T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [],
+    "destination_packages": [],
+    "source_harvests": "Gelato #41 (HVN) 10-03-26",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [
+      {
+        "id": 357500,
+        "name": "Gelato #41 (HVN) 10-03-26"
+      }
+    ],
+    "updated_at": "2026-10-03T13:10:01.613Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Sulphur Bank: CCL28-0000167",
+    "_facility_license_number": "CCL25-0000167"
+  },
+  {
+    "id": 34319366,
+    "tag": "1A406030007975D000000428",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Transit",
+    "item": {
+      "id": 3472818,
+      "name": "Wet Flower - Gelato #41",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4924,
+      "type": {
+        "id": 119117,
+        "name": "Fresh Cannabis Plant",
+        "quantity_type": "WeightBased",
+        "product_category": "Plants"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 703910,
+        "name": "Gelato #41 (HVN)"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-03T15:48:44.546Z"
+    },
+    "facility_id": 4924,
+    "weight": 306.0,
+    "original_weight": 306.0,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-03T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [],
+    "destination_packages": [],
+    "source_harvests": "Gelato #41 (HVN) 10-03-26",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [
+      {
+        "id": 357500,
+        "name": "Gelato #41 (HVN) 10-03-26"
+      }
+    ],
+    "updated_at": "2026-10-03T12:43:03.644Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Sulphur Bank: CCL28-0000167",
+    "_facility_license_number": "CCL25-0000167"
+  },
+  {
+    "id": 34319365,
+    "tag": "1A406030007975D000000427",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Transit",
+    "item": {
+      "id": 3472817,
+      "name": "Wet Flower - Blue Dream",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4924,
+      "type": {
+        "id": 119117,
+        "name": "Fresh Cannabis Plant",
+        "quantity_type": "WeightBased",
+        "product_category": "Plants"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 668421,
+        "name": "Blue Dream (HVN)"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-03T12:43:00.627Z"
+    },
+    "facility_id": 4924,
+    "weight": 1736.5,
+    "original_weight": 1736.5,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-03T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [],
+    "destination_packages": [],
+    "source_harvests": "Blue Dream (HVN) 10-03-26",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [
+      {
+        "id": 357499,
+        "name": "Blue Dream (HVN) 10-03-26"
+      }
+    ],
+    "updated_at": "2026-10-03T12:43:02.591Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Sulphur Bank: CCL28-0000167",
+    "_facility_license_number": "CCL25-0000167"
+  },
+  {
+    "id": 34317746,
+    "tag": "1A406030005D4FB000010217",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3472603,
+      "name": "Mixed harvested plants",
+      "sku": null,
+      "is_active": false,
+      "facility_id": 4923,
+      "type": {
+        "id": 119081,
+        "name": "Fresh Cannabis Plant",
+        "quantity_type": "WeightBased",
+        "product_category": "Plants"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 733729,
+        "name": "Mixed"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": "CCL23-0000111",
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-03T14:37:13.746Z"
+    },
+    "facility_id": 4923,
+    "weight": 2072.4,
+    "original_weight": 2072.4,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-02T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": "2026-10-03T14:35:11.000Z",
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [],
+    "destination_packages": [],
+    "source_harvests": "Outdoor 10/2",
+    "source_facility": "CCL23-0000111",
+    "source_facility_name": "Ocean View Acres 1, LLC",
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-10-03T14:37:14.055Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
