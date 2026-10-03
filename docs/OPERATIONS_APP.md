@@ -89,6 +89,28 @@ record who changed it. This is how a second person records the Metrc
 adjustment (`metrcAdjusted` + `metrcAdjustedLb`) after someone else did
 the intake.
 
+Two more checkboxes there, each implying View: **Delete** (`harvest intakes
+delete`) and **See edit history** (`harvest intakes history`), turned into
+`2cw_intake_delete` / `2cw_intake_history` at login. Both only show the
+buttons; the work goes through `netlify/functions/operations-records.js`,
+which looks the person up in `app_users` from their PIN and re-checks the
+permission with the service role key. Delete requires a reason and calls the
+`delete_operations_form()` database function; anon has no DELETE on
+`operations_forms`.
+
+Edit history lives in `operations_forms_history`, written by a trigger on
+`operations_forms` (so it catches changes from any page or direct API call,
+and nothing in the browser can write to or erase it). Logged: the record as
+first submitted, every change after that (field, before, after, who, when —
+weigh-in rows by row number), and deletions with a full copy of the record,
+who, and why. Draft autosaves aren't logged; tracking starts at submit.
+Records submitted before the history existed have no baseline. With See
+edit history, each intake shows its history at the bottom, edited intakes get
+an "Edited" tag, and a "Deleted" filter lists deleted intakes. Who made an
+edit is the app's logged-in name (`updated_by`), which the browser supplies —
+the same trust level as everything else on `operations_forms` (see the RLS
+note in `supabase/schema.sql`); for deletes it's verified from the PIN.
+
 **Information Hub** (`information_hub.html`, hub card `information_hub`
 under Operations) holds the reference lists the rest of the app runs on, one
 tab each: Strain Library, Canix Facilities, Yield Forecasts, Farm Licenses,

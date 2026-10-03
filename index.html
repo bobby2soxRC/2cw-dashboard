@@ -469,10 +469,17 @@ async function buildHub(user){
 
   // Harvest Intakes page: view, or view + edit submitted intakes. Edit
   // implies view. Read by harvest_intakes.html and ops_form.html's edit mode.
+  // Delete and edit history are separate checkboxes, each implying view;
+  // they only show the buttons — netlify/functions/operations-records.js
+  // re-checks both against app_users from the PIN.
   const intakeEdit = (user['harvest intakes edit'] || '').toUpperCase() === 'TRUE';
-  const intakeView = intakeEdit || (user['harvest_intakes'] || '').toUpperCase() === 'TRUE';
+  const intakeDelete = (user['harvest intakes delete'] || '').toUpperCase() === 'TRUE';
+  const intakeHistory = (user['harvest intakes history'] || '').toUpperCase() === 'TRUE';
+  const intakeView = intakeEdit || intakeDelete || intakeHistory || (user['harvest_intakes'] || '').toUpperCase() === 'TRUE';
   user.harvest_intakes = intakeView ? 'TRUE' : 'FALSE';
   sessionStorage.setItem('2cw_intake_access', intakeEdit ? 'edit' : intakeView ? 'view' : '');
+  sessionStorage.setItem('2cw_intake_delete', intakeDelete ? 'true' : 'false');
+  sessionStorage.setItem('2cw_intake_history', intakeHistory ? 'true' : 'false');
 
   // Information Hub: a View/Edit pair per section (INFO_HUB_SECTIONS in
   // hub_config.js), edit implying view. The card shows if any section is
@@ -960,6 +967,8 @@ function doLogout(){
   sessionStorage.removeItem('2cw_ops_edit_access');
   sessionStorage.removeItem('2cw_ops_view_access');
   sessionStorage.removeItem('2cw_intake_access');
+  sessionStorage.removeItem('2cw_intake_delete');
+  sessionStorage.removeItem('2cw_intake_history');
   sessionStorage.removeItem('2cw_info_access');
   sessionStorage.removeItem(LAST_FOLDER_KEY);
   document.getElementById('pin-input').value = '';
