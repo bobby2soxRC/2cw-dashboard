@@ -1,5 +1,6 @@
 {
   "_comment": "Reference lists for the operations app. Edit here (or via the Admin card) — every form picker reads from this file. Codes were seeded from the Cannabis_Processing_Inventory_Workbook; rename `label` fields to the real farm/room/machine names.",
+  "_dryRoomsCapacityNote": "dryRooms[].capacityLb: drying capacity in lb, from \"Rooms capacity.xlsx\" (Rooms Capacity Adobe, hoops-based estimate at 3-4 lb/plant). Room 2 was measured as one room (28,140 lb); 2A-2D are split evenly (7,035 lb each) until measured. Read by the Intake & Drying report (netlify/lib/intake_drying_report.js).",
   "updatedAt": "2026-08-28",
   "sites": [
     {
@@ -117,67 +118,80 @@
     {
       "id": "1A",
       "label": "Room 1A",
-      "active": true
+      "active": true,
+      "capacityLb": 13860
     },
     {
       "id": "1B",
       "label": "Room 1B",
-      "active": true
+      "active": true,
+      "capacityLb": 23793
     },
     {
       "id": "1C",
       "label": "Room 1C",
-      "active": true
+      "active": true,
+      "capacityLb": 29400
     },
     {
       "id": "2A",
       "label": "Room 2A",
-      "active": true
+      "active": true,
+      "capacityLb": 7035
     },
     {
       "id": "2B",
       "label": "Room 2B",
-      "active": true
+      "active": true,
+      "capacityLb": 7035
     },
     {
       "id": "2C",
       "label": "Room 2C",
-      "active": true
+      "active": true,
+      "capacityLb": 7035
     },
     {
       "id": "2D",
       "label": "Room 2D",
-      "active": true
+      "active": true,
+      "capacityLb": 7035
     },
     {
       "id": "3A",
       "label": "Room 3A",
-      "active": true
+      "active": true,
+      "capacityLb": 16800
     },
     {
       "id": "3B",
       "label": "Room 3B",
-      "active": true
+      "active": true,
+      "capacityLb": 16800
     },
     {
       "id": "3C",
       "label": "Room 3C",
-      "active": true
+      "active": true,
+      "capacityLb": 16800
     },
     {
       "id": "3D",
       "label": "Room 3D",
-      "active": true
+      "active": true,
+      "capacityLb": 16800
     },
     {
       "id": "4A",
       "label": "Room 4A",
-      "active": true
+      "active": true,
+      "capacityLb": 18480
     },
     {
       "id": "4B",
       "label": "Room 4B",
-      "active": true
+      "active": true,
+      "capacityLb": 28140
     },
     {
       "id": "2",

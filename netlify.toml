@@ -1,2 +1,8 @@
 [functions]
   directory = "netlify/functions"
+
+# Intake & Drying report email, 7 pm Pacific. Cron is UTC, so it runs at both
+# 02:00 and 03:00 UTC and the function only sends on the one that's 7 pm in
+# California (daylight saving moves it). See docs/REPORTS.md.
+[functions."intake-drying-report-daily"]
+  schedule = "0 2,3 * * *"

@@ -1161,3 +1161,43 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 values ('customer-docs', 'customer-docs', false, 26214400,
         array['application/pdf', 'image/jpeg', 'image/png', 'image/heic', 'image/heif', 'image/webp'])
 on conflict (id) do nothing;
+
+-- ── Emailed reports: recipients and send log ─────────────────────────────
+-- Who gets each emailed report (report_key, e.g. 'intake_drying'), managed
+-- from the admin panel's Reports tab, and a log of every send so the panel
+-- can show when it last went out and whether it worked. Recipients can be
+-- anyone, not just app users. Service role only: every read and write goes
+-- through netlify/functions/admin.js (admin PIN token) or the scheduled
+-- report function. See docs/REPORTS.md.
+create table if not exists report_recipients (
+  id          uuid primary key default gen_random_uuid(),
+  report_key  text not null,
+  email       text not null,          -- stored lowercased by admin.js
+  name        text,
+  created_at  timestamptz not null default now()
+);
+create unique index if not exists idx_report_recipients_key_email on report_recipients (report_key, email);
+
+create table if not exists report_runs (
+  id           bigint generated always as identity primary key,
+  report_key   text not null,
+  trigger      text not null check (trigger in ('schedule', 'manual')),
+  report_from  date,
+  report_to    date,
+  recipients   int not null default 0,
+  status       text not null check (status in ('sent', 'skipped', 'failed')),
+  detail       text,                  -- who it went to if not the list, why it was skipped, or the error
+  total_lb     numeric,              -- wet lb received in the period
+  ran_at       timestamptz not null default now()
+);
+create index if not exists idx_report_runs_key on report_runs (report_key, ran_at desc);
+
+alter table report_recipients enable row level security;   -- no policies: service role only
+alter table report_runs enable row level security;
+revoke all on public.report_recipients from anon, authenticated;
+revoke all on public.report_runs from anon, authenticated;
+grant select, insert, update, delete on public.report_recipients to service_role;
+grant select, insert on public.report_runs to service_role;
+-- The report reads every intake and the farm names server-side.
+grant select on public.operations_forms to service_role;
+grant select on public.ref_codes to service_role;

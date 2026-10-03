@@ -106,6 +106,28 @@
   .org-title{color:var(--subtext);font-size:.78rem;margin-top:2px}
   .org-children{margin:10px 0 0 18px;padding-left:18px;border-left:1px dashed var(--border);display:flex;flex-direction:column;gap:10px}
 
+  /* Reports tab */
+  .rp-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 18px 20px;margin-bottom:18px}
+  .rp-card h2{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.03em;margin-bottom:4px}
+  .rp-note{color:var(--subtext);font-size:.84rem;line-height:1.5;margin-bottom:12px}
+  .rp-warn{border:1px solid var(--gold);color:var(--gold);border-radius:10px;padding:10px 12px;font-size:.84rem;line-height:1.5;margin-bottom:14px}
+  .rp-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:10px}
+  .rp-row label{display:flex;flex-direction:column;gap:4px;font-size:.68rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+  .rp-row input[type=text],.rp-row input[type=email]{min-width:200px}
+  .rp-row input[type=date],.rp-row select{background:#0c0d0f;border:1px solid var(--border);color:var(--text);padding:.62rem .7rem;border-radius:8px;font-size:.95rem;color-scheme:dark}
+  .rp-msg{font-family:'DM Mono',monospace;font-size:.78rem;margin-top:10px;min-height:1.2em}
+  .rp-msg.ok{color:var(--green)} .rp-msg.bad{color:var(--red)}
+  .rp-room{margin-top:14px}
+  .rp-room-hd{display:flex;justify-content:space-between;gap:10px;font-size:.88rem;margin-bottom:6px}
+  .rp-room-hd b{font-weight:600}
+  .rp-fill{color:var(--subtext);font-family:'DM Mono',monospace;font-size:.78rem}
+  .rp-table td,.rp-table th{padding:7px 10px;font-size:.8rem}
+  .rp-table td.num{text-align:right;white-space:nowrap;font-family:'DM Mono',monospace}
+  .rp-acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .rp-acts select{background:#0c0d0f;border:1px solid var(--border);color:var(--text);padding:.3rem .4rem;border-radius:6px;font-size:.75rem}
+  .rp-acts button{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.06em;text-transform:uppercase;background:transparent;border:1px solid var(--border);color:var(--subtext);padding:.3rem .6rem;border-radius:6px;cursor:pointer;white-space:nowrap}
+  .rp-acts button:hover{border-color:var(--gold);color:var(--gold)}
+  .st-sent{color:var(--green)} .st-skipped{color:var(--gold)} .st-failed{color:var(--red)}
   /* Responsibilities tab */
   .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
   select{background:#0c0d0f;border:1px solid var(--border);color:var(--text);padding:.55rem .7rem;border-radius:8px;font-size:.85rem;font-family:'DM Sans',sans-serif;outline:none}
@@ -195,6 +217,7 @@
       <button data-tab="users" class="on" onclick="switchTab('users')">Users</button>
       <button data-tab="orgchart" onclick="switchTab('orgchart')">Org Chart</button>
       <button data-tab="responsibilities" onclick="switchTab('responsibilities')">Responsibilities</button>
+      <button data-tab="reports" onclick="switchTab('reports')">Reports</button>
     </div>
 
     <div id="users-view" class="view on">
@@ -216,6 +239,50 @@
       </div>
       <div class="status-line">Every user in the app, nested by who reports to whom. Set a person's title and manager from their editor on the Users tab — this view just visualizes it.</div>
       <div id="orgchart-wrap"></div>
+    </div>
+
+    <div id="reports-view" class="view">
+      <div class="toolbar"><h1>Reports</h1></div>
+      <div id="rp-mailer-warn"></div>
+
+      <div class="rp-card">
+        <h2>Intake &amp; Drying Report</h2>
+        <div class="rp-note">Emailed every evening at 7 pm Pacific: what came in that day by farm (strain and room), what's in each drying room right now and for how long, and how full each room and the facility are. Recipients are BCC'd, so they don't see each other's addresses. Anyone can be added — they don't need an app login.</div>
+
+        <div class="section-hd" style="margin-top:6px">Recipients</div>
+        <div id="rp-recipients"></div>
+        <div class="rp-row">
+          <label>Name<input type="text" id="rp-new-name" placeholder="optional"/></label>
+          <label>Email<input type="email" id="rp-new-email" placeholder="name@example.com"/></label>
+          <button class="btn btn-green" onclick="rpAddRecipient()">+ Add</button>
+        </div>
+        <div class="rp-msg" id="rp-recip-msg"></div>
+
+        <div class="section-hd">Send or preview now</div>
+        <div class="rp-row">
+          <label>Intakes from<input type="date" id="rp-from"/></label>
+          <label>To<input type="date" id="rp-to"/></label>
+          <label>Send to<select id="rp-to-who" onchange="rpToWhoChanged()"></select></label>
+          <label id="rp-other-wrap" style="display:none">Address<input type="email" id="rp-other" placeholder="name@example.com"/></label>
+        </div>
+        <div class="rp-row">
+          <button class="btn btn-ghost" onclick="rpPreview()">Preview</button>
+          <button class="btn btn-gold" onclick="rpSend()" id="rp-send-btn">Send now</button>
+        </div>
+        <div class="rp-msg" id="rp-send-msg"></div>
+
+        <div class="section-hd">Recent sends</div>
+        <div id="rp-runs"></div>
+      </div>
+
+      <div class="rp-card">
+        <h2>Drying rooms</h2>
+        <div class="rp-note">What the report counts as in each room. A package stays in its room from its Wet Intake until a Take Down — Dry form is submitted for its farm UID. If a take-down wasn't entered in the app, or an intake was logged to the wrong room, fix it here — the change is saved on the intake and shows in its edit history as "Admin panel". In-progress intakes can't be changed until they're submitted.</div>
+        <div id="rp-drying">Loading…</div>
+        <div class="rp-msg" id="rp-dry-msg"></div>
+        <div class="section-hd">Marked taken down here (last 30 days)</div>
+        <div id="rp-markedout"></div>
+      </div>
     </div>
 
     <div id="responsibilities-view" class="view">
@@ -300,10 +367,14 @@ function switchTab(tab){
   document.getElementById('users-view').classList.toggle('on', tab === 'users');
   document.getElementById('orgchart-view').classList.toggle('on', tab === 'orgchart');
   document.getElementById('responsibilities-view').classList.toggle('on', tab === 'responsibilities');
+  document.getElementById('reports-view').classList.toggle('on', tab === 'reports');
   if(tab === 'orgchart') renderOrgChart();
+  if(tab === 'reports') rpLoad();
   if(tab === 'responsibilities'){
     history.replaceState(null, '', '#responsibilities');
     if(!respLoaded){ respLoaded = true; respLoadAll(); }
+  } else if(tab === 'reports'){
+    history.replaceState(null, '', '#reports');
   } else {
     history.replaceState(null, '', location.pathname);
   }
@@ -368,6 +439,7 @@ async function showPanel(){
   // tab once logged in — used by my_responsibilities.html's "Edit in
   // matrix" links, which can't skip the PIN gate.
   if(location.hash === '#responsibilities') switchTab('responsibilities');
+  if(location.hash === '#reports') switchTab('reports');
 }
 
 async function refreshUsers(){
@@ -437,6 +509,156 @@ function renderTable(){
     </tbody>
   </table>`;
 }
+
+// ── Reports tab ─────────────────────────────────────────────────────────
+// Intake & Drying report: recipients, preview / send now, send log, and
+// drying-room fixes. Everything goes through admin.js (actions reportInfo,
+// addRecipient, removeRecipient, previewReport, sendReport, dryingRooms,
+// markTakenDown, undoTakenDown, moveRoom); the report itself is built by
+// netlify/lib/intake_drying_report.js. See docs/REPORTS.md.
+let rpRecipients = [];
+let rpRooms = null;   // reference.json dryRooms, for the "Move to" picker
+
+const rpFmt = (x, dp = 0) => Number(x || 0).toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp });
+const rpDays = (d) => d == null ? '—' : d === 0 ? 'today' : d + (d === 1 ? ' day' : ' days');
+function rpMsg(id, text, ok){ const el = document.getElementById(id); el.textContent = text || ''; el.className = 'rp-msg' + (text ? (ok ? ' ok' : ' bad') : ''); }
+
+async function rpLoad(){
+  if(!rpRooms){
+    try { const ref = await (await fetch('/data/operations/reference.json?t=' + Date.now())).json(); rpRooms = (ref.dryRooms || []).filter(r => r.active !== false); }
+    catch { rpRooms = []; }
+  }
+  rpLoadInfo();
+  rpLoadDrying();
+}
+
+async function rpLoadInfo(){
+  try{
+    const j = await callAdmin({ action: 'reportInfo', token: getToken() });
+    rpRecipients = j.recipients || [];
+    document.getElementById('rp-mailer-warn').innerHTML = j.mailerConfigured ? '' :
+      '<div class="rp-warn"><b>Email isn\'t set up yet.</b> Reports can be previewed, but nothing can be sent until <code>GMAIL_USER</code> and <code>GMAIL_APP_PASSWORD</code> are added in Netlify (see docs/REPORTS.md).</div>';
+    const from = document.getElementById('rp-from'), to = document.getElementById('rp-to');
+    if(!from.value) from.value = j.today;
+    if(!to.value) to.value = j.today;
+    rpRenderRecipients();
+    rpRenderRuns(j.runs || []);
+  }catch(e){
+    document.getElementById('rp-recipients').innerHTML = '<div class="empty-note">Could not load: ' + esc(e.message) + '</div>';
+  }
+}
+
+function rpRenderRecipients(){
+  const wrap = document.getElementById('rp-recipients');
+  wrap.innerHTML = !rpRecipients.length ? '<div class="empty-note">No one on the list yet — add someone below.</div>' :
+    '<table class="rp-table"><tr><th>Name</th><th>Email</th><th></th></tr>' +
+    rpRecipients.map(r => '<tr><td>' + esc(r.name || '—') + '</td><td>' + esc(r.email) + '</td><td class="rp-acts"><button onclick="rpRemoveRecipient(\'' + r.id + '\')">Remove</button></td></tr>').join('') + '</table>';
+  const sel = document.getElementById('rp-to-who'), prev = sel.value;
+  sel.innerHTML = '<option value="">Everyone on the list (' + rpRecipients.length + ')</option>' +
+    rpRecipients.map(r => '<option value="' + esc(r.email) + '">Only ' + esc(r.name ? r.name + ' — ' + r.email : r.email) + '</option>').join('') +
+    '<option value="__other">Only another address…</option>';
+  if([...sel.options].some(o => o.value === prev)) sel.value = prev;
+  rpToWhoChanged();
+}
+function rpToWhoChanged(){ document.getElementById('rp-other-wrap').style.display = document.getElementById('rp-to-who').value === '__other' ? '' : 'none'; }
+
+function rpRenderRuns(runs){
+  document.getElementById('rp-runs').innerHTML = !runs.length ? '<div class="empty-note">Nothing sent yet.</div>' :
+    '<table class="rp-table"><tr><th>When</th><th>How</th><th>Status</th><th>To</th><th>Intakes</th><th>Detail</th></tr>' +
+    runs.map(r => '<tr><td>' + esc(new Date(r.ran_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })) + '</td>' +
+      '<td>' + (r.trigger === 'schedule' ? '7 pm email' : 'Send now') + '</td>' +
+      '<td class="st-' + esc(r.status) + '">' + esc(r.status) + '</td><td>' + (r.recipients || '—') + '</td>' +
+      '<td>' + esc(r.report_from === r.report_to ? r.report_from : r.report_from + ' → ' + r.report_to) + (r.total_lb != null ? ' · ' + rpFmt(r.total_lb) + ' lb' : '') + '</td>' +
+      '<td>' + esc(r.detail || '') + '</td></tr>').join('') + '</table>';
+}
+
+async function rpAddRecipient(){
+  const email = document.getElementById('rp-new-email').value.trim(), name = document.getElementById('rp-new-name').value.trim();
+  if(!email){ rpMsg('rp-recip-msg', 'Enter an email address.'); return; }
+  try{
+    await callAdmin({ action: 'addRecipient', token: getToken(), email, name });
+    document.getElementById('rp-new-email').value = ''; document.getElementById('rp-new-name').value = '';
+    rpMsg('rp-recip-msg', 'Added ' + email + '.', true);
+    rpLoadInfo();
+  }catch(e){ rpMsg('rp-recip-msg', e.message); }
+}
+
+async function rpRemoveRecipient(id){
+  const r = rpRecipients.find(x => x.id === id);
+  if(!r || !confirm('Remove ' + r.email + ' from the report list?')) return;
+  try{ await callAdmin({ action: 'removeRecipient', token: getToken(), id }); rpMsg('rp-recip-msg', 'Removed ' + r.email + '.', true); rpLoadInfo(); }
+  catch(e){ rpMsg('rp-recip-msg', e.message); }
+}
+
+function rpRange(){ return { from: document.getElementById('rp-from').value, to: document.getElementById('rp-to').value }; }
+
+async function rpPreview(){
+  const w = window.open('', '_blank');   // opened before the await so pop-up blockers allow it
+  rpMsg('rp-send-msg', 'Building preview…', true);
+  try{
+    const j = await callAdmin({ action: 'previewReport', token: getToken(), ...rpRange() });
+    if(w){ w.document.write('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc(j.subject) + '</title><body style="margin:16px;background:#fff">' + j.html + '</body>'); w.document.close(); }
+    rpMsg('rp-send-msg', w ? 'Preview opened in a new tab.' : 'Pop-up blocked — allow pop-ups for this site to preview.', !!w);
+  }catch(e){ if(w) w.close(); rpMsg('rp-send-msg', e.message); }
+}
+
+async function rpSend(){
+  const who = document.getElementById('rp-to-who').value;
+  const onlyTo = who === '__other' ? document.getElementById('rp-other').value.trim() : who;
+  if(who === '__other' && !onlyTo){ rpMsg('rp-send-msg', 'Enter the address to send to.'); return; }
+  const label = onlyTo ? onlyTo : 'everyone on the list (' + rpRecipients.length + ')';
+  if(!confirm('Send the Intake & Drying report to ' + label + ' now?')) return;
+  const btn = document.getElementById('rp-send-btn'); btn.disabled = true;
+  rpMsg('rp-send-msg', 'Sending…', true);
+  try{
+    const j = await callAdmin({ action: 'sendReport', token: getToken(), ...rpRange(), onlyTo: onlyTo || null });
+    rpMsg('rp-send-msg', j.status === 'sent' ? 'Sent to ' + label + '.' : 'Not sent: ' + (j.detail || j.status), j.status === 'sent');
+  }catch(e){ rpMsg('rp-send-msg', 'Could not send: ' + e.message); }
+  btn.disabled = false;
+  rpLoadInfo();
+}
+
+async function rpLoadDrying(){
+  const wrap = document.getElementById('rp-drying');
+  try{
+    const j = await callAdmin({ action: 'dryingRooms', token: getToken() });
+    const d = j.drying;
+    const roomOpts = (cur) => rpRooms.map(r => '<option value="' + esc(r.id) + '"' + (String(r.id) === String(cur) ? ' selected' : '') + '>' + esc(r.label) + '</option>').join('');
+    const roomHtml = (r) => '<div class="rp-room"><div class="rp-room-hd"><b>' + esc(r.room) + '</b><span class="rp-fill">' + rpFmt(r.lb) + ' lb' +
+        (r.capacityLb ? ' of ' + rpFmt(r.capacityLb) + ' · ' + Math.round(100 * r.pct) + '% full' : ' · not on the room list') + '</span></div>' +
+      (!r.packages.length ? '<div class="rp-fill">Empty</div>' :
+        '<div class="table-scroll"><table class="rp-table" style="min-width:640px"><tr><th>Farm</th><th>Strain</th><th>UID</th><th>In since</th><th>Days</th><th>Net lb</th><th></th></tr>' +
+        r.packages.map(p => '<tr><td>' + esc(p.farm) + '</td><td>' + esc(p.strains || '—') + '</td><td>' + esc(p.uids || '—') + '</td><td>' + esc(p.since) + '</td>' +
+          '<td class="num">' + rpDays(p.days) + '</td><td class="num">' + rpFmt(p.lb, 1) + '</td><td>' +
+          (p.draft ? '<span class="rp-fill">being entered</span>' :
+            '<div class="rp-acts"><select id="mv-' + p.id + '">' + roomOpts(p.roomId) + '</select><button onclick="rpMove(\'' + p.id + '\')">Move</button>' +
+            '<button onclick="rpTakenDown(\'' + p.id + '\')">Taken down</button></div>') + '</td></tr>').join('') + '</table></div>') + '</div>';
+    wrap.innerHTML = '<div class="rp-fill">Facility: ' + rpFmt(d.inRoomsLb) + ' of ' + rpFmt(d.capacityLb) + ' lb (' + (d.pct == null ? '—' : Math.round(100 * d.pct) + '%') + ' full) · ' + d.packageCount + ' packages</div>' +
+      [...d.rooms, ...d.elsewhere].map(roomHtml).join('');
+    document.getElementById('rp-markedout').innerHTML = !j.markedOut.length ? '<div class="empty-note">None.</div>' :
+      '<table class="rp-table"><tr><th>UID</th><th>Room</th><th>Marked</th><th>Note</th><th></th></tr>' +
+      j.markedOut.map(m => '<tr><td>' + esc(m.uids || '—') + '</td><td>' + esc(m.room) + '</td><td>' + esc(new Date(m.takenDownAt).toLocaleDateString()) + '</td><td>' + esc(m.note) + '</td>' +
+        '<td class="rp-acts"><button onclick="rpUndo(\'' + m.id + '\')">Put back</button></td></tr>').join('') + '</table>';
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-note">Could not load drying rooms: ' + esc(e.message) + '</div>';
+  }
+}
+
+async function rpDryAction(body, okText){
+  try{ await callAdmin({ token: getToken(), ...body }); rpMsg('rp-dry-msg', okText, true); rpLoadDrying(); }
+  catch(e){ rpMsg('rp-dry-msg', e.message); }
+}
+function rpMove(id){
+  const room = document.getElementById('mv-' + id).value;
+  rpDryAction({ action: 'moveRoom', id, room }, 'Moved to ' + room + '.');
+}
+function rpTakenDown(id){
+  const note = prompt('Mark this package as taken down (out of its room).\nShort note — e.g. "taken down 10/3, form missed":');
+  if(note === null) return;
+  if(!note.trim()){ rpMsg('rp-dry-msg', 'A note is required.'); return; }
+  rpDryAction({ action: 'markTakenDown', id, note: note.trim() }, 'Marked taken down.');
+}
+function rpUndo(id){ rpDryAction({ action: 'undoTakenDown', id }, 'Put back in its room.'); }
 
 // ── Org Chart tab ───────────────────────────────────────────────────────
 // Builds a parent(id) -> children[] map from users' reports_to. A user

@@ -21,6 +21,8 @@
 //   SUPABASE_SERVICE_ROLE_KEY service_role key (Project Settings -> API)
 
 const crypto = require('crypto');
+const report = require('../lib/intake_drying_report');
+const mail = require('../lib/report_mail');
 
 const TOKEN_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -83,6 +85,37 @@ async function chainReaches(supaUrl, serviceKey, startId, targetId) {
     cur = byId.get(cur) || null;
   }
   return false;
+}
+
+// ── Reports tab (docs/REPORTS.md) ────────────────────────────────────────
+const REPORT_KEY = 'intake_drying';
+const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
+const REPORT_EDITOR = 'Admin panel';   // who the edit history shows for drying-room fixes made here
+
+function reportRange(p) {
+  const today = report.pacificDate();
+  const from = YMD_RE.test(p.from || '') ? p.from : today;
+  const to = YMD_RE.test(p.to || '') ? p.to : from;
+  return from <= to ? { from, to } : { from: to, to: from };
+}
+
+// Drying-room fixes write onto the intake record itself, so they show in its
+// edit history (operations_forms_history). Submitted intakes only — a draft
+// is still open on someone's tablet and its autosave would undo the change.
+async function patchIntakeFields(supaUrl, serviceKey, id, change) {
+  if (!/^[0-9a-f-]{36}$/i.test(String(id || ''))) return { error: 'Invalid intake id', status: 400 };
+  const res = await supaFetch(supaUrl, serviceKey, `operations_forms?id=eq.${id}&station_key=eq.intake_wet&select=status,fields`);
+  if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+  const rec = (await res.json())[0];
+  if (!rec) return { error: 'Intake not found', status: 404 };
+  if (rec.status !== 'submitted') return { error: 'That intake is still being entered — finish and submit it first.', status: 409 };
+  const fields = { ...(rec.fields || {}), ...change, lastEditedBy: REPORT_EDITOR, lastEditedAt: new Date().toISOString() };
+  for (const k of Object.keys(change)) if (change[k] === null) delete fields[k];
+  const upd = await supaFetch(supaUrl, serviceKey, `operations_forms?id=eq.${id}&status=eq.submitted`, {
+    method: 'PATCH', body: JSON.stringify({ fields, updated_by: REPORT_EDITOR })
+  });
+  if (!upd.ok) throw new Error(`${upd.status} ${await upd.text()}`);
+  return { ok: true };
 }
 
 async function importRows(supaUrl, serviceKey, rows) {
@@ -211,6 +244,84 @@ exports.handler = async (event) => {
       });
       if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
       return json(200, { ok: true });
+    }
+
+    if (action === 'reportInfo') {
+      const [recipients, runs] = await Promise.all([
+        mail.listRecipients(supaUrl, serviceKey, REPORT_KEY),
+        mail.listRuns(supaUrl, serviceKey, REPORT_KEY, 10)
+      ]);
+      return json(200, { ok: true, recipients, runs, mailerConfigured: mail.mailerConfigured(), today: report.pacificDate() });
+    }
+
+    if (action === 'addRecipient') {
+      const email = String(payload.email || '').trim().toLowerCase();
+      if (!EMAIL_RE.test(email)) return json(400, { ok: false, error: 'That email address doesn\'t look right' });
+      const res = await supaFetch(supaUrl, serviceKey, 'report_recipients', {
+        method: 'POST', body: JSON.stringify({ report_key: REPORT_KEY, email, name: String(payload.name || '').trim() || null })
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        if (text.includes('23505')) return json(409, { ok: false, error: 'That address is already on the list' });
+        throw new Error(`${res.status} ${text}`);
+      }
+      return json(200, { ok: true, recipient: (await res.json())[0] });
+    }
+
+    if (action === 'removeRecipient') {
+      if (!payload.id) return json(400, { ok: false, error: 'Missing id' });
+      const res = await supaFetch(supaUrl, serviceKey, `report_recipients?id=eq.${encodeURIComponent(payload.id)}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+      return json(200, { ok: true });
+    }
+
+    if (action === 'previewReport') {
+      const { from, to } = reportRange(payload);
+      const rep = await report.intakeDryingReport(supaUrl, serviceKey, { from, to });
+      return json(200, { ok: true, subject: report.subjectLine(rep), html: report.renderHtml(rep, { siteUrl: process.env.URL }) });
+    }
+
+    if (action === 'sendReport') {
+      const { from, to } = reportRange(payload);
+      const onlyTo = payload.onlyTo ? String(payload.onlyTo).trim().toLowerCase() : null;
+      if (onlyTo && !EMAIL_RE.test(onlyTo)) return json(400, { ok: false, error: 'That email address doesn\'t look right' });
+      const result = await mail.runIntakeDryingReport({ supaUrl, serviceKey, from, to, trigger: 'manual', onlyTo });
+      if (result.status === 'failed') return json(502, { ok: false, error: result.detail });
+      return json(200, { ok: true, ...result });
+    }
+
+    // What's in each drying room now, plus intakes marked taken down here in
+    // the last 30 days (so a mistake can be put back).
+    if (action === 'dryingRooms') {
+      const data = await report.fetchData(supaUrl, serviceKey);
+      const today = report.pacificDate();
+      const rep = report.buildReport({ ...data, from: today, to: today, today });
+      const cutoff = new Date(Date.now() - 30 * 864e5).toISOString();
+      const markedOut = data.intakes.filter((r) => (r.fields || {}).takenDownAt && r.fields.takenDownAt >= cutoff).map((r) => ({
+        id: r.id, since: r.work_date, room: r.fields.dryRoom || '', pid: r.fields.pid || '',
+        uids: [...new Set([r.fields.sourceUid, ...(r.fields.lines || []).map((x) => x.sourceUid)].filter(Boolean))].join(', '),
+        strain: r.fields.strain || '', takenDownAt: r.fields.takenDownAt, note: r.fields.takenDownNote || ''
+      }));
+      return json(200, { ok: true, drying: rep.drying, markedOut });
+    }
+
+    if (action === 'markTakenDown') {
+      const note = String(payload.note || '').trim().slice(0, 300);
+      if (!note) return json(400, { ok: false, error: 'Add a short note (e.g. "taken down 10/3, form missed")' });
+      const r = await patchIntakeFields(supaUrl, serviceKey, payload.id, { takenDownAt: new Date().toISOString(), takenDownNote: note });
+      return r.error ? json(r.status, { ok: false, error: r.error }) : json(200, { ok: true });
+    }
+
+    if (action === 'undoTakenDown') {
+      const r = await patchIntakeFields(supaUrl, serviceKey, payload.id, { takenDownAt: null, takenDownNote: null });
+      return r.error ? json(r.status, { ok: false, error: r.error }) : json(200, { ok: true });
+    }
+
+    if (action === 'moveRoom') {
+      const room = String(payload.room || '').trim();
+      if (!room) return json(400, { ok: false, error: 'Pick a room' });
+      const r = await patchIntakeFields(supaUrl, serviceKey, payload.id, { dryRoom: room });
+      return r.error ? json(r.status, { ok: false, error: r.error }) : json(200, { ok: true });
     }
 
     if (action === 'import') {

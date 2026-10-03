@@ -19,3 +19,6 @@ data/canix_transfers.json
 
 # Personal Claude Code settings (not shared)
 .claude/settings.local.json
+
+# Netlify function dependencies (package.json) — installed by Netlify at deploy
+node_modules/

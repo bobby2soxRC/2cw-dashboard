@@ -2,7 +2,9 @@
 
 Static site on Netlify (`netlify/functions/` for server code), Supabase for
 live data. Docs live in `docs/` — `OPERATIONS_APP.md` (station forms,
-`operations_stations.js`) and `USER_ADMIN.md` (users, admin panel).
+`operations_stations.js`), `USER_ADMIN.md` (users, admin panel) and
+`REPORTS.md` (emailed Intake & Drying report, `/intake-drying-report` skill).
+Netlify function dependencies are in `package.json` (no build step).
 
 - `sw.js` serves the app shell cache-first: bump `CACHE_VERSION` whenever a
   shell file changes (HTML pages, `operations_stations.js`, `ops_*.js`, …)

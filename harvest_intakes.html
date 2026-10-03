@@ -361,6 +361,9 @@
   function describePath(path) {
     if (path === '(status)') return { label: getLang() === 'es' ? 'Estado' : 'Status' };
     if (path === '(owner)') return { label: getLang() === 'es' ? 'Enviada por' : 'Submitted by' };
+    // Set from the admin panel's Reports tab (drying-room fixes).
+    if (path === 'takenDownAt') return { label: getLang() === 'es' ? 'Marcada como bajada (panel de admin)' : 'Marked taken down (admin panel)' };
+    if (path === 'takenDownNote') return { label: getLang() === 'es' ? 'Nota de bajada' : 'Take-down note' };
     const m = /^([^.[]+)(?:\[(\d+)\](?:\.(.+))?)?$/.exec(path);
     const f = m && fieldByKey[m[1]];
     if (!f) return { label: path };
