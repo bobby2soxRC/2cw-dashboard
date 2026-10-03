@@ -229,6 +229,10 @@ begin
 end;
 $$;
 
+-- operations-records.js reads the record's station before deleting it;
+-- this project doesn't give service_role table grants by default.
+grant select on public.operations_forms to service_role;
+
 revoke all on function delete_operations_form(uuid, text, text) from public, anon, authenticated;
 grant execute on function delete_operations_form(uuid, text, text) to service_role;
 
