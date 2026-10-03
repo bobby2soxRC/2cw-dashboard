@@ -78,6 +78,31 @@
     .d-table th{color:var(--muted);font-weight:500;text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);font-size:.7rem}
     .d-table td{padding:4px 6px;border-bottom:1px solid var(--border)}
     .d-photo{max-width:100%;max-height:320px;border-radius:10px;border:1px solid var(--border);display:block}
+    .pill.edited{border-color:var(--purple);color:var(--purple)}
+    .pill.deleted{border-color:var(--red);background:var(--red);color:#000}
+    .row.deleted{border-left-color:var(--red);opacity:.85}
+    .d-section{margin-top:22px;padding-top:14px;border-top:1px solid var(--border)}
+    .d-section-hd{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--subtext);margin-bottom:10px}
+    .d-deleted{border:1px solid var(--red);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:.85rem;line-height:1.5}
+    .d-deleted b{color:var(--red)}
+    .hist{list-style:none;display:flex;flex-direction:column;gap:12px}
+    .hist-hd{font-size:.82rem;color:var(--subtext)}
+    .hist-hd b{color:var(--text);font-weight:500}
+    .hist-act{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:99px;border:1px solid var(--border);margin-right:6px}
+    .hist-act.edited{border-color:var(--purple);color:var(--purple)}
+    .hist-act.deleted{border-color:var(--red);color:var(--red)}
+    .hist-act.submitted{border-color:var(--green);color:var(--green)}
+    .hist-reason{font-size:.82rem;color:var(--subtext);margin-top:4px}
+    .hist .d-table td.old{color:var(--muted);text-decoration:line-through}
+    .hist .d-table tr.num td.new{color:var(--gold);font-weight:500}
+    .muted-note{font-size:.82rem;color:var(--muted)}
+    .btn-danger{border-color:var(--red);color:var(--red)}
+    .btn-danger.solid{background:var(--red);color:#000}
+    .del-box{border:1px solid var(--red);border-radius:10px;padding:12px;margin-top:10px}
+    .del-box p{font-size:.85rem;color:var(--subtext);margin-bottom:8px;line-height:1.5}
+    .del-box textarea{width:100%;min-height:70px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px;font:inherit;font-size:.95rem;resize:vertical}
+    .del-box .row-btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+    .del-err{color:var(--red);font-size:.85rem;margin-top:8px}
   </style>
 </head>
 <body>
@@ -108,12 +133,19 @@
 // one for the full record; with edit access (admin panel → Harvest Intakes →
 // Edit) it reopens in ops_form.html?edit=<id> to correct it or record the
 // Metrc adjustment. Access comes from 2cw_intake_access, set at hub login.
+// Delete (2cw_intake_delete) and See edit history (2cw_intake_history) are
+// separate admin-panel checkboxes; both go through
+// netlify/functions/operations-records.js, which re-checks the permission
+// from the PIN. History comes from operations_forms_history, written by a
+// database trigger on every change to a submitted record.
 (async function () {
   mountLangToggle('lang');
   const STATION_KEY = 'intake_wet';
   const station = STATION_BY_KEY[STATION_KEY];
   const access = sessionStorage.getItem('2cw_intake_access') || '';
   const canEdit = access === 'edit';
+  const canDelete = sessionStorage.getItem('2cw_intake_delete') === 'true';
+  const canHistory = sessionStorage.getItem('2cw_intake_history') === 'true';
 
   const L = {
     title:     { en: 'Harvest Intakes', es: 'Recepciones de Cosecha' },
@@ -134,6 +166,32 @@
     intakes:   { en: 'intakes', es: 'recepciones' },
     intake:    { en: 'intake', es: 'recepción' },
     empty:     { en: 'No intakes match.', es: 'Ninguna recepción coincide.' },
+    deletedF:  { en: 'Deleted', es: 'Eliminadas' },
+    deletedP:  { en: 'Deleted', es: 'Eliminada' },
+    editedP:   { en: 'Edited', es: 'Editada' },
+    del:       { en: 'Delete this intake', es: 'Eliminar esta recepción' },
+    delWhy:    { en: 'Why is it being deleted? (required — saved with the deleted copy in the edit history)',
+                 es: '¿Por qué se elimina? (obligatorio — se guarda con la copia eliminada en el historial)' },
+    delGo:     { en: 'Delete', es: 'Eliminar' },
+    cancel:    { en: 'Cancel', es: 'Cancelar' },
+    delNeedWhy:{ en: 'Enter a reason first.', es: 'Escriba un motivo primero.' },
+    delFail:   { en: 'Could not delete:', es: 'No se pudo eliminar:' },
+    delBy:     { en: 'Deleted by', es: 'Eliminada por' },
+    reason:    { en: 'Reason', es: 'Motivo' },
+    history:   { en: 'Edit history', es: 'Historial de cambios' },
+    histNone:  { en: 'No changes since it was submitted.', es: 'Sin cambios desde que se envió.' },
+    histPre:   { en: 'Submitted before edit history started — changes are tracked from then on.',
+                 es: 'Enviada antes de que empezara el historial — los cambios se registran desde entonces.' },
+    histFail:  { en: 'Could not load the edit history.', es: 'No se pudo cargar el historial.' },
+    actSubmitted: { en: 'Submitted', es: 'Enviada' },
+    actEdited:    { en: 'Edited', es: 'Editada' },
+    actDeleted:   { en: 'Deleted', es: 'Eliminada' },
+    field:     { en: 'Field', es: 'Campo' },
+    before:    { en: 'Before', es: 'Antes' },
+    after:     { en: 'After', es: 'Después' },
+    rowN:      { en: 'row', es: 'fila' },
+    added:     { en: '(added)', es: '(agregada)' },
+    removed:   { en: '(removed)', es: '(eliminada)' },
     noAccess:  { en: 'You don’t have access to Harvest Intakes yet. Ask your manager to turn it on in the admin panel.',
                  es: 'Aún no tiene acceso a Recepciones de Cosecha. Pida a su gerente que lo active en el panel de administración.' },
     noData:    { en: 'Could not load intakes. Check your connection and reload.', es: 'No se pudieron cargar las recepciones. Revise su conexión y recargue.' }
@@ -149,6 +207,40 @@
   const [reference, rowsOrNull] = await Promise.all([loadReference(), listStationForms(STATION_KEY)]);
   if (!rowsOrNull) { board.innerHTML = `<div class="empty">${esc(t(L.noData))}</div>`; return; }
   const rows = rowsOrNull;
+
+  // Edit history and deleted intakes, for people with See edit history.
+  // history: every logged event, grouped by record; deletedRows: each
+  // deleted record rebuilt from its snapshot, carrying who/when/why.
+  let historyByForm = new Map(), deletedRows = [], historyError = false;
+  async function callRecords(body) {
+    const res = await fetch('/.netlify/functions/operations-records', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...body, pin: sessionStorage.getItem('2cw_pin') || '', stationKey: STATION_KEY })
+    });
+    const out = await res.json().catch(() => ({ ok: false, error: `HTTP ${res.status}` }));
+    if (!out.ok) throw new Error(out.error || `HTTP ${res.status}`);
+    return out;
+  }
+  async function loadHistory() {
+    if (!canHistory) return;
+    try {
+      const out = await callRecords({ action: 'history' });
+      historyByForm = new Map();
+      for (const h of out.history) {
+        if (!historyByForm.has(h.form_id)) historyByForm.set(h.form_id, []);
+        historyByForm.get(h.form_id).push(h);
+      }
+      historyByForm.forEach((list) => list.reverse());  // oldest first
+      deletedRows = out.deleted.filter((d) => d.snapshot)
+        .map((d) => ({ ...d.snapshot, _deleted: { actor: d.actor, reason: d.reason, at: d.created_at } }));
+      historyError = false;
+    } catch (err) {
+      console.error('history', err);
+      historyError = true;
+    }
+  }
+  await loadHistory();
+  const editCount = (r) => (historyByForm.get(r.id) || []).filter((h) => h.action === 'edited').length;
   const editAccess = JSON.parse(sessionStorage.getItem('2cw_ops_edit_access') || 'null');
   const canOpenDrafts = editAccess === 'all' || (Array.isArray(editAccess) && editAccess.includes(STATION_KEY));
 
@@ -175,6 +267,12 @@
   const shown = (r, k) => fieldByKey[k] ? display(fieldByKey[k], val(r, k)) : (val(r, k) || '—');
   const fmtDate = (d) => d ? new Date(`${d}T12:00:00`).toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
 
+  function pills(r) {
+    if (r._deleted) return `<span class="pill deleted">${t(L.deletedP)}</span>`;
+    const n = editCount(r);
+    return metrcPill(r) + (n ? `<span class="pill edited">${t(L.editedP)}${n > 1 ? ' ×' + n : ''}</span>` : '');
+  }
+
   function metrcPill(r) {
     if (r.status === 'draft') return `<span class="pill draft">${t(L.drafts)}</span>`;
     if (val(r, 'metrcAdjusted') === 'yes') {
@@ -186,7 +284,8 @@
 
   // ── Filters ────────────────────────────────────────────────────────────────
   let mode = 'all', query = '';
-  const FILTERS = [['all', L.all], ['metrc', L.metrcTodo], ['draft', L.drafts]];
+  const FILTERS = [['all', L.all], ['metrc', L.metrcTodo], ['draft', L.drafts]]
+    .concat(canHistory ? [['deleted', L.deletedF]] : []);
   const filtersEl = document.getElementById('filters');
   filtersEl.innerHTML = FILTERS.map(([k, l]) => `<button data-k="${k}" class="${k === mode ? 'on' : ''}">${t(l)}</button>`).join('') +
     `<input type="search" id="q" placeholder="${esc(t(L.search))}">`;
@@ -198,6 +297,7 @@
   function matches(r) {
     if (mode === 'metrc' && !(r.status === 'submitted' && val(r, 'metrcAdjusted') !== 'yes')) return false;
     if (mode === 'draft' && r.status !== 'draft') return false;
+    if ((mode === 'deleted') !== !!r._deleted) return false;
     if (!query) return true;
     const hay = [r.strain, uids(r), val(r, 'pid'), shown(r, 'pid'), val(r, 'cid'), shown(r, 'cid'),
       val(r, 'manifestNo'), val(r, 'truckNo'), val(r, 'driver'), val(r, 'completedBy'), r.owner_user].join(' ').toLowerCase();
@@ -205,18 +305,18 @@
   }
 
   function render() {
-    const list = rows.filter(matches);
+    const list = (mode === 'deleted' ? deletedRows : rows).filter(matches);
     document.getElementById('sub').textContent = `${list.length} ${list.length === 1 ? t(L.intake) : t(L.intakes)}`;
     if (!list.length) { board.className = ''; board.innerHTML = `<div class="empty">${t(L.empty)}</div>`; return; }
     board.className = 'board';
     board.innerHTML = list.map((r) => `
-      <button type="button" class="row ${r.status}" data-id="${r.id}">
+      <button type="button" class="row ${r._deleted ? 'deleted' : r.status}" data-id="${r.id}">
         <div class="row-top">
           <div>
             <div class="row-date">${esc(fmtDate(r.work_date))}</div>
             <div class="row-strain">${esc(r.strain || val(r, 'strain') || '—')}</div>
           </div>
-          <div class="pills">${metrcPill(r)}</div>
+          <div class="pills">${pills(r)}</div>
         </div>
         <dl class="row-facts">
           <dt>UID</dt><dd>${esc(uids(r) || '—')}</dd>
@@ -255,13 +355,107 @@
     return `<div class="d-row ${f.t === 'calc' ? 'hl' : ''}"><div class="k">${esc(t(f.l))}</div><div class="v">${esc(display(f, v))}</div></div>`;
   }
 
+  // ── Edit history ───────────────────────────────────────────────────────────
+  // A logged change's path ("metrcAdjustedLb", "lines[2].weight", "lines[3]")
+  // as a label people read, plus the field/column def to format its values.
+  function describePath(path) {
+    if (path === '(status)') return { label: getLang() === 'es' ? 'Estado' : 'Status' };
+    if (path === '(owner)') return { label: getLang() === 'es' ? 'Enviada por' : 'Submitted by' };
+    const m = /^([^.[]+)(?:\[(\d+)\](?:\.(.+))?)?$/.exec(path);
+    const f = m && fieldByKey[m[1]];
+    if (!f) return { label: path };
+    if (f.t !== 'lineitems' || m[2] === undefined) return { label: t(f.l), def: f };
+    const rowLabel = `${t(f.l)} · ${t(L.rowN)} ${Number(m[2]) + 1}`;
+    if (!m[3]) return { label: rowLabel, row: f };
+    const col = (f.cols || []).find((c) => c.k === m[3]);
+    return { label: `${rowLabel} · ${col ? t(col.l) : m[3]}`, def: col };
+  }
+  function changeValue(d, v) {
+    if (v === null || v === undefined || v === '') return '—';
+    if (d.row) return (d.row.cols || []).map((c) => display(c, v[c.k])).filter((x) => x !== '—').join(' / ') || '—';
+    if (d.def && d.def.t === 'lineitems') return Array.isArray(v) ? `${v.length} × ${t(L.rowN)}` : '—';
+    if (d.def) return display(d.def, v);
+    return typeof v === 'object' ? JSON.stringify(v) : String(v);
+  }
+  const isNumeric = (d) => d.def && (d.def.t === 'number' || d.def.t === 'calc');
+  const fmtWhen = (ts) => ts ? new Date(ts).toLocaleString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+
+  function historyHtml(r) {
+    if (!canHistory) return '';
+    const hd = `<div class="d-section"><div class="d-section-hd">${t(L.history)}</div>`;
+    if (historyError) return `${hd}<div class="muted-note">${t(L.histFail)}</div></div>`;
+    if (r.status === 'draft' && !r._deleted) return '';
+    const list = historyByForm.get(r.id) || [];
+    const items = list.map((h) => {
+      const act = { submitted: L.actSubmitted, edited: L.actEdited, deleted: L.actDeleted }[h.action];
+      let bodyHtml = '';
+      if (h.action === 'edited' && h.changes.length) {
+        bodyHtml = `<div style="overflow-x:auto"><table class="d-table"><thead><tr><th>${t(L.field)}</th><th>${t(L.before)}</th><th>${t(L.after)}</th></tr></thead><tbody>${
+          h.changes.map((c) => {
+            const d = describePath(c.path);
+            const before = d.row && c.old === null ? t(L.added) : changeValue(d, c.old);
+            const after = d.row && c.new === null ? t(L.removed) : changeValue(d, c.new);
+            return `<tr class="${isNumeric(d) ? 'num' : ''}"><td>${esc(d.label)}</td><td class="old">${esc(before)}</td><td class="new">${esc(after)}</td></tr>`;
+          }).join('')}</tbody></table></div>`;
+      }
+      if (h.reason) bodyHtml += `<div class="hist-reason">${t(L.reason)}: ${esc(h.reason)}</div>`;
+      return `<li><div class="hist-hd"><span class="hist-act ${h.action}">${t(act)}</span><b>${esc(h.actor || '—')}</b> · ${esc(fmtWhen(h.created_at))}</div>${bodyHtml}</li>`;
+    });
+    const notes = [];
+    if (!list.some((h) => h.action === 'submitted')) notes.push(t(L.histPre));
+    if (!list.some((h) => h.action === 'edited') && !r._deleted) notes.push(t(L.histNone));
+    return `${hd}${items.length ? `<ul class="hist">${items.join('')}</ul>` : ''}${
+      notes.map((n) => `<div class="muted-note" style="margin-top:8px">${esc(n)}</div>`).join('')}</div>`;
+  }
+
+  function deleteHtml(r) {
+    if (!canDelete || r._deleted) return '';
+    return `<div class="d-section">
+      <button type="button" class="btn btn-danger" id="d-del">${t(L.del)}</button>
+      <div class="del-box" id="d-del-box" hidden>
+        <p>${esc(t(L.delWhy))}</p>
+        <textarea id="d-del-why" maxlength="500"></textarea>
+        <div class="row-btns">
+          <button type="button" class="btn btn-danger solid" id="d-del-go">${t(L.delGo)}</button>
+          <button type="button" class="btn" id="d-del-cancel">${t(L.cancel)}</button>
+        </div>
+        <div class="del-err" id="d-del-err"></div>
+      </div>
+    </div>`;
+  }
+
+  function wireDelete(r) {
+    const btn = document.getElementById('d-del');
+    if (!btn) return;
+    const box = document.getElementById('d-del-box'), why = document.getElementById('d-del-why'), err = document.getElementById('d-del-err');
+    btn.onclick = () => { box.hidden = false; btn.hidden = true; why.focus(); };
+    document.getElementById('d-del-cancel').onclick = () => { box.hidden = true; btn.hidden = false; err.textContent = ''; };
+    document.getElementById('d-del-go').onclick = async (e) => {
+      const reason = why.value.trim();
+      if (!reason) { err.textContent = t(L.delNeedWhy); why.focus(); return; }
+      e.target.disabled = true; err.textContent = '';
+      try {
+        await callRecords({ action: 'delete', id: r.id, reason });
+      } catch (ex) {
+        err.textContent = `${t(L.delFail)} ${ex.message}`;
+        e.target.disabled = false;
+        return;
+      }
+      const i = rows.findIndex((x) => x.id === r.id);
+      if (i >= 0) rows.splice(i, 1);
+      closeDetail();
+      await loadHistory();
+      render();
+    };
+  }
+
   function openDetail(id) {
-    const r = rows.find((x) => x.id === id);
+    const r = rows.find((x) => x.id === id) || deletedRows.find((x) => x.id === id);
     if (!r) return;
     const url = new URL(location.href); url.searchParams.set('id', id); history.replaceState(null, '', url);
     let action = '';
-    if (r.status === 'submitted' && canEdit) action = `<a class="btn btn-blue" href="/ops_form.html?station=${STATION_KEY}&edit=${r.id}">${t(L.edit)}</a>`;
-    if (r.status === 'draft' && canOpenDrafts) action = `<a class="btn btn-blue" href="/ops_form.html?station=${STATION_KEY}&draft=${r.id}">${t(L.openDraft)}</a>`;
+    if (!r._deleted && r.status === 'submitted' && canEdit) action = `<a class="btn btn-blue" href="/ops_form.html?station=${STATION_KEY}&edit=${r.id}">${t(L.edit)}</a>`;
+    if (!r._deleted && r.status === 'draft' && canOpenDrafts) action = `<a class="btn btn-blue" href="/ops_form.html?station=${STATION_KEY}&draft=${r.id}">${t(L.openDraft)}</a>`;
     const f = r.fields || {};
     const subLines = [
       r.status === 'draft' ? t(L.draftNote) : `${t(L.submitted)} ${r.submitted_at ? new Date(r.submitted_at).toLocaleString() : ''} ${r.owner_user ? t(L.by) + ' ' + r.owner_user : ''}`,
@@ -273,9 +467,14 @@
         <div class="d-actions">${action}<button type="button" class="btn" id="d-close">${t(L.close)}</button></div>
       </div>
       <div class="d-sub">${subLines.map(esc).join('<br>')}</div>
-      <div style="margin-bottom:10px">${metrcPill(r)}</div>
-      ${station.fields.map((fd) => fieldHtml(fd, r)).join('')}`;
+      ${r._deleted ? `<div class="d-deleted"><b>${t(L.delBy)} ${esc(r._deleted.actor || '—')}</b> · ${esc(fmtWhen(r._deleted.at))}${
+        r._deleted.reason ? `<br>${t(L.reason)}: ${esc(r._deleted.reason)}` : ''}</div>` : ''}
+      <div style="margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap">${pills(r)}</div>
+      ${station.fields.map((fd) => fieldHtml(fd, r)).join('')}
+      ${historyHtml(r)}
+      ${deleteHtml(r)}`;
     document.getElementById('d-close').onclick = closeDetail;
+    wireDelete(r);
     bg.classList.add('on');
     document.body.style.overflow = 'hidden';
   }

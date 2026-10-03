@@ -98,6 +98,144 @@ create policy "anon update" on operations_forms for update using (true) with che
 -- one created by running this file in the SQL editor does not.
 grant select, insert, update on public.operations_forms to anon;
 
+-- Deleting a form goes through netlify/functions/operations-records.js
+-- (PIN + per-user permission, service role key), never the anon key — so
+-- anon must not hold DELETE even if it was granted from the dashboard.
+revoke delete on public.operations_forms from anon;
+
+-- ── Operations form history (audit log) ──────────────────────────────────
+-- Every change to a submitted form, written by a trigger inside the
+-- database — so it catches edits from any page, device or direct API call,
+-- not just the ones the app remembers to log. Nothing in the browser can
+-- write to or delete from it (no anon grants; reads go through
+-- operations-records.js too), so a change can't be quietly un-logged.
+--
+--   submitted  the record as first submitted (`snapshot`) — the baseline
+--   edited     each changed value after submit: `changes` is a list of
+--              {path, old, new}, e.g. path "lines[2].weight" for the third
+--              weigh-in row's weight
+--   deleted    the whole record as it was (`snapshot`), who, and why
+--
+-- Drafts aren't logged while they're being filled in (autosave writes every
+-- few seconds); logging starts when the form is submitted. `actor` is the
+-- app's logged-in name (operations_forms.updated_by), or for deletes the
+-- name verified server-side from the PIN.
+--
+-- No foreign key to operations_forms on purpose: the history of a deleted
+-- record has to outlive it.
+
+create table if not exists operations_forms_history (
+  id           bigint generated always as identity primary key,
+  form_id      uuid not null,
+  station_key  text not null,
+  action       text not null check (action in ('submitted', 'edited', 'deleted')),
+  actor        text,
+  reason       text,
+  changes      jsonb not null default '[]'::jsonb,
+  snapshot     jsonb,
+  created_at   timestamptz not null default now()
+);
+
+create index if not exists idx_ops_history_form on operations_forms_history (form_id, created_at);
+create index if not exists idx_ops_history_station on operations_forms_history (station_key, created_at desc);
+
+-- Leaf-by-leaf differences between two jsonb values, as (path, old, new).
+-- Objects recurse by key ("metrcAdjustedLb"), arrays by index
+-- ("lines[2].weight"); a key missing on one side compares as null.
+create or replace function ops_jsonb_diff(a jsonb, b jsonb, at_path text default '')
+returns table (path text, old_val jsonb, new_val jsonb)
+language plpgsql immutable as $$
+declare
+  k text;
+  i int;
+begin
+  a := coalesce(a, 'null'::jsonb);
+  b := coalesce(b, 'null'::jsonb);
+  if a = b then return; end if;
+  if jsonb_typeof(a) = 'object' and jsonb_typeof(b) = 'object' then
+    for k in select jsonb_object_keys(a) union select jsonb_object_keys(b) loop
+      return query select * from ops_jsonb_diff(a -> k, b -> k, case when at_path = '' then k else at_path || '.' || k end);
+    end loop;
+  elsif jsonb_typeof(a) = 'array' and jsonb_typeof(b) = 'array' then
+    for i in 0 .. greatest(jsonb_array_length(a), jsonb_array_length(b)) - 1 loop
+      return query select * from ops_jsonb_diff(a -> i, b -> i, at_path || '[' || i || ']');
+    end loop;
+  else
+    path := at_path; old_val := a; new_val := b;
+    return next;
+  end if;
+end;
+$$;
+
+-- security definer: runs as the table owner, so it can write the history
+-- table that anon has no grants on.
+create or replace function log_operations_form_change() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare
+  -- Set by delete_operations_form() below for the length of its transaction.
+  v_actor  text := nullif(current_setting('app.actor', true), '');
+  v_reason text := nullif(current_setting('app.reason', true), '');
+  v_changes jsonb;
+begin
+  if tg_op = 'DELETE' then
+    insert into operations_forms_history (form_id, station_key, action, actor, reason, snapshot)
+    values (old.id, old.station_key, 'deleted', coalesce(v_actor, 'unknown (deleted outside the app)'), v_reason, to_jsonb(old));
+    return old;
+  end if;
+
+  if new.status = 'submitted' and (tg_op = 'INSERT' or old.status is distinct from 'submitted') then
+    insert into operations_forms_history (form_id, station_key, action, actor, snapshot)
+    values (new.id, new.station_key, 'submitted', coalesce(new.updated_by, new.owner_user), to_jsonb(new));
+    return new;
+  end if;
+
+  if tg_op = 'UPDATE' and old.status = 'submitted' then
+    -- lastEditedBy/At change on every edit and say nothing the row itself doesn't.
+    select coalesce(jsonb_agg(jsonb_build_object('path', d.path, 'old', d.old_val, 'new', d.new_val) order by d.n), '[]'::jsonb)
+      into v_changes
+      from ops_jsonb_diff(old.fields - 'lastEditedBy' - 'lastEditedAt', new.fields - 'lastEditedBy' - 'lastEditedAt')
+           with ordinality as d(path, old_val, new_val, n);
+    if old.status is distinct from new.status then
+      v_changes := v_changes || jsonb_build_array(jsonb_build_object('path', '(status)', 'old', old.status, 'new', new.status));
+    end if;
+    if old.owner_user is distinct from new.owner_user then
+      v_changes := v_changes || jsonb_build_array(jsonb_build_object('path', '(owner)', 'old', old.owner_user, 'new', new.owner_user));
+    end if;
+    if jsonb_array_length(v_changes) > 0 then
+      insert into operations_forms_history (form_id, station_key, action, actor, changes)
+      values (new.id, new.station_key, 'edited', coalesce(v_actor, new.updated_by), v_changes);
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_log_operations_forms on operations_forms;
+create trigger trg_log_operations_forms
+  after insert or update or delete on operations_forms
+  for each row execute function log_operations_form_change();
+
+-- The only way the app deletes a form: operations-records.js calls this
+-- with the service role key after checking the person's PIN and delete
+-- permission. The settings make the trigger above record who and why.
+create or replace function delete_operations_form(p_id uuid, p_actor text, p_reason text)
+returns boolean
+language plpgsql security definer set search_path = public as $$
+begin
+  perform set_config('app.actor', coalesce(p_actor, ''), true);
+  perform set_config('app.reason', coalesce(p_reason, ''), true);
+  delete from operations_forms where id = p_id;
+  return found;
+end;
+$$;
+
+revoke all on function delete_operations_form(uuid, text, text) from public, anon, authenticated;
+grant execute on function delete_operations_form(uuid, text, text) to service_role;
+
+alter table operations_forms_history enable row level security;   -- no policies: service role only
+revoke all on public.operations_forms_history from anon, authenticated;
+grant select on public.operations_forms_history to service_role;
+
 -- ── User directory (app_users) ───────────────────────────────────────────
 -- Backs the in-app admin panel (admin.html) that replaces the "Users"
 -- Google Sheet. Unlike operations_forms above, this table gates access to
