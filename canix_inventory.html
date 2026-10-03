@@ -320,14 +320,15 @@ function applySearch(pkgs) {
 }
 
 // ── Currently Drying (sub-page of Processing) ────────────────────────────
-// Anything drying comes through Canix as a package whose item name includes
-// "Wet Flower" — taken from every non-excluded facility, not just
+// Anything drying comes through Canix as a package whose item category is
+// "Fresh Cannabis Plant" (whatever the item is named — "Wet Flower - …",
+// "Mixed harvested plants", …) — taken from every non-excluded facility, not just
 // Processing-stage ones, since the wet packages are created at the farm
 // licenses. Rooms are matched from the package's Canix location (or its
 // parent location) by name, e.g. "Room 1A" / "Dry Room 1A" / "1A" → 1A.
 
 function isDrying(p) {
-  return /wet flower/i.test(p.item?.name || '');
+  return /^fresh cannabis plant$/i.test((p.item?.type?.name || '').trim());
 }
 
 function dryingPackages() {
@@ -406,7 +407,7 @@ function renderDrying() {
   const bar = pct => `<div class="bar ${barCls(pct)}"><span style="width:${Math.min(pct, 100).toFixed(1)}%"></span></div>`;
 
   const kpis = `<div class="kpis" style="margin-top:0">
-    <div class="kpi gold"><div class="k">Wet Flower Drying</div><div class="v">${fmtNum(totalUsed)} lb</div><div class="n">${all.length} package(s) · ≈ ${fmtNum(totalUsed / LBS_PER_BIN, 1)} macro-bins</div></div>
+    <div class="kpi gold"><div class="k">Fresh Plant Drying</div><div class="v">${fmtNum(totalUsed)} lb</div><div class="n">${all.length} package(s) · ≈ ${fmtNum(totalUsed / LBS_PER_BIN, 1)} macro-bins</div></div>
     <div class="kpi ${barCls(pct) === 'red' ? '' : 'green'}"><div class="k">Capacity Used</div><div class="v">${fmtNum(pct, 1)}%</div><div class="n">of ${fmtNum(totalCap)} lb across ${DRYING_ROOMS.length} rooms</div></div>
     <div class="kpi blue"><div class="k">Space Available</div><div class="v">${fmtNum(free)} lb</div><div class="n">≈ ${fmtNum(free / LBS_PER_TRUCK, 1)} trucks · ${fmtNum(free / LBS_PER_BIN)} macro-bins</div></div>
     <div class="kpi purple"><div class="k">Rooms In Use</div><div class="v">${roomsInUse} / ${DRYING_ROOMS.length}</div><div class="n">${unassignedLbs ? fmtNum(unassignedLbs) + ' lb not matched to a room' : 'all drying lbs matched to a room'}</div></div>
@@ -430,7 +431,7 @@ function renderDrying() {
 
   const capacityCard = `<div class="card">
     <div class="card-hd"><h2>Drying Room Capacity</h2><div class="rollup"><b>${fmtNum(totalUsed)}</b> / ${fmtNum(totalCap)} lb</div></div>
-    <div class="note">Capacity from the Rooms Capacity sheet (hoops-based estimate, 3–4 lb/plant). 1 truck ≈ 42 macro-bins ≈ 2,100 lb; 1 macro-bin ≈ 50 lb. Wet Flower packages are assigned to a room by their Canix location name.</div>
+    <div class="note">Capacity from the Rooms Capacity sheet (hoops-based estimate, 3–4 lb/plant). 1 truck ≈ 42 macro-bins ≈ 2,100 lb; 1 macro-bin ≈ 50 lb. Fresh Cannabis Plant packages are assigned to a room by their Canix location name.</div>
     <div class="scroll"><table>
       <thead><tr><th>Room</th><th class="num">Drying</th><th class="num">Capacity</th><th>Fill</th><th class="num">Used</th><th class="num">Free</th><th class="num">Trellis (Mallas)</th><th class="num">Trucks</th><th class="num">Macro-Bins</th></tr></thead>
       <tbody>${roomRows}
@@ -444,7 +445,7 @@ function renderDrying() {
   const sorted = [...pkgs].sort((a, b) => (a.packaged_date || '').localeCompare(b.packaged_date || ''));
   const listCard = `<div class="card">
     <div class="card-hd"><h2>Currently Drying</h2><div class="rollup"><b>${pkgs.length}</b> package(s)</div></div>
-    ${!all.length ? '<div class="empty">Nothing drying right now. Wet Flower packages from Canix show up here as soon as they are created.</div>'
+    ${!all.length ? '<div class="empty">Nothing drying right now. Fresh Cannabis Plant packages from Canix show up here as soon as they are created.</div>'
       : !pkgs.length ? '<div class="empty">No drying packages match the search.</div>'
       : `<div class="scroll"><table>
       <thead><tr><th>Item</th><th>Strain</th><th class="num">Wet Weight</th><th>Room</th><th>Facility (License)</th><th class="num">Started</th><th class="num">Days</th><th>Source Harvest</th></tr></thead>
