@@ -219,7 +219,7 @@ async function loadIntakeRooms() {
       const f = r.fields || {};
       if (!f.dryRoom) return;
       const uids = new Set([f.sourceUid, ...(f.lines || []).map(l => l && l.sourceUid)]
-        .map(u => String(u || '').trim().toUpperCase()).filter(Boolean));
+        .map(normUid).filter(Boolean));
       const cid = String(f.cid || '').trim();
       uids.forEach(uid => out.push({ uid, dryRoom: String(f.dryRoom), cid }));
     });
@@ -244,6 +244,14 @@ async function loadCidLabels() {
     console.warn('Could not load CID names:', e);
     return {};
   }
+}
+
+// UIDs are typed by hand off the tag, and a letter O for a zero ("OO433")
+// is an easy slip — compare them with O read as 0 (and anything that isn't
+// a letter or digit dropped). Applied to both sides, so it can't break a
+// tag that genuinely has an O in it.
+function normUid(u) {
+  return String(u || '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/O/g, '0');
 }
 
 const $ = id => document.getElementById(id);
@@ -428,12 +436,12 @@ function intakeRooms(dryRoom) {
 // whose UID is the tag's last 4+ characters (the form accepts "the last 5")
 // as long as that suffix points at only one drying package.
 function intakeForTag(tag) {
-  tag = String(tag || '').toUpperCase();
+  tag = normUid(tag);
   if (!tag) return null;
   const exact = INTAKE_ROOMS.find(i => i.uid === tag);
   if (exact) return exact;
   return INTAKE_ROOMS.find(i => i.uid.length >= 4 && i.uid.length < tag.length && tag.endsWith(i.uid) &&
-    dryingPackages().filter(p => String(p.tag || '').toUpperCase().endsWith(i.uid)).length === 1) || null;
+    dryingPackages().filter(p => normUid(p.tag).endsWith(i.uid)).length === 1) || null;
 }
 
 // Returns the drying room(s) (["1A"], or several if the intake lists more
