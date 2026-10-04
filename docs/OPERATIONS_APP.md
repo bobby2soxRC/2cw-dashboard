@@ -417,6 +417,25 @@ has no DELETE on `operations_forms`), so it sets `fields.voided` and stamps
 who and when. The edit history trigger records the change, and voided
 entries count for nothing.
 
+**Timeline** (third tab) is a day-at-a-glance check that every clocked hour
+is logged. Each person who clocked in that day, or has an entry, gets a row:
+- Their Connecteam clock-ins are drawn as a gray track. They come from
+  `data/connecteam_shifts.json`, which the hourly sync writes with every
+  shift's start and end for the last 14 days (`SHIFT_DAYS`).
+- Entries that have a start/end are drawn on the track as blue blocks.
+- Clocked time with no entry covering it is hatched gold. Tapping a hatched
+  stretch opens Log time with that person, the date and those times filled
+  in.
+- Entries logged while the person wasn't clocked in get a red outline.
+
+Totals per row and for the team: clocked, logged, not logged
+(clocked − logged), and % allocated. There's also an "only people with time
+not logged" filter. Entries saved with hours only count toward Logged but
+can't be placed on the line. Times are shown in the viewer's local time.
+The hourly sync means the most recent hour can be missing, and someone still
+on the clock is drawn up to now. An unpaid break shows as not-logged time
+unless people clock out for it.
+
 The dashboard's Labor tab loads `labor_entry` alongside the stations, and
 `crewLaborLog` turns each entry into one row per UID. Entries show there by
 name, keyed on the Connecteam user id. The Today board ignores them because

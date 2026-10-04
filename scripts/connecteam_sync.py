@@ -10,6 +10,7 @@ Usage:
 Output:
     data/connecteam_hours.json
     data/connecteam_roster.json  (active employees — the Labor Log's people list)
+    data/connecteam_shifts.json  (each clock-in/out, last SHIFT_DAYS days — the Labor Log's timeline)
 
 Requirements:
     pip install requests
@@ -42,6 +43,9 @@ OUTPUT_DIR = Path("data")
 DAILY_OT_HOURS = 8
 DAILY_DOUBLETIME_HOURS = 12
 WEEKLY_OT_HOURS = 40
+
+# How far back connecteam_shifts.json goes (the Labor Log timeline's range).
+SHIFT_DAYS = 14
 
 REQUEST_PACE_SECONDS = 0.3
 SERVER_ERROR_RETRY_BACKOFF_SECONDS = [10, 30, 60]
@@ -313,12 +317,36 @@ def build_hours_json(users, shifts):
     }
 
 
+def build_shifts_json(users, shifts, since):
+    """Every shift that started on or after `since`, as clock-in/clock-out
+    times — what the Labor Log's timeline (labor_log.html) draws each
+    person's day from. `end` is null while someone is still clocked in.
+    Only names and times, the same kind of data connecteam_hours.json
+    already publishes."""
+    out = []
+    for s in shifts:
+        start = _to_dt(_first(s, "start", "shiftStartTime", "startTime", "clockIn"))
+        if start is None or start < since:
+            continue
+        end = _to_dt(_first(s, "end", "shiftEndTime", "endTime", "clockOut"))
+        uid = str(_first(s, "userId", "employeeId"))
+        out.append({
+            "userId": uid, "name": users.get(uid, {}).get("name", f"User {uid}"),
+            "start": start.isoformat(), "end": end.isoformat() if end else None,
+        })
+    out.sort(key=lambda x: (x["start"], x["name"]))
+    return {"last_sync": datetime.now(timezone.utc).isoformat(), "days": SHIFT_DAYS, "shifts": out}
+
+
 # ── MAIN ──────────────────────────────────────────────────────────────────────
 
 def main():
     started = datetime.now(timezone.utc)
     today_str = started.strftime("%Y-%m-%d")
     week_start_str = (started - timedelta(days=started.weekday())).strftime("%Y-%m-%d")
+    # Fetch back far enough for both the week totals and the shifts file.
+    shifts_since = (started - timedelta(days=SHIFT_DAYS - 1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    fetch_from_str = min(week_start_str, shifts_since.strftime("%Y-%m-%d"))
 
     print("=" * 55)
     print("  Connecteam Staff Hours Sync — 2CW Enterprises")
@@ -330,7 +358,7 @@ def main():
         clock_ids = discover_clocks()
         if not clock_ids:
             raise RuntimeError("No time clocks found on this Connecteam account")
-        shifts = sync_time_activities(clock_ids, week_start_str, today_str)
+        shifts = sync_time_activities(clock_ids, fetch_from_str, today_str)
     except RuntimeError as e:
         print(f"\n\nFATAL ERROR: {e}")
         return 1
@@ -339,6 +367,8 @@ def main():
     save("connecteam_hours.json", result)
     roster = build_roster_json(users)
     save("connecteam_roster.json", roster)
+    shift_file = build_shifts_json(users, shifts, shifts_since)
+    save("connecteam_shifts.json", shift_file)
 
     elapsed = (datetime.now(timezone.utc) - started).total_seconds()
     print("\n" + "=" * 55)
@@ -348,6 +378,7 @@ def main():
     print(f"  Today rows   : {len(result['today'])}")
     print(f"  Week rows    : {len(result['week'])}")
     print(f"  Roster       : {len(roster['people'])}")
+    print(f"  Shifts ({SHIFT_DAYS}d) : {len(shift_file['shifts'])}")
     print("=" * 55)
     return 0
 
