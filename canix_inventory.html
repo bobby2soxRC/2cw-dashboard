@@ -191,6 +191,35 @@ async function loadForecastInputs() {
   }
 }
 
+// Harvest Intake — Wet forms (station intake_wet in operations_forms) record
+// each farm package UID and the Drying Location it went to. Canix packages
+// usually have no location set, so the Currently Drying view falls back to
+// these to place a package in a room. Drafts count too: a truck still being
+// unloaded is already on the racks.
+async function loadIntakeRooms() {
+  const client = getSupabaseClient();
+  if (!client) return [];
+  try {
+    const { data, error } = await client.from('operations_forms')
+      .select('fields, work_date, updated_at')
+      .eq('station_key', 'intake_wet')
+      .order('work_date', { ascending: false }).order('updated_at', { ascending: false });
+    if (error) throw error;
+    const out = [];
+    (data || []).forEach(r => {
+      const f = r.fields || {};
+      if (!f.dryRoom) return;
+      const uids = new Set([f.sourceUid, ...(f.lines || []).map(l => l && l.sourceUid)]
+        .map(u => String(u || '').trim().toUpperCase()).filter(Boolean));
+      uids.forEach(uid => out.push({ uid, dryRoom: String(f.dryRoom) }));
+    });
+    return out;
+  } catch (e) {
+    console.warn('Could not load harvest intakes for drying rooms:', e);
+    return [];
+  }
+}
+
 const $ = id => document.getElementById(id);
 const STAGE_ORDER = ['Cultivation', 'Processing', 'Manufacturing', 'Distribution', 'Unclassified'];
 const STAGE_COLOR = { Cultivation: 'green', Processing: 'gold', Manufacturing: 'purple', Distribution: 'blue', Unclassified: '' };
@@ -202,6 +231,7 @@ let HARVEST_PLANS = [];
 let FACILITY_CONFIG = {};
 let CURRENT_STAGE = 'All';
 let CURRENT_PAGE = 'inventory'; // 'inventory' | 'forecast'
+let INTAKE_ROOMS = []; // [{ uid, room, label }] from Harvest Intake — Wet forms, newest first
 let PROCESSING_VIEW = 'packages'; // 'packages' | 'drying' — sub-page within the Processing tab
 
 // Drying room capacity, from "Rooms capacity.xlsx" (Rooms Capacity Adobe,
@@ -326,6 +356,8 @@ function applySearch(pkgs) {
 // Processing-stage ones, since the wet packages are created at the farm
 // licenses. Rooms are matched from the package's Canix location (or its
 // parent location) by name, e.g. "Room 1A" / "Dry Room 1A" / "1A" → 1A.
+// When Canix has no usable location, the package's tag is looked up in the
+// Harvest Intake — Wet forms and their Drying Location is used instead.
 
 function isDrying(p) {
   return /^fresh cannabis plant$/i.test((p.item?.type?.name || '').trim());
@@ -350,12 +382,42 @@ function roomKey(name) {
 
 const ROOM_BY_KEY = Object.fromEntries(DRYING_ROOMS.map(r => [roomKey(r.room), r.room]));
 
-// Returns the drying-room id ("1A") or null, plus the raw location label.
+// A room name/code to a capacity-table room. Sub-rooms the forms know about
+// but the capacity sheet doesn't split out (2A–2D) roll up to their room (2).
+function matchRoom(name) {
+  const k = roomKey(name);
+  if (!k) return null;
+  return ROOM_BY_KEY[k] || ROOM_BY_KEY[k.replace(/[A-Z]$/, '')] || null;
+}
+
+// An intake's Drying Location(s) — "1A", "Room 2B", "1A, 1B" — as rooms.
+function intakeRooms(dryRoom) {
+  return [...new Set(String(dryRoom).split(/[,&/+]|\band\b|\by\b/i).map(matchRoom).filter(Boolean))];
+}
+
+// The intake for a Canix tag: an exact UID match, or else the newest intake
+// whose UID is the tag's last 4+ characters (the form accepts "the last 5")
+// as long as that suffix points at only one drying package.
+function intakeForTag(tag) {
+  tag = String(tag || '').toUpperCase();
+  if (!tag) return null;
+  const exact = INTAKE_ROOMS.find(i => i.uid === tag);
+  if (exact) return exact;
+  return INTAKE_ROOMS.find(i => i.uid.length >= 4 && i.uid.length < tag.length && tag.endsWith(i.uid) &&
+    dryingPackages().filter(p => String(p.tag || '').toUpperCase().endsWith(i.uid)).length === 1) || null;
+}
+
+// Returns the drying room(s) (["1A"], or several if the intake lists more
+// than one), the raw location label, and where the room came from.
 function packageRoom(p) {
   const loc = p.location || null;
   const label = loc ? (loc.parent_location?.name ? `${loc.parent_location.name} › ${loc.name}` : loc.name) : null;
-  const room = loc ? (ROOM_BY_KEY[roomKey(loc.name)] || ROOM_BY_KEY[roomKey(loc.parent_location?.name)] || null) : null;
-  return { room, label };
+  const room = loc ? (matchRoom(loc.name) || matchRoom(loc.parent_location?.name)) : null;
+  if (room) return { rooms: [room], label, source: 'canix' };
+  const intake = intakeForTag(p.tag);
+  const rooms = intake ? intakeRooms(intake.dryRoom) : [];
+  if (rooms.length) return { rooms, label, source: 'intake' };
+  return { rooms: [], label: label || (intake ? `Intake: ${intake.dryRoom}` : null), source: null };
 }
 
 function daysSince(iso) {
@@ -392,9 +454,10 @@ function renderDrying() {
   let unassignedLbs = 0;
   const unassignedLocs = new Set();
   all.forEach(p => {
-    const { room, label } = packageRoom(p);
-    if (room) usedByRoom[room] = (usedByRoom[room] || 0) + toLbs(p);
-    else { unassignedLbs += toLbs(p); unassignedLocs.add(label || 'No location set'); }
+    const { rooms, label } = packageRoom(p);
+    // An intake split across rooms is counted evenly across them.
+    if (rooms.length) rooms.forEach(room => { usedByRoom[room] = (usedByRoom[room] || 0) + toLbs(p) / rooms.length; });
+    else { unassignedLbs += toLbs(p); unassignedLocs.add(label || 'No Canix location or intake form'); }
   });
 
   const totalCap = DRYING_ROOMS.reduce((s, r) => s + r.lbs, 0);
@@ -431,7 +494,7 @@ function renderDrying() {
 
   const capacityCard = `<div class="card">
     <div class="card-hd"><h2>Drying Room Capacity</h2><div class="rollup"><b>${fmtNum(totalUsed)}</b> / ${fmtNum(totalCap)} lb</div></div>
-    <div class="note">Capacity from the Rooms Capacity sheet (hoops-based estimate, 3–4 lb/plant). 1 truck ≈ 42 macro-bins ≈ 2,100 lb; 1 macro-bin ≈ 50 lb. Fresh Cannabis Plant packages are assigned to a room by their Canix location name.</div>
+    <div class="note">Capacity from the Rooms Capacity sheet (hoops-based estimate, 3–4 lb/plant). 1 truck ≈ 42 macro-bins ≈ 2,100 lb; 1 macro-bin ≈ 50 lb. Fresh Cannabis Plant packages are assigned to a room by their Canix location name, or — when Canix has no location — by the Drying Location on the package's Harvest Intake form (matched on the package UID; an intake listing several rooms is split evenly).</div>
     <div class="scroll"><table>
       <thead><tr><th>Room</th><th class="num">Drying</th><th class="num">Capacity</th><th>Fill</th><th class="num">Used</th><th class="num">Free</th><th class="num">Trellis (Mallas)</th><th class="num">Trucks</th><th class="num">Macro-Bins</th></tr></thead>
       <tbody>${roomRows}
@@ -451,13 +514,13 @@ function renderDrying() {
       <thead><tr><th>Item</th><th>Strain</th><th class="num">Wet Weight</th><th>Room</th><th>Facility (License)</th><th class="num">Started</th><th class="num">Days</th><th>Source Harvest</th></tr></thead>
       <tbody>${sorted.map(p => {
         const fi = facilityInfo(p.facility_id);
-        const { room, label } = packageRoom(p);
+        const { rooms, label, source } = packageRoom(p);
         const days = daysSince(p.packaged_date);
         return `<tr>
           <td class="wide">${p.item?.name || '—'}</td>
           <td>${p.item?.strain?.name || '—'}</td>
           <td class="num">${fmtWeight(p)}</td>
-          <td>${room ? `<span class="pill gold">Room ${room}</span>` : `<span class="muted">${label || '—'}</span>`}</td>
+          <td>${rooms.length ? `<span class="pill gold">Room ${rooms.join(' + ')}</span>${source === 'intake' ? ' <span class="muted" title="From the Harvest Intake form">· intake</span>' : ''}` : `<span class="muted">${label || '—'}</span>`}</td>
           <td>${fi.displayName}${fi.license ? ` <span class="muted">(${fi.license})</span>` : ''}</td>
           <td class="num">${(p.packaged_date || '').slice(0, 10) || '—'}</td>
           <td class="num">${days ?? '—'}</td>
@@ -700,13 +763,15 @@ document.getElementById('pageTabs').querySelectorAll('button').forEach(btn => {
 
 async function load() {
   try {
-    const [inv, batches, cfg, meta, forecastInputs] = await Promise.all([
+    const [inv, batches, cfg, meta, forecastInputs, intakeRooms] = await Promise.all([
       fetch(INVENTORY_URL).then(r => r.json()),
       fetch(PLANT_BATCHES_URL).then(r => r.json()).catch(() => []),
       loadFacilityConfig(),
       fetch(META_URL).then(r => r.json()).catch(() => null),
       loadForecastInputs(),
+      loadIntakeRooms(),
     ]);
+    INTAKE_ROOMS = intakeRooms;
     ALL_PACKAGES = inv;
     PLANT_BATCHES = batches;
     FACILITY_CONFIG = cfg;
