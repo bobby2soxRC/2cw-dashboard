@@ -288,6 +288,30 @@ and phone numbers can be read by anyone who opens the site's developer
 tools. Moving the PIN check server-side would close that; it hasn't been
 done yet.
 
+## Labor rates
+
+The **Labor Rates** tab sets each person's loaded hourly cost for the Labor
+Log's cost reports (`labor_log.html`; see "Labor Log" in
+`docs/OPERATIONS_APP.md`). People come from the Connecteam roster
+(`data/connecteam_roster.json`, written by the hourly sync). Anyone who
+already has a rate stays listed after leaving the roster, marked "not in
+roster". The **Default** row covers everyone without their own rate,
+including people typed into the Labor Log by name.
+
+- A rate takes effect from its date, or from the start if the date is left
+  blank. Entering a raise with a date keeps earlier work at the old rate.
+  Saving the same person and date again replaces that rate, and × removes
+  one.
+- Storage is the `labor_rates` table (`supabase/schema.sql`). It has no anon
+  policy, so all reads and writes go through `admin.js`
+  (`labor_rates_list` / `_set` / `_delete`), and the Labor Log reads
+  through `netlify/functions/labor-rates.js`.
+- Who sees costs is the user editor's **Labor Log — see costs** checkbox
+  (`labor log costs`, under Special access). It implies the Labor Log card.
+  `labor-rates.js` checks it from the PIN before returning any rates.
+  Anyone with it can work out each person's rate from the costs shown, so
+  give it only to people who could see pay anyway.
+
 ## Why `app_users` isn't as open as `operations_forms`
 
 `operations_forms`' RLS intentionally allows anonymous read/write — see the

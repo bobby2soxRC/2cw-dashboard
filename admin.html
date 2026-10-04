@@ -116,6 +116,13 @@
   .hint{font-size:.72rem;color:var(--muted);margin:-8px 0 14px}
   .search-wrap{flex:1;min-width:180px}
   .search-wrap input{width:100%}
+  .rate-in{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .rate-in input{background:#0c0d0f;border:1px solid var(--border);color:var(--text);padding:.4rem .55rem;border-radius:6px;font-size:.85rem;font-family:'DM Mono',monospace;outline:none}
+  .rate-in input[type=number]{width:90px}
+  .rate-hist{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--subtext)}
+  .rate-hist button{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;padding:0 4px}
+  .rate-hist button:hover{color:var(--red)}
+  .rate-now{font-family:'DM Mono',monospace}
   .summary-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
   .summary-tile{flex:1;min-width:120px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px}
   .summary-tile .n{font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1}
@@ -195,6 +202,7 @@
       <button data-tab="users" class="on" onclick="switchTab('users')">Users</button>
       <button data-tab="orgchart" onclick="switchTab('orgchart')">Org Chart</button>
       <button data-tab="responsibilities" onclick="switchTab('responsibilities')">Responsibilities</button>
+      <button data-tab="rates" onclick="switchTab('rates')">Labor Rates</button>
     </div>
 
     <div id="users-view" class="view on">
@@ -216,6 +224,16 @@
       </div>
       <div class="status-line">Every user in the app, nested by who reports to whom. Set a person's title and manager from their editor on the Users tab — this view just visualizes it.</div>
       <div id="orgchart-wrap"></div>
+    </div>
+
+    <div id="rates-view" class="view">
+      <div class="toolbar">
+        <h1>Labor Rates</h1>
+      </div>
+      <div class="status-line" id="rates-status">Loading…</div>
+      <div class="status-line" style="color:var(--muted)">Loaded cost per hour (wage + taxes + benefits) for the Labor Log's cost reports. A new rate applies from its effective date on, so a raise doesn't change the cost of work already done; leave the date blank for "from the start". The default covers anyone without their own rate, including people typed into the Labor Log by name. Only users with "Labor Log — see costs" (user editor) can see these, in the Labor Log.</div>
+      <div class="filters"><div class="search-wrap"><input type="text" id="rates-search" placeholder="Search people…" oninput="ratesRender()"/></div></div>
+      <div class="table-scroll" id="rates-wrap"></div>
     </div>
 
     <div id="responsibilities-view" class="view">
@@ -300,7 +318,9 @@ function switchTab(tab){
   document.getElementById('users-view').classList.toggle('on', tab === 'users');
   document.getElementById('orgchart-view').classList.toggle('on', tab === 'orgchart');
   document.getElementById('responsibilities-view').classList.toggle('on', tab === 'responsibilities');
+  document.getElementById('rates-view').classList.toggle('on', tab === 'rates');
   if(tab === 'orgchart') renderOrgChart();
+  if(tab === 'rates' && !ratesLoaded){ ratesLoaded = true; ratesLoadAll(); }
   if(tab === 'responsibilities'){
     history.replaceState(null, '', '#responsibilities');
     if(!respLoaded){ respLoaded = true; respLoadAll(); }
@@ -400,6 +420,7 @@ function cardSummary(u){
   const comm = COMMISSION_COLS.filter(col => (cols[col]||'').toUpperCase()==='TRUE');
   if(comm.length) pills.push(comm.length===1 ? 'Commission: '+COMMISSION_REP_MAP[comm[0]] : 'Commission: all reps');
   if((cols['pr access']||'').toUpperCase()==='TRUE') pills.push('Add PR');
+  if((cols['labor log costs']||'').toUpperCase()==='TRUE') pills.push('Labor costs');
   const hiExtra = [['harvest intakes delete', 'delete'], ['harvest intakes history', 'history']]
     .filter(([col]) => (cols[col]||'').toUpperCase()==='TRUE').map(([, l]) => l);
   if((cols['harvest intakes edit']||'').toUpperCase()==='TRUE') pills.push(['Harvest Intakes: edit', ...hiExtra].join(', '));
@@ -436,6 +457,90 @@ function renderTable(){
         </tr>`).join('')}
     </tbody>
   </table>`;
+}
+
+// ── Labor Rates tab ─────────────────────────────────────────────────────
+// Per-person $/hr for the Labor Log's cost reports, in the labor_rates table
+// (no anon access — read and written only through admin.js here, and read by
+// netlify/functions/labor-rates.js for users with 'labor log costs'). People
+// come from the Connecteam roster the hourly sync writes; anyone who already
+// has a rate stays listed even after leaving the roster. '*' is the default.
+const ROSTER_URL = 'https://raw.githubusercontent.com/bobby2soxRC/2cw-dashboard/main/data/';
+const RATE_ALWAYS = '2000-01-01';
+let ratesLoaded = false;
+let rateRows = [];      // labor_rates rows
+let ratePeople = [];    // [{id, name, inRoster}]
+async function ratesLoadAll(){
+  const status = document.getElementById('rates-status');
+  status.textContent = 'Loading…';
+  const getJson = (f) => fetch(ROSTER_URL + f + '?t=' + Date.now()).then(r => r.ok ? r.json() : null).catch(() => null);
+  try {
+    const [roster, hours, list] = await Promise.all([getJson('connecteam_roster.json'), getJson('connecteam_hours.json'),
+      callAdmin({ action: 'labor_rates_list', token: getToken() })]);
+    rateRows = list.rates || [];
+    const byId = new Map();
+    if(roster && Array.isArray(roster.people)) roster.people.forEach(p => byId.set(String(p.userId), { id: String(p.userId), name: p.name, inRoster: true }));
+    // Until the roster file exists, this week's Connecteam hours stand in.
+    if(!byId.size && hours) [...(hours.week||[]), ...(hours.today||[])].forEach(p => byId.set(String(p.userId), { id: String(p.userId), name: p.name, inRoster: true }));
+    rateRows.forEach(r => {
+      if(r.employee_id !== '*' && !byId.has(r.employee_id)) byId.set(r.employee_id, { id: r.employee_id, name: r.employee_name || r.employee_id, inRoster: false });
+    });
+    ratePeople = [...byId.values()].sort((a,b) => a.name.localeCompare(b.name));
+    const withRate = new Set(rateRows.map(r => r.employee_id));
+    status.textContent = `${ratePeople.length} people · ${ratePeople.filter(p => withRate.has(p.id)).length} with their own rate · default ${withRate.has('*') ? 'set' : 'not set'}`;
+    ratesRender();
+  } catch(err) {
+    status.textContent = 'Could not load labor rates: ' + err.message + ' (has the labor_rates table been created? See supabase/schema.sql.)';
+  }
+}
+function ratesRender(){
+  const q = (document.getElementById('rates-search').value || '').trim().toLowerCase();
+  const today = new Date().toISOString().slice(0, 10);
+  const rowsFor = (id) => rateRows.filter(r => r.employee_id === id).sort((a,b) => b.effective_from.localeCompare(a.effective_from));
+  const since = (d) => d === RATE_ALWAYS ? 'from the start' : 'since ' + d;
+  const line = (p) => {
+    const rs = rowsFor(p.id);
+    const cur = rs.find(r => r.effective_from <= today);
+    const future = rs.filter(r => r.effective_from > today);
+    const hist = rs.map(r => `<div>$${Number(r.rate).toFixed(2)} ${esc(since(r.effective_from))}<button title="Remove this rate" onclick="rateDelete(${r.id})">×</button></div>`).join('');
+    return `<tr>
+      <td>${esc(p.name)}${p.inRoster ? '' : ' <span class="pill">not in roster</span>'}</td>
+      <td class="rate-now">${cur ? '$' + Number(cur.rate).toFixed(2) : '<span class="muted">' + (p.id === '*' ? 'not set' : 'default') + '</span>'}${future.length ? `<div class="muted" style="font-size:.75rem">→ $${Number(future[future.length-1].rate).toFixed(2)} from ${esc(future[future.length-1].effective_from)}</div>` : ''}</td>
+      <td class="rate-hist">${hist || '<span class="muted">—</span>'}</td>
+      <td><div class="rate-in">
+        <input type="number" min="0" step="0.25" placeholder="$/hr" id="rate-new-${esc(p.id)}"/>
+        <input type="date" id="rate-from-${esc(p.id)}" title="Effective from (blank = from the start)"/>
+        <button class="btn btn-gold" style="padding:.45rem .8rem" onclick="rateSave('${esc(p.id)}')">Save</button>
+      </div></td>
+    </tr>`;
+  };
+  const people = ratePeople.filter(p => !q || p.name.toLowerCase().includes(q));
+  document.getElementById('rates-wrap').innerHTML = `<table>
+    <thead><tr><th>Person</th><th>Current</th><th>History</th><th>New rate · effective from</th></tr></thead>
+    <tbody>
+      ${!q || 'default'.includes(q) ? line({ id: '*', name: 'Default (anyone without their own rate)', inRoster: true }) : ''}
+      ${people.map(line).join('')}
+    </tbody>
+  </table>`;
+}
+async function rateSave(id){
+  const rateEl = document.getElementById('rate-new-' + id);
+  const fromEl = document.getElementById('rate-from-' + id);
+  const rate = parseFloat(rateEl.value);
+  if(!Number.isFinite(rate) || rate < 0){ alert('Enter a rate in $/hr.'); rateEl.focus(); return; }
+  const person = ratePeople.find(p => p.id === id);
+  try {
+    await callAdmin({ action: 'labor_rates_set', token: getToken(), employeeId: id,
+      employeeName: id === '*' ? 'Default' : (person ? person.name : ''), rate, effectiveFrom: fromEl.value || RATE_ALWAYS });
+    await ratesLoadAll();
+  } catch(err) { alert('Could not save: ' + err.message); }
+}
+async function rateDelete(rowId){
+  if(!confirm('Remove this rate? Work in its date range will be costed at the earlier rate (or the default).')) return;
+  try {
+    await callAdmin({ action: 'labor_rates_delete', token: getToken(), id: rowId });
+    await ratesLoadAll();
+  } catch(err) { alert('Could not remove: ' + err.message); }
 }
 
 // ── Org Chart tab ───────────────────────────────────────────────────────
@@ -1048,6 +1153,7 @@ function openEditor(id){
     <div class="section-hd">Special access</div>
     <div class="check-grid">
       <label class="check-item"><input type="checkbox" data-card="pr access" ${(cols['pr access']||'').toUpperCase()==='TRUE'?'checked':''}/> Add PR button (Inventory)</label>
+      <label class="check-item"><input type="checkbox" data-card="labor log costs" ${(cols['labor log costs']||'').toUpperCase()==='TRUE'?'checked':''}/> Labor Log — see costs (uses everyone's pay rates; implies Labor Log)</label>
     </div>
 
     <div class="section-hd">Harvest Intakes</div>

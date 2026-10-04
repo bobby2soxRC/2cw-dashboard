@@ -219,6 +219,40 @@ exports.handler = async (event) => {
       return json(200, { ok: true, results });
     }
 
+    // Labor rates (labor_rates table — pay, so service role only; see
+    // supabase/schema.sql). Each row is one person's $/hr from a date on.
+    if (action === 'labor_rates_list') {
+      const res = await supaFetch(supaUrl, serviceKey, 'labor_rates?select=*&order=employee_id.asc,effective_from.desc');
+      if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+      return json(200, { ok: true, rates: await res.json() });
+    }
+
+    if (action === 'labor_rates_set') {
+      const employeeId = String(payload.employeeId || '').trim();
+      const rate = Number(payload.rate);
+      const from = String(payload.effectiveFrom || '2000-01-01');
+      if (!employeeId || employeeId.length > 64) return json(400, { ok: false, error: 'Missing employee' });
+      if (!Number.isFinite(rate) || rate < 0 || rate > 1000) return json(400, { ok: false, error: 'Rate must be a number between 0 and 1000' });
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(from)) return json(400, { ok: false, error: 'Effective date must be YYYY-MM-DD' });
+      const res = await supaFetch(supaUrl, serviceKey, 'labor_rates?on_conflict=employee_id,effective_from', {
+        method: 'POST',
+        prefer: 'return=representation,resolution=merge-duplicates',
+        body: JSON.stringify({
+          employee_id: employeeId, employee_name: String(payload.employeeName || '').trim().slice(0, 200) || null,
+          rate: Math.round(rate * 100) / 100, effective_from: from, created_by: 'admin panel'
+        })
+      });
+      if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+      return json(200, { ok: true, rate: (await res.json())[0] });
+    }
+
+    if (action === 'labor_rates_delete') {
+      if (!/^\d+$/.test(String(payload.id || ''))) return json(400, { ok: false, error: 'Missing id' });
+      const res = await supaFetch(supaUrl, serviceKey, `labor_rates?id=eq.${payload.id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+      return json(200, { ok: true });
+    }
+
     return json(400, { ok: false, error: `Unknown action: ${action}` });
   } catch (err) {
     return json(502, { ok: false, error: String(err.message || err) });

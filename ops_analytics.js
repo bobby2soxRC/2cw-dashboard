@@ -423,9 +423,29 @@ function lotLbForProcess(lot, process) {
   return st && st.outputLb > 0 ? st.outputLb : 0;
 }
 
+// Per-person labor rates, from netlify/functions/labor-rates.js:
+// [{employeeId, rate, from}], '*' being the default for anyone without their
+// own. An entry is costed at the person's latest rate effective on or before
+// its date, else the default's; null when neither applies (no cost shown).
+// A plain number is taken as one default rate for everyone.
+function rateFor(rates, employeeId, date) {
+  if (rates == null) return null;
+  if (typeof rates === 'number') return rates > 0 ? rates : null;
+  const pick = (id) => {
+    let best = null;
+    rates.forEach((r) => {
+      if (String(r.employeeId) !== id || String(r.from || '') > String(date || '')) return;
+      if (!best || String(r.from) > String(best.from)) best = r;
+    });
+    return best ? num(best.rate) : null;
+  };
+  const own = employeeId ? pick(String(employeeId)) : null;
+  return own != null ? own : pick('*');
+}
+
 // Every Labor Log entry spread over its UIDs: one row per entry × UID with
-// that UID's share of the hours (and cost, at the entry's own rate or
-// `defaultRate`). Shares follow the pounds each UID's lot had at that process
+// that UID's share of the hours (and cost, at the person's rate on that
+// date — see rateFor). Shares follow the pounds each UID's lot had at that process
 // (2,000 wet lb over three packages: the 1,000 lb one carries half the
 // hours). If any UID on the entry has no weight yet, the entry is split
 // evenly instead and marked basis 'even' — it re-splits by weight on its own
@@ -433,7 +453,7 @@ function lotLbForProcess(lot, process) {
 // blank UID. Voided entries count for nothing. `lotId` is the lot's root UID
 // (Take Down's on-stem tag rolls back to the farm package), so labor at every
 // stage of one lot adds up in one place.
-function laborAllocations(stages, defaultRate) {
+function laborAllocations(stages, rates) {
   const entries = (stages.labor_entry || []).filter((r) => r && !r.voided);
   if (!entries.length) return [];
   const alias = buildAliasMap(stages);
@@ -443,7 +463,7 @@ function laborAllocations(stages, defaultRate) {
   const out = [];
   entries.forEach((r) => {
     const hours = num(r.hours);
-    const rate = num(r.rate) || num(defaultRate);
+    const rate = rateFor(rates, r.employeeId, dayOf(r));
     const base = { entryId: r.id, date: dayOf(r), process: r.process || '',
                    employeeNo: String(r.employeeId || r.employeeName || '').trim(), name: r.employeeName || '' };
     const uids = (r.uids || []).filter((u) => u && u.uid);
@@ -473,10 +493,10 @@ function laborAllocations(stages, defaultRate) {
 // Labor rolled up per lot: hours and cost by process, the lot's wet weight in
 // and its weight at the latest stage, and cost per pound of each. Allocations
 // with no UID come back as one row with lotId '' (general work).
-function laborCostByLot(stages, defaultRate, allocs) {
+function laborCostByLot(stages, rates, allocs) {
   const lots = new Map(buildLots(stages).map((l) => [l.id, l]));
   const by = new Map();
-  (allocs || laborAllocations(stages, defaultRate)).forEach((a) => {
+  (allocs || laborAllocations(stages, rates)).forEach((a) => {
     let row = by.get(a.lotId);
     if (!row) {
       const lot = lots.get(a.lotId) || null;
@@ -580,6 +600,6 @@ function exceptions(stages, asOf) {
   return out.sort((a, b) => String(b.date).localeCompare(String(a.date)));
 }
 
-return { buildLots, stageYields, strainYields, dailyOutput, biomassLedger, trimmerStats, crewThroughput, crewLaborLog, crewLaborByEmployee, laborAllocations, laborCostByLot, lotLbForProcess,
+return { buildLots, stageYields, strainYields, dailyOutput, biomassLedger, trimmerStats, crewThroughput, crewLaborLog, crewLaborByEmployee, laborAllocations, laborCostByLot, lotLbForProcess, rateFor,
          requestSummary, exceptions, buildAliasMap, rootUid, daysBetween };
 }));

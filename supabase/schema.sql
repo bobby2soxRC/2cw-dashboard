@@ -1161,3 +1161,31 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 values ('customer-docs', 'customer-docs', false, 26214400,
         array['application/pdf', 'image/jpeg', 'image/png', 'image/heic', 'image/heif', 'image/webp'])
 on conflict (id) do nothing;
+
+-- ── Labor rates (per person, $/hr) ───────────────────────────────────────
+-- Loaded hourly cost per employee for the Labor Log's cost reports
+-- (labor_log.html). Pay, so no anon policy: rates are set in the admin
+-- panel (admin.html → Labor Rates, through netlify/functions/admin.js) and
+-- read only by netlify/functions/labor-rates.js, which checks the caller's
+-- 'labor log costs' column in app_users from their PIN first.
+--
+-- One row per person per effective date, so a raise doesn't rewrite the
+-- cost of work done before it: an entry is costed at the latest rate whose
+-- effective_from is on or before the entry's date. employee_id is the
+-- Connecteam user id (data/connecteam_roster.json); '*' is the default rate
+-- for anyone without their own (including people typed in by name). An
+-- effective_from of 2000-01-01 means "from the start".
+create table if not exists labor_rates (
+  id              bigint generated always as identity primary key,
+  employee_id     text not null,
+  employee_name   text,
+  rate            numeric(10,2) not null check (rate >= 0),
+  effective_from  date not null default '2000-01-01',
+  created_by      text,
+  created_at      timestamptz not null default now(),
+  unique (employee_id, effective_from)
+);
+
+alter table labor_rates enable row level security;   -- no policies: service role only
+revoke all on public.labor_rates from anon;
+grant select, insert, update, delete on public.labor_rates to service_role;

@@ -385,15 +385,18 @@ or just hours, one or more people, and zero or more UIDs, then Save.
   re-splits by weight on its own once the weights are recorded, because
   nothing is frozen at save time. The form previews the split before
   saving.
-- **Labor rate:** one loaded $/hr (wage + taxes + benefits) for everyone,
-  set on the Entries tab. It's stored in one `operations_forms` row
-  (`station_key: 'labor_settings'`, fixed id `6c61626f-7273-4000-8000-000000000001`,
-  `fields.rate`), so the edit history logs every change. Each new entry
-  saves the rate in effect (`fields.rate`), so changing the rate later
-  doesn't rewrite past costs. Entries saved before any rate was set use the
-  current one. It's visible to anyone with the anon key, like the rest of
-  `operations_forms`, so per-person pay rates would need server-side
-  storage instead.
+- **Costs** use each person's own loaded $/hr (wage + taxes + benefits),
+  set in the admin panel's **Labor Rates** tab (see `docs/USER_ADMIN.md`).
+  Rates live in the `labor_rates` table, one row per person per effective
+  date (`'*'` is the default for anyone without their own). Each entry is
+  costed at the rate in effect on its date (`rateFor` in `ops_analytics.js`),
+  so a raise doesn't change the cost of earlier work. Rates are pay, so
+  `labor_rates` has no anon access, and nothing about pay is stored on the
+  entries. Only users with **Labor Log — see costs** (`labor log costs`
+  column; implies the card) see $: at login that sets `2cw_labor_costs`, and
+  the page then asks `netlify/functions/labor-rates.js` for the rates with
+  the user's PIN. The function re-checks the column server-side. Everyone
+  else sees hours only, with the $ columns hidden.
 
 Saving writes **one row per person** to `operations_forms` with
 `station_key: 'labor_entry'`, `status: 'submitted'`, `fields = { process,
@@ -401,12 +404,12 @@ employeeId, employeeName, uids: [{uid, strain}], start, end, hours, notes,
 enteredBy }`. There's no new table or SQL, just like Bucking's submissions.
 After a save the process, date, times and UIDs stay filled in so the next
 person can be logged right away. **Entries** lists a date range (with
-Today / Last 30 days / All dates shortcuts) three ways: each entry with its
-cost, totals **by person**, and **By lot ($)**. By lot has one row per lot,
+Today / Last 30 days / All dates shortcuts) three ways: each entry (with
+cost, for cost access), totals **by person**, and **By lot**. By lot has one row per lot,
 keyed on its root UID (`laborCostByLot`), so Take Down's on-stem tag counts
-toward its farm package. It shows hours and cost for each process, then the
-total, wet lb in and $/wet lb, and the lot's weight at its latest stage and
-$/lb there. Only entries in the date range count, so pick All dates to see
+toward its farm package. It shows hours (and cost) for each process, then the
+total, wet lb in (and $/wet lb), and the lot's weight at its latest stage
+(and $/lb there). Only entries in the date range count, so pick All dates to see
 a lot's whole cost. General work with no UID is its own row.
 When the range is just today, By person also shows Connecteam's clocked
 hours and how much of that time has no entry yet. "Remove" can't delete (anon

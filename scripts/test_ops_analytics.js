@@ -113,7 +113,7 @@ console.log('\nlabor log (labor_log.html entries)');
 const FARM_UID = '1A4060300032386000000777';
 const laborStages = { ...stages, labor_entry: [
   // 8 hours of intake across both packages — split by wet lb
-  { id: 'L1', process: 'intake_wet', employeeId: '5475211', employeeName: 'Gilberto Diaz', hours: 8, date: ASOF, rate: 25,
+  { id: 'L1', process: 'intake_wet', employeeId: '5475211', employeeName: 'Gilberto Diaz', hours: 8, date: ASOF,
     uids: [{ uid: FARM_UID, strain: 'Lemon Cherry Gelato' }, { uid: '1A9999', strain: 'Zoap' }] },
   // take-down across LCG and a package with no weight anywhere — even split
   { id: 'L2', process: 'dry_check', employeeId: '5475211', employeeName: 'Gilberto Diaz', hours: 4, date: ASOF,
@@ -126,24 +126,31 @@ const laborStages = { ...stages, labor_entry: [
   { id: 'L5', process: 'buck', employeeId: '5475211', employeeName: 'Gilberto Diaz', hours: 3, date: ASOF, voided: true,
     uids: [{ uid: DRY_UID }] }
 ] };
-const allocs = A.laborAllocations(laborStages, 20);
+// Gilberto is $20 until the 20th, $25 after; everyone else gets the $20 default.
+const RATES = [{ employeeId: '*', rate: 20, from: '2000-01-01' },
+               { employeeId: '5475211', rate: 20, from: '2000-01-01' }, { employeeId: '5475211', rate: 25, from: '2026-08-20' }];
+check('rate in effect on the date', [A.rateFor(RATES, '5475211', '2026-08-19'), A.rateFor(RATES, '5475211', '2026-08-20')], [20, 25]);
+check('no rate of their own → default', A.rateFor(RATES, '7366212', ASOF), 20);
+check('no rate at all → null', A.rateFor([{ employeeId: '*', rate: 20, from: '2027-01-01' }], 'x', ASOF), null);
+const allocs = A.laborAllocations(laborStages, RATES);
 const l1 = allocs.filter((a) => a.entryId === 'L1');
 check('intake hours split by wet lb (310 : 92)', l1.map((a) => a.hours), [6.169, 1.831]);
 check('…and marked as a weight split', l1.map((a) => a.basis), ['weight', 'weight']);
-check('entry rate wins over the default', l1[0].cost, 154.23);
+check('person’s own rate on that date', l1[0].cost, 154.23);
 const l2 = allocs.filter((a) => a.entryId === 'L2');
 check('a UID with no weight falls back to an even split', [l2.map((a) => a.hours), l2[0].basis], [[2, 2], 'even']);
 check('take-down weight is the wet lb going in', A.lotLbForProcess(A.buildLots(laborStages).find((l) => l.id === FARM_UID), 'dry_check'), 310);
 const l3 = allocs.find((a) => a.entryId === 'L3');
 check('on-stem UID rolls back to the farm lot', l3.lotId, FARM_UID);
-check('default rate when the entry has none', l3.cost, 120);
+check('default rate for someone without their own', l3.cost, 120);
 check('voided entry is left out', allocs.some((a) => a.entryId === 'L5'), false);
 
-const byLot = A.laborCostByLot(laborStages, 20);
+const byLot = A.laborCostByLot(laborStages, RATES);
 const lcgLot = byLot.find((r) => r.lotId === FARM_UID);
 check('LCG lot: intake + take-down + bucking hours', lcgLot.hours, 14.17);
-check('LCG lot: cost across stages', lcgLot.cost, 154.23 + 40 + 120);
-check('LCG lot: cost per wet lb', lcgLot.costPerWetLb, (154.23 + 40 + 120) / 310, 1e-6);
+check('LCG lot: cost across stages', lcgLot.cost, 154.23 + 50 + 120);
+check('LCG lot: cost per wet lb', lcgLot.costPerWetLb, (154.23 + 50 + 120) / 310, 1e-6);
+check('no rates → hours but no cost', A.laborCostByLot(laborStages, null).find((r) => r.lotId === FARM_UID).cost, null);
 check('LCG lot flagged for the even take-down split', lcgLot.evenSplit, true);
 check('general work is its own row, last', [byLot[byLot.length - 1].lotId, byLot[byLot.length - 1].hours], ['', 1.5]);
 

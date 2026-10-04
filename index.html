@@ -446,6 +446,13 @@ async function buildHub(user){
   // per-user toggle in the admin panel instead of a code change.
   sessionStorage.setItem('2cw_pr_access', (user['pr access'] || '').toUpperCase() === 'TRUE' ? 'true' : 'false');
 
+  // Labor Log: 'labor log costs' shows the $ columns (and implies the card).
+  // Only hides/shows them — the rates come from netlify/functions/labor-rates.js,
+  // which re-checks the column from the PIN.
+  const laborCosts = (user['labor log costs'] || '').toUpperCase() === 'TRUE';
+  if (laborCosts) user['labor log'] = 'TRUE';
+  sessionStorage.setItem('2cw_labor_costs', laborCosts ? 'true' : 'false');
+
   // Operations access has two independent axes: EDIT (create/autosave/submit
   // forms for a station) and VIEW (see it on the live Today board without
   // being able to touch it — a plant manager watching bucking, say). Each is
@@ -964,6 +971,7 @@ function doLogout(){
   sessionStorage.removeItem('2cw_user_name');
   sessionStorage.removeItem('2cw_form_access');
   sessionStorage.removeItem('2cw_pr_access');
+  sessionStorage.removeItem('2cw_labor_costs');
   sessionStorage.removeItem('2cw_ops_edit_access');
   sessionStorage.removeItem('2cw_ops_view_access');
   sessionStorage.removeItem('2cw_intake_access');
