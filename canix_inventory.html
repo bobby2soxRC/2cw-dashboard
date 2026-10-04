@@ -86,6 +86,14 @@
     .bar.red > span{background:var(--red)}
     tr.total td{font-weight:700;border-top:2px solid var(--border)}
     .muted{color:var(--muted)}
+    table.cid-table{min-width:0}
+    table.cid-table td:first-child{white-space:normal}
+    tr.cid-row{cursor:pointer}
+    tr.cid-row td:first-child{font-weight:700}
+    tr.cid-row .caret{display:inline-block;width:1.1em;color:var(--gold);transition:transform .15s}
+    tr.cid-row.open .caret{transform:rotate(90deg)}
+    tr.cid-strain td{background:var(--surface2);font-size:.8rem;color:var(--subtext)}
+    tr.cid-strain td:first-child{padding-left:1.6em}
 
     .empty{color:var(--muted);font-size:.9rem;padding:32px 0;text-align:center}
     .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
@@ -211,12 +219,29 @@ async function loadIntakeRooms() {
       if (!f.dryRoom) return;
       const uids = new Set([f.sourceUid, ...(f.lines || []).map(l => l && l.sourceUid)]
         .map(u => String(u || '').trim().toUpperCase()).filter(Boolean));
-      uids.forEach(uid => out.push({ uid, dryRoom: String(f.dryRoom) }));
+      const cid = String(f.cid || '').trim();
+      uids.forEach(uid => out.push({ uid, dryRoom: String(f.dryRoom), cid }));
     });
     return out;
   } catch (e) {
     console.warn('Could not load harvest intakes for drying rooms:', e);
     return [];
+  }
+}
+
+// CID code → "Name: CID 012" label, from the admin panel's ref_codes table
+// (what the intake form's CID dropdown reads). Codes not in the table —
+// typed in via the form's "Other" — just show as entered.
+async function loadCidLabels() {
+  const client = getSupabaseClient();
+  if (!client) return {};
+  try {
+    const { data, error } = await client.from('ref_codes').select('code, name').eq('kind', 'cid');
+    if (error) throw error;
+    return Object.fromEntries((data || []).map(r => [r.code, r.name ? `${r.name}: CID ${r.code}` : `CID ${r.code}`]));
+  } catch (e) {
+    console.warn('Could not load CID names:', e);
+    return {};
   }
 }
 
@@ -231,7 +256,9 @@ let HARVEST_PLANS = [];
 let FACILITY_CONFIG = {};
 let CURRENT_STAGE = 'All';
 let CURRENT_PAGE = 'inventory'; // 'inventory' | 'forecast'
-let INTAKE_ROOMS = []; // [{ uid, room, label }] from Harvest Intake — Wet forms, newest first
+let INTAKE_ROOMS = []; // [{ uid, dryRoom, cid }] from Harvest Intake — Wet forms, newest first
+let CID_LABELS = {};   // CID code → display label (ref_codes)
+const OPEN_CIDS = new Set(); // CID rows expanded in the drying-by-CID table
 let PROCESSING_VIEW = 'packages'; // 'packages' | 'drying' — sub-page within the Processing tab
 
 // Drying room capacity, from "Rooms capacity.xlsx" (Rooms Capacity Adobe,
@@ -420,11 +447,26 @@ function packageRoom(p) {
   return { rooms: [], label: label || (intake ? `Intake: ${intake.dryRoom}` : null), source: null };
 }
 
+// The customer a drying package belongs to — the CID on its Harvest Intake
+// form (Canix doesn't carry one). '' when there's no intake or no CID on it.
+function packageCid(p) {
+  return intakeForTag(p.tag)?.cid || '';
+}
+
+function cidLabel(cid) {
+  return cid ? (CID_LABELS[cid] || CID_LABELS[cid.replace(/^CID\s*/i, '')] || (/^\d+$/.test(cid) ? `CID ${cid}` : cid)) : 'No CID';
+}
+
 function daysSince(iso) {
   if (!iso) return null;
   const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
   return d >= 0 ? d : null;
 }
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
+}
+const escapeAttr = escapeHtml;
 
 function fmtNum(n, digits = 0) {
   return Number(n).toLocaleString(undefined, { maximumFractionDigits: digits });
@@ -505,6 +547,48 @@ function renderDrying() {
     </table></div>
   </div>`;
 
+  // Drying weight by customer (like capacity, from every drying package —
+  // not filtered by the search box). Each CID row expands to its strains.
+  const byCid = {};
+  all.forEach(p => {
+    const cid = packageCid(p);
+    const strain = p.item?.strain?.name || 'Unknown strain';
+    const c = byCid[cid] = byCid[cid] || { lbs: 0, count: 0, strains: {} };
+    const s = c.strains[strain] = c.strains[strain] || { lbs: 0, count: 0 };
+    c.lbs += toLbs(p); c.count++;
+    s.lbs += toLbs(p); s.count++;
+  });
+  // Biggest first, with "No CID" always last.
+  const cids = Object.keys(byCid).sort((a, b) => (!a) - (!b) || byCid[b].lbs - byCid[a].lbs);
+  const share = lbs => totalUsed ? fmtNum(lbs / totalUsed * 100, 1) + '%' : '—';
+  const cidCard = `<div class="card">
+    <div class="card-hd"><h2>Drying by Customer (CID)</h2><div class="rollup"><b>${cids.filter(Boolean).length}</b> customer(s)</div></div>
+    <div class="note">The CID comes from the package's Harvest Intake form (matched on the package UID, same as the room). Tap a customer to see their weight by strain.</div>
+    ${!all.length ? '<div class="empty">Nothing drying right now.</div>' : `<div class="scroll"><table class="cid-table">
+      <thead><tr><th>Customer</th><th class="num">Packages</th><th class="num">Drying</th><th class="num">Share</th></tr></thead>
+      ${cids.map(cid => {
+        const c = byCid[cid];
+        const open = OPEN_CIDS.has(cid);
+        const strains = Object.entries(c.strains).sort((a, b) => b[1].lbs - a[1].lbs);
+        return `<tbody>
+          <tr class="cid-row${open ? ' open' : ''}" data-cid="${escapeAttr(cid)}">
+            <td${cid ? '' : ' class="muted"'}><span class="caret">▸</span>${escapeHtml(cidLabel(cid))}</td>
+            <td class="num">${c.count}</td>
+            <td class="num">${fmtNum(c.lbs)} lb</td>
+            <td class="num">${share(c.lbs)}</td>
+          </tr>
+          ${strains.map(([strain, s]) => `<tr class="cid-strain"${open ? '' : ' hidden'}>
+            <td>${escapeHtml(strain)}</td>
+            <td class="num">${s.count}</td>
+            <td class="num">${fmtNum(s.lbs)} lb</td>
+            <td class="num muted">${c.lbs ? fmtNum(s.lbs / c.lbs * 100, 1) + '%' : '—'}</td>
+          </tr>`).join('')}
+        </tbody>`;
+      }).join('')}
+      <tbody><tr class="total"><td>Total</td><td class="num">${all.length}</td><td class="num">${fmtNum(totalUsed)} lb</td><td class="num">${totalUsed ? '100%' : '—'}</td></tr></tbody>
+    </table></div>`}
+  </div>`;
+
   const sorted = [...pkgs].sort((a, b) => (a.packaged_date || '').localeCompare(b.packaged_date || ''));
   const listCard = `<div class="card">
     <div class="card-hd"><h2>Currently Drying</h2><div class="rollup"><b>${pkgs.length}</b> package(s)</div></div>
@@ -530,8 +614,17 @@ function renderDrying() {
     </table></div>`}
   </div>`;
 
-  $('view').innerHTML = processingSubtabs() + kpis + capacityCard + listCard;
+  $('view').innerHTML = processingSubtabs() + kpis + capacityCard + cidCard + listCard;
   attachSubtabListeners();
+  $('view').querySelectorAll('.cid-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const cid = row.dataset.cid;
+      const open = !OPEN_CIDS.has(cid);
+      if (open) OPEN_CIDS.add(cid); else OPEN_CIDS.delete(cid);
+      row.classList.toggle('open', open);
+      row.parentElement.querySelectorAll('.cid-strain').forEach(r => { r.hidden = !open; });
+    });
+  });
 }
 
 function renderView() {
@@ -763,15 +856,17 @@ document.getElementById('pageTabs').querySelectorAll('button').forEach(btn => {
 
 async function load() {
   try {
-    const [inv, batches, cfg, meta, forecastInputs, intakeRooms] = await Promise.all([
+    const [inv, batches, cfg, meta, forecastInputs, intakeRooms, cidLabels] = await Promise.all([
       fetch(INVENTORY_URL).then(r => r.json()),
       fetch(PLANT_BATCHES_URL).then(r => r.json()).catch(() => []),
       loadFacilityConfig(),
       fetch(META_URL).then(r => r.json()).catch(() => null),
       loadForecastInputs(),
       loadIntakeRooms(),
+      loadCidLabels(),
     ]);
     INTAKE_ROOMS = intakeRooms;
+    CID_LABELS = cidLabels;
     ALL_PACKAGES = inv;
     PLANT_BATCHES = batches;
     FACILITY_CONFIG = cfg;
