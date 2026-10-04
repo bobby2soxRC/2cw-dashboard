@@ -88,12 +88,13 @@
     .muted{color:var(--muted)}
     table.cid-table{min-width:0}
     table.cid-table td:first-child{white-space:normal}
-    tr.cid-row{cursor:pointer}
-    tr.cid-row td:first-child{font-weight:700}
-    tr.cid-row .caret{display:inline-block;width:1.1em;color:var(--gold);transition:transform .15s}
-    tr.cid-row.open .caret{transform:rotate(90deg)}
-    tr.cid-strain td{background:var(--surface2);font-size:.8rem;color:var(--subtext)}
-    tr.cid-strain td:first-child{padding-left:1.6em}
+    tr.exp-row{cursor:pointer}
+    tr.exp-row td:first-child{font-weight:700}
+    .caret{display:inline-block;width:1.1em;color:var(--gold);transition:transform .15s}
+    tr.exp-row.open .caret{transform:rotate(90deg)}
+    .caret.none{visibility:hidden}
+    tr.exp-child td{background:var(--surface2);font-size:.8rem;color:var(--subtext)}
+    tr.exp-child td:first-child{padding-left:1.6em}
 
     .empty{color:var(--muted);font-size:.9rem;padding:32px 0;text-align:center}
     .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
@@ -258,7 +259,8 @@ let CURRENT_STAGE = 'All';
 let CURRENT_PAGE = 'inventory'; // 'inventory' | 'forecast'
 let INTAKE_ROOMS = []; // [{ uid, dryRoom, cid }] from Harvest Intake — Wet forms, newest first
 let CID_LABELS = {};   // CID code → display label (ref_codes)
-const OPEN_CIDS = new Set(); // CID rows expanded in the drying-by-CID table
+// Rows expanded in the drying view's tables, kept across re-renders.
+const OPEN_ROWS = { cid: new Set(), room: new Set() };
 let PROCESSING_VIEW = 'packages'; // 'packages' | 'drying' — sub-page within the Processing tab
 
 // Drying room capacity, from "Rooms capacity.xlsx" (Rooms Capacity Adobe,
@@ -493,13 +495,22 @@ function renderDrying() {
   // Capacity is a property of the rooms, so it's always computed from every
   // drying package — the search box only filters the package list below.
   const usedByRoom = {};
+  const strainsByRoom = {}; // room ('' = not matched) → strain → lbs
+  const addStrain = (room, p, lbs) => {
+    const strain = p.item?.strain?.name || 'Unknown strain';
+    const m = strainsByRoom[room] = strainsByRoom[room] || {};
+    m[strain] = (m[strain] || 0) + lbs;
+  };
   let unassignedLbs = 0;
   const unassignedLocs = new Set();
   all.forEach(p => {
     const { rooms, label } = packageRoom(p);
     // An intake split across rooms is counted evenly across them.
-    if (rooms.length) rooms.forEach(room => { usedByRoom[room] = (usedByRoom[room] || 0) + toLbs(p) / rooms.length; });
-    else { unassignedLbs += toLbs(p); unassignedLocs.add(label || 'No Canix location or intake form'); }
+    if (rooms.length) rooms.forEach(room => {
+      usedByRoom[room] = (usedByRoom[room] || 0) + toLbs(p) / rooms.length;
+      addStrain(room, p, toLbs(p) / rooms.length);
+    });
+    else { unassignedLbs += toLbs(p); addStrain('', p, toLbs(p)); unassignedLocs.add(label || 'No Canix location or intake form'); }
   });
 
   const totalCap = DRYING_ROOMS.reduce((s, r) => s + r.lbs, 0);
@@ -518,11 +529,26 @@ function renderDrying() {
     <div class="kpi purple"><div class="k">Rooms In Use</div><div class="v">${roomsInUse} / ${DRYING_ROOMS.length}</div><div class="n">${unassignedLbs ? fmtNum(unassignedLbs) + ' lb not matched to a room' : 'all drying lbs matched to a room'}</div></div>
   </div>`;
 
+  // A room's strains, shown when its row is tapped.
+  const strainRows = (room, used) => {
+    const open = OPEN_ROWS.room.has(room);
+    return Object.entries(strainsByRoom[room] || {}).sort((a, b) => b[1] - a[1]).map(([strain, lbs]) =>
+      `<tr class="exp-child"${open ? '' : ' hidden'}>
+        <td>${escapeHtml(strain)}</td>
+        <td class="num">${fmtNum(lbs)} lb</td>
+        <td colspan="7" class="muted">${used ? fmtNum(lbs / used * 100, 1) + (room ? '% of the room' : '% of unmatched') : ''}</td>
+      </tr>`).join('');
+  };
+  const expRow = (group, key, hasChildren) =>
+    hasChildren ? `class="exp-row${OPEN_ROWS[group].has(key) ? ' open' : ''}" data-group="${group}" data-key="${escapeAttr(key)}"` : '';
+  const caret = has => `<span class="caret${has ? '' : ' none'}">▸</span>`;
+
   const roomRows = DRYING_ROOMS.map(r => {
     const used = usedByRoom[r.room] || 0;
     const p = used / r.lbs * 100;
-    return `<tr>
-      <td><b>Room ${r.room}</b></td>
+    const has = !!strainsByRoom[r.room];
+    return `<tbody><tr ${expRow('room', r.room, has)}>
+      <td>${caret(has)}<b>Room ${r.room}</b></td>
       <td class="num">${fmtNum(used)} lb</td>
       <td class="num">${fmtNum(r.lbs)} lb</td>
       <td>${bar(p)}</td>
@@ -531,17 +557,17 @@ function renderDrying() {
       <td class="num muted">${r.trellis}</td>
       <td class="num muted">${fmtNum(r.trucks, 2)}</td>
       <td class="num muted">${fmtNum(r.bins, 1)}</td>
-    </tr>`;
+    </tr>${strainRows(r.room, used)}</tbody>`;
   }).join('');
 
   const capacityCard = `<div class="card">
     <div class="card-hd"><h2>Drying Room Capacity</h2><div class="rollup"><b>${fmtNum(totalUsed)}</b> / ${fmtNum(totalCap)} lb</div></div>
-    <div class="note">Capacity from the Rooms Capacity sheet (hoops-based estimate, 3–4 lb/plant). 1 truck ≈ 42 macro-bins ≈ 2,100 lb; 1 macro-bin ≈ 50 lb. Fresh Cannabis Plant packages are assigned to a room by their Canix location name, or — when Canix has no location — by the Drying Location on the package's Harvest Intake form (matched on the package UID; an intake listing several rooms is split evenly).</div>
+    <div class="note">Capacity from the Rooms Capacity sheet (hoops-based estimate, 3–4 lb/plant). 1 truck ≈ 42 macro-bins ≈ 2,100 lb; 1 macro-bin ≈ 50 lb. Fresh Cannabis Plant packages are assigned to a room by their Canix location name, or — when Canix has no location — by the Drying Location on the package's Harvest Intake form (matched on the package UID; an intake listing several rooms is split evenly). Tap a room to see its weight by strain.</div>
     <div class="scroll"><table>
       <thead><tr><th>Room</th><th class="num">Drying</th><th class="num">Capacity</th><th>Fill</th><th class="num">Used</th><th class="num">Free</th><th class="num">Trellis (Mallas)</th><th class="num">Trucks</th><th class="num">Macro-Bins</th></tr></thead>
-      <tbody>${roomRows}
-        ${unassignedLbs ? `<tr><td class="muted">Not matched to a room</td><td class="num">${fmtNum(unassignedLbs)} lb</td><td colspan="7" class="muted" style="white-space:normal">${[...unassignedLocs].join(', ')}</td></tr>` : ''}
-        <tr class="total"><td>Total</td><td class="num">${fmtNum(totalUsed)} lb</td><td class="num">${fmtNum(totalCap)} lb</td><td>${bar(pct)}</td><td class="num">${fmtNum(pct, 1)}%</td><td class="num">${fmtNum(free)} lb</td>
+      ${roomRows}
+      ${unassignedLbs ? `<tbody><tr ${expRow('room', '', true)}><td class="muted">${caret(true)}Not matched to a room</td><td class="num">${fmtNum(unassignedLbs)} lb</td><td colspan="7" class="muted" style="white-space:normal">${escapeHtml([...unassignedLocs].join(', '))}</td></tr>${strainRows('', unassignedLbs)}</tbody>` : ''}
+      <tbody><tr class="total"><td>Total</td><td class="num">${fmtNum(totalUsed)} lb</td><td class="num">${fmtNum(totalCap)} lb</td><td>${bar(pct)}</td><td class="num">${fmtNum(pct, 1)}%</td><td class="num">${fmtNum(free)} lb</td>
           <td class="num muted">${DRYING_ROOMS.reduce((s, r) => s + r.trellis, 0)}</td><td class="num muted">${fmtNum(DRYING_ROOMS.reduce((s, r) => s + r.trucks, 0), 2)}</td><td class="num muted">${fmtNum(DRYING_ROOMS.reduce((s, r) => s + r.bins, 0), 1)}</td></tr>
       </tbody>
     </table></div>
@@ -568,16 +594,16 @@ function renderDrying() {
       <thead><tr><th>Customer</th><th class="num">Packages</th><th class="num">Drying</th><th class="num">Share</th></tr></thead>
       ${cids.map(cid => {
         const c = byCid[cid];
-        const open = OPEN_CIDS.has(cid);
+        const open = OPEN_ROWS.cid.has(cid);
         const strains = Object.entries(c.strains).sort((a, b) => b[1].lbs - a[1].lbs);
         return `<tbody>
-          <tr class="cid-row${open ? ' open' : ''}" data-cid="${escapeAttr(cid)}">
-            <td${cid ? '' : ' class="muted"'}><span class="caret">▸</span>${escapeHtml(cidLabel(cid))}</td>
+          <tr ${expRow('cid', cid, true)}>
+            <td${cid ? '' : ' class="muted"'}>${caret(true)}${escapeHtml(cidLabel(cid))}</td>
             <td class="num">${c.count}</td>
             <td class="num">${fmtNum(c.lbs)} lb</td>
             <td class="num">${share(c.lbs)}</td>
           </tr>
-          ${strains.map(([strain, s]) => `<tr class="cid-strain"${open ? '' : ' hidden'}>
+          ${strains.map(([strain, s]) => `<tr class="exp-child"${open ? '' : ' hidden'}>
             <td>${escapeHtml(strain)}</td>
             <td class="num">${s.count}</td>
             <td class="num">${fmtNum(s.lbs)} lb</td>
@@ -616,13 +642,13 @@ function renderDrying() {
 
   $('view').innerHTML = processingSubtabs() + kpis + capacityCard + cidCard + listCard;
   attachSubtabListeners();
-  $('view').querySelectorAll('.cid-row').forEach(row => {
+  $('view').querySelectorAll('.exp-row').forEach(row => {
     row.addEventListener('click', () => {
-      const cid = row.dataset.cid;
-      const open = !OPEN_CIDS.has(cid);
-      if (open) OPEN_CIDS.add(cid); else OPEN_CIDS.delete(cid);
+      const set = OPEN_ROWS[row.dataset.group], key = row.dataset.key;
+      const open = !set.has(key);
+      if (open) set.add(key); else set.delete(key);
       row.classList.toggle('open', open);
-      row.parentElement.querySelectorAll('.cid-strain').forEach(r => { r.hidden = !open; });
+      row.parentElement.querySelectorAll('.exp-child').forEach(r => { r.hidden = !open; });
     });
   });
 }
