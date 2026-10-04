@@ -9,6 +9,7 @@ Usage:
 
 Output:
     data/connecteam_hours.json
+    data/connecteam_roster.json  (active employees — the Labor Log's people list)
 
 Requirements:
     pip install requests
@@ -186,9 +187,22 @@ def sync_users():
         if uid is None:
             continue
         name = _first(u, "fullName") or f"{_first(u, 'firstName', default='')} {_first(u, 'lastName', default='')}".strip()
-        by_id[str(uid)] = {"name": name or f"User {uid}"}
-    print(f"  → {len(by_id)} user(s)")
+        # Archived users can still show up in time activities from earlier in
+        # the week, so they stay in by_id for name lookups — the roster file
+        # just leaves them out.
+        archived = bool(_first(u, "isArchived", "archived", default=False))
+        by_id[str(uid)] = {"name": name or f"User {uid}", "archived": archived}
+    print(f"  → {len(by_id)} user(s), {sum(1 for v in by_id.values() if not v['archived'])} active")
     return by_id
+
+
+def build_roster_json(users):
+    """Active employees, for the Labor Log's people picker (labor_log.html).
+    Name + Connecteam user id only — nothing the hours file doesn't already
+    publish."""
+    people = [{"userId": uid, "name": v["name"]} for uid, v in users.items() if not v["archived"]]
+    people.sort(key=lambda p: p["name"].lower())
+    return {"last_sync": datetime.now(timezone.utc).isoformat(), "people": people}
 
 
 def discover_clocks():
@@ -323,6 +337,8 @@ def main():
 
     result = build_hours_json(users, shifts)
     save("connecteam_hours.json", result)
+    roster = build_roster_json(users)
+    save("connecteam_roster.json", roster)
 
     elapsed = (datetime.now(timezone.utc) - started).total_seconds()
     print("\n" + "=" * 55)
@@ -331,6 +347,7 @@ def main():
     print(f"  Clocked in   : {len(result['clocked_in'])}")
     print(f"  Today rows   : {len(result['today'])}")
     print(f"  Week rows    : {len(result['week'])}")
+    print(f"  Roster       : {len(roster['people'])}")
     print("=" * 55)
     return 0
 

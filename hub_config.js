@@ -217,6 +217,15 @@ const CARD_DEFS = [
     external: true
   },
   {
+    key: 'labor_log',
+    color: 'gold',
+    label: 'Operations',
+    dept: 'operations',
+    title: 'Labor Log',
+    desc: 'Put people’s hours against the UIDs they worked on — pick the process, the crew from Connecteam, and one UID or several to split the time across.',
+    href: '/labor_log.html'
+  },
+  {
     key: 'staff_hours',
     color: 'blue',
     label: 'Operations',
@@ -300,6 +309,7 @@ const CARD_ES = {
   information_hub:     { title: 'Centro de Información', desc: 'Las listas de referencia que usa el resto de la app — variedades, instalaciones de Canix, pronósticos de rendimiento, licencias de ranchos e IDs de clientes.' },
   production_today:    { title: 'Hoy — En Vivo', desc: 'Cada formulario en progreso o terminado hoy, actualizado en vivo — para quien tenga acceso de vista, pueda editarlo o no.' },
   brand_assets:        { title: 'Recursos de Marca', desc: 'Logotipos, fotografía y guías de marca de 2CW y marcas socias — carpeta compartida de Drive.' },
+  labor_log:           { title: 'Registro de Mano de Obra', desc: 'Asigna las horas de cada persona a los UIDs que trabajó — elige el proceso, el equipo de Connecteam, y uno o varios UIDs para dividir el tiempo.' },
   staff_hours:         { title: 'Horas del Personal', desc: 'Quién está marcado en este momento, horas diarias/semanales y cumplimiento del horario — sincronizado cada hora desde Connecteam.' },
   tasks_dashboard:     { title: 'Plan de Operaciones', desc: 'El plan 30/60/90 del VP de Operaciones como tareas y subtareas editables — estado, responsables, fechas y carga de CSV.' },
   task_oversight:      { title: 'Actividad de Tareas (Todo el Personal)', desc: 'Todas las tareas asignadas en el equipo — quién tiene qué, estado, vencidas y cuánto tardan en cerrarse.' },
@@ -360,7 +370,8 @@ const INFO_HUB_SECTIONS = [
 const CARD_SHEET_COLS = {
   menu_health: 'menu health',
   brand_assets: 'brand assets',
-  staff_hours: 'staff hours'
+  staff_hours: 'staff hours',
+  labor_log: 'labor log'
 };
 // production, production_dashboard, and production_today are not sheet
 // columns — they're derived from 'production edit stations' / 'production

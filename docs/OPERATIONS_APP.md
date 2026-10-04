@@ -14,6 +14,7 @@ the existing Operations Hub — same login, same Netlify deploy.
 | `ops_form.html` | The form for every station, rendered from the schema, with autosave + resume |
 | `buck_station.html` | Bucking's own 4-tab page (Today / Batches / Employee / Historical) — see below, doesn't use `ops_form.html` |
 | `buck_data.js` | Bucking's data layer — submissions, boxes, batch close-out. Reuses `operations_forms`, no schema changes |
+| `labor_log.html` | Labor Log — people's hours (Connecteam roster) against UIDs, split across several UIDs when needed — see below |
 | `operations_today.html` | Live board — every form in progress or finished today, for anyone with view access |
 | `operations_dashboard.html` | Pipeline, yields, biomass, labor, requests, exceptions (finished forms only) |
 | `operations_stations.js` | **The schema.** Station and field definitions, EN + ES |
@@ -345,6 +346,54 @@ hours-worked-by-employee-by-date, join it to this table on employee number +
 date, and you can allocate real labor cost down to a batch. I didn't build a
 speculative importer for a system you haven't picked yet — tell me which one
 once you know, and the join is a small, concrete piece of work.
+(Connecteam it is: the Labor Log below keys its entries on the Connecteam
+user id, which is the join key to Connecteam's time activities.)
+
+## Labor Log — hours against UIDs
+
+`labor_log.html` (hub card `labor_log`, admin checkbox "Labor Log", column
+`labor log`) is where a lead puts people's time against the UIDs they worked
+on, without filling out a station form. **Log time:** pick a process (every
+station except Biomass Request, plus "Other / general"), a date, start/end
+or just hours, one or more people, and zero or more UIDs, then Save.
+
+- **People** come from Connecteam. `scripts/connecteam_sync.py` (the hourly
+  Staff Hours sync) also writes `data/connecteam_roster.json`, every active,
+  non-archived user (Connecteam user id + name). Anyone clocked in shows
+  first with a green dot, and "Add everyone clocked in" adds the whole crew
+  at once. Someone not in Connecteam can be typed in and saved with no id.
+  Until the roster file has been written once, the page uses the names from
+  `connecteam_hours.json` instead.
+- **UIDs** can be picked from a list or found by typing the last 4. The list
+  is built from the last 60 days of `operations_forms`. UIDs whose latest
+  record is at the stage feeding the chosen process come first ("At this
+  stage"). For example, Wet Intake UIDs come first for Take Down, and Take
+  Down's new on-stem UIDs come first for Bucking. `FEEDS` in the page sets
+  this. If the records don't have a UID, the search also checks active Canix
+  packages (`data/canix_inventory.json`, only fetched once someone types 4+
+  characters). A full tag that's in neither can still be added as typed.
+- **Several UIDs on one entry** is for harvest, intake and take-down work
+  that's too fast-moving to track per package: the hours are split evenly
+  across the UIDs (`laborSplit` in `ops_analytics.js`). For example, 8 hours
+  over 4 UIDs puts 2 hours on each.
+
+Saving writes **one row per person** to `operations_forms` with
+`station_key: 'labor_entry'`, `status: 'submitted'`, `fields = { process,
+employeeId, employeeName, uids: [{uid, strain}], start, end, hours, notes,
+enteredBy }`. There's no new table or SQL, just like Bucking's submissions.
+After a save the process, date, times and UIDs stay filled in so the next
+person can be logged right away. **Entries** lists a date range three ways:
+each entry, totals **by UID** (after the split), and totals **by person**.
+When the range is just today, By person also shows Connecteam's clocked
+hours and how much of that time has no entry yet. "Remove" can't delete (anon
+has no DELETE on `operations_forms`), so it sets `fields.voided` and stamps
+who and when. The edit history trigger records the change, and voided
+entries count for nothing.
+
+The dashboard's Labor tab loads `labor_entry` alongside the stations, and
+`crewLaborLog` turns each entry into one row per UID. Entries show there by
+name, keyed on the Connecteam user id. The Today board ignores them because
+it only shows station keys.
 
 ## Setting up Supabase (do this before going live)
 

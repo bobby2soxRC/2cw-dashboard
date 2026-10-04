@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Labor Log — 2CW Operations</title>
+  <script>
+    (function(){ if (!sessionStorage.getItem('2cw_pin')) window.location.replace('/index.html'); })();
+  </script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0c0d0f">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0c0d0f;--surface:#13151a;--surface2:#181b21;--border:#1e2129;
+      --green:#3db87a;--gold:#d4a843;--blue:#5a9fd4;--purple:#9b7fd4;--red:#ef5350;
+      --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;
+    }
+    html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-text-size-adjust:100%}
+
+    .hdr{min-height:calc(54px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:12px;position:sticky;top:0;z-index:20}
+    .hdr-back{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
+    .hdr-div{width:1px;height:18px;background:var(--border)}
+    .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .lang{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;flex:0 0 auto}
+    .lang button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:12px;font-weight:600;padding:8px 12px;cursor:pointer;min-height:36px}
+    .lang button.on{background:var(--blue);color:#000}
+
+    main{padding:28px 16px 60px;max-width:1100px;margin:0 auto}
+    .title{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,6vw,46px);letter-spacing:.04em;line-height:1}
+    .sub{margin-top:6px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+
+    .tabs{display:flex;gap:8px;margin:22px 0 18px;flex-wrap:wrap}
+    .tabs button,.seg button{background:var(--surface);border:1px solid var(--border);color:var(--subtext);border-radius:10px;padding:.6rem 1rem;
+      font-family:'DM Mono',monospace;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;min-height:44px}
+    .tabs button.on,.seg button.on{background:var(--blue);border-color:var(--blue);color:#000;font-weight:700}
+    .view{display:none}
+    .view.on{display:block}
+
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;max-width:760px}
+    .field{margin-bottom:18px}
+    .field > label,.lbl{display:block;font-size:.85rem;color:var(--subtext);margin-bottom:6px}
+    .hint{font-size:.78rem;color:var(--muted);margin-top:6px;line-height:1.45}
+    input,select,textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.65rem .8rem;
+      font:inherit;font-size:1rem;min-height:46px;outline:none}
+    input:focus,select:focus,textarea:focus{border-color:var(--blue)}
+    textarea{min-height:70px;resize:vertical}
+    .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+    @media (max-width:480px){ .row3{grid-template-columns:1fr 1fr} .row3 > div:first-child{grid-column:span 2} }
+
+    /* Pickers: an input with a dropdown list, picks land as chips above it. */
+    .picker{position:relative}
+    .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+    .chips:empty{display:none}
+    .chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:5px 6px 5px 12px;font-size:.88rem;max-width:100%}
+    .chip .m{font-family:'DM Mono',monospace}
+    .chip .s{color:var(--muted);font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .chip.manual{border-color:var(--gold)}
+    .chip button{background:transparent;border:none;color:var(--subtext);font-size:1.1rem;line-height:1;cursor:pointer;width:28px;height:28px;border-radius:99px;flex:0 0 auto}
+    .chip button:hover{background:var(--red);color:#000}
+    .panel{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+      box-shadow:0 10px 30px rgba(0,0,0,.5);max-height:min(55vh,420px);overflow-y:auto;display:none}
+    .panel.on{display:block}
+    .panel .grp{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:10px 14px 4px}
+    .panel button{display:block;width:100%;text-align:left;background:transparent;border:none;color:var(--text);font:inherit;cursor:pointer;padding:9px 14px;min-height:44px}
+    .panel button:hover,.panel button.hl{background:var(--blue);color:#000}
+    .panel button .s{display:block;font-size:.76rem;color:var(--muted)}
+    .panel button:hover .s,.panel button.hl .s{color:#000;opacity:.7}
+    .panel .m{font-family:'DM Mono',monospace}
+    .panel .empty{padding:14px;color:var(--muted);font-size:.85rem}
+    .dot{display:inline-block;width:8px;height:8px;border-radius:99px;background:var(--green);margin-right:6px;vertical-align:middle}
+    .quick{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+    .quick button{background:transparent;border:1px solid var(--border);color:var(--subtext);border-radius:8px;padding:6px 10px;font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;min-height:36px}
+    .quick button:hover{border-color:var(--blue);color:var(--blue)}
+
+    .summary{background:var(--bg);border:1px dashed var(--border);border-radius:10px;padding:12px 14px;font-size:.9rem;color:var(--subtext);line-height:1.55;margin-bottom:16px}
+    .summary b{color:var(--text);font-family:'DM Mono',monospace;font-weight:500}
+    .btn{padding:.75rem 1.2rem;border:1px solid var(--border);border-radius:10px;font-family:'DM Mono',monospace;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer;background:transparent;color:var(--text);min-height:48px}
+    .btn-blue{background:var(--blue);border-color:var(--blue);color:#000}
+    .btn:disabled{opacity:.5;cursor:default}
+    .err{color:var(--red);font-size:.88rem;margin-top:10px}
+
+    .filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;align-items:center}
+    .filters input,.filters select{flex:1 1 150px;min-width:0;width:auto}
+    .seg{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+    .tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+    table{width:100%;border-collapse:collapse;font-size:.88rem}
+    th{color:var(--muted);font-weight:500;text-align:left;padding:10px;border-bottom:1px solid var(--border);font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+    td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+    tr:last-child td{border-bottom:none}
+    td.n,th.n{text-align:right;font-family:'DM Mono',monospace;white-space:nowrap}
+    td .m{font-family:'DM Mono',monospace}
+    td .s{color:var(--muted);font-size:.78rem}
+    tr.total td{font-weight:700;border-top:1px solid var(--border)}
+    .link-btn{background:transparent;border:1px solid var(--border);color:var(--subtext);border-radius:7px;padding:4px 10px;min-height:32px;font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+    .link-btn:hover{border-color:var(--red);color:var(--red)}
+    .warn{color:var(--gold)}
+    .empty-big{color:var(--muted);text-align:center;padding:50px 0;font-size:.9rem}
+    .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
+    #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--green);color:#000;font-weight:700;
+      padding:12px 18px;border-radius:10px;z-index:60;display:none;max-width:calc(100vw - 32px)}
+    #toast.on{display:block}
+  </style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="/index.html" id="back">← Hub</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand" id="brand">Labor Log</div>
+  <div class="lang" id="lang"></div>
+</header>
+
+<main>
+  <div class="title" id="title">Labor Log</div>
+  <div class="sub" id="sub">—</div>
+  <div class="tabs" id="tabs"></div>
+
+  <section class="view" id="view-log">
+    <div class="card">
+      <div class="field">
+        <label for="process" id="l-process"></label>
+        <select id="process"></select>
+      </div>
+      <div class="field">
+        <div class="row3">
+          <div><label class="lbl" for="date" id="l-date"></label><input type="date" id="date"></div>
+          <div><label class="lbl" for="start" id="l-start"></label><input type="time" id="start"></div>
+          <div><label class="lbl" for="end" id="l-end"></label><input type="time" id="end"></div>
+        </div>
+        <div style="margin-top:10px" class="hrs">
+          <label class="lbl" for="hours" id="l-hours"></label>
+          <input type="number" id="hours" min="0" step="0.25" inputmode="decimal">
+        </div>
+        <div class="hint" id="h-hours"></div>
+      </div>
+      <div class="field">
+        <label class="lbl" for="people-q" id="l-people"></label>
+        <div class="picker" id="people-picker">
+          <div class="chips" id="people-chips"></div>
+          <input id="people-q" autocomplete="off">
+          <div class="panel" id="people-panel"></div>
+        </div>
+        <div class="quick" id="people-quick"></div>
+        <div class="hint" id="h-people"></div>
+      </div>
+      <div class="field">
+        <label class="lbl" for="uid-q" id="l-uids"></label>
+        <div class="picker" id="uid-picker">
+          <div class="chips" id="uid-chips"></div>
+          <input id="uid-q" autocomplete="off" autocapitalize="characters" spellcheck="false">
+          <div class="panel" id="uid-panel"></div>
+        </div>
+        <div class="hint" id="h-uids"></div>
+      </div>
+      <div class="field">
+        <label for="notes" id="l-notes"></label>
+        <textarea id="notes"></textarea>
+      </div>
+      <div class="summary" id="summary"></div>
+      <button class="btn btn-blue" id="save" type="button"></button>
+      <div class="err" id="err"></div>
+    </div>
+  </section>
+
+  <section class="view" id="view-list">
+    <div class="filters">
+      <input type="date" id="f-from">
+      <input type="date" id="f-to">
+      <select id="f-process"></select>
+      <input id="f-q">
+    </div>
+    <div class="seg" id="seg"></div>
+    <div id="list"></div>
+  </section>
+
+  <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution</footer>
+</main>
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/config/supabase_config.js"></script>
+<script src="/operations_stations.js"></script>
+<script src="/ops_common.js"></script>
+<script src="/ops_data.js"></script>
+<script src="/ops_analytics.js"></script>
+<script>
+// Labor Log — put people's hours against the UIDs they worked on.
+//
+// Pick a process, a date and time (or just hours), one or more people (the
+// active roster synced hourly from Connecteam — data/connecteam_roster.json,
+// written by scripts/connecteam_sync.py — plus anyone typed in by hand), and
+// one or more UIDs (picked from what's moving through the stations, or typed
+// as the last 4 of the tag). Saving writes one row per person to
+// operations_forms with station_key 'labor_entry' — no schema of its own,
+// like Bucking's submissions. When an entry covers several UIDs its hours
+// are split evenly across them (laborSplit in ops_analytics.js), which is how
+// a crew on take-down for the morning gets spread over everything they took
+// down. The dashboard's Labor tab counts these alongside the station forms'
+// crew grids. Entries can't be deleted from the browser (anon has no DELETE
+// on operations_forms), so "Remove" marks the entry voided, and the edit
+// history trigger keeps who did it.
+(async function () {
+  mountLangToggle('lang');
+  const A = window.OpsAnalytics;
+  const DATA_BASE = 'https://raw.githubusercontent.com/bobby2soxRC/2cw-dashboard/main/data/';
+  const ENTRY_KEY = 'labor_entry';
+  const PROCESS_KEY = '2cw_labor_process';
+  const me = sessionStorage.getItem('2cw_user_name') || '';
+
+  const L = {
+    title:     { en: 'Labor Log', es: 'Registro de Mano de Obra' },
+    sub:       { en: 'Hours by person, process and UID', es: 'Horas por persona, proceso y UID' },
+    back:      { en: '← Hub', es: '← Inicio' },
+    tabLog:    { en: 'Log time', es: 'Registrar horas' },
+    tabList:   { en: 'Entries', es: 'Registros' },
+    process:   { en: 'Process', es: 'Proceso' },
+    other:     { en: 'Other / general', es: 'Otro / general' },
+    date:      { en: 'Date', es: 'Fecha' },
+    start:     { en: 'Start', es: 'Inicio' },
+    end:       { en: 'End', es: 'Fin' },
+    hours:     { en: 'Hours (each person)', es: 'Horas (cada persona)' },
+    hHours:    { en: 'Fill in start and end to work the hours out, or just type the hours.',
+                 es: 'Llene inicio y fin para calcular las horas, o escriba solo las horas.' },
+    people:    { en: 'People', es: 'Personas' },
+    peopleQ:   { en: 'Type a name…', es: 'Escriba un nombre…' },
+    hPeople:   { en: 'Everyone active in Connecteam. Add several people at once if they worked the same hours. Not in Connecteam? Type the name and press Enter.',
+                 es: 'Todos los activos en Connecteam. Agregue varias personas a la vez si trabajaron las mismas horas. ¿No está en Connecteam? Escriba el nombre y presione Enter.' },
+    clockedIn: { en: 'Clocked in now', es: 'Marcados ahora' },
+    everyone:  { en: 'Everyone', es: 'Todos' },
+    addAll:    { en: 'Add everyone clocked in', es: 'Agregar a todos los marcados' },
+    addManual: { en: 'Add “{q}” (not in Connecteam)', es: 'Agregar “{q}” (no está en Connecteam)' },
+    notInCt:   { en: 'not in Connecteam', es: 'no está en Connecteam' },
+    noRoster:  { en: 'Couldn’t load the Connecteam list — type names and press Enter.', es: 'No se pudo cargar la lista de Connecteam — escriba los nombres y presione Enter.' },
+    uids:      { en: 'UIDs', es: 'UIDs' },
+    uidQ:      { en: 'Pick from the list or type the last 4…', es: 'Elija de la lista o escriba los últimos 4…' },
+    hUids:     { en: 'Add one UID, or several if the time covered several packages — the hours are split evenly across them. Leave empty for general work at this process.',
+                 es: 'Agregue un UID, o varios si el tiempo cubrió varios paquetes — las horas se dividen en partes iguales. Déjelo vacío para trabajo general en este proceso.' },
+    suggested: { en: 'At this stage', es: 'En esta etapa' },
+    recent:    { en: 'Other recent UIDs', es: 'Otros UIDs recientes' },
+    canix:     { en: 'Canix packages', es: 'Paquetes de Canix' },
+    useTyped:  { en: 'Use “{q}” as typed', es: 'Usar “{q}” como está escrito' },
+    noMatch:   { en: 'No UID ends in that. Keep typing the full tag to add it as typed.', es: 'Ningún UID termina así. Siga escribiendo la etiqueta completa para agregarla.' },
+    typeMore:  { en: 'Type at least 4 characters.', es: 'Escriba al menos 4 caracteres.' },
+    notes:     { en: 'Notes (optional)', es: 'Notas (opcional)' },
+    save:      { en: 'Save', es: 'Guardar' },
+    saving:    { en: 'Saving…', es: 'Guardando…' },
+    saved:     { en: 'Saved {n} entries', es: 'Se guardaron {n} registros' },
+    saved1:    { en: 'Saved 1 entry', es: 'Se guardó 1 registro' },
+    needProc:  { en: 'Pick a process.', es: 'Elija un proceso.' },
+    needDate:  { en: 'Pick a date.', es: 'Elija una fecha.' },
+    needPeople:{ en: 'Add at least one person.', es: 'Agregue al menos una persona.' },
+    needHours: { en: 'Enter the hours.', es: 'Escriba las horas.' },
+    tooMany:   { en: 'More than 16 hours — check the times.', es: 'Más de 16 horas — revise las horas.' },
+    failed:    { en: 'Could not save:', es: 'No se pudo guardar:' },
+    noDb:      { en: 'Supabase isn’t connected, so the Labor Log can’t save yet.', es: 'Supabase no está conectado, así que el registro no puede guardar todavía.' },
+    sumNone:   { en: 'Add people and hours to see the total.', es: 'Agregue personas y horas para ver el total.' },
+    sumPeople: { en: '{p} × {h} h = {t} labor hours', es: '{p} × {h} h = {t} horas de trabajo' },
+    sumSplit:  { en: 'Split over {u} UIDs: {e} h per UID per person ({tu} h on each UID).', es: 'Dividido entre {u} UIDs: {e} h por UID por persona ({tu} h en cada UID).' },
+    sumOne:    { en: 'All on {uid}.', es: 'Todo en {uid}.' },
+    sumNoUid:  { en: 'No UID — counted against the process only.', es: 'Sin UID — se cuenta solo contra el proceso.' },
+    person1:   { en: '1 person', es: '1 persona' },
+    personN:   { en: '{n} people', es: '{n} personas' },
+    allProc:   { en: 'All processes', es: 'Todos los procesos' },
+    search:    { en: 'Search name or UID…', es: 'Buscar nombre o UID…' },
+    segEntries:{ en: 'Entries', es: 'Registros' },
+    segUid:    { en: 'By UID', es: 'Por UID' },
+    segPerson: { en: 'By person', es: 'Por persona' },
+    colDate:   { en: 'Date', es: 'Fecha' },
+    colPerson: { en: 'Person', es: 'Persona' },
+    colProc:   { en: 'Process', es: 'Proceso' },
+    colTime:   { en: 'Time', es: 'Hora' },
+    colHours:  { en: 'Hours', es: 'Horas' },
+    colUids:   { en: 'UIDs', es: 'UIDs' },
+    colBy:     { en: 'Entered by', es: 'Registrado por' },
+    colStrain: { en: 'Strain', es: 'Variedad' },
+    colPeople: { en: 'People', es: 'Personas' },
+    colEntries:{ en: 'Entries', es: 'Registros' },
+    colClock:  { en: 'Clocked today', es: 'Marcado hoy' },
+    colUnlog:  { en: 'Not logged', es: 'Sin registrar' },
+    noUid:     { en: '(no UID)', es: '(sin UID)' },
+    total:     { en: 'Total', es: 'Total' },
+    remove:    { en: 'Remove', es: 'Quitar' },
+    removeQ:   { en: 'Remove this entry? It stops counting toward labor totals.', es: '¿Quitar este registro? Deja de contar en los totales.' },
+    empty:     { en: 'No entries for these dates.', es: 'No hay registros para estas fechas.' },
+    loading:   { en: 'Loading…', es: 'Cargando…' },
+    clockNote: { en: 'Clocked today is from Connecteam (synced hourly); Not logged is clocked time with no Labor Log entry yet.',
+                 es: '“Marcado hoy” viene de Connecteam (cada hora); “Sin registrar” es tiempo marcado sin registro todavía.' }
+  };
+  const fill = (s, vars) => Object.entries(vars).reduce((a, [k, v]) => a.split(`{${k}}`).join(v), s);
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const $ = (id) => document.getElementById(id);
+  const localDay = (d = new Date()) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  const normUid = (u) => String(u || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const fold = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const tail = (uid) => uid.length > 8 ? '…' + uid.slice(-4) : uid;
+  const fmtH = (h) => fmtNum(h, Math.abs(h - Math.round(h)) < 1e-9 ? 0 : 2);
+
+  document.title = `${t(L.title)} — 2CW`;
+  $('title').textContent = t(L.title);
+  $('brand').textContent = t(L.title);
+  $('back').textContent = t(L.back);
+  $('sub').textContent = t(L.sub);
+  [['l-process', 'process'], ['l-date', 'date'], ['l-start', 'start'], ['l-end', 'end'], ['l-hours', 'hours'],
+   ['h-hours', 'hHours'], ['l-people', 'people'], ['h-people', 'hPeople'], ['l-uids', 'uids'], ['h-uids', 'hUids'],
+   ['l-notes', 'notes'], ['save', 'save']].forEach(([id, k]) => { $(id).textContent = t(L[k]); });
+  $('people-q').placeholder = t(L.peopleQ);
+  $('uid-q').placeholder = t(L.uidQ);
+  $('f-q').placeholder = t(L.search);
+
+  // ── Processes: every station except the paperwork-only ones ─────────────
+  const PROCESSES = OPERATIONS_STATIONS.filter((s) => s.key !== 'biomass_request');
+  const procTitle = (k) => k === 'other' ? t(L.other) : (STATION_BY_KEY[k] ? t(STATION_BY_KEY[k].title) : (k || '—'));
+  function processOptions(withAll) {
+    const groups = [];
+    PROCESSES.forEach((s) => {
+      const g = t(s.dept);
+      let grp = groups.find((x) => x.label === g);
+      if (!grp) groups.push(grp = { label: g, items: [] });
+      grp.items.push(s);
+    });
+    return (withAll ? `<option value="">${esc(t(L.allProc))}</option>` : `<option value=""></option>`) +
+      groups.map((g) => `<optgroup label="${esc(g.label)}">${g.items.map((s) =>
+        `<option value="${s.key}">${esc(t(s.title))}</option>`).join('')}</optgroup>`).join('') +
+      `<option value="other">${esc(t(L.other))}</option>`;
+  }
+  $('process').innerHTML = processOptions(false);
+  $('f-process').innerHTML = processOptions(true);
+  const params = new URLSearchParams(location.search);
+  let savedProc = '';
+  try { savedProc = localStorage.getItem(PROCESS_KEY) || ''; } catch {}
+  $('process').value = params.get('process') || savedProc;
+  $('date').value = localDay();
+
+  // ── Tabs ────────────────────────────────────────────────────────────────
+  const TABS = [['log', L.tabLog], ['list', L.tabList]];
+  $('tabs').innerHTML = TABS.map(([k, l]) => `<button type="button" data-tab="${k}">${esc(t(l))}</button>`).join('');
+  function showTab(k) {
+    document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === k));
+    document.querySelectorAll('.view').forEach((v) => v.classList.toggle('on', v.id === 'view-' + k));
+    if (k === 'list') loadEntries();
+  }
+  $('tabs').onclick = (e) => { const b = e.target.closest('button'); if (b) showTab(b.dataset.tab); };
+
+  // ── Connecteam roster + who's clocked in ────────────────────────────────
+  let roster = [];            // [{userId, name}]
+  let clockedIn = new Set();  // userIds
+  let clockedToday = {};      // userId -> hours today
+  async function getJson(file) {
+    try {
+      const res = await fetch(DATA_BASE + file + '?t=' + Date.now());
+      if (!res.ok) throw new Error(res.status);
+      return await res.json();
+    } catch { return null; }
+  }
+  const rosterReady = Promise.all([getJson('connecteam_roster.json'), getJson('connecteam_hours.json')]).then(([r, h]) => {
+    const byId = new Map();
+    if (r && Array.isArray(r.people)) r.people.forEach((p) => byId.set(String(p.userId), { userId: String(p.userId), name: p.name }));
+    if (h) {
+      // Until the roster file exists, everyone with hours this week stands in.
+      if (!byId.size) [...(h.week || []), ...(h.today || []), ...(h.clocked_in || [])]
+        .forEach((p) => byId.set(String(p.userId), { userId: String(p.userId), name: p.name }));
+      (h.clocked_in || []).forEach((p) => clockedIn.add(String(p.userId)));
+      (h.today || []).forEach((p) => { clockedToday[String(p.userId)] = p.hoursToday; });
+    }
+    roster = [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
+    if (!roster.length) $('h-people').textContent = t(L.noRoster);
+    renderQuick();
+  });
+
+  // ── UIDs: everything that's been through a station lately ───────────────
+  // Read straight off operations_forms. Each UID remembers the station it was
+  // last seen at, so the list can put the ones waiting on (or being worked at)
+  // the chosen process first. `role: 'in'` marks a UID a station consumed and
+  // retagged (Take Down's farm UID → new on-stem UID), so it isn't suggested
+  // for the stage after.
+  const UID_FIELDS = {
+    dry_check: [['incomingUid', 'in'], ['sourceUid', 'out']]
+  };
+  const DEFAULT_UID_FIELDS = [['sourceUid', 'out'], ['batchTag', 'out'], ['newBuckedUid', 'out'], ['newBigLeafUid', 'out']];
+  // Which stations' UIDs are up next at each process.
+  const FEEDS = {
+    cult_batch_log: ['cult_batch_log'], cult_ipm_feed: ['cult_batch_log', 'cult_ipm_feed'],
+    cult_preharvest: ['cult_batch_log', 'cult_ipm_feed', 'cult_preharvest'],
+    harvest: ['cult_preharvest', 'cult_batch_log', 'harvest'],
+    intake_wet: ['harvest', 'intake_wet'], dry_check: ['intake_wet', 'dry_check'],
+    buck: ['dry_check', 'buck'], machine_trim: ['buck', 'machine_trim'],
+    hand_trim: ['buck', 'machine_trim', 'hand_trim'], fresh_frozen: ['harvest', 'fresh_frozen'],
+    preroll_production: ['machine_trim', 'hand_trim', 'preroll_production'],
+    mfg_output: ['machine_trim', 'hand_trim', 'mfg_output']
+  };
+  const RECENT_DAYS = 3;   // a UID last seen at this very process counts as "at this stage" for this long
+  const LOOKBACK_DAYS = 60;
+  const uidIndex = new Map(); // uid -> {uid, strain, station, status, date, role}
+  function noteUid(raw, strain, row, role) {
+    const uid = normUid(raw);
+    if (uid.length < 4) return;
+    const seen = { uid, strain: strain || '', station: row.station_key, status: row.status, date: row.work_date, at: row.updated_at || '', role };
+    const prev = uidIndex.get(uid);
+    if (!prev || (seen.date + seen.at) > (prev.date + prev.at)) uidIndex.set(uid, { ...seen, strain: seen.strain || (prev && prev.strain) || '' });
+  }
+  const uidsReady = (async () => {
+    const client = getClient();
+    if (!client) return;
+    const since = new Date(); since.setDate(since.getDate() - LOOKBACK_DAYS);
+    const PAGE = 1000;
+    for (let page = 0; page < 6; page++) {
+      const { data, error } = await client.from('operations_forms')
+        .select('station_key,status,work_date,strain,fields,updated_at')
+        .gte('work_date', localDay(since))
+        .not('station_key', 'in', '(buck_submission,buck_box,buck_batch_close,labor_entry)')
+        .order('work_date', { ascending: false }).order('updated_at', { ascending: false })
+        .range(page * PAGE, page * PAGE + PAGE - 1);
+      if (error) { console.error('labor uids', error); return; }
+      (data || []).forEach((row) => {
+        const f = row.fields || {};
+        const strain = row.strain || f.strain || '';
+        (UID_FIELDS[row.station_key] || DEFAULT_UID_FIELDS).forEach(([k, role]) => { if (f[k]) noteUid(f[k], strain, row, role); });
+        // Multi-package forms (Wet Intake) carry a UID per line.
+        (f.lines || []).forEach((ln) => { if (ln && ln.sourceUid) noteUid(ln.sourceUid, ln.strain || strain, row, 'out'); });
+      });
+      if (!data || data.length < PAGE) break;
+    }
+  })();
+
+  // Canix packages — only searched when the operations records don't have the
+  // UID (a package that never went through a station form). 3 MB, so it's
+  // only fetched the first time someone types 4+ characters.
+  let canix = null, canixLoading = false;
+  function loadCanix() {
+    if (canix || canixLoading) return;
+    canixLoading = true;
+    getJson('canix_inventory.json').then((rows) => {
+      canix = (rows || []).filter((p) => p && p.tag && p.is_active !== false)
+        .filter((p) => !/clone|seed|immature|packaged/i.test(((p.item || {}).type || {}).name || ''))
+        .map((p) => ({ uid: normUid(p.tag), strain: ((p.item || {}).strain || {}).name || '', item: (p.item || {}).name || '', status: p.status || '' }));
+      canixLoading = false;
+      if (document.activeElement === $('uid-q')) uidPicker.refresh();
+    });
+  }
+
+  function isSuggested(u, proc) {
+    const feeds = FEEDS[proc];
+    if (!feeds || !feeds.includes(u.station)) return false;
+    if (u.station !== proc) return u.role !== 'in';
+    if (u.status === 'draft') return true;
+    const days = (Date.parse(localDay()) - Date.parse(u.date)) / 86400000;
+    return days <= RECENT_DAYS;
+  }
+
+  // ── Picker (input + dropdown + chips) ───────────────────────────────────
+  // `options(q)` returns [{label, items:[{html, pick, raw?}]}] — `raw` marks
+  // the "add what I typed" item. Enter takes the one real match if there's
+  // exactly one (or the raw item when there's nothing else); `onRaw(q)` is
+  // what Enter does when the list is empty. The list closes after a pick so
+  // it isn't covering the next field; tap the input to open it again.
+  function makePicker({ input, panel, options, onRaw }) {
+    let flat = [], hl = -1;
+    function render() {
+      const groups = options(input.value.trim());
+      flat = [];
+      panel.innerHTML = groups.map((g) => {
+        if (g.note) return `<div class="empty">${esc(g.note)}</div>`;
+        if (!g.items.length) return '';
+        return (g.label ? `<div class="grp">${esc(g.label)}</div>` : '') + g.items.map((it) => {
+          flat.push(it);
+          return `<button type="button" data-i="${flat.length - 1}">${it.html}</button>`;
+        }).join('');
+      }).join('') || '';
+      const real = flat.filter((it) => !it.raw);
+      hl = real.length === 1 ? flat.indexOf(real[0]) : (!real.length && flat.length === 1 ? 0 : -1);
+      highlight();
+      panel.classList.toggle('on', !!panel.innerHTML);
+    }
+    function highlight() {
+      panel.querySelectorAll('button').forEach((b, i) => b.classList.toggle('hl', i === hl));
+      const b = panel.querySelectorAll('button')[hl];
+      if (b) b.scrollIntoView({ block: 'nearest' });
+    }
+    function pick(i) {
+      const it = flat[i];
+      if (!it) return;
+      it.pick();
+      input.value = '';
+      panel.classList.remove('on');
+      input.focus();
+    }
+    input.addEventListener('focus', render);
+    input.addEventListener('click', render);
+    input.addEventListener('input', render);
+    input.addEventListener('blur', () => setTimeout(() => panel.classList.remove('on'), 150));
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') { hl = Math.min(flat.length - 1, hl + 1); highlight(); e.preventDefault(); }
+      else if (e.key === 'ArrowUp') { hl = Math.max(0, hl - 1); highlight(); e.preventDefault(); }
+      else if (e.key === 'Escape') panel.classList.remove('on');
+      else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (hl >= 0) pick(hl);
+        else if (!flat.length && onRaw && onRaw(input.value.trim())) { input.value = ''; panel.classList.remove('on'); }
+      }
+    });
+    panel.addEventListener('mousedown', (e) => e.preventDefault());
+    panel.addEventListener('click', (e) => { const b = e.target.closest('button[data-i]'); if (b) pick(+b.dataset.i); });
+    return { refresh: render };
+  }
+
+  // People
+  let people = []; // [{userId, name}] — userId '' for someone typed in
+  const addPerson = (p) => { if (!people.some((x) => x.userId ? x.userId === p.userId : fold(x.name) === fold(p.name))) people.push(p); renderPeople(); };
+  function renderPeople() {
+    $('people-chips').innerHTML = people.map((p, i) =>
+      `<span class="chip ${p.userId ? '' : 'manual'}">${clockedIn.has(p.userId) ? '<span class="dot"></span>' : ''}${esc(p.name)}${p.userId ? '' : ` <span class="s">${esc(t(L.notInCt))}</span>`}<button type="button" data-i="${i}" aria-label="×">×</button></span>`).join('');
+    renderQuick();
+    renderSummary();
+  }
+  $('people-chips').onclick = (e) => { const b = e.target.closest('button[data-i]'); if (b) { people.splice(+b.dataset.i, 1); renderPeople(); } };
+  function renderQuick() {
+    const missing = roster.filter((p) => clockedIn.has(p.userId) && !people.some((x) => x.userId === p.userId));
+    $('people-quick').innerHTML = missing.length > 1
+      ? `<button type="button" id="add-clocked"><span class="dot"></span>${esc(t(L.addAll))} (${missing.length})</button>` : '';
+    const btn = $('add-clocked');
+    if (btn) btn.onclick = () => { missing.forEach((p) => people.push(p)); renderPeople(); };
+  }
+  makePicker({
+    input: $('people-q'), panel: $('people-panel'),
+    options: (q) => {
+      const fq = fold(q);
+      const words = fq.split(/\s+/).filter(Boolean);
+      const pool = roster.filter((p) => !people.some((x) => x.userId === p.userId) && words.every((w) => fold(p.name).includes(w)));
+      const item = (p) => ({ html: `${clockedIn.has(p.userId) ? '<span class="dot"></span>' : ''}${esc(p.name)}`, pick: () => addPerson(p) });
+      const groups = [
+        { label: t(L.clockedIn), items: pool.filter((p) => clockedIn.has(p.userId)).map(item) },
+        { label: t(L.everyone), items: pool.filter((p) => !clockedIn.has(p.userId)).slice(0, 80).map(item) }
+      ];
+      if (q && !roster.some((p) => fold(p.name) === fq)) {
+        groups.push({ label: '', items: [{ raw: true, html: esc(fill(t(L.addManual), { q })), pick: () => addPerson({ userId: '', name: q }) }] });
+      }
+      return groups;
+    },
+    onRaw: (q) => { if (q.length < 2) return false; addPerson({ userId: '', name: q }); return true; }
+  });
+
+  // UIDs
+  let uids = []; // [{uid, strain}]
+  const addUid = (u) => { if (!uids.some((x) => x.uid === u.uid)) uids.push({ uid: u.uid, strain: u.strain || '' }); renderUids(); };
+  function renderUids() {
+    $('uid-chips').innerHTML = uids.map((u, i) =>
+      `<span class="chip" title="${esc(u.uid)}"><span class="m">${esc(tail(u.uid))}</span>${u.strain ? `<span class="s">${esc(u.strain)}</span>` : ''}<button type="button" data-i="${i}" aria-label="×">×</button></span>`).join('');
+    renderSummary();
+  }
+  $('uid-chips').onclick = (e) => { const b = e.target.closest('button[data-i]'); if (b) { uids.splice(+b.dataset.i, 1); renderUids(); } };
+  function uidItem(u, sub) {
+    return {
+      html: `<span class="m"><b>${esc(tail(u.uid))}</b> ${u.uid.length > 8 ? esc(u.uid) : ''}</span><span class="s">${esc([u.strain, sub].filter(Boolean).join(' · '))}</span>`,
+      pick: () => addUid(u)
+    };
+  }
+  const stageSub = (u) => `${procTitle(u.station)} · ${u.date}${u.status === 'draft' ? ' …' : ''}`;
+  const uidPicker = makePicker({
+    input: $('uid-q'), panel: $('uid-panel'),
+    options: (raw) => {
+      const q = normUid(raw);
+      const proc = $('process').value;
+      if (q.length >= 4) loadCanix();
+      const taken = new Set(uids.map((u) => u.uid));
+      const hit = (uid) => !q || uid.includes(q);
+      const rank = (a, b) => (b.uid.endsWith(q) - a.uid.endsWith(q)) || (b.date + b.at).localeCompare(a.date + a.at);
+      const all = [...uidIndex.values()].filter((u) => !taken.has(u.uid) && hit(u.uid)).sort(rank);
+      const sug = all.filter((u) => isSuggested(u, proc));
+      const rest = all.filter((u) => !isSuggested(u, proc));
+      const groups = [
+        { label: `${t(L.suggested)}${proc ? ' — ' + procTitle(proc) : ''}`, items: sug.slice(0, 60).map((u) => uidItem(u, stageSub(u))) },
+        { label: t(L.recent), items: (q ? rest : rest.slice(0, 40)).slice(0, 60).map((u) => uidItem(u, stageSub(u))) }
+      ];
+      if (q.length >= 4 && canix) {
+        const cx = canix.filter((p) => !taken.has(p.uid) && !uidIndex.has(p.uid) && p.uid.includes(q))
+          .sort((a, b) => b.uid.endsWith(q) - a.uid.endsWith(q)).slice(0, 30);
+        groups.push({ label: t(L.canix), items: cx.map((p) => uidItem(p, [p.item, p.status].filter(Boolean).join(' · '))) });
+      }
+      const found = groups.some((g) => g.items.length);
+      if (!found && q.length >= 10 && !taken.has(q)) {
+        groups.push({ label: '', items: [{ raw: true, html: `<span class="m">${esc(fill(t(L.useTyped), { q }))}</span>`, pick: () => addUid({ uid: q }) }] });
+      } else if (q && !found) {
+        groups.push({ note: q.length < 4 ? t(L.typeMore) : t(L.noMatch) });
+      }
+      return groups;
+    },
+    onRaw: (raw) => { const q = normUid(raw); if (q.length < 10) return false; addUid({ uid: q }); return true; }
+  });
+  $('process').addEventListener('change', () => {
+    try { localStorage.setItem(PROCESS_KEY, $('process').value); } catch {}
+    renderSummary();
+  });
+  if (params.get('uid')) { addUid({ uid: normUid(params.get('uid')) }); uidsReady.then(() => {
+    uids = uids.map((u) => ({ ...u, strain: u.strain || (uidIndex.get(u.uid) || {}).strain || '' })); renderUids(); }); }
+
+  // ── Hours ───────────────────────────────────────────────────────────────
+  function fromTimes() {
+    const h = hoursBetween($('start').value, $('end').value);
+    if (h !== null) $('hours').value = h;
+    renderSummary();
+  }
+  $('start').addEventListener('change', fromTimes);
+  $('end').addEventListener('change', fromTimes);
+  $('hours').addEventListener('input', renderSummary);
+
+  function renderSummary() {
+    const h = num($('hours').value);
+    if (!people.length || !h) { $('summary').textContent = t(L.sumNone); return; }
+    const p = people.length === 1 ? t(L.person1) : fill(t(L.personN), { n: people.length });
+    let s = fill(t(L.sumPeople), { p, h: `<b>${fmtH(h)}</b>`, t: `<b>${fmtH(h * people.length)}</b>` });
+    if (!uids.length) s += '<br>' + t(L.sumNoUid);
+    else if (uids.length === 1) s += '<br>' + fill(t(L.sumOne), { uid: `<b>${esc(tail(uids[0].uid))}</b>` });
+    else s += '<br>' + fill(t(L.sumSplit), { u: uids.length, e: `<b>${fmtNum(h / uids.length, 2)}</b>`, tu: `<b>${fmtNum(h * people.length / uids.length, 2)}</b>` });
+    $('summary').innerHTML = s;
+  }
+  renderSummary();
+
+  // ── Save ────────────────────────────────────────────────────────────────
+  $('save').onclick = async () => {
+    const err = $('err');
+    err.textContent = '';
+    const proc = $('process').value, date = $('date').value, hours = num($('hours').value);
+    const problem = !proc ? L.needProc : !date ? L.needDate : !people.length ? L.needPeople
+      : !(hours > 0) ? L.needHours : hours > 16 ? L.tooMany : null;
+    if (problem) { err.textContent = t(problem); return; }
+    const client = getClient();
+    if (!client) { err.textContent = t(L.noDb); return; }
+    const strains = [...new Set(uids.map((u) => u.strain).filter(Boolean))];
+    const now = new Date().toISOString();
+    const rows = people.map((p) => ({
+      station_key: ENTRY_KEY, status: 'submitted', owner_user: me || null, updated_by: me || null,
+      strain: strains.length === 1 ? strains[0] : null, work_date: date, submitted_at: now,
+      fields: {
+        process: proc, employeeId: p.userId || '', employeeName: p.name,
+        uids: uids.map((u) => ({ uid: u.uid, strain: u.strain || '' })),
+        start: $('start').value || '', end: $('end').value || '', hours,
+        notes: $('notes').value.trim(), enteredBy: me
+      }
+    }));
+    $('save').disabled = true;
+    $('save').textContent = t(L.saving);
+    const { error } = await client.from('operations_forms').insert(rows);
+    $('save').disabled = false;
+    $('save').textContent = t(L.save);
+    if (error) { err.textContent = `${t(L.failed)} ${error.message}`; return; }
+    // Keep process, date, times and UIDs — the next person usually worked the
+    // same block — and clear who and the notes.
+    people = []; renderPeople();
+    $('notes').value = '';
+    toast(rows.length === 1 ? t(L.saved1) : fill(t(L.saved), { n: rows.length }));
+  };
+  function toast(msg) {
+    const el = $('toast');
+    el.textContent = msg;
+    el.classList.add('on');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => el.classList.remove('on'), 2500);
+  }
+
+  // ── Entries / summaries ─────────────────────────────────────────────────
+  let entries = [];
+  let seg = 'entries';
+  $('f-from').value = localDay();
+  $('f-to').value = localDay();
+  const SEGS = [['entries', L.segEntries], ['uid', L.segUid], ['person', L.segPerson]];
+  $('seg').innerHTML = SEGS.map(([k, l]) => `<button type="button" data-seg="${k}">${esc(t(l))}</button>`).join('');
+  $('seg').onclick = (e) => { const b = e.target.closest('button'); if (b) { seg = b.dataset.seg; renderList(); } };
+  ['f-from', 'f-to'].forEach((id) => $(id).addEventListener('change', loadEntries));
+  $('f-process').addEventListener('change', renderList);
+  $('f-q').addEventListener('input', renderList);
+
+  async function loadEntries() {
+    const client = getClient();
+    if (!client) { $('list').innerHTML = `<div class="empty-big">${esc(t(L.noDb))}</div>`; return; }
+    $('list').innerHTML = `<div class="empty-big">${esc(t(L.loading))}</div>`;
+    const PAGE = 1000, data = [];
+    for (let page = 0; page < 20; page++) {
+      let q = client.from('operations_forms').select('*').eq('station_key', ENTRY_KEY).eq('status', 'submitted');
+      if ($('f-from').value) q = q.gte('work_date', $('f-from').value);
+      if ($('f-to').value) q = q.lte('work_date', $('f-to').value);
+      const res = await q.order('work_date', { ascending: false }).order('submitted_at', { ascending: false }).order('id')
+        .range(page * PAGE, page * PAGE + PAGE - 1);
+      if (res.error) { $('list').innerHTML = `<div class="empty-big">${esc(t(L.failed))} ${esc(res.error.message)}</div>`; return; }
+      data.push(...(res.data || []));
+      if (!res.data || res.data.length < PAGE) break;
+    }
+    entries = data.filter((r) => !(r.fields || {}).voided);
+    renderList();
+  }
+
+  function visibleEntries() {
+    const proc = $('f-process').value;
+    const q = fold($('f-q').value.trim());
+    const qu = normUid($('f-q').value);
+    return entries.filter((r) => {
+      const f = r.fields || {};
+      if (proc && f.process !== proc) return false;
+      if (!q) return true;
+      return fold(f.employeeName).includes(q) || (qu && (f.uids || []).some((u) => normUid(u.uid).includes(qu)));
+    });
+  }
+
+  function renderList() {
+    document.querySelectorAll('#seg button').forEach((b) => b.classList.toggle('on', b.dataset.seg === seg));
+    const rows = visibleEntries();
+    if (!rows.length) { $('list').innerHTML = `<div class="empty-big">${esc(t(L.empty))}</div>`; return; }
+    const table = (head, body) => `<div class="tbl-wrap"><table><thead><tr>${head.map(([l, n]) => `<th class="${n ? 'n' : ''}">${esc(t(l))}</th>`).join('')}</tr></thead><tbody>${body.join('')}</tbody></table></div>`;
+    const totalH = rows.reduce((a, r) => a + num(r.fields.hours), 0);
+
+    if (seg === 'entries') {
+      const body = rows.map((r) => {
+        const f = r.fields;
+        const time = f.start && f.end ? `${f.start}–${f.end}` : '';
+        const us = (f.uids || []).map((u) => `<span class="m" title="${esc(u.uid)}">${esc(tail(u.uid))}</span>${u.strain ? ` <span class="s">${esc(u.strain)}</span>` : ''}`).join('<br>') || `<span class="s">${esc(t(L.noUid))}</span>`;
+        return `<tr><td>${esc(r.work_date)}</td>
+          <td>${esc(f.employeeName)}${f.employeeId ? '' : ` <span class="s warn">${esc(t(L.notInCt))}</span>`}</td>
+          <td>${esc(procTitle(f.process))}</td><td class="n">${esc(time)}</td><td class="n">${fmtH(num(f.hours))}</td>
+          <td>${us}${f.notes ? `<div class="s">${esc(f.notes)}</div>` : ''}</td><td><span class="s">${esc(f.enteredBy || r.owner_user || '')}</span></td>
+          <td><button type="button" class="link-btn" data-remove="${r.id}">${esc(t(L.remove))}</button></td></tr>`;
+      });
+      body.push(`<tr class="total"><td colspan="4">${esc(t(L.total))}</td><td class="n">${fmtH(totalH)}</td><td colspan="3"></td></tr>`);
+      $('list').innerHTML = table([[L.colDate], [L.colPerson], [L.colProc], [L.colTime, 1], [L.colHours, 1], [L.colUids], [L.colBy], [{ en: '', es: '' }]], body);
+    } else if (seg === 'uid') {
+      const by = {};
+      rows.forEach((r) => A.laborSplit(r.fields).forEach((part) => {
+        const k = part.uid || '';
+        const row = by[k] || (by[k] = { uid: k, strain: part.strain, hours: 0, people: new Set(), procs: new Set() });
+        row.hours += part.hours;
+        row.people.add(r.fields.employeeId || r.fields.employeeName);
+        row.procs.add(r.fields.process);
+        if (!row.strain) row.strain = part.strain;
+      }));
+      const list = Object.values(by).sort((a, b) => b.hours - a.hours);
+      const body = list.map((u) => `<tr><td>${u.uid ? `<span class="m">${esc(u.uid)}</span>` : `<span class="s">${esc(t(L.noUid))}</span>`}</td>
+        <td>${esc(u.strain)}</td><td class="n">${fmtNum(u.hours, 2)}</td><td class="n">${u.people.size}</td>
+        <td>${[...u.procs].map((p) => esc(procTitle(p))).join(', ')}</td></tr>`);
+      body.push(`<tr class="total"><td colspan="2">${esc(t(L.total))}</td><td class="n">${fmtNum(list.reduce((a, u) => a + u.hours, 0), 2)}</td><td colspan="2"></td></tr>`);
+      $('list').innerHTML = table([[L.colUids], [L.colStrain], [L.colHours, 1], [L.colPeople, 1], [L.colProc]], body);
+    } else {
+      const by = {};
+      rows.forEach((r) => {
+        const f = r.fields;
+        const k = f.employeeId || 'name:' + fold(f.employeeName);
+        const row = by[k] || (by[k] = { id: f.employeeId, name: f.employeeName, hours: 0, n: 0, uids: new Set(), procs: new Set() });
+        row.hours += num(f.hours);
+        row.n += 1;
+        (f.uids || []).forEach((u) => row.uids.add(u.uid));
+        row.procs.add(f.process);
+      });
+      const list = Object.values(by).sort((a, b) => b.hours - a.hours);
+      // Connecteam's hours-today only covers today, so the comparison only
+      // shows when today is the whole range.
+      const today = localDay();
+      const withClock = $('f-from').value === today && $('f-to').value === today;
+      const body = list.map((p) => {
+        const clock = p.id && clockedToday[p.id] != null ? clockedToday[p.id] : null;
+        const gap = clock != null ? clock - p.hours : null;
+        return `<tr><td>${esc(p.name)}</td><td class="n">${fmtH(p.hours)}</td>
+          ${withClock ? `<td class="n">${clock != null ? fmtNum(clock, 2) : '—'}</td><td class="n ${gap > 0.25 ? 'warn' : ''}">${gap != null ? fmtNum(Math.max(0, gap), 2) : '—'}</td>` : ''}
+          <td class="n">${p.n}</td><td class="n">${p.uids.size}</td><td>${[...p.procs].map((x) => esc(procTitle(x))).join(', ')}</td></tr>`;
+      });
+      body.push(`<tr class="total"><td>${esc(t(L.total))}</td><td class="n">${fmtH(totalH)}</td><td colspan="${withClock ? 5 : 3}"></td></tr>`);
+      $('list').innerHTML = table([[L.colPerson], [L.colHours, 1], ...(withClock ? [[L.colClock, 1], [L.colUnlog, 1]] : []),
+        [L.colEntries, 1], [L.colUids, 1], [L.colProc]], body) + (withClock ? `<div class="hint">${esc(t(L.clockNote))}</div>` : '');
+    }
+  }
+
+  $('list').addEventListener('click', async (e) => {
+    const b = e.target.closest('button[data-remove]');
+    if (!b || !confirm(t(L.removeQ))) return;
+    const row = entries.find((r) => r.id === b.dataset.remove);
+    const client = getClient();
+    if (!row || !client) return;
+    b.disabled = true;
+    const fields = { ...row.fields, voided: true, voidedBy: me, voidedAt: new Date().toISOString() };
+    const { error } = await client.from('operations_forms').update({ fields, updated_by: me || null })
+      .eq('id', row.id).eq('status', 'submitted');
+    if (error) { b.disabled = false; alert(`${t(L.failed)} ${error.message}`); return; }
+    entries = entries.filter((r) => r.id !== row.id);
+    renderList();
+  });
+
+  showTab(params.get('tab') === 'list' ? 'list' : 'log');
+  await rosterReady;
+  renderPeople();
+})();
+</script>
+</body>
+</html>

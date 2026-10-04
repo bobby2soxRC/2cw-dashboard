@@ -107,6 +107,26 @@ check('employee 42 touched one distinct batch', emp42.batchCount, 1);
 const emp79 = byEmp.find((e) => e.employeeNo === '79');
 check('employee 79 (hand-trim only) shows 0 logged hours, 1 touch', [emp79.hours, emp79.touches], [0, 1]);
 
+console.log('\nlabor log (labor_log.html entries)');
+const laborStages = { ...stages, labor_entry: [
+  // 8 hours on take-down spread over four packages
+  { process: 'dry_check', employeeId: '5475211', employeeName: 'Gilberto Diaz', hours: 8, date: ASOF,
+    uids: [{ uid: 'AAAA1111', strain: 'OG' }, { uid: 'AAAA2222', strain: 'OG' }, { uid: 'AAAA3333', strain: 'Runtz' }, { uid: 'AAAA4444', strain: 'Runtz' }] },
+  // general harvest work, no UID
+  { process: 'harvest', employeeId: '5475211', employeeName: 'Gilberto Diaz', hours: 1.5, date: ASOF, uids: [] },
+  // removed entries count for nothing
+  { process: 'buck', employeeId: '5475211', employeeName: 'Gilberto Diaz', hours: 3, date: ASOF, voided: true,
+    uids: [{ uid: 'AAAA1111', strain: 'OG' }] }
+] };
+const split = A.laborSplit(laborStages.labor_entry[0]);
+check('8 hours over 4 UIDs is 2 each', split.map((p) => p.hours), [2, 2, 2, 2]);
+check('voided entry splits to nothing', A.laborSplit(laborStages.labor_entry[2]).length, 0);
+const llRows = A.crewLaborLog(laborStages).filter((e) => e.employeeNo === '5475211');
+check('one row per UID plus the no-UID row', llRows.length, 5);
+check('strain filter keeps only that strain’s share', A.crewLaborLog(laborStages, { strain: 'Runtz' }).filter((e) => e.employeeNo === '5475211').map((e) => e.hours), [2, 2]);
+const gil = A.crewLaborByEmployee(laborStages).find((e) => e.employeeNo === '5475211');
+check('employee roll-up: 9.5 hours, named, 4 distinct UIDs', [gil.hours, gil.name, gil.batchCount], [9.5, 'Gilberto Diaz', 4]);
+
 console.log('\nrequests');
 const reqs = A.requestSummary(stages, ASOF);
 check('one request still open', reqs.filter((r) => r.open).length, 1);

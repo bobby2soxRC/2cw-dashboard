@@ -185,6 +185,9 @@
   // isn't — same shape either way, so ops_analytics.js never has to know
   // which one it got.
   await Promise.all(OPERATIONS_STATIONS.map(async (s) => { stages[s.key] = await loadSubmitted(s.key); }));
+  // Labor Log entries (labor_log.html) — not a station, but the Labor tab's
+  // crew log counts them.
+  stages.labor_entry = await loadSubmitted('labor_entry');
 
   const allRows = Object.values(stages).flat();
   const lastEntry = allRows.map((r) => String(r.submittedAt || r.date || '')).sort().pop();
@@ -476,7 +479,7 @@
       ${tdn(c.records, 0)} ${tdn(c.lb, 1)} ${tdn(c.laborHours, 1)} ${tdn(c.lbPerLaborHour, 2)}
     </tr>`);
     const empRows = byEmployee.map((e) => `<tr>
-      ${td(`<span style="font-family:'DM Mono',monospace">#${esc(e.employeeNo)}</span>`)}
+      ${td(e.name ? esc(e.name) : `<span style="font-family:'DM Mono',monospace">#${esc(e.employeeNo)}</span>`)}
       ${tdn(e.hours, 2)} ${tdn(e.touches, 0)} ${tdn(e.batchCount, 0)}
       ${td(e.stations.map((k) => `<span class="pill ${(STATION_BY_KEY[k] || {}).color || ''}">${t((STATION_BY_KEY[k] || {}).title || k)}</span>`).join(' '), 'wide')}
       ${td(bar(e.hours / maxH))}
@@ -485,7 +488,7 @@
     return `
       <div class="card">
         <h2>${t({ en: 'Crew log by employee', es: 'Registro de equipo por empleado' })}</h2>
-        <div class="note">${t({ en: 'Every employee number logged against a batch, from the optional crew grid on each station plus the hand-trim worksheet. This is the seam for a payroll/timeclock join later — match employee # + date here against a timeclock export to get labor cost per batch. Hours show as — where only the batch touch was captured, not time (the hand-trim worksheet today).', es: 'Cada número de empleado registrado contra un lote, desde la cuadrícula opcional de equipo en cada estación más la hoja de corte a mano. Este es el punto de conexión para un futuro cruce con nómina/reloj — coincida N.º de empleado + fecha aquí con una exportación de nómina para obtener el costo laboral por lote. Las horas se muestran como — donde solo se registró el contacto con el lote, no el tiempo (la hoja de corte a mano hoy).' })}</div>
+        <div class="note">${t({ en: 'Every employee number logged against a batch, from the optional crew grid on each station, the Labor Log, and the hand-trim worksheet. This is the seam for a payroll/timeclock join later — match employee # + date here against a timeclock export to get labor cost per batch. Hours show as — where only the batch touch was captured, not time (the hand-trim worksheet today).', es: 'Cada número de empleado registrado contra un lote, desde la cuadrícula opcional de equipo en cada estación, el Registro de Mano de Obra y la hoja de corte a mano. Este es el punto de conexión para un futuro cruce con nómina/reloj — coincida N.º de empleado + fecha aquí con una exportación de nómina para obtener el costo laboral por lote. Las horas se muestran como — donde solo se registró el contacto con el lote, no el tiempo (la hoja de corte a mano hoy).' })}</div>
         ${table([{ label: t(L.employee) }, { label: t(L.laborHours), num: true }, { label: t({ en: 'Batch Touches', es: 'Contactos con lotes' }), num: true },
                  { label: t({ en: 'Distinct Batches', es: 'Lotes distintos' }), num: true }, { label: t(L.stage) }, { label: '' }], empRows)}
       </div>

@@ -392,7 +392,30 @@ function crewLaborLog(stages, filter) {
       }
     });
   });
+  // Labor Log entries (labor_log.html, station_key 'labor_entry'): one person,
+  // one process, a block of hours spread over one or more UIDs.
+  (stages.labor_entry || []).forEach((r) => {
+    laborSplit(r).forEach((part) => {
+      if (!matches({ ...r, strain: part.strain }, filter)) return;
+      out.push({ employeeNo: String(r.employeeId || r.employeeName || '').trim(), name: r.employeeName || '',
+                 hours: part.hours, date: dayOf(r), stationKey: r.process || '',
+                 stationTitle: (STATION_BY_KEY[r.process] || {}).title || null,
+                 uid: part.uid, batch: '', strain: part.strain || '' });
+    });
+  });
   return out;
+}
+
+// A Labor Log entry's hours, divided evenly across the UIDs it was logged
+// against — someone on take-down for 8 hours across 4 packages puts 2 hours
+// on each. No UIDs (general work at that process) keeps the hours on one row
+// with a blank UID. Removed (voided) entries count for nothing.
+function laborSplit(r) {
+  if (!r || r.voided) return [];
+  const hours = num(r.hours);
+  const uids = (r.uids || []).filter((u) => u && u.uid);
+  if (!uids.length) return hours ? [{ uid: '', strain: r.strain || '', hours: round2(hours) }] : [];
+  return uids.map((u) => ({ uid: u.uid, strain: u.strain || '', hours: Math.round(hours / uids.length * 1000) / 1000 }));
 }
 
 // Rolled up by employee: total logged hours, distinct batches/UIDs touched,
@@ -402,15 +425,16 @@ function crewLaborByEmployee(stages, filter) {
   const by = {};
   crewLaborLog(stages, filter).forEach((e) => {
     const row = by[e.employeeNo] || (by[e.employeeNo] = {
-      employeeNo: e.employeeNo, hours: 0, touches: 0, batches: new Set(), stations: new Set()
+      employeeNo: e.employeeNo, name: '', hours: 0, touches: 0, batches: new Set(), stations: new Set()
     });
+    if (e.name) row.name = e.name;
     row.hours += e.hours || 0;
     row.touches += 1;
     if (e.uid || e.batch) row.batches.add(e.uid || e.batch);
     row.stations.add(e.stationKey);
   });
   return Object.values(by).map((r) => ({
-    employeeNo: r.employeeNo, hours: round2(r.hours), touches: r.touches,
+    employeeNo: r.employeeNo, name: r.name, hours: round2(r.hours), touches: r.touches,
     batchCount: r.batches.size, stations: [...r.stations]
   })).sort((a, b) => b.hours - a.hours || b.touches - a.touches);
 }
@@ -473,6 +497,6 @@ function exceptions(stages, asOf) {
   return out.sort((a, b) => String(b.date).localeCompare(String(a.date)));
 }
 
-return { buildLots, stageYields, strainYields, dailyOutput, biomassLedger, trimmerStats, crewThroughput, crewLaborLog, crewLaborByEmployee,
+return { buildLots, stageYields, strainYields, dailyOutput, biomassLedger, trimmerStats, crewThroughput, crewLaborLog, crewLaborByEmployee, laborSplit,
          requestSummary, exceptions, buildAliasMap, rootUid, daysBetween };
 }));
