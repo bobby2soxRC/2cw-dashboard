@@ -372,18 +372,42 @@ or just hours, one or more people, and zero or more UIDs, then Save.
   this. If the records don't have a UID, the search also checks active Canix
   packages (`data/canix_inventory.json`, only fetched once someone types 4+
   characters). A full tag that's in neither can still be added as typed.
-- **Several UIDs on one entry** is for harvest, intake and take-down work
-  that's too fast-moving to track per package: the hours are split evenly
-  across the UIDs (`laborSplit` in `ops_analytics.js`). For example, 8 hours
-  over 4 UIDs puts 2 hours on each.
+- **Several UIDs on one entry** is for intake, take-down and any other work
+  that's too fast-moving to track per package. The hours are split **by the
+  pounds each UID had at that process** (`laborAllocations` /
+  `lotLbForProcess` in `ops_analytics.js`). That's the stage's own input
+  weight (Take Down's wet intake lb, Bucking's starting dry lb, Trim's
+  bucked lb), or for Harvest and Wet Intake what they weighed in, or else
+  what the stage before put out. So bucking labor logged before the batch
+  closes still splits by dry weight. For example, 16 hours of intake over a
+  500 lb and a 1,500 lb package is 4 h and 12 h. If any UID on the entry has
+  no weight anywhere yet, that entry splits evenly and is marked ≈. It
+  re-splits by weight on its own once the weights are recorded, because
+  nothing is frozen at save time. The form previews the split before
+  saving.
+- **Labor rate:** one loaded $/hr (wage + taxes + benefits) for everyone,
+  set on the Entries tab. It's stored in one `operations_forms` row
+  (`station_key: 'labor_settings'`, fixed id `6c61626f-7273-4000-8000-000000000001`,
+  `fields.rate`), so the edit history logs every change. Each new entry
+  saves the rate in effect (`fields.rate`), so changing the rate later
+  doesn't rewrite past costs. Entries saved before any rate was set use the
+  current one. It's visible to anyone with the anon key, like the rest of
+  `operations_forms`, so per-person pay rates would need server-side
+  storage instead.
 
 Saving writes **one row per person** to `operations_forms` with
 `station_key: 'labor_entry'`, `status: 'submitted'`, `fields = { process,
 employeeId, employeeName, uids: [{uid, strain}], start, end, hours, notes,
 enteredBy }`. There's no new table or SQL, just like Bucking's submissions.
 After a save the process, date, times and UIDs stay filled in so the next
-person can be logged right away. **Entries** lists a date range three ways:
-each entry, totals **by UID** (after the split), and totals **by person**.
+person can be logged right away. **Entries** lists a date range (with
+Today / Last 30 days / All dates shortcuts) three ways: each entry with its
+cost, totals **by person**, and **By lot ($)**. By lot has one row per lot,
+keyed on its root UID (`laborCostByLot`), so Take Down's on-stem tag counts
+toward its farm package. It shows hours and cost for each process, then the
+total, wet lb in and $/wet lb, and the lot's weight at its latest stage and
+$/lb there. Only entries in the date range count, so pick All dates to see
+a lot's whole cost. General work with no UID is its own row.
 When the range is just today, By person also shows Connecteam's clocked
 hours and how much of that time has no entry yet. "Remove" can't delete (anon
 has no DELETE on `operations_forms`), so it sets `fields.voided` and stamps

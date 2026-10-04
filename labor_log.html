@@ -76,6 +76,8 @@
     .quick button:hover{border-color:var(--blue);color:var(--blue)}
 
     .summary{background:var(--bg);border:1px dashed var(--border);border-radius:10px;padding:12px 14px;font-size:.9rem;color:var(--subtext);line-height:1.55;margin-bottom:16px}
+    .summary table{margin-top:6px;font-size:.85rem}
+    .summary td{padding:3px 8px 3px 0;border:none}
     .summary b{color:var(--text);font-family:'DM Mono',monospace;font-weight:500}
     .btn{padding:.75rem 1.2rem;border:1px solid var(--border);border-radius:10px;font-family:'DM Mono',monospace;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer;background:transparent;color:var(--text);min-height:48px}
     .btn-blue{background:var(--blue);border-color:var(--blue);color:#000}
@@ -158,7 +160,7 @@
         <label for="notes" id="l-notes"></label>
         <textarea id="notes"></textarea>
       </div>
-      <div class="summary" id="summary"></div>
+      <div class="summary"><div id="summary"></div><div id="split"></div></div>
       <button class="btn btn-blue" id="save" type="button"></button>
       <div class="err" id="err"></div>
     </div>
@@ -166,11 +168,17 @@
 
   <section class="view" id="view-list">
     <div class="filters">
+      <label class="lbl" for="rate" id="l-rate" style="margin:0;flex:0 0 auto"></label>
+      <input type="number" id="rate" min="0" step="0.25" inputmode="decimal" style="flex:0 1 120px">
+    </div>
+    <div class="hint" id="h-rate" style="margin:-6px 0 14px"></div>
+    <div class="filters">
       <input type="date" id="f-from">
       <input type="date" id="f-to">
       <select id="f-process"></select>
       <input id="f-q">
     </div>
+    <div class="quick" id="ranges" style="margin:-4px 0 14px"></div>
     <div class="seg" id="seg"></div>
     <div id="list"></div>
   </section>
@@ -195,9 +203,10 @@
 // as the last 4 of the tag). Saving writes one row per person to
 // operations_forms with station_key 'labor_entry' — no schema of its own,
 // like Bucking's submissions. When an entry covers several UIDs its hours
-// are split evenly across them (laborSplit in ops_analytics.js), which is how
-// a crew on take-down for the morning gets spread over everything they took
-// down. The dashboard's Labor tab counts these alongside the station forms'
+// are split across them by the pounds each had at that process
+// (laborAllocations in ops_analytics.js), which is how a crew on intake or
+// take-down for the morning gets spread over everything they handled. With
+// a labor rate set, the By lot view turns that into cost per lot and per lb. The dashboard's Labor tab counts these alongside the station forms'
 // crew grids. Entries can't be deleted from the browser (anon has no DELETE
 // on operations_forms), so "Remove" marks the entry voided, and the edit
 // history trigger keeps who did it.
@@ -235,8 +244,8 @@
     noRoster:  { en: 'Couldn’t load the Connecteam list — type names and press Enter.', es: 'No se pudo cargar la lista de Connecteam — escriba los nombres y presione Enter.' },
     uids:      { en: 'UIDs', es: 'UIDs' },
     uidQ:      { en: 'Pick from the list or type the last 4…', es: 'Elija de la lista o escriba los últimos 4…' },
-    hUids:     { en: 'Add one UID, or several if the time covered several packages — the hours are split evenly across them. Leave empty for general work at this process.',
-                 es: 'Agregue un UID, o varios si el tiempo cubrió varios paquetes — las horas se dividen en partes iguales. Déjelo vacío para trabajo general en este proceso.' },
+    hUids:     { en: 'Add one UID, or several if the time covered several packages — the hours are split by the pounds each one had at this process. Leave empty for general work at this process.',
+                 es: 'Agregue un UID, o varios si el tiempo cubrió varios paquetes — las horas se dividen según las libras de cada uno en este proceso. Déjelo vacío para trabajo general en este proceso.' },
     suggested: { en: 'At this stage', es: 'En esta etapa' },
     recent:    { en: 'Other recent UIDs', es: 'Otros UIDs recientes' },
     canix:     { en: 'Canix packages', es: 'Paquetes de Canix' },
@@ -257,7 +266,10 @@
     noDb:      { en: 'Supabase isn’t connected, so the Labor Log can’t save yet.', es: 'Supabase no está conectado, así que el registro no puede guardar todavía.' },
     sumNone:   { en: 'Add people and hours to see the total.', es: 'Agregue personas y horas para ver el total.' },
     sumPeople: { en: '{p} × {h} h = {t} labor hours', es: '{p} × {h} h = {t} horas de trabajo' },
-    sumSplit:  { en: 'Split over {u} UIDs: {e} h per UID per person ({tu} h on each UID).', es: 'Dividido entre {u} UIDs: {e} h por UID por persona ({tu} h en cada UID).' },
+    sumWeight: { en: 'Split over {u} UIDs by the pounds each one had at this process:', es: 'Dividido entre {u} UIDs según las libras de cada uno en este proceso:' },
+    sumEven:   { en: 'Split evenly over {u} UIDs for now — no weight recorded yet for {missing}. It re-splits by weight once the weights are in.',
+                 es: 'Dividido en partes iguales entre {u} UIDs por ahora — todavía no hay peso para {missing}. Se vuelve a dividir por peso cuando estén los pesos.' },
+    sumCost:   { en: '≈ {c} at {r}/hr.', es: '≈ {c} a {r}/hora.' },
     sumOne:    { en: 'All on {uid}.', es: 'Todo en {uid}.' },
     sumNoUid:  { en: 'No UID — counted against the process only.', es: 'Sin UID — se cuenta solo contra el proceso.' },
     person1:   { en: '1 person', es: '1 persona' },
@@ -265,7 +277,23 @@
     allProc:   { en: 'All processes', es: 'Todos los procesos' },
     search:    { en: 'Search name or UID…', es: 'Buscar nombre o UID…' },
     segEntries:{ en: 'Entries', es: 'Registros' },
-    segUid:    { en: 'By UID', es: 'Por UID' },
+    segLot:    { en: 'By lot ($)', es: 'Por lote ($)' },
+    rate:      { en: 'Labor rate $/hr', es: 'Tarifa $/hora' },
+    rateHint:  { en: 'Loaded cost per labor hour (wage + taxes + benefits), one rate for everyone. Saved with each new entry, so changing it later doesn’t rewrite past costs; entries saved before a rate was set use this one.',
+                 es: 'Costo cargado por hora de trabajo (salario + impuestos + beneficios), una tarifa para todos. Se guarda con cada registro nuevo, así que cambiarla después no cambia costos pasados; los registros guardados antes de fijar una tarifa usan esta.' },
+    rateSaved: { en: 'Rate saved', es: 'Tarifa guardada' },
+    allTime:   { en: 'All dates', es: 'Todas las fechas' },
+    today:     { en: 'Today', es: 'Hoy' },
+    last30:    { en: 'Last 30 days', es: 'Últimos 30 días' },
+    colLot:    { en: 'Lot (UID)', es: 'Lote (UID)' },
+    colCost:   { en: 'Cost', es: 'Costo' },
+    colWet:    { en: 'Wet lb in', es: 'Lb húmedas' },
+    colPerWet: { en: '$/wet lb', es: '$/lb húmeda' },
+    colNow:    { en: 'Now (lb)', es: 'Ahora (lb)' },
+    colPerNow: { en: '$/lb now', es: '$/lb ahora' },
+    lotNote:   { en: 'Hours on multi-UID entries are split by the pounds each lot had at that process. ≈ marks a lot with an entry split evenly because a weight wasn’t recorded yet. Take Down’s on-stem UID counts toward its farm package’s lot. Only entries in the dates above are counted — pick “All dates” for a lot’s whole cost.',
+                 es: 'Las horas de registros con varios UIDs se dividen según las libras de cada lote en ese proceso. ≈ marca un lote con un registro dividido en partes iguales porque faltaba un peso. El UID en tallo de Desmontaje cuenta en el lote de su paquete de rancho. Solo cuentan los registros en las fechas de arriba — elija “Todas las fechas” para el costo completo de un lote.' },
+    noRate:    { en: 'Set a labor rate above to see costs.', es: 'Fije una tarifa arriba para ver costos.' },
     segPerson: { en: 'By person', es: 'Por persona' },
     colDate:   { en: 'Date', es: 'Fecha' },
     colPerson: { en: 'Person', es: 'Persona' },
@@ -409,7 +437,7 @@
       const { data, error } = await client.from('operations_forms')
         .select('station_key,status,work_date,strain,fields,updated_at')
         .gte('work_date', localDay(since))
-        .not('station_key', 'in', '(buck_submission,buck_box,buck_batch_close,labor_entry)')
+        .not('station_key', 'in', '(buck_submission,buck_box,buck_batch_close,labor_entry,labor_settings)')
         .order('work_date', { ascending: false }).order('updated_at', { ascending: false })
         .range(page * PAGE, page * PAGE + PAGE - 1);
       if (error) { console.error('labor uids', error); return; }
@@ -592,8 +620,51 @@
     try { localStorage.setItem(PROCESS_KEY, $('process').value); } catch {}
     renderSummary();
   });
+  $('date').addEventListener('change', renderSummary);
   if (params.get('uid')) { addUid({ uid: normUid(params.get('uid')) }); uidsReady.then(() => {
     uids = uids.map((u) => ({ ...u, strain: u.strain || (uidIndex.get(u.uid) || {}).strain || '' })); renderUids(); }); }
+
+  // ── Stage records, for weights ──────────────────────────────────────────
+  // Every submitted station record, the same set the dashboard reads —
+  // what laborAllocations uses to find each UID's lot and its pounds.
+  let stagesP = null;
+  function loadStages() {
+    if (!stagesP) stagesP = (async () => {
+      const st = {};
+      await Promise.all(OPERATIONS_STATIONS.map(async (s) => { st[s.key] = await loadSubmitted(s.key); }));
+      return st;
+    })();
+    return stagesP;
+  }
+
+  // ── Labor rate ──────────────────────────────────────────────────────────
+  // One loaded $/hr, kept in a single operations_forms row (station_key
+  // labor_settings, fixed id) so it needs no table of its own; the edit
+  // history trigger logs every change to it.
+  const SETTINGS_ID = '6c61626f-7273-4000-8000-000000000001';
+  let rate = 0;
+  const fmtMoney = (x) => x == null ? '—' : '$' + fmtNum(x, 2);
+  const settingsReady = (async () => {
+    const client = getClient();
+    if (!client) return;
+    const { data } = await client.from('operations_forms').select('fields').eq('id', SETTINGS_ID).maybeSingle();
+    rate = num(data && data.fields && data.fields.rate);
+    $('rate').value = rate || '';
+    renderSummary();
+  })();
+  $('rate').addEventListener('change', async () => {
+    const client = getClient();
+    if (!client) return;
+    const v = Math.max(0, num($('rate').value));
+    const { error } = await client.from('operations_forms').upsert({
+      id: SETTINGS_ID, station_key: 'labor_settings', status: 'submitted', owner_user: me || null, updated_by: me || null,
+      submitted_at: new Date().toISOString(), fields: { rate: v }
+    });
+    if (error) { alert(`${t(L.failed)} ${error.message}`); return; }
+    rate = v;
+    toast(t(L.rateSaved));
+    renderList();
+  });
 
   // ── Hours ───────────────────────────────────────────────────────────────
   function fromTimes() {
@@ -610,10 +681,32 @@
     if (!people.length || !h) { $('summary').textContent = t(L.sumNone); return; }
     const p = people.length === 1 ? t(L.person1) : fill(t(L.personN), { n: people.length });
     let s = fill(t(L.sumPeople), { p, h: `<b>${fmtH(h)}</b>`, t: `<b>${fmtH(h * people.length)}</b>` });
+    if (rate) s += ' ' + fill(t(L.sumCost), { c: `<b>${fmtMoney(h * people.length * rate)}</b>`, r: fmtMoney(rate) });
     if (!uids.length) s += '<br>' + t(L.sumNoUid);
     else if (uids.length === 1) s += '<br>' + fill(t(L.sumOne), { uid: `<b>${esc(tail(uids[0].uid))}</b>` });
-    else s += '<br>' + fill(t(L.sumSplit), { u: uids.length, e: `<b>${fmtNum(h / uids.length, 2)}</b>`, tu: `<b>${fmtNum(h * people.length / uids.length, 2)}</b>` });
     $('summary').innerHTML = s;
+    renderSplit();
+  }
+  // How a multi-UID entry will divide: each UID's pounds at this process and
+  // its share, worked out the same way the reports do (laborAllocations).
+  let splitSeq = 0;
+  async function renderSplit() {
+    const seq = ++splitSeq;
+    const h = num($('hours').value), proc = $('process').value;
+    if (uids.length < 2 || !people.length || !h || !proc) { $('split').innerHTML = ''; return; }
+    const st = await loadStages();
+    if (seq !== splitSeq) return;
+    const entry = { id: 'preview', process: proc, hours: h * people.length, rate, date: $('date').value, uids };
+    const al = A.laborAllocations({ ...st, labor_entry: [entry] }, rate);
+    if (!al.length) { $('split').innerHTML = ''; return; }
+    if (al[0].basis === 'even') {
+      const missing = al.filter((a) => !a.lb).map((a) => tail(a.uid)).join(', ');
+      $('split').innerHTML = '<br>' + esc(fill(t(L.sumEven), { u: al.length, missing }));
+      return;
+    }
+    $('split').innerHTML = '<br>' + esc(fill(t(L.sumWeight), { u: al.length })) +
+      `<table>${al.map((a) => `<tr><td class="m">${esc(tail(a.uid))}</td><td>${esc(a.strain)}</td><td class="n">${fmtNum(a.lb, 0)} lb</td>
+        <td class="n">${fmtPct(a.share, 0)}</td><td class="n"><b>${fmtNum(a.hours, 2)} h</b></td>${a.cost != null ? `<td class="n">${fmtMoney(a.cost)}</td>` : ''}</tr>`).join('')}</table>`;
   }
   renderSummary();
 
@@ -636,7 +729,7 @@
         process: proc, employeeId: p.userId || '', employeeName: p.name,
         uids: uids.map((u) => ({ uid: u.uid, strain: u.strain || '' })),
         start: $('start').value || '', end: $('end').value || '', hours,
-        notes: $('notes').value.trim(), enteredBy: me
+        notes: $('notes').value.trim(), enteredBy: me, ...(rate ? { rate } : {})
       }
     }));
     $('save').disabled = true;
@@ -664,7 +757,20 @@
   let seg = 'entries';
   $('f-from').value = localDay();
   $('f-to').value = localDay();
-  const SEGS = [['entries', L.segEntries], ['uid', L.segUid], ['person', L.segPerson]];
+  $('l-rate').textContent = t(L.rate);
+  $('h-rate').textContent = t(L.rateHint);
+  const RANGES = [['today', L.today, 0], ['30', L.last30, 29], ['all', L.allTime, null]];
+  $('ranges').innerHTML = RANGES.map(([k, l]) => `<button type="button" data-range="${k}">${esc(t(l))}</button>`).join('');
+  $('ranges').onclick = (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    const back = RANGES.find((r) => r[0] === b.dataset.range)[2];
+    const from = new Date(); from.setDate(from.getDate() - (back || 0));
+    $('f-from').value = back == null ? '' : localDay(from);
+    $('f-to').value = back == null ? '' : localDay();
+    loadEntries();
+  };
+  const SEGS = [['entries', L.segEntries], ['lot', L.segLot], ['person', L.segPerson]];
   $('seg').innerHTML = SEGS.map(([k, l]) => `<button type="button" data-seg="${k}">${esc(t(l))}</button>`).join('');
   $('seg').onclick = (e) => { const b = e.target.closest('button'); if (b) { seg = b.dataset.seg; renderList(); } };
   ['f-from', 'f-to'].forEach((id) => $(id).addEventListener('change', loadEntries));
@@ -708,6 +814,8 @@
     if (!rows.length) { $('list').innerHTML = `<div class="empty-big">${esc(t(L.empty))}</div>`; return; }
     const table = (head, body) => `<div class="tbl-wrap"><table><thead><tr>${head.map(([l, n]) => `<th class="${n ? 'n' : ''}">${esc(t(l))}</th>`).join('')}</tr></thead><tbody>${body.join('')}</tbody></table></div>`;
     const totalH = rows.reduce((a, r) => a + num(r.fields.hours), 0);
+    const entryCost = (f) => { const r = num(f.rate) || rate; return r ? num(f.hours) * r : null; };
+    const totalCost = rate || rows.every((r) => num(r.fields.rate)) ? rows.reduce((a, r) => a + (entryCost(r.fields) || 0), 0) : null;
 
     if (seg === 'entries') {
       const body = rows.map((r) => {
@@ -717,34 +825,22 @@
         return `<tr><td>${esc(r.work_date)}</td>
           <td>${esc(f.employeeName)}${f.employeeId ? '' : ` <span class="s warn">${esc(t(L.notInCt))}</span>`}</td>
           <td>${esc(procTitle(f.process))}</td><td class="n">${esc(time)}</td><td class="n">${fmtH(num(f.hours))}</td>
+          <td class="n">${fmtMoney(entryCost(f))}</td>
           <td>${us}${f.notes ? `<div class="s">${esc(f.notes)}</div>` : ''}</td><td><span class="s">${esc(f.enteredBy || r.owner_user || '')}</span></td>
           <td><button type="button" class="link-btn" data-remove="${r.id}">${esc(t(L.remove))}</button></td></tr>`;
       });
-      body.push(`<tr class="total"><td colspan="4">${esc(t(L.total))}</td><td class="n">${fmtH(totalH)}</td><td colspan="3"></td></tr>`);
-      $('list').innerHTML = table([[L.colDate], [L.colPerson], [L.colProc], [L.colTime, 1], [L.colHours, 1], [L.colUids], [L.colBy], [{ en: '', es: '' }]], body);
-    } else if (seg === 'uid') {
-      const by = {};
-      rows.forEach((r) => A.laborSplit(r.fields).forEach((part) => {
-        const k = part.uid || '';
-        const row = by[k] || (by[k] = { uid: k, strain: part.strain, hours: 0, people: new Set(), procs: new Set() });
-        row.hours += part.hours;
-        row.people.add(r.fields.employeeId || r.fields.employeeName);
-        row.procs.add(r.fields.process);
-        if (!row.strain) row.strain = part.strain;
-      }));
-      const list = Object.values(by).sort((a, b) => b.hours - a.hours);
-      const body = list.map((u) => `<tr><td>${u.uid ? `<span class="m">${esc(u.uid)}</span>` : `<span class="s">${esc(t(L.noUid))}</span>`}</td>
-        <td>${esc(u.strain)}</td><td class="n">${fmtNum(u.hours, 2)}</td><td class="n">${u.people.size}</td>
-        <td>${[...u.procs].map((p) => esc(procTitle(p))).join(', ')}</td></tr>`);
-      body.push(`<tr class="total"><td colspan="2">${esc(t(L.total))}</td><td class="n">${fmtNum(list.reduce((a, u) => a + u.hours, 0), 2)}</td><td colspan="2"></td></tr>`);
-      $('list').innerHTML = table([[L.colUids], [L.colStrain], [L.colHours, 1], [L.colPeople, 1], [L.colProc]], body);
+      body.push(`<tr class="total"><td colspan="4">${esc(t(L.total))}</td><td class="n">${fmtH(totalH)}</td><td class="n">${fmtMoney(totalCost)}</td><td colspan="3"></td></tr>`);
+      $('list').innerHTML = table([[L.colDate], [L.colPerson], [L.colProc], [L.colTime, 1], [L.colHours, 1], [L.colCost, 1], [L.colUids], [L.colBy], [{ en: '', es: '' }]], body);
+    } else if (seg === 'lot') {
+      renderLots(rows, table);
     } else {
       const by = {};
       rows.forEach((r) => {
         const f = r.fields;
         const k = f.employeeId || 'name:' + fold(f.employeeName);
-        const row = by[k] || (by[k] = { id: f.employeeId, name: f.employeeName, hours: 0, n: 0, uids: new Set(), procs: new Set() });
+        const row = by[k] || (by[k] = { id: f.employeeId, name: f.employeeName, hours: 0, cost: 0, n: 0, uids: new Set(), procs: new Set() });
         row.hours += num(f.hours);
+        row.cost += entryCost(f) || 0;
         row.n += 1;
         (f.uids || []).forEach((u) => row.uids.add(u.uid));
         row.procs.add(f.process);
@@ -757,14 +853,46 @@
       const body = list.map((p) => {
         const clock = p.id && clockedToday[p.id] != null ? clockedToday[p.id] : null;
         const gap = clock != null ? clock - p.hours : null;
-        return `<tr><td>${esc(p.name)}</td><td class="n">${fmtH(p.hours)}</td>
+        return `<tr><td>${esc(p.name)}</td><td class="n">${fmtH(p.hours)}</td><td class="n">${totalCost != null ? fmtMoney(p.cost) : '—'}</td>
           ${withClock ? `<td class="n">${clock != null ? fmtNum(clock, 2) : '—'}</td><td class="n ${gap > 0.25 ? 'warn' : ''}">${gap != null ? fmtNum(Math.max(0, gap), 2) : '—'}</td>` : ''}
           <td class="n">${p.n}</td><td class="n">${p.uids.size}</td><td>${[...p.procs].map((x) => esc(procTitle(x))).join(', ')}</td></tr>`;
       });
-      body.push(`<tr class="total"><td>${esc(t(L.total))}</td><td class="n">${fmtH(totalH)}</td><td colspan="${withClock ? 5 : 3}"></td></tr>`);
-      $('list').innerHTML = table([[L.colPerson], [L.colHours, 1], ...(withClock ? [[L.colClock, 1], [L.colUnlog, 1]] : []),
+      body.push(`<tr class="total"><td>${esc(t(L.total))}</td><td class="n">${fmtH(totalH)}</td><td class="n">${fmtMoney(totalCost)}</td><td colspan="${withClock ? 5 : 3}"></td></tr>`);
+      $('list').innerHTML = table([[L.colPerson], [L.colHours, 1], [L.colCost, 1], ...(withClock ? [[L.colClock, 1], [L.colUnlog, 1]] : []),
         [L.colEntries, 1], [L.colUids, 1], [L.colProc]], body) + (withClock ? `<div class="hint">${esc(t(L.clockNote))}</div>` : '');
     }
+  }
+
+  // Labor cost per lot, through the flow: intake, take-down, bucking, … each
+  // its own column, then totals and cost per pound.
+  let lotSeq = 0;
+  async function renderLots(rows, table) {
+    const seq = ++lotSeq;
+    $('list').innerHTML = `<div class="empty-big">${esc(t(L.loading))}</div>`;
+    const st = await loadStages();
+    if (seq !== lotSeq || seg !== 'lot') return;
+    const all = { ...st, labor_entry: rows.map(flattenRecord) };
+    const allocs = A.laborAllocations(all, rate);
+    const lots = A.laborCostByLot(all, rate, allocs);
+    const procs = [...OPERATIONS_STATIONS.map((x) => x.key), 'other'].filter((k) => lots.some((l) => l.byProcess[k]));
+    const hasCost = lots.every((l) => l.cost != null);
+    const cell = (p) => !p ? '' : hasCost ? `${fmtMoney(p.cost)}<div class="s">${fmtNum(p.hours, 2)} h</div>` : `${fmtNum(p.hours, 2)} h`;
+    const body = lots.map((l) => `<tr>
+      <td>${l.lotId ? `<span class="m" title="${esc(l.uids.join(', '))}">${esc(tail(l.lotId))}</span>${l.evenSplit ? ' <span class="warn">≈</span>' : ''}` : `<span class="s">${esc(t(L.noUid))}</span>`}
+        <div class="s">${esc(l.strain)}</div></td>
+      ${procs.map((k) => `<td class="n">${cell(l.byProcess[k])}</td>`).join('')}
+      <td class="n">${fmtNum(l.hours, 2)}</td><td class="n">${fmtMoney(l.cost)}</td>
+      <td class="n">${l.wetLb ? fmtNum(l.wetLb, 0) : '—'}</td><td class="n">${l.costPerWetLb != null ? '$' + fmtNum(l.costPerWetLb, 3) : '—'}</td>
+      <td class="n">${l.currentLb ? fmtNum(l.currentLb, 1) : '—'}${l.currentStage ? `<div class="s">${esc(procTitle(l.currentStage))}</div>` : ''}</td>
+      <td class="n">${l.costPerCurrentLb != null ? '$' + fmtNum(l.costPerCurrentLb, 2) : '—'}</td></tr>`);
+    const sum = (k) => lots.reduce((a, l) => a + (l[k] || 0), 0);
+    body.push(`<tr class="total"><td>${esc(t(L.total))}</td>${procs.map((k) => {
+      const p = lots.reduce((a, l) => { const x = l.byProcess[k]; if (x) { a.hours += x.hours; a.cost += x.cost; } return a; }, { hours: 0, cost: 0 });
+      return `<td class="n">${cell(p)}</td>`; }).join('')}<td class="n">${fmtNum(sum('hours'), 2)}</td><td class="n">${hasCost ? fmtMoney(sum('cost')) : '—'}</td><td colspan="4"></td></tr>`);
+    $('list').innerHTML = (hasCost ? '' : `<div class="hint warn" style="margin-bottom:10px">${esc(t(L.noRate))}</div>`) +
+      table([[L.colLot], ...procs.map((k) => [{ en: procTitle(k), es: procTitle(k) }, 1]), [L.colHours, 1], [L.colCost, 1],
+             [L.colWet, 1], [L.colPerWet, 1], [L.colNow, 1], [L.colPerNow, 1]], body) +
+      `<div class="hint">${esc(t(L.lotNote))}</div>`;
   }
 
   $('list').addEventListener('click', async (e) => {

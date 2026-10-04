@@ -392,30 +392,113 @@ function crewLaborLog(stages, filter) {
       }
     });
   });
-  // Labor Log entries (labor_log.html, station_key 'labor_entry'): one person,
-  // one process, a block of hours spread over one or more UIDs.
-  (stages.labor_entry || []).forEach((r) => {
-    laborSplit(r).forEach((part) => {
-      if (!matches({ ...r, strain: part.strain }, filter)) return;
-      out.push({ employeeNo: String(r.employeeId || r.employeeName || '').trim(), name: r.employeeName || '',
-                 hours: part.hours, date: dayOf(r), stationKey: r.process || '',
-                 stationTitle: (STATION_BY_KEY[r.process] || {}).title || null,
-                 uid: part.uid, batch: '', strain: part.strain || '' });
+  // Labor Log entries (labor_log.html, station_key 'labor_entry'), already
+  // spread across their UIDs by laborAllocations.
+  laborAllocations(stages).forEach((a) => {
+    if (!matches({ date: a.date, strain: a.strain }, filter)) return;
+    out.push({ employeeNo: a.employeeNo, name: a.name, hours: a.hours, date: a.date, stationKey: a.process,
+               stationTitle: (STATION_BY_KEY[a.process] || {}).title || null,
+               uid: a.uid, batch: '', strain: a.strain });
+  });
+  return out;
+}
+
+// ── Labor cost by UID / lot ─────────────────────────────────────────────────
+// The pounds a process handled for one lot — what a Labor Log entry's hours
+// are split by when it covers several UIDs. The stage's own input weight
+// first (Take Down's wet intake lb, Bucking's starting dry lb, …); a stage
+// with no input of its own (Harvest, Wet Intake) uses what it weighed in;
+// otherwise what the stage before it put out, which is how bucking labor
+// logged before the batch is closed still splits by dry weight.
+function lotLbForProcess(lot, process) {
+  if (!lot) return 0;
+  const st = lot.stages[process];
+  const station = STATION_BY_KEY[process];
+  if (st && st.inputLb > 0) return st.inputLb;
+  if (st && st.outputLb > 0 && station && station.flow && !station.flow.input) return st.outputLb;
+  for (let i = PIPELINE_ORDER.indexOf(process) - 1; i >= 0; i--) {
+    const prev = lot.stages[PIPELINE_ORDER[i]];
+    if (prev && prev.outputLb > 0) return prev.outputLb;
+  }
+  return st && st.outputLb > 0 ? st.outputLb : 0;
+}
+
+// Every Labor Log entry spread over its UIDs: one row per entry × UID with
+// that UID's share of the hours (and cost, at the entry's own rate or
+// `defaultRate`). Shares follow the pounds each UID's lot had at that process
+// (2,000 wet lb over three packages: the 1,000 lb one carries half the
+// hours). If any UID on the entry has no weight yet, the entry is split
+// evenly instead and marked basis 'even' — it re-splits by weight on its own
+// once the weights are recorded. No UIDs keeps the hours on one row with a
+// blank UID. Voided entries count for nothing. `lotId` is the lot's root UID
+// (Take Down's on-stem tag rolls back to the farm package), so labor at every
+// stage of one lot adds up in one place.
+function laborAllocations(stages, defaultRate) {
+  const entries = (stages.labor_entry || []).filter((r) => r && !r.voided);
+  if (!entries.length) return [];
+  const alias = buildAliasMap(stages);
+  const lots = new Map(buildLots(stages).map((l) => [l.id, l]));
+  const roots = new Set(lots.keys());
+  const lotFor = (uid) => lots.get(resolveKey(roots, rootUid(alias, uid))) || null;
+  const out = [];
+  entries.forEach((r) => {
+    const hours = num(r.hours);
+    const rate = num(r.rate) || num(defaultRate);
+    const base = { entryId: r.id, date: dayOf(r), process: r.process || '',
+                   employeeNo: String(r.employeeId || r.employeeName || '').trim(), name: r.employeeName || '' };
+    const uids = (r.uids || []).filter((u) => u && u.uid);
+    if (!uids.length) {
+      if (hours) out.push({ ...base, uid: '', lotId: '', strain: r.strain || '', lb: null, share: 1, basis: 'none',
+                            hours: round2(hours), cost: rate ? round2(hours * rate) : null });
+      return;
+    }
+    const parts = uids.map((u) => {
+      const lot = lotFor(u.uid);
+      return { u, lot, lb: lotLbForProcess(lot, r.process) };
+    });
+    const byWeight = parts.every((p) => p.lb > 0);
+    const totalLb = parts.reduce((a, p) => a + p.lb, 0);
+    parts.forEach((p) => {
+      const share = byWeight ? p.lb / totalLb : 1 / parts.length;
+      const h = hours * share;
+      out.push({ ...base, uid: normUid(p.u.uid), lotId: p.lot ? p.lot.id : normUid(p.u.uid),
+                 strain: p.u.strain || (p.lot && p.lot.strain) || '', lb: p.lb || null, share,
+                 basis: parts.length === 1 ? 'single' : byWeight ? 'weight' : 'even',
+                 hours: Math.round(h * 1000) / 1000, cost: rate ? Math.round(h * rate * 100) / 100 : null });
     });
   });
   return out;
 }
 
-// A Labor Log entry's hours, divided evenly across the UIDs it was logged
-// against — someone on take-down for 8 hours across 4 packages puts 2 hours
-// on each. No UIDs (general work at that process) keeps the hours on one row
-// with a blank UID. Removed (voided) entries count for nothing.
-function laborSplit(r) {
-  if (!r || r.voided) return [];
-  const hours = num(r.hours);
-  const uids = (r.uids || []).filter((u) => u && u.uid);
-  if (!uids.length) return hours ? [{ uid: '', strain: r.strain || '', hours: round2(hours) }] : [];
-  return uids.map((u) => ({ uid: u.uid, strain: u.strain || '', hours: Math.round(hours / uids.length * 1000) / 1000 }));
+// Labor rolled up per lot: hours and cost by process, the lot's wet weight in
+// and its weight at the latest stage, and cost per pound of each. Allocations
+// with no UID come back as one row with lotId '' (general work).
+function laborCostByLot(stages, defaultRate, allocs) {
+  const lots = new Map(buildLots(stages).map((l) => [l.id, l]));
+  const by = new Map();
+  (allocs || laborAllocations(stages, defaultRate)).forEach((a) => {
+    let row = by.get(a.lotId);
+    if (!row) {
+      const lot = lots.get(a.lotId) || null;
+      const wet = lot ? ((lot.stages.intake_wet || {}).outputLb || (lot.stages.harvest || {}).outputLb || 0) : 0;
+      const cur = lot && lot.currentStage ? lot.stages[lot.currentStage].outputLb : 0;
+      row = { lotId: a.lotId, strain: a.strain || (lot && lot.strain) || '', currentStage: lot ? lot.currentStage : null,
+              wetLb: wet || null, currentLb: cur || null, uids: new Set(), byProcess: {}, hours: 0, cost: 0,
+              costKnown: true, evenSplit: false };
+      by.set(a.lotId, row);
+    }
+    if (a.uid) row.uids.add(a.uid);
+    const p = row.byProcess[a.process] || (row.byProcess[a.process] = { hours: 0, cost: 0 });
+    p.hours += a.hours; row.hours += a.hours;
+    if (a.cost == null) row.costKnown = false; else { p.cost += a.cost; row.cost += a.cost; }
+    if (a.basis === 'even') row.evenSplit = true;
+    if (!row.strain && a.strain) row.strain = a.strain;
+  });
+  return [...by.values()].map((r) => ({
+    ...r, uids: [...r.uids], hours: round2(r.hours), cost: r.costKnown ? round2(r.cost) : null,
+    costPerWetLb: r.costKnown && r.wetLb ? r.cost / r.wetLb : null,
+    costPerCurrentLb: r.costKnown && r.currentLb ? r.cost / r.currentLb : null
+  })).sort((a, b) => (!a.lotId) - (!b.lotId) || b.hours - a.hours);
 }
 
 // Rolled up by employee: total logged hours, distinct batches/UIDs touched,
@@ -497,6 +580,6 @@ function exceptions(stages, asOf) {
   return out.sort((a, b) => String(b.date).localeCompare(String(a.date)));
 }
 
-return { buildLots, stageYields, strainYields, dailyOutput, biomassLedger, trimmerStats, crewThroughput, crewLaborLog, crewLaborByEmployee, laborSplit,
+return { buildLots, stageYields, strainYields, dailyOutput, biomassLedger, trimmerStats, crewThroughput, crewLaborLog, crewLaborByEmployee, laborAllocations, laborCostByLot, lotLbForProcess,
          requestSummary, exceptions, buildAliasMap, rootUid, daysBetween };
 }));

@@ -108,24 +108,50 @@ const emp79 = byEmp.find((e) => e.employeeNo === '79');
 check('employee 79 (hand-trim only) shows 0 logged hours, 1 touch', [emp79.hours, emp79.touches], [0, 1]);
 
 console.log('\nlabor log (labor_log.html entries)');
+// The fixture's truck: the LCG farm package came in at 310 wet lb, Zoap
+// (1A9999) at 92. LCG was taken down into DRY_UID and bucked from 102 dry lb.
+const FARM_UID = '1A4060300032386000000777';
 const laborStages = { ...stages, labor_entry: [
-  // 8 hours on take-down spread over four packages
-  { process: 'dry_check', employeeId: '5475211', employeeName: 'Gilberto Diaz', hours: 8, date: ASOF,
-    uids: [{ uid: 'AAAA1111', strain: 'OG' }, { uid: 'AAAA2222', strain: 'OG' }, { uid: 'AAAA3333', strain: 'Runtz' }, { uid: 'AAAA4444', strain: 'Runtz' }] },
+  // 8 hours of intake across both packages — split by wet lb
+  { id: 'L1', process: 'intake_wet', employeeId: '5475211', employeeName: 'Gilberto Diaz', hours: 8, date: ASOF, rate: 25,
+    uids: [{ uid: FARM_UID, strain: 'Lemon Cherry Gelato' }, { uid: '1A9999', strain: 'Zoap' }] },
+  // take-down across LCG and a package with no weight anywhere — even split
+  { id: 'L2', process: 'dry_check', employeeId: '5475211', employeeName: 'Gilberto Diaz', hours: 4, date: ASOF,
+    uids: [{ uid: FARM_UID }, { uid: '1AUNKNOWN0000000000000001' }] },
+  // bucking on the on-stem UID — still the LCG lot
+  { id: 'L3', process: 'buck', employeeId: '7366212', employeeName: 'Andres Beltran', hours: 6, date: ASOF, uids: [{ uid: DRY_UID }] },
   // general harvest work, no UID
-  { process: 'harvest', employeeId: '5475211', employeeName: 'Gilberto Diaz', hours: 1.5, date: ASOF, uids: [] },
+  { id: 'L4', process: 'harvest', employeeId: '5475211', employeeName: 'Gilberto Diaz', hours: 1.5, date: ASOF, uids: [] },
   // removed entries count for nothing
-  { process: 'buck', employeeId: '5475211', employeeName: 'Gilberto Diaz', hours: 3, date: ASOF, voided: true,
-    uids: [{ uid: 'AAAA1111', strain: 'OG' }] }
+  { id: 'L5', process: 'buck', employeeId: '5475211', employeeName: 'Gilberto Diaz', hours: 3, date: ASOF, voided: true,
+    uids: [{ uid: DRY_UID }] }
 ] };
-const split = A.laborSplit(laborStages.labor_entry[0]);
-check('8 hours over 4 UIDs is 2 each', split.map((p) => p.hours), [2, 2, 2, 2]);
-check('voided entry splits to nothing', A.laborSplit(laborStages.labor_entry[2]).length, 0);
+const allocs = A.laborAllocations(laborStages, 20);
+const l1 = allocs.filter((a) => a.entryId === 'L1');
+check('intake hours split by wet lb (310 : 92)', l1.map((a) => a.hours), [6.169, 1.831]);
+check('…and marked as a weight split', l1.map((a) => a.basis), ['weight', 'weight']);
+check('entry rate wins over the default', l1[0].cost, 154.23);
+const l2 = allocs.filter((a) => a.entryId === 'L2');
+check('a UID with no weight falls back to an even split', [l2.map((a) => a.hours), l2[0].basis], [[2, 2], 'even']);
+check('take-down weight is the wet lb going in', A.lotLbForProcess(A.buildLots(laborStages).find((l) => l.id === FARM_UID), 'dry_check'), 310);
+const l3 = allocs.find((a) => a.entryId === 'L3');
+check('on-stem UID rolls back to the farm lot', l3.lotId, FARM_UID);
+check('default rate when the entry has none', l3.cost, 120);
+check('voided entry is left out', allocs.some((a) => a.entryId === 'L5'), false);
+
+const byLot = A.laborCostByLot(laborStages, 20);
+const lcgLot = byLot.find((r) => r.lotId === FARM_UID);
+check('LCG lot: intake + take-down + bucking hours', lcgLot.hours, 14.17);
+check('LCG lot: cost across stages', lcgLot.cost, 154.23 + 40 + 120);
+check('LCG lot: cost per wet lb', lcgLot.costPerWetLb, (154.23 + 40 + 120) / 310, 1e-6);
+check('LCG lot flagged for the even take-down split', lcgLot.evenSplit, true);
+check('general work is its own row, last', [byLot[byLot.length - 1].lotId, byLot[byLot.length - 1].hours], ['', 1.5]);
+
 const llRows = A.crewLaborLog(laborStages).filter((e) => e.employeeNo === '5475211');
-check('one row per UID plus the no-UID row', llRows.length, 5);
-check('strain filter keeps only that strain’s share', A.crewLaborLog(laborStages, { strain: 'Runtz' }).filter((e) => e.employeeNo === '5475211').map((e) => e.hours), [2, 2]);
+check('crew log: one row per UID plus the no-UID row', llRows.length, 5);
+check('strain filter keeps only that strain’s share', A.crewLaborLog(laborStages, { strain: 'Zoap' }).map((e) => e.hours), [1.831]);
 const gil = A.crewLaborByEmployee(laborStages).find((e) => e.employeeNo === '5475211');
-check('employee roll-up: 9.5 hours, named, 4 distinct UIDs', [gil.hours, gil.name, gil.batchCount], [9.5, 'Gilberto Diaz', 4]);
+check('employee roll-up: 13.5 hours, named', [gil.hours, gil.name], [13.5, 'Gilberto Diaz']);
 
 console.log('\nrequests');
 const reqs = A.requestSummary(stages, ASOF);
