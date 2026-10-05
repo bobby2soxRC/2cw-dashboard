@@ -402,7 +402,9 @@ daily sheet (a column per location, names under it, tasks in red):
 `labor_log.html` (hub card `labor_log`, admin checkbox "Labor Log", column
 `labor log`) is where a lead puts people's time against the UIDs they worked
 on, without filling out a station form. **Log time:** pick a process (every
-station except Biomass Request, plus "Other / general"), a date, start/end
+station except Biomass Request, plus Transportation and "Other / general",
+the non-station processes in `LABOR_PROCESSES` in `operations_stations.js`;
+those two split multi-UID time by each lot's wet lb), a date, start/end
 or just hours, one or more people, and zero or more UIDs, then Save.
 
 - **People** come from Connecteam. `scripts/connecteam_sync.py` (the hourly

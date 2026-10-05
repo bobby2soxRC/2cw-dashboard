@@ -416,6 +416,17 @@ function lotLbForProcess(lot, process) {
   if (!lot) return 0;
   const st = lot.stages[process];
   const station = STATION_BY_KEY[process];
+  // Not a station (Transportation, Other / general): split by the lot's wet
+  // lb, or its weight at the latest stage it has a weight for.
+  if (!station) {
+    const wet = (lot.stages.intake_wet || {}).outputLb || (lot.stages.harvest || {}).outputLb || 0;
+    if (wet > 0) return wet;
+    for (let i = PIPELINE_ORDER.length - 1; i >= 0; i--) {
+      const s = lot.stages[PIPELINE_ORDER[i]];
+      if (s && s.outputLb > 0) return s.outputLb;
+    }
+    return 0;
+  }
   if (st && st.inputLb > 0) return st.inputLb;
   if (st && st.outputLb > 0 && station && station.flow && !station.flow.input) return st.outputLb;
   for (let i = PIPELINE_ORDER.indexOf(process) - 1; i >= 0; i--) {
