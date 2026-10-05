@@ -945,6 +945,11 @@
   let seg = 'entries';
   $('f-from').value = localDay();
   $('f-to').value = localDay();
+  // Deep links (e.g. Harvest Intakes → "Open in Labor Log"):
+  // ?tab=list&seg=lot&all=1&q=<UID>
+  if (params.get('all')) { $('f-from').value = ''; $('f-to').value = ''; }
+  if (params.get('q')) $('f-q').value = params.get('q');
+  if (['entries', 'lot', 'person'].includes(params.get('seg'))) seg = params.get('seg');
   const RANGES = [['today', L.today, 0], ['30', L.last30, 29], ['all', L.allTime, null]];
   $('ranges').innerHTML = RANGES.map(([k, l]) => `<button type="button" data-range="${k}">${esc(t(l))}</button>`).join('');
   $('ranges').onclick = (e) => {
@@ -982,21 +987,23 @@
     renderList();
   }
 
-  function visibleEntries() {
+  // `noSearch`: By lot applies the search to the lots after allocation
+  // instead, so farm-wide time (no UIDs) still reaches a searched-for lot.
+  function visibleEntries(noSearch) {
     const proc = $('f-process').value;
     const q = fold($('f-q').value.trim());
     const qu = normUid($('f-q').value);
     return entries.filter((r) => {
       const f = r.fields || {};
       if (proc && f.process !== proc) return false;
-      if (!q) return true;
+      if (!q || noSearch) return true;
       return fold(f.employeeName).includes(q) || fold(f.farmName).includes(q) || (qu && (f.uids || []).some((u) => normUid(u.uid).includes(qu)));
     });
   }
 
   function renderList() {
     document.querySelectorAll('#seg button').forEach((b) => b.classList.toggle('on', b.dataset.seg === seg));
-    const rows = visibleEntries();
+    const rows = visibleEntries(seg === 'lot');
     if (!rows.length) { $('list').innerHTML = `<div class="empty-big">${esc(t(L.empty))}</div>`; return; }
     const table = (head, body) => `<div class="tbl-wrap"><table><thead><tr>${head.map(([l, n]) => `<th class="${n ? 'n' : ''}">${esc(t(l))}</th>`).join('')}</tr></thead><tbody>${body.join('')}</tbody></table></div>`;
     const totalH = rows.reduce((a, r) => a + num(r.fields.hours), 0);
@@ -1065,7 +1072,10 @@
     if (seq !== lotSeq || seg !== 'lot') return;
     const all = { ...st, labor_entry: rows.map(flattenRecord) };
     const allocs = A.laborAllocations(all, rates);
-    const lots = A.laborCostByLot(all, rates, allocs);
+    const q = fold($('f-q').value.trim()), qu = normUid($('f-q').value);
+    const lots = A.laborCostByLot(all, rates, allocs).filter((l) => !q
+      || (qu && (normUid(l.lotId).includes(qu) || l.uids.some((u) => normUid(u).includes(qu))))
+      || fold(l.strain).includes(q) || fold(farmName(l.farm)).includes(q));
     const procs = [...OPERATIONS_STATIONS.map((x) => x.key), 'other'].filter((k) => lots.some((l) => l.byProcess[k]));
     const hasCost = !!rates && lots.every((l) => l.cost != null);
     const cell = (p) => !p ? '' : hasCost ? `${fmtMoney(p.cost)}<div class="s">${fmtNum(p.hours, 2)} h</div>` : `${fmtNum(p.hours, 2)} h`;

@@ -499,6 +499,19 @@ The hourly sync means the most recent hour can be missing, and someone still
 on the clock is drawn up to now. An unpaid break shows as not-logged time
 unless people clock out for it.
 
+**Labor on a package.** Each intake's detail on Harvest Intakes has a
+"Labor on this package" section. It shows hours by process, people, cost
+(with "see costs"), and labor per wet lb, for that intake's lot: the
+lot's own UIDs, farm-wide time spread over it, and later stages via Take
+Down's on-stem UID. The numbers are the same as By lot. The section's **Open
+in Labor Log** link opens `labor_log.html?tab=list&seg=lot&all=1&q=<UID>`.
+By lot applies its search to the lots after allocation, so farm-wide time
+still shows on a searched-for lot.
+
+Weights for a process with nothing recorded at or before it (Harvest labor
+on a lot that only has a Wet Intake) come from the first stage after it
+that has a weight, rather than falling back to an even split.
+
 The dashboard's Labor tab loads `labor_entry` alongside the stations, and
 `crewLaborLog` turns each entry into one row per UID. Entries show there by
 name, keyed on the Connecteam user id. The Today board ignores them because

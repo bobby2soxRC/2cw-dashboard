@@ -422,7 +422,16 @@ function lotLbForProcess(lot, process) {
     const prev = lot.stages[PIPELINE_ORDER[i]];
     if (prev && prev.outputLb > 0) return prev.outputLb;
   }
-  return st && st.outputLb > 0 ? st.outputLb : 0;
+  if (st && st.outputLb > 0) return st.outputLb;
+  // Nothing at or before this process — e.g. Harvest labor on a lot that
+  // only has a Wet Intake record. Use the first weight recorded after it, so
+  // the split still follows pounds instead of falling back to even.
+  for (let i = PIPELINE_ORDER.indexOf(process) + 1; i > 0 && i < PIPELINE_ORDER.length; i++) {
+    const next = lot.stages[PIPELINE_ORDER[i]];
+    if (next && next.inputLb > 0) return next.inputLb;
+    if (next && next.outputLb > 0) return next.outputLb;
+  }
+  return 0;
 }
 
 // Per-person labor rates, from netlify/functions/labor-rates.js:

@@ -146,6 +146,7 @@
 <script src="/operations_stations.js"></script>
 <script src="/ops_common.js"></script>
 <script src="/ops_data.js"></script>
+<script src="/ops_analytics.js"></script>
 <script>
 // Every Harvest Intake — Wet record (station intake_wet), newest first. Click
 // one for the full record; with edit access (admin panel → Harvest Intakes →
@@ -167,6 +168,19 @@
 
   const L = {
     title:     { en: 'Harvest Intakes', es: 'Recepciones de Cosecha' },
+    labor:     { en: 'Labor on this package', es: 'Mano de obra en este paquete' },
+    laborNone: { en: 'No Labor Log time on this package yet.', es: 'Todavía no hay horas del Registro de Mano de Obra en este paquete.' },
+    laborLoad: { en: 'Loading labor…', es: 'Cargando mano de obra…' },
+    laborProc: { en: 'Process', es: 'Proceso' },
+    laborHrs:  { en: 'Hours', es: 'Horas' },
+    laborCost: { en: 'Cost', es: 'Costo' },
+    laborPpl:  { en: 'People', es: 'Personas' },
+    laborTot:  { en: 'Total', es: 'Total' },
+    laborPerLb:{ en: 'Per wet lb', es: 'Por lb húmeda' },
+    laborEven: { en: '≈ part of this was split evenly because another package on the same entry had no weight yet.', es: '≈ parte se dividió en partes iguales porque otro paquete del mismo registro aún no tenía peso.' },
+    laborFarm: { en: 'Includes {h} h of farm-wide work spread over this farm’s pounds.', es: 'Incluye {h} h de trabajo general del rancho repartido entre sus libras.' },
+    laborOpen: { en: 'Open in Labor Log', es: 'Abrir en Registro de Mano de Obra' },
+    laborOther:{ en: 'Other / general', es: 'Otro / general' },
     back:      { en: '← Hub', es: '← Inicio' },
     all:       { en: 'All', es: 'Todas' },
     metrcTodo: { en: 'Metrc not adjusted', es: 'Metrc sin ajustar' },
@@ -581,15 +595,95 @@
         r._deleted.reason ? `<br>${t(L.reason)}: ${esc(r._deleted.reason)}` : ''}</div>` : ''}
       <div style="margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap">${pills(r)}</div>
       ${station.fields.map((fd) => fieldHtml(fd, r)).join('')}
+      ${laborUid(r) ? `<div class="d-section" id="d-labor"><div class="d-section-hd">${t(L.labor)}</div><div class="muted-note">${t(L.laborLoad)}</div></div>` : ''}
       ${historyHtml(r)}
       ${deleteHtml(r)}`;
     document.getElementById('d-close').onclick = closeDetail;
     const dCopy = document.getElementById('d-copy');
     dCopy.onclick = (e) => { e.stopPropagation(); toggleCopyMenu(dCopy, r); };
     wireDelete(r);
+    fillLabor(r);
     bg.classList.add('on');
     document.body.style.overflow = 'hidden';
   }
+  // ── Labor on this package ────────────────────────────────────────────────
+  // Labor Log time allocated to this intake's lot (laborAllocations in
+  // ops_analytics.js — the same numbers as Labor Log → Entries → By lot):
+  // hours (and cost, for 'labor log costs') by process, and per wet lb.
+  // Take Down's on-stem UID and later stages count toward this lot too.
+  const laborUid = (r) => String(((r.fields || {}).sourceUid) || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  let laborData = null;
+  function loadLaborData() {
+    if (laborData) return laborData;
+    laborData = (async () => {
+      const client = getClient();
+      const st = {};
+      await Promise.all(OPERATIONS_STATIONS.map(async (s) => { st[s.key] = await loadSubmitted(s.key); }));
+      const entries = [];
+      for (let page = 0; client && page < 50; page++) {
+        const { data, error } = await client.from('operations_forms').select('*').eq('station_key', 'labor_entry')
+          .eq('status', 'submitted').order('id').range(page * 1000, page * 1000 + 999);
+        if (error || !data) break;
+        entries.push(...data.map(flattenRecord));
+        if (data.length < 1000) break;
+      }
+      st.labor_entry = entries;
+      let rates = null;
+      if (sessionStorage.getItem('2cw_labor_costs') === 'true') {
+        try {
+          const res = await fetch('/.netlify/functions/labor-rates', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pin: sessionStorage.getItem('2cw_pin') || '' }) });
+          const j = await res.json();
+          if (res.ok && j.ok) rates = j.rates || [];
+        } catch {}
+      }
+      const A = window.OpsAnalytics;
+      return { st, rates, alias: A.buildAliasMap(st), allocs: A.laborAllocations(st, rates) };
+    })();
+    return laborData;
+  }
+  async function fillLabor(r) {
+    const uid = laborUid(r);
+    if (!uid) return;
+    const { st, rates, alias, allocs } = await loadLaborData();
+    const el = document.getElementById('d-labor');
+    if (!el || new URLSearchParams(location.search).get('id') !== r.id) return;
+    const A = window.OpsAnalytics;
+    const lotId = A.rootUid(alias, uid);
+    const mine = allocs.filter((a) => a.lotId === lotId || a.uid === uid);
+    const hd = `<div class="d-section-hd">${t(L.labor)}</div>`;
+    if (!mine.length) { el.innerHTML = hd + `<div class="muted-note">${t(L.laborNone)}</div>`; return; }
+    const by = {};
+    mine.forEach((a) => {
+      const k = a.process || 'other';
+      const row = by[k] || (by[k] = { hours: 0, cost: 0, costKnown: true, people: new Set() });
+      row.hours += a.hours;
+      if (a.cost == null) row.costKnown = false; else row.cost += a.cost;
+      row.people.add(a.employeeNo || a.name);
+    });
+    const showCost = !!rates;
+    const procTitle = (k) => k === 'other' ? t(L.laborOther) : (STATION_BY_KEY[k] ? t(STATION_BY_KEY[k].title) : k);
+    const order = [...OPERATIONS_STATIONS.map((x) => x.key), 'other'];
+    const keys = Object.keys(by).sort((a, b) => order.indexOf(a) - order.indexOf(b));
+    const totH = mine.reduce((x, a) => x + a.hours, 0);
+    const totCostKnown = mine.every((a) => a.cost != null);
+    const totC = mine.reduce((x, a) => x + (a.cost || 0), 0);
+    const allPpl = new Set(mine.map((a) => a.employeeNo || a.name));
+    const wetLb = parseFloat((r.fields || {}).totalWetLb) || 0;
+    const money = (x) => '$' + fmtNum(x, 2);
+    const farmH = mine.filter((a) => a.basis === 'farm').reduce((x, a) => x + a.hours, 0);
+    el.innerHTML = hd + `<table class="d-table">
+      <thead><tr><th>${t(L.laborProc)}</th><th>${t(L.laborHrs)}</th>${showCost ? `<th>${t(L.laborCost)}</th>` : ''}<th>${t(L.laborPpl)}</th></tr></thead>
+      <tbody>${keys.map((k) => `<tr><td>${esc(procTitle(k))}</td><td>${fmtNum(by[k].hours, 2)}</td>${showCost ? `<td>${by[k].costKnown ? money(by[k].cost) : '—'}</td>` : ''}<td>${by[k].people.size}</td></tr>`).join('')}
+        <tr class="num"><td><b>${t(L.laborTot)}</b></td><td><b>${fmtNum(totH, 2)}</b></td>${showCost ? `<td><b>${totCostKnown ? money(totC) : '—'}</b></td>` : ''}<td><b>${allPpl.size}</b></td></tr>
+        ${wetLb ? `<tr><td>${t(L.laborPerLb)} (${fmtNum(wetLb, 2)} lb)</td><td>${fmtNum(totH / wetLb * 60, 2)} min</td>${showCost ? `<td>${totCostKnown ? '$' + fmtNum(totC / wetLb, 3) : '—'}</td>` : ''}<td></td></tr>` : ''}
+      </tbody></table>
+      ${mine.some((a) => a.basis === 'even') ? `<div class="muted-note" style="margin-top:6px">${t(L.laborEven)}</div>` : ''}
+      ${farmH ? `<div class="muted-note" style="margin-top:6px">${esc(fill(t(L.laborFarm), { h: fmtNum(farmH, 2) }))}</div>` : ''}
+      <div style="margin-top:10px"><a class="btn" href="/labor_log.html?tab=list&seg=lot&all=1&q=${encodeURIComponent(uid)}">${t(L.laborOpen)}</a></div>`;
+  }
+  const fill = (s, vars) => Object.entries(vars).reduce((a, [k, v]) => a.split(`{${k}}`).join(v), s);
+
   function closeDetail() {
     if (!bg.classList.contains('on')) return;
     closeCopyMenu();

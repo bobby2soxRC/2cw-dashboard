@@ -160,6 +160,9 @@ check('strain filter keeps only that strain’s share', A.crewLaborLog(laborStag
 const gil = A.crewLaborByEmployee(laborStages).find((e) => e.employeeNo === '5475211');
 check('employee roll-up: 13.5 hours, named', [gil.hours, gil.name], [13.5, 'Gilberto Diaz']);
 
+check('Harvest labor on an intake-only lot splits by its wet lb', A.lotLbForProcess({ stages: { intake_wet: { inputLb: 0, outputLb: 1072 } } }, 'harvest'), 1072);
+check('…but a lot with no weight anywhere still has none', A.lotLbForProcess({ stages: {} }, 'harvest'), 0);
+
 console.log('\nfarm-wide labor (spread over the farm\'s pounds)');
 // Both fixture intakes came from farm license 540 in 2026: LCG 310 wet lb, Zoap 92.
 const farmStages = { ...stages, labor_entry: [
