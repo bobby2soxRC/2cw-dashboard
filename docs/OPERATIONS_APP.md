@@ -374,6 +374,22 @@ daily sheet (a column per location, names under it, tasks in red):
   - A schedule with no end is treated as `DEFAULT_SHIFT_H` (8) hours, and
     an end earlier than the start runs past midnight (bomba 7 pm–7 am).
   - Conflicts are only checked within the same date.
+- **Day / 3 days / Week** switch (remembered per device):
+  - **Day** is the editable view.
+  - **3 days** (the date and the next two) and **Week** (Monday–Sunday)
+    are a read-only table with locations down the side and days across,
+    like the old sheet, with conflicts marked ⚠. Tap a day's header to
+    open it in Day view and edit. The arrows step by the view's length.
+- **Save image** draws the current view as a PNG on a white background,
+  for texting:
+  - Layout: a title with the dates, then each day as a section of location
+    blocks (orange header with the location and time, notes in red, leads
+    first in green).
+  - It's drawn straight onto a canvas, with no screenshot library.
+  - The preview offers **Share / text**, the phone's share sheet
+    (`navigator.share` with the file, when the browser supports sharing
+    files), and **Download**. On a phone you can also long-press the
+    preview to save it to Photos.
 - Each schedule is one `operations_forms` row, `station_key:
   'work_schedule'`, on that `work_date`, with `fields = { location,
   locationName, sameStart, start, end, people: [{userId, name, lead, start?,
