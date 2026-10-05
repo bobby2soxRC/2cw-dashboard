@@ -517,6 +517,35 @@ estimate until all of the farm's harvests are done. `laborCostByLot`
 returns `hours/cost/costPerWetLb/costPerCurrentLb` for direct labor and
 `farmHours/farmCost/farmCostPerWetLb` for the share.
 
+**Cost carried forward (Labor Log → Entries → Cost / lb, cost access
+only).** Each lot's labor cost per lb at every stage, over all dates. The
+math is `carryCost` in `ops_analytics.js`:
+- **Wet**: everything up to intake (harvest, intake, farm-wide, other) ÷
+  wet lb.
+- **Dry**: + Take Down labor ÷ dry lb. Water lost carries no cost.
+- **Bucked**: + Bucking labor ÷ bucked flower lb. Big leaf, stems and waste
+  carry none.
+- **Trim**:
+  1. The bucked cost of the pounds that went into trim runs, plus
+     machine and hand trim labor, is divided between **A flower /
+     Smalls / Trim** by the **trim cost split** %. Shake, sugar trim and
+     A+/A/B trim count as Trim, and waste carries none.
+  2. Each category's share ÷ its own lb is its $/lb.
+  3. A category the lot didn't produce is dropped and the rest are
+     re-scaled. Bucked flower not trimmed yet keeps its share ("Not
+     trimmed yet").
+- The split is one shared setting, edited at the top of Cost / lb (must
+  total 100, default 70/20/10). It's stored in an `operations_forms` row
+  (`station_key: 'cost_settings'`, fixed id
+  `636f7374-7370-4000-8000-000000000001`, `fields.trimSplit`), read and
+  saved by `getTrimSplit` / `saveTrimSplit` in `ops_data.js`. It's a
+  ratio, not pay, so it's not in the private table.
+- The farm-wide estimate is carried the same way and shown as gold "+"
+  lines.
+- The intake's Labor section shows the same carried-forward $/lb once the
+  lot has reached Take Down.
+- Labor only: no material, packaging or overhead.
+
 Weights for a process with nothing recorded at or before it (Harvest labor
 on a lot that only has a Wet Intake) come from the first stage after it
 that has a weight, rather than falling back to an even split.

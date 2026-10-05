@@ -182,6 +182,13 @@
     laborFarmRow:{ en: 'Farm-wide share (estimate)', es: 'Parte del rancho general (estimado)' },
     laborFarm: { en: 'This package’s current share of general farm work, spread by wet lb over every lot the farm brings in this year. It keeps changing until all of the farm’s harvests are in, so it isn’t included in the direct totals above.',
                  es: 'La parte actual de este paquete del trabajo general del rancho, repartida por lb húmedas entre todos los lotes del rancho este año. Cambia hasta que entren todas las cosechas del rancho, por eso no se incluye en los totales directos.' },
+    laborCarry:{ en: 'Carried forward ($/lb)', es: 'Llevado adelante ($/lb)' },
+    cDry:      { en: 'Dry', es: 'Seco' },
+    cBucked:   { en: 'Bucked', es: 'Desvarado' },
+    cA:        { en: 'A flower', es: 'Flor A' },
+    cSmalls:   { en: 'Smalls', es: 'Pequeñas' },
+    cTrim:     { en: 'Trim', es: 'Recorte' },
+    laborCarryOpen: { en: 'Cost / lb', es: 'Costo / lb' },
     laborOpen: { en: 'Open in Labor Log', es: 'Abrir en Registro de Mano de Obra' },
     laborOther:{ en: 'Other / general', es: 'Otro / general' },
     back:      { en: '← Hub', es: '← Inicio' },
@@ -641,14 +648,15 @@
         } catch {}
       }
       const A = window.OpsAnalytics;
-      return { st, rates, alias: A.buildAliasMap(st), allocs: A.laborAllocations(st, rates) };
+      const split = rates ? await getTrimSplit() : null;
+      return { st, rates, split, alias: A.buildAliasMap(st), lots: new Map(A.buildLots(st).map((l) => [l.id, l])), allocs: A.laborAllocations(st, rates) };
     })();
     return laborData;
   }
   async function fillLabor(r) {
     const uid = laborUid(r);
     if (!uid) return;
-    const { st, rates, alias, allocs } = await loadLaborData();
+    const { st, rates, split, alias, lots, allocs } = await loadLaborData();
     const el = document.getElementById('d-labor');
     if (!el || new URLSearchParams(location.search).get('id') !== r.id) return;
     const A = window.OpsAnalytics;
@@ -681,6 +689,20 @@
     const wetLb = parseFloat((r.fields || {}).totalWetLb) || 0;
     const money = (x) => x == null ? '—' : '$' + fmtNum(x, 2);
     const perLb = (c) => c == null || !wetLb ? '—' : '$' + fmtNum(c / wetLb, 3) + ' / lb';
+    // Past intake: the same lot's cost per lb at each later stage
+    // (carryCost — water and waste carry nothing, trim split by the set %).
+    const carryHtml = () => {
+      const lot = lots.get(lotId);
+      if (!showCost || !lot || !lot.stages.dry_check || totC == null) return '';
+      const costs = {};
+      direct.forEach((a) => { costs[a.process || 'other'] = (costs[a.process || 'other'] || 0) + a.cost; });
+      const c = A.carryCost(lot, costs, split).stages.filter((x) => x.key !== 'wet' && x.perLb != null);
+      if (!c.length) return '';
+      const name = { dry: L.cDry, bucked: L.cBucked, a: L.cA, smalls: L.cSmalls, trim: L.cTrim };
+      return `<div style="margin-top:10px"><div class="d-section-hd" style="margin-bottom:4px">${t(L.laborCarry)}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px 18px;font-family:'DM Mono',monospace;font-size:.85rem">${c.map((x) =>
+          `<span><span class="muted-note">${t(name[x.key])}</span> $${fmtNum(x.perLb, 2)}</span>`).join('')}</div></div>`;
+    };
     el.innerHTML = hd + `<table class="d-table">
       <thead><tr><th>${t(L.laborProc)}</th><th>${t(L.laborHrs)}</th>${showCost ? `<th>${t(L.laborCost)}</th>` : ''}<th>${t(L.laborPpl)}</th></tr></thead>
       <tbody>${keys.map((k) => `<tr><td>${esc(procTitle(k))}</td><td>${fmtNum(by[k].hours, 2)}</td>${showCost ? `<td>${by[k].costKnown ? money(by[k].cost) : '—'}</td>` : ''}<td>${by[k].people.size}</td></tr>`).join('')}
@@ -688,9 +710,11 @@
         ${wetLb ? `<tr><td>${t(L.laborPerLb)} (${fmtNum(wetLb, 2)} lb)</td><td>${fmtNum(totH / wetLb * 60, 2)} min</td>${showCost ? `<td>${perLb(totC)}</td>` : ''}<td></td></tr>` : ''}` : ''}
         ${farm.length ? `<tr><td style="color:var(--gold)">${t(L.laborFarmRow)}</td><td>${fmtNum(farmH, 2)}</td>${showCost ? `<td>${money(farmC)}<br><span class="muted-note">${perLb(farmC)}</span></td>` : ''}<td></td></tr>` : ''}
       </tbody></table>
+      ${carryHtml()}
       ${direct.some((a) => a.basis === 'even') ? `<div class="muted-note" style="margin-top:6px">${t(L.laborEven)}</div>` : ''}
       ${farm.length ? `<div class="muted-note" style="margin-top:6px">${t(L.laborFarm)}</div>` : ''}
-      <div style="margin-top:10px"><a class="btn" href="/labor_log.html?tab=list&seg=lot&all=1&q=${encodeURIComponent(uid)}">${t(L.laborOpen)}</a></div>`;
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><a class="btn" href="/labor_log.html?tab=list&seg=lot&all=1&q=${encodeURIComponent(uid)}">${t(L.laborOpen)}</a>
+        ${showCost ? `<a class="btn" href="/labor_log.html?tab=list&seg=costlb&q=${encodeURIComponent(uid)}">${t(L.laborCarryOpen)}</a>` : ''}</div>`;
   }
   const fill = (s, vars) => Object.entries(vars).reduce((a, [k, v]) => a.split(`{${k}}`).join(v), s);
 

@@ -197,3 +197,29 @@ async function loadSubmitted(stationKey) {
   if (error) { console.error('loadSubmitted', error); return []; }
   return (data || []).map(flattenRecord);
 }
+
+// ── Trim cost split (Labor Log → Cost / lb) ─────────────────────────────────
+// The % of a lot's trimmed cost that goes to A flower / Smalls / Trim
+// (carryCost in ops_analytics.js). One shared setting, kept in a single
+// operations_forms row (station_key 'cost_settings', fixed id) so it needs no
+// table of its own; the edit history trigger logs each change. It's a
+// business ratio, not pay, so the open anon access is fine here.
+const COST_SETTINGS_ID = '636f7374-7370-4000-8000-000000000001';
+async function getTrimSplit() {
+  const client = getClient();
+  const def = (typeof OpsAnalytics !== 'undefined' && OpsAnalytics.DEFAULT_TRIM_SPLIT) || { a: 70, smalls: 20, trim: 10 };
+  if (!client) return { ...def };
+  const { data } = await client.from(TABLE).select('fields').eq('id', COST_SETTINGS_ID).maybeSingle();
+  const sp = data && data.fields && data.fields.trimSplit;
+  return sp ? { a: Number(sp.a) || 0, smalls: Number(sp.smalls) || 0, trim: Number(sp.trim) || 0 } : { ...def };
+}
+async function saveTrimSplit(split, who) {
+  const client = getClient();
+  if (!client) return { ok: false, reason: 'not-configured' };
+  const { data } = await client.from(TABLE).select('fields').eq('id', COST_SETTINGS_ID).maybeSingle();
+  const { error } = await client.from(TABLE).upsert({
+    id: COST_SETTINGS_ID, station_key: 'cost_settings', status: 'submitted', owner_user: who || null, updated_by: who || null,
+    submitted_at: new Date().toISOString(), fields: { ...((data && data.fields) || {}), trimSplit: split, updatedBy: who || '' }
+  });
+  return error ? { ok: false, reason: error.message } : { ok: true };
+}

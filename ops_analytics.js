@@ -577,6 +577,73 @@ function laborCostByLot(stages, rates, allocs) {
   })).sort((a, b) => (!a.lotId) - (!b.lotId) || a.pending - b.pending || (b.hours + b.farmHours) - (a.hours + a.farmHours));
 }
 
+// ── Cost carried forward through the stages ────────────────────────────────
+// Labor follows the material: water lost at Take Down carries no cost, so
+// everything spent up to then lands on the dry lb; bucking waste, stems and
+// big leaf carry none, so it all lands on the bucked flower lb; at trim the
+// cost of the bucked flower that went in (plus trim labor) is divided between
+// A flower, Smalls and Trim by a set % split — not by weight — and each
+// category's share over its own pounds is its $/lb.
+//
+//   lot       a buildLots() lot
+//   costs     {process: $} of labor on the lot (laborCostByLot's byProcess
+//             costs for direct labor, or {other: farmCost} for the farm
+//             estimate). Anything not Take Down / Bucking / a trim counts
+//             toward the wet stage.
+//   split     {a, smalls, trim} percentages; categories this lot didn't
+//             produce are dropped and the rest re-scaled to 100.
+// Returns [{key, lb, cost, perLb}] for wet, dry, bucked, a, smalls, trim
+// (stages the lot hasn't reached are left out) and `untrimmedCost`, the part
+// of the bucked cost still sitting on bucked flower that hasn't gone
+// through a trim run.
+const TRIM_CATEGORY = { flower_a: 'a', smalls_b: 'smalls', sugar_trim: 'trim', trim: 'trim', shake: 'trim',
+                        trim_a_plus: 'trim', trim_a: 'trim', trim_b: 'trim' };
+const DEFAULT_TRIM_SPLIT = { a: 70, smalls: 20, trim: 10 };
+function carryCost(lot, costs, split) {
+  const c = (k) => num((costs || {})[k]);
+  const late = ['dry_check', 'buck', 'machine_trim', 'hand_trim'];
+  let carry = Object.keys(costs || {}).filter((k) => !late.includes(k)).reduce((a, k) => a + c(k), 0);
+  const out = [];
+  const st = lot ? lot.stages : {};
+  const per = (cost, lb) => (lb > 0 ? cost / lb : null);
+  const wetLb = (st.intake_wet || {}).outputLb || (st.harvest || {}).outputLb || 0;
+  out.push({ key: 'wet', lb: wetLb || null, cost: round2(carry), perLb: per(carry, wetLb) });
+  if (st.dry_check || c('dry_check')) {
+    carry += c('dry_check');
+    const dryLb = st.dry_check ? (st.dry_check.outputs.dry_whole_plant || st.dry_check.outputLb) : 0;
+    out.push({ key: 'dry', lb: dryLb || null, cost: round2(carry), perLb: per(carry, dryLb) });
+  }
+  let untrimmedCost = 0;
+  if (st.buck || c('buck')) {
+    carry += c('buck');
+    const buckedLb = st.buck ? num(st.buck.outputs.bucked_flower) : 0;
+    out.push({ key: 'bucked', lb: buckedLb || null, cost: round2(carry), perLb: per(carry, buckedLb) });
+    const trims = ['machine_trim', 'hand_trim'].filter((k) => st[k] || c(k));
+    if (trims.length) {
+      const trimIn = trims.reduce((a, k) => a + num((st[k] || {}).inputLb), 0);
+      // Share of the bucked cost that went into trim runs, by bucked lb.
+      const frac = buckedLb > 0 && trimIn > 0 ? Math.min(1, trimIn / buckedLb) : 1;
+      const into = carry * frac + trims.reduce((a, k) => a + c(k), 0);
+      untrimmedCost = carry * (1 - frac);
+      const lbs = { a: 0, smalls: 0, trim: 0 };
+      trims.forEach((k) => Object.entries((st[k] || {}).outputs || {}).forEach(([cat, lb]) => {
+        const g = TRIM_CATEGORY[cat];
+        if (g) lbs[g] += num(lb);
+      }));
+      const sp = split || DEFAULT_TRIM_SPLIT;
+      const live = ['a', 'smalls', 'trim'].filter((g) => lbs[g] > 0 && num(sp[g]) > 0);
+      const pctTotal = live.reduce((a, g) => a + num(sp[g]), 0);
+      ['a', 'smalls', 'trim'].forEach((g) => {
+        if (!lbs[g]) return;
+        const share = live.includes(g) && pctTotal ? num(sp[g]) / pctTotal : 0;
+        const cost = into * share;
+        out.push({ key: g, lb: round2(lbs[g]), cost: round2(cost), perLb: per(cost, lbs[g]), pct: round2(share * 100) });
+      });
+    }
+  }
+  return { stages: out, untrimmedCost: round2(untrimmedCost) };
+}
+
 // Rolled up by employee: total logged hours, distinct batches/UIDs touched,
 // and which stations — the view that answers "what has employee #79 been
 // working on."
@@ -656,6 +723,6 @@ function exceptions(stages, asOf) {
   return out.sort((a, b) => String(b.date).localeCompare(String(a.date)));
 }
 
-return { buildLots, stageYields, strainYields, dailyOutput, biomassLedger, trimmerStats, crewThroughput, crewLaborLog, crewLaborByEmployee, laborAllocations, laborCostByLot, lotLbForProcess, rateFor,
+return { buildLots, stageYields, strainYields, dailyOutput, biomassLedger, trimmerStats, crewThroughput, crewLaborLog, crewLaborByEmployee, laborAllocations, laborCostByLot, lotLbForProcess, rateFor, carryCost, DEFAULT_TRIM_SPLIT,
          requestSummary, exceptions, buildAliasMap, rootUid, daysBetween };
 }));

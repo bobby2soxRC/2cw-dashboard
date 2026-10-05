@@ -184,6 +184,29 @@ const fl = fLots.find((r) => r.lotId === FARM_UID);
 check('farm-wide share stays out of the direct numbers', [fl.hours, fl.cost, fl.costPerWetLb, Object.keys(fl.byProcess).length], [0, 0, 0, 0]);
 check('farm-wide cost and $/wet lb reported on their own', [fl.farmCost, Math.round(fl.farmCostPerWetLb * 10000) / 10000], [154.23, Math.round(154.23 / 310 * 10000) / 10000]);
 
+console.log('\ncost carried forward (water and waste carry nothing; trim split by %)');
+// The LCG lot: 310 wet lb → 102 dry → 60 bucked (plus big leaf/stems/waste)
+// → machine trim takes 36.35 bucked lb, hand trim 23.65 (all 60).
+const lotLCG = A.buildLots(stages).find((l) => l.id === FARM_UID);
+const carried = A.carryCost(lotLCG, { harvest: 100, intake_wet: 55, dry_check: 45, buck: 60, machine_trim: 20, hand_trim: 40 }, { a: 70, smalls: 20, trim: 10 });
+const by = Object.fromEntries(carried.stages.map((x) => [x.key, x]));
+check('wet: harvest + intake labor over wet lb', [by.wet.cost, Math.round(by.wet.perLb * 1e4) / 1e4], [155, Math.round(155 / 310 * 1e4) / 1e4]);
+check('dry: everything so far onto the dry lb (water carries none)', [by.dry.cost, by.dry.lb], [200, 102]);
+check('bucked: all of it onto bucked flower only', [by.bucked.cost, by.bucked.lb, Math.round(by.bucked.perLb * 100) / 100], [260, 60, 4.33]);
+// Trim takes all 60 bucked lb: 260 + 60 trim labor = 320, split 70/20/10.
+check('trim split by %, not weight', [by.a.cost, by.smalls.cost, by.trim.cost], [224, 64, 32]);
+check('A flower $/lb is its share over its own lb', Math.round(by.a.perLb * 100) / 100, Math.round(224 / by.a.lb * 100) / 100);
+check('nothing left untrimmed', carried.untrimmedCost, 0);
+const noSmalls = { ...lotLCG, stages: { ...lotLCG.stages, machine_trim: { ...lotLCG.stages.machine_trim, outputs: { flower_a: 20, sugar_trim: 5 } },
+  hand_trim: { ...lotLCG.stages.hand_trim, outputs: { flower_a: 2, sugar_trim: 8 } } } };
+const ns = Object.fromEntries(A.carryCost(noSmalls, { buck: 60 }, { a: 70, smalls: 20, trim: 10 }).stages.map((x) => [x.key, x]));
+check('a category the lot didn\'t make is dropped and the rest re-scaled', [ns.smalls, ns.a.pct, ns.trim.pct], [undefined, 87.5, 12.5]);
+const half = { ...lotLCG, stages: { intake_wet: lotLCG.stages.intake_wet, dry_check: lotLCG.stages.dry_check, buck: lotLCG.stages.buck,
+  machine_trim: lotLCG.stages.machine_trim } };
+const hc = A.carryCost(half, { buck: 60 }, { a: 70, smalls: 20, trim: 10 });
+check('bucked flower not trimmed yet keeps its share of the cost', hc.untrimmedCost, Math.round(60 * (1 - 36.35 / 60) * 100) / 100);
+check('a lot still at intake stops at wet', A.carryCost({ stages: { intake_wet: { outputLb: 500, outputs: {} } } }, { harvest: 50 }).stages.map((x) => x.key), ['wet']);
+
 console.log('\nrequests');
 const reqs = A.requestSummary(stages, ASOF);
 check('one request still open', reqs.filter((r) => r.open).length, 1);

@@ -370,6 +370,25 @@
     last30:    { en: 'Last 30 days', es: 'Últimos 30 días' },
     colLot:    { en: 'Lot (UID)', es: 'Lote (UID)' },
     colCost:   { en: 'Cost', es: 'Costo' },
+    segCost:   { en: 'Cost / lb', es: 'Costo / lb' },
+    splitHd:   { en: 'Trim cost split', es: 'Reparto del costo al recortar' },
+    splitHint: { en: 'How a lot’s cost at trim is divided between A flower, Smalls and Trim (shake and sugar trim count as Trim; waste carries nothing). Must add up to 100. Applies to every lot.',
+                 es: 'Cómo se reparte el costo de un lote al recortar entre Flor A, Pequeñas y Recorte (shake y azúcar cuentan como Recorte; el desecho no lleva costo). Debe sumar 100. Aplica a todos los lotes.' },
+    splitA:    { en: 'A flower %', es: 'Flor A %' },
+    splitS:    { en: 'Smalls %', es: 'Pequeñas %' },
+    splitT:    { en: 'Trim %', es: 'Recorte %' },
+    splitSave: { en: 'Save split', es: 'Guardar reparto' },
+    splitBad:  { en: 'The three must add up to 100 (now {n}).', es: 'Los tres deben sumar 100 (ahora {n}).' },
+    splitSaved:{ en: 'Split saved', es: 'Reparto guardado' },
+    cWet:      { en: 'Wet', es: 'Húmedo' },
+    cDry:      { en: 'Dry (take down)', es: 'Seco (desmontaje)' },
+    cBucked:   { en: 'Bucked', es: 'Desvarado' },
+    cA:        { en: 'A flower', es: 'Flor A' },
+    cSmalls:   { en: 'Smalls', es: 'Pequeñas' },
+    cTrim:     { en: 'Trim', es: 'Recorte' },
+    cUntrim:   { en: 'Not trimmed yet', es: 'Sin recortar' },
+    costNote2: { en: 'Labor cost per lb as it moves through the stages, all dates. Water lost at Take Down and bucking waste/stems/big leaf carry no cost, so everything spent lands on the dry lb, then the bucked lb; at trim it’s split by the % above. Gold “+” lines are the farm-wide estimate carried the same way. Labor only — no material or overhead.',
+                 es: 'Costo de mano de obra por lb a lo largo de las etapas, todas las fechas. El agua perdida al desmontar y el desecho/tallos/hoja grande al desvarar no llevan costo, así que todo lo gastado pasa a la lb seca y luego a la lb desvarada; al recortar se reparte con el % de arriba. Las líneas doradas “+” son el estimado del rancho, llevado igual. Solo mano de obra — sin materiales ni gastos generales.' },
     colFarm:   { en: 'Farm-wide (est.)', es: 'Rancho general (est.)' },
     colPerWetFarm: { en: '+ farm $/wet lb (est.)', es: '+ rancho $/lb húm. (est.)' },
     colWet:    { en: 'Wet lb in', es: 'Lb húmedas' },
@@ -932,6 +951,7 @@
     people = []; renderPeople();
     $('notes').value = '';
     toast(rows.length === 1 ? t(L.saved1) : fill(t(L.saved), { n: rows.length }));
+    allEntriesP = null;
     loadMine();
   };
   function toast(msg) {
@@ -951,7 +971,7 @@
   // ?tab=list&seg=lot&all=1&q=<UID>
   if (params.get('all')) { $('f-from').value = ''; $('f-to').value = ''; }
   if (params.get('q')) $('f-q').value = params.get('q');
-  if (['entries', 'lot', 'person'].includes(params.get('seg'))) seg = params.get('seg');
+  if (['entries', 'lot', 'person', 'costlb'].includes(params.get('seg'))) seg = params.get('seg');
   const RANGES = [['today', L.today, 0], ['30', L.last30, 29], ['all', L.allTime, null]];
   $('ranges').innerHTML = RANGES.map(([k, l]) => `<button type="button" data-range="${k}">${esc(t(l))}</button>`).join('');
   $('ranges').onclick = (e) => {
@@ -963,7 +983,7 @@
     $('f-to').value = back == null ? '' : localDay();
     loadEntries();
   };
-  const SEGS = [['entries', L.segEntries], ['lot', canCost ? L.segLot : L.segLotH], ['person', L.segPerson]];
+  const SEGS = [['entries', L.segEntries], ['lot', canCost ? L.segLot : L.segLotH], ['person', L.segPerson], ...(canCost ? [['costlb', L.segCost]] : [])];
   $('seg').innerHTML = SEGS.map(([k, l]) => `<button type="button" data-seg="${k}">${esc(t(l))}</button>`).join('');
   $('seg').onclick = (e) => { const b = e.target.closest('button'); if (b) { seg = b.dataset.seg; renderList(); } };
   ['f-from', 'f-to'].forEach((id) => $(id).addEventListener('change', loadEntries));
@@ -1005,6 +1025,7 @@
 
   function renderList() {
     document.querySelectorAll('#seg button').forEach((b) => b.classList.toggle('on', b.dataset.seg === seg));
+    if (seg === 'costlb') { renderCostLb(); return; }
     const rows = visibleEntries(seg === 'lot');
     if (!rows.length) { $('list').innerHTML = `<div class="empty-big">${esc(t(L.empty))}</div>`; return; }
     const table = (head, body) => `<div class="tbl-wrap"><table><thead><tr>${head.map(([l, n]) => `<th class="${n ? 'n' : ''}">${esc(t(l))}</th>`).join('')}</tr></thead><tbody>${body.join('')}</tbody></table></div>`;
@@ -1108,6 +1129,83 @@
       `<div class="hint">${esc(t(L.lotNote))}</div>`;
   }
 
+  // ── Cost / lb: labor carried forward through the stages ─────────────────
+  // All dates (a lot's cost per lb needs all of its labor), so it loads every
+  // entry itself rather than using the date range above. carryCost in
+  // ops_analytics.js does the math; the trim split is the shared setting.
+  let allEntriesP = null, trimSplit = null, costSeq = 0;
+  function loadAllEntries() {
+    if (allEntriesP) return allEntriesP;
+    allEntriesP = (async () => {
+      const client = getClient(), out = [];
+      for (let page = 0; client && page < 50; page++) {
+        const { data, error } = await client.from('operations_forms').select('*').eq('station_key', ENTRY_KEY)
+          .eq('status', 'submitted').order('id').range(page * 1000, page * 1000 + 999);
+        if (error || !data) break;
+        out.push(...data.filter((r) => !(r.fields || {}).voided));
+        if (data.length < 1000) break;
+      }
+      return out;
+    })();
+    return allEntriesP;
+  }
+  async function renderCostLb() {
+    const s = ++costSeq;
+    $('list').innerHTML = `<div class="empty-big">${esc(t(L.loading))}</div>`;
+    const [st, ents, split] = await Promise.all([loadStages(), loadAllEntries(), trimSplit ? Promise.resolve(trimSplit) : getTrimSplit()]);
+    if (s !== costSeq || seg !== 'costlb') return;
+    trimSplit = split;
+    const all = { ...st, labor_entry: ents.map(flattenRecord) };
+    const lotsById = new Map(A.buildLots(all).map((l) => [l.id, l]));
+    const q = fold($('f-q').value.trim()), qu = normUid($('f-q').value);
+    const rowsC = A.laborCostByLot(all, rates).filter((l) => l.lotId && !l.pending && lotsById.has(l.lotId))
+      .filter((l) => !q || (qu && (normUid(l.lotId).includes(qu) || l.uids.some((u) => normUid(u).includes(qu))))
+        || fold(l.strain).includes(q) || fold(farmName(l.farm)).includes(q));
+    const COLS = [['wet', L.cWet], ['dry', L.cDry], ['bucked', L.cBucked], ['a', L.cA], ['smalls', L.cSmalls], ['trim', L.cTrim]];
+    const sum = num(split.a) + num(split.smalls) + num(split.trim);
+    const editor = `<div class="card" style="max-width:none;margin-bottom:14px">
+      <div class="lbl" style="font-weight:700;color:var(--text)">${esc(t(L.splitHd))}</div>
+      <div class="filters" style="margin:8px 0 0">
+        ${[['a', L.splitA], ['smalls', L.splitS], ['trim', L.splitT]].map(([k, l]) => `<label style="flex:1 1 120px"><span class="lbl">${esc(t(l))}</span>
+          <input type="number" min="0" max="100" step="1" inputmode="decimal" data-split="${k}" value="${esc(split[k])}"></label>`).join('')}
+        <button type="button" class="btn btn-blue" id="split-save" style="align-self:flex-end">${esc(t(L.splitSave))}</button>
+      </div>
+      <div class="hint" id="split-msg">${esc(t(L.splitHint))}${sum !== 100 ? ` <span class="warn">${esc(fill(t(L.splitBad), { n: sum }))}</span>` : ''}</div>
+    </div>`;
+    const cell = (x, farmX) => {
+      if (!x) return '<td class="n"><span class="s">—</span></td>';
+      const main = x.perLb != null ? '$' + fmtNum(x.perLb, 2) : fmtMoney(x.cost);
+      const f = farmX && farmX.perLb ? `<div class="s warn">+$${fmtNum(farmX.perLb, 2)}</div>` : '';
+      return `<td class="n">${main}<div class="s">${x.lb ? fmtNum(x.lb, 1) + ' lb' : ''}${x.pct != null ? ' · ' + fmtNum(x.pct, 0) + '%' : ''}</div>${f}</td>`;
+    };
+    const body = rowsC.map((l) => {
+      const lot = lotsById.get(l.lotId);
+      const direct = A.carryCost(lot, Object.fromEntries(Object.entries(l.byProcess).map(([k, v]) => [k, v.cost])), split);
+      const farm = l.farmCost ? A.carryCost(lot, { other: l.farmCost }, split) : null;
+      const d = Object.fromEntries(direct.stages.map((x) => [x.key, x]));
+      const f = farm ? Object.fromEntries(farm.stages.map((x) => [x.key, x])) : {};
+      return `<tr><td><span class="m" title="${esc(l.uids.join(', '))}">${esc(tail(l.lotId))}</span>
+          <div class="s">${esc([l.strain, l.farm ? farmName(l.farm) : ''].filter(Boolean).join(' · '))}</div></td>
+        ${COLS.map(([k]) => cell(d[k], f[k])).join('')}
+        <td class="n">${direct.untrimmedCost ? fmtMoney(direct.untrimmedCost) : '<span class="s">—</span>'}</td></tr>`;
+    });
+    $('list').innerHTML = editor + (rowsC.length
+      ? `<div class="tbl-wrap"><table><thead><tr><th>${esc(t(L.colLot))}</th>${COLS.map(([, l]) => `<th class="n">${esc(t(l))}</th>`).join('')}<th class="n">${esc(t(L.cUntrim))}</th></tr></thead>
+          <tbody>${body.join('')}</tbody></table></div>`
+      : `<div class="empty-big">${esc(t(L.empty))}</div>`) + `<div class="hint">${esc(t(L.costNote2))}</div>`;
+    $('split-save').onclick = async () => {
+      const v = {};
+      document.querySelectorAll('[data-split]').forEach((i) => { v[i.dataset.split] = Math.max(0, num(i.value)); });
+      const n = v.a + v.smalls + v.trim;
+      if (Math.abs(n - 100) > 0.01) { $('split-msg').innerHTML = `<span class="warn">${esc(fill(t(L.splitBad), { n: fmtNum(n, 0) }))}</span>`; return; }
+      const res = await saveTrimSplit(v, me);
+      if (!res.ok) { alert(`${t(L.failed)} ${res.reason}`); return; }
+      trimSplit = v;
+      toast(t(L.splitSaved));
+      renderCostLb();
+    };
+  }
+
   // Removing an entry marks it voided (anon has no DELETE on
   // operations_forms); the edit history trigger records who and when, and
   // voided entries count for nothing anywhere.
@@ -1119,6 +1217,7 @@
     const { error } = await client.from('operations_forms').update({ fields, updated_by: me || null })
       .eq('id', row.id).eq('status', 'submitted');
     if (error) { if (btn) btn.disabled = false; alert(`${t(L.failed)} ${error.message}`); return false; }
+    allEntriesP = null;
     return true;
   }
   $('list').addEventListener('click', async (e) => {
