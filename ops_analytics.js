@@ -422,7 +422,16 @@ function lotLbForProcess(lot, process) {
     const prev = lot.stages[PIPELINE_ORDER[i]];
     if (prev && prev.outputLb > 0) return prev.outputLb;
   }
-  return st && st.outputLb > 0 ? st.outputLb : 0;
+  if (st && st.outputLb > 0) return st.outputLb;
+  // Nothing at or before this process — e.g. Harvest labor on a lot that
+  // only has a Wet Intake record. Use the first weight recorded after it, so
+  // the split still follows pounds instead of falling back to even.
+  for (let i = PIPELINE_ORDER.indexOf(process) + 1; i > 0 && i < PIPELINE_ORDER.length; i++) {
+    const next = lot.stages[PIPELINE_ORDER[i]];
+    if (next && next.inputLb > 0) return next.inputLb;
+    if (next && next.outputLb > 0) return next.outputLb;
+  }
+  return 0;
 }
 
 // Per-person labor rates, from netlify/functions/labor-rates.js:
@@ -520,9 +529,17 @@ function laborAllocations(stages, rates) {
   return out;
 }
 
-// Labor rolled up per lot: hours and cost by process, the lot's wet weight in
-// and its weight at the latest stage, and cost per pound of each. Allocations
-// with no UID come back as one row with lotId '' (general work).
+// Labor rolled up per lot. Direct labor (time logged on the lot's UIDs) is
+// kept apart from its share of farm-wide work: that share keeps moving until
+// every harvest on the farm is in, so it's an estimate and never folded into
+// the firm numbers.
+//   byProcess, hours, cost        direct labor only
+//   costPerWetLb, costPerCurrentLb direct cost per wet lb in / per lb at the
+//                                  lot's latest stage
+//   farmHours, farmCost,           this lot's current share of farm-wide work
+//   farmCostPerWetLb               (estimate)
+// Farm-wide time with no pounds yet comes back as the farm's own pool row
+// (pending, lotId 'farm:<license>'); time with no UID at all as lotId ''.
 function laborCostByLot(stages, rates, allocs) {
   const lots = new Map(buildLots(stages).map((l) => [l.id, l]));
   const by = new Map();
@@ -535,22 +552,29 @@ function laborCostByLot(stages, rates, allocs) {
       row = { lotId: a.lotId, strain: a.strain || (lot && lot.strain) || '', currentStage: lot ? lot.currentStage : null,
               farm: lot ? lot.pid : (a.farm || ''), pending: a.basis === 'farm-pending',
               wetLb: wet || null, currentLb: cur || null, uids: new Set(), byProcess: {}, hours: 0, cost: 0,
-              costKnown: true, evenSplit: false };
+              costKnown: true, farmHours: 0, farmCost: 0, farmCostKnown: true, evenSplit: false };
       by.set(a.lotId, row);
+    }
+    if (!row.strain && a.strain) row.strain = a.strain;
+    if (a.basis === 'farm') {
+      row.farmHours += a.hours;
+      if (a.cost == null) row.farmCostKnown = false; else row.farmCost += a.cost;
+      return;
     }
     if (a.uid) row.uids.add(a.uid);
     const p = row.byProcess[a.process] || (row.byProcess[a.process] = { hours: 0, cost: 0 });
     p.hours += a.hours; row.hours += a.hours;
     if (a.cost == null) row.costKnown = false; else { p.cost += a.cost; row.cost += a.cost; }
     if (a.basis === 'even') row.evenSplit = true;
-    if (a.basis === 'farm') { row.farmHours = (row.farmHours || 0) + a.hours; }
-    if (!row.strain && a.strain) row.strain = a.strain;
   });
   return [...by.values()].map((r) => ({
     ...r, uids: [...r.uids], hours: round2(r.hours), cost: r.costKnown ? round2(r.cost) : null,
     costPerWetLb: r.costKnown && r.wetLb ? r.cost / r.wetLb : null,
-    costPerCurrentLb: r.costKnown && r.currentLb ? r.cost / r.currentLb : null
-  })).sort((a, b) => (!a.lotId) - (!b.lotId) || a.pending - b.pending || b.hours - a.hours);
+    costPerCurrentLb: r.costKnown && r.currentLb ? r.cost / r.currentLb : null,
+    farmHours: Math.round(r.farmHours * 1000) / 1000,
+    farmCost: r.farmHours && r.farmCostKnown ? round2(r.farmCost) : (r.farmHours ? null : 0),
+    farmCostPerWetLb: r.farmHours && r.farmCostKnown && r.wetLb ? r.farmCost / r.wetLb : null
+  })).sort((a, b) => (!a.lotId) - (!b.lotId) || a.pending - b.pending || (b.hours + b.farmHours) - (a.hours + a.farmHours));
 }
 
 // Rolled up by employee: total logged hours, distinct batches/UIDs touched,

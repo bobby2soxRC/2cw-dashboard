@@ -370,12 +370,14 @@
     last30:    { en: 'Last 30 days', es: 'Últimos 30 días' },
     colLot:    { en: 'Lot (UID)', es: 'Lote (UID)' },
     colCost:   { en: 'Cost', es: 'Costo' },
+    colFarm:   { en: 'Farm-wide (est.)', es: 'Rancho general (est.)' },
+    colPerWetFarm: { en: '+ farm $/wet lb (est.)', es: '+ rancho $/lb húm. (est.)' },
     colWet:    { en: 'Wet lb in', es: 'Lb húmedas' },
     colPerWet: { en: '$/wet lb', es: '$/lb húmeda' },
     colNow:    { en: 'Now (lb)', es: 'Ahora (lb)' },
     colPerNow: { en: '$/lb now', es: '$/lb ahora' },
-    lotNote:   { en: 'Farm-wide work is spread over every lot that farm brings in that year, by wet lb; until it has any, it shows as the farm’s pool at the bottom. Hours on multi-UID entries are split by the pounds each lot had at that process. ≈ marks a lot with an entry split evenly because a weight wasn’t recorded yet. Take Down’s on-stem UID counts toward its farm package’s lot. Only entries in the dates above are counted — pick “All dates” for a lot’s whole cost.',
-                 es: 'El trabajo general de un rancho se reparte entre todos los lotes que ese rancho trae ese año, por lb húmedas; mientras no tenga, aparece abajo como el fondo del rancho. Las horas de registros con varios UIDs se dividen según las libras de cada lote en ese proceso. ≈ marca un lote con un registro dividido en partes iguales porque faltaba un peso. El UID en tallo de Desmontaje cuenta en el lote de su paquete de rancho. Solo cuentan los registros en las fechas de arriba — elija “Todas las fechas” para el costo completo de un lote.' },
+    lotNote:   { en: 'Hours, Cost and $/lb are direct labor only — time logged on the lot’s own UIDs. Farm-wide (est.) is the lot’s current share of the farm’s general work, spread by wet lb over every lot that farm brings in that year; it keeps changing until all of that farm’s harvests are in, so it’s kept separate. A farm with no pounds yet shows as its pool at the bottom. Hours on multi-UID entries are split by the pounds each lot had at that process. ≈ marks a lot with an entry split evenly because a weight wasn’t recorded yet. Take Down’s on-stem UID counts toward its farm package’s lot. Only entries in the dates above are counted — pick “All dates” for a lot’s whole cost.',
+                 es: 'Horas, Costo y $/lb son solo mano de obra directa — tiempo registrado en los UIDs del lote. Rancho general (est.) es la parte actual del lote del trabajo general del rancho, repartida por lb húmedas entre todos los lotes de ese rancho en el año; cambia hasta que entren todas las cosechas de ese rancho, por eso va aparte. Un rancho sin libras todavía aparece abajo como su fondo. Las horas de registros con varios UIDs se dividen según las libras de cada lote en ese proceso. ≈ marca un lote con un registro dividido en partes iguales porque faltaba un peso. El UID en tallo de Desmontaje cuenta en el lote de su paquete de rancho. Solo cuentan los registros en las fechas de arriba — elija “Todas las fechas” para el costo completo de un lote.' },
     noRate:    { en: 'Some people have no labor rate (and there’s no default rate), so their cost shows as —. Rates are set in the admin panel → Labor Rates.',
                  es: 'Algunas personas no tienen tarifa (y no hay tarifa predeterminada), así que su costo aparece como —. Las tarifas se fijan en el panel de administración → Labor Rates.' },
     segPerson: { en: 'By person', es: 'Por persona' },
@@ -945,6 +947,11 @@
   let seg = 'entries';
   $('f-from').value = localDay();
   $('f-to').value = localDay();
+  // Deep links (e.g. Harvest Intakes → "Open in Labor Log"):
+  // ?tab=list&seg=lot&all=1&q=<UID>
+  if (params.get('all')) { $('f-from').value = ''; $('f-to').value = ''; }
+  if (params.get('q')) $('f-q').value = params.get('q');
+  if (['entries', 'lot', 'person'].includes(params.get('seg'))) seg = params.get('seg');
   const RANGES = [['today', L.today, 0], ['30', L.last30, 29], ['all', L.allTime, null]];
   $('ranges').innerHTML = RANGES.map(([k, l]) => `<button type="button" data-range="${k}">${esc(t(l))}</button>`).join('');
   $('ranges').onclick = (e) => {
@@ -982,21 +989,23 @@
     renderList();
   }
 
-  function visibleEntries() {
+  // `noSearch`: By lot applies the search to the lots after allocation
+  // instead, so farm-wide time (no UIDs) still reaches a searched-for lot.
+  function visibleEntries(noSearch) {
     const proc = $('f-process').value;
     const q = fold($('f-q').value.trim());
     const qu = normUid($('f-q').value);
     return entries.filter((r) => {
       const f = r.fields || {};
       if (proc && f.process !== proc) return false;
-      if (!q) return true;
+      if (!q || noSearch) return true;
       return fold(f.employeeName).includes(q) || fold(f.farmName).includes(q) || (qu && (f.uids || []).some((u) => normUid(u.uid).includes(qu)));
     });
   }
 
   function renderList() {
     document.querySelectorAll('#seg button').forEach((b) => b.classList.toggle('on', b.dataset.seg === seg));
-    const rows = visibleEntries();
+    const rows = visibleEntries(seg === 'lot');
     if (!rows.length) { $('list').innerHTML = `<div class="empty-big">${esc(t(L.empty))}</div>`; return; }
     const table = (head, body) => `<div class="tbl-wrap"><table><thead><tr>${head.map(([l, n]) => `<th class="${n ? 'n' : ''}">${esc(t(l))}</th>`).join('')}</tr></thead><tbody>${body.join('')}</tbody></table></div>`;
     const totalH = rows.reduce((a, r) => a + num(r.fields.hours), 0);
@@ -1065,27 +1074,36 @@
     if (seq !== lotSeq || seg !== 'lot') return;
     const all = { ...st, labor_entry: rows.map(flattenRecord) };
     const allocs = A.laborAllocations(all, rates);
-    const lots = A.laborCostByLot(all, rates, allocs);
+    const q = fold($('f-q').value.trim()), qu = normUid($('f-q').value);
+    const lots = A.laborCostByLot(all, rates, allocs).filter((l) => !q
+      || (qu && (normUid(l.lotId).includes(qu) || l.uids.some((u) => normUid(u).includes(qu))))
+      || fold(l.strain).includes(q) || fold(farmName(l.farm)).includes(q));
     const procs = [...OPERATIONS_STATIONS.map((x) => x.key), 'other'].filter((k) => lots.some((l) => l.byProcess[k]));
     const hasCost = !!rates && lots.every((l) => l.cost != null);
+    const anyFarm = lots.some((l) => l.farmHours);
+    const farmCell = (l) => !l.farmHours ? '' : rates && l.farmCost != null
+      ? `<span class="warn">${fmtMoney(l.farmCost)}</span><div class="s">${fmtNum(l.farmHours, 2)} h</div>` : `<span class="warn">${fmtNum(l.farmHours, 2)} h</span>`;
     const cell = (p) => !p ? '' : hasCost ? `${fmtMoney(p.cost)}<div class="s">${fmtNum(p.hours, 2)} h</div>` : `${fmtNum(p.hours, 2)} h`;
     const body = lots.map((l) => `<tr>
       <td>${l.pending ? `${esc(fill(t(L.farmLabel), { f: farmName(l.farm) }))}<div class="s warn">${esc(t(L.pool))}</div>`
         : l.lotId ? `<span class="m" title="${esc(l.uids.join(', '))}">${esc(tail(l.lotId))}</span>${l.evenSplit ? ' <span class="warn">≈</span>' : ''}
-        <div class="s">${esc([l.strain, l.farm ? farmName(l.farm) : ''].filter(Boolean).join(' · '))}</div>${l.farmHours ? `<div class="s">${esc(fill(t(L.farmShare), { h: fmtNum(l.farmHours, 2) }))}</div>` : ''}`
+        <div class="s">${esc([l.strain, l.farm ? farmName(l.farm) : ''].filter(Boolean).join(' · '))}</div>`
         : `<span class="s">${esc(t(L.noUid))}</span>`}</td>
       ${procs.map((k) => `<td class="n">${cell(l.byProcess[k])}</td>`).join('')}
-      <td class="n">${fmtNum(l.hours, 2)}</td>${rates ? `<td class="n">${fmtMoney(l.cost)}</td>` : ''}
-      <td class="n">${l.wetLb ? fmtNum(l.wetLb, 0) : '—'}</td>${rates ? `<td class="n">${l.costPerWetLb != null ? '$' + fmtNum(l.costPerWetLb, 3) : '—'}</td>` : ''}
+      <td class="n">${l.hours ? fmtNum(l.hours, 2) : '—'}</td>${rates ? `<td class="n">${l.hours ? fmtMoney(l.cost) : '—'}</td>` : ''}
+      ${anyFarm ? `<td class="n">${farmCell(l)}</td>` : ''}
+      <td class="n">${l.wetLb ? fmtNum(l.wetLb, 0) : '—'}</td>${rates ? `<td class="n">${l.hours && l.costPerWetLb != null ? '$' + fmtNum(l.costPerWetLb, 3) : '—'}</td>` : ''}
+      ${anyFarm && rates ? `<td class="n">${l.farmCostPerWetLb != null ? '<span class="s">+</span>$' + fmtNum(l.farmCostPerWetLb, 3) : '—'}</td>` : ''}
       <td class="n">${l.currentLb ? fmtNum(l.currentLb, 1) : '—'}${l.currentStage ? `<div class="s">${esc(procTitle(l.currentStage))}</div>` : ''}</td>
-      ${rates ? `<td class="n">${l.costPerCurrentLb != null ? '$' + fmtNum(l.costPerCurrentLb, 2) : '—'}</td>` : ''}</tr>`);
+      ${rates ? `<td class="n">${l.hours && l.costPerCurrentLb != null ? '$' + fmtNum(l.costPerCurrentLb, 2) : '—'}</td>` : ''}</tr>`);
     const sum = (k) => lots.reduce((a, l) => a + (l[k] || 0), 0);
     body.push(`<tr class="total"><td>${esc(t(L.total))}</td>${procs.map((k) => {
       const p = lots.reduce((a, l) => { const x = l.byProcess[k]; if (x) { a.hours += x.hours; a.cost += x.cost; } return a; }, { hours: 0, cost: 0 });
-      return `<td class="n">${cell(p)}</td>`; }).join('')}<td class="n">${fmtNum(sum('hours'), 2)}</td>${rates ? `<td class="n">${hasCost ? fmtMoney(sum('cost')) : '—'}</td>` : ''}<td colspan="${rates ? 4 : 2}"></td></tr>`);
+      return `<td class="n">${cell(p)}</td>`; }).join('')}<td class="n">${fmtNum(sum('hours'), 2)}</td>${rates ? `<td class="n">${hasCost ? fmtMoney(sum('cost')) : '—'}</td>` : ''}${anyFarm ? `<td class="n">${farmCell({ farmHours: sum('farmHours'), farmCost: lots.every((l) => l.farmCost != null) ? sum('farmCost') : null })}</td>` : ''}<td colspan="${(rates ? 4 : 2) + (anyFarm && rates ? 1 : 0)}"></td></tr>`);
     $('list').innerHTML = costNote +
       table([[L.colLot], ...procs.map((k) => [{ en: procTitle(k), es: procTitle(k) }, 1]), [L.colHours, 1],
-             ...(rates ? [[L.colCost, 1]] : []), [L.colWet, 1], ...(rates ? [[L.colPerWet, 1]] : []),
+             ...(rates ? [[L.colCost, 1]] : []), ...(anyFarm ? [[L.colFarm, 1]] : []), [L.colWet, 1], ...(rates ? [[L.colPerWet, 1]] : []),
+             ...(anyFarm && rates ? [[L.colPerWetFarm, 1]] : []),
              [L.colNow, 1], ...(rates ? [[L.colPerNow, 1]] : [])], body) +
       `<div class="hint">${esc(t(L.lotNote))}</div>`;
   }

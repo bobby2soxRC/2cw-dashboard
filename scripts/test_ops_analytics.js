@@ -160,6 +160,9 @@ check('strain filter keeps only that strain’s share', A.crewLaborLog(laborStag
 const gil = A.crewLaborByEmployee(laborStages).find((e) => e.employeeNo === '5475211');
 check('employee roll-up: 13.5 hours, named', [gil.hours, gil.name], [13.5, 'Gilberto Diaz']);
 
+check('Harvest labor on an intake-only lot splits by its wet lb', A.lotLbForProcess({ stages: { intake_wet: { inputLb: 0, outputLb: 1072 } } }, 'harvest'), 1072);
+check('…but a lot with no weight anywhere still has none', A.lotLbForProcess({ stages: {} }, 'harvest'), 0);
+
 console.log('\nfarm-wide labor (spread over the farm\'s pounds)');
 // Both fixture intakes came from farm license 540 in 2026: LCG 310 wet lb, Zoap 92.
 const farmStages = { ...stages, labor_entry: [
@@ -177,6 +180,9 @@ check('last year\'s farm work doesn\'t land on this year\'s lots', fa.find((a) =
 const fLots = A.laborCostByLot(farmStages, RATES);
 check('pool rows sort after real lots', fLots.map((r) => r.pending), [false, false, true, true]);
 check('lot carries its farm-wide share', [fLots.find((r) => r.lotId === FARM_UID).farmHours, fLots.find((r) => r.lotId === FARM_UID).farm], [7.711, '540']);
+const fl = fLots.find((r) => r.lotId === FARM_UID);
+check('farm-wide share stays out of the direct numbers', [fl.hours, fl.cost, fl.costPerWetLb, Object.keys(fl.byProcess).length], [0, 0, 0, 0]);
+check('farm-wide cost and $/wet lb reported on their own', [fl.farmCost, Math.round(fl.farmCostPerWetLb * 10000) / 10000], [154.23, Math.round(154.23 / 310 * 10000) / 10000]);
 
 console.log('\nrequests');
 const reqs = A.requestSummary(stages, ASOF);
