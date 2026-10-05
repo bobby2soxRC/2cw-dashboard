@@ -40,7 +40,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/connecteam_hours.json data/connecteam_roster.json
+          git add data/connecteam_hours.json data/connecteam_roster.json data/connecteam_shifts.json
           git diff --staged --quiet || git commit -m "Hourly Connecteam staff hours sync"
           git pull --rebase origin main
           git push

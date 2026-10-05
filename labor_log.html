@@ -101,6 +101,51 @@
     .warn{color:var(--gold)}
     .empty-big{color:var(--muted);text-align:center;padding:50px 0;font-size:.9rem}
     .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
+    /* Timeline: one row per person, their clock-in time as a track, logged
+       entries on top, uncovered clock time hatched (and clickable). */
+    .tl-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+    .tl-bar input[type=date]{flex:0 1 170px;width:auto}
+    .tl-bar input[type=search]{flex:1 1 160px;width:auto}
+    .tl-nav{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;min-width:46px;min-height:46px;font-size:1.1rem;cursor:pointer}
+    .tl-check{display:flex;gap:8px;align-items:center;font-size:.88rem;color:var(--subtext);cursor:pointer}
+    .tl-check input{width:18px;height:18px;min-height:0}
+    .tl-hero{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+    .tl-stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 14px;min-width:120px}
+    .tl-stat .k{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+    .tl-stat .v{font-family:'DM Mono',monospace;font-size:1.35rem;margin-top:2px}
+    .tl-stat.warn{border-color:var(--gold)}
+    .tl-stat.ok .v::before{content:'✓ ';color:var(--green)}
+    .tl-stat.warn .v::before{content:'⚠ ';color:var(--gold)}
+    .tl-legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.8rem;color:var(--subtext);margin-bottom:10px}
+    .tl-legend span{display:inline-flex;align-items:center;gap:6px}
+    .tl-key{display:inline-block;width:22px;height:12px;border-radius:3px}
+    .tl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+    .tl{min-width:880px;display:grid;grid-template-columns:170px 1fr 76px 76px 84px}
+    .tl > div{padding:6px 8px;border-bottom:1px solid var(--border);min-height:44px;display:flex;align-items:center}
+    .tl .hd{min-height:30px;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--surface2)}
+    .tl .num{justify-content:flex-end;text-align:right;font-family:'DM Mono',monospace;font-size:.85rem}
+    .tl .num.warn{color:var(--gold)}
+    .tl .who{flex-direction:column;align-items:flex-start;justify-content:center;font-size:.86rem;line-height:1.25}
+    .tl .who .s{font-size:.72rem;color:var(--muted)}
+    .tl .lane{position:relative;padding:0}
+    .tl .axis{position:relative;padding:0}
+    .tl .tick{position:absolute;top:0;bottom:0;border-left:1px solid var(--border)}
+    .tl .axis .tick span{position:absolute;top:8px;left:4px;white-space:nowrap}
+    .tl .lane .tick{opacity:.6}
+    .tl .seg{position:absolute;border-radius:4px;top:50%;transform:translateY(-50%)}
+    .tl .shift{height:28px;background:var(--surface2);border:1px solid #2d323d}
+    .tl .entry{height:20px;background:var(--blue);border:none;cursor:default;padding:0;
+      color:#000;font:600 .66rem/1 'DM Mono',monospace;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;display:flex;align-items:center;padding-left:5px;
+      box-shadow:0 0 0 2px var(--surface)}
+    .tl .gap{height:20px;border:1px solid var(--gold);cursor:pointer;padding:0;
+      background:repeating-linear-gradient(45deg,rgba(212,168,67,.55) 0 3px,transparent 3px 7px)}
+    .tl .gap:hover,.tl .gap:focus-visible{background:rgba(212,168,67,.6);outline:none}
+    .tl .outside{height:24px;border:2px solid var(--red);background:transparent;pointer-events:none}
+    .tl .now{position:absolute;top:0;bottom:0;border-left:2px solid var(--green);z-index:2}
+    #tl-tip{position:fixed;z-index:70;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:.82rem;
+      line-height:1.45;max-width:280px;box-shadow:0 10px 30px rgba(0,0,0,.5);pointer-events:none;display:none}
+    #tl-tip b{font-family:'DM Mono',monospace;font-weight:500}
+    #tl-tip .s{color:var(--muted);font-size:.75rem}
     #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--green);color:#000;font-weight:700;
       padding:12px 18px;border-radius:10px;z-index:60;display:none;max-width:calc(100vw - 32px)}
     #toast.on{display:block}
@@ -178,9 +223,24 @@
     <div id="list"></div>
   </section>
 
+  <section class="view" id="view-timeline">
+    <div class="tl-bar">
+      <button type="button" class="tl-nav" id="tl-prev" aria-label="Previous day">‹</button>
+      <input type="date" id="tl-date">
+      <button type="button" class="tl-nav" id="tl-next" aria-label="Next day">›</button>
+      <input type="search" id="tl-q">
+      <label class="tl-check"><input type="checkbox" id="tl-only"> <span id="tl-only-l"></span></label>
+    </div>
+    <div class="tl-hero" id="tl-hero"></div>
+    <div class="tl-legend" id="tl-legend"></div>
+    <div id="tl-body"></div>
+    <div class="hint" id="tl-note"></div>
+  </section>
+
   <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution</footer>
 </main>
 <div id="toast"></div>
+<div id="tl-tip" role="tooltip"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/config/supabase_config.js"></script>
@@ -311,6 +371,29 @@
     removeQ:   { en: 'Remove this entry? It stops counting toward labor totals.', es: '¿Quitar este registro? Deja de contar en los totales.' },
     empty:     { en: 'No entries for these dates.', es: 'No hay registros para estas fechas.' },
     loading:   { en: 'Loading…', es: 'Cargando…' },
+    tabTl:     { en: 'Timeline', es: 'Línea de tiempo' },
+    tlOnly:    { en: 'Only people with time not logged', es: 'Solo personas con tiempo sin registrar' },
+    tlSearch:  { en: 'Search name…', es: 'Buscar nombre…' },
+    tlClocked: { en: 'Clocked', es: 'Marcado' },
+    tlLogged:  { en: 'Logged', es: 'Registrado' },
+    tlUnalloc: { en: 'Not logged', es: 'Sin registrar' },
+    tlPct:     { en: 'Allocated', es: 'Asignado' },
+    tlPeople:  { en: 'People', es: 'Personas' },
+    tlKeyShift:{ en: 'Clocked in (Connecteam)', es: 'Marcado (Connecteam)' },
+    tlKeyEntry:{ en: 'Logged to a UID or task', es: 'Registrado a un UID o tarea' },
+    tlKeyGap:  { en: 'Clocked in, no entry for this time — tap to log it', es: 'Marcado, sin registro para este tiempo — toque para registrarlo' },
+    tlKeyOut:  { en: 'Logged while not clocked in', es: 'Registrado sin estar marcado' },
+    tlNoTimes: { en: '+{h} h logged without times', es: '+{h} h registradas sin hora' },
+    tlOnClock: { en: 'on the clock', es: 'marcado ahora' },
+    tlNotCt:   { en: 'not in Connecteam', es: 'no está en Connecteam' },
+    tlEmpty:   { en: 'Nobody clocked in or logged time on this day.', es: 'Nadie marcó ni registró tiempo este día.' },
+    tlAllDone: { en: 'Everyone’s clocked time is logged.', es: 'Todo el tiempo marcado está registrado.' },
+    tlGapTip:  { en: 'Not logged: {a}–{b} ({h} h). Tap to log this time.', es: 'Sin registrar: {a}–{b} ({h} h). Toque para registrar este tiempo.' },
+    tlShiftTip:{ en: 'Clocked in {a}–{b} ({h} h)', es: 'Marcado {a}–{b} ({h} h)' },
+    tlNoData:  { en: 'Couldn’t load Connecteam clock times — the timeline needs data/connecteam_shifts.json from the hourly sync.',
+                 es: 'No se pudieron cargar las horas de Connecteam — la línea de tiempo necesita data/connecteam_shifts.json de la sincronización.' },
+    tlNote:    { en: 'Clock times come from Connecteam, synced hourly ({t}), so the last hour may be missing. Entries saved with only hours (no start/end) count toward Logged but can’t be placed on the line. Unpaid breaks show as not-logged time unless people clock out for them.',
+                 es: 'Las horas marcadas vienen de Connecteam, cada hora ({t}), así que puede faltar la última hora. Los registros solo con horas (sin inicio/fin) cuentan en Registrado pero no se pueden ubicar en la línea. Los descansos sin pago aparecen como tiempo sin registrar a menos que marquen salida.' },
     clockNote: { en: 'Clocked today is from Connecteam (synced hourly); Not logged is clocked time with no Labor Log entry yet.',
                  es: '“Marcado hoy” viene de Connecteam (cada hora); “Sin registrar” es tiempo marcado sin registro todavía.' }
   };
@@ -360,12 +443,13 @@
   $('date').value = localDay();
 
   // ── Tabs ────────────────────────────────────────────────────────────────
-  const TABS = [['log', L.tabLog], ['list', L.tabList]];
+  const TABS = [['log', L.tabLog], ['list', L.tabList], ['timeline', L.tabTl]];
   $('tabs').innerHTML = TABS.map(([k, l]) => `<button type="button" data-tab="${k}">${esc(t(l))}</button>`).join('');
   function showTab(k) {
     document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === k));
     document.querySelectorAll('.view').forEach((v) => v.classList.toggle('on', v.id === 'view-' + k));
     if (k === 'list') loadEntries();
+    if (k === 'timeline') loadTimeline();
   }
   $('tabs').onclick = (e) => { const b = e.target.closest('button'); if (b) showTab(b.dataset.tab); };
 
@@ -920,7 +1004,190 @@
     renderList();
   });
 
-  showTab(params.get('tab') === 'list' ? 'list' : 'log');
+  // ── Timeline ────────────────────────────────────────────────────────────
+  // Each person's day: Connecteam clock-ins (data/connecteam_shifts.json,
+  // from the hourly sync) as a track, Labor Log entries that have start/end
+  // drawn on it, and any clocked time no entry covers hatched — tap a hatched
+  // stretch to log it (opens Log time with the person, date and times
+  // filled in). Entries saved with hours only count toward Logged but can't
+  // be placed. Times are the viewer's local time.
+  let shiftData = null, shiftsLoading = null;
+  const loadShifts = () => shiftsLoading || (shiftsLoading = getJson('connecteam_shifts.json').then((d) => { shiftData = d; return d; }));
+  const hhmm = (m) => { const x = ((Math.round(m) % 1440) + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
+  const toMin = (s) => { const [h, mi] = String(s || '').split(':').map(Number); return Number.isFinite(h) && Number.isFinite(mi) ? h * 60 + mi : null; };
+  const dayStart = (d) => new Date(d + 'T00:00:00');
+  // Union of [a,b) minute intervals, merged and sorted.
+  const union = (iv) => iv.slice().sort((x, y) => x[0] - y[0]).reduce((o, [a, b]) => {
+    if (o.length && a <= o[o.length - 1][1]) o[o.length - 1][1] = Math.max(o[o.length - 1][1], b); else o.push([a, b]);
+    return o;
+  }, []);
+  // Parts of `iv` not covered by `cover`; pieces under 5 minutes are noise.
+  const minus = (iv, cover) => {
+    const out = [];
+    union(iv).forEach(([a, b]) => {
+      let cur = a;
+      union(cover).forEach(([c, d]) => { if (d <= cur || c >= b) return; if (c > cur) out.push([cur, c]); cur = Math.max(cur, d); });
+      if (cur < b) out.push([cur, b]);
+    });
+    return out.filter(([a, b]) => b - a >= 5);
+  };
+
+  $('tl-date').value = localDay();
+  $('tl-q').placeholder = t(L.tlSearch);
+  $('tl-only-l').textContent = t(L.tlOnly);
+  $('tl-legend').innerHTML = [
+    ['background:var(--surface2);border:1px solid #2d323d', L.tlKeyShift],
+    ['background:var(--blue)', L.tlKeyEntry],
+    ['border:1px solid var(--gold);background:repeating-linear-gradient(45deg,rgba(212,168,67,.55) 0 3px,transparent 3px 7px)', L.tlKeyGap],
+    ['border:2px solid var(--red)', L.tlKeyOut]
+  ].map(([css, l]) => `<span><i class="tl-key" style="${css}"></i>${esc(t(l))}</span>`).join('');
+  const shiftDay = (n) => { const d = dayStart($('tl-date').value || localDay()); d.setDate(d.getDate() + n); $('tl-date').value = localDay(d); loadTimeline(); };
+  $('tl-prev').onclick = () => shiftDay(-1);
+  $('tl-next').onclick = () => shiftDay(1);
+  $('tl-date').addEventListener('change', loadTimeline);
+  $('tl-q').addEventListener('input', () => renderTimeline());
+  $('tl-only').addEventListener('change', () => renderTimeline());
+
+  let tlEntries = [], tlSeq = 0;
+  async function loadTimeline() {
+    const seq = ++tlSeq;
+    const date = $('tl-date').value || localDay();
+    $('tl-body').innerHTML = `<div class="empty-big">${esc(t(L.loading))}</div>`;
+    const client = getClient();
+    const [shifts, res] = await Promise.all([loadShifts(), client
+      ? client.from('operations_forms').select('*').eq('station_key', ENTRY_KEY).eq('status', 'submitted').eq('work_date', date).range(0, 4999)
+      : Promise.resolve({ data: [] })]);
+    if (seq !== tlSeq) return;
+    tlEntries = ((res && res.data) || []).filter((r) => !(r.fields || {}).voided);
+    renderTimeline(shifts);
+  }
+
+  function renderTimeline() {
+    const date = $('tl-date').value || localDay();
+    const day0 = dayStart(date).getTime();
+    const nowMin = (Date.now() - day0) / 60000;
+    const isToday = date === localDay();
+    if (!shiftData || !Array.isArray(shiftData.shifts)) $('tl-note').textContent = t(L.tlNoData);
+    else $('tl-note').textContent = fill(t(L.tlNote), { t: new Date(shiftData.last_sync).toLocaleString() });
+
+    // People: everyone clocked in that day, plus anyone with an entry.
+    const rows = new Map();
+    const rowFor = (key, name, userId) => rows.get(key) || rows.set(key, { key, name, userId, shifts: [], timed: [], untimed: 0, logged: 0, open: false }).get(key);
+    ((shiftData && shiftData.shifts) || []).forEach((sh) => {
+      const a = (Date.parse(sh.start) - day0) / 60000;
+      const openShift = !sh.end;
+      const b = openShift ? (isToday ? nowMin : a) : (Date.parse(sh.end) - day0) / 60000;
+      if (!(b > 0 && a < 1440) || b <= a) return;
+      const row = rowFor(String(sh.userId), sh.name, String(sh.userId));
+      row.shifts.push([Math.max(0, a), Math.min(1440, b)]);
+      if (openShift && isToday) row.open = true;
+    });
+    tlEntries.forEach((r) => {
+      const f = r.fields || {};
+      const key = f.employeeId ? String(f.employeeId) : 'name:' + fold(f.employeeName);
+      const row = rowFor(key, f.employeeName, f.employeeId || '');
+      row.logged += num(f.hours);
+      const a = toMin(f.start), b0 = toMin(f.end);
+      if (a == null || b0 == null) { row.untimed += num(f.hours); return; }
+      const b = b0 <= a ? b0 + 1440 : b0;   // past midnight
+      row.timed.push({ a, b, f });
+    });
+
+    let list = [...rows.values()].map((row) => {
+      const clocked = union(row.shifts).reduce((x, [a, b]) => x + (b - a), 0) / 60;
+      const timedIv = row.timed.map((e) => [e.a, e.b]);
+      return { ...row, clocked, unalloc: Math.max(0, clocked - row.logged),
+               gaps: minus(row.shifts, timedIv), outside: row.shifts.length ? minus(timedIv, row.shifts) : [] };
+    });
+    // Team numbers before filtering, so the totals don't move with the search.
+    const tot = list.reduce((o, r) => ({ c: o.c + r.clocked, l: o.l + r.logged, u: o.u + r.unalloc }), { c: 0, l: 0, u: 0 });
+    const pct = tot.c ? Math.min(1, (tot.c - tot.u) / tot.c) : null;
+    const stat = (k, v, cls) => `<div class="tl-stat ${cls || ''}"><div class="k">${esc(t(k))}</div><div class="v">${v}</div></div>`;
+    $('tl-hero').innerHTML = stat(L.tlPeople, list.length) + stat(L.tlClocked, fmtNum(tot.c, 1) + ' h') + stat(L.tlLogged, fmtNum(tot.l, 1) + ' h') +
+      stat(L.tlUnalloc, fmtNum(tot.u, 1) + ' h', tot.u > 0.25 ? 'warn' : list.length ? 'ok' : '') + stat(L.tlPct, pct == null ? '—' : fmtPct(pct, 0));
+
+    const q = fold($('tl-q').value.trim());
+    if (q) list = list.filter((r) => fold(r.name).includes(q));
+    if ($('tl-only').checked) list = list.filter((r) => r.unalloc > 0.25);
+    list.sort((x, y) => (y.unalloc > 0.25) - (x.unalloc > 0.25) || y.unalloc - x.unalloc || x.name.localeCompare(y.name));
+    if (!rows.size) { $('tl-body').innerHTML = `<div class="empty-big">${esc(t(L.tlEmpty))}</div>`; return; }
+    if (!list.length) { $('tl-body').innerHTML = `<div class="empty-big">${esc(t($('tl-only').checked ? L.tlAllDone : L.empty))}</div>`; return; }
+
+    // Hour range: whole hours around everything on screen.
+    let lo = 1440, hi = 0;
+    list.forEach((r) => [...r.shifts, ...r.timed.map((e) => [e.a, e.b])].forEach(([a, b]) => { lo = Math.min(lo, a); hi = Math.max(hi, b); }));
+    if (lo >= hi) { lo = 360; hi = 1080; }
+    lo = Math.max(0, Math.floor(lo / 60) * 60); hi = Math.min(1440 * 2, Math.ceil(hi / 60) * 60);
+    if (hi - lo < 240) hi = Math.min(1440 * 2, lo + 240);
+    const span = hi - lo;
+    const X = (m) => ((Math.max(lo, Math.min(hi, m)) - lo) / span * 100).toFixed(3) + '%';
+    const W = (a, b) => ((Math.min(hi, b) - Math.max(lo, a)) / span * 100).toFixed(3) + '%';
+    const step = span > 14 * 60 ? 120 : 60;
+    const ticks = [];
+    for (let m = lo; m <= hi; m += 60) ticks.push(m);
+    const tickHtml = (withLabel) => ticks.map((m) => `<div class="tick" style="left:${X(m)}">${withLabel && (m - lo) % step === 0 && m < hi ? `<span>${hhmm(m)}</span>` : ''}</div>`).join('');
+    const nowLine = isToday && nowMin > lo && nowMin < hi ? `<div class="now" style="left:${X(nowMin)}"></div>` : '';
+
+    tlTips = [];
+    const tip = (html) => { tlTips.push(html); return tlTips.length - 1; };
+    const html = [`<div class="hd">${esc(t(L.colPerson))}</div><div class="hd axis">${tickHtml(true)}</div>
+      <div class="hd num">${esc(t(L.tlClocked))}</div><div class="hd num">${esc(t(L.tlLogged))}</div><div class="hd num">${esc(t(L.tlUnalloc))}</div>`];
+    list.forEach((r, ri) => {
+      const segs = [];
+      union(r.shifts).forEach(([a, b]) => segs.push(`<div class="seg shift" style="left:${X(a)};width:${W(a, b)}" data-tip="${tip(
+        fill(t(L.tlShiftTip), { a: hhmm(a), b: b === nowMin ? '…' : hhmm(b), h: fmtNum((b - a) / 60, 2) }))}"></div>`));
+      r.timed.forEach((e) => {
+        const f = e.f;
+        const label = [procTitle(f.process), (f.uids || []).map((u) => tail(u.uid)).join(' ')].filter(Boolean).join(' · ');
+        segs.push(`<div class="seg entry" style="left:${X(e.a)};width:${W(e.a, e.b)}" data-tip="${tip(
+          `<b>${esc(f.start)}–${esc(f.end)}</b> · ${fmtH(num(f.hours))} h<br>${esc(procTitle(f.process))}<br>${(f.uids || []).map((u) => `<b>${esc(tail(u.uid))}</b> ${esc(u.strain || '')}`).join('<br>') || `<span class="s">${esc(t(L.noUid))}</span>`}${f.notes ? `<br><span class="s">${esc(f.notes)}</span>` : ''}`)}">${esc(label)}</div>`);
+      });
+      r.outside.forEach(([a, b]) => segs.push(`<div class="seg outside" style="left:${X(a)};width:${W(a, b)}"></div>`));
+      r.gaps.forEach(([a, b]) => segs.push(`<button type="button" class="seg gap" style="left:${X(a)};width:${W(a, b)}" aria-label="${esc(fill(t(L.tlGapTip), { a: hhmm(a), b: hhmm(b), h: fmtNum((b - a) / 60, 2) }))}"
+        data-row="${ri}" data-a="${Math.round(a)}" data-b="${Math.round(b)}" data-tip="${tip(esc(fill(t(L.tlGapTip), { a: hhmm(a), b: hhmm(b), h: fmtNum((b - a) / 60, 2) })))}"></button>`));
+      const sub = [r.open ? `<span style="color:var(--green)">● ${esc(t(L.tlOnClock))}</span>` : '',
+                   !r.userId ? esc(t(L.tlNotCt)) : '',
+                   r.untimed ? esc(fill(t(L.tlNoTimes), { h: fmtH(r.untimed) })) : ''].filter(Boolean).join(' · ');
+      html.push(`<div class="who"><span>${esc(r.name)}</span>${sub ? `<span class="s">${sub}</span>` : ''}</div>
+        <div class="lane">${tickHtml(false)}${segs.join('')}${nowLine}</div>
+        <div class="num">${r.clocked ? fmtNum(r.clocked, 2) : '—'}</div><div class="num">${fmtNum(r.logged, 2)}</div>
+        <div class="num ${r.unalloc > 0.25 ? 'warn' : ''}">${r.clocked ? fmtNum(r.unalloc, 2) : '—'}</div>`);
+    });
+    tlRows = list;
+    $('tl-body').innerHTML = `<div class="tl-wrap"><div class="tl">${html.join('')}</div></div>`;
+  }
+
+  // Tooltip, and tapping a not-logged stretch to log it.
+  let tlTips = [], tlRows = [];
+  const tipEl = $('tl-tip');
+  function showTip(el, x, y) {
+    tipEl.innerHTML = tlTips[+el.dataset.tip] || '';
+    tipEl.style.display = 'block';
+    const w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+    tipEl.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, x + 12)) + 'px';
+    tipEl.style.top = (y + h + 20 > window.innerHeight ? y - h - 12 : y + 16) + 'px';
+  }
+  $('tl-body').addEventListener('mousemove', (e) => { const el = e.target.closest('[data-tip]'); if (el) showTip(el, e.clientX, e.clientY); else tipEl.style.display = 'none'; });
+  $('tl-body').addEventListener('mouseleave', () => { tipEl.style.display = 'none'; });
+  $('tl-body').addEventListener('focusin', (e) => { const el = e.target.closest('[data-tip]'); if (el) { const r = el.getBoundingClientRect(); showTip(el, r.left, r.bottom); } });
+  $('tl-body').addEventListener('focusout', () => { tipEl.style.display = 'none'; });
+  $('tl-body').addEventListener('click', (e) => {
+    const g = e.target.closest('button.gap');
+    if (!g) return;
+    const r = tlRows[+g.dataset.row];
+    tipEl.style.display = 'none';
+    people = [r.userId ? (roster.find((p) => p.userId === r.userId) || { userId: r.userId, name: r.name }) : { userId: '', name: r.name }];
+    renderPeople();
+    $('date').value = $('tl-date').value;
+    $('start').value = hhmm(+g.dataset.a);
+    $('end').value = hhmm(+g.dataset.b);
+    fromTimes();
+    showTab('log');
+    window.scrollTo(0, 0);
+    $('process').focus();
+  });
+
+  showTab(['list', 'timeline'].includes(params.get('tab')) ? params.get('tab') : 'log');
   await rosterReady;
   renderPeople();
 })();
