@@ -508,6 +508,15 @@ in Labor Log** link opens `labor_log.html?tab=list&seg=lot&all=1&q=<UID>`.
 By lot applies its search to the lots after allocation, so farm-wide time
 still shows on a searched-for lot.
 
+**Direct vs. farm-wide.** A lot's Hours, Cost and $/lb (in By lot and on
+the intake's Labor section) count **direct labor only**: time logged on
+its own UIDs. Its share of farm-wide work is shown on its own as
+**Farm-wide (est.)**, with its own "+ farm $/wet lb (est.)". That share is
+re-divided every time another lot from the farm comes in, so it's an
+estimate until all of the farm's harvests are done. `laborCostByLot`
+returns `hours/cost/costPerWetLb/costPerCurrentLb` for direct labor and
+`farmHours/farmCost/farmCostPerWetLb` for the share.
+
 Weights for a process with nothing recorded at or before it (Harvest labor
 on a lot that only has a Wet Intake) come from the first stage after it
 that has a weight, rather than falling back to an even split.

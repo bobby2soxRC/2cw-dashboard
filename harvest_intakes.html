@@ -178,7 +178,10 @@
     laborTot:  { en: 'Total', es: 'Total' },
     laborPerLb:{ en: 'Per wet lb', es: 'Por lb húmeda' },
     laborEven: { en: '≈ part of this was split evenly because another package on the same entry had no weight yet.', es: '≈ parte se dividió en partes iguales porque otro paquete del mismo registro aún no tenía peso.' },
-    laborFarm: { en: 'Includes {h} h of farm-wide work spread over this farm’s pounds.', es: 'Incluye {h} h de trabajo general del rancho repartido entre sus libras.' },
+    laborDirect:{ en: 'Direct labor', es: 'Mano de obra directa' },
+    laborFarmRow:{ en: 'Farm-wide share (estimate)', es: 'Parte del rancho general (estimado)' },
+    laborFarm: { en: 'This package’s current share of general farm work, spread by wet lb over every lot the farm brings in this year. It keeps changing until all of the farm’s harvests are in, so it isn’t included in the direct totals above.',
+                 es: 'La parte actual de este paquete del trabajo general del rancho, repartida por lb húmedas entre todos los lotes del rancho este año. Cambia hasta que entren todas las cosechas del rancho, por eso no se incluye en los totales directos.' },
     laborOpen: { en: 'Open in Labor Log', es: 'Abrir en Registro de Mano de Obra' },
     laborOther:{ en: 'Other / general', es: 'Otro / general' },
     back:      { en: '← Hub', es: '← Inicio' },
@@ -653,8 +656,13 @@
     const mine = allocs.filter((a) => a.lotId === lotId || a.uid === uid);
     const hd = `<div class="d-section-hd">${t(L.labor)}</div>`;
     if (!mine.length) { el.innerHTML = hd + `<div class="muted-note">${t(L.laborNone)}</div>`; return; }
+    // Direct labor (logged on this package's UIDs) is firm; the farm-wide
+    // share keeps moving until the farm's harvests are all in, so it's shown
+    // on its own and kept out of the totals and per-lb figures.
+    const direct = mine.filter((a) => a.basis !== 'farm');
+    const farm = mine.filter((a) => a.basis === 'farm');
     const by = {};
-    mine.forEach((a) => {
+    direct.forEach((a) => {
       const k = a.process || 'other';
       const row = by[k] || (by[k] = { hours: 0, cost: 0, costKnown: true, people: new Set() });
       row.hours += a.hours;
@@ -665,21 +673,23 @@
     const procTitle = (k) => k === 'other' ? t(L.laborOther) : (STATION_BY_KEY[k] ? t(STATION_BY_KEY[k].title) : k);
     const order = [...OPERATIONS_STATIONS.map((x) => x.key), 'other'];
     const keys = Object.keys(by).sort((a, b) => order.indexOf(a) - order.indexOf(b));
-    const totH = mine.reduce((x, a) => x + a.hours, 0);
-    const totCostKnown = mine.every((a) => a.cost != null);
-    const totC = mine.reduce((x, a) => x + (a.cost || 0), 0);
-    const allPpl = new Set(mine.map((a) => a.employeeNo || a.name));
+    const sumH = (list) => list.reduce((x, a) => x + a.hours, 0);
+    const sumC = (list) => list.every((a) => a.cost != null) ? list.reduce((x, a) => x + a.cost, 0) : null;
+    const totH = sumH(direct), totC = sumC(direct);
+    const farmH = sumH(farm), farmC = sumC(farm);
+    const ppl = new Set(direct.map((a) => a.employeeNo || a.name));
     const wetLb = parseFloat((r.fields || {}).totalWetLb) || 0;
-    const money = (x) => '$' + fmtNum(x, 2);
-    const farmH = mine.filter((a) => a.basis === 'farm').reduce((x, a) => x + a.hours, 0);
+    const money = (x) => x == null ? '—' : '$' + fmtNum(x, 2);
+    const perLb = (c) => c == null || !wetLb ? '—' : '$' + fmtNum(c / wetLb, 3) + ' / lb';
     el.innerHTML = hd + `<table class="d-table">
       <thead><tr><th>${t(L.laborProc)}</th><th>${t(L.laborHrs)}</th>${showCost ? `<th>${t(L.laborCost)}</th>` : ''}<th>${t(L.laborPpl)}</th></tr></thead>
       <tbody>${keys.map((k) => `<tr><td>${esc(procTitle(k))}</td><td>${fmtNum(by[k].hours, 2)}</td>${showCost ? `<td>${by[k].costKnown ? money(by[k].cost) : '—'}</td>` : ''}<td>${by[k].people.size}</td></tr>`).join('')}
-        <tr class="num"><td><b>${t(L.laborTot)}</b></td><td><b>${fmtNum(totH, 2)}</b></td>${showCost ? `<td><b>${totCostKnown ? money(totC) : '—'}</b></td>` : ''}<td><b>${allPpl.size}</b></td></tr>
-        ${wetLb ? `<tr><td>${t(L.laborPerLb)} (${fmtNum(wetLb, 2)} lb)</td><td>${fmtNum(totH / wetLb * 60, 2)} min</td>${showCost ? `<td>${totCostKnown ? '$' + fmtNum(totC / wetLb, 3) : '—'}</td>` : ''}<td></td></tr>` : ''}
+        ${direct.length ? `<tr class="num"><td><b>${t(L.laborDirect)}</b></td><td><b>${fmtNum(totH, 2)}</b></td>${showCost ? `<td><b>${money(totC)}</b></td>` : ''}<td><b>${ppl.size}</b></td></tr>
+        ${wetLb ? `<tr><td>${t(L.laborPerLb)} (${fmtNum(wetLb, 2)} lb)</td><td>${fmtNum(totH / wetLb * 60, 2)} min</td>${showCost ? `<td>${perLb(totC)}</td>` : ''}<td></td></tr>` : ''}` : ''}
+        ${farm.length ? `<tr><td style="color:var(--gold)">${t(L.laborFarmRow)}</td><td>${fmtNum(farmH, 2)}</td>${showCost ? `<td>${money(farmC)}<br><span class="muted-note">${perLb(farmC)}</span></td>` : ''}<td></td></tr>` : ''}
       </tbody></table>
-      ${mine.some((a) => a.basis === 'even') ? `<div class="muted-note" style="margin-top:6px">${t(L.laborEven)}</div>` : ''}
-      ${farmH ? `<div class="muted-note" style="margin-top:6px">${esc(fill(t(L.laborFarm), { h: fmtNum(farmH, 2) }))}</div>` : ''}
+      ${direct.some((a) => a.basis === 'even') ? `<div class="muted-note" style="margin-top:6px">${t(L.laborEven)}</div>` : ''}
+      ${farm.length ? `<div class="muted-note" style="margin-top:6px">${t(L.laborFarm)}</div>` : ''}
       <div style="margin-top:10px"><a class="btn" href="/labor_log.html?tab=list&seg=lot&all=1&q=${encodeURIComponent(uid)}">${t(L.laborOpen)}</a></div>`;
   }
   const fill = (s, vars) => Object.entries(vars).reduce((a, [k, v]) => a.split(`{${k}}`).join(v), s);

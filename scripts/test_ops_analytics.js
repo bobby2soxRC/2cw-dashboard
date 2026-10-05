@@ -180,6 +180,9 @@ check('last year\'s farm work doesn\'t land on this year\'s lots', fa.find((a) =
 const fLots = A.laborCostByLot(farmStages, RATES);
 check('pool rows sort after real lots', fLots.map((r) => r.pending), [false, false, true, true]);
 check('lot carries its farm-wide share', [fLots.find((r) => r.lotId === FARM_UID).farmHours, fLots.find((r) => r.lotId === FARM_UID).farm], [7.711, '540']);
+const fl = fLots.find((r) => r.lotId === FARM_UID);
+check('farm-wide share stays out of the direct numbers', [fl.hours, fl.cost, fl.costPerWetLb, Object.keys(fl.byProcess).length], [0, 0, 0, 0]);
+check('farm-wide cost and $/wet lb reported on their own', [fl.farmCost, Math.round(fl.farmCostPerWetLb * 10000) / 10000], [154.23, Math.round(154.23 / 310 * 10000) / 10000]);
 
 console.log('\nrequests');
 const reqs = A.requestSummary(stages, ASOF);
