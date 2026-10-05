@@ -481,7 +481,7 @@
     const empRows = byEmployee.map((e) => `<tr>
       ${td(e.name ? esc(e.name) : `<span style="font-family:'DM Mono',monospace">#${esc(e.employeeNo)}</span>`)}
       ${tdn(e.hours, 2)} ${tdn(e.touches, 0)} ${tdn(e.batchCount, 0)}
-      ${td(e.stations.map((k) => `<span class="pill ${(STATION_BY_KEY[k] || {}).color || ''}">${t((STATION_BY_KEY[k] || {}).title || k)}</span>`).join(' '), 'wide')}
+      ${td(e.stations.map((k) => `<span class="pill ${(STATION_BY_KEY[k] || {}).color || ''}">${t(processTitle(k))}</span>`).join(' '), 'wide')}
       ${td(bar(e.hours / maxH))}
     </tr>`);
 

@@ -497,7 +497,7 @@
 
   // ── Processes: every station except the paperwork-only ones ─────────────
   const PROCESSES = OPERATIONS_STATIONS.filter((s) => s.key !== 'biomass_request');
-  const procTitle = (k) => k === 'other' ? t(L.other) : (STATION_BY_KEY[k] ? t(STATION_BY_KEY[k].title) : (k || '—'));
+  const procTitle = (k) => t(processTitle(k));
   function processOptions(withAll) {
     const groups = [];
     PROCESSES.forEach((s) => {
@@ -509,7 +509,7 @@
     return (withAll ? `<option value="">${esc(t(L.allProc))}</option>` : `<option value=""></option>`) +
       groups.map((g) => `<optgroup label="${esc(g.label)}">${g.items.map((s) =>
         `<option value="${s.key}">${esc(t(s.title))}</option>`).join('')}</optgroup>`).join('') +
-      `<option value="other">${esc(t(L.other))}</option>`;
+      Object.keys(LABOR_PROCESSES).map((k) => `<option value="${k}">${esc(t(LABOR_PROCESSES[k]))}</option>`).join('');
   }
   $('process').innerHTML = processOptions(false);
   $('f-process').innerHTML = processOptions(true);
@@ -1162,7 +1162,7 @@
     const lots = A.laborCostByLot(all, rates, allocs).filter((l) => !q
       || (qu && (normUid(l.lotId).includes(qu) || l.uids.some((u) => normUid(u).includes(qu))))
       || fold(l.strain).includes(q) || fold(farmsLabel(String(l.farm || '').split(',').filter(Boolean))).includes(q));
-    const procs = [...OPERATIONS_STATIONS.map((x) => x.key), 'other'].filter((k) => lots.some((l) => l.byProcess[k]));
+    const procs = [...OPERATIONS_STATIONS.map((x) => x.key), ...Object.keys(LABOR_PROCESSES)].filter((k) => lots.some((l) => l.byProcess[k]));
     const hasCost = !!rates && lots.every((l) => l.cost != null);
     const anyFarm = lots.some((l) => l.farmHours);
     const farmCell = (l) => !l.farmHours ? '' : rates && l.farmCost != null

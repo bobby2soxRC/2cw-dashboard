@@ -163,6 +163,9 @@ check('employee roll-up: 13.5 hours, named', [gil.hours, gil.name], [13.5, 'Gilb
 check('Harvest labor on an intake-only lot splits by its wet lb', A.lotLbForProcess({ stages: { intake_wet: { inputLb: 0, outputLb: 1072 } } }, 'harvest'), 1072);
 check('…but a lot with no weight anywhere still has none', A.lotLbForProcess({ stages: {} }, 'harvest'), 0);
 
+check('Transportation splits by wet lb', A.lotLbForProcess({ stages: { intake_wet: { outputLb: 800 }, dry_check: { inputLb: 800, outputLb: 200 } } }, 'transport'), 800);
+check('…or the latest weight when there\'s no intake', A.lotLbForProcess({ stages: { buck: { inputLb: 90, outputLb: 60 } } }, 'transport'), 60);
+
 console.log('\nfarm-wide labor (spread over the farm\'s pounds)');
 // Both fixture intakes came from farm license 540 in 2026: LCG 310 wet lb, Zoap 92.
 const farmStages = { ...stages, labor_entry: [

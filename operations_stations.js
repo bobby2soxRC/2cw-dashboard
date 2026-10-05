@@ -913,6 +913,15 @@ const PIPELINE_ORDER = ['harvest', 'intake_wet', 'dry_check', 'buck', 'machine_t
 
 const STATION_BY_KEY = Object.fromEntries(OPERATIONS_STATIONS.map((s) => [s.key, s]));
 
+// Labor Log processes that aren't station forms (labor_log.html's process
+// list, alongside the stations). 'other' is "Other / general".
+const LABOR_PROCESSES = {
+  transport: { en: 'Transportation', es: 'Transporte' },
+  other:     { en: 'Other / general', es: 'Otro / general' }
+};
+// Display name for any Labor Log process key — station or not.
+const processTitle = (k) => (STATION_BY_KEY[k] && STATION_BY_KEY[k].title) || LABOR_PROCESSES[k] || { en: k || '—', es: k || '—' };
+
 if (typeof module !== 'undefined') {
-  module.exports = { OPERATIONS_STATIONS, STATION_BY_KEY, BIOMASS, SELLABLE, PREFILL_MAP, PIPELINE_ORDER, G_PER_LB };
+  module.exports = { OPERATIONS_STATIONS, STATION_BY_KEY, BIOMASS, SELLABLE, PREFILL_MAP, PIPELINE_ORDER, G_PER_LB, LABOR_PROCESSES, processTitle };
 }

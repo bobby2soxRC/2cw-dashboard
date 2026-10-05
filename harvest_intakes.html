@@ -678,8 +678,8 @@
       row.people.add(a.employeeNo || a.name);
     });
     const showCost = !!rates;
-    const procTitle = (k) => k === 'other' ? t(L.laborOther) : (STATION_BY_KEY[k] ? t(STATION_BY_KEY[k].title) : k);
-    const order = [...OPERATIONS_STATIONS.map((x) => x.key), 'other'];
+    const procTitle = (k) => t(processTitle(k));
+    const order = [...OPERATIONS_STATIONS.map((x) => x.key), ...Object.keys(LABOR_PROCESSES)];
     const keys = Object.keys(by).sort((a, b) => order.indexOf(a) - order.indexOf(b));
     const sumH = (list) => list.reduce((x, a) => x + a.hours, 0);
     const sumC = (list) => list.every((a) => a.cost != null) ? list.reduce((x, a) => x + a.cost, 0) : null;
