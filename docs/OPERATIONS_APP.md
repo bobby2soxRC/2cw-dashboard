@@ -349,6 +349,38 @@ once you know, and the join is a small, concrete piece of work.
 (Connecteam it is: the Labor Log below keys its entries on the Connecteam
 user id, which is the join key to Connecteam's time activities.)
 
+## Workforce: Scheduling and the Labor Log
+
+Both cards sit in the hub's **Operations → Workforce** folder (`subdept:
+'workforce'` in `hub_config.js`; `buildTree` in `index.html` adds the
+folder, which only shows when someone has at least one of its cards).
+Access is the admin panel's "Scheduling" and "Labor Log" card checkboxes.
+
+**Scheduling** (`schedule.html`, card `scheduling`) replaces the shared
+daily sheet (a column per location, names under it, tasks in red):
+- Each day starts empty. **+ Add schedule** creates one for a location
+  (Adobe, Airway, Wildcat, Comstock, Lucerne, Sulphur Bank, Highland, or
+  Other with a name). **Copy from <previous day>** brings yesterday's
+  schedules over to edit.
+- **Everyone starts at the same time** (on by default) takes one start and
+  an optional end. Unticked, each person gets their own start/end.
+- **People** come from the Connecteam roster (`data/connecteam_roster.json`)
+  or can be typed in. Any of them can be marked **Lead**.
+- **Notes / tasks** hold things like "riego" or "colgar 5 am".
+- **Conflicts**: a person on two schedules whose times overlap that day is
+  flagged in red on both ("also at Comstock 7:00 AM–3:30 PM"). The people
+  list shows where someone is already scheduled before they're added, and
+  saving with a conflict asks for confirmation.
+  - A schedule with no end is treated as `DEFAULT_SHIFT_H` (8) hours, and
+    an end earlier than the start runs past midnight (bomba 7 pm–7 am).
+  - Conflicts are only checked within the same date.
+- Each schedule is one `operations_forms` row, `station_key:
+  'work_schedule'`, on that `work_date`, with `fields = { location,
+  locationName, sameStart, start, end, people: [{userId, name, lead, start?,
+  end?}], notes, createdBy, updatedBy }`. There's no SQL, as with the Labor
+  Log. Remove sets `fields.voided` (anon can't DELETE), and the edit history
+  trigger records edits and removals.
+
 ## Labor Log — hours against UIDs
 
 `labor_log.html` (hub card `labor_log`, admin checkbox "Labor Log", column
@@ -385,6 +417,17 @@ or just hours, one or more people, and zero or more UIDs, then Save.
   re-splits by weight on its own once the weights are recorded, because
   nothing is frozen at save time. The form previews the split before
   saving.
+- **A farm (general work)**: "Applies to" switches the entry from UIDs to
+  a farm, for work at a farm that isn't tied to particular packages. The
+  entry stores `farm` (the Farm License code, the same one Harvest and Wet
+  Intake record as `pid`, so lots carry it as `lot.pid`) and `farmName`,
+  with no UIDs. `laborAllocations` spreads its hours over every lot from
+  that farm that came in during the same calendar year, by wet lb (Wet
+  Intake, else Harvest). While the farm has no pounds that year, the hours
+  sit in the farm's pool (basis `farm-pending`, shown at the bottom of By
+  lot). The split is worked out when a report is opened, so it settles on
+  its own once the harvest is in. A season is the calendar year, so farms
+  with several rounds a year would need explicit harvest periods.
 - **Costs** use each person's own loaded $/hr (wage + taxes + benefits),
   set in the admin panel's **Labor Rates** tab (see `docs/USER_ADMIN.md`).
   Rates live in the `labor_rates` table, one row per person per effective
@@ -403,7 +446,11 @@ Saving writes **one row per person** to `operations_forms` with
 employeeId, employeeName, uids: [{uid, strain}], start, end, hours, notes,
 enteredBy }`. There's no new table or SQL, just like Bucking's submissions.
 After a save the process, date, times and UIDs stay filled in so the next
-person can be logged right away. **Entries** lists a date range (with
+person can be logged right away.
+Under Save, **You logged for <date>** lists the entries this login saved for
+the selected date (`owner_user`), each with **Delete**, so a mistake can be
+fixed where it was made. Delete, like Remove on the Entries tab, sets
+`fields.voided`. **Entries** lists a date range (with
 Today / Last 30 days / All dates shortcuts) three ways: each entry (with
 cost, for cost access), totals **by person**, and **By lot**. By lot has one row per lot,
 keyed on its root UID (`laborCostByLot`), so Take Down's on-stem tag counts

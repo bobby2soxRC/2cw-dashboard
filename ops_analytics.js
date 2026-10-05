@@ -101,11 +101,13 @@ function buildLots(stages, asOf) {
       contributionsFor(station, r).forEach((c, idx) => {
         const id = resolveKey(roots, rootUid(alias, c.sourceUid)) || `batch:${c.harvestBatchName || r.id + '-' + idx}`;
         if (!lots.has(id)) {
-          lots.set(id, { id, uid: id, strain: '', site: '', harvestBatchName: '', stages: {}, currentStage: null, lastDate: '' });
+          lots.set(id, { id, uid: id, strain: '', site: '', pid: '', harvestBatchName: '', stages: {}, currentStage: null, lastDate: '' });
         }
         const lot = lots.get(id);
         if (c.strain && !lot.strain) lot.strain = c.strain;
         if (r.site && !lot.site) lot.site = r.site;
+        // Farm license — Harvest and Wet Intake both carry it.
+        if (r.pid && !lot.pid) lot.pid = String(r.pid).trim();
         if (c.harvestBatchName && !lot.harvestBatchName) lot.harvestBatchName = c.harvestBatchName;
 
         const outputs = {};
@@ -460,6 +462,16 @@ function laborAllocations(stages, rates) {
   const lots = new Map(buildLots(stages).map((l) => [l.id, l]));
   const roots = new Set(lots.keys());
   const lotFor = (uid) => lots.get(resolveKey(roots, rootUid(alias, uid))) || null;
+  // A farm's lots for one year, by wet lb in (Wet Intake, else Harvest) —
+  // the pounds farm-wide labor is spread over. Dated by when the lot came in.
+  const farmCache = {};
+  const farmLots = (pid, year) => farmCache[pid + '|' + year] || (farmCache[pid + '|' + year] = [...lots.values()]
+    .filter((l) => l.pid === pid)
+    .map((l) => {
+      const st = l.stages.intake_wet || l.stages.harvest || null;
+      return { lot: l, lb: st ? st.outputLb : 0, date: st ? st.date : '' };
+    })
+    .filter((x) => x.lb > 0 && String(x.date).slice(0, 4) === year));
   const out = [];
   entries.forEach((r) => {
     const hours = num(r.hours);
@@ -467,9 +479,27 @@ function laborAllocations(stages, rates) {
     const base = { entryId: r.id, date: dayOf(r), process: r.process || '',
                    employeeNo: String(r.employeeId || r.employeeName || '').trim(), name: r.employeeName || '' };
     const uids = (r.uids || []).filter((u) => u && u.uid);
+    // General work at a farm: spread over the pounds that farm brings in
+    // that year (see farmLots). Until it has any, it waits as the farm's pool.
+    if (!uids.length && r.farm) {
+      if (!hours) return;
+      const fl = farmLots(String(r.farm).trim(), dayOf(r).slice(0, 4));
+      const totalLb = fl.reduce((a, x) => a + x.lb, 0);
+      if (!totalLb) {
+        out.push({ ...base, uid: '', lotId: 'farm:' + r.farm, farm: String(r.farm), strain: '', lb: null, share: 1, basis: 'farm-pending',
+                   hours: round2(hours), cost: rate != null ? round2(hours * rate) : null });
+        return;
+      }
+      fl.forEach((x) => {
+        const share = x.lb / totalLb;
+        out.push({ ...base, uid: x.lot.id, lotId: x.lot.id, farm: String(r.farm), strain: x.lot.strain || '', lb: x.lb, share, basis: 'farm',
+                   hours: Math.round(hours * share * 1000) / 1000, cost: rate != null ? Math.round(hours * share * rate * 100) / 100 : null });
+      });
+      return;
+    }
     if (!uids.length) {
       if (hours) out.push({ ...base, uid: '', lotId: '', strain: r.strain || '', lb: null, share: 1, basis: 'none',
-                            hours: round2(hours), cost: rate ? round2(hours * rate) : null });
+                            hours: round2(hours), cost: rate != null ? round2(hours * rate) : null });
       return;
     }
     const parts = uids.map((u) => {
@@ -484,7 +514,7 @@ function laborAllocations(stages, rates) {
       out.push({ ...base, uid: normUid(p.u.uid), lotId: p.lot ? p.lot.id : normUid(p.u.uid),
                  strain: p.u.strain || (p.lot && p.lot.strain) || '', lb: p.lb || null, share,
                  basis: parts.length === 1 ? 'single' : byWeight ? 'weight' : 'even',
-                 hours: Math.round(h * 1000) / 1000, cost: rate ? Math.round(h * rate * 100) / 100 : null });
+                 hours: Math.round(h * 1000) / 1000, cost: rate != null ? Math.round(h * rate * 100) / 100 : null });
     });
   });
   return out;
@@ -503,6 +533,7 @@ function laborCostByLot(stages, rates, allocs) {
       const wet = lot ? ((lot.stages.intake_wet || {}).outputLb || (lot.stages.harvest || {}).outputLb || 0) : 0;
       const cur = lot && lot.currentStage ? lot.stages[lot.currentStage].outputLb : 0;
       row = { lotId: a.lotId, strain: a.strain || (lot && lot.strain) || '', currentStage: lot ? lot.currentStage : null,
+              farm: lot ? lot.pid : (a.farm || ''), pending: a.basis === 'farm-pending',
               wetLb: wet || null, currentLb: cur || null, uids: new Set(), byProcess: {}, hours: 0, cost: 0,
               costKnown: true, evenSplit: false };
       by.set(a.lotId, row);
@@ -512,13 +543,14 @@ function laborCostByLot(stages, rates, allocs) {
     p.hours += a.hours; row.hours += a.hours;
     if (a.cost == null) row.costKnown = false; else { p.cost += a.cost; row.cost += a.cost; }
     if (a.basis === 'even') row.evenSplit = true;
+    if (a.basis === 'farm') { row.farmHours = (row.farmHours || 0) + a.hours; }
     if (!row.strain && a.strain) row.strain = a.strain;
   });
   return [...by.values()].map((r) => ({
     ...r, uids: [...r.uids], hours: round2(r.hours), cost: r.costKnown ? round2(r.cost) : null,
     costPerWetLb: r.costKnown && r.wetLb ? r.cost / r.wetLb : null,
     costPerCurrentLb: r.costKnown && r.currentLb ? r.cost / r.currentLb : null
-  })).sort((a, b) => (!a.lotId) - (!b.lotId) || b.hours - a.hours);
+  })).sort((a, b) => (!a.lotId) - (!b.lotId) || a.pending - b.pending || b.hours - a.hours);
 }
 
 // Rolled up by employee: total logged hours, distinct batches/UIDs touched,

@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Scheduling — 2CW Operations</title>
+  <script>
+    (function(){ if (!sessionStorage.getItem('2cw_pin')) window.location.replace('/index.html'); })();
+  </script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0c0d0f">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0c0d0f;--surface:#13151a;--surface2:#181b21;--border:#1e2129;
+      --green:#3db87a;--gold:#d4a843;--blue:#5a9fd4;--purple:#9b7fd4;--red:#ef5350;--orange:#e08a3c;
+      --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;
+    }
+    html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-text-size-adjust:100%}
+
+    .hdr{min-height:calc(54px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:12px;position:sticky;top:0;z-index:20}
+    .hdr-back{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
+    .hdr-div{width:1px;height:18px;background:var(--border)}
+    .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .lang{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;flex:0 0 auto}
+    .lang button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:12px;font-weight:600;padding:8px 12px;cursor:pointer;min-height:36px}
+    .lang button.on{background:var(--blue);color:#000}
+
+    main{padding:28px 16px 60px;max-width:1200px;margin:0 auto}
+    .title{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,6vw,46px);letter-spacing:.04em;line-height:1}
+    .sub{margin-top:6px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+
+    .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:22px 0 16px}
+    .bar input[type=date]{flex:0 1 180px}
+    .nav{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;min-width:46px;min-height:46px;font-size:1.1rem;cursor:pointer}
+    .day-name{font-family:'DM Mono',monospace;font-size:.8rem;color:var(--subtext);letter-spacing:.06em;text-transform:uppercase}
+    .spacer{flex:1}
+    input,select,textarea{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .75rem;
+      font:inherit;font-size:1rem;min-height:46px;outline:none;width:100%}
+    input:focus,select:focus,textarea:focus{border-color:var(--blue)}
+    /* iOS Safari gives date/time inputs a minimum width that overflows narrow cells. */
+    input[type=date],input[type=time]{-webkit-appearance:none;appearance:none;min-width:0;display:block}
+    input::-webkit-date-and-time-value{text-align:left}
+    .ed .row > div{min-width:0}
+    textarea{min-height:64px;resize:vertical}
+    .btn{padding:.7rem 1.1rem;border:1px solid var(--border);border-radius:10px;font-family:'DM Mono',monospace;font-size:.76rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer;background:transparent;color:var(--text);min-height:46px}
+    .btn-blue{background:var(--blue);border-color:var(--blue);color:#000}
+    .btn-ghost{color:var(--subtext)}
+    .btn-danger{color:var(--red);border-color:rgba(239,83,80,.4)}
+    .btn:disabled{opacity:.5;cursor:default}
+
+    .summary{font-size:.9rem;color:var(--subtext);margin-bottom:14px}
+    .summary b{color:var(--text);font-family:'DM Mono',monospace;font-weight:500}
+    .summary .warn{color:var(--red)}
+
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;align-items:start}
+    .sched{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+    .sched.editing{border-color:var(--blue);grid-column:1/-1;max-width:760px}
+    .sched-hd{background:var(--orange);color:#000;padding:10px 14px;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+    .sched-hd .loc{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.04em;line-height:1}
+    .sched-hd .time{font-family:'DM Mono',monospace;font-size:.78rem;font-weight:500;white-space:nowrap}
+    .sched-body{padding:12px 14px}
+    .notes{background:rgba(239,83,80,.12);border-left:3px solid var(--red);padding:8px 10px;border-radius:6px;font-size:.88rem;margin-bottom:10px;white-space:pre-wrap}
+    .ppl{list-style:none}
+    .ppl li{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--border);font-size:.92rem}
+    .ppl li:first-child{border-top:none}
+    .ppl .nm{flex:1;min-width:0}
+    .ppl .tm{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--subtext);white-space:nowrap}
+    .lead-tag{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;background:var(--green);color:#000;border-radius:99px;padding:2px 7px;margin-left:6px;vertical-align:middle}
+    .conflict{display:block;color:var(--red);font-size:.76rem;margin-top:2px}
+    .conflict::before{content:'⚠ '}
+    .sched-ft{display:flex;gap:8px;justify-content:flex-end;padding:0 14px 12px}
+    .count{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+
+    /* Editor */
+    .ed{padding:16px}
+    .ed .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+    .ed .full{grid-column:1/-1}
+    .ed label.lbl,.lbl{display:block;font-size:.82rem;color:var(--subtext);margin-bottom:5px}
+    .check{display:flex;gap:10px;align-items:center;font-size:.95rem;cursor:pointer;margin-bottom:12px}
+    .check input{width:22px;height:22px;min-height:0;flex:0 0 auto}
+    .ed-ppl{list-style:none;margin:8px 0 6px}
+    .ed-ppl li{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--border)}
+    .ed-ppl li.indiv{grid-template-columns:1fr 104px 104px auto auto}
+    .ed-ppl li .nm{min-width:0;font-size:.95rem}
+    .ed-ppl input[type=time]{padding:.4rem .5rem;min-height:40px;font-size:.9rem;min-width:0}
+    .ed-ppl li.has-conflict{background:rgba(239,83,80,.08)}
+    .star{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;min-height:40px;padding:0 10px;cursor:pointer;font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.06em;text-transform:uppercase}
+    .star.on{background:var(--green);border-color:var(--green);color:#000;font-weight:700}
+    .x{background:transparent;border:1px solid var(--border);color:var(--subtext);border-radius:8px;width:40px;min-height:40px;font-size:1.1rem;cursor:pointer}
+    .x:hover{border-color:var(--red);color:var(--red)}
+    @media (max-width:560px){
+      .ed-ppl li.indiv{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto auto;gap:6px}
+      .star{padding:0 7px}
+      .x{width:36px}
+      .ed-ppl li.indiv .nm{grid-column:1/-1}
+    }
+    .picker{position:relative}
+    .panel{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+      box-shadow:0 10px 30px rgba(0,0,0,.5);max-height:min(50vh,380px);overflow-y:auto;display:none}
+    .panel.on{display:block}
+    .panel .grp{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:10px 14px 4px}
+    .panel button{display:block;width:100%;text-align:left;background:transparent;border:none;color:var(--text);font:inherit;cursor:pointer;padding:9px 14px;min-height:44px}
+    .panel button:hover,.panel button.hl{background:var(--blue);color:#000}
+    .panel button .s{display:block;font-size:.76rem;color:var(--muted)}
+    .panel button .s.busy{color:var(--red)}
+    .panel button:hover .s,.panel button.hl .s{color:#000;opacity:.75}
+    .ed-ft{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
+    .err{color:var(--red);font-size:.88rem;margin-top:8px}
+    .hint{font-size:.78rem;color:var(--muted);margin-top:5px;line-height:1.45}
+
+    .empty{border:1px dashed var(--border);border-radius:14px;padding:40px 20px;text-align:center;color:var(--subtext)}
+    .empty p{margin-bottom:14px}
+    .empty .btn{margin:4px}
+    .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
+    #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--green);color:#000;font-weight:700;
+      padding:12px 18px;border-radius:10px;z-index:60;display:none;max-width:calc(100vw - 32px)}
+    #toast.on{display:block}
+  </style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="/index.html" id="back">← Hub</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand" id="brand">Scheduling</div>
+  <div class="lang" id="lang"></div>
+</header>
+
+<main>
+  <div class="title" id="title">Scheduling</div>
+  <div class="sub" id="sub">—</div>
+  <div class="bar">
+    <button type="button" class="nav" id="prev" aria-label="Previous day">‹</button>
+    <input type="date" id="date">
+    <button type="button" class="nav" id="next" aria-label="Next day">›</button>
+    <span class="day-name" id="day-name"></span>
+    <span class="spacer"></span>
+    <button type="button" class="btn btn-blue" id="add"></button>
+  </div>
+  <div class="summary" id="summary"></div>
+  <div id="board"></div>
+  <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution</footer>
+</main>
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/config/supabase_config.js"></script>
+<script src="/operations_stations.js"></script>
+<script src="/ops_common.js"></script>
+<script src="/ops_data.js"></script>
+<script>
+// Scheduling — who works where, by day. Replaces the shared daily sheet
+// (one column per location, names underneath, tasks in red).
+//
+// Each schedule is one location on one date: start (and optional end) for
+// everyone, or individual times per person; the people (from the Connecteam
+// roster, data/connecteam_roster.json, or typed in); an optional lead per
+// schedule; and notes for the day's tasks ("riego", "colgar 5 am"). Saved as
+// one operations_forms row per schedule, station_key 'work_schedule' — no
+// table of its own, like the Labor Log. Remove marks a schedule voided (anon
+// has no DELETE on operations_forms; the edit history trigger keeps who).
+//
+// Conflicts: a person on two schedules whose times overlap that day is
+// flagged on both, and the people picker shows where someone is already
+// scheduled before they're added. A schedule with no end time is taken to
+// run DEFAULT_SHIFT_H hours; no start time at all counts as the whole day.
+(async function () {
+  mountLangToggle('lang');
+  const KEY = 'work_schedule';
+  const DATA_BASE = 'https://raw.githubusercontent.com/bobby2soxRC/2cw-dashboard/main/data/';
+  const DEFAULT_SHIFT_H = 8;
+  const me = sessionStorage.getItem('2cw_user_name') || '';
+  const LOCATIONS = [
+    ['adobe', 'Adobe'], ['airway', 'Airway'], ['wildcat', 'Wildcat'], ['comstock', 'Comstock'],
+    ['lucerne', 'Lucerne'], ['sulphur_bank', 'Sulphur Bank'], ['highland', 'Highland'], ['other', null]
+  ];
+
+  const L = {
+    title:    { en: 'Scheduling', es: 'Horarios' },
+    sub:      { en: 'Who works where', es: 'Quién trabaja dónde' },
+    back:     { en: '← Hub', es: '← Inicio' },
+    add:      { en: '+ Add schedule', es: '+ Agregar horario' },
+    other:    { en: 'Other', es: 'Otro' },
+    empty:    { en: 'No schedules for this date yet.', es: 'Todavía no hay horarios para esta fecha.' },
+    copy:     { en: 'Copy from {d}', es: 'Copiar de {d}' },
+    copied:   { en: 'Copied {n} schedules — check the times and people.', es: 'Se copiaron {n} horarios — revise horas y personas.' },
+    nothingToCopy: { en: 'Nothing scheduled on {d} to copy.', es: 'No hay horarios el {d} para copiar.' },
+    location: { en: 'Location', es: 'Lugar' },
+    otherName:{ en: 'Location name', es: 'Nombre del lugar' },
+    same:     { en: 'Everyone starts at the same time', es: 'Todos empiezan a la misma hora' },
+    start:    { en: 'Start', es: 'Inicio' },
+    end:      { en: 'End (optional)', es: 'Fin (opcional)' },
+    hEnd:     { en: 'Leave End blank and it’s treated as an {h}-hour shift for conflict checks.', es: 'Si deja Fin vacío, se toma como turno de {h} horas para revisar conflictos.' },
+    people:   { en: 'People', es: 'Personas' },
+    addPerson:{ en: 'Add a person — type a name…', es: 'Agregar persona — escriba un nombre…' },
+    addTyped: { en: 'Add “{q}” (not in Connecteam)', es: 'Agregar “{q}” (no está en Connecteam)' },
+    everyone: { en: 'Everyone', es: 'Todos' },
+    lead:     { en: 'Lead', es: 'Líder' },
+    notes:    { en: 'Notes / tasks (optional)', es: 'Notas / tareas (opcional)' },
+    notesPh:  { en: 'e.g. riego, colgar 5 am, bomba 7pm a 7am', es: 'p. ej. riego, colgar 5 am, bomba 7pm a 7am' },
+    save:     { en: 'Save schedule', es: 'Guardar horario' },
+    cancel:   { en: 'Cancel', es: 'Cancelar' },
+    edit:     { en: 'Edit', es: 'Editar' },
+    remove:   { en: 'Remove', es: 'Quitar' },
+    removeQ:  { en: 'Remove this schedule?', es: '¿Quitar este horario?' },
+    saved:    { en: 'Schedule saved', es: 'Horario guardado' },
+    needLoc:  { en: 'Pick the location.', es: 'Elija el lugar.' },
+    needName: { en: 'Name the location.', es: 'Escriba el nombre del lugar.' },
+    needPeople:{ en: 'Add at least one person.', es: 'Agregue al menos una persona.' },
+    needStart:{ en: 'Set the start time.', es: 'Ponga la hora de inicio.' },
+    needIndiv:{ en: 'Set a start time for everyone.', es: 'Ponga hora de inicio para todos.' },
+    conflictQ:{ en: '{n} people are already scheduled somewhere else at the same time. Save anyway?', es: '{n} personas ya tienen otro horario a la misma hora. ¿Guardar de todos modos?' },
+    alsoAt:   { en: 'also at {loc} {t}', es: 'también en {loc} {t}' },
+    already:  { en: 'scheduled: {list}', es: 'programado: {list}' },
+    noTime:   { en: 'no time set', es: 'sin hora' },
+    indiv:    { en: 'individual times', es: 'horas individuales' },
+    personN:  { en: '{n} people', es: '{n} personas' },
+    person1:  { en: '1 person', es: '1 persona' },
+    sumLine:  { en: '{p} scheduled at {l} locations', es: '{p} programadas en {l} lugares' },
+    sumConf:  { en: '{n} conflicts', es: '{n} conflictos' },
+    noDb:     { en: 'Supabase isn’t connected, so schedules can’t be saved.', es: 'Supabase no está conectado, así que no se pueden guardar horarios.' },
+    failed:   { en: 'Could not save:', es: 'No se pudo guardar:' },
+    loading:  { en: 'Loading…', es: 'Cargando…' }
+  };
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fill = (s, vars) => Object.entries(vars).reduce((a, [k, v]) => a.split(`{${k}}`).join(v), s);
+  const fold = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+  const localDay = (d = new Date()) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  const addDays = (iso, n) => { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return localDay(d); };
+  const toMin = (s) => { const [h, mi] = String(s || '').split(':').map(Number); return Number.isFinite(h) && Number.isFinite(mi) ? h * 60 + mi : null; };
+  const fmtTime = (s) => {
+    const m = toMin(s);
+    if (m == null) return '';
+    const d = new Date(2000, 0, 1, Math.floor(m / 60), m % 60);
+    return d.toLocaleTimeString(getLang() === 'es' ? 'es-MX' : 'en-US', { hour: 'numeric', minute: '2-digit' });
+  };
+  const span = (a, b) => a && b ? `${fmtTime(a)}–${fmtTime(b)}` : a ? fmtTime(a) : '';
+  const personKey = (p) => p.userId ? 'id:' + p.userId : 'name:' + fold(p.name);
+  const locName = (s) => s.location === 'other' ? (s.locationName || t(L.other)) : ((LOCATIONS.find((l) => l[0] === s.location) || [])[1] || s.location);
+
+  document.title = `${t(L.title)} — 2CW`;
+  $('title').textContent = t(L.title);
+  $('brand').textContent = t(L.title);
+  $('back').textContent = t(L.back);
+  $('sub').textContent = t(L.sub);
+  $('add').textContent = t(L.add);
+
+  // ── Roster ──────────────────────────────────────────────────────────────
+  let roster = [];
+  try {
+    const res = await fetch(DATA_BASE + 'connecteam_roster.json?t=' + Date.now());
+    if (res.ok) roster = ((await res.json()).people || []).map((p) => ({ userId: String(p.userId), name: p.name }));
+  } catch {}
+  roster.sort((a, b) => a.name.localeCompare(b.name));
+
+  // ── Data ────────────────────────────────────────────────────────────────
+  // rows: operations_forms rows for the date; `editing` is the schedule being
+  // edited ({id|null, ...fields}) or null.
+  let rows = [], editing = null, seq = 0;
+  const params = new URLSearchParams(location.search);
+  $('date').value = params.get('date') || localDay();
+
+  async function fetchDay(date) {
+    const client = getClient();
+    if (!client) return null;
+    const { data, error } = await client.from('operations_forms').select('*')
+      .eq('station_key', KEY).eq('status', 'submitted').eq('work_date', date).order('created_at');
+    if (error) { console.error(error); return []; }
+    return (data || []).filter((r) => !(r.fields || {}).voided);
+  }
+  async function load() {
+    const s = ++seq;
+    editing = null;
+    const d = $('date').value;
+    $('day-name').textContent = new Date(d + 'T12:00:00').toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US', { weekday: 'long' });
+    $('board').innerHTML = `<div class="empty">${esc(t(L.loading))}</div>`;
+    const got = await fetchDay(d);
+    if (s !== seq) return;
+    if (got == null) { $('board').innerHTML = `<div class="empty">${esc(t(L.noDb))}</div>`; $('add').disabled = true; return; }
+    rows = got;
+    render();
+  }
+
+  // ── Times & conflicts ───────────────────────────────────────────────────
+  // A person's [start, end) minutes on a schedule; null start = whole day.
+  function window_(sched, p) {
+    const st = sched.sameStart !== false ? sched.start : (p.start || '');
+    const en = sched.sameStart !== false ? sched.end : (p.end || '');
+    const a = toMin(st);
+    if (a == null) return [0, 1440];
+    let b = toMin(en);
+    if (b == null) b = a + DEFAULT_SHIFT_H * 60;
+    else if (b <= a) b += 1440;            // runs past midnight (bomba 7pm a 7am)
+    return [a, b];
+  }
+  const timeLabel = (sched, p) => {
+    const st = sched.sameStart !== false ? sched.start : p.start;
+    const en = sched.sameStart !== false ? sched.end : p.end;
+    return span(st, en) || t(L.noTime);
+  };
+  // Other schedules this person is on whose times overlap, for schedule
+  // `self` (an id, or null for the one being created).
+  function conflictsFor(person, sched, selfId) {
+    const [a, b] = window_(sched, person);
+    const key = personKey(person);
+    const out = [];
+    rows.forEach((r) => {
+      if (r.id === selfId) return;
+      const f = r.fields || {};
+      (f.people || []).forEach((q) => {
+        if (personKey(q) !== key) return;
+        const [c, d] = window_(f, q);
+        if (a < d && c < b) out.push({ loc: locName(f), time: timeLabel(f, q) });
+      });
+    });
+    return out;
+  }
+  // Every schedule a person is on today (for the picker).
+  function placesFor(person) {
+    const key = personKey(person);
+    const out = [];
+    rows.forEach((r) => {
+      if (editing && r.id === editing.id) return;
+      const f = r.fields || {};
+      const q = (f.people || []).find((x) => personKey(x) === key);
+      if (q) out.push(`${locName(f)} ${timeLabel(f, q)}`);
+    });
+    return out;
+  }
+
+  // ── Board ───────────────────────────────────────────────────────────────
+  function render() {
+    // Summary: distinct people, locations, conflicts.
+    const ppl = new Set(), locs = new Set();
+    let conflicts = 0;
+    rows.forEach((r) => {
+      const f = r.fields || {};
+      locs.add(locName(f));
+      (f.people || []).forEach((p) => { ppl.add(personKey(p)); if (conflictsFor(p, f, r.id).length) conflicts++; });
+    });
+    const pTxt = ppl.size === 1 ? t(L.person1) : fill(t(L.personN), { n: ppl.size });
+    $('summary').innerHTML = rows.length ? esc(fill(t(L.sumLine), { p: pTxt, l: locs.size })) +
+      (conflicts ? ` · <span class="warn">⚠ ${esc(fill(t(L.sumConf), { n: conflicts }))}</span>` : '') : '';
+
+    if (!rows.length && !editing) {
+      const prev = addDays($('date').value, -1);
+      $('board').innerHTML = `<div class="empty"><p>${esc(t(L.empty))}</p>
+        <button type="button" class="btn btn-blue" data-act="add">${esc(t(L.add))}</button>
+        <button type="button" class="btn btn-ghost" data-act="copy">${esc(fill(t(L.copy), { d: shortDate(prev) }))}</button></div>`;
+      return;
+    }
+    const cards = rows.map((r) => editing && editing.id === r.id ? editorHtml() : cardHtml(r));
+    if (editing && !editing.id) cards.push(editorHtml());
+    $('board').innerHTML = `<div class="grid">${cards.join('')}</div>`;
+    if (editing) mountEditor();
+  }
+  const shortDate = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+  function cardHtml(r) {
+    const f = r.fields || {};
+    const people = (f.people || []).slice().sort((x, y) => (y.lead ? 1 : 0) - (x.lead ? 1 : 0));
+    const time = f.sameStart !== false ? (span(f.start, f.end) || t(L.noTime)) : t(L.indiv);
+    return `<div class="sched">
+      <div class="sched-hd"><span class="loc">${esc(locName(f))}</span><span class="time">${esc(time)}</span></div>
+      <div class="sched-body">
+        ${f.notes ? `<div class="notes">${esc(f.notes)}</div>` : ''}
+        <div class="count">${esc(people.length === 1 ? t(L.person1) : fill(t(L.personN), { n: people.length }))}</div>
+        <ul class="ppl">${people.map((p) => {
+          const c = conflictsFor(p, f, r.id);
+          return `<li><span class="nm">${esc(p.name)}${p.lead ? `<span class="lead-tag">${esc(t(L.lead))}</span>` : ''}
+            ${c.map((x) => `<span class="conflict">${esc(fill(t(L.alsoAt), { loc: x.loc, t: x.time }))}</span>`).join('')}</span>
+            ${f.sameStart === false ? `<span class="tm">${esc(timeLabel(f, p))}</span>` : ''}</li>`;
+        }).join('')}</ul>
+      </div>
+      <div class="sched-ft">
+        <button type="button" class="btn btn-ghost" data-act="edit" data-id="${r.id}">${esc(t(L.edit))}</button>
+        <button type="button" class="btn btn-danger" data-act="remove" data-id="${r.id}">${esc(t(L.remove))}</button>
+      </div>
+    </div>`;
+  }
+
+  // ── Editor ──────────────────────────────────────────────────────────────
+  function startEdit(r) {
+    const f = r ? JSON.parse(JSON.stringify(r.fields || {})) : {};
+    editing = { id: r ? r.id : null, location: f.location || '', locationName: f.locationName || '',
+                sameStart: f.sameStart !== false, start: f.start || '', end: f.end || '',
+                people: f.people || [], notes: f.notes || '' };
+    render();
+    const el = document.querySelector('.sched.editing');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function editorHtml() {
+    const e = editing;
+    return `<div class="sched editing"><div class="ed">
+      <div class="row">
+        <div class="${e.location === 'other' ? '' : 'full'}"><label class="lbl" for="ed-loc">${esc(t(L.location))}</label>
+          <select id="ed-loc"><option value=""></option>${LOCATIONS.map(([k, n]) => `<option value="${k}" ${e.location === k ? 'selected' : ''}>${esc(n || t(L.other))}</option>`).join('')}</select></div>
+        ${e.location === 'other' ? `<div><label class="lbl" for="ed-locname">${esc(t(L.otherName))}</label><input id="ed-locname" value="${esc(e.locationName)}"></div>` : ''}
+      </div>
+      <label class="check"><input type="checkbox" id="ed-same" ${e.sameStart ? 'checked' : ''}> ${esc(t(L.same))}</label>
+      ${e.sameStart ? `<div class="row">
+        <div><label class="lbl" for="ed-start">${esc(t(L.start))}</label><input type="time" id="ed-start" value="${esc(e.start)}"></div>
+        <div><label class="lbl" for="ed-end">${esc(t(L.end))}</label><input type="time" id="ed-end" value="${esc(e.end)}"></div>
+        <div class="full hint">${esc(fill(t(L.hEnd), { h: DEFAULT_SHIFT_H }))}</div>
+      </div>` : ''}
+      <label class="lbl" for="ed-q">${esc(t(L.people))} (${e.people.length})</label>
+      <ul class="ed-ppl" id="ed-ppl">${e.people.map((p, i) => {
+        const c = conflictsFor(p, e, e.id);
+        return `<li class="${e.sameStart ? '' : 'indiv'} ${c.length ? 'has-conflict' : ''}">
+          <span class="nm">${esc(p.name)}${c.map((x) => `<span class="conflict">${esc(fill(t(L.alsoAt), { loc: x.loc, t: x.time }))}</span>`).join('')}</span>
+          ${e.sameStart ? '' : `<input type="time" data-i="${i}" data-k="start" value="${esc(p.start || '')}" aria-label="${esc(t(L.start))}">
+            <input type="time" data-i="${i}" data-k="end" value="${esc(p.end || '')}" aria-label="${esc(t(L.end))}">`}
+          <button type="button" class="star ${p.lead ? 'on' : ''}" data-lead="${i}">${esc(t(L.lead))}</button>
+          <button type="button" class="x" data-rm="${i}" aria-label="×">×</button>
+        </li>`;
+      }).join('')}</ul>
+      <div class="picker"><input id="ed-q" autocomplete="off" placeholder="${esc(t(L.addPerson))}"><div class="panel" id="ed-panel"></div></div>
+      ${e.sameStart ? '' : `<div class="hint">${esc(fill(t(L.hEnd), { h: DEFAULT_SHIFT_H }))}</div>`}
+      <div style="margin-top:14px"><label class="lbl" for="ed-notes">${esc(t(L.notes))}</label>
+        <textarea id="ed-notes" placeholder="${esc(t(L.notesPh))}">${esc(e.notes)}</textarea></div>
+      <div class="err" id="ed-err"></div>
+      <div class="ed-ft">
+        <button type="button" class="btn btn-ghost" data-act="cancel">${esc(t(L.cancel))}</button>
+        <button type="button" class="btn btn-blue" data-act="save">${esc(t(L.save))}</button>
+      </div>
+    </div></div>`;
+  }
+  // Re-render the editor in place, keeping focus on the people box when asked.
+  // After adding someone the cursor stays in the box but the list stays
+  // closed (it would cover Save); typing or tapping the box opens it again.
+  let quietFocus = false;
+  function refreshEditor(focusPicker) {
+    render();
+    if (focusPicker) { const q = $('ed-q'); if (q) { quietFocus = true; q.focus(); quietFocus = false; } }
+  }
+  function mountEditor() {
+    const e = editing;
+    $('ed-loc').onchange = (ev) => { e.location = ev.target.value; refreshEditor(); };
+    if ($('ed-locname')) $('ed-locname').oninput = (ev) => { e.locationName = ev.target.value; };
+    $('ed-same').onchange = (ev) => {
+      e.sameStart = ev.target.checked;
+      // Going to individual times: start everyone from the shared time.
+      if (!e.sameStart) e.people.forEach((p) => { if (!p.start) p.start = e.start; if (!p.end) p.end = e.end; });
+      refreshEditor();
+    };
+    if ($('ed-start')) $('ed-start').onchange = (ev) => { e.start = ev.target.value; refreshEditor(); };
+    if ($('ed-end')) $('ed-end').onchange = (ev) => { e.end = ev.target.value; refreshEditor(); };
+    $('ed-notes').oninput = (ev) => { e.notes = ev.target.value; };
+    $('ed-ppl').onchange = (ev) => {
+      const inp = ev.target.closest('input[data-i]');
+      if (inp) { e.people[+inp.dataset.i][inp.dataset.k] = inp.value; refreshEditor(); }
+    };
+    $('ed-ppl').onclick = (ev) => {
+      const rm = ev.target.closest('[data-rm]'), ld = ev.target.closest('[data-lead]');
+      if (rm) { e.people.splice(+rm.dataset.rm, 1); refreshEditor(); }
+      if (ld) { const p = e.people[+ld.dataset.lead]; p.lead = !p.lead; refreshEditor(); }
+    };
+    mountPicker();
+  }
+
+  // People picker: roster filtered by name, each showing where they're
+  // already scheduled today; Enter adds the single match, or the typed name.
+  function mountPicker() {
+    const input = $('ed-q'), panel = $('ed-panel');
+    let flat = [], hl = -1;
+    const add = (p) => {
+      const e = editing;
+      if (e.people.some((x) => personKey(x) === personKey(p))) return;
+      e.people.push({ userId: p.userId || '', name: p.name, lead: false,
+                      ...(e.sameStart ? {} : { start: e.start || '', end: e.end || '' }) });
+      refreshEditor(true);
+    };
+    function draw() {
+      const q = fold(input.value);
+      const words = q.split(/\s+/).filter(Boolean);
+      const taken = new Set(editing.people.map(personKey));
+      const pool = roster.filter((p) => !taken.has(personKey(p)) && words.every((w) => fold(p.name).includes(w))).slice(0, 80);
+      flat = pool.map((p) => ({ p, places: placesFor(p) }));
+      let html = flat.map((x, i) => `<button type="button" data-i="${i}">${esc(x.p.name)}${x.places.length
+        ? `<span class="s busy">⚠ ${esc(fill(t(L.already), { list: x.places.join(', ') }))}</span>` : ''}</button>`).join('');
+      if (q && !roster.some((p) => fold(p.name) === q)) {
+        flat.push({ p: { userId: '', name: input.value.trim() }, raw: true, places: [] });
+        html += `<button type="button" data-i="${flat.length - 1}">${esc(fill(t(L.addTyped), { q: input.value.trim() }))}</button>`;
+      }
+      const real = flat.filter((x) => !x.raw);
+      hl = real.length === 1 ? 0 : (!real.length && flat.length === 1 ? 0 : -1);
+      panel.innerHTML = html ? (q ? '' : `<div class="grp">${esc(t(L.everyone))}</div>`) + html : '';
+      panel.querySelectorAll('button').forEach((b, i) => b.classList.toggle('hl', i === hl));
+      panel.classList.toggle('on', !!html);
+    }
+    input.addEventListener('focus', () => { if (!quietFocus) draw(); });
+    input.addEventListener('click', draw);
+    input.addEventListener('input', draw);
+    input.addEventListener('blur', () => setTimeout(() => panel.classList.remove('on'), 150));
+    input.addEventListener('keydown', (ev) => {
+      const btns = panel.querySelectorAll('button');
+      if (ev.key === 'ArrowDown') { hl = Math.min(btns.length - 1, hl + 1); ev.preventDefault(); }
+      else if (ev.key === 'ArrowUp') { hl = Math.max(0, hl - 1); ev.preventDefault(); }
+      else if (ev.key === 'Escape') { panel.classList.remove('on'); return; }
+      else if (ev.key === 'Enter') { ev.preventDefault(); if (hl >= 0 && flat[hl]) add(flat[hl].p); return; }
+      else return;
+      btns.forEach((b, i) => b.classList.toggle('hl', i === hl));
+    });
+    panel.addEventListener('mousedown', (ev) => ev.preventDefault());
+    panel.addEventListener('click', (ev) => { const b = ev.target.closest('button[data-i]'); if (b) add(flat[+b.dataset.i].p); });
+  }
+
+  async function save() {
+    const e = editing, err = $('ed-err');
+    err.textContent = '';
+    if ($('ed-locname')) e.locationName = $('ed-locname').value.trim();
+    e.notes = $('ed-notes').value.trim();
+    const problem = !e.location ? L.needLoc : e.location === 'other' && !e.locationName ? L.needName
+      : !e.people.length ? L.needPeople : e.sameStart && !e.start ? L.needStart
+      : !e.sameStart && e.people.some((p) => !p.start) ? L.needIndiv : null;
+    if (problem) { err.textContent = t(problem); return; }
+    const nConf = e.people.filter((p) => conflictsFor(p, e, e.id).length).length;
+    if (nConf && !confirm(fill(t(L.conflictQ), { n: nConf }))) return;
+    const client = getClient();
+    if (!client) { err.textContent = t(L.noDb); return; }
+    const fields = {
+      location: e.location, locationName: e.location === 'other' ? e.locationName : '',
+      sameStart: e.sameStart, start: e.sameStart ? e.start : '', end: e.sameStart ? e.end : '',
+      people: e.people.map((p) => ({ userId: p.userId || '', name: p.name, lead: !!p.lead,
+                                     ...(e.sameStart ? {} : { start: p.start || '', end: p.end || '' }) })),
+      notes: e.notes, updatedBy: me
+    };
+    const btn = document.querySelector('[data-act="save"]');
+    if (btn) btn.disabled = true;
+    const res = e.id
+      ? await client.from('operations_forms').update({ fields, updated_by: me || null }).eq('id', e.id).eq('status', 'submitted')
+      : await client.from('operations_forms').insert({ station_key: KEY, status: 'submitted', owner_user: me || null, updated_by: me || null,
+          work_date: $('date').value, submitted_at: new Date().toISOString(), fields: { ...fields, createdBy: me } });
+    if (res.error) { if (btn) btn.disabled = false; err.textContent = `${t(L.failed)} ${res.error.message}`; return; }
+    toast(t(L.saved));
+    await load();
+  }
+
+  // Copy the previous day's schedules (same locations, times, people,
+  // notes) onto this date as new schedules, to edit from there.
+  async function copyPrev() {
+    const client = getClient();
+    if (!client) return;
+    const prev = addDays($('date').value, -1);
+    const src = await fetchDay(prev);
+    if (!src || !src.length) { toast(fill(t(L.nothingToCopy), { d: shortDate(prev) })); return; }
+    const now = new Date().toISOString();
+    const { error } = await client.from('operations_forms').insert(src.map((r) => {
+      const { voided, voidedBy, voidedAt, ...f } = r.fields || {};
+      return { station_key: KEY, status: 'submitted', owner_user: me || null, updated_by: me || null,
+               work_date: $('date').value, submitted_at: now, fields: { ...f, createdBy: me, copiedFrom: prev } };
+    }));
+    if (error) { alert(`${t(L.failed)} ${error.message}`); return; }
+    toast(fill(t(L.copied), { n: src.length }));
+    await load();
+  }
+
+  async function remove(id) {
+    const r = rows.find((x) => x.id === id);
+    const client = getClient();
+    if (!r || !client || !confirm(t(L.removeQ))) return;
+    const { error } = await client.from('operations_forms')
+      .update({ fields: { ...r.fields, voided: true, voidedBy: me, voidedAt: new Date().toISOString() }, updated_by: me || null })
+      .eq('id', id).eq('status', 'submitted');
+    if (error) { alert(`${t(L.failed)} ${error.message}`); return; }
+    await load();
+  }
+
+  function toast(msg) {
+    const el = $('toast');
+    el.textContent = msg;
+    el.classList.add('on');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => el.classList.remove('on'), 3000);
+  }
+
+  // ── Wiring ──────────────────────────────────────────────────────────────
+  $('board').addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-act]');
+    if (!b) return;
+    const act = b.dataset.act;
+    if (act === 'add') startEdit(null);
+    else if (act === 'copy') copyPrev();
+    else if (act === 'edit') startEdit(rows.find((r) => r.id === b.dataset.id));
+    else if (act === 'remove') remove(b.dataset.id);
+    else if (act === 'cancel') { editing = null; render(); }
+    else if (act === 'save') save();
+  });
+  $('add').onclick = () => { if (!editing) startEdit(null); };
+  $('prev').onclick = () => { $('date').value = addDays($('date').value, -1); load(); };
+  $('next').onclick = () => { $('date').value = addDays($('date').value, 1); load(); };
+  $('date').addEventListener('change', load);
+  load();
+})();
+</script>
+</body>
+</html>
