@@ -115,6 +115,32 @@
     .empty p{margin-bottom:14px}
     .empty .btn{margin:4px}
     .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
+    .seg{display:flex;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+    .seg button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:0 12px;min-height:44px;cursor:pointer}
+    .seg button.on{background:var(--blue);color:#000;font-weight:700}
+    /* 3-day / week: locations down, days across, like the old sheet */
+    .multi-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+    .multi{border-collapse:collapse;width:100%;min-width:640px;font-size:.84rem}
+    .multi th,.multi td{border-bottom:1px solid var(--border);border-left:1px solid var(--border);padding:8px;vertical-align:top;text-align:left}
+    .multi thead th{background:var(--surface2);position:sticky;top:0}
+    .multi thead th button{background:transparent;border:none;color:var(--text);font:inherit;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;padding:0;text-align:left}
+    .multi thead th button:hover{color:var(--blue)}
+    .multi thead th.today button{color:var(--blue)}
+    .multi tbody th,.multi thead th:first-child{width:1%}
+    .multi tbody th{background:var(--orange);color:#000;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.04em;font-weight:400;white-space:nowrap;border-left:none}
+    .multi .blk + .blk{margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)}
+    .multi .tm{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--subtext);margin-bottom:3px}
+    .multi .nt{color:var(--red);font-size:.78rem;margin-bottom:3px;white-space:pre-wrap}
+    .multi .pp{line-height:1.45}
+    .multi .pp .c{color:var(--red)}
+    .multi .none{color:var(--muted)}
+    #img-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:80;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:calc(16px + env(safe-area-inset-top)) 12px 30px}
+    #img-bg.on{display:flex}
+    #img-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;width:100%;max-width:760px}
+    .img-ft{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+    #img-name{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--subtext);word-break:break-all}
+    #img-preview{display:block;width:100%;border-radius:8px;margin-top:10px;background:#fff}
+    a.btn{text-decoration:none;display:inline-flex;align-items:center}
     #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--green);color:#000;font-weight:700;
       padding:12px 18px;border-radius:10px;z-index:60;display:none;max-width:calc(100vw - 32px)}
     #toast.on{display:block}
@@ -137,6 +163,8 @@
     <button type="button" class="nav" id="next" aria-label="Next day">›</button>
     <span class="day-name" id="day-name"></span>
     <span class="spacer"></span>
+    <div class="seg" id="view-seg"></div>
+    <button type="button" class="btn btn-ghost" id="png"></button>
     <button type="button" class="btn btn-blue" id="add"></button>
   </div>
   <div class="summary" id="summary"></div>
@@ -144,6 +172,14 @@
   <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution</footer>
 </main>
 <div id="toast"></div>
+<div id="img-bg"><div id="img-box">
+  <div class="img-ft"><span id="img-name"></span><span class="spacer"></span>
+    <button type="button" class="btn btn-blue" id="img-share"></button>
+    <a class="btn btn-ghost" id="img-dl" download></a>
+    <button type="button" class="btn btn-ghost" id="img-close"></button></div>
+  <div class="hint" id="img-hint"></div>
+  <img id="img-preview" alt="">
+</div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/config/supabase_config.js"></script>
@@ -222,6 +258,20 @@
     sumConf:  { en: '{n} conflicts', es: '{n} conflictos' },
     noDb:     { en: 'Supabase isn’t connected, so schedules can’t be saved.', es: 'Supabase no está conectado, así que no se pueden guardar horarios.' },
     failed:   { en: 'Could not save:', es: 'No se pudo guardar:' },
+    vDay:     { en: 'Day', es: 'Día' },
+    v3:       { en: '3 days', es: '3 días' },
+    vWeek:    { en: 'Week', es: 'Semana' },
+    png:      { en: 'Save image', es: 'Guardar imagen' },
+    share:    { en: 'Share / text', es: 'Compartir / enviar' },
+    download: { en: 'Download', es: 'Descargar' },
+    close:    { en: 'Close', es: 'Cerrar' },
+    imgHint:  { en: 'On a phone: Share / text sends it to Messages, or long-press the picture and Save to Photos. On a computer: Download.',
+                es: 'En el teléfono: Compartir / enviar lo manda a Mensajes, o mantenga presionada la imagen y Guardar en Fotos. En la computadora: Descargar.' },
+    nothingImg:{ en: 'Nothing scheduled in this view to save.', es: 'No hay horarios en esta vista para guardar.' },
+    imgTitle: { en: 'Work schedule', es: 'Horario de trabajo' },
+    imgMade:  { en: 'Made {t}', es: 'Hecho {t}' },
+    openDay:  { en: 'Open this day to edit', es: 'Abrir este día para editar' },
+    schedN:   { en: '{n} schedules · {p} people', es: '{n} horarios · {p} personas' },
     loading:  { en: 'Loading…', es: 'Cargando…' }
   };
   const $ = (id) => document.getElementById(id);
@@ -271,7 +321,48 @@
     if (error) { console.error(error); return []; }
     return (data || []).filter((r) => !(r.fields || {}).voided);
   }
+  // ── Views: one day (editable), or 3 days / a week (read-only grid) ────
+  let view = 'day';
+  try { view = localStorage.getItem('2cw_sched_view') || 'day'; } catch {}
+  if (params.get('view')) view = params.get('view');
+  let byDate = {};   // multi-day: date -> rows
+  const VIEWS = [['day', L.vDay], ['3', L.v3], ['week', L.vWeek]];
+  $('view-seg').innerHTML = VIEWS.map(([k, l]) => `<button type="button" data-view="${k}">${esc(t(l))}</button>`).join('');
+  $('png').textContent = t(L.png);
+  // The dates a view covers: the day; that day and the next two; or the
+  // Monday–Sunday week it falls in.
+  function viewDates() {
+    const d = $('date').value;
+    if (view === '3') return [d, addDays(d, 1), addDays(d, 2)];
+    if (view === 'week') {
+      const dow = (new Date(d + 'T12:00:00').getDay() + 6) % 7;   // Monday = 0
+      const mon = addDays(d, -dow);
+      return [0, 1, 2, 3, 4, 5, 6].map((i) => addDays(mon, i));
+    }
+    return [d];
+  }
+  const step = () => view === '3' ? 3 : view === 'week' ? 7 : 1;
+  function setView(v) {
+    view = v;
+    try { localStorage.setItem('2cw_sched_view', v); } catch {}
+    load();
+  }
+  $('view-seg').onclick = (ev) => { const b = ev.target.closest('button[data-view]'); if (b) setView(b.dataset.view); };
+
+  async function fetchRange(from, to) {
+    const client = getClient();
+    if (!client) return null;
+    const { data, error } = await client.from('operations_forms').select('*')
+      .eq('station_key', KEY).eq('status', 'submitted').gte('work_date', from).lte('work_date', to)
+      .order('work_date').order('created_at').range(0, 1999);
+    if (error) { console.error(error); return []; }
+    return (data || []).filter((r) => !(r.fields || {}).voided);
+  }
+
   async function load() {
+    document.querySelectorAll('#view-seg button').forEach((b) => b.classList.toggle('on', b.dataset.view === view));
+    $('add').hidden = view !== 'day';
+    if (view !== 'day') return loadMulti();
     const s = ++seq;
     editing = null;
     const d = $('date').value;
@@ -303,11 +394,11 @@
   };
   // Other schedules this person is on whose times overlap, for schedule
   // `self` (an id, or null for the one being created).
-  function conflictsFor(person, sched, selfId) {
+  function conflictsFor(person, sched, selfId, list) {
     const [a, b] = window_(sched, person);
     const key = personKey(person);
     const out = [];
-    rows.forEach((r) => {
+    (list || rows).forEach((r) => {
       if (r.id === selfId) return;
       const f = r.fields || {};
       (f.people || []).forEach((q) => {
@@ -330,6 +421,223 @@
     });
     return out;
   }
+
+  async function loadMulti() {
+    const s = ++seq;
+    editing = null;
+    const dates = viewDates();
+    const lang = getLang() === 'es' ? 'es-MX' : 'en-US';
+    const fmt = (iso, o) => new Date(iso + 'T12:00:00').toLocaleDateString(lang, o);
+    $('day-name').textContent = `${fmt(dates[0], { month: 'short', day: 'numeric' })} – ${fmt(dates[dates.length - 1], { month: 'short', day: 'numeric' })}`;
+    $('board').innerHTML = `<div class="empty">${esc(t(L.loading))}</div>`;
+    const got = await fetchRange(dates[0], dates[dates.length - 1]);
+    if (s !== seq) return;
+    if (got == null) { $('board').innerHTML = `<div class="empty">${esc(t(L.noDb))}</div>`; return; }
+    byDate = {};
+    dates.forEach((d) => { byDate[d] = []; });
+    got.forEach((r) => { (byDate[r.work_date] || (byDate[r.work_date] = [])).push(r); });
+    renderMulti(dates);
+  }
+  // Location rows in the usual order, then any "Other" names, A–Z.
+  function locationRows(dates) {
+    const seen = new Map();
+    dates.forEach((d) => (byDate[d] || []).forEach((r) => {
+      const f = r.fields || {};
+      const key = f.location === 'other' ? 'other:' + fold(f.locationName) : f.location;
+      if (!seen.has(key)) seen.set(key, locName(f));
+    }));
+    const order = (k) => { const i = LOCATIONS.findIndex((l) => l[0] === k); return i < 0 ? 99 : i; };
+    return [...seen.entries()].sort((a, b) => order(a[0]) - order(b[0]) || a[1].localeCompare(b[1]))
+      .map(([key, name]) => ({ key, name }));
+  }
+  const rowKey = (f) => f.location === 'other' ? 'other:' + fold(f.locationName) : f.location;
+  const sortedPeople = (f) => (f.people || []).slice().sort((x, y) => (y.lead ? 1 : 0) - (x.lead ? 1 : 0));
+  function renderMulti(dates) {
+    const lang = getLang() === 'es' ? 'es-MX' : 'en-US';
+    const locs = locationRows(dates);
+    const total = dates.reduce((a, d) => a + (byDate[d] || []).length, 0);
+    const ppl = new Set();
+    dates.forEach((d) => (byDate[d] || []).forEach((r) => (r.fields.people || []).forEach((p) => ppl.add(d + personKey(p)))));
+    $('summary').textContent = total ? fill(t(L.schedN), { n: total, p: ppl.size }) : '';
+    const today = localDay();
+    const head = dates.map((d) => `<th class="${d === today ? 'today' : ''}"><button type="button" data-day="${d}" title="${esc(t(L.openDay))}">
+      ${esc(new Date(d + 'T12:00:00').toLocaleDateString(lang, { weekday: 'short', month: 'short', day: 'numeric' }))}</button></th>`).join('');
+    if (!locs.length) {
+      $('board').innerHTML = `<div class="multi-wrap"><table class="multi"><thead><tr><th></th>${head}</tr></thead></table></div>
+        <div class="empty" style="margin-top:14px">${esc(t(L.empty))}</div>`;
+      return;
+    }
+    const body = locs.map((loc) => `<tr><th>${esc(loc.name)}</th>${dates.map((d) => {
+      const day = byDate[d] || [];
+      const blocks = day.filter((r) => rowKey(r.fields || {}) === loc.key).map((r) => {
+        const f = r.fields || {};
+        const time = f.sameStart !== false ? (span(f.start, f.end) || t(L.noTime)) : t(L.indiv);
+        return `<div class="blk"><div class="tm">${esc(time)}</div>${f.notes ? `<div class="nt">${esc(f.notes)}</div>` : ''}
+          <div class="pp">${sortedPeople(f).map((p) => {
+            const c = conflictsFor(p, f, r.id, day);
+            return `<div>${p.lead ? '<b>' : ''}${esc(p.name)}${p.lead ? `</b> <span class="lead-tag">${esc(t(L.lead))}</span>` : ''}${f.sameStart === false ? ` <span class="tm">${esc(timeLabel(f, p))}</span>` : ''}${c.length ? ` <span class="c" title="${esc(c.map((x) => fill(t(L.alsoAt), { loc: x.loc, t: x.time })).join('; '))}">⚠</span>` : ''}</div>`;
+          }).join('')}</div></div>`;
+      });
+      return `<td>${blocks.join('') || '<span class="none">—</span>'}</td>`;
+    }).join('')}</tr>`).join('');
+    $('board').innerHTML = `<div class="multi-wrap"><table class="multi"><thead><tr><th></th>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+  }
+
+  // ── Image (PNG) of the current view ─────────────────────────────────────
+  // Drawn straight onto a canvas (no screenshot library), white background
+  // so it reads in a text thread: a title with the dates, then each day as a
+  // section of location blocks — orange header with the location and time,
+  // the day's notes in red, then the people (leads first, in green).
+  async function makeImage() {
+    const dates = view === 'day' ? [$('date').value] : viewDates();
+    const dayRows = (d) => view === 'day' ? rows : (byDate[d] || []);
+    const days = dates.map((d) => ({ d, rows: dayRows(d) })).filter((x) => x.rows.length);
+    if (!days.length) { toast(t(L.nothingImg)); return; }
+    try { await document.fonts.ready; } catch {}
+    const lang = getLang() === 'es' ? 'es-MX' : 'en-US';
+    const W = 1080, PAD = 36, GAP = 16;
+    const COLS = days.length === 1 && days[0].rows.length <= 2 ? days[0].rows.length : 3;
+    const colW = (W - PAD * 2 - GAP * (COLS - 1)) / COLS;
+    const SANS = "'DM Sans', Arial, sans-serif", HEAD = "'Bebas Neue', 'Arial Narrow', Arial, sans-serif", MONO = "'DM Mono', Menlo, monospace";
+    const C = { ink: '#16181d', sub: '#5b6170', line: '#e3e5ea', orange: '#e08a3c', red: '#c62828', redBg: '#fdecea', green: '#1f8a52', paper: '#ffffff' };
+    const cv = document.createElement('canvas');
+    const ctx = cv.getContext('2d');
+    // Word-wrap `text` to `maxW`, returning lines.
+    const wrap = (text, font, maxW) => {
+      ctx.font = font;
+      const out = [];
+      String(text || '').split('\n').forEach((para) => {
+        let line = '';
+        para.split(/\s+/).forEach((w) => {
+          const test = line ? line + ' ' + w : w;
+          if (ctx.measureText(test).width > maxW && line) { out.push(line); line = w; } else line = test;
+        });
+        out.push(line);
+      });
+      return out;
+    };
+    const F = { title: `400 54px ${HEAD}`, range: `500 24px ${SANS}`, day: `400 40px ${HEAD}`, dayN: `500 20px ${SANS}`,
+                loc: `400 32px ${HEAD}`, time: `500 19px ${MONO}`, note: `500 20px ${SANS}`, name: `400 22px ${SANS}`,
+                lead: `700 22px ${SANS}`, small: `500 17px ${MONO}`, foot: `400 16px ${SANS}` };
+    // Lay out one schedule block: list of draw ops + height.
+    function block(r, list) {
+      const f = r.fields || {};
+      const inner = colW - 28;
+      const time = f.sameStart !== false ? (span(f.start, f.end) || t(L.noTime)) : t(L.indiv);
+      const notes = f.notes ? wrap(f.notes, F.note, inner - 12) : [];
+      const people = sortedPeople(f).map((p) => {
+        const c = conflictsFor(p, f, r.id, list);
+        const label = p.name + (p.lead ? ` — ${t(L.lead)}` : '');
+        const time = f.sameStart === false ? timeLabel(f, p) : '';
+        ctx.font = F.small;
+        const timeW = time ? ctx.measureText(time).width + 14 : 0;
+        return { p, lines: wrap(label, p.lead ? F.lead : F.name, inner - timeW - (c.length ? 30 : 0)), time, conflict: c.length > 0 };
+      });
+      // Header: location on top, time under it, so long names never collide.
+      const locLines = wrap(locName(f).toUpperCase(), F.loc, inner);
+      const headH = 18 + locLines.length * 34 + 26;
+      let h = headH + 12;
+      if (notes.length) h += notes.length * 27 + 16 + 10;
+      people.forEach((x) => { h += x.lines.length * 30 + 4; });
+      h += 12;
+      return { f, time, notes, people, h, locLines, headH };
+    }
+    // Measure everything first.
+    const sections = days.map((day) => {
+      const blocks = day.rows.slice().sort((a, b) => {
+        const o = (k) => { const i = LOCATIONS.findIndex((l) => l[0] === k); return i < 0 ? 99 : i; };
+        return o(a.fields.location) - o(b.fields.location);
+      }).map((r) => block(r, day.rows));
+      const rowsOf = [];
+      for (let i = 0; i < blocks.length; i += COLS) rowsOf.push(blocks.slice(i, i + COLS));
+      const ppl = new Set(); day.rows.forEach((r) => (r.fields.people || []).forEach((p) => ppl.add(personKey(p))));
+      return { d: day.d, rowsOf, nPeople: ppl.size, h: 64 + rowsOf.reduce((a, row) => a + Math.max(...row.map((b) => b.h)) + GAP, 0) };
+    });
+    const headH = 130, footH = 60;
+    const H = headH + sections.reduce((a, s) => a + s.h + 18, 0) + footH;
+    cv.width = W; cv.height = Math.ceil(H);
+    ctx.fillStyle = C.paper; ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = 'top';
+    // Title
+    const fmt = (iso, o) => new Date(iso + 'T12:00:00').toLocaleDateString(lang, o);
+    ctx.fillStyle = C.ink; ctx.font = F.title; ctx.fillText(t(L.imgTitle).toUpperCase(), PAD, PAD - 4);
+    ctx.fillStyle = C.sub; ctx.font = F.range;
+    ctx.fillText(dates.length === 1 ? fmt(dates[0], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+      : `${fmt(dates[0], { weekday: 'short', month: 'short', day: 'numeric' })} – ${fmt(dates[dates.length - 1], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}`, PAD, PAD + 56);
+    let y = headH;
+    const rr = (x, yy, w, h, r) => { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, yy, w, h, r) : ctx.rect(x, yy, w, h); };
+    sections.forEach((sec) => {
+      // Day header (always shown, so a one-day image still names the day)
+      ctx.fillStyle = C.ink; ctx.font = F.day;
+      const dayLabel = fmt(sec.d, { weekday: 'long', month: 'short', day: 'numeric' }).toUpperCase();
+      ctx.fillText(dayLabel, PAD, y + 8);
+      const dw = ctx.measureText(dayLabel).width;
+      ctx.fillStyle = C.sub; ctx.font = F.dayN;
+      ctx.fillText(sec.nPeople === 1 ? t(L.person1) : fill(t(L.personN), { n: sec.nPeople }), PAD + dw + 16, y + 20);
+      ctx.fillStyle = C.line; ctx.fillRect(PAD, y + 54, W - PAD * 2, 2);
+      y += 64;
+      sec.rowsOf.forEach((row) => {
+        const rowH = Math.max(...row.map((b) => b.h));
+        row.forEach((b, i) => {
+          const x = PAD + i * (colW + GAP);
+          ctx.fillStyle = C.paper; ctx.strokeStyle = C.line; ctx.lineWidth = 2;
+          rr(x, y, colW, rowH, 10); ctx.fill(); ctx.stroke();
+          ctx.save(); rr(x, y, colW, rowH, 10); ctx.clip(); ctx.fillStyle = C.orange; ctx.fillRect(x, y, colW, b.headH); ctx.restore();
+          ctx.fillStyle = '#000'; ctx.font = F.loc;
+          b.locLines.forEach((ln, k) => ctx.fillText(ln, x + 14, y + 12 + k * 34));
+          ctx.font = F.time; ctx.fillText(b.time, x + 14, y + 12 + b.locLines.length * 34 + 2);
+          let yy = y + b.headH + 12;
+          if (b.notes.length) {
+            const nh = b.notes.length * 27 + 16;
+            ctx.fillStyle = C.redBg; rr(x + 14, yy, colW - 28, nh, 6); ctx.fill();
+            ctx.fillStyle = C.red; ctx.fillRect(x + 14, yy, 4, nh);
+            ctx.font = F.note; b.notes.forEach((ln, k) => ctx.fillText(ln, x + 26, yy + 8 + k * 27));
+            yy += nh + 10;
+          }
+          b.people.forEach((pp) => {
+            ctx.fillStyle = pp.p.lead ? C.green : C.ink; ctx.font = pp.p.lead ? F.lead : F.name;
+            pp.lines.forEach((ln, k) => {
+              ctx.fillText(ln, x + 14, yy + k * 30);
+              if (k === 0 && pp.conflict) { ctx.fillStyle = C.red; ctx.fillText('⚠', x + 14 + ctx.measureText(ln).width + 6, yy); ctx.fillStyle = pp.p.lead ? C.green : C.ink; }
+            });
+            if (pp.time) { ctx.fillStyle = C.sub; ctx.font = F.small; const w = ctx.measureText(pp.time).width; ctx.fillText(pp.time, x + colW - 14 - w, yy + 3); }
+            yy += pp.lines.length * 30 + 4;
+          });
+        });
+        y += rowH + GAP;
+      });
+      y += 18;
+    });
+    ctx.fillStyle = C.sub; ctx.font = F.foot;
+    ctx.fillText(`2CW · ${fill(t(L.imgMade), { t: new Date().toLocaleString(lang, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) })}`, PAD, H - footH + 18);
+    const blob = await new Promise((res) => cv.toBlob(res, 'image/png'));
+    const name = `schedule-${dates[0]}${dates.length > 1 ? '_to_' + dates[dates.length - 1] : ''}.png`;
+    showImage(blob, name);
+  }
+
+  let imgUrl = null, imgFile = null;
+  function showImage(blob, name) {
+    if (imgUrl) URL.revokeObjectURL(imgUrl);
+    imgUrl = URL.createObjectURL(blob);
+    imgFile = new File([blob], name, { type: 'image/png' });
+    $('img-preview').src = imgUrl;
+    $('img-name').textContent = name;
+    $('img-dl').href = imgUrl;
+    $('img-dl').download = name;
+    $('img-dl').textContent = t(L.download);
+    $('img-close').textContent = t(L.close);
+    $('img-hint').textContent = t(L.imgHint);
+    const canShare = !!(navigator.canShare && navigator.canShare({ files: [imgFile] }));
+    $('img-share').hidden = !canShare;
+    $('img-share').textContent = t(L.share);
+    $('img-bg').classList.add('on');
+  }
+  $('img-share').onclick = async () => {
+    try { await navigator.share({ files: [imgFile], title: t(L.imgTitle) }); } catch (e) { if (e && e.name !== 'AbortError') toast(String(e.message || e)); }
+  };
+  $('img-close').onclick = () => $('img-bg').classList.remove('on');
+  $('img-bg').addEventListener('click', (e) => { if (e.target === $('img-bg')) $('img-bg').classList.remove('on'); });
+  $('png').onclick = () => makeImage();
 
   // ── Board ───────────────────────────────────────────────────────────────
   function render() {
@@ -579,6 +887,8 @@
 
   // ── Wiring ──────────────────────────────────────────────────────────────
   $('board').addEventListener('click', (ev) => {
+    const dayBtn = ev.target.closest('button[data-day]');
+    if (dayBtn) { $('date').value = dayBtn.dataset.day; setView('day'); return; }
     const b = ev.target.closest('[data-act]');
     if (!b) return;
     const act = b.dataset.act;
@@ -590,8 +900,8 @@
     else if (act === 'save') save();
   });
   $('add').onclick = () => { if (!editing) startEdit(null); };
-  $('prev').onclick = () => { $('date').value = addDays($('date').value, -1); load(); };
-  $('next').onclick = () => { $('date').value = addDays($('date').value, 1); load(); };
+  $('prev').onclick = () => { $('date').value = addDays($('date').value, -step()); load(); };
+  $('next').onclick = () => { $('date').value = addDays($('date').value, step()); load(); };
   $('date').addEventListener('change', load);
   load();
 })();
