@@ -160,6 +160,24 @@ check('strain filter keeps only that strain’s share', A.crewLaborLog(laborStag
 const gil = A.crewLaborByEmployee(laborStages).find((e) => e.employeeNo === '5475211');
 check('employee roll-up: 13.5 hours, named', [gil.hours, gil.name], [13.5, 'Gilberto Diaz']);
 
+console.log('\nfarm-wide labor (spread over the farm\'s pounds)');
+// Both fixture intakes came from farm license 540 in 2026: LCG 310 wet lb, Zoap 92.
+const farmStages = { ...stages, labor_entry: [
+  { id: 'F1', process: 'other', farm: '540', employeeId: '5475211', employeeName: 'Gilberto Diaz', hours: 10, date: '2026-07-01', uids: [] },
+  { id: 'F2', process: 'other', farm: '999', employeeId: '5475211', employeeName: 'Gilberto Diaz', hours: 3, date: '2026-07-01', uids: [] },
+  { id: 'F3', process: 'other', farm: '540', employeeId: '5475211', employeeName: 'Gilberto Diaz', hours: 2, date: '2025-07-01', uids: [] }
+] };
+check('lots pick up their farm license from intake', A.buildLots(farmStages).find((l) => l.id === FARM_UID).pid, '540');
+const fa = A.laborAllocations(farmStages, RATES);
+const f1 = fa.filter((a) => a.entryId === 'F1');
+check('farm hours spread by wet lb over that year\'s lots', f1.map((a) => [a.lotId, a.hours]), [[FARM_UID, 7.711], ['1A9999', 2.289]]);
+check('…marked as a farm split', f1.every((a) => a.basis === 'farm'), true);
+check('a farm with no pounds yet waits as its pool', fa.filter((a) => a.entryId === 'F2').map((a) => [a.lotId, a.basis, a.hours]), [['farm:999', 'farm-pending', 3]]);
+check('last year\'s farm work doesn\'t land on this year\'s lots', fa.find((a) => a.entryId === 'F3').basis, 'farm-pending');
+const fLots = A.laborCostByLot(farmStages, RATES);
+check('pool rows sort after real lots', fLots.map((r) => r.pending), [false, false, true, true]);
+check('lot carries its farm-wide share', [fLots.find((r) => r.lotId === FARM_UID).farmHours, fLots.find((r) => r.lotId === FARM_UID).farm], [7.711, '540']);
+
 console.log('\nrequests');
 const reqs = A.requestSummary(stages, ASOF);
 check('one request still open', reqs.filter((r) => r.open).length, 1);

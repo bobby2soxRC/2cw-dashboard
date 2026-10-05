@@ -77,7 +77,7 @@
 
     .summary{background:var(--bg);border:1px dashed var(--border);border-radius:10px;padding:12px 14px;font-size:.9rem;color:var(--subtext);line-height:1.55;margin-bottom:16px}
     .summary table{margin-top:6px;font-size:.85rem}
-    .summary td{padding:3px 8px 3px 0;border:none}
+    .summary td{padding:3px 8px 3px 0;border:none;white-space:nowrap}
     .summary b{color:var(--text);font-family:'DM Mono',monospace;font-weight:500}
     .btn{padding:.75rem 1.2rem;border:1px solid var(--border);border-radius:10px;font-family:'DM Mono',monospace;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer;background:transparent;color:var(--text);min-height:48px}
     .btn-blue{background:var(--blue);border-color:var(--blue);color:#000}
@@ -193,13 +193,22 @@
         <div class="hint" id="h-people"></div>
       </div>
       <div class="field">
-        <label class="lbl" for="uid-q" id="l-uids"></label>
-        <div class="picker" id="uid-picker">
-          <div class="chips" id="uid-chips"></div>
-          <input id="uid-q" autocomplete="off" autocapitalize="characters" spellcheck="false">
-          <div class="panel" id="uid-panel"></div>
+        <div class="lbl" id="l-target"></div>
+        <div class="seg" id="target-seg" style="margin-bottom:10px"></div>
+        <div id="target-uids">
+          <label class="lbl" for="uid-q" id="l-uids"></label>
+          <div class="picker" id="uid-picker">
+            <div class="chips" id="uid-chips"></div>
+            <input id="uid-q" autocomplete="off" autocapitalize="characters" spellcheck="false">
+            <div class="panel" id="uid-panel"></div>
+          </div>
+          <div class="hint" id="h-uids"></div>
         </div>
-        <div class="hint" id="h-uids"></div>
+        <div id="target-farm" hidden>
+          <label class="lbl" for="farm" id="l-farm"></label>
+          <select id="farm"></select>
+          <div class="hint" id="h-farm"></div>
+        </div>
       </div>
       <div class="field">
         <label for="notes" id="l-notes"></label>
@@ -348,8 +357,8 @@
     colPerWet: { en: '$/wet lb', es: '$/lb húmeda' },
     colNow:    { en: 'Now (lb)', es: 'Ahora (lb)' },
     colPerNow: { en: '$/lb now', es: '$/lb ahora' },
-    lotNote:   { en: 'Hours on multi-UID entries are split by the pounds each lot had at that process. ≈ marks a lot with an entry split evenly because a weight wasn’t recorded yet. Take Down’s on-stem UID counts toward its farm package’s lot. Only entries in the dates above are counted — pick “All dates” for a lot’s whole cost.',
-                 es: 'Las horas de registros con varios UIDs se dividen según las libras de cada lote en ese proceso. ≈ marca un lote con un registro dividido en partes iguales porque faltaba un peso. El UID en tallo de Desmontaje cuenta en el lote de su paquete de rancho. Solo cuentan los registros en las fechas de arriba — elija “Todas las fechas” para el costo completo de un lote.' },
+    lotNote:   { en: 'Farm-wide work is spread over every lot that farm brings in that year, by wet lb; until it has any, it shows as the farm’s pool at the bottom. Hours on multi-UID entries are split by the pounds each lot had at that process. ≈ marks a lot with an entry split evenly because a weight wasn’t recorded yet. Take Down’s on-stem UID counts toward its farm package’s lot. Only entries in the dates above are counted — pick “All dates” for a lot’s whole cost.',
+                 es: 'El trabajo general de un rancho se reparte entre todos los lotes que ese rancho trae ese año, por lb húmedas; mientras no tenga, aparece abajo como el fondo del rancho. Las horas de registros con varios UIDs se dividen según las libras de cada lote en ese proceso. ≈ marca un lote con un registro dividido en partes iguales porque faltaba un peso. El UID en tallo de Desmontaje cuenta en el lote de su paquete de rancho. Solo cuentan los registros en las fechas de arriba — elija “Todas las fechas” para el costo completo de un lote.' },
     noRate:    { en: 'Some people have no labor rate (and there’s no default rate), so their cost shows as —. Rates are set in the admin panel → Labor Rates.',
                  es: 'Algunas personas no tienen tarifa (y no hay tarifa predeterminada), así que su costo aparece como —. Las tarifas se fijan en el panel de administración → Labor Rates.' },
     segPerson: { en: 'By person', es: 'Por persona' },
@@ -371,6 +380,19 @@
     removeQ:   { en: 'Remove this entry? It stops counting toward labor totals.', es: '¿Quitar este registro? Deja de contar en los totales.' },
     empty:     { en: 'No entries for these dates.', es: 'No hay registros para estas fechas.' },
     loading:   { en: 'Loading…', es: 'Cargando…' },
+    target:    { en: 'Applies to', es: 'Se aplica a' },
+    tgtUids:   { en: 'UIDs', es: 'UIDs' },
+    tgtFarm:   { en: 'A farm (general work)', es: 'Un rancho (trabajo general)' },
+    farm:      { en: 'Farm', es: 'Rancho' },
+    hFarm:     { en: 'For general work at a farm that isn’t tied to particular packages. The hours are spread over every lot that farm brings in that year, by wet pounds — so the split settles once the harvest is in.',
+                 es: 'Para trabajo general en un rancho que no es de paquetes específicos. Las horas se reparten entre todos los lotes que ese rancho trae ese año, según las libras húmedas — el reparto queda fijo cuando termina la cosecha.' },
+    needFarm:  { en: 'Pick the farm.', es: 'Elija el rancho.' },
+    farmLabel: { en: 'Farm: {f}', es: 'Rancho: {f}' },
+    sumFarm:   { en: 'Spread over {f}’s {y} lots by wet lb — so far {n} lots, {lb} lb:', es: 'Repartido entre los lotes {y} de {f} por lb húmedas — hasta ahora {n} lotes, {lb} lb:' },
+    sumFarmNone:{ en: 'No pounds from {f} in {y} yet — the hours wait in the farm’s pool and spread over its lots as intakes come in.',
+                  es: 'Todavía no hay libras de {f} en {y} — las horas esperan en el fondo del rancho y se reparten entre sus lotes cuando lleguen las recepciones.' },
+    pool:      { en: 'waiting for pounds', es: 'esperando libras' },
+    farmShare: { en: 'incl. {h} h farm-wide', es: 'incl. {h} h del rancho' },
     tabTl:     { en: 'Timeline', es: 'Línea de tiempo' },
     tlOnly:    { en: 'Only people with time not logged', es: 'Solo personas con tiempo sin registrar' },
     tlSearch:  { en: 'Search name…', es: 'Buscar nombre…' },
@@ -745,6 +767,34 @@
     if ($('view-list').classList.contains('on')) renderList();
   })();
 
+  // ── Applies to: UIDs, or general work at a farm ─────────────────────────
+  // A farm entry has no UIDs, just the farm license (`farm`, the same code
+  // Harvest and Wet Intake record as `pid`); laborAllocations spreads it
+  // over that farm's lots for the year by wet lb.
+  let target = 'uids';
+  let farms = [];   // [{v, label}] — Farm Licenses (Information Hub)
+  const farmName = (pid, fallback) => { const f = farms.find((x) => x.v === pid); return f ? f.label : (fallback || pid || ''); };
+  $('l-target').textContent = t(L.target);
+  $('l-farm').textContent = t(L.farm);
+  $('h-farm').textContent = t(L.hFarm);
+  $('target-seg').innerHTML = [['uids', L.tgtUids], ['farm', L.tgtFarm]]
+    .map(([k, l]) => `<button type="button" data-target="${k}">${esc(t(l))}</button>`).join('');
+  function setTarget(k) {
+    target = k;
+    document.querySelectorAll('#target-seg button').forEach((b) => b.classList.toggle('on', b.dataset.target === k));
+    $('target-uids').hidden = k !== 'uids';
+    $('target-farm').hidden = k !== 'farm';
+    renderSummary();
+  }
+  $('target-seg').onclick = (e) => { const b = e.target.closest('button'); if (b) setTarget(b.dataset.target); };
+  document.querySelector('#target-seg button[data-target="uids"]').classList.add('on');
+  $('farm').addEventListener('change', () => { $('err').textContent = ''; renderSummary(); });
+  loadReference().then((ref) => {
+    farms = refOptions(ref, 'properties');
+    $('farm').innerHTML = '<option value=""></option>' + farms.map((f) => `<option value="${esc(f.v)}">${esc(f.label)}</option>`).join('');
+    if (params.get('farm')) { $('farm').value = params.get('farm'); setTarget('farm'); }
+  });
+
   // ── Hours ───────────────────────────────────────────────────────────────
   function fromTimes() {
     const h = hoursBetween($('start').value, $('end').value);
@@ -757,14 +807,15 @@
 
   function renderSummary() {
     const h = num($('hours').value);
-    if (!people.length || !h) { $('summary').textContent = t(L.sumNone); return; }
+    if (!people.length || !h) { $('summary').textContent = t(L.sumNone); renderSplit(); return; }
     const p = people.length === 1 ? t(L.person1) : fill(t(L.personN), { n: people.length });
     let s = fill(t(L.sumPeople), { p, h: `<b>${fmtH(h)}</b>`, t: `<b>${fmtH(h * people.length)}</b>` });
     if (rates) {
       const costs = people.map((x) => costOf(x.userId, $('date').value, h));
       if (costs.every((c) => c != null)) s += ' ' + fill(t(L.sumCost), { c: `<b>${fmtMoney(costs.reduce((a, c) => a + c, 0))}</b>` });
     }
-    if (!uids.length) s += '<br>' + t(L.sumNoUid);
+    if (target === 'farm') { /* farm preview comes from renderSplit */ }
+    else if (!uids.length) s += '<br>' + t(L.sumNoUid);
     else if (uids.length === 1) s += '<br>' + fill(t(L.sumOne), { uid: `<b>${esc(tail(uids[0].uid))}</b>` });
     $('summary').innerHTML = s;
     renderSplit();
@@ -775,6 +826,30 @@
   async function renderSplit() {
     const seq = ++splitSeq;
     const h = num($('hours').value), proc = $('process').value;
+    if (target === 'farm') {
+      const pid = $('farm').value;
+      if (!pid || !people.length || !h) { $('split').innerHTML = ''; return; }
+      const st = await loadStages();
+      if (seq !== splitSeq) return;
+      const date = $('date').value || localDay();
+      const preview = people.map((x, i) => ({ id: 'preview' + i, process: proc || 'other', hours: h, date, farm: pid,
+                                              employeeId: x.userId, employeeName: x.name, uids: [] }));
+      const per = A.laborAllocations({ ...st, labor_entry: preview }, rates);
+      const f = farmName(pid), y = date.slice(0, 4);
+      if (!per.length || per[0].basis === 'farm-pending') { $('split').innerHTML = '<br>' + esc(fill(t(L.sumFarmNone), { f, y })); return; }
+      const al = [];
+      per.forEach((a) => {
+        const row = al.find((x) => x.uid === a.uid);
+        if (!row) al.push({ ...a });
+        else { row.hours += a.hours; row.cost = row.cost == null || a.cost == null ? null : row.cost + a.cost; }
+      });
+      const lb = al.reduce((a, x) => a + x.lb, 0);
+      $('split').innerHTML = '<br>' + esc(fill(t(L.sumFarm), { f, y, n: al.length, lb: fmtNum(lb, 0) })) +
+        `<table>${al.slice(0, 12).map((a) => `<tr><td class="m">${esc(tail(a.uid))}</td><td>${esc(a.strain)}</td><td class="n">${fmtNum(a.lb, 0)} lb</td>
+          <td class="n">${fmtPct(a.share, 0)}</td><td class="n"><b>${fmtNum(a.hours, 2)} h</b></td>${a.cost != null ? `<td class="n">${fmtMoney(a.cost)}</td>` : ''}</tr>`).join('')}</table>` +
+        (al.length > 12 ? `<div class="s">+ ${al.length - 12}</div>` : '');
+      return;
+    }
     if (uids.length < 2 || !people.length || !h || !proc) { $('split').innerHTML = ''; return; }
     const st = await loadStages();
     if (seq !== splitSeq) return;
@@ -806,18 +881,20 @@
     err.textContent = '';
     const proc = $('process').value, date = $('date').value, hours = num($('hours').value);
     const problem = !proc ? L.needProc : !date ? L.needDate : !people.length ? L.needPeople
-      : !(hours > 0) ? L.needHours : hours > 16 ? L.tooMany : null;
+      : !(hours > 0) ? L.needHours : hours > 16 ? L.tooMany : target === 'farm' && !$('farm').value ? L.needFarm : null;
     if (problem) { err.textContent = t(problem); return; }
     const client = getClient();
     if (!client) { err.textContent = t(L.noDb); return; }
-    const strains = [...new Set(uids.map((u) => u.strain).filter(Boolean))];
+    const isFarm = target === 'farm';
+    const strains = isFarm ? [] : [...new Set(uids.map((u) => u.strain).filter(Boolean))];
     const now = new Date().toISOString();
     const rows = people.map((p) => ({
       station_key: ENTRY_KEY, status: 'submitted', owner_user: me || null, updated_by: me || null,
       strain: strains.length === 1 ? strains[0] : null, work_date: date, submitted_at: now,
       fields: {
         process: proc, employeeId: p.userId || '', employeeName: p.name,
-        uids: uids.map((u) => ({ uid: u.uid, strain: u.strain || '' })),
+        uids: isFarm ? [] : uids.map((u) => ({ uid: u.uid, strain: u.strain || '' })),
+        ...(isFarm ? { farm: $('farm').value, farmName: farmName($('farm').value) } : {}),
         start: $('start').value || '', end: $('end').value || '', hours,
         notes: $('notes').value.trim(), enteredBy: me
       }
@@ -892,7 +969,7 @@
       const f = r.fields || {};
       if (proc && f.process !== proc) return false;
       if (!q) return true;
-      return fold(f.employeeName).includes(q) || (qu && (f.uids || []).some((u) => normUid(u.uid).includes(qu)));
+      return fold(f.employeeName).includes(q) || fold(f.farmName).includes(q) || (qu && (f.uids || []).some((u) => normUid(u.uid).includes(qu)));
     });
   }
 
@@ -913,7 +990,8 @@
       const body = rows.map((r) => {
         const f = r.fields;
         const time = f.start && f.end ? `${f.start}–${f.end}` : '';
-        const us = (f.uids || []).map((u) => `<span class="m" title="${esc(u.uid)}">${esc(tail(u.uid))}</span>${u.strain ? ` <span class="s">${esc(u.strain)}</span>` : ''}`).join('<br>') || `<span class="s">${esc(t(L.noUid))}</span>`;
+        const us = f.farm && !(f.uids || []).length ? esc(fill(t(L.farmLabel), { f: farmName(f.farm, f.farmName) }))
+          : (f.uids || []).map((u) => `<span class="m" title="${esc(u.uid)}">${esc(tail(u.uid))}</span>${u.strain ? ` <span class="s">${esc(u.strain)}</span>` : ''}`).join('<br>') || `<span class="s">${esc(t(L.noUid))}</span>`;
         return `<tr><td>${esc(r.work_date)}</td>
           <td>${esc(f.employeeName)}${f.employeeId ? '' : ` <span class="s warn">${esc(t(L.notInCt))}</span>`}</td>
           <td>${esc(procTitle(f.process))}</td><td class="n">${esc(time)}</td><td class="n">${fmtH(num(f.hours))}</td>
@@ -971,8 +1049,10 @@
     const hasCost = !!rates && lots.every((l) => l.cost != null);
     const cell = (p) => !p ? '' : hasCost ? `${fmtMoney(p.cost)}<div class="s">${fmtNum(p.hours, 2)} h</div>` : `${fmtNum(p.hours, 2)} h`;
     const body = lots.map((l) => `<tr>
-      <td>${l.lotId ? `<span class="m" title="${esc(l.uids.join(', '))}">${esc(tail(l.lotId))}</span>${l.evenSplit ? ' <span class="warn">≈</span>' : ''}` : `<span class="s">${esc(t(L.noUid))}</span>`}
-        <div class="s">${esc(l.strain)}</div></td>
+      <td>${l.pending ? `${esc(fill(t(L.farmLabel), { f: farmName(l.farm) }))}<div class="s warn">${esc(t(L.pool))}</div>`
+        : l.lotId ? `<span class="m" title="${esc(l.uids.join(', '))}">${esc(tail(l.lotId))}</span>${l.evenSplit ? ' <span class="warn">≈</span>' : ''}
+        <div class="s">${esc([l.strain, l.farm ? farmName(l.farm) : ''].filter(Boolean).join(' · '))}</div>${l.farmHours ? `<div class="s">${esc(fill(t(L.farmShare), { h: fmtNum(l.farmHours, 2) }))}</div>` : ''}`
+        : `<span class="s">${esc(t(L.noUid))}</span>`}</td>
       ${procs.map((k) => `<td class="n">${cell(l.byProcess[k])}</td>`).join('')}
       <td class="n">${fmtNum(l.hours, 2)}</td>${rates ? `<td class="n">${fmtMoney(l.cost)}</td>` : ''}
       <td class="n">${l.wetLb ? fmtNum(l.wetLb, 0) : '—'}</td>${rates ? `<td class="n">${l.costPerWetLb != null ? '$' + fmtNum(l.costPerWetLb, 3) : '—'}</td>` : ''}
@@ -1138,9 +1218,9 @@
         fill(t(L.tlShiftTip), { a: hhmm(a), b: b === nowMin ? '…' : hhmm(b), h: fmtNum((b - a) / 60, 2) }))}"></div>`));
       r.timed.forEach((e) => {
         const f = e.f;
-        const label = [procTitle(f.process), (f.uids || []).map((u) => tail(u.uid)).join(' ')].filter(Boolean).join(' · ');
+        const label = [procTitle(f.process), f.farm && !(f.uids || []).length ? farmName(f.farm, f.farmName) : (f.uids || []).map((u) => tail(u.uid)).join(' ')].filter(Boolean).join(' · ');
         segs.push(`<div class="seg entry" style="left:${X(e.a)};width:${W(e.a, e.b)}" data-tip="${tip(
-          `<b>${esc(f.start)}–${esc(f.end)}</b> · ${fmtH(num(f.hours))} h<br>${esc(procTitle(f.process))}<br>${(f.uids || []).map((u) => `<b>${esc(tail(u.uid))}</b> ${esc(u.strain || '')}`).join('<br>') || `<span class="s">${esc(t(L.noUid))}</span>`}${f.notes ? `<br><span class="s">${esc(f.notes)}</span>` : ''}`)}">${esc(label)}</div>`);
+          `<b>${esc(f.start)}–${esc(f.end)}</b> · ${fmtH(num(f.hours))} h<br>${esc(procTitle(f.process))}<br>${f.farm && !(f.uids || []).length ? esc(fill(t(L.farmLabel), { f: farmName(f.farm, f.farmName) })) : (f.uids || []).map((u) => `<b>${esc(tail(u.uid))}</b> ${esc(u.strain || '')}`).join('<br>') || `<span class="s">${esc(t(L.noUid))}</span>`}${f.notes ? `<br><span class="s">${esc(f.notes)}</span>` : ''}`)}">${esc(label)}</div>`);
       });
       r.outside.forEach(([a, b]) => segs.push(`<div class="seg outside" style="left:${X(a)};width:${W(a, b)}"></div>`));
       r.gaps.forEach(([a, b]) => segs.push(`<button type="button" class="seg gap" style="left:${X(a)};width:${W(a, b)}" aria-label="${esc(fill(t(L.tlGapTip), { a: hhmm(a), b: hhmm(b), h: fmtNum((b - a) / 60, 2) }))}"

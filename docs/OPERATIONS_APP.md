@@ -385,6 +385,17 @@ or just hours, one or more people, and zero or more UIDs, then Save.
   re-splits by weight on its own once the weights are recorded, because
   nothing is frozen at save time. The form previews the split before
   saving.
+- **A farm (general work)**: "Applies to" switches the entry from UIDs to
+  a farm, for work at a farm that isn't tied to particular packages. The
+  entry stores `farm` (the Farm License code, the same one Harvest and Wet
+  Intake record as `pid`, so lots carry it as `lot.pid`) and `farmName`,
+  with no UIDs. `laborAllocations` spreads its hours over every lot from
+  that farm that came in during the same calendar year, by wet lb (Wet
+  Intake, else Harvest). While the farm has no pounds that year, the hours
+  sit in the farm's pool (basis `farm-pending`, shown at the bottom of By
+  lot). The split is worked out when a report is opened, so it settles on
+  its own once the harvest is in. A season is the calendar year, so farms
+  with several rounds a year would need explicit harvest periods.
 - **Costs** use each person's own loaded $/hr (wage + taxes + benefits),
   set in the admin panel's **Labor Rates** tab (see `docs/USER_ADMIN.md`).
   Rates live in the `labor_rates` table, one row per person per effective
