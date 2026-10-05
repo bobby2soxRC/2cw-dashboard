@@ -435,11 +435,20 @@ or just hours, one or more people, and zero or more UIDs, then Save.
   saving.
 - **A farm (general work)**: "Applies to" switches the entry from UIDs to
   a farm, for work at a farm that isn't tied to particular packages. The
-  entry stores `farm` (the Farm License code, the same one Harvest and Wet
-  Intake record as `pid`, so lots carry it as `lot.pid`) and `farmName`,
-  with no UIDs. `laborAllocations` spreads its hours over every lot from
-  that farm that came in during the same calendar year, by wet lb (Wet
-  Intake, else Harvest). While the farm has no pounds that year, the hours
+  entry stores `farms`, the Farm License codes it covers (the same codes
+  Harvest and Wet Intake record as `pid`, so lots carry one as
+  `lot.pid`), plus `farm` (the first, for older readers) and `farmName`,
+  with no UIDs.
+  - One farm can hold several licenses. The picker groups licenses by
+    farm, using the name before ": " in each license's label
+    (Information Hub → Farm Licenses). Tapping the farm takes all of its
+    licenses, or you can tap single ones. Give all of a farm's licenses
+    the same name there.
+  - `laborAllocations` spreads the hours over every lot that came in under
+    any of those licenses in the same calendar year, by wet lb (Wet
+    Intake, else Harvest).
+  - Entries saved before this have a single `farm` and still work
+    (`entryFarms`). While the farm has no pounds that year, the hours
   sit in the farm's pool (basis `farm-pending`, shown at the bottom of By
   lot). The split is worked out when a report is opened, so it settles on
   its own once the harvest is in. A season is the calendar year, so farms

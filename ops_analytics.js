@@ -454,6 +454,13 @@ function rateFor(rates, employeeId, date) {
   return own != null ? own : pick('*');
 }
 
+// The farm licenses a farm-wide entry covers, sorted: `farms` (one farm can
+// hold several licenses), or the single `farm` older entries saved.
+function entryFarms(r) {
+  const list = Array.isArray(r && r.farms) && r.farms.length ? r.farms : (r && r.farm ? [r.farm] : []);
+  return [...new Set(list.map((x) => String(x).trim()).filter(Boolean))].sort();
+}
+
 // Every Labor Log entry spread over its UIDs: one row per entry × UID with
 // that UID's share of the hours (and cost, at the person's rate on that
 // date — see rateFor). Shares follow the pounds each UID's lot had at that process
@@ -471,11 +478,12 @@ function laborAllocations(stages, rates) {
   const lots = new Map(buildLots(stages).map((l) => [l.id, l]));
   const roots = new Set(lots.keys());
   const lotFor = (uid) => lots.get(resolveKey(roots, rootUid(alias, uid))) || null;
-  // A farm's lots for one year, by wet lb in (Wet Intake, else Harvest) —
-  // the pounds farm-wide labor is spread over. Dated by when the lot came in.
+  // A farm's lots for one year (any of the given licenses), by wet lb in
+  // (Wet Intake, else Harvest) — the pounds farm-wide labor is spread over.
+  // Dated by when the lot came in.
   const farmCache = {};
-  const farmLots = (pid, year) => farmCache[pid + '|' + year] || (farmCache[pid + '|' + year] = [...lots.values()]
-    .filter((l) => l.pid === pid)
+  const farmLots = (pids, year) => farmCache[pids.join(',') + '|' + year] || (farmCache[pids.join(',') + '|' + year] = [...lots.values()]
+    .filter((l) => pids.includes(l.pid))
     .map((l) => {
       const st = l.stages.intake_wet || l.stages.harvest || null;
       return { lot: l, lb: st ? st.outputLb : 0, date: st ? st.date : '' };
@@ -488,20 +496,23 @@ function laborAllocations(stages, rates) {
     const base = { entryId: r.id, date: dayOf(r), process: r.process || '',
                    employeeNo: String(r.employeeId || r.employeeName || '').trim(), name: r.employeeName || '' };
     const uids = (r.uids || []).filter((u) => u && u.uid);
-    // General work at a farm: spread over the pounds that farm brings in
-    // that year (see farmLots). Until it has any, it waits as the farm's pool.
-    if (!uids.length && r.farm) {
+    // General work at a farm: spread over the pounds the farm brings in that
+    // year under any of its licenses (`farms`; older entries have a single
+    // `farm`) — see farmLots. Until it has any, it waits as the farm's pool.
+    const farms = entryFarms(r);
+    if (!uids.length && farms.length) {
       if (!hours) return;
-      const fl = farmLots(String(r.farm).trim(), dayOf(r).slice(0, 4));
+      const fl = farmLots(farms, dayOf(r).slice(0, 4));
       const totalLb = fl.reduce((a, x) => a + x.lb, 0);
+      const farmKey = farms.join(',');
       if (!totalLb) {
-        out.push({ ...base, uid: '', lotId: 'farm:' + r.farm, farm: String(r.farm), strain: '', lb: null, share: 1, basis: 'farm-pending',
+        out.push({ ...base, uid: '', lotId: 'farm:' + farmKey, farm: farmKey, strain: '', lb: null, share: 1, basis: 'farm-pending',
                    hours: round2(hours), cost: rate != null ? round2(hours * rate) : null });
         return;
       }
       fl.forEach((x) => {
         const share = x.lb / totalLb;
-        out.push({ ...base, uid: x.lot.id, lotId: x.lot.id, farm: String(r.farm), strain: x.lot.strain || '', lb: x.lb, share, basis: 'farm',
+        out.push({ ...base, uid: x.lot.id, lotId: x.lot.id, farm: farmKey, strain: x.lot.strain || '', lb: x.lb, share, basis: 'farm',
                    hours: Math.round(hours * share * 1000) / 1000, cost: rate != null ? Math.round(hours * share * rate * 100) / 100 : null });
       });
       return;
@@ -723,6 +734,6 @@ function exceptions(stages, asOf) {
   return out.sort((a, b) => String(b.date).localeCompare(String(a.date)));
 }
 
-return { buildLots, stageYields, strainYields, dailyOutput, biomassLedger, trimmerStats, crewThroughput, crewLaborLog, crewLaborByEmployee, laborAllocations, laborCostByLot, lotLbForProcess, rateFor, carryCost, DEFAULT_TRIM_SPLIT,
+return { buildLots, stageYields, strainYields, dailyOutput, biomassLedger, trimmerStats, crewThroughput, crewLaborLog, crewLaborByEmployee, laborAllocations, laborCostByLot, lotLbForProcess, rateFor, carryCost, entryFarms, DEFAULT_TRIM_SPLIT,
          requestSummary, exceptions, buildAliasMap, rootUid, daysBetween };
 }));

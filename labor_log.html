@@ -93,6 +93,7 @@
 
     .summary{background:var(--bg);border:1px dashed var(--border);border-radius:10px;padding:12px 14px;font-size:.9rem;color:var(--subtext);line-height:1.55;margin-bottom:16px}
     .summary table{margin-top:6px;font-size:.85rem}
+    #split{overflow-x:auto}
     .summary td{padding:3px 8px 3px 0;border:none;white-space:nowrap}
     .summary b{color:var(--text);font-family:'DM Mono',monospace;font-weight:500}
     .btn{padding:.75rem 1.2rem;border:1px solid var(--border);border-radius:10px;font-family:'DM Mono',monospace;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer;background:transparent;color:var(--text);min-height:48px}
@@ -162,6 +163,16 @@
       line-height:1.45;max-width:280px;box-shadow:0 10px 30px rgba(0,0,0,.5);pointer-events:none;display:none}
     #tl-tip b{font-family:'DM Mono',monospace;font-weight:500}
     #tl-tip .s{color:var(--muted);font-size:.75rem}
+    /* Farm licenses grouped by farm: tap the farm to take all its licenses. */
+    .farm-pick{max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;background:var(--bg)}
+    .fgrp{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 10px;border-top:1px solid var(--border)}
+    .fgrp:first-child{border-top:none}
+    .fgrp.sel{background:rgba(90,159,212,.08)}
+    .fname{flex:1 1 160px;text-align:left;background:transparent;border:none;color:var(--text);font:inherit;font-size:.95rem;cursor:pointer;min-height:40px;padding:0}
+    .fname .s{display:block;font-size:.72rem;color:var(--muted)}
+    .flic{background:transparent;border:1px solid var(--border);color:var(--subtext);border-radius:99px;padding:4px 11px;min-height:34px;
+      font-family:'DM Mono',monospace;font-size:.75rem;cursor:pointer}
+    .flic.on{background:var(--blue);border-color:var(--blue);color:#000;font-weight:700}
     #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--green);color:#000;font-weight:700;
       padding:12px 18px;border-radius:10px;z-index:60;display:none;max-width:calc(100vw - 32px)}
     #toast.on{display:block}
@@ -222,7 +233,8 @@
         </div>
         <div id="target-farm" hidden>
           <label class="lbl" for="farm" id="l-farm"></label>
-          <select id="farm"></select>
+          <input type="search" id="farm-q" autocomplete="off" style="margin-bottom:8px">
+          <div class="farm-pick" id="farm"></div>
           <div class="hint" id="h-farm"></div>
         </div>
       </div>
@@ -425,9 +437,11 @@
     tgtUids:   { en: 'UIDs', es: 'UIDs' },
     tgtFarm:   { en: 'A farm (general work)', es: 'Un rancho (trabajo general)' },
     farm:      { en: 'Farm', es: 'Rancho' },
-    hFarm:     { en: 'For general work at a farm that isn’t tied to particular packages. The hours are spread over every lot that farm brings in that year, by wet pounds — so the split settles once the harvest is in.',
-                 es: 'Para trabajo general en un rancho que no es de paquetes específicos. Las horas se reparten entre todos los lotes que ese rancho trae ese año, según las libras húmedas — el reparto queda fijo cuando termina la cosecha.' },
-    needFarm:  { en: 'Pick the farm.', es: 'Elija el rancho.' },
+    hFarm:     { en: 'For general work at a farm that isn’t tied to particular packages. Tap the farm to take all of its licenses, or tap single licenses. The hours are spread over every lot that comes in under any of them that year, by wet pounds — so the split settles once the harvest is in.',
+                 es: 'Para trabajo general en un rancho que no es de paquetes específicos. Toque el rancho para tomar todas sus licencias, o toque licencias sueltas. Las horas se reparten entre todos los lotes que lleguen con cualquiera de ellas ese año, según las libras húmedas — el reparto queda fijo cuando termina la cosecha.' },
+    farmQ:     { en: 'Search farms or licenses…', es: 'Buscar ranchos o licencias…' },
+    licOf:     { en: '{n} of {t} licenses', es: '{n} de {t} licencias' },
+    needFarm:  { en: 'Pick the farm’s licenses.', es: 'Elija las licencias del rancho.' },
     farmLabel: { en: 'Farm: {f}', es: 'Rancho: {f}' },
     sumFarm:   { en: 'Spread over {f}’s {y} lots by wet lb — so far {n} lots, {lb} lb:', es: 'Repartido entre los lotes {y} de {f} por lb húmedas — hasta ahora {n} lotes, {lb} lb:' },
     sumFarmNone:{ en: 'No pounds from {f} in {y} yet — the hours wait in the farm’s pool and spread over its lots as intakes come in.',
@@ -815,6 +829,56 @@
   let target = 'uids';
   let farms = [];   // [{v, label}] — Farm Licenses (Information Hub)
   const farmName = (pid, fallback) => { const f = farms.find((x) => x.v === pid); return f ? f.label : (fallback || pid || ''); };
+  // Licenses are labelled "Farm: license" (Information Hub → Farm Licenses);
+  // the part before ": " is the farm they're grouped under.
+  const splitLabel = (label, v) => { const i = String(label).lastIndexOf(': '); return i > 0 ? [label.slice(0, i), label.slice(i + 2)] : [label || v, v]; };
+  // "Sulphur Bank: 167, 168 · Lucerne: 073" for a list of license codes.
+  function farmsLabel(pids, fallback) {
+    if (!pids || !pids.length) return fallback || '';
+    const by = new Map();
+    pids.forEach((p) => {
+      const f = farms.find((x) => x.v === p);
+      const [name, lic] = f ? splitLabel(f.label, f.v) : [p, p];
+      (by.get(name) || by.set(name, []).get(name)).push(f ? lic : p);
+    });
+    if (!farms.length && fallback) return fallback;
+    return [...by.entries()].map(([n, l]) => n === l.join(', ') ? n : `${n}: ${l.join(', ')}`).join(' · ');
+  }
+  const entryFarms = (f) => A.entryFarms(f);
+  const isFarmEntry = (f) => entryFarms(f).length > 0 && !(f.uids || []).length;
+  let selFarms = new Set();
+  function renderFarmPick() {
+    const q = fold($('farm-q').value.trim());
+    const groups = new Map();
+    farms.forEach((f) => {
+      const [name, lic] = splitLabel(f.label, f.v);
+      (groups.get(name) || groups.set(name, []).get(name)).push({ v: f.v, lic });
+    });
+    const html = [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]))
+      .filter(([name, lics]) => !q || fold(name).includes(q) || lics.some((x) => fold(x.lic).includes(q)))
+      .map(([name, lics]) => {
+        const n = lics.filter((x) => selFarms.has(x.v)).length;
+        return `<div class="fgrp ${n ? 'sel' : ''}"><button type="button" class="fname" data-group="${esc(name)}">${esc(name)}
+            <span class="s">${esc(fill(t(L.licOf), { n, t: lics.length }))}</span></button>
+          ${lics.map((x) => `<button type="button" class="flic ${selFarms.has(x.v) ? 'on' : ''}" data-pid="${esc(x.v)}">${esc(x.lic)}</button>`).join('')}</div>`;
+      }).join('');
+    $('farm').innerHTML = html || `<div class="hint" style="padding:10px">—</div>`;
+  }
+  $('farm-q').placeholder = t(L.farmQ);
+  $('farm-q').addEventListener('input', renderFarmPick);
+  $('farm').addEventListener('click', (e) => {
+    const lic = e.target.closest('[data-pid]'), grp = e.target.closest('[data-group]');
+    if (lic) { selFarms.has(lic.dataset.pid) ? selFarms.delete(lic.dataset.pid) : selFarms.add(lic.dataset.pid); }
+    else if (grp) {
+      // Tapping the farm takes all of its licenses (or clears them if they're all on).
+      const pids = farms.filter((f) => splitLabel(f.label, f.v)[0] === grp.dataset.group).map((f) => f.v);
+      const all = pids.every((p) => selFarms.has(p));
+      pids.forEach((p) => (all ? selFarms.delete(p) : selFarms.add(p)));
+    } else return;
+    $('err').textContent = '';
+    renderFarmPick();
+    renderSummary();
+  });
   $('l-target').textContent = t(L.target);
   $('l-farm').textContent = t(L.farm);
   $('h-farm').textContent = t(L.hFarm);
@@ -829,11 +893,10 @@
   }
   $('target-seg').onclick = (e) => { const b = e.target.closest('button'); if (b) setTarget(b.dataset.target); };
   document.querySelector('#target-seg button[data-target="uids"]').classList.add('on');
-  $('farm').addEventListener('change', () => { $('err').textContent = ''; renderSummary(); });
   loadReference().then((ref) => {
     farms = refOptions(ref, 'properties');
-    $('farm').innerHTML = '<option value=""></option>' + farms.map((f) => `<option value="${esc(f.v)}">${esc(f.label)}</option>`).join('');
-    if (params.get('farm')) { $('farm').value = params.get('farm'); setTarget('farm'); }
+    if (params.get('farm')) { params.get('farm').split(',').forEach((p) => selFarms.add(p)); setTarget('farm'); }
+    renderFarmPick();
   });
 
   // ── Hours ───────────────────────────────────────────────────────────────
@@ -868,15 +931,15 @@
     const seq = ++splitSeq;
     const h = num($('hours').value), proc = $('process').value;
     if (target === 'farm') {
-      const pid = $('farm').value;
-      if (!pid || !people.length || !h) { $('split').innerHTML = ''; return; }
+      const sel = [...selFarms].sort();
+      if (!sel.length || !people.length || !h) { $('split').innerHTML = ''; return; }
       const st = await loadStages();
       if (seq !== splitSeq) return;
       const date = $('date').value || localDay();
-      const preview = people.map((x, i) => ({ id: 'preview' + i, process: proc || 'other', hours: h, date, farm: pid,
+      const preview = people.map((x, i) => ({ id: 'preview' + i, process: proc || 'other', hours: h, date, farms: sel,
                                               employeeId: x.userId, employeeName: x.name, uids: [] }));
       const per = A.laborAllocations({ ...st, labor_entry: preview }, rates);
-      const f = farmName(pid), y = date.slice(0, 4);
+      const f = farmsLabel(sel), y = date.slice(0, 4);
       if (!per.length || per[0].basis === 'farm-pending') { $('split').innerHTML = '<br>' + esc(fill(t(L.sumFarmNone), { f, y })); return; }
       const al = [];
       per.forEach((a) => {
@@ -922,7 +985,7 @@
     err.textContent = '';
     const proc = $('process').value, date = $('date').value, hours = num($('hours').value);
     const problem = !proc ? L.needProc : !date ? L.needDate : !people.length ? L.needPeople
-      : !(hours > 0) ? L.needHours : hours > 16 ? L.tooMany : target === 'farm' && !$('farm').value ? L.needFarm : null;
+      : !(hours > 0) ? L.needHours : hours > 16 ? L.tooMany : target === 'farm' && !selFarms.size ? L.needFarm : null;
     if (problem) { err.textContent = t(problem); return; }
     const client = getClient();
     if (!client) { err.textContent = t(L.noDb); return; }
@@ -935,7 +998,7 @@
       fields: {
         process: proc, employeeId: p.userId || '', employeeName: p.name,
         uids: isFarm ? [] : uids.map((u) => ({ uid: u.uid, strain: u.strain || '' })),
-        ...(isFarm ? { farm: $('farm').value, farmName: farmName($('farm').value) } : {}),
+        ...(isFarm ? (() => { const sel = [...selFarms].sort(); return { farms: sel, farm: sel[0], farmName: farmsLabel(sel) }; })() : {}),
         start: $('start').value || '', end: $('end').value || '', hours,
         notes: $('notes').value.trim(), enteredBy: me
       }
@@ -1041,7 +1104,7 @@
       const body = rows.map((r) => {
         const f = r.fields;
         const time = f.start && f.end ? `${f.start}–${f.end}` : '';
-        const us = f.farm && !(f.uids || []).length ? esc(fill(t(L.farmLabel), { f: farmName(f.farm, f.farmName) }))
+        const us = isFarmEntry(f) ? esc(fill(t(L.farmLabel), { f: farmsLabel(entryFarms(f), f.farmName) }))
           : (f.uids || []).map((u) => `<span class="m" title="${esc(u.uid)}">${esc(tail(u.uid))}</span>${u.strain ? ` <span class="s">${esc(u.strain)}</span>` : ''}`).join('<br>') || `<span class="s">${esc(t(L.noUid))}</span>`;
         return `<tr><td>${esc(r.work_date)}</td>
           <td>${esc(f.employeeName)}${f.employeeId ? '' : ` <span class="s warn">${esc(t(L.notInCt))}</span>`}</td>
@@ -1098,7 +1161,7 @@
     const q = fold($('f-q').value.trim()), qu = normUid($('f-q').value);
     const lots = A.laborCostByLot(all, rates, allocs).filter((l) => !q
       || (qu && (normUid(l.lotId).includes(qu) || l.uids.some((u) => normUid(u).includes(qu))))
-      || fold(l.strain).includes(q) || fold(farmName(l.farm)).includes(q));
+      || fold(l.strain).includes(q) || fold(farmsLabel(String(l.farm || '').split(',').filter(Boolean))).includes(q));
     const procs = [...OPERATIONS_STATIONS.map((x) => x.key), 'other'].filter((k) => lots.some((l) => l.byProcess[k]));
     const hasCost = !!rates && lots.every((l) => l.cost != null);
     const anyFarm = lots.some((l) => l.farmHours);
@@ -1106,7 +1169,7 @@
       ? `<span class="warn">${fmtMoney(l.farmCost)}</span><div class="s">${fmtNum(l.farmHours, 2)} h</div>` : `<span class="warn">${fmtNum(l.farmHours, 2)} h</span>`;
     const cell = (p) => !p ? '' : hasCost ? `${fmtMoney(p.cost)}<div class="s">${fmtNum(p.hours, 2)} h</div>` : `${fmtNum(p.hours, 2)} h`;
     const body = lots.map((l) => `<tr>
-      <td>${l.pending ? `${esc(fill(t(L.farmLabel), { f: farmName(l.farm) }))}<div class="s warn">${esc(t(L.pool))}</div>`
+      <td>${l.pending ? `${esc(fill(t(L.farmLabel), { f: farmsLabel(String(l.farm || '').split(',').filter(Boolean)) }))}<div class="s warn">${esc(t(L.pool))}</div>`
         : l.lotId ? `<span class="m" title="${esc(l.uids.join(', '))}">${esc(tail(l.lotId))}</span>${l.evenSplit ? ' <span class="warn">≈</span>' : ''}
         <div class="s">${esc([l.strain, l.farm ? farmName(l.farm) : ''].filter(Boolean).join(' · '))}</div>`
         : `<span class="s">${esc(t(L.noUid))}</span>`}</td>
@@ -1160,7 +1223,7 @@
     const q = fold($('f-q').value.trim()), qu = normUid($('f-q').value);
     const rowsC = A.laborCostByLot(all, rates).filter((l) => l.lotId && !l.pending && lotsById.has(l.lotId))
       .filter((l) => !q || (qu && (normUid(l.lotId).includes(qu) || l.uids.some((u) => normUid(u).includes(qu))))
-        || fold(l.strain).includes(q) || fold(farmName(l.farm)).includes(q));
+        || fold(l.strain).includes(q) || fold(farmsLabel(String(l.farm || '').split(',').filter(Boolean))).includes(q));
     const COLS = [['wet', L.cWet], ['dry', L.cDry], ['bucked', L.cBucked], ['a', L.cA], ['smalls', L.cSmalls], ['trim', L.cTrim]];
     const sum = num(split.a) + num(split.smalls) + num(split.trim);
     const editor = `<div class="card" style="max-width:none;margin-bottom:14px">
@@ -1249,7 +1312,7 @@
     const d = new Date(date + 'T12:00:00').toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric' });
     $('mine').innerHTML = `<div class="mine-hd">${esc(fill(t(L.mineHd), { d }))}</div>` + mine.map((r) => {
       const f = r.fields || {};
-      const on = f.farm && !(f.uids || []).length ? fill(t(L.farmLabel), { f: farmName(f.farm, f.farmName) })
+      const on = isFarmEntry(f) ? fill(t(L.farmLabel), { f: farmsLabel(entryFarms(f), f.farmName) })
         : (f.uids || []).map((u) => tail(u.uid)).join(' ') || t(L.noUid);
       const time = f.start && f.end ? `${f.start}–${f.end} · ` : '';
       return `<div class="mine-row"><div class="what">${esc(f.employeeName)} · ${esc(procTitle(f.process))}
@@ -1403,9 +1466,9 @@
         fill(t(L.tlShiftTip), { a: hhmm(a), b: b === nowMin ? '…' : hhmm(b), h: fmtNum((b - a) / 60, 2) }))}"></div>`));
       r.timed.forEach((e) => {
         const f = e.f;
-        const label = [procTitle(f.process), f.farm && !(f.uids || []).length ? farmName(f.farm, f.farmName) : (f.uids || []).map((u) => tail(u.uid)).join(' ')].filter(Boolean).join(' · ');
+        const label = [procTitle(f.process), isFarmEntry(f) ? farmsLabel(entryFarms(f), f.farmName) : (f.uids || []).map((u) => tail(u.uid)).join(' ')].filter(Boolean).join(' · ');
         segs.push(`<div class="seg entry" style="left:${X(e.a)};width:${W(e.a, e.b)}" data-tip="${tip(
-          `<b>${esc(f.start)}–${esc(f.end)}</b> · ${fmtH(num(f.hours))} h<br>${esc(procTitle(f.process))}<br>${f.farm && !(f.uids || []).length ? esc(fill(t(L.farmLabel), { f: farmName(f.farm, f.farmName) })) : (f.uids || []).map((u) => `<b>${esc(tail(u.uid))}</b> ${esc(u.strain || '')}`).join('<br>') || `<span class="s">${esc(t(L.noUid))}</span>`}${f.notes ? `<br><span class="s">${esc(f.notes)}</span>` : ''}`)}">${esc(label)}</div>`);
+          `<b>${esc(f.start)}–${esc(f.end)}</b> · ${fmtH(num(f.hours))} h<br>${esc(procTitle(f.process))}<br>${isFarmEntry(f) ? esc(fill(t(L.farmLabel), { f: farmsLabel(entryFarms(f), f.farmName) })) : (f.uids || []).map((u) => `<b>${esc(tail(u.uid))}</b> ${esc(u.strain || '')}`).join('<br>') || `<span class="s">${esc(t(L.noUid))}</span>`}${f.notes ? `<br><span class="s">${esc(f.notes)}</span>` : ''}`)}">${esc(label)}</div>`);
       });
       r.outside.forEach(([a, b]) => segs.push(`<div class="seg outside" style="left:${X(a)};width:${W(a, b)}"></div>`));
       r.gaps.forEach(([a, b]) => segs.push(`<button type="button" class="seg gap" style="left:${X(a)};width:${W(a, b)}" aria-label="${esc(fill(t(L.tlGapTip), { a: hhmm(a), b: hhmm(b), h: fmtNum((b - a) / 60, 2) }))}"

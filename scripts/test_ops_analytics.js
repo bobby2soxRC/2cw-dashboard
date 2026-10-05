@@ -177,6 +177,16 @@ check('farm hours spread by wet lb over that year\'s lots', f1.map((a) => [a.lot
 check('…marked as a farm split', f1.every((a) => a.basis === 'farm'), true);
 check('a farm with no pounds yet waits as its pool', fa.filter((a) => a.entryId === 'F2').map((a) => [a.lotId, a.basis, a.hours]), [['farm:999', 'farm-pending', 3]]);
 check('last year\'s farm work doesn\'t land on this year\'s lots', fa.find((a) => a.entryId === 'F3').basis, 'farm-pending');
+// One farm, several licenses: the Zoap package moves to license 541; an entry
+// naming both licenses still spreads over both lots.
+const twoLic = { ...farmStages, intake_wet: farmStages.intake_wet.map((r) => r.id === 'i2' ? { ...r, pid: '541' } : r), labor_entry: [
+  { id: 'M1', process: 'other', farms: ['541', '540'], employeeId: '5475211', employeeName: 'Gilberto Diaz', hours: 10, date: '2026-07-01', uids: [] },
+  { id: 'M2', process: 'other', farm: '540', employeeId: '5475211', employeeName: 'Gilberto Diaz', hours: 10, date: '2026-07-01', uids: [] }] };
+const ma = A.laborAllocations(twoLic, RATES);
+check('several licenses: spread over every lot under any of them', ma.filter((a) => a.entryId === 'M1').map((a) => [a.lotId, a.hours]), [[FARM_UID, 7.711], ['1A9999', 2.289]]);
+check('…and an older single-license entry still works', ma.filter((a) => a.entryId === 'M2').map((a) => a.lotId), [FARM_UID]);
+check('licenses are de-duplicated and sorted', A.entryFarms({ farms: ['541', '540', '541'] }), ['540', '541']);
+
 const fLots = A.laborCostByLot(farmStages, RATES);
 check('pool rows sort after real lots', fLots.map((r) => r.pending), [false, false, true, true]);
 check('lot carries its farm-wide share', [fLots.find((r) => r.lotId === FARM_UID).farmHours, fLots.find((r) => r.lotId === FARM_UID).farm], [7.711, '540']);
