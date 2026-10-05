@@ -446,7 +446,11 @@ Saving writes **one row per person** to `operations_forms` with
 employeeId, employeeName, uids: [{uid, strain}], start, end, hours, notes,
 enteredBy }`. There's no new table or SQL, just like Bucking's submissions.
 After a save the process, date, times and UIDs stay filled in so the next
-person can be logged right away. **Entries** lists a date range (with
+person can be logged right away.
+Under Save, **You logged for <date>** lists the entries this login saved for
+the selected date (`owner_user`), each with **Delete**, so a mistake can be
+fixed where it was made. Delete, like Remove on the Entries tab, sets
+`fields.voided`. **Entries** lists a date range (with
 Today / Last 30 days / All dates shortcuts) three ways: each entry (with
 cost, for cost access), totals **by person**, and **By lot**. By lot has one row per lot,
 keyed on its root UID (`laborCostByLot`), so Take Down's on-stem tag counts

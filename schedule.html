@@ -40,6 +40,10 @@
     input,select,textarea{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .75rem;
       font:inherit;font-size:1rem;min-height:46px;outline:none;width:100%}
     input:focus,select:focus,textarea:focus{border-color:var(--blue)}
+    /* iOS Safari gives date/time inputs a minimum width that overflows narrow cells. */
+    input[type=date],input[type=time]{-webkit-appearance:none;appearance:none;min-width:0;display:block}
+    input::-webkit-date-and-time-value{text-align:left}
+    .ed .row > div{min-width:0}
     textarea{min-height:64px;resize:vertical}
     .btn{padding:.7rem 1.1rem;border:1px solid var(--border);border-radius:10px;font-family:'DM Mono',monospace;font-size:.76rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer;background:transparent;color:var(--text);min-height:46px}
     .btn-blue{background:var(--blue);border-color:var(--blue);color:#000}

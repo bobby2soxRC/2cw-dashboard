@@ -46,6 +46,22 @@
     input,select,textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.65rem .8rem;
       font:inherit;font-size:1rem;min-height:46px;outline:none}
     input:focus,select:focus,textarea:focus{border-color:var(--blue)}
+    /* iOS Safari gives date/time inputs a minimum width that pushes them out
+       of narrow grid cells; drop it and keep the value left-aligned. */
+    input[type=date],input[type=time]{-webkit-appearance:none;appearance:none;min-width:0;display:block}
+    input::-webkit-date-and-time-value{text-align:left}
+    .row3 > div{min-width:0}
+    /* Entries this person logged for the date, under Save — to remove a mistake. */
+    .mine{margin-top:22px;border-top:1px solid var(--border);padding-top:16px}
+    .mine-hd{font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+    .mine-row{display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--border)}
+    .mine-row:first-of-type{border-top:none}
+    .mine-row .what{flex:1;min-width:0;font-size:.88rem;line-height:1.35}
+    .mine-row .what .s{display:block;color:var(--muted);font-size:.76rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .mine-row .h{font-family:'DM Mono',monospace;font-size:.85rem;white-space:nowrap}
+    .del-btn{background:transparent;border:1px solid rgba(239,83,80,.45);color:var(--red);border-radius:8px;min-height:40px;padding:0 12px;
+      font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer}
+    .del-btn:disabled{opacity:.5}
     textarea{min-height:70px;resize:vertical}
     .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
     @media (max-width:480px){ .row3{grid-template-columns:1fr 1fr} .row3 > div:first-child{grid-column:span 2} }
@@ -217,6 +233,7 @@
       <div class="summary"><div id="summary"></div><div id="split"></div></div>
       <button class="btn btn-blue" id="save" type="button"></button>
       <div class="err" id="err"></div>
+      <div class="mine" id="mine" hidden></div>
     </div>
   </section>
 
@@ -377,6 +394,9 @@
     noUid:     { en: '(no UID)', es: '(sin UID)' },
     total:     { en: 'Total', es: 'Total' },
     remove:    { en: 'Remove', es: 'Quitar' },
+    mineHd:    { en: 'You logged for {d}', es: 'Registraste para el {d}' },
+    delete:    { en: 'Delete', es: 'Borrar' },
+    deleted:   { en: 'Entry deleted', es: 'Registro borrado' },
     removeQ:   { en: 'Remove this entry? It stops counting toward labor totals.', es: '¿Quitar este registro? Deja de contar en los totales.' },
     empty:     { en: 'No entries for these dates.', es: 'No hay registros para estas fechas.' },
     loading:   { en: 'Loading…', es: 'Cargando…' },
@@ -910,6 +930,7 @@
     people = []; renderPeople();
     $('notes').value = '';
     toast(rows.length === 1 ? t(L.saved1) : fill(t(L.saved), { n: rows.length }));
+    loadMine();
   };
   function toast(msg) {
     const el = $('toast');
@@ -1069,20 +1090,67 @@
       `<div class="hint">${esc(t(L.lotNote))}</div>`;
   }
 
-  $('list').addEventListener('click', async (e) => {
-    const b = e.target.closest('button[data-remove]');
-    if (!b || !confirm(t(L.removeQ))) return;
-    const row = entries.find((r) => r.id === b.dataset.remove);
+  // Removing an entry marks it voided (anon has no DELETE on
+  // operations_forms); the edit history trigger records who and when, and
+  // voided entries count for nothing anywhere.
+  async function voidEntry(row, btn) {
     const client = getClient();
-    if (!row || !client) return;
-    b.disabled = true;
+    if (!row || !client || !confirm(t(L.removeQ))) return false;
+    if (btn) btn.disabled = true;
     const fields = { ...row.fields, voided: true, voidedBy: me, voidedAt: new Date().toISOString() };
     const { error } = await client.from('operations_forms').update({ fields, updated_by: me || null })
       .eq('id', row.id).eq('status', 'submitted');
-    if (error) { b.disabled = false; alert(`${t(L.failed)} ${error.message}`); return; }
+    if (error) { if (btn) btn.disabled = false; alert(`${t(L.failed)} ${error.message}`); return false; }
+    return true;
+  }
+  $('list').addEventListener('click', async (e) => {
+    const b = e.target.closest('button[data-remove]');
+    if (!b) return;
+    const row = entries.find((r) => r.id === b.dataset.remove);
+    if (!(await voidEntry(row, b))) return;
     entries = entries.filter((r) => r.id !== row.id);
     renderList();
+    loadMine();
   });
+
+  // ── Your entries for this date (under Save) ─────────────────────────────
+  // What the person using this tablet logged for the selected date, newest
+  // first, each with Delete — so a mistake can be fixed right where it was
+  // made, without going to the Entries tab.
+  let mine = [], mineSeq = 0;
+  async function loadMine() {
+    const client = getClient();
+    const date = $('date').value;
+    if (!client || !me || !date) { $('mine').hidden = true; return; }
+    const s = ++mineSeq;
+    const { data, error } = await client.from('operations_forms').select('*')
+      .eq('station_key', ENTRY_KEY).eq('status', 'submitted').eq('work_date', date).eq('owner_user', me)
+      .order('submitted_at', { ascending: false }).range(0, 199);
+    if (s !== mineSeq) return;
+    mine = error ? [] : (data || []).filter((r) => !(r.fields || {}).voided);
+    if (!mine.length) { $('mine').hidden = true; return; }
+    const d = new Date(date + 'T12:00:00').toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric' });
+    $('mine').innerHTML = `<div class="mine-hd">${esc(fill(t(L.mineHd), { d }))}</div>` + mine.map((r) => {
+      const f = r.fields || {};
+      const on = f.farm && !(f.uids || []).length ? fill(t(L.farmLabel), { f: farmName(f.farm, f.farmName) })
+        : (f.uids || []).map((u) => tail(u.uid)).join(' ') || t(L.noUid);
+      const time = f.start && f.end ? `${f.start}–${f.end} · ` : '';
+      return `<div class="mine-row"><div class="what">${esc(f.employeeName)} · ${esc(procTitle(f.process))}
+          <span class="s">${esc(time + on)}</span></div>
+        <span class="h">${fmtH(num(f.hours))} h</span>
+        <button type="button" class="del-btn" data-del="${r.id}">${esc(t(L.delete))}</button></div>`;
+    }).join('');
+    $('mine').hidden = false;
+  }
+  $('mine').addEventListener('click', async (e) => {
+    const b = e.target.closest('button[data-del]');
+    if (!b) return;
+    if (!(await voidEntry(mine.find((r) => r.id === b.dataset.del), b))) return;
+    toast(t(L.deleted));
+    loadMine();
+  });
+  $('date').addEventListener('change', loadMine);
+  loadMine();
 
   // ── Timeline ────────────────────────────────────────────────────────────
   // Each person's day: Connecteam clock-ins (data/connecteam_shifts.json,
