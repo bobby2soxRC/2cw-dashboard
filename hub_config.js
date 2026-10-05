@@ -19,7 +19,7 @@ const DIRECTORY_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTvUb2y2U
 // cards can be pinned, they all show up together; everything else lives
 // under its dept, optionally one level deeper
 // under `subdept` (Operations is the only department with subdepts today —
-// Cultivation/Processing/Manufacturing, matching operations_stations.js's
+// Cultivation/Processing/Manufacturing, plus Workforce (Labor Log, Scheduling), matching operations_stations.js's
 // own `dept` field on each station, which buildTree() merges in alongside
 // these cards). A department with zero visible cards for a user simply
 // doesn't appear — Marketing and Finance aren't referenced anywhere yet
@@ -219,11 +219,22 @@ const CARD_DEFS = [
   {
     key: 'labor_log',
     color: 'gold',
-    label: 'Operations',
+    label: 'Workforce',
     dept: 'operations',
+    subdept: 'workforce',
     title: 'Labor Log',
     desc: 'Put people’s hours against the UIDs they worked on — pick the process, the crew from Connecteam, and one UID or several to split the time across.',
     href: '/labor_log.html'
+  },
+  {
+    key: 'scheduling',
+    color: 'gold',
+    label: 'Workforce',
+    dept: 'operations',
+    subdept: 'workforce',
+    title: 'Scheduling',
+    desc: 'Who works where each day — a schedule per location with start times and people, conflicts flagged when someone is double-booked.',
+    href: '/schedule.html'
   },
   {
     key: 'staff_hours',
@@ -309,6 +320,7 @@ const CARD_ES = {
   information_hub:     { title: 'Centro de Información', desc: 'Las listas de referencia que usa el resto de la app — variedades, instalaciones de Canix, pronósticos de rendimiento, licencias de ranchos e IDs de clientes.' },
   production_today:    { title: 'Hoy — En Vivo', desc: 'Cada formulario en progreso o terminado hoy, actualizado en vivo — para quien tenga acceso de vista, pueda editarlo o no.' },
   brand_assets:        { title: 'Recursos de Marca', desc: 'Logotipos, fotografía y guías de marca de 2CW y marcas socias — carpeta compartida de Drive.' },
+  scheduling:          { title: 'Horarios', desc: 'Quién trabaja dónde cada día — un horario por lugar con horas de inicio y personas, con conflictos marcados si alguien está en dos lugares.' },
   labor_log:           { title: 'Registro de Mano de Obra', desc: 'Asigna las horas de cada persona a los UIDs que trabajó — elige el proceso, el equipo de Connecteam, y uno o varios UIDs para dividir el tiempo.' },
   staff_hours:         { title: 'Horas del Personal', desc: 'Quién está marcado en este momento, horas diarias/semanales y cumplimiento del horario — sincronizado cada hora desde Connecteam.' },
   tasks_dashboard:     { title: 'Plan de Operaciones', desc: 'El plan 30/60/90 del VP de Operaciones como tareas y subtareas editables — estado, responsables, fechas y carga de CSV.' },
@@ -328,6 +340,7 @@ const HUB_WORDS_ES = {
   'Cultivation': 'Cultivo',
   'Processing': 'Procesamiento',
   'Manufacturing': 'Manufactura',
+  'Workforce': 'Personal',
   'Folder': 'Carpeta'
 };
 

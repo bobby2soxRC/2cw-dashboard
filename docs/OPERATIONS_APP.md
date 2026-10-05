@@ -349,6 +349,38 @@ once you know, and the join is a small, concrete piece of work.
 (Connecteam it is: the Labor Log below keys its entries on the Connecteam
 user id, which is the join key to Connecteam's time activities.)
 
+## Workforce: Scheduling and the Labor Log
+
+Both cards sit in the hub's **Operations → Workforce** folder (`subdept:
+'workforce'` in `hub_config.js`; `buildTree` in `index.html` adds the
+folder, which only shows when someone has at least one of its cards).
+Access is the admin panel's "Scheduling" and "Labor Log" card checkboxes.
+
+**Scheduling** (`schedule.html`, card `scheduling`) replaces the shared
+daily sheet (a column per location, names under it, tasks in red):
+- Each day starts empty. **+ Add schedule** creates one for a location
+  (Adobe, Airway, Wildcat, Comstock, Lucerne, Sulphur Bank, Highland, or
+  Other with a name). **Copy from <previous day>** brings yesterday's
+  schedules over to edit.
+- **Everyone starts at the same time** (on by default) takes one start and
+  an optional end. Unticked, each person gets their own start/end.
+- **People** come from the Connecteam roster (`data/connecteam_roster.json`)
+  or can be typed in. Any of them can be marked **Lead**.
+- **Notes / tasks** hold things like "riego" or "colgar 5 am".
+- **Conflicts**: a person on two schedules whose times overlap that day is
+  flagged in red on both ("also at Comstock 7:00 AM–3:30 PM"). The people
+  list shows where someone is already scheduled before they're added, and
+  saving with a conflict asks for confirmation.
+  - A schedule with no end is treated as `DEFAULT_SHIFT_H` (8) hours, and
+    an end earlier than the start runs past midnight (bomba 7 pm–7 am).
+  - Conflicts are only checked within the same date.
+- Each schedule is one `operations_forms` row, `station_key:
+  'work_schedule'`, on that `work_date`, with `fields = { location,
+  locationName, sameStart, start, end, people: [{userId, name, lead, start?,
+  end?}], notes, createdBy, updatedBy }`. There's no SQL, as with the Labor
+  Log. Remove sets `fields.voided` (anon can't DELETE), and the edit history
+  trigger records edits and removals.
+
 ## Labor Log — hours against UIDs
 
 `labor_log.html` (hub card `labor_log`, admin checkbox "Labor Log", column
