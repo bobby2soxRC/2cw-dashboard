@@ -67,6 +67,9 @@
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;align-items:start}
     .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
     .card.editing{border-color:var(--gold);grid-column:1/-1;max-width:860px}
+    /* Editors let the people dropdown spill past the card instead of clipping it. */
+    .card.editing{overflow:visible}
+    .card.editing .card-hd{border-radius:13px 13px 0 0}
     .card-hd{background:var(--orange);color:#000;padding:10px 14px}
     .card-hd .loc{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.04em;line-height:1}
     .card-hd .nm{font-weight:700;font-size:.95rem;margin-top:2px}
@@ -109,7 +112,7 @@
     .days button.on{background:var(--gold);border-color:var(--gold);color:#000;font-weight:700}
     .role-ed{border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;background:var(--surface2)}
     /* Responsibilities table: Name | Process | Start | End, people under each row */
-    .rtbl{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface2)}
+    .rtbl{border:1px solid var(--border);border-radius:12px;background:var(--surface2)}
     .rhead,.rrow{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1.2fr) 118px 118px 40px;gap:8px;align-items:center}
     .rhead{padding:8px 10px;font-family:'DM Mono',monospace;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)}
     .rgrp{padding:10px;border-top:1px solid var(--border)}
