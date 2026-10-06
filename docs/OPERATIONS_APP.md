@@ -623,6 +623,11 @@ Each person's row shows **where they clocked in**: the Connecteam job they
 punched into (`job` in `connecteam_shifts.json`, names from
 `/jobs/v1/jobs`), or else the time clock's name (`clock`). Each shift's
 tooltip says the same, and the search matches places as well as names.
+A **Location** dropdown (places clocked in at that day, most-used first)
+narrows the rows, and the totals at the top follow it. Entries has the same
+dropdown: it keeps entries whose person clocked in at that place on the
+entry's date. Location comes from the shifts file, so it only covers the
+last 14 days; older entries never match a location.
 The clock-in GPS address Connecteam also sends is deliberately left out of
 the file, because the repo's data files are public and an address can be
 someone's home.

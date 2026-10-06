@@ -273,6 +273,7 @@
       <input type="date" id="f-from">
       <input type="date" id="f-to">
       <select id="f-process"></select>
+      <select id="f-loc" hidden></select>
       <input id="f-q">
     </div>
     <div class="quick" id="ranges" style="margin:-4px 0 14px"></div>
@@ -286,6 +287,7 @@
       <input type="date" id="tl-date">
       <button type="button" class="tl-nav" id="tl-next" aria-label="Next day">›</button>
       <input type="search" id="tl-q">
+      <select id="tl-loc" style="flex:0 1 200px;width:auto" hidden></select>
       <label class="tl-check"><input type="checkbox" id="tl-only"> <span id="tl-only-l"></span></label>
     </div>
     <div class="tl-hero" id="tl-hero"></div>
@@ -510,6 +512,8 @@
     tlAllDone: { en: 'Everyone’s clocked time is logged.', es: 'Todo el tiempo marcado está registrado.' },
     tlGapTip:  { en: 'Not logged: {a}–{b} ({h} h). Tap to log this time.', es: 'Sin registrar: {a}–{b} ({h} h). Toque para registrar este tiempo.' },
     tlShiftTip:{ en: 'Clocked in {a}–{b} ({h} h)', es: 'Marcado {a}–{b} ({h} h)' },
+    allLocs:   { en: 'All locations', es: 'Todos los lugares' },
+    locHint:   { en: 'Location is where the person clocked in that day (Connecteam job, last 14 days).', es: 'El lugar es donde la persona marcó ese día (trabajo de Connecteam, últimos 14 días).' },
     tlAt:      { en: 'at {p}', es: 'en {p}' },
     tlNoData:  { en: 'Couldn’t load Connecteam clock times — the timeline needs data/connecteam_shifts.json from the hourly sync.',
                  es: 'No se pudieron cargar las horas de Connecteam — la línea de tiempo necesita data/connecteam_shifts.json de la sincronización.' },
@@ -1195,6 +1199,7 @@
   $('seg').onclick = (e) => { const b = e.target.closest('button'); if (b) { seg = b.dataset.seg; renderList(); } };
   ['f-from', 'f-to'].forEach((id) => $(id).addEventListener('change', loadEntries));
   $('f-process').addEventListener('change', renderList);
+  $('f-loc').addEventListener('change', renderList);
   $('f-q').addEventListener('input', renderList);
 
   async function loadEntries() {
@@ -1213,6 +1218,13 @@
       if (!res.data || res.data.length < PAGE) break;
     }
     entries = data.filter((r) => !(r.fields || {}).voided);
+    await loadShifts();
+    const idx = placesIndex(), counts = new Map();
+    entries.forEach((r) => {
+      const f = r.fields || {};
+      (idx.get(String(f.employeeId) + '|' + r.work_date) || []).forEach((p) => counts.set(p, (counts.get(p) || 0) + 1));
+    });
+    fillLocSelect($('f-loc'), counts);
     renderList();
   }
 
@@ -1220,11 +1232,14 @@
   // instead, so farm-wide time (no UIDs) still reaches a searched-for lot.
   function visibleEntries(noSearch) {
     const proc = $('f-process').value;
+    const loc = $('f-loc').value;
+    const idx = loc ? placesIndex() : null;
     const q = fold($('f-q').value.trim());
     const qu = normUid($('f-q').value);
     return entries.filter((r) => {
       const f = r.fields || {};
       if (proc && f.process !== proc) return false;
+      if (loc && !(idx.get(String(f.employeeId) + '|' + r.work_date) || new Set()).has(loc)) return false;
       if (!q || noSearch) return true;
       return fold(f.employeeName).includes(q) || fold(f.farmName).includes(q) || (f.project && fold(projectName(f.project, f.projectName)).includes(q)) || (qu && (f.uids || []).some((u) => normUid(u.uid).includes(qu)));
     });
@@ -1485,6 +1500,31 @@
   // be placed. Times are the viewer's local time.
   let shiftData = null, shiftsLoading = null;
   const loadShifts = () => shiftsLoading || (shiftsLoading = getJson('connecteam_shifts.json').then((d) => { shiftData = d; return d; }));
+  // userId|local date → places they clocked in at (Connecteam job, else
+  // clock), from the shifts file — what the Location filters match on.
+  let placeIdx = null;
+  function placesIndex() {
+    if (placeIdx) return placeIdx;
+    placeIdx = new Map();
+    ((shiftData && shiftData.shifts) || []).forEach((sh) => {
+      const place = sh.job || sh.clock;
+      if (!place) return;
+      const k = String(sh.userId) + '|' + localDay(new Date(sh.start));
+      (placeIdx.get(k) || placeIdx.set(k, new Set()).get(k)).add(place);
+    });
+    return placeIdx;
+  }
+  // Fill a Location <select> with `places` (most-used first), keeping the
+  // current choice; hidden when there's nothing to pick from.
+  function fillLocSelect(sel, counts) {
+    const cur = sel.value;
+    const list = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    sel.innerHTML = `<option value="">${esc(t(L.allLocs))}</option>` +
+      list.map(([p, n]) => `<option value="${esc(p)}">${esc(p)} (${n})</option>`).join('');
+    sel.value = list.some(([p]) => p === cur) ? cur : '';
+    sel.hidden = !list.length;
+    sel.title = t(L.locHint);
+  }
   const hhmm = (m) => { const x = ((Math.round(m) % 1440) + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
   const toMin = (s) => { const [h, mi] = String(s || '').split(':').map(Number); return Number.isFinite(h) && Number.isFinite(mi) ? h * 60 + mi : null; };
   const dayStart = (d) => new Date(d + 'T00:00:00');
@@ -1519,6 +1559,7 @@
   $('tl-date').addEventListener('change', loadTimeline);
   $('tl-q').addEventListener('input', () => renderTimeline());
   $('tl-only').addEventListener('change', () => renderTimeline());
+  $('tl-loc').addEventListener('change', () => renderTimeline());
 
   let tlEntries = [], tlSeq = 0;
   async function loadTimeline() {
@@ -1575,7 +1616,14 @@
       return { ...row, clocked, unalloc: Math.max(0, clocked - row.logged),
                gaps: minus(row.shifts, timedIv), outside: row.shifts.length ? minus(timedIv, row.shifts) : [] };
     });
-    // Team numbers before filtering, so the totals don't move with the search.
+    // Location: the places people clocked in at today, then the rows (and
+    // the totals) narrowed to the chosen one.
+    const locCounts = new Map();
+    list.forEach((r) => r.places.forEach((p) => locCounts.set(p, (locCounts.get(p) || 0) + 1)));
+    fillLocSelect($('tl-loc'), locCounts);
+    const loc = $('tl-loc').value;
+    if (loc) list = list.filter((r) => r.places.has(loc));
+    // Team numbers before the search/only filters, so they don't move with them.
     const tot = list.reduce((o, r) => ({ c: o.c + r.clocked, l: o.l + r.logged, u: o.u + r.unalloc }), { c: 0, l: 0, u: 0 });
     const pct = tot.c ? Math.min(1, (tot.c - tot.u) / tot.c) : null;
     const stat = (k, v, cls) => `<div class="tl-stat ${cls || ''}"><div class="k">${esc(t(k))}</div><div class="v">${v}</div></div>`;
