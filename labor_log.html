@@ -450,7 +450,7 @@
     farmShare: { en: 'incl. {h} h farm-wide', es: 'incl. {h} h del rancho' },
     tabTl:     { en: 'Timeline', es: 'Línea de tiempo' },
     tlOnly:    { en: 'Only people with time not logged', es: 'Solo personas con tiempo sin registrar' },
-    tlSearch:  { en: 'Search name…', es: 'Buscar nombre…' },
+    tlSearch:  { en: 'Search name or place…', es: 'Buscar nombre o lugar…' },
     tlClocked: { en: 'Clocked', es: 'Marcado' },
     tlLogged:  { en: 'Logged', es: 'Registrado' },
     tlUnalloc: { en: 'Not logged', es: 'Sin registrar' },
@@ -467,6 +467,7 @@
     tlAllDone: { en: 'Everyone’s clocked time is logged.', es: 'Todo el tiempo marcado está registrado.' },
     tlGapTip:  { en: 'Not logged: {a}–{b} ({h} h). Tap to log this time.', es: 'Sin registrar: {a}–{b} ({h} h). Toque para registrar este tiempo.' },
     tlShiftTip:{ en: 'Clocked in {a}–{b} ({h} h)', es: 'Marcado {a}–{b} ({h} h)' },
+    tlAt:      { en: 'at {p}', es: 'en {p}' },
     tlNoData:  { en: 'Couldn’t load Connecteam clock times — the timeline needs data/connecteam_shifts.json from the hourly sync.',
                  es: 'No se pudieron cargar las horas de Connecteam — la línea de tiempo necesita data/connecteam_shifts.json de la sincronización.' },
     tlNote:    { en: 'Clock times come from Connecteam, synced hourly ({t}), so the last hour may be missing. Entries saved with only hours (no start/end) count toward Logged but can’t be placed on the line. Unpaid breaks show as not-logged time unless people clock out for them.',
@@ -1400,7 +1401,7 @@
 
     // People: everyone clocked in that day, plus anyone with an entry.
     const rows = new Map();
-    const rowFor = (key, name, userId) => rows.get(key) || rows.set(key, { key, name, userId, shifts: [], timed: [], untimed: 0, logged: 0, open: false }).get(key);
+    const rowFor = (key, name, userId) => rows.get(key) || rows.set(key, { key, name, userId, shifts: [], shiftInfo: [], places: new Set(), timed: [], untimed: 0, logged: 0, open: false }).get(key);
     ((shiftData && shiftData.shifts) || []).forEach((sh) => {
       const a = (Date.parse(sh.start) - day0) / 60000;
       const openShift = !sh.end;
@@ -1408,6 +1409,10 @@
       if (!(b > 0 && a < 1440) || b <= a) return;
       const row = rowFor(String(sh.userId), sh.name, String(sh.userId));
       row.shifts.push([Math.max(0, a), Math.min(1440, b)]);
+      // Where they clocked in: the Connecteam job, else the time clock's name.
+      const place = sh.job || sh.clock || '';
+      row.shiftInfo.push({ a: Math.max(0, a), b: Math.min(1440, b), place });
+      if (place) row.places.add(place);
       if (openShift && isToday) row.open = true;
     });
     tlEntries.forEach((r) => {
@@ -1435,7 +1440,7 @@
       stat(L.tlUnalloc, fmtNum(tot.u, 1) + ' h', tot.u > 0.25 ? 'warn' : list.length ? 'ok' : '') + stat(L.tlPct, pct == null ? '—' : fmtPct(pct, 0));
 
     const q = fold($('tl-q').value.trim());
-    if (q) list = list.filter((r) => fold(r.name).includes(q));
+    if (q) list = list.filter((r) => fold(r.name).includes(q) || [...r.places].some((p) => fold(p).includes(q)));
     if ($('tl-only').checked) list = list.filter((r) => r.unalloc > 0.25);
     list.sort((x, y) => (y.unalloc > 0.25) - (x.unalloc > 0.25) || y.unalloc - x.unalloc || x.name.localeCompare(y.name));
     if (!rows.size) { $('tl-body').innerHTML = `<div class="empty-big">${esc(t(L.tlEmpty))}</div>`; return; }
@@ -1462,8 +1467,8 @@
       <div class="hd num">${esc(t(L.tlClocked))}</div><div class="hd num">${esc(t(L.tlLogged))}</div><div class="hd num">${esc(t(L.tlUnalloc))}</div>`];
     list.forEach((r, ri) => {
       const segs = [];
-      union(r.shifts).forEach(([a, b]) => segs.push(`<div class="seg shift" style="left:${X(a)};width:${W(a, b)}" data-tip="${tip(
-        fill(t(L.tlShiftTip), { a: hhmm(a), b: b === nowMin ? '…' : hhmm(b), h: fmtNum((b - a) / 60, 2) }))}"></div>`));
+      r.shiftInfo.slice().sort((x, y) => x.a - y.a).forEach(({ a, b, place }) => segs.push(`<div class="seg shift" style="left:${X(a)};width:${W(a, b)}" data-tip="${tip(
+        esc(fill(t(L.tlShiftTip), { a: hhmm(a), b: b === nowMin ? '…' : hhmm(b), h: fmtNum((b - a) / 60, 2) })) + (place ? '<br>' + esc(fill(t(L.tlAt), { p: place })) : ''))}"></div>`));
       r.timed.forEach((e) => {
         const f = e.f;
         const label = [procTitle(f.process), isFarmEntry(f) ? farmsLabel(entryFarms(f), f.farmName) : (f.uids || []).map((u) => tail(u.uid)).join(' ')].filter(Boolean).join(' · ');
@@ -1473,7 +1478,8 @@
       r.outside.forEach(([a, b]) => segs.push(`<div class="seg outside" style="left:${X(a)};width:${W(a, b)}"></div>`));
       r.gaps.forEach(([a, b]) => segs.push(`<button type="button" class="seg gap" style="left:${X(a)};width:${W(a, b)}" aria-label="${esc(fill(t(L.tlGapTip), { a: hhmm(a), b: hhmm(b), h: fmtNum((b - a) / 60, 2) }))}"
         data-row="${ri}" data-a="${Math.round(a)}" data-b="${Math.round(b)}" data-tip="${tip(esc(fill(t(L.tlGapTip), { a: hhmm(a), b: hhmm(b), h: fmtNum((b - a) / 60, 2) })))}"></button>`));
-      const sub = [r.open ? `<span style="color:var(--green)">● ${esc(t(L.tlOnClock))}</span>` : '',
+      const sub = [r.places.size ? `<span style="color:var(--text)">${esc([...r.places].join(', '))}</span>` : '',
+                   r.open ? `<span style="color:var(--green)">● ${esc(t(L.tlOnClock))}</span>` : '',
                    !r.userId ? esc(t(L.tlNotCt)) : '',
                    r.untimed ? esc(fill(t(L.tlNoTimes), { h: fmtH(r.untimed) })) : ''].filter(Boolean).join(' · ');
       html.push(`<div class="who"><span>${esc(r.name)}</span>${sub ? `<span class="s">${sub}</span>` : ''}</div>

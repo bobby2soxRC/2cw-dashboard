@@ -537,6 +537,14 @@ is logged. Each person who clocked in that day, or has an entry, gets a row:
   in.
 - Entries logged while the person wasn't clocked in get a red outline.
 
+Each person's row shows **where they clocked in**: the Connecteam job they
+punched into (`job` in `connecteam_shifts.json`, names from
+`/jobs/v1/jobs`), or else the time clock's name (`clock`). Each shift's
+tooltip says the same, and the search matches places as well as names.
+The clock-in GPS address Connecteam also sends is deliberately left out of
+the file, because the repo's data files are public and an address can be
+someone's home.
+
 Totals per row and for the team: clocked, logged, not logged
 (clocked − logged), and % allocated. There's also an "only people with time
 not logged" filter. Entries saved with hours only count toward Logged but

@@ -220,8 +220,36 @@ def discover_clocks():
         clocks = []
     clock_ids = [_first(c, "id", "clockId") for c in clocks]
     clock_ids = [c for c in clock_ids if c is not None]
-    print(f"  → {len(clock_ids)} clock(s): {clock_ids}")
+    for c in clocks:
+        cid = _first(c, "id", "clockId")
+        if cid is not None:
+            CLOCK_NAMES[str(cid)] = _first(c, "name", default="") or ""
+    print(f"  → {len(clock_ids)} clock(s): {[(c, CLOCK_NAMES.get(str(c), '')) for c in clock_ids]}")
     return clock_ids
+
+
+# Clock id → name, filled by discover_clocks; job id → name, by sync_jobs.
+CLOCK_NAMES = {}
+
+
+def sync_jobs():
+    """Connecteam jobs (what a shift's jobId points at — often a site or
+    task). Names only; a failure here never stops the sync, shifts just go
+    out without job names."""
+    print("\n[2b] Jobs")
+    try:
+        jobs = api_get_all("/jobs/v1/jobs", list_path=("data", "jobs"))
+    except RuntimeError as e:
+        print(f"    [WARN] couldn't read jobs: {e}")
+        return {}
+    names = {}
+    for j in jobs:
+        jid = _first(j, "jobId", "id")
+        if jid is None:
+            continue
+        names[str(jid)] = _first(j, "title", "name", default="") or ""
+    print(f"  → {len(names)} job(s): {sorted(set(n for n in names.values() if n))[:60]}")
+    return names
 
 
 def sync_time_activities(clock_ids, start_date, end_date):
@@ -249,6 +277,7 @@ def sync_time_activities(clock_ids, start_date, end_date):
             for s in shifts:
                 s = dict(s)
                 s["userId"] = uid
+                s["clockId"] = clock_id
                 all_shifts.append(s)
     print(f"  → {len(all_shifts)} shift record(s) total")
     return all_shifts
@@ -317,23 +346,35 @@ def build_hours_json(users, shifts):
     }
 
 
-def build_shifts_json(users, shifts, since):
+def build_shifts_json(users, shifts, since, jobs=None):
     """Every shift that started on or after `since`, as clock-in/clock-out
     times — what the Labor Log's timeline (labor_log.html) draws each
     person's day from. `end` is null while someone is still clocked in.
     Only names and times, the same kind of data connecteam_hours.json
     already publishes."""
     out = []
+    jobs = jobs or {}
+    with_gps = 0
     for s in shifts:
         start = _to_dt(_first(s, "start", "shiftStartTime", "startTime", "clockIn"))
         if start is None or start < since:
             continue
+        # Where: the job they punched into and the time clock it was on.
+        # The clock-in GPS address (start.locationData) is NOT written out —
+        # this file is public, and an address can be someone's home.
+        if isinstance(s.get("start"), dict) and s["start"].get("locationData"):
+            with_gps += 1
+        job_id = _first(s, "jobId")
         end = _to_dt(_first(s, "end", "shiftEndTime", "endTime", "clockOut"))
         uid = str(_first(s, "userId", "employeeId"))
         out.append({
             "userId": uid, "name": users.get(uid, {}).get("name", f"User {uid}"),
             "start": start.isoformat(), "end": end.isoformat() if end else None,
+            "job": jobs.get(str(job_id), "") if job_id else "",
+            "clock": CLOCK_NAMES.get(str(s.get("clockId")), ""),
         })
+    print(f"  [shifts] {len(out)} in range · {sum(1 for x in out if x['job'])} with a job name · "
+          f"{with_gps} with clock-in GPS (not published) · clocks: {sorted(set(x['clock'] for x in out))}")
     out.sort(key=lambda x: (x["start"], x["name"]))
     return {"last_sync": datetime.now(timezone.utc).isoformat(), "days": SHIFT_DAYS, "shifts": out}
 
@@ -358,6 +399,7 @@ def main():
         clock_ids = discover_clocks()
         if not clock_ids:
             raise RuntimeError("No time clocks found on this Connecteam account")
+        jobs = sync_jobs()
         shifts = sync_time_activities(clock_ids, fetch_from_str, today_str)
     except RuntimeError as e:
         print(f"\n\nFATAL ERROR: {e}")
@@ -367,7 +409,7 @@ def main():
     save("connecteam_hours.json", result)
     roster = build_roster_json(users)
     save("connecteam_roster.json", roster)
-    shift_file = build_shifts_json(users, shifts, shifts_since)
+    shift_file = build_shifts_json(users, shifts, shifts_since, jobs)
     save("connecteam_shifts.json", shift_file)
 
     elapsed = (datetime.now(timezone.utc) - started).total_seconds()
