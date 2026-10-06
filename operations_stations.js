@@ -243,7 +243,6 @@ const OPERATIONS_STATIONS = [
         l: { en: 'Harvest Style', es: 'Estilo de cosecha' },
         opts: [
           { v: 'whole_plant', l: { en: 'Whole plant — hang to dry', es: 'Planta entera — colgar a secar' } },
-          { v: 'bucked_wet', l: { en: 'Bucked wet — to dry facility', es: 'Desvarado húmedo — a secado' } },
           { v: 'fresh_frozen', l: { en: 'Fresh frozen — to freezer', es: 'Fresco congelado — a congelador' } }
         ] },
       { k: 'destination', t: 'select', req: true,
