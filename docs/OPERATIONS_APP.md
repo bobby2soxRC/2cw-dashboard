@@ -399,16 +399,24 @@ Scheduling. It holds the bigger jobs ("Smalls Trimming" at Adobe, "Fresh
 Frozen Harvest" at Comstock) and builds the daily/weekly work schedule
 from them.
 - **Projects tab.** Each project has a name, location (`WORK_LOCATIONS`
-  in `operations_stations.js`, shared with Scheduling), an optional
-  process (fills in the Labor Log's process), start date, optional end
-  date, the days of the week it runs (none = every day), start/end times,
-  status (Active / Planned / Done) and notes.
-- **Responsibilities** are the standing jobs on a project, like Lead,
-  Trimmers, Weigh station or Driver. Each has the people under it (from
-  the Connecteam roster, or typed in), any of them marked Lead. A
-  responsibility can have its own process and its own hours. They aren't
-  one-time tasks: they apply every day the project runs. The people
-  picker shows which other projects someone is already on.
+  in `operations_stations.js`, shared with Scheduling), a **Project
+  lead** (a dropdown of the Connecteam roster, just under Location), an
+  optional process (fills in the Labor Log's process), start date,
+  optional end date, the days of the week it runs (none = every day),
+  start/end times, status (Active / Planned / Done) and notes.
+- **Responsibilities** are the standing jobs on a project, like
+  Trimmers, Weigh station or Driver. They're a table with columns Name,
+  Process, Start and End, and each row's people listed under it (from
+  the Connecteam roster, or typed in).
+  - Start and End are only filled in when they differ from the
+    project's hours. Either one can differ on its own (`projectHours`
+    takes each one separately). On save, a time equal to the project's is
+    stored blank.
+  - They aren't one-time tasks: they apply every day the project runs.
+  - The people picker shows which other projects someone is already on.
+  - The lead counts as working the project: `projectRoles` lists the
+    lead first, as a role with id `_lead`, for the schedule, conflicts,
+    the image, and the Labor Log's right-click.
 - **UIDs** are added as the work reaches the packages. You can scan or
   type the full tag, or type the last 4, matched against the last 60 days
   of station records and then active Canix packages. Several can be pasted
@@ -429,8 +437,8 @@ from them.
 - Each project is one `operations_forms` row, `station_key:
   'work_project'`, `work_date` = start date, `fields = { name, location,
   locationName, process, status, start, end, days: [0–6, Sun = 0],
-  startTime, endTime, roles: [{id, name, process, startTime, endTime,
-  people: [{userId, name, lead}]}], uids: [{uid, strain, addedAt,
+  startTime, endTime, lead: {userId, name}, roles: [{id, name, process,
+  startTime, endTime, people: [{userId, name}]}], uids: [{uid, strain, addedAt,
   addedBy}], notes, overrides: { 'YYYY-MM-DD': { skip, note, out:
   [personKey], extra: [{roleId, userId, name}] } }, createdBy, updatedBy
   }`. There's no SQL.

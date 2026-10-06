@@ -482,6 +482,7 @@
     projManage:{ en: 'Add UIDs in Master Schedule', es: 'Agregar UIDs en el Plan Maestro' },
     sumProject:{ en: 'Split over the project’s {u} UIDs by the pounds each one had at this process:', es: 'Dividido entre los {u} UIDs del proyecto según las libras de cada uno en este proceso:' },
     projPool:  { en: 'waiting for UIDs', es: 'esperando UIDs' },
+    projLead:  { en: 'Project lead', es: 'Líder del proyecto' },
     menuHd:    { en: 'Log this time to a scheduled project', es: 'Registrar este tiempo a un proyecto programado' },
     menuNone:  { en: 'No projects scheduled around this time.', es: 'No hay proyectos programados a esta hora.' },
     menuOngoing:{ en: 'Running this day', es: 'En curso este día' },
@@ -1683,7 +1684,7 @@
         const [s, e] = projectHours(f, role);
         return s == null || (s < b && e > a);
       };
-      const mineRoles = (f.roles || []).filter((r) => (r.people || []).some(isMe) && overlaps(r));
+      const mineRoles = projectRoles(f, t(L.projLead)).filter((r) => (r.people || []).some(isMe) && overlaps(r));
       mineRoles.forEach((role) => out.push({ p, role, mine: true }));
       if (!mineRoles.length && overlaps(null)) out.push({ p, role: null, mine: false });
     });

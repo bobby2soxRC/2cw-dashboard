@@ -1030,10 +1030,12 @@ const WORK_LOCATIONS = [
 // Master Schedule projects (master_schedule.html, station_key
 // 'work_project'): fields { name, location, locationName, process, start,
 // end (dates; no end = open-ended), days (0 = Sun … 6 = Sat; empty = every
-// day), startTime, endTime, status, roles: [{id, name, process, startTime?,
-// endTime?, people: [{userId, name, lead}]}], uids, notes }. Roles are the
-// standing responsibilities on the project and the people under each — the
-// daily/weekly schedule is every project running that day with its roles.
+// day), startTime, endTime, status, lead: {userId, name} (the project lead),
+// roles: [{id, name, process, startTime?, endTime?, people: [{userId,
+// name}]}], uids, notes }. Roles are the standing responsibilities on the
+// project and the people under each — the daily/weekly schedule is every
+// project running that day with its lead and roles. A role's start or end
+// is only set when it differs from the project's.
 const projectRunsOn = (f, date) => {
   if (!f || (f.status || 'active') === 'done' || !date) return false;
   if (f.start && date < f.start) return false;
@@ -1043,17 +1045,25 @@ const projectRunsOn = (f, date) => {
 };
 // A project's (or one role's) hours that day as [startMin, endMin], the end
 // past 1440 when it runs over midnight and start + 8 h when there's no end;
-// [null, null] when no times are set (all day).
+// [null, null] when no times are set (all day). A role's own start/end each
+// override the project's, so a role can differ in just one of them.
 const projectHours = (f, role) => {
   const toMin = (s) => { const [h, m] = String(s || '').split(':').map(Number); return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : null; };
   const s = toMin((role && role.startTime) || f.startTime);
   if (s == null) return [null, null];
-  const e0 = toMin((role && role.startTime ? role.endTime : f.endTime) || '');
+  const e0 = toMin((role && role.endTime) || f.endTime);
   return [s, e0 == null ? s + 480 : (e0 <= s ? e0 + 1440 : e0)];
 };
+// The project lead as a role of its own (id '_lead', listed first), then
+// the responsibilities — everyone working the project, for the schedule,
+// conflicts and the Labor Log's right-click.
+const projectRoles = (f, leadLabel) => [
+  ...(f && f.lead && f.lead.name ? [{ id: '_lead', name: leadLabel || 'Lead', isLead: true, people: [{ ...f.lead, lead: true }] }] : []),
+  ...((f && f.roles) || []).map((r) => ({ ...r, people: r.people || [] }))
+];
 // Display name for any Labor Log process key — station or not.
 const processTitle = (k) => (STATION_BY_KEY[k] && STATION_BY_KEY[k].title) || LABOR_PROCESSES[k] || { en: k || '—', es: k || '—' };
 
 if (typeof module !== 'undefined') {
-  module.exports = { OPERATIONS_STATIONS, STATION_BY_KEY, BIOMASS, SELLABLE, PREFILL_MAP, PIPELINE_ORDER, G_PER_LB, LABOR_PROCESSES, WORK_LOCATIONS, projectRunsOn, projectHours, processTitle };
+  module.exports = { OPERATIONS_STATIONS, STATION_BY_KEY, BIOMASS, SELLABLE, PREFILL_MAP, PIPELINE_ORDER, G_PER_LB, LABOR_PROCESSES, WORK_LOCATIONS, projectRunsOn, projectHours, projectRoles, processTitle };
 }

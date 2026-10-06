@@ -108,8 +108,25 @@
     .days button{background:var(--bg);border:1px solid var(--border);color:var(--subtext);border-radius:8px;min-width:46px;min-height:42px;cursor:pointer;font-family:'DM Mono',monospace;font-size:.72rem}
     .days button.on{background:var(--gold);border-color:var(--gold);color:#000;font-weight:700}
     .role-ed{border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;background:var(--surface2)}
-    .role-ed .top{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) auto;gap:8px;align-items:end;margin-bottom:8px}
-    .role-ed .times{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+    /* Responsibilities table: Name | Process | Start | End, people under each row */
+    .rtbl{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface2)}
+    .rhead,.rrow{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1.2fr) 118px 118px 40px;gap:8px;align-items:center}
+    .rhead{padding:8px 10px;font-family:'DM Mono',monospace;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)}
+    .rgrp{padding:10px;border-top:1px solid var(--border)}
+    .rhead + .rgrp{border-top:none}
+    .rrow input,.rrow select{min-height:42px;padding:.45rem .6rem;font-size:.92rem}
+    .rppl{margin-top:6px;padding-left:2px}
+    .rppl .chips{margin:0 0 6px}
+    .rppl .picker input{min-height:40px;font-size:.9rem}
+    @media (max-width:640px){
+      .rhead{display:none}
+      .rrow{grid-template-columns:1fr 1fr 40px}
+      .rrow [data-rname]{grid-column:1/3}
+      .rrow [data-rproc]{grid-column:1/-1;order:3}
+      .rrow [data-rts]{order:4}
+      .rrow [data-rte]{order:5}
+      .rrow .x{grid-row:1;grid-column:3}
+    }
     .ed-ppl{list-style:none;margin:4px 0 8px}
     .ed-ppl li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--border)}
     .ed-ppl li:first-child{border-top:none}
@@ -171,8 +188,6 @@
     #toast.on{display:block}
     @media (max-width:560px){
       .ed .row3{grid-template-columns:1fr 1fr}
-      .role-ed .top{grid-template-columns:1fr auto}
-      .role-ed .top .proc{grid-column:1/-1;order:3}
     }
   </style>
 </head>
@@ -238,9 +253,10 @@
 // A project is one operations_forms row, station_key 'work_project' — no
 // table of its own, like the Labor Log and Scheduling. Its fields are
 // described above projectRunsOn in operations_stations.js: dates, the days
-// of the week and hours it runs, a status, its responsibilities (roles —
-// "Lead", "Trimmers", "Driver" — each with the people standing under it and
-// optionally its own process and hours), the UIDs worked on it, and notes.
+// of the week and hours it runs, a status, the project lead, its
+// responsibilities (roles — "Trimmers", "Weigh station", "Driver" — a table
+// of name, process and start/end only where they differ from the project's,
+// each with the people standing under it), the UIDs worked on it, and notes.
 //
 // Schedule tab: every project running on the day (projectRunsOn) at its
 // location and hours, with its roles and people. Changes for one day only
@@ -323,11 +339,18 @@
     tEnd:     { en: 'End time', es: 'Hora final' },
     notes:    { en: 'Notes', es: 'Notas' },
     roles:    { en: 'Responsibilities', es: 'Responsabilidades' },
-    rolesHint:{ en: 'The standing jobs on this project and who does them — e.g. Lead, Trimmers, Weigh station, Driver. These make up the daily schedule for every day the project runs.',
-                es: 'Los puestos fijos del proyecto y quién los hace — p. ej. Líder, Recortadores, Báscula, Chofer. Forman el horario diario de cada día que trabaja el proyecto.' },
+    rolesHint:{ en: 'The standing jobs on this project and who does them — e.g. Trimmers, Weigh station, Driver. Together with the lead they make up the daily schedule for every day the project runs.',
+                es: 'Los puestos fijos del proyecto y quién los hace — p. ej. Recortadores, Báscula, Chofer. Junto con el líder forman el horario diario de cada día que trabaja el proyecto.' },
     roleName: { en: 'Responsibility', es: 'Responsabilidad' },
     roleProc: { en: 'Process (optional)', es: 'Proceso (opcional)' },
-    roleOwn:  { en: 'Different hours from the project', es: 'Horario distinto al del proyecto' },
+    projLead: { en: 'Project lead', es: 'Líder del proyecto' },
+    noLead:   { en: '— no lead yet —', es: '— sin líder —' },
+    colName:  { en: 'Name', es: 'Nombre' },
+    colProc:  { en: 'Process', es: 'Proceso' },
+    colStart: { en: 'Start', es: 'Inicio' },
+    colEnd:   { en: 'End', es: 'Fin' },
+    timesHint:{ en: 'Leave Start / End blank to use the project’s hours ({h}); fill in only what’s different.', es: 'Deje Inicio / Fin en blanco para usar el horario del proyecto ({h}); llene solo lo que cambie.' },
+    leadLine: { en: 'Lead: {n}', es: 'Líder: {n}' },
     addRole:  { en: '+ Add responsibility', es: '+ Agregar responsabilidad' },
     addPerson:{ en: 'Add a person…', es: 'Agregar persona…' },
     addTyped: { en: 'Add “{q}” (not in Connecteam)', es: 'Agregar “{q}” (no está en Connecteam)' },
@@ -485,7 +508,7 @@
     const ov = ovFor(f, date);
     const out = new Set(ov.out || []);
     const off = [];
-    const roles = (f.roles || []).map((r) => {
+    const roles = projectRoles(f, t(L.projLead)).map((r) => {
       const people = [];
       (r.people || []).forEach((p) => { if (out.has(personKey(p))) off.push(p); else people.push(p); });
       (ov.extra || []).filter((x) => x.roleId === r.id).forEach((x) => people.push({ userId: x.userId || '', name: x.name, extra: true }));
@@ -583,7 +606,7 @@
   function dayCard(p, date, conf) {
     const f = p.fields;
     const { roles, off, note } = dayRoles(f, date);
-    const rolesHtml = roles.map((r) => `<div class="role"><div class="role-hd">${esc(r.name)}${r.startTime ? `<span class="tm">${esc(hoursLabel(f, r))}</span>` : ''}</div>
+    const rolesHtml = roles.map((r) => `<div class="role"><div class="role-hd">${esc(r.name)}${r.startTime || r.endTime ? `<span class="tm">${esc(hoursLabel(f, r))}</span>` : ''}</div>
       <ul class="ppl">${r.people.length ? r.people.map((x) => {
         const c = conf.get(personKey(x) + '|' + p.id) || [];
         return `<li class="${x.extra ? 'extra' : ''}">${esc(x.name)}${x.lead ? `<span class="lead-tag">${esc(t(L.lead))}</span>` : ''}
@@ -604,7 +627,7 @@
         <div class="hint" style="margin:0 0 12px">${esc(fill(t(L.dayHint), { d: fmtDate(date, { weekday: 'short', month: 'short', day: 'numeric' }) }))}</div>
         <label class="check"><input type="checkbox" id="de-skip" ${e.skip ? 'checked' : ''}> ${esc(t(L.skipQ))}</label>
         <div style="margin-bottom:12px"><label class="lbl" for="de-note">${esc(t(L.dayNote))}</label><textarea id="de-note">${esc(e.note)}</textarea></div>
-        ${(f.roles || []).map((r) => `<div class="role-ed"><div class="role-hd" style="margin-bottom:6px">${esc(r.name)}</div>
+        ${projectRoles(f, t(L.projLead)).map((r) => `<div class="role-ed"><div class="role-hd" style="margin-bottom:6px">${esc(r.name)}</div>
           <ul class="ed-ppl">${(r.people || []).map((x) => `<li class="${e.out.has(personKey(x)) ? 'out' : ''}"><span class="nm">${esc(x.name)}${x.lead ? `<span class="lead-tag">${esc(t(L.lead))}</span>` : ''}</span>
               <span></span><input type="checkbox" style="width:24px;height:24px;min-height:0" data-out="${esc(personKey(x))}" ${e.out.has(personKey(x)) ? '' : 'checked'}></li>`).join('')}
             ${extraFor(r.id).map((x) => `<li><span class="nm">${esc(x.name)} <span style="color:var(--blue)">+</span></span><span></span><button type="button" class="x" data-rmextra="${x.i}">×</button></li>`).join('')}</ul>
@@ -693,7 +716,7 @@
   // who's spoken for before adding them.
   function elsewhere(key, exceptId) {
     return projects.filter((p) => p.id !== exceptId && (p.fields.status || 'active') !== 'done' &&
-      (p.fields.roles || []).some((r) => (r.people || []).some((x) => personKey(x) === key))).map((p) => p.fields.name);
+      projectRoles(p.fields).some((r) => r.people.some((x) => personKey(x) === key))).map((p) => p.fields.name);
   }
   function personPicker(input, onPick, taken, exceptId) {
     const panel = input.nextElementSibling;
@@ -746,7 +769,7 @@
     if (q) list = list.filter((p) => {
       const f = p.fields;
       return fold(f.name).includes(q) || fold(locName(f)).includes(q) ||
-        (f.roles || []).some((r) => fold(r.name).includes(q) || (r.people || []).some((x) => fold(x.name).includes(q))) ||
+        projectRoles(f).some((r) => fold(r.name).includes(q) || r.people.some((x) => fold(x.name).includes(q))) ||
         (qu.length >= 4 && (f.uids || []).some((u) => normUid(u.uid).includes(qu)));
     });
     const order = { active: 0, planned: 1, done: 2 };
@@ -769,8 +792,9 @@
           <br>${esc(fill(t(L.uidCount), { n: nU }))}${nU ? ': ' + (f.uids || []).slice(0, 8).map((u) => `<span class="m" title="${esc(u.uid)}">${esc(tail(u.uid))}</span>`).join(' ') + (nU > 8 ? ' …' : '') : ''}
           <br>${esc(t(L.labor))}: ${lab ? esc(fill(t(L.laborLine), { h: fmtNum(lab.hours, 1), p: lab.people.size === 1 ? t(L.person1) : fill(t(L.personN), { n: lab.people.size }) })) : esc(t(L.noLabor))}</div>
         ${f.notes ? `<div class="note">${esc(f.notes)}</div>` : ''}
-        ${(f.roles || []).map((r) => `<div class="role"><div class="role-hd">${esc(r.name)} (${(r.people || []).length})${r.startTime ? `<span class="tm">${esc(hoursLabel(f, r))}</span>` : ''}</div>
-          <div style="font-size:.88rem">${(r.people || []).map((x) => esc(x.name) + (x.lead ? ` <span class="lead-tag">${esc(t(L.lead))}</span>` : '')).join(', ') || `<span class="s">${esc(t(L.nobody))}</span>`}</div></div>`).join('')}
+        ${f.lead && f.lead.name ? `<div class="meta" style="margin-bottom:6px">${esc(t(L.projLead))}: <b>${esc(f.lead.name)}</b> <span class="lead-tag">${esc(t(L.lead))}</span></div>` : ''}
+        ${(f.roles || []).map((r) => `<div class="role"><div class="role-hd">${esc(r.name)} (${(r.people || []).length})${r.startTime || r.endTime ? `<span class="tm">${esc(hoursLabel(f, r))}</span>` : ''}${r.process ? `<span class="tm">${esc(procTitle(r.process))}</span>` : ''}</div>
+          <div style="font-size:.88rem">${(r.people || []).map((x) => esc(x.name)).join(', ') || `<span class="s">${esc(t(L.nobody))}</span>`}</div></div>`).join('')}
       </div>
       <div class="card-ft">
         <a class="btn btn-sm btn-ghost" href="/labor_log.html?tab=list&seg=entries&all=1&q=${encodeURIComponent(f.name)}">${esc(t(L.entries))}</a>
@@ -783,12 +807,28 @@
     if (e.target.closest('[data-new]')) openEditor(null);
   });
 
+  // ── Project lead dropdown ───────────────────────────────────────────────
+  // The Connecteam roster; a lead who isn't on it (typed in on an older
+  // project, or since archived) stays selectable as they were saved.
+  function leadOptions(lead) {
+    const cur = lead && lead.name ? (lead.userId ? 'id:' + lead.userId : 'name:' + lead.name) : '';
+    const list = roster.map((p) => ['id:' + p.userId, p.name]);
+    if (cur && !list.some(([v]) => v === cur)) list.unshift([cur, lead.name]);
+    return `<option value="">${esc(t(L.noLead))}</option>` +
+      list.map(([v, n]) => `<option value="${esc(v)}" ${v === cur ? 'selected' : ''}>${esc(n)}</option>`).join('');
+  }
+  function leadFromValue(v, prev) {
+    if (!v) return null;
+    if (v.startsWith('id:')) { const p = roster.find((x) => x.userId === v.slice(3)); return p ? { userId: p.userId, name: p.name } : prev; }
+    return { userId: '', name: v.slice(5) };
+  }
+
   // ── Project editor ──────────────────────────────────────────────────────
   function openEditor(id) {
     const p = id ? projects.find((x) => x.id === id) : null;
     if (id && !p) return;
     const f = p ? clone(p.fields) : { name: '', location: '', locationName: '', process: '', status: 'active', start: localDay(), end: '',
-                                      days: [], startTime: '', endTime: '', roles: [{ id: newId(), name: t(L.lead), people: [] }], uids: [], notes: '' };
+                                      days: [], startTime: '', endTime: '', lead: null, roles: [{ id: newId(), name: '', process: '', startTime: '', endTime: '', people: [] }], uids: [], notes: '' };
     f.roles = (f.roles || []).map((r) => ({ ...r, people: r.people || [] }));
     f.uids = f.uids || []; f.days = f.days || [];
     editing = { id, f };
@@ -803,7 +843,8 @@
       <div class="row"><div class="full"><label class="lbl" for="ed-name">${esc(t(L.name))}</label><input id="ed-name" value="${esc(f.name)}" placeholder="${esc(t(L.namePh))}"></div>
         <div class="${f.location === 'other' ? '' : 'full'}"><label class="lbl" for="ed-loc">${esc(t(L.location))}</label>
           <select id="ed-loc"><option value=""></option>${LOCATIONS.map(([k, n]) => `<option value="${k}" ${f.location === k ? 'selected' : ''}>${esc(n || t(L.other))}</option>`).join('')}</select></div>
-        ${f.location === 'other' ? `<div><label class="lbl" for="ed-locname">${esc(t(L.otherName))}</label><input id="ed-locname" value="${esc(f.locationName)}"></div>` : ''}</div>
+        ${f.location === 'other' ? `<div><label class="lbl" for="ed-locname">${esc(t(L.otherName))}</label><input id="ed-locname" value="${esc(f.locationName)}"></div>` : ''}
+        <div class="full"><label class="lbl" for="ed-lead">${esc(t(L.projLead))}</label><select id="ed-lead">${leadOptions(f.lead)}</select></div></div>
       <div class="row"><div><label class="lbl" for="ed-proc">${esc(t(L.process))}</label><select id="ed-proc">${processOptions(f.process)}</select></div>
         <div><label class="lbl" for="ed-status">${esc(t(L.status))}</label><select id="ed-status">${STATUSES.map(([k, l]) => `<option value="${k}" ${f.status === k ? 'selected' : ''}>${esc(t(l))}</option>`).join('')}</select></div></div>
       <div class="row"><div><label class="lbl" for="ed-start">${esc(t(L.start))}</label><input type="date" id="ed-start" value="${esc(f.start)}"></div>
@@ -817,18 +858,19 @@
 
       <div class="sec">${esc(t(L.roles))}</div>
       <div class="hint" style="margin:-2px 0 10px">${esc(t(L.rolesHint))}</div>
-      <div id="ed-roles">${f.roles.map((r, ri) => `<div class="role-ed">
-        <div class="top"><div><label class="lbl">${esc(t(L.roleName))}</label><input data-rname="${ri}" value="${esc(r.name)}"></div>
-          <div class="proc"><label class="lbl">${esc(t(L.roleProc))}</label><select data-rproc="${ri}">${processOptions(r.process || '')}</select></div>
-          <button type="button" class="x" data-rdel="${ri}" aria-label="×">×</button></div>
-        <label class="check" style="margin-bottom:8px;font-size:.85rem"><input type="checkbox" data-rown="${ri}" ${r.startTime || r._own ? 'checked' : ''}> ${esc(t(L.roleOwn))}</label>
-        ${r.startTime != null && r.startTime !== '' || r._own ? `<div class="times"><input type="time" data-rts="${ri}" value="${esc(r.startTime || '')}" aria-label="${esc(t(L.tStart))}">
-          <input type="time" data-rte="${ri}" value="${esc(r.endTime || '')}" aria-label="${esc(t(L.tEnd))}"></div>` : ''}
-        <ul class="ed-ppl">${r.people.map((x, pi) => `<li><span class="nm">${esc(x.name)}${x.userId ? '' : ' <span class="s">✎</span>'}</span>
-          <button type="button" class="star ${x.lead ? 'on' : ''}" data-lead="${ri}:${pi}">${esc(t(L.lead))}</button>
-          <button type="button" class="x" data-pdel="${ri}:${pi}" aria-label="×">×</button></li>`).join('')}</ul>
-        <div class="picker"><input data-padd="${ri}" autocomplete="off" placeholder="${esc(t(L.addPerson))}"><div class="panel"></div></div>
-      </div>`).join('')}</div>
+      <div class="rtbl" id="ed-roles">
+        <div class="rhead"><span>${esc(t(L.colName))}</span><span>${esc(t(L.colProc))}</span><span>${esc(t(L.colStart))}</span><span>${esc(t(L.colEnd))}</span><span></span></div>
+        ${f.roles.map((r, ri) => `<div class="rgrp">
+          <div class="rrow"><input data-rname="${ri}" value="${esc(r.name)}" aria-label="${esc(t(L.colName))}" placeholder="${esc(t(L.roleName))}">
+            <select data-rproc="${ri}" aria-label="${esc(t(L.colProc))}">${processOptions(r.process || '')}</select>
+            <input type="time" data-rts="${ri}" value="${esc(r.startTime || '')}" aria-label="${esc(t(L.colStart))}">
+            <input type="time" data-rte="${ri}" value="${esc(r.endTime || '')}" aria-label="${esc(t(L.colEnd))}">
+            <button type="button" class="x" data-rdel="${ri}" aria-label="×">×</button></div>
+          <div class="rppl"><div class="chips">${r.people.map((x, pi) => `<span class="chip">${esc(x.name)}${x.userId ? '' : ' <span class="s">✎</span>'}<button type="button" data-pdel="${ri}:${pi}" aria-label="×">×</button></span>`).join('')}</div>
+            <div class="picker"><input data-padd="${ri}" autocomplete="off" placeholder="${esc(t(L.addPerson))}"><div class="panel"></div></div></div>
+        </div>`).join('')}
+      </div>
+      <div class="hint" style="margin:6px 0 10px">${esc(fill(t(L.timesHint), { h: hoursLabel(f) }))}</div>
       <button type="button" class="btn btn-sm" id="ed-addrole">${esc(t(L.addRole))}</button>
 
       <div class="sec">${esc(t(L.uids))}</div>
@@ -851,11 +893,12 @@
     f.process = $('ed-proc').value; f.status = $('ed-status').value;
     f.start = $('ed-start').value; f.end = $('ed-end').value;
     f.startTime = $('ed-ts').value; f.endTime = $('ed-te').value; f.notes = $('ed-notes').value;
+    f.lead = leadFromValue($('ed-lead').value, f.lead);
     f.roles.forEach((r, ri) => {
       r.name = document.querySelector(`[data-rname="${ri}"]`).value;
       r.process = document.querySelector(`[data-rproc="${ri}"]`).value;
-      const ts = document.querySelector(`[data-rts="${ri}"]`), te = document.querySelector(`[data-rte="${ri}"]`);
-      if (ts) { r.startTime = ts.value; r.endTime = te.value; }
+      r.startTime = document.querySelector(`[data-rts="${ri}"]`).value;
+      r.endTime = document.querySelector(`[data-rte="${ri}"]`).value;
     });
   }
   const rerender = () => { readEditor(); render(); };
@@ -868,28 +911,20 @@
       f.days = f.days.includes(d) ? f.days.filter((x) => x !== d) : [...f.days, d];
       b.classList.toggle('on');
     };
-    $('ed-addrole').onclick = () => { readEditor(); f.roles.push({ id: newId(), name: '', people: [] }); render();
+    $('ed-addrole').onclick = () => { readEditor(); f.roles.push({ id: newId(), name: '', process: '', startTime: '', endTime: '', people: [] }); render();
       const ins = document.querySelectorAll('[data-rname]'); if (ins.length) ins[ins.length - 1].focus(); };
     $('ed-roles').onclick = (e) => {
       const del = e.target.closest('[data-rdel]');
       if (del) { readEditor(); f.roles.splice(+del.dataset.rdel, 1); render(); return; }
-      const ld = e.target.closest('[data-lead]');
-      if (ld) { const [ri, pi] = ld.dataset.lead.split(':').map(Number); readEditor(); f.roles[ri].people[pi].lead = !f.roles[ri].people[pi].lead; render(); return; }
       const pd = e.target.closest('[data-pdel]');
       if (pd) { const [ri, pi] = pd.dataset.pdel.split(':').map(Number); readEditor(); f.roles[ri].people.splice(pi, 1); render(); }
     };
-    document.querySelectorAll('[data-rown]').forEach((cb) => cb.onchange = () => {
-      readEditor();
-      const r = f.roles[+cb.dataset.rown];
-      if (cb.checked) { r._own = true; r.startTime = r.startTime || f.startTime || ''; r.endTime = r.endTime || f.endTime || ''; }
-      else { delete r._own; r.startTime = ''; r.endTime = ''; }
-      render();
-    });
+    ['ed-ts', 'ed-te'].forEach((id) => $(id).addEventListener('change', rerender));
     document.querySelectorAll('[data-padd]').forEach((inp) => {
       const ri = +inp.dataset.padd;
       personPicker(inp, (person) => {
         readEditor();
-        f.roles[ri].people.push({ userId: person.userId || '', name: person.name, lead: false });
+        f.roles[ri].people.push({ userId: person.userId || '', name: person.name });
         render();
         const again = document.querySelector(`[data-padd="${ri}"]`); if (again) again.focus();
       }, (key) => f.roles[ri].people.some((x) => personKey(x) === key), editing.id);
@@ -945,6 +980,8 @@
     const f = editing.f;
     f.name = f.name.trim(); f.locationName = (f.locationName || '').trim();
     f.roles.forEach((r) => { r.name = r.name.trim(); });
+    // A blank row nobody filled in is just dropped.
+    f.roles = f.roles.filter((r) => r.name || r.people.length || r.process || r.startTime || r.endTime);
     const problem = !f.name ? L.needName : !f.location || (f.location === 'other' && !f.locationName) ? L.needLoc
       : !f.start ? L.needStart : f.end && f.end < f.start ? L.badEnd : f.roles.some((r) => !r.name) ? L.needRole : null;
     if (problem) { $('ed-err').textContent = t(problem); return; }
@@ -952,8 +989,12 @@
     const out = {
       name: f.name, location: f.location, locationName: f.location === 'other' ? f.locationName : '', process: f.process || '',
       status: f.status || 'active', start: f.start, end: f.end || '', days: [...f.days].sort(), startTime: f.startTime || '', endTime: f.startTime ? f.endTime || '' : '',
-      roles: f.roles.map((r) => ({ id: r.id || newId(), name: r.name, process: r.process || '', startTime: r.startTime || '', endTime: r.startTime ? r.endTime || '' : '',
-                                   people: r.people.map((x) => ({ userId: x.userId || '', name: x.name, lead: !!x.lead })) })),
+      lead: f.lead && f.lead.name ? { userId: f.lead.userId || '', name: f.lead.name } : null,
+      // A responsibility's start/end are kept only where they differ from the project's.
+      roles: f.roles.map((r) => ({ id: r.id || newId(), name: r.name, process: r.process || '',
+                                   startTime: r.startTime && r.startTime !== f.startTime ? r.startTime : '',
+                                   endTime: r.endTime && r.endTime !== f.endTime ? r.endTime : '',
+                                   people: r.people.map((x) => ({ userId: x.userId || '', name: x.name })) })),
       uids: f.uids, notes: (f.notes || '').trim()
     };
     const btn = $('ed-save');
@@ -1051,7 +1092,7 @@
       const projLines = wrap(f.name, F.proj, inner);
       const headH = 12 + locLines.length * 32 + projLines.length * 24 + 26;
       const notes = note ? wrap(note, F.note, inner - 12) : [];
-      const rs = roles.filter((r) => r.people.length).map((r) => ({ r, label: (r.name + (r.startTime ? '  ' + hoursLabel(f, r) : '')).toUpperCase(),
+      const rs = roles.filter((r) => r.people.length).map((r) => ({ r, label: (r.name + (r.startTime || r.endTime ? '  ' + hoursLabel(f, r) : '')).toUpperCase(),
         people: r.people.map((x) => ({ x, conflict: conf.has(personKey(x) + '|' + p.id), lines: wrap(x.name + (x.lead ? ` — ${t(L.lead)}` : ''), x.lead ? F.lead : F.name, inner - 30) })) }));
       let h = headH + 12 + (notes.length ? notes.length * 26 + 26 : 0);
       rs.forEach((r) => { h += 24; r.people.forEach((x) => { h += x.lines.length * 28 + 2; }); h += 8; });
