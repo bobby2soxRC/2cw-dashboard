@@ -300,7 +300,7 @@ const OPERATIONS_STATIONS = [
         l: { en: 'Drying / Freezer Location(s)', es: 'Ubicación(es) de secado / congelador' } },
       // Some material goes straight into a freezer instead of a drying room.
       { k: 'freshFrozen', t: 'check',
-        l: { en: 'Fresh Frozen (not dried)', es: 'Fresco congelado (no se seca)' } },
+        l: { en: 'Fresh Frozen', es: 'Fresco congelado' } },
       { k: 'lines', t: 'lineitems', req: true,
         l: { en: 'Weigh-In — Bins', es: 'Pesaje — bins' },
         hint: { en: 'One row per group of bins on the scale, with the farm package UID (the last 5 is fine) and strain. Weight is the scale reading; the bins’ tare is subtracted for you. Each UID is saved as its own intake.',
