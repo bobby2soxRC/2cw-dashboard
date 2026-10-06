@@ -360,7 +360,7 @@ function crewThroughput(stages, filter) {
 }
 
 // The per-employee crew log, flattened across every station that has a
-// `crew` lineitems field (plus hand_trim's per-bag weighing worksheet, which
+// `crew` lineitems field (plus hand_trim's and smalls_trim's per-bag weighing worksheets, which
 // already ties an employee number to a batch the same way). This is the seam
 // for a future payroll/timeclock join: match employeeNo + date here against
 // employeeNo + date in a timeclock export to get real labor cost per batch —
@@ -381,7 +381,7 @@ function crewLaborLog(stages, filter) {
                      batch: r.harvestBatchName || r.batchId || '', strain: r.strain || '' });
         });
       }
-      if (station.key === 'hand_trim') {
+      if (station.key === 'hand_trim' || station.key === 'smalls_trim') {
         (r.weights || []).forEach((w) => {
           const emp = String(w.employeeNo || '').trim();
           if (!emp) return;

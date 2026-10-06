@@ -680,6 +680,76 @@ const OPERATIONS_STATIONS = [
             ] }
   },
 
+  // ── PROCESSING: SMALLS HAND TRIM (BY THE HOURLY) ──────────────────────────
+  // The paper "Work Order Form (Smalls | By the Hourly)": one page per flavor
+  // per day. Several flavors run at once, so `sharedDay` puts every open
+  // smalls page in the switcher at the top (anyone's, not just yours) to jump
+  // between flavors, and `dailySummary` draws the notebook tally under the
+  // form — employee # × flavor, grams, for the day.
+  {
+    key: 'smalls_trim',
+    dept: { en: 'Processing', es: 'Procesamiento' },
+    title: { en: 'Smalls Hand Trim', es: 'Corte a mano — smalls' },
+    desc: { en: 'Smalls work order, by the hourly — one page per flavor per day. Weigh each trimmer’s finished smalls.',
+            es: 'Orden de trabajo de smalls, por hora — una hoja por sabor por día. Pese los smalls terminados de cada persona.' },
+    color: 'blue',
+    headline: 'finishedSmallsLb',
+    sharedDay: true,
+    dailySummary: { lines: 'weights', empCol: 'employeeNo', valueCol: 'grams' },
+    fields: [
+      F.date(),
+      { k: 'sourceUid', t: 'uid', req: true,
+        l: { en: 'Package UID', es: 'UID del paquete' },
+        hint: { en: 'Metrc tag on the smalls package — the last 4 is enough.',
+                es: 'Etiqueta Metrc del paquete de smalls — basta con los últimos 4.' } },
+      { k: 'strain', t: 'select', ref: 'strains', allowOther: true, req: true,
+        l: { en: 'Strain (flavor)', es: 'Variedad (sabor)' } },
+      { k: 'startingLb', t: 'number', req: true, min: 0, step: 0.01,
+        l: { en: 'Total Starting Weight (lbs)', es: 'Peso inicial total (lbs)' } },
+
+      // Finished Smalls — Weighing Worksheet: one row per bag weighed out.
+      { k: 'weights', t: 'lineitems', req: true,
+        l: { en: 'Finished Smalls — Weighing Worksheet', es: 'Smalls terminados — hoja de pesaje' },
+        hint: { en: 'One row per bag weighed out. The same employee # can appear on several rows.',
+                es: 'Una fila por bolsa pesada. El mismo n.º de empleado puede aparecer en varias filas.' },
+        cols: [
+          { k: 'employeeNo', t: 'text', l: { en: 'Employee #', es: 'N.º de empleado' }, inputmode: 'numeric', req: true },
+          { k: 'grams', t: 'number', l: { en: 'Weight (gm)', es: 'Peso (gm)' }, min: 0, step: 1, req: true }
+        ],
+        totalCol: 'grams' },
+
+      { k: 'totalGrams', t: 'calc', dp: 0,
+        calc: (v) => (v.weights || []).reduce((a, r) => a + num(r.grams), 0),
+        l: { en: 'Total Finished Smalls (grams)', es: 'Smalls terminados total (gramos)' } },
+      { k: 'finishedSmallsLb', t: 'calc',
+        calc: (v) => (v.weights || []).reduce((a, r) => a + num(r.grams), 0) / G_PER_LB,
+        l: { en: 'Total Finished Smalls (lbs)', es: 'Smalls terminados total (lbs)' },
+        hint: { en: 'grams ÷ 453.592. (The printed form says "× 454" — that is a typo on the form.)',
+                es: 'gramos ÷ 453.592. (El formulario impreso dice "× 454" — es un error del formulario.)' } },
+      { k: 'trimmerCount', t: 'calc', dp: 0,
+        calc: (v) => new Set((v.weights || []).map((r) => String(r.employeeNo || '').trim()).filter(Boolean)).size,
+        l: { en: 'Trimmers on this Page', es: 'Personas en esta hoja' } },
+
+      { k: 'shakeLb', t: 'number', min: 0, step: 0.01,
+        l: { en: 'Shake (lbs)', es: 'Shake (lbs)' } },
+      F.waste(),
+      ...totalsBlock('startingLb', ['finishedSmallsLb', 'shakeLb', 'wasteLb']),
+
+      // Back of the paper form: who did the follow-up paperwork.
+      { k: 'wasteAdjustedBy', t: 'text', l: { en: 'Waste Adjusted (starting package UID) — initials', es: 'Desecho ajustado (UID inicial) — iniciales' } },
+      { k: 'inventoryUpdatedBy', t: 'text', l: { en: '2CW Processor Inventory Updated — initials', es: 'Inventario del procesador 2CW actualizado — iniciales' } },
+      { k: 'notes', t: 'textarea', l: { en: 'Smalls Manager Notes', es: 'Notas del encargado de smalls' } },
+      F.photo()
+    ],
+    flow: { lossKind: 'conserving',
+            input: { field: 'startingLb', category: 'smalls_b' },
+            outputs: [
+              { field: 'finishedSmallsLb', category: 'smalls_b' },
+              { field: 'shakeLb', category: 'shake' },
+              { field: 'wasteLb', category: 'waste' }
+            ] }
+  },
+
   // ── CULTIVATION: FRESH FROZEN ────────────────────────────────────────────
   {
     key: 'fresh_frozen',

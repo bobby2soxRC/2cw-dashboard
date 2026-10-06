@@ -35,7 +35,7 @@ the existing Operations Hub — same login, same Netlify deploy.
 **Cultivation** *(placeholder — see below)* — Plant Batch Log · IPM / Feed Log · Pre-Harvest Inspection
 **Harvest** — Harvest · Fresh Frozen
 **Drying** — Harvest Intake — Wet · Take Down — Dry
-**Processing** — Bucking · Machine Trim · Hand Trim / Hand Touch
+**Processing** — Bucking · Machine Trim · Hand Trim / Hand Touch · Smalls Hand Trim
 **Manufacturing** — Biomass Request · Pre-Roll Production · Manufacturing Run
 
 Wet Intake and Take Down are the two halves of the paper "Harvest Intake &
@@ -74,6 +74,28 @@ once QC and the secondary verification are done. The log is the station's
 `crew` field, so `crewLaborLog` reports each shift on the day it was worked.
 Two people editing the same open batch at the same moment can overwrite each
 other's rows (last save wins), so one tablet per batch is safest.
+
+**Smalls Hand Trim** (`smalls_trim`) is the paper "Work Order Form (Smalls |
+By the Hourly)": one page per flavor per day — package UID, strain, starting
+lbs, then the weighing worksheet (employee #, grams, one row per bag), with
+grams → lbs worked out (÷ 453.592, not the form's "× 454"), shake, waste and
+variance, and the back-of-form initials (waste adjusted, processor inventory)
+plus manager notes. No farm license, CID or grade — those come from the UID.
+A page is filled in over the whole day and autosaves; someone who closes it
+and reopens the station gets a blank page with a note pointing at the open
+flavor pages in the switcher. Two station
+options drive it, both handled in `ops_form.html`:
+- `sharedDay: true` — the switcher at the top ("Flavors open") lists every
+  open smalls page from anyone, not just your own, plus "+ New flavor", so
+  the room can jump between the flavors running that day. Older pages still
+  open show their date.
+- `dailySummary: { lines, empCol, valueCol }` — a panel under the form that
+  replaces the notebook tally: employee # down the side, each flavor page
+  across the top, grams in each cell, totals both ways and lbs per person.
+  Built from every form on the station for the picked date (drafts and
+  submitted), with the page you're on using its live values.
+Its flow is smalls in → finished smalls + shake + waste, and
+its worksheet rows feed the Labor tab the same way Hand Trim's do.
 
 **Pre-Roll Dashboard** (`preroll_dashboard.html`, hub card `preroll_dashboard`
 under Manufacturing) is the pre-roll team's queue. It reads the Production

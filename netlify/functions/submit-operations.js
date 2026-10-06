@@ -25,6 +25,7 @@ const KNOWN_STATIONS = new Set([
   'buck',
   'machine_trim',
   'hand_trim',
+  'smalls_trim',
   'fresh_frozen',
   'biomass_request',
   'preroll_production',

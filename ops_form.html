@@ -55,6 +55,23 @@
     .chip .cs{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
     .chip .cv{font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
     .chip.new{color:var(--accent);border-style:dashed;justify-content:center;align-items:center}
+    .switcher-lbl{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:18px}
+    .switcher-lbl + .switcher{margin-top:8px}
+
+    /* Daily summary (Smalls): employee # × flavor, the notebook tally. */
+    .summary h2{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:.04em;font-weight:400}
+    .sum-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+    .sum-head .hint{margin-top:2px}
+    .sum-head input{width:auto;min-height:44px}
+    .sum-table{border-collapse:collapse;font-family:'DM Mono',monospace;font-size:.85rem;min-width:100%}
+    .sum-table th,.sum-table td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap}
+    .sum-table th{font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;vertical-align:bottom;white-space:normal;min-width:72px}
+    .sum-table th:first-child,.sum-table td:first-child{text-align:left;position:sticky;left:0;background:var(--surface)}
+    .sum-table th.cur{color:var(--accent)}
+    .sum-table td.zero{color:var(--muted)}
+    .sum-table td.tot,.sum-table th.tot{color:var(--accent)}
+    .sum-table tfoot td{border-bottom:none;border-top:1px solid var(--subtext);color:var(--subtext)}
+    .sum-empty{color:var(--muted);font-size:.85rem}
 
     .panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 18px;margin-top:24px}
     .field{margin-bottom:20px}
@@ -135,9 +152,11 @@
   <div class="dept" id="dept"></div>
   <div class="title" id="title"></div>
   <div class="subtitle" id="subtitle"></div>
+  <div class="switcher-lbl" id="switcher-lbl" style="display:none"></div>
   <div class="switcher" id="switcher" style="display:none"></div>
   <form class="panel" id="form" autocomplete="off"></form>
   <div class="banner" id="banner"></div>
+  <section class="panel summary" id="summary" style="display:none"></section>
 </main>
 
 <div class="actions">
@@ -634,6 +653,7 @@
         (v === null || v === undefined || !Number.isFinite(Number(v))) ? '—'
           : (primaryCalc.fmt === 'pct' ? fmtPct(v) : fmtNum(v, primaryCalc.dp === undefined ? 2 : primaryCalc.dp));
     }
+    scheduleSummary();
   }
 
   function updateVisibility() {
@@ -669,6 +689,9 @@
 
   function markDirty() {
     if (!draftsOn || editMode) return;
+    // The "pages already open" note goes once they start on a new flavor.
+    const b = document.getElementById('banner');
+    if (b.dataset.openPages) { delete b.dataset.openPages; b.className = 'banner'; }
     localStorage.setItem(mirrorKey(), JSON.stringify({ ...draftPayload(), savedAt: Date.now() }));
     autosaveEl.style.display = 'flex';
     autosaveEl.className = 'autosave saving';
@@ -692,27 +715,146 @@
   }
 
   // ── Strain switcher ──────────────────────────────────────────────────────
-  const SW = { newForm: { en: '+ New', es: '+ Nuevo' }, untitled: { en: 'Untitled', es: 'Sin título' }, started: { en: 'Started', es: 'Inicio' } };
+  const SW = { newForm: { en: '+ New', es: '+ Nuevo' }, untitled: { en: 'Untitled', es: 'Sin título' }, started: { en: 'Started', es: 'Inicio' },
+               newFlavor: { en: '+ New flavor', es: '+ Nuevo sabor' }, flavors: { en: 'Flavors open', es: 'Sabores abiertos' } };
   async function renderSwitcher() {
-    if (!draftsOn || !owner) return;
+    if (!draftsOn || (!owner && !station.sharedDay)) return;
     // A multi-day batch has to be findable by whoever works it next, on any
     // day — so those stations list every open batch, not just yours today.
-    const drafts = station.multiDay
+    // A sharedDay station (Smalls: one page per flavor per day, worked by the
+    // whole room) lists every open page from anyone, so the flavors at the
+    // top are the room's, not one person's.
+    const drafts = (station.multiDay || station.sharedDay)
       ? await listOpenDrafts(station.key)
       : await listMyDrafts(station.key, owner, todayStr());
     const el = document.getElementById('switcher');
-    if (!drafts.length) { el.style.display = 'none'; return; }
+    const lblEl = document.getElementById('switcher-lbl');
+    if (station.sharedDay) {
+      // Always shown, so "+ New flavor" is there even before the first page.
+      const isNew = !drafts.some((d) => d.id === draftId);
+      // Someone who closed the page and came back from the hub lands on a
+      // blank page — point them at the pages already open so they carry on
+      // there instead of starting a duplicate.
+      if (isNew && drafts.length && !banner.className.includes('success')) {
+        banner.className = 'banner warn';
+        banner.dataset.openPages = '1';
+        banner.textContent = t({ en: `${drafts.length} flavor page${drafts.length > 1 ? 's are' : ' is'} already open — tap ${drafts.length > 1 ? 'one' : 'it'} above to keep working on it. This blank page is only for a new flavor.`,
+                                 es: `Ya hay ${drafts.length} hoja${drafts.length > 1 ? 's' : ''} de sabor abierta${drafts.length > 1 ? 's' : ''} — tóquela arriba para seguir trabajando. Esta hoja en blanco es solo para un sabor nuevo.` });
+        banner.style.marginTop = '12px';
+        document.getElementById('switcher').after(banner);
+      }
+      if (isNew) drafts.unshift({ id: draftId, strain: values.strain, fields: values, work_date: values.date || todayStr() });
+      lblEl.textContent = t(SW.flavors);
+      lblEl.style.display = 'block';
+    } else if (!drafts.length) { el.style.display = 'none'; return; }
     el.style.display = 'flex';
-    const chipTop = (d) => station.multiDay
-      ? `${t(SW.started)} ${new Date(`${d.work_date}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' })}`
+    const shortDate = (d) => new Date(`${d}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' });
+    const chipTop = (d) => station.sharedDay
+      ? [d.fields && d.fields.sourceUid ? `…${String(d.fields.sourceUid).slice(-4)}` : '',
+         d.work_date && d.work_date !== todayStr() ? shortDate(d.work_date) : ''].filter(Boolean).join(' · ') || '—'
+      : station.multiDay
+      ? `${t(SW.started)} ${shortDate(d.work_date)}`
       : new Date(d.updated_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
     const chipLabel = (d) => [d.fields && d.fields.batchId, d.strain].filter(Boolean).join(' · ') || t(SW.untitled);
+    if (station.sharedDay) {
+      el.innerHTML = drafts.map((d) => `
+        <a class="chip ${d.id === draftId ? 'on' : ''}" href="/ops_form.html?station=${station.key}&draft=${d.id}">
+          <span class="cs">${escapeHtml(chipTop(d))}</span>
+          <span class="cv">${escapeHtml(chipLabel(d))}</span>
+        </a>`).join('') +
+        `<a class="chip new" href="/ops_form.html?station=${station.key}">${t(SW.newFlavor)}</a>`;
+      return;
+    }
     el.innerHTML = drafts.map((d) => `
       <a class="chip ${d.id === draftId ? 'on' : ''}" href="/ops_form.html?station=${station.key}&draft=${d.id}">
         <span class="cs">${escapeHtml(chipTop(d))}</span>
         <span class="cv">${escapeHtml(chipLabel(d))}</span>
       </a>`).join('') +
       `<a class="chip new" href="/ops_form.html?station=${station.key}">${t(SW.newForm)}</a>`;
+  }
+
+  // ── Daily summary (station.dailySummary) ──────────────────────────────────
+  // The hand-kept notebook page: for one day, every employee # down the side,
+  // every flavor page across the top, grams in each cell, totals both ways.
+  // Built from every form on this station for that date (drafts and
+  // submitted, anyone's), with this page's live values in place of its last
+  // autosave so the numbers move as the scale readings are typed in.
+  // `var`, not `let`: recompute() calls scheduleSummary() during the first
+  // render, before this block has run.
+  var SUM = { rows: [], date: null, timer: null };
+  const SM = {
+    title:  { en: 'Daily Summary — by Employee', es: 'Resumen del día — por empleado' },
+    hint:   { en: 'Every smalls page for the day, in grams. Open pages included.', es: 'Todas las hojas de smalls del día, en gramos. Incluye hojas abiertas.' },
+    emp:    { en: 'Employee #', es: 'N.º empl.' },
+    total:  { en: 'Total g', es: 'Total g' },
+    lbs:    { en: 'lbs', es: 'lbs' },
+    allEmp: { en: 'Total', es: 'Total' },
+    none:   { en: 'Nothing weighed out yet for this day.', es: 'Aún no hay nada pesado para este día.' },
+    open:   { en: 'open', es: 'abierta' }
+  };
+
+  async function loadSummary(date) {
+    SUM.date = date;
+    const req = SUM.req = (SUM.req || 0) + 1;
+    const rows = await listToday(date);
+    if (SUM.req !== req) return;   // a newer load was started meanwhile
+    SUM.rows = rows.filter((r) => r.station_key === station.key);
+    renderSummary();
+  }
+
+  function scheduleSummary() {
+    if (!station.dailySummary || typeof SUM === 'undefined') return;
+    clearTimeout(SUM.timer);
+    SUM.timer = setTimeout(renderSummary, 250);
+  }
+
+  function renderSummary() {
+    const cfg = station.dailySummary;
+    const box = document.getElementById('summary');
+    if (!cfg || !draftsOn || !SUM.date) return;
+    box.style.display = 'block';
+    // Keep this page's chip label in step with the strain being typed.
+    const onChip = document.querySelector('.chip.on .cv');
+    if (onChip && values.strain) onChip.textContent = values.strain;
+    const onUid = document.querySelector('.chip.on .cs');
+    if (onUid && values.sourceUid) onUid.textContent = `…${String(values.sourceUid).slice(-4)}`;
+
+    // Pages for the day: saved rows, with this page swapped for its live values.
+    const pages = SUM.rows.filter((r) => r.id !== draftId)
+      .map((r) => ({ id: r.id, status: r.status, f: r.fields || {}, strain: r.strain || (r.fields || {}).strain }));
+    if ((values.date || todayStr()) === SUM.date) pages.push({ id: draftId, status: editMode ? 'submitted' : 'draft', f: values, strain: values.strain, cur: true });
+    const used = pages.filter((p) => (p.f[cfg.lines] || []).some((r) => num(r[cfg.valueCol]) > 0) || p.cur);
+    used.sort((a, b) => String(a.strain || '').localeCompare(String(b.strain || '')));
+
+    const grid = {};   // emp -> page id -> grams
+    used.forEach((p) => (p.f[cfg.lines] || []).forEach((r) => {
+      const emp = String(r[cfg.empCol] || '').trim();
+      const g = num(r[cfg.valueCol]);
+      if (!emp || !g) return;
+      grid[emp] = grid[emp] || {};
+      grid[emp][p.id] = (grid[emp][p.id] || 0) + g;
+    }));
+    const emps = Object.keys(grid).sort((a, b) => (Number(a) - Number(b)) || a.localeCompare(b));
+
+    const head = `<div class="sum-head"><div><h2>${t(SM.title)}</h2><div class="hint">${t(SM.hint)}</div></div>` +
+      `<input type="date" id="sum-date" value="${escapeAttr(SUM.date)}"></div>`;
+    if (!emps.length) {
+      box.innerHTML = head + `<div class="sum-empty">${t(SM.none)}</div>`;
+    } else {
+      const uid4 = (p) => p.f.sourceUid ? `…${String(p.f.sourceUid).slice(-4)}` : '';
+      const colTot = (p) => emps.reduce((a, e) => a + (grid[e][p.id] || 0), 0);
+      const empTot = (e) => Object.values(grid[e]).reduce((a, g) => a + g, 0);
+      const all = emps.reduce((a, e) => a + empTot(e), 0);
+      box.innerHTML = head + `<div class="li-scroll"><table class="sum-table"><thead><tr><th>${t(SM.emp)}</th>` +
+        used.map((p) => `<th class="${p.cur ? 'cur' : ''}">${escapeHtml(p.strain || t(SW.untitled))}<br>${escapeHtml(uid4(p))}${p.status === 'draft' ? ` · ${t(SM.open)}` : ''}</th>`).join('') +
+        `<th class="tot">${t(SM.total)}</th><th class="tot">${t(SM.lbs)}</th></tr></thead><tbody>` +
+        emps.map((e) => `<tr><td>${escapeHtml(e)}</td>` +
+          used.map((p) => grid[e][p.id] ? `<td>${fmtNum(grid[e][p.id], 0)}</td>` : '<td class="zero">·</td>').join('') +
+          `<td class="tot">${fmtNum(empTot(e), 0)}</td><td class="tot">${fmtNum(empTot(e) / G_PER_LB, 2)}</td></tr>`).join('') +
+        `</tbody><tfoot><tr><td>${t(SM.allEmp)}</td>` + used.map((p) => `<td>${fmtNum(colTot(p), 0)}</td>`).join('') +
+        `<td class="tot">${fmtNum(all, 0)}</td><td class="tot">${fmtNum(all / G_PER_LB, 2)}</td></tr></tfoot></table></div>`;
+    }
+    document.getElementById('sum-date').addEventListener('change', (ev) => { if (ev.target.value) loadSummary(ev.target.value); });
   }
 
   // ── Submit ────────────────────────────────────────────────────────────────
@@ -964,6 +1106,7 @@
       }
     }
     renderSwitcher();
+    if (station.dailySummary) loadSummary(values.date || todayStr());
   } else {
     applyLinkPrefill();
   }
