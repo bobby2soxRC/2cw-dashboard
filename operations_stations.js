@@ -26,7 +26,14 @@
 // Station option:
 //   splitBy  key of a lineitems field whose rows carry sourceUid/strain — on
 //            submit the form is saved as one record per distinct UID+strain
-//            (see splitRecords in ops_form.html)
+//            (see splitRecords in ops_form.html). Columns marked `lift: true`
+//            are copied from the UID's first row onto its record, like
+//            sourceUid and strain are.
+//   splitShare {by, fields, lineitems} — for a split station, whole-form
+//            numbers (labor) divided between the UID records by each one's
+//            share of the `by` calc instead of copied onto every record.
+//            `fields` are top-level keys; `lineitems` maps a worksheet key
+//            to the column scaled on each of its rows.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const G_PER_LB = 453.59237;
@@ -209,18 +216,29 @@ const OPERATIONS_STATIONS = [
   },
 
   // ── CULTIVATION: HARVEST ─────────────────────────────────────────────────
+  // The step before Wet Intake: the farm side of loading a truck. Built like
+  // Wet Intake — one form per truck load, with a worksheet row per group of
+  // bins/bags carrying its own Metrc UID, strain and plant count — and split
+  // on submit into one record per UID (`splitBy`), so each harvest record
+  // lines up with the package Wet Intake receives.
+  //
+  // Crew time is for the whole load, so on the split it's divided between
+  // the UIDs by their share of the wet weight (`splitShare`) instead of
+  // being copied whole onto each one.
   {
     key: 'harvest',
     dept: { en: 'Cultivation', es: 'Cultivo' },
     title: { en: 'Harvest', es: 'Cosecha' },
-    desc: { en: 'Log a harvest off a farm block — plant count, wet weight, and where it is headed.',
-            es: 'Registre una cosecha de un bloque — número de plantas, peso húmedo y su destino.' },
+    desc: { en: 'Log a harvest load off the farm — one form per truck, with the Metrc UID, strain, plant count and wet weight on each row.',
+            es: 'Registre una carga de cosecha del rancho — un formulario por camión, con el UID de Metrc, la variedad, el número de plantas y el peso húmedo en cada fila.' },
     color: 'green',
     headline: 'wetWeightLb',
+    splitBy: 'lines',
+    splitShare: { by: 'wetWeightLb', fields: ['laborHours'], lineitems: { crew: 'hours' } },
     fields: [
       F.date(),
       F.site(),
-      { k: 'pid', t: 'select', ref: 'properties', allowOther: true,
+      { k: 'pid', t: 'select', ref: 'properties', allowOther: true, req: true,
         l: { en: 'Farm License', es: 'Licencia del rancho' } },
       { k: 'block', t: 'text', l: { en: 'Field / Block', es: 'Campo / bloque' } },
       { k: 'round', t: 'select', allowOther: true,
@@ -231,11 +249,6 @@ const OPERATIONS_STATIONS = [
           { v: 'R3', l: { en: 'Round 3', es: 'Ronda 3' } },
           { v: 'R4', l: { en: 'Round 4', es: 'Ronda 4' } }
         ] },
-      F.strain(),
-      { k: 'harvestBatchName', t: 'text', req: true,
-        l: { en: 'Harvest / Batch Name', es: 'Nombre de cosecha / lote' },
-        hint: { en: 'e.g. AF-071-Glitter Bomb-224-T2', es: 'p. ej. AF-071-Glitter Bomb-224-T2' } },
-      { k: 'sourceUid', t: 'uid', l: { en: 'Metrc UID Tag', es: 'Etiqueta UID de Metrc' } },
       { k: 'harvestStyle', t: 'select', req: true,
         l: { en: 'Harvest Style', es: 'Estilo de cosecha' },
         opts: [
@@ -243,21 +256,48 @@ const OPERATIONS_STATIONS = [
           { v: 'bucked_wet', l: { en: 'Bucked wet — to dry facility', es: 'Desvarado húmedo — a secado' } },
           { v: 'fresh_frozen', l: { en: 'Fresh frozen — to freezer', es: 'Fresco congelado — a congelador' } }
         ] },
-      { k: 'plantCount', t: 'number', min: 0, step: 1, dp: 0,
-        l: { en: 'Plant Count', es: 'Número de plantas' } },
-      { k: 'wetWeightLb', t: 'number', req: true, min: 0, step: 0.01,
-        l: { en: 'Wet Weight (lbs)', es: 'Peso húmedo (lbs)' } },
-      { k: 'lbPerPlant', t: 'calc', calc: (v) => (num(v.plantCount) > 0 ? num(v.wetWeightLb) / num(v.plantCount) : null),
-        l: { en: 'Wet lbs / Plant', es: 'Lbs húmedos por planta' } },
-      { k: 'binCount', t: 'number', min: 0, step: 1, dp: 0,
-        l: { en: 'Bins / Bags Loaded', es: 'Bins / bolsas cargadas' } },
       { k: 'destination', t: 'select', req: true,
         l: { en: 'Destination', es: 'Destino' },
         opts: [
           { v: 'dry_facility', l: { en: 'Drying facility', es: 'Instalación de secado' } },
           { v: 'freezer', l: { en: 'Freezer (fresh frozen)', es: 'Congelador (fresco congelado)' } }
         ] },
-      F.teamLead(), F.crewSize(), F.laborHours(), F.crew(), F.notes(), F.photo()
+      { k: 'truckNo', t: 'text', l: { en: 'Truck #', es: 'N.º de camión' } },
+      { k: 'licensePlate', t: 'text', req: true, l: { en: 'License Plate', es: 'Placa del vehículo' } },
+      { k: 'driverIdPhoto', t: 'photo', req: true,
+        l: { en: 'Photo of Driver ID', es: 'Foto de la identificación del conductor' },
+        hint: { en: 'Photo of the driver’s license or ID card.',
+                es: 'Foto de la licencia de conducir o identificación del conductor.' } },
+      { k: 'lines', t: 'lineitems', req: true,
+        l: { en: 'Load — by UID', es: 'Carga — por UID' },
+        hint: { en: 'One row per group of bins/bags loaded, with its Metrc UID (the last 5 is fine), strain, plant count and wet weight. Each UID is saved as its own harvest record.',
+                es: 'Una fila por cada grupo de bins/bolsas cargado, con su UID de Metrc (los últimos 5 son suficientes), variedad, número de plantas y peso húmedo. Cada UID se guarda como su propio registro de cosecha.' },
+        cols: [
+          { k: 'sourceUid', t: 'uid', req: true, carry: true, l: { en: 'Metrc UID', es: 'UID de Metrc' } },
+          { k: 'strain', t: 'select', ref: 'strains', allowOther: true, req: true, carry: true, l: { en: 'Strain', es: 'Variedad' } },
+          { k: 'harvestBatchName', t: 'text', req: true, carry: true, lift: true,
+            l: { en: 'Harvest / Batch Name', es: 'Nombre de cosecha / lote' } },
+          { k: 'plantCount', t: 'number', req: true, l: { en: 'Plant Count', es: 'N.º de plantas' }, min: 0, step: 1, inputmode: 'numeric' },
+          { k: 'binCount', t: 'number', req: true, l: { en: 'Bins / Bags Loaded', es: 'Bins / bolsas cargadas' }, min: 0, step: 1, inputmode: 'numeric' },
+          { k: 'weight', t: 'number', req: true, l: { en: 'Wet Weight (lbs)', es: 'Peso húmedo (lbs)' }, min: 0, step: 0.01 }
+        ],
+        totalCol: 'weight' },
+      { k: 'plantCount', t: 'calc', dp: 0, calc: (v) => (v.lines || []).reduce((a, r) => a + num(r.plantCount), 0),
+        l: { en: 'Total Plant Count', es: 'Número total de plantas' } },
+      { k: 'binCount', t: 'calc', dp: 0, calc: (v) => (v.lines || []).reduce((a, r) => a + num(r.binCount), 0),
+        l: { en: 'Total Bins / Bags Loaded', es: 'Total de bins / bolsas cargadas' } },
+      { k: 'wetWeightLb', t: 'calc', calc: (v) => (v.lines || []).reduce((a, r) => a + num(r.weight), 0),
+        l: { en: 'Total Wet Weight (lbs)', es: 'Peso húmedo total (lbs)' } },
+      { k: 'lbPerPlant', t: 'calc',
+        calc: (v) => {
+          const plants = (v.lines || []).reduce((a, r) => a + num(r.plantCount), 0);
+          return plants > 0 ? (v.lines || []).reduce((a, r) => a + num(r.weight), 0) / plants : null;
+        },
+        l: { en: 'Wet lbs / Plant', es: 'Lbs húmedos por planta' } },
+      F.teamLead(),
+      { ...F.crewSize(), req: true },
+      { ...F.laborHours(), req: true },
+      F.crew(), F.notes(), F.photo()
     ],
     flow: { lossKind: 'origin', outputs: [{ field: 'wetWeightLb', category: 'wet_whole_plant' }] }
   },
