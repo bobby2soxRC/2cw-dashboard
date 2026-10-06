@@ -302,6 +302,7 @@
       const hit = opts.find((o) => String(o.v) === String(v));
       return hit ? hit.label : String(v);
     }
+    if (f.t === 'check') return v === true || v === 'true' ? (getLang() === 'es' ? 'Sí' : 'Yes') : 'No';
     if (f.t === 'number' || f.t === 'calc') return Number.isFinite(Number(v)) ? fmtNum(v, f.dp === undefined ? 2 : f.dp) : String(v);
     return String(v);
   }
@@ -397,6 +398,7 @@
   let copyAnchor = null;
   function copyText(f, v) {
     if (v === undefined || v === null || v === '') return '';
+    if (f.t === 'check') return display(f, v);
     if ((f.t === 'number' || f.t === 'calc') && Number.isFinite(Number(v))) return String(Number(Number(v).toFixed(f.dp === undefined ? 2 : f.dp)));
     return String(v);
   }
@@ -407,7 +409,7 @@
       [t(fieldByKey.lines.cols.find((c) => c.k === 'strain').l), r.strain || f.strain],
       [t(L.date), r.work_date]
     ];
-    for (const k of ['pid', 'cid', 'manifestNo', 'truckNo', 'driver', 'completedBy', 'weighmaster', 'dryRoom',
+    for (const k of ['pid', 'cid', 'manifestNo', 'truckNo', 'driver', 'completedBy', 'weighmaster', 'dryRoom', 'freshFrozen',
       'binCount', 'totalTareLb', 'totalWetLb', 'metrcAdjustedLb']) {
       const fd = fieldByKey[k];
       if (fd && (!fd.showIf || fd.showIf(f))) items.push([t(fd.l), copyText(fd, f[k])]);
