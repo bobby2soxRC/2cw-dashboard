@@ -197,6 +197,25 @@ const fl = fLots.find((r) => r.lotId === FARM_UID);
 check('farm-wide share stays out of the direct numbers', [fl.hours, fl.cost, fl.costPerWetLb, Object.keys(fl.byProcess).length], [0, 0, 0, 0]);
 check('farm-wide cost and $/wet lb reported on their own', [fl.farmCost, Math.round(fl.farmCostPerWetLb * 10000) / 10000], [154.23, Math.round(154.23 / 310 * 10000) / 10000]);
 
+console.log('\nproject labor (Master Schedule projects)');
+// A project's hours go over the UIDs it has now, by pounds at the process;
+// with no UIDs yet they wait as the project's pool.
+const projStages = { ...stages,
+  work_project: [{ id: 'P1', name: 'Fresh Frozen Harvest', uids: [{ uid: FARM_UID }, { uid: '1A9999' }] },
+                 { id: 'P2', name: 'Smalls Trimming', uids: [] },
+                 { id: 'P3', name: 'Removed', voided: true, uids: [{ uid: FARM_UID }] }],
+  labor_entry: [
+    { id: 'J1', process: 'intake_wet', project: 'P1', employeeId: '5475211', employeeName: 'Gilberto Diaz', hours: 8, date: ASOF, uids: [] },
+    { id: 'J2', process: 'other', project: 'P2', employeeId: '5475211', employeeName: 'Gilberto Diaz', hours: 3, date: ASOF, uids: [] },
+    { id: 'J3', process: 'other', project: 'P3', employeeId: '5475211', employeeName: 'Gilberto Diaz', hours: 2, date: ASOF, uids: [] }] };
+const pa = A.laborAllocations(projStages, RATES);
+check('project hours split over its UIDs by wet lb (310 : 92)', pa.filter((a) => a.entryId === 'J1').map((a) => [a.lotId, a.hours, a.project]), [[FARM_UID, 6.169, 'P1'], ['1A9999', 1.831, 'P1']]);
+check('a project with no UIDs yet waits as its pool', pa.filter((a) => a.entryId === 'J2').map((a) => [a.lotId, a.basis, a.hours]), [['project:P2', 'project-pending', 3]]);
+check('a removed project\'s UIDs don\'t take the hours', pa.find((a) => a.entryId === 'J3').basis, 'project-pending');
+const pLots = A.laborCostByLot(projStages, RATES);
+check('project hours count as direct labor on the lot', pLots.find((r) => r.lotId === FARM_UID).hours, 6.17);
+check('project pool row is pending and names the project', [pLots.find((r) => r.lotId === 'project:P2').pending, pLots.find((r) => r.lotId === 'project:P2').project], [true, 'P2']);
+
 console.log('\ncost carried forward (water and waste carry nothing; trim split by %)');
 // The LCG lot: 310 wet lb → 102 dry → 60 bucked (plus big leaf/stems/waste)
 // → machine trim takes 36.35 bucked lb, hand trim 23.65 (all 60).

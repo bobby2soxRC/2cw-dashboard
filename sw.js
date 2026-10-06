@@ -33,6 +33,7 @@ const APP_SHELL = [
   '/harvest_intakes.html',
   '/labor_log.html',
   '/schedule.html',
+  '/master_schedule.html',
   '/information_hub.html',
   '/strain_library.html',
   '/buck_station.html',

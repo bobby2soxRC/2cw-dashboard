@@ -15,6 +15,7 @@ the existing Operations Hub — same login, same Netlify deploy.
 | `buck_station.html` | Bucking's own 4-tab page (Today / Batches / Employee / Historical) — see below, doesn't use `ops_form.html` |
 | `buck_data.js` | Bucking's data layer — submissions, boxes, batch close-out. Reuses `operations_forms`, no schema changes |
 | `labor_log.html` | Labor Log — people's hours (Connecteam roster) against UIDs, split across several UIDs when needed — see below |
+| `master_schedule.html` | Master Schedule — projects, their responsibilities and people, UIDs, and the day/week work schedule (replaced `schedule.html`) — see below |
 | `operations_today.html` | Live board — every form in progress or finished today, for anyone with view access |
 | `operations_dashboard.html` | Pipeline, yields, biomass, labor, requests, exceptions (finished forms only) |
 | `operations_stations.js` | **The schema.** Station and field definitions, EN + ES |
@@ -384,14 +385,65 @@ once you know, and the join is a small, concrete piece of work.
 (Connecteam it is: the Labor Log below keys its entries on the Connecteam
 user id, which is the join key to Connecteam's time activities.)
 
-## Workforce: Scheduling and the Labor Log
+## Workforce: Master Schedule and the Labor Log
 
 Both cards sit in the hub's **Operations → Workforce** folder (`subdept:
 'workforce'` in `hub_config.js`; `buildTree` in `index.html` adds the
 folder, which only shows when someone has at least one of its cards).
-Access is the admin panel's "Scheduling" and "Labor Log" card checkboxes.
+Access is the admin panel's "Master Schedule" and "Labor Log" card
+checkboxes. Master Schedule kept the old Scheduling card's key
+(`scheduling`), so everyone who had Scheduling has it.
 
-**Scheduling** (`schedule.html`, card `scheduling`) replaces the shared
+**Master Schedule** (`master_schedule.html`, card `scheduling`) replaces
+Scheduling. It holds the bigger jobs ("Smalls Trimming" at Adobe, "Fresh
+Frozen Harvest" at Comstock) and builds the daily/weekly work schedule
+from them.
+- **Projects tab.** Each project has a name, location (`WORK_LOCATIONS`
+  in `operations_stations.js`, shared with Scheduling), an optional
+  process (fills in the Labor Log's process), start date, optional end
+  date, the days of the week it runs (none = every day), start/end times,
+  status (Active / Planned / Done) and notes.
+- **Responsibilities** are the standing jobs on a project, like Lead,
+  Trimmers, Weigh station or Driver. Each has the people under it (from
+  the Connecteam roster, or typed in), any of them marked Lead. A
+  responsibility can have its own process and its own hours. They aren't
+  one-time tasks: they apply every day the project runs. The people
+  picker shows which other projects someone is already on.
+- **UIDs** are added as the work reaches the packages. You can scan or
+  type the full tag, or type the last 4, matched against the last 60 days
+  of station records and then active Canix packages. Several can be pasted
+  at once. Each card shows the hours logged to the project (Labor Log
+  entries with `project`) with links to **Log time** (opens
+  `labor_log.html?project=<id>`) and **Labor entries**.
+- **Schedule tab — Day** shows every project running that day
+  (`projectRunsOn`: Planned or Active, inside its dates, on one of its
+  days), at its location and hours (`projectHours`), with each
+  responsibility and its people. Someone on two projects whose hours
+  overlap is flagged on both, and the summary counts them.
+  - **Change this day** is for one day only: untick someone who's off,
+    add someone just for that day, add a note, or mark the project as not
+    working that day. It never changes the standing responsibilities.
+- **Week** is a table with projects down the side and Mon–Sun across.
+  Tap a day to open it. **Save image** draws the day or the week as a
+  PNG for texting, the same way Scheduling did.
+- Each project is one `operations_forms` row, `station_key:
+  'work_project'`, `work_date` = start date, `fields = { name, location,
+  locationName, process, status, start, end, days: [0–6, Sun = 0],
+  startTime, endTime, roles: [{id, name, process, startTime, endTime,
+  people: [{userId, name, lead}]}], uids: [{uid, strain, addedAt,
+  addedBy}], notes, overrides: { 'YYYY-MM-DD': { skip, note, out:
+  [personKey], extra: [{roleId, userId, name}] } }, createdBy, updatedBy
+  }`. There's no SQL.
+- Every save re-reads the row and writes only if `updated_at` hasn't
+  changed since, retrying on top of the newer version. That way two leads
+  editing different days don't undo each other. Remove sets
+  `fields.voided`.
+
+The old **Scheduling** page (`schedule.html`, `work_schedule` rows) is no
+longer on the hub. It's still linked at the bottom of Master Schedule so
+past day schedules can be looked up. What it did:
+
+**Scheduling** (`schedule.html`) replaced the shared
 daily sheet (a column per location, names under it, tasks in red):
 - Each day starts empty. **+ Add schedule** creates one for a location
   (Adobe, Airway, Wildcat, Comstock, Lucerne, Sulphur Bank, Highland, or
@@ -490,6 +542,19 @@ or just hours, one or more people, and zero or more UIDs, then Save.
   lot). The split is worked out when a report is opened, so it settles on
   its own once the harvest is in. A season is the calendar year, so farms
   with several rounds a year would need explicit harvest periods.
+- **A project**: "Applies to" can also be a Master Schedule project.
+  Picking one fills in its process and lists its UIDs. The entry stores
+  `project` (the `work_project` id) and `projectName`, with no UIDs.
+  - `laborAllocations` splits the hours over the UIDs the project has
+    when the report is opened, by pounds at the process (the same as a
+    multi-UID entry), so UIDs added to the project later pick up their
+    share.
+  - Unlike farm-wide time, this counts as direct labor on those lots.
+  - Until the project has UIDs, the hours wait as its pool (basis
+    `project-pending`, lotId `project:<id>`, shown at the bottom of By
+    lot).
+  - Pages that allocate labor (Labor Log, Harvest Intakes, the
+    dashboard) load the `work_project` rows into `stages.work_project`.
 - **Costs** use each person's own loaded $/hr (wage + taxes + benefits),
   set in the admin panel's **Labor Rates** tab (see `docs/USER_ADMIN.md`).
   Rates live in the `labor_rates` table, one row per person per effective
@@ -535,6 +600,15 @@ is logged. Each person who clocked in that day, or has an entry, gets a row:
 - Clocked time with no entry covering it is hatched gold. Tapping a hatched
   stretch opens Log time with that person, the date and those times filled
   in.
+  - **Right-clicking** a hatched stretch (or long-pressing it, where the
+    browser supports that) opens a menu of the Master Schedule projects
+    running at that time. The person's own responsibilities come first
+    ("✓ Trimmers"), then other projects whose hours overlap. Picking one
+    saves an entry for the whole stretch right away. It takes the person,
+    the gap's start/end, the project, the responsibility (`role`,
+    `roleName`), and the responsibility's process, else the project's,
+    else Other / general.
+  - **Something else…** opens Log time, the same as a tap.
 - Entries logged while the person wasn't clocked in get a red outline.
 
 Each person's row shows **where they clocked in**: the Connecteam job they

@@ -631,6 +631,8 @@
       const client = getClient();
       const st = {};
       await Promise.all(OPERATIONS_STATIONS.map(async (s) => { st[s.key] = await loadSubmitted(s.key); }));
+      // Master Schedule projects — a project entry's hours go over its UIDs.
+      st.work_project = await loadSubmitted('work_project');
       const entries = [];
       for (let page = 0; client && page < 50; page++) {
         const { data, error } = await client.from('operations_forms').select('*').eq('station_key', 'labor_entry')

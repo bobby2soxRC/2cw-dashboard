@@ -1021,9 +1021,39 @@ const LABOR_PROCESSES = {
   transport: { en: 'Transportation', es: 'Transporte' },
   other:     { en: 'Other / general', es: 'Otro / general' }
 };
+// Work locations — Scheduling's day schedules and the Master Schedule's
+// projects. 'other' takes a typed name (`locationName`).
+const WORK_LOCATIONS = [
+  ['adobe', 'Adobe'], ['airway', 'Airway'], ['wildcat', 'Wildcat'], ['comstock', 'Comstock'],
+  ['lucerne', 'Lucerne'], ['sulphur_bank', 'Sulphur Bank'], ['highland', 'Highland'], ['other', null]
+];
+// Master Schedule projects (master_schedule.html, station_key
+// 'work_project'): fields { name, location, locationName, process, start,
+// end (dates; no end = open-ended), days (0 = Sun … 6 = Sat; empty = every
+// day), startTime, endTime, status, roles: [{id, name, process, startTime?,
+// endTime?, people: [{userId, name, lead}]}], uids, notes }. Roles are the
+// standing responsibilities on the project and the people under each — the
+// daily/weekly schedule is every project running that day with its roles.
+const projectRunsOn = (f, date) => {
+  if (!f || (f.status || 'active') === 'done' || !date) return false;
+  if (f.start && date < f.start) return false;
+  if (f.end && date > f.end) return false;
+  const dow = new Date(date + 'T12:00:00').getDay();
+  return !(f.days && f.days.length) || f.days.includes(dow);
+};
+// A project's (or one role's) hours that day as [startMin, endMin], the end
+// past 1440 when it runs over midnight and start + 8 h when there's no end;
+// [null, null] when no times are set (all day).
+const projectHours = (f, role) => {
+  const toMin = (s) => { const [h, m] = String(s || '').split(':').map(Number); return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : null; };
+  const s = toMin((role && role.startTime) || f.startTime);
+  if (s == null) return [null, null];
+  const e0 = toMin((role && role.startTime ? role.endTime : f.endTime) || '');
+  return [s, e0 == null ? s + 480 : (e0 <= s ? e0 + 1440 : e0)];
+};
 // Display name for any Labor Log process key — station or not.
 const processTitle = (k) => (STATION_BY_KEY[k] && STATION_BY_KEY[k].title) || LABOR_PROCESSES[k] || { en: k || '—', es: k || '—' };
 
 if (typeof module !== 'undefined') {
-  module.exports = { OPERATIONS_STATIONS, STATION_BY_KEY, BIOMASS, SELLABLE, PREFILL_MAP, PIPELINE_ORDER, G_PER_LB, LABOR_PROCESSES, processTitle };
+  module.exports = { OPERATIONS_STATIONS, STATION_BY_KEY, BIOMASS, SELLABLE, PREFILL_MAP, PIPELINE_ORDER, G_PER_LB, LABOR_PROCESSES, WORK_LOCATIONS, projectRunsOn, projectHours, processTitle };
 }

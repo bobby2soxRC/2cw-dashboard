@@ -193,6 +193,9 @@
   const lastEntry = allRows.map((r) => String(r.submittedAt || r.date || '')).sort().pop();
   document.getElementById('sub').textContent =
     `${t(L.lastEntry)}: ${lastEntry ? lastEntry.slice(0, 10) : t(L.never)} · ${allRows.length} records`;
+  // Master Schedule projects (not records, so after the count) — a project
+  // entry's hours go over the project's UIDs.
+  stages.work_project = await loadSubmitted('work_project');
 
   // ── Filters ───────────────────────────────────────────────────────────────
   const filter = { strain: '', site: '', from: '', to: '' };

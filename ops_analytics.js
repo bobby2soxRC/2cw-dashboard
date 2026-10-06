@@ -479,7 +479,11 @@ function entryFarms(r) {
 // hours). If any UID on the entry has no weight yet, the entry is split
 // evenly instead and marked basis 'even' — it re-splits by weight on its own
 // once the weights are recorded. No UIDs keeps the hours on one row with a
-// blank UID. Voided entries count for nothing. `lotId` is the lot's root UID
+// blank UID. An entry on a Master Schedule project (`project`, a
+// work_project id, with no UIDs of its own) goes over the UIDs the project
+// has now, the same way — so UIDs added to the project later pick up their
+// share; until it has any, the hours wait as the project's pool (basis
+// 'project-pending'). Voided entries count for nothing. `lotId` is the lot's root UID
 // (Take Down's on-stem tag rolls back to the farm package), so labor at every
 // stage of one lot adds up in one place.
 function laborAllocations(stages, rates) {
@@ -500,13 +504,23 @@ function laborAllocations(stages, rates) {
       return { lot: l, lb: st ? st.outputLb : 0, date: st ? st.date : '' };
     })
     .filter((x) => x.lb > 0 && String(x.date).slice(0, 4) === year));
+  const projects = new Map((stages.work_project || []).filter((p) => p && !p.voided).map((p) => [p.id, p]));
   const out = [];
   entries.forEach((r) => {
     const hours = num(r.hours);
     const rate = rateFor(rates, r.employeeId, dayOf(r));
     const base = { entryId: r.id, date: dayOf(r), process: r.process || '',
-                   employeeNo: String(r.employeeId || r.employeeName || '').trim(), name: r.employeeName || '' };
-    const uids = (r.uids || []).filter((u) => u && u.uid);
+                   employeeNo: String(r.employeeId || r.employeeName || '').trim(), name: r.employeeName || '',
+                   project: r.project || '' };
+    let uids = (r.uids || []).filter((u) => u && u.uid);
+    if (r.project && !uids.length) {
+      uids = ((projects.get(r.project) || {}).uids || []).filter((u) => u && u.uid);
+      if (!uids.length) {
+        if (hours) out.push({ ...base, uid: '', lotId: 'project:' + r.project, strain: '', lb: null, share: 1, basis: 'project-pending',
+                              hours: round2(hours), cost: rate != null ? round2(hours * rate) : null });
+        return;
+      }
+    }
     // General work at a farm: spread over the pounds the farm brings in that
     // year under any of its licenses (`farms`; older entries have a single
     // `farm`) — see farmLots. Until it has any, it waits as the farm's pool.
@@ -561,7 +575,9 @@ function laborAllocations(stages, rates) {
 //   farmHours, farmCost,           this lot's current share of farm-wide work
 //   farmCostPerWetLb               (estimate)
 // Farm-wide time with no pounds yet comes back as the farm's own pool row
-// (pending, lotId 'farm:<license>'); time with no UID at all as lotId ''.
+// (pending, lotId 'farm:<license>'), a project with no UIDs yet as the
+// project's (pending, lotId 'project:<id>'); time with no UID at all as
+// lotId ''.
 function laborCostByLot(stages, rates, allocs) {
   const lots = new Map(buildLots(stages).map((l) => [l.id, l]));
   const by = new Map();
@@ -572,7 +588,8 @@ function laborCostByLot(stages, rates, allocs) {
       const wet = lot ? ((lot.stages.intake_wet || {}).outputLb || (lot.stages.harvest || {}).outputLb || 0) : 0;
       const cur = lot && lot.currentStage ? lot.stages[lot.currentStage].outputLb : 0;
       row = { lotId: a.lotId, strain: a.strain || (lot && lot.strain) || '', currentStage: lot ? lot.currentStage : null,
-              farm: lot ? lot.pid : (a.farm || ''), pending: a.basis === 'farm-pending',
+              farm: lot ? lot.pid : (a.farm || ''), pending: a.basis === 'farm-pending' || a.basis === 'project-pending',
+              project: a.basis === 'project-pending' ? a.project : '',
               wetLb: wet || null, currentLb: cur || null, uids: new Set(), byProcess: {}, hours: 0, cost: 0,
               costKnown: true, farmHours: 0, farmCost: 0, farmCostKnown: true, evenSplit: false };
       by.set(a.lotId, row);

@@ -208,10 +208,7 @@
   const DATA_BASE = 'https://raw.githubusercontent.com/bobby2soxRC/2cw-dashboard/main/data/';
   const DEFAULT_SHIFT_H = 8;
   const me = sessionStorage.getItem('2cw_user_name') || '';
-  const LOCATIONS = [
-    ['adobe', 'Adobe'], ['airway', 'Airway'], ['wildcat', 'Wildcat'], ['comstock', 'Comstock'],
-    ['lucerne', 'Lucerne'], ['sulphur_bank', 'Sulphur Bank'], ['highland', 'Highland'], ['other', null]
-  ];
+  const LOCATIONS = WORK_LOCATIONS;
 
   const L = {
     title:    { en: 'Scheduling', es: 'Horarios' },

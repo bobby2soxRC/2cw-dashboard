@@ -163,6 +163,19 @@
       line-height:1.45;max-width:280px;box-shadow:0 10px 30px rgba(0,0,0,.5);pointer-events:none;display:none}
     #tl-tip b{font-family:'DM Mono',monospace;font-weight:500}
     #tl-tip .s{color:var(--muted);font-size:.75rem}
+    /* Right-click menu on a not-logged stretch: projects scheduled then. */
+    #tl-menu{position:fixed;z-index:60;min-width:260px;max-width:min(380px,calc(100vw - 16px));max-height:70vh;overflow-y:auto;
+      background:var(--surface2);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.5);padding:6px}
+    #tl-menu .mh{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--text);padding:8px 10px 4px}
+    #tl-menu .mg{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 10px}
+    #tl-menu button{display:block;width:100%;text-align:left;background:transparent;border:none;color:var(--text);font:inherit;font-size:.9rem;
+      padding:8px 10px;border-radius:8px;cursor:pointer}
+    #tl-menu button:hover,#tl-menu button:focus{background:var(--surface)}
+    #tl-menu button .s{display:block;font-size:.78rem;color:var(--subtext)}
+    #tl-menu button .ok{color:var(--green);font-size:.78rem}
+    #tl-menu button.other{border-top:1px solid var(--border);border-radius:0 0 8px 8px;color:var(--blue);margin-top:4px}
+    .proj-uids{margin-top:8px;font-size:.85rem;color:var(--subtext);line-height:1.6}
+    .proj-uids a{color:var(--blue)}
     /* Farm licenses grouped by farm: tap the farm to take all its licenses. */
     .farm-pick{max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;background:var(--bg)}
     .fgrp{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 10px;border-top:1px solid var(--border)}
@@ -237,6 +250,12 @@
           <div class="farm-pick" id="farm"></div>
           <div class="hint" id="h-farm"></div>
         </div>
+        <div id="target-project" hidden>
+          <label class="lbl" for="project" id="l-project"></label>
+          <select id="project"></select>
+          <div class="proj-uids" id="project-uids"></div>
+          <div class="hint" id="h-project"></div>
+        </div>
       </div>
       <div class="field">
         <label for="notes" id="l-notes"></label>
@@ -279,6 +298,7 @@
 </main>
 <div id="toast"></div>
 <div id="tl-tip" role="tooltip"></div>
+<div id="tl-menu" role="menu" hidden></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/config/supabase_config.js"></script>
@@ -447,6 +467,28 @@
     sumFarmNone:{ en: 'No pounds from {f} in {y} yet — the hours wait in the farm’s pool and spread over its lots as intakes come in.',
                   es: 'Todavía no hay libras de {f} en {y} — las horas esperan en el fondo del rancho y se reparten entre sus lotes cuando lleguen las recepciones.' },
     pool:      { en: 'waiting for pounds', es: 'esperando libras' },
+    tgtProject:{ en: 'A project', es: 'Un proyecto' },
+    project:   { en: 'Project (Master Schedule)', es: 'Proyecto (Plan Maestro)' },
+    hProject:  { en: 'For work on a Master Schedule project. The hours are split over the project’s UIDs by the pounds each had at this process — UIDs added to the project later pick up their share.',
+                 es: 'Para trabajo en un proyecto del Plan Maestro. Las horas se dividen entre los UIDs del proyecto según las libras de cada uno en este proceso — los UIDs que se agreguen después toman su parte.' },
+    needProject:{ en: 'Pick the project.', es: 'Elija el proyecto.' },
+    noProjects:{ en: 'No projects yet — create them in Master Schedule.', es: 'No hay proyectos — créelos en el Plan Maestro.' },
+    projActive:{ en: 'Active', es: 'Activos' },
+    projPlanned:{ en: 'Planned', es: 'Planeados' },
+    projDone:  { en: 'Done', es: 'Terminados' },
+    projLabel: { en: 'Project: {p}', es: 'Proyecto: {p}' },
+    projUids:  { en: '{n} UIDs on this project:', es: '{n} UIDs en este proyecto:' },
+    projNoUids:{ en: 'No UIDs on this project yet — the hours wait in the project’s pool until UIDs are added.', es: 'Este proyecto aún no tiene UIDs — las horas esperan en el fondo del proyecto hasta que se agreguen.' },
+    projManage:{ en: 'Add UIDs in Master Schedule', es: 'Agregar UIDs en el Plan Maestro' },
+    sumProject:{ en: 'Split over the project’s {u} UIDs by the pounds each one had at this process:', es: 'Dividido entre los {u} UIDs del proyecto según las libras de cada uno en este proceso:' },
+    projPool:  { en: 'waiting for UIDs', es: 'esperando UIDs' },
+    menuHd:    { en: 'Log this time to a scheduled project', es: 'Registrar este tiempo a un proyecto programado' },
+    menuNone:  { en: 'No projects scheduled around this time.', es: 'No hay proyectos programados a esta hora.' },
+    menuOngoing:{ en: 'Running this day', es: 'En curso este día' },
+    menuMine:  { en: 'assigned', es: 'asignado' },
+    menuForm:  { en: 'Something else… (open Log time)', es: 'Otra cosa… (abrir Registrar horas)' },
+    menuSaved: { en: 'Logged {h} h to {p}', es: 'Se registraron {h} h a {p}' },
+    tlRightClick:{ en: 'Right-click (or long-press) a gold stretch to log it straight to a project scheduled at that time.', es: 'Clic derecho (o mantenga presionado) en un tramo dorado para registrarlo directo a un proyecto programado a esa hora.' },
     farmShare: { en: 'incl. {h} h farm-wide', es: 'incl. {h} h del rancho' },
     tabTl:     { en: 'Timeline', es: 'Línea de tiempo' },
     tlOnly:    { en: 'Only people with time not logged', es: 'Solo personas con tiempo sin registrar' },
@@ -784,6 +826,29 @@
   if (params.get('uid')) { addUid({ uid: normUid(params.get('uid')) }); uidsReady.then(() => {
     uids = uids.map((u) => ({ ...u, strain: u.strain || (uidIndex.get(u.uid) || {}).strain || '' })); renderUids(); }); }
 
+  // ── Master Schedule projects ────────────────────────────────────────────
+  // operations_forms rows, station_key 'work_project' (master_schedule.html).
+  // A project entry stores the project's id; its hours go over whatever UIDs
+  // the project has when a report is opened (laborAllocations).
+  let projects = [];
+  const projectsReady = (async () => {
+    const client = getClient();
+    if (!client) return [];
+    const { data, error } = await client.from('operations_forms').select('*')
+      .eq('station_key', 'work_project').eq('status', 'submitted').order('work_date', { ascending: false });
+    if (error) { console.error('projects', error); return []; }
+    projects = (data || []).filter((r) => !(r.fields || {}).voided);
+    return projects;
+  })();
+  const projectById = (id) => projects.find((p) => p.id === id) || null;
+  const projectName = (id, fallback) => { const p = projectById(id); return p ? p.fields.name : (fallback || '—'); };
+  // What an entry was logged against, when it isn't UIDs: a project or a farm.
+  function entryOn(f) {
+    if (f.project && !(f.uids || []).length) return fill(t(L.projLabel), { p: projectName(f.project, f.projectName) });
+    if (isFarmEntry(f)) return fill(t(L.farmLabel), { f: farmsLabel(entryFarms(f), f.farmName) });
+    return null;
+  }
+
   // ── Stage records, for weights ──────────────────────────────────────────
   // Every submitted station record, the same set the dashboard reads —
   // what laborAllocations uses to find each UID's lot and its pounds.
@@ -792,6 +857,8 @@
     if (!stagesP) stagesP = (async () => {
       const st = {};
       await Promise.all(OPERATIONS_STATIONS.map(async (s) => { st[s.key] = await loadSubmitted(s.key); }));
+      // Master Schedule projects, so a project entry splits over its UIDs.
+      st.work_project = (await projectsReady).map(flattenRecord);
       return st;
     })();
     return stagesP;
@@ -883,15 +950,61 @@
   $('l-target').textContent = t(L.target);
   $('l-farm').textContent = t(L.farm);
   $('h-farm').textContent = t(L.hFarm);
-  $('target-seg').innerHTML = [['uids', L.tgtUids], ['farm', L.tgtFarm]]
+  $('target-seg').innerHTML = [['uids', L.tgtUids], ['project', L.tgtProject], ['farm', L.tgtFarm]]
     .map(([k, l]) => `<button type="button" data-target="${k}">${esc(t(l))}</button>`).join('');
   function setTarget(k) {
     target = k;
     document.querySelectorAll('#target-seg button').forEach((b) => b.classList.toggle('on', b.dataset.target === k));
     $('target-uids').hidden = k !== 'uids';
     $('target-farm').hidden = k !== 'farm';
+    $('target-project').hidden = k !== 'project';
     renderSummary();
   }
+  // Project picker: active first, then planned, then the last 60 days of done.
+  $('l-project').textContent = t(L.project);
+  $('h-project').textContent = t(L.hProject);
+  function renderProjectPick() {
+    const cur = $('project').value;
+    const cutoff = (() => { const d = new Date(); d.setDate(d.getDate() - 60); return localDay(d); })();
+    const opt = (p) => {
+      const f = p.fields;
+      const loc = f.location === 'other' ? f.locationName : ((WORK_LOCATIONS.find((l) => l[0] === f.location) || [])[1] || '');
+      return `<option value="${esc(p.id)}">${esc([f.name, loc].filter(Boolean).join(' — '))}</option>`;
+    };
+    const grp = (label, list) => list.length ? `<optgroup label="${esc(t(label))}">${list.map(opt).join('')}</optgroup>` : '';
+    const st = (p) => p.fields.status || 'active';
+    $('project').innerHTML = projects.length
+      ? `<option value=""></option>` + grp(L.projActive, projects.filter((p) => st(p) === 'active'))
+        + grp(L.projPlanned, projects.filter((p) => st(p) === 'planned'))
+        + grp(L.projDone, projects.filter((p) => st(p) === 'done' && (p.fields.end || p.work_date) >= cutoff))
+      : `<option value="">${esc(t(L.noProjects))}</option>`;
+    if (cur && projectById(cur)) $('project').value = cur;
+    renderProjectUids();
+  }
+  function renderProjectUids() {
+    const p = projectById($('project').value);
+    if (!p) { $('project-uids').innerHTML = ''; return; }
+    const us = (p.fields.uids || []).filter((u) => u && u.uid);
+    const link = `<a href="/master_schedule.html?id=${encodeURIComponent(p.id)}">${esc(t(L.projManage))}</a>`;
+    $('project-uids').innerHTML = (us.length
+      ? esc(fill(t(L.projUids), { n: us.length })) + ' ' + us.map((u) => `<span class="m" title="${esc(u.uid)}">${esc(tail(u.uid))}</span>`).join(' ')
+      : esc(t(L.projNoUids))) + ' · ' + link;
+  }
+  $('project').addEventListener('change', () => {
+    // A project's own process fills in the process, when it has one.
+    const p = projectById($('project').value);
+    if (p && p.fields.process && $('process').querySelector(`option[value="${p.fields.process}"]`)) $('process').value = p.fields.process;
+    renderProjectUids();
+    renderSummary();
+  });
+  projectsReady.then(() => {
+    renderProjectPick();
+    if (params.get('project') && projectById(params.get('project'))) {
+      $('project').value = params.get('project');
+      $('project').dispatchEvent(new Event('change'));
+      setTarget('project');
+    }
+  });
   $('target-seg').onclick = (e) => { const b = e.target.closest('button'); if (b) setTarget(b.dataset.target); };
   document.querySelector('#target-seg button[data-target="uids"]').classList.add('on');
   loadReference().then((ref) => {
@@ -919,7 +1032,7 @@
       const costs = people.map((x) => costOf(x.userId, $('date').value, h));
       if (costs.every((c) => c != null)) s += ' ' + fill(t(L.sumCost), { c: `<b>${fmtMoney(costs.reduce((a, c) => a + c, 0))}</b>` });
     }
-    if (target === 'farm') { /* farm preview comes from renderSplit */ }
+    if (target === 'farm' || target === 'project') { /* preview comes from renderSplit */ }
     else if (!uids.length) s += '<br>' + t(L.sumNoUid);
     else if (uids.length === 1) s += '<br>' + fill(t(L.sumOne), { uid: `<b>${esc(tail(uids[0].uid))}</b>` });
     $('summary').innerHTML = s;
@@ -955,6 +1068,32 @@
         (al.length > 12 ? `<div class="s">+ ${al.length - 12}</div>` : '');
       return;
     }
+    if (target === 'project') {
+      const pid = $('project').value;
+      if (!pid || !people.length || !h || !proc) { $('split').innerHTML = ''; return; }
+      const st = await loadStages();
+      if (seq !== splitSeq) return;
+      const preview = people.map((x, i) => ({ id: 'preview' + i, process: proc, hours: h, date: $('date').value, project: pid,
+                                              employeeId: x.userId, employeeName: x.name, uids: [] }));
+      const per = A.laborAllocations({ ...st, labor_entry: preview }, rates);
+      if (!per.length || per[0].basis === 'project-pending') { $('split').innerHTML = '<br>' + esc(t(L.projNoUids)); return; }
+      const al = [];
+      per.forEach((a) => {
+        const row = al.find((x) => x.uid === a.uid);
+        if (!row) al.push({ ...a });
+        else { row.hours += a.hours; row.cost = row.cost == null || a.cost == null ? null : row.cost + a.cost; }
+      });
+      if (al.length > 1 && al[0].basis === 'even') {
+        const missing = al.filter((a) => !a.lb).map((a) => tail(a.uid)).join(', ');
+        $('split').innerHTML = '<br>' + esc(fill(t(L.sumEven), { u: al.length, missing }));
+        return;
+      }
+      $('split').innerHTML = '<br>' + esc(fill(t(L.sumProject), { u: al.length })) +
+        `<table>${al.slice(0, 12).map((a) => `<tr><td class="m">${esc(tail(a.uid))}</td><td>${esc(a.strain)}</td><td class="n">${a.lb ? fmtNum(a.lb, 0) + ' lb' : '—'}</td>
+          <td class="n">${fmtPct(a.share, 0)}</td><td class="n"><b>${fmtNum(a.hours, 2)} h</b></td>${a.cost != null ? `<td class="n">${fmtMoney(a.cost)}</td>` : ''}</tr>`).join('')}</table>` +
+        (al.length > 12 ? `<div class="s">+ ${al.length - 12}</div>` : '');
+      return;
+    }
     if (uids.length < 2 || !people.length || !h || !proc) { $('split').innerHTML = ''; return; }
     const st = await loadStages();
     if (seq !== splitSeq) return;
@@ -986,20 +1125,23 @@
     err.textContent = '';
     const proc = $('process').value, date = $('date').value, hours = num($('hours').value);
     const problem = !proc ? L.needProc : !date ? L.needDate : !people.length ? L.needPeople
-      : !(hours > 0) ? L.needHours : hours > 16 ? L.tooMany : target === 'farm' && !selFarms.size ? L.needFarm : null;
+      : !(hours > 0) ? L.needHours : hours > 16 ? L.tooMany : target === 'farm' && !selFarms.size ? L.needFarm
+      : target === 'project' && !projectById($('project').value) ? L.needProject : null;
     if (problem) { err.textContent = t(problem); return; }
     const client = getClient();
     if (!client) { err.textContent = t(L.noDb); return; }
     const isFarm = target === 'farm';
-    const strains = isFarm ? [] : [...new Set(uids.map((u) => u.strain).filter(Boolean))];
+    const proj = target === 'project' ? projectById($('project').value) : null;
+    const strains = isFarm || proj ? [] : [...new Set(uids.map((u) => u.strain).filter(Boolean))];
     const now = new Date().toISOString();
     const rows = people.map((p) => ({
       station_key: ENTRY_KEY, status: 'submitted', owner_user: me || null, updated_by: me || null,
       strain: strains.length === 1 ? strains[0] : null, work_date: date, submitted_at: now,
       fields: {
         process: proc, employeeId: p.userId || '', employeeName: p.name,
-        uids: isFarm ? [] : uids.map((u) => ({ uid: u.uid, strain: u.strain || '' })),
+        uids: isFarm || proj ? [] : uids.map((u) => ({ uid: u.uid, strain: u.strain || '' })),
         ...(isFarm ? (() => { const sel = [...selFarms].sort(); return { farms: sel, farm: sel[0], farmName: farmsLabel(sel) }; })() : {}),
+        ...(proj ? { project: proj.id, projectName: proj.fields.name } : {}),
         start: $('start').value || '', end: $('end').value || '', hours,
         notes: $('notes').value.trim(), enteredBy: me
       }
@@ -1083,7 +1225,7 @@
       const f = r.fields || {};
       if (proc && f.process !== proc) return false;
       if (!q || noSearch) return true;
-      return fold(f.employeeName).includes(q) || fold(f.farmName).includes(q) || (qu && (f.uids || []).some((u) => normUid(u.uid).includes(qu)));
+      return fold(f.employeeName).includes(q) || fold(f.farmName).includes(q) || (f.project && fold(projectName(f.project, f.projectName)).includes(q)) || (qu && (f.uids || []).some((u) => normUid(u.uid).includes(qu)));
     });
   }
 
@@ -1105,7 +1247,7 @@
       const body = rows.map((r) => {
         const f = r.fields;
         const time = f.start && f.end ? `${f.start}–${f.end}` : '';
-        const us = isFarmEntry(f) ? esc(fill(t(L.farmLabel), { f: farmsLabel(entryFarms(f), f.farmName) }))
+        const us = entryOn(f) ? esc(entryOn(f))
           : (f.uids || []).map((u) => `<span class="m" title="${esc(u.uid)}">${esc(tail(u.uid))}</span>${u.strain ? ` <span class="s">${esc(u.strain)}</span>` : ''}`).join('<br>') || `<span class="s">${esc(t(L.noUid))}</span>`;
         return `<tr><td>${esc(r.work_date)}</td>
           <td>${esc(f.employeeName)}${f.employeeId ? '' : ` <span class="s warn">${esc(t(L.notInCt))}</span>`}</td>
@@ -1170,7 +1312,8 @@
       ? `<span class="warn">${fmtMoney(l.farmCost)}</span><div class="s">${fmtNum(l.farmHours, 2)} h</div>` : `<span class="warn">${fmtNum(l.farmHours, 2)} h</span>`;
     const cell = (p) => !p ? '' : hasCost ? `${fmtMoney(p.cost)}<div class="s">${fmtNum(p.hours, 2)} h</div>` : `${fmtNum(p.hours, 2)} h`;
     const body = lots.map((l) => `<tr>
-      <td>${l.pending ? `${esc(fill(t(L.farmLabel), { f: farmsLabel(String(l.farm || '').split(',').filter(Boolean)) }))}<div class="s warn">${esc(t(L.pool))}</div>`
+      <td>${l.pending && l.project ? `${esc(fill(t(L.projLabel), { p: projectName(l.project) }))}<div class="s warn">${esc(t(L.projPool))}</div>`
+        : l.pending ? `${esc(fill(t(L.farmLabel), { f: farmsLabel(String(l.farm || '').split(',').filter(Boolean)) }))}<div class="s warn">${esc(t(L.pool))}</div>`
         : l.lotId ? `<span class="m" title="${esc(l.uids.join(', '))}">${esc(tail(l.lotId))}</span>${l.evenSplit ? ' <span class="warn">≈</span>' : ''}
         <div class="s">${esc([l.strain, l.farm ? farmName(l.farm) : ''].filter(Boolean).join(' · '))}</div>`
         : `<span class="s">${esc(t(L.noUid))}</span>`}</td>
@@ -1313,8 +1456,7 @@
     const d = new Date(date + 'T12:00:00').toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric' });
     $('mine').innerHTML = `<div class="mine-hd">${esc(fill(t(L.mineHd), { d }))}</div>` + mine.map((r) => {
       const f = r.fields || {};
-      const on = isFarmEntry(f) ? fill(t(L.farmLabel), { f: farmsLabel(entryFarms(f), f.farmName) })
-        : (f.uids || []).map((u) => tail(u.uid)).join(' ') || t(L.noUid);
+      const on = entryOn(f) || (f.uids || []).map((u) => tail(u.uid)).join(' ') || t(L.noUid);
       const time = f.start && f.end ? `${f.start}–${f.end} · ` : '';
       return `<div class="mine-row"><div class="what">${esc(f.employeeName)} · ${esc(procTitle(f.process))}
           <span class="s">${esc(time + on)}</span></div>
@@ -1397,7 +1539,7 @@
     const nowMin = (Date.now() - day0) / 60000;
     const isToday = date === localDay();
     if (!shiftData || !Array.isArray(shiftData.shifts)) $('tl-note').textContent = t(L.tlNoData);
-    else $('tl-note').textContent = fill(t(L.tlNote), { t: new Date(shiftData.last_sync).toLocaleString() });
+    else $('tl-note').textContent = fill(t(L.tlNote), { t: new Date(shiftData.last_sync).toLocaleString() }) + ' ' + t(L.tlRightClick);
 
     // People: everyone clocked in that day, plus anyone with an entry.
     const rows = new Map();
@@ -1471,9 +1613,9 @@
         esc(fill(t(L.tlShiftTip), { a: hhmm(a), b: b === nowMin ? '…' : hhmm(b), h: fmtNum((b - a) / 60, 2) })) + (place ? '<br>' + esc(fill(t(L.tlAt), { p: place })) : ''))}"></div>`));
       r.timed.forEach((e) => {
         const f = e.f;
-        const label = [procTitle(f.process), isFarmEntry(f) ? farmsLabel(entryFarms(f), f.farmName) : (f.uids || []).map((u) => tail(u.uid)).join(' ')].filter(Boolean).join(' · ');
+        const label = [procTitle(f.process), entryOn(f) || (f.uids || []).map((u) => tail(u.uid)).join(' ')].filter(Boolean).join(' · ');
         segs.push(`<div class="seg entry" style="left:${X(e.a)};width:${W(e.a, e.b)}" data-tip="${tip(
-          `<b>${esc(f.start)}–${esc(f.end)}</b> · ${fmtH(num(f.hours))} h<br>${esc(procTitle(f.process))}<br>${isFarmEntry(f) ? esc(fill(t(L.farmLabel), { f: farmsLabel(entryFarms(f), f.farmName) })) : (f.uids || []).map((u) => `<b>${esc(tail(u.uid))}</b> ${esc(u.strain || '')}`).join('<br>') || `<span class="s">${esc(t(L.noUid))}</span>`}${f.notes ? `<br><span class="s">${esc(f.notes)}</span>` : ''}`)}">${esc(label)}</div>`);
+          `<b>${esc(f.start)}–${esc(f.end)}</b> · ${fmtH(num(f.hours))} h<br>${esc(procTitle(f.process))}<br>${entryOn(f) ? esc(entryOn(f)) : (f.uids || []).map((u) => `<b>${esc(tail(u.uid))}</b> ${esc(u.strain || '')}`).join('<br>') || `<span class="s">${esc(t(L.noUid))}</span>`}${f.notes ? `<br><span class="s">${esc(f.notes)}</span>` : ''}`)}">${esc(label)}</div>`);
       });
       r.outside.forEach(([a, b]) => segs.push(`<div class="seg outside" style="left:${X(a)};width:${W(a, b)}"></div>`));
       r.gaps.forEach(([a, b]) => segs.push(`<button type="button" class="seg gap" style="left:${X(a)};width:${W(a, b)}" aria-label="${esc(fill(t(L.tlGapTip), { a: hhmm(a), b: hhmm(b), h: fmtNum((b - a) / 60, 2) }))}"
@@ -1519,6 +1661,91 @@
     showTab('log');
     window.scrollTo(0, 0);
     $('process').focus();
+  });
+
+  // Right-click (or long-press) a not-logged stretch: the Master Schedule
+  // projects running around that time (projectRunsOn / projectHours in
+  // operations_stations.js), to log the whole stretch to one in a single
+  // step. The person's own responsibilities come first ("✓ Trimmers"), then
+  // the rest of the projects whose hours overlap. The entry takes the gap's
+  // start/end, the person, and the role's process (else the project's, else
+  // Other / general).
+  const menuEl = $('tl-menu');
+  let menuCtx = null;
+  const closeMenu = () => { menuEl.hidden = true; menuCtx = null; };
+  function scheduledAround(date, a, b, userId, name) {
+    const out = [];
+    const isMe = (p) => userId ? String(p.userId) === String(userId) : fold(p.name) === fold(name);
+    projects.forEach((p) => {
+      const f = p.fields;
+      if (!projectRunsOn(f, date)) return;
+      const overlaps = (role) => {
+        const [s, e] = projectHours(f, role);
+        return s == null || (s < b && e > a);
+      };
+      const mineRoles = (f.roles || []).filter((r) => (r.people || []).some(isMe) && overlaps(r));
+      mineRoles.forEach((role) => out.push({ p, role, mine: true }));
+      if (!mineRoles.length && overlaps(null)) out.push({ p, role: null, mine: false });
+    });
+    return out.sort((x, y) => y.mine - x.mine || String(x.p.fields.name).localeCompare(String(y.p.fields.name)));
+  }
+  function openMenu(g, x, y) {
+    const r = tlRows[+g.dataset.row];
+    const a = +g.dataset.a, b = +g.dataset.b;
+    const date = $('tl-date').value || localDay();
+    const opts = scheduledAround(date, a, b, r.userId, r.name);
+    menuCtx = { r, a, b, date, opts, g };
+    const locOf = (f) => f.location === 'other' ? f.locationName : ((WORK_LOCATIONS.find((l) => l[0] === f.location) || [])[1] || '');
+    const span = (f, role) => { const [s, e] = projectHours(f, role); return s == null ? t(L.menuOngoing) : `${hhmm(s)}–${hhmm(e)}`; };
+    menuEl.innerHTML = `<div class="mh">${esc(r.name)} · ${esc(hhmm(a))}–${esc(hhmm(b))} (${fmtNum((b - a) / 60, 2)} h)</div>` +
+      (opts.length ? `<div class="mg">${esc(t(L.menuHd))}</div>` + opts.map((o, i) => {
+        const f = o.p.fields;
+        const sub = [span(f, o.role), locOf(f), procTitle((o.role && o.role.process) || f.process || 'other')].filter(Boolean).join(' · ');
+        return `<button type="button" data-opt="${i}"><b>${esc(f.name)}</b>${o.mine ? ` <span class="ok">✓ ${esc(o.role.name || t(L.menuMine))}</span>` : ''}<span class="s">${esc(sub)}</span></button>`;
+      }).join('') : `<div class="mg">${esc(t(L.menuNone))}</div>`) +
+      `<button type="button" data-opt="form" class="other">${esc(t(L.menuForm))}</button>`;
+    menuEl.hidden = false;
+    const w = menuEl.offsetWidth, h = menuEl.offsetHeight;
+    menuEl.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, x)) + 'px';
+    menuEl.style.top = Math.max(8, Math.min(window.innerHeight - h - 8, y)) + 'px';
+    tipEl.style.display = 'none';
+  }
+  $('tl-body').addEventListener('contextmenu', (e) => {
+    const g = e.target.closest('button.gap');
+    if (!g) return;
+    e.preventDefault();
+    openMenu(g, e.clientX, e.clientY);
+  });
+  document.addEventListener('click', (e) => { if (!menuEl.hidden && !menuEl.contains(e.target)) closeMenu(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
+  window.addEventListener('scroll', closeMenu, true);
+  menuEl.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-opt]');
+    if (!btn || !menuCtx) return;
+    const { r, a, b, date, opts, g } = menuCtx;
+    if (btn.dataset.opt === 'form') { closeMenu(); g.click(); return; }
+    const o = opts[+btn.dataset.opt];
+    const client = getClient();
+    if (!client) { toast(t(L.noDb)); return; }
+    btn.disabled = true;
+    const hours = Math.round((b - a) / 60 * 100) / 100;
+    const row = {
+      station_key: ENTRY_KEY, status: 'submitted', owner_user: me || null, updated_by: me || null,
+      strain: null, work_date: date, submitted_at: new Date().toISOString(),
+      fields: {
+        process: (o.role && o.role.process) || o.p.fields.process || 'other',
+        employeeId: r.userId || '', employeeName: r.name, uids: [],
+        project: o.p.id, projectName: o.p.fields.name,
+        ...(o.role ? { role: o.role.id, roleName: o.role.name } : {}),
+        start: hhmm(a), end: hhmm(b), hours, notes: '', enteredBy: me
+      }
+    };
+    const { error } = await client.from('operations_forms').insert(row);
+    closeMenu();
+    if (error) { toast(`${t(L.failed)} ${error.message}`); return; }
+    toast(fill(t(L.menuSaved), { h: fmtH(hours), p: o.p.fields.name }));
+    allEntriesP = null;
+    loadTimeline();
   });
 
   showTab(['list', 'timeline'].includes(params.get('tab')) ? params.get('tab') : 'log');

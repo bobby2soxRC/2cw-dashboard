@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Master Schedule — 2CW Operations</title>
+  <script>
+    (function(){ if (!sessionStorage.getItem('2cw_pin')) window.location.replace('/index.html'); })();
+  </script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0c0d0f">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0c0d0f;--surface:#13151a;--surface2:#181b21;--border:#1e2129;
+      --green:#3db87a;--gold:#d4a843;--blue:#5a9fd4;--purple:#9b7fd4;--red:#ef5350;--orange:#e08a3c;
+      --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;
+    }
+    html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-text-size-adjust:100%}
+
+    .hdr{min-height:calc(54px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:12px;position:sticky;top:0;z-index:20}
+    .hdr-back{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
+    .hdr-div{width:1px;height:18px;background:var(--border)}
+    .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .lang{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;flex:0 0 auto}
+    .lang button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:12px;font-weight:600;padding:8px 12px;cursor:pointer;min-height:36px}
+    .lang button.on{background:var(--blue);color:#000}
+
+    main{padding:28px 16px 60px;max-width:1200px;margin:0 auto}
+    .title{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,6vw,46px);letter-spacing:.04em;line-height:1}
+    .sub{margin-top:6px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+    .tabs{display:flex;gap:8px;margin:20px 0 4px;flex-wrap:wrap}
+    .tabs button{background:var(--surface);border:1px solid var(--border);color:var(--subtext);border-radius:10px;padding:.6rem 1rem;
+      font-family:'DM Mono',monospace;font-size:.76rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;min-height:44px}
+    .tabs button.on{background:var(--gold);border-color:var(--gold);color:#000;font-weight:700}
+    .view{display:none}.view.on{display:block}
+
+    .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0 16px}
+    .bar input[type=date]{flex:0 1 180px}
+    .bar input[type=search]{flex:1 1 200px}
+    .nav{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;min-width:46px;min-height:46px;font-size:1.1rem;cursor:pointer}
+    .day-name{font-family:'DM Mono',monospace;font-size:.8rem;color:var(--subtext);letter-spacing:.06em;text-transform:uppercase}
+    .spacer{flex:1}
+    input,select,textarea{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .75rem;
+      font:inherit;font-size:1rem;min-height:46px;outline:none;width:100%}
+    input:focus,select:focus,textarea:focus{border-color:var(--blue)}
+    input[type=date],input[type=time]{-webkit-appearance:none;appearance:none;min-width:0;display:block}
+    input::-webkit-date-and-time-value{text-align:left}
+    textarea{min-height:64px;resize:vertical}
+    .btn{padding:.7rem 1.1rem;border:1px solid var(--border);border-radius:10px;font-family:'DM Mono',monospace;font-size:.76rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer;background:transparent;color:var(--text);min-height:46px}
+    .btn-blue{background:var(--blue);border-color:var(--blue);color:#000}
+    .btn-gold{background:var(--gold);border-color:var(--gold);color:#000}
+    .btn-ghost{color:var(--subtext)}
+    .btn-danger{color:var(--red);border-color:rgba(239,83,80,.4)}
+    .btn-sm{min-height:38px;padding:.45rem .8rem;font-size:.68rem}
+    .btn:disabled{opacity:.5;cursor:default}
+    a.btn{text-decoration:none;display:inline-flex;align-items:center}
+    .seg{display:flex;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+    .seg button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:0 12px;min-height:44px;cursor:pointer}
+    .seg button.on{background:var(--blue);color:#000;font-weight:700}
+
+    .summary{font-size:.9rem;color:var(--subtext);margin-bottom:14px}
+    .summary b{color:var(--text);font-family:'DM Mono',monospace;font-weight:500}
+    .summary .warn{color:var(--red)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;align-items:start}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+    .card.editing{border-color:var(--gold);grid-column:1/-1;max-width:860px}
+    .card-hd{background:var(--orange);color:#000;padding:10px 14px}
+    .card-hd .loc{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.04em;line-height:1}
+    .card-hd .nm{font-weight:700;font-size:.95rem;margin-top:2px}
+    .card-hd .time{font-family:'DM Mono',monospace;font-size:.76rem;font-weight:500;margin-top:2px}
+    .card-hd.st-planned{background:var(--blue)}
+    .card-hd.st-done{background:var(--muted)}
+    .card-hd.st-active{background:var(--green)}
+    .card-body{padding:12px 14px}
+    .card-ft{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;padding:0 14px 12px}
+    .meta{font-size:.82rem;color:var(--subtext);line-height:1.55;margin-bottom:8px}
+    .meta b{color:var(--text);font-weight:500}
+    .note{background:rgba(239,83,80,.12);border-left:3px solid var(--red);padding:8px 10px;border-radius:6px;font-size:.88rem;margin-bottom:10px;white-space:pre-wrap}
+    .role{margin-top:10px}
+    .role:first-child{margin-top:0}
+    .role-hd{font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);display:flex;gap:8px;align-items:baseline}
+    .role-hd .tm{color:var(--subtext);letter-spacing:.04em}
+    .ppl{list-style:none}
+    .ppl li{padding:5px 0;border-top:1px solid var(--border);font-size:.92rem}
+    .ppl li:first-child{border-top:none}
+    .ppl .none{color:var(--muted);font-size:.85rem}
+    .ppl li.extra::after{content:' +';color:var(--blue);font-weight:700}
+    .lead-tag{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;background:var(--green);color:#000;border-radius:99px;padding:2px 7px;margin-left:6px;vertical-align:middle}
+    .conflict{display:block;color:var(--red);font-size:.76rem;margin-top:2px}
+    .conflict::before{content:'⚠ '}
+    .off{font-size:.8rem;color:var(--muted);margin-top:8px}
+    .tag{display:inline-block;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--border);color:var(--subtext);border-radius:99px;padding:2px 8px}
+    .m{font-family:'DM Mono',monospace}
+    .s{font-size:.78rem;color:var(--muted)}
+
+    /* Editors */
+    .ed{padding:16px}
+    .ed .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+    .ed .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+    .ed .row > div,.ed .row3 > div{min-width:0}
+    .ed .full{grid-column:1/-1}
+    .lbl{display:block;font-size:.82rem;color:var(--subtext);margin-bottom:5px}
+    .sec{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin:18px 0 8px;padding-top:14px;border-top:1px solid var(--border)}
+    .days{display:flex;gap:6px;flex-wrap:wrap}
+    .days button{background:var(--bg);border:1px solid var(--border);color:var(--subtext);border-radius:8px;min-width:46px;min-height:42px;cursor:pointer;font-family:'DM Mono',monospace;font-size:.72rem}
+    .days button.on{background:var(--gold);border-color:var(--gold);color:#000;font-weight:700}
+    .role-ed{border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;background:var(--surface2)}
+    .role-ed .top{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) auto;gap:8px;align-items:end;margin-bottom:8px}
+    .role-ed .times{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+    .ed-ppl{list-style:none;margin:4px 0 8px}
+    .ed-ppl li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--border)}
+    .ed-ppl li:first-child{border-top:none}
+    .ed-ppl li .nm{min-width:0;font-size:.95rem}
+    .ed-ppl li.out .nm{color:var(--muted);text-decoration:line-through}
+    .star{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;min-height:38px;padding:0 10px;cursor:pointer;font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.06em;text-transform:uppercase}
+    .star.on{background:var(--green);border-color:var(--green);color:#000;font-weight:700}
+    .x{background:transparent;border:1px solid var(--border);color:var(--subtext);border-radius:8px;width:38px;min-height:38px;font-size:1.1rem;cursor:pointer}
+    .x:hover{border-color:var(--red);color:var(--red)}
+    .check{display:flex;gap:10px;align-items:center;font-size:.95rem;cursor:pointer;margin-bottom:12px}
+    .check input{width:22px;height:22px;min-height:0;flex:0 0 auto}
+    .picker{position:relative}
+    .panel{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+      box-shadow:0 10px 30px rgba(0,0,0,.5);max-height:min(50vh,340px);overflow-y:auto;display:none}
+    .panel.on{display:block}
+    .panel button{display:block;width:100%;text-align:left;background:transparent;border:none;color:var(--text);font:inherit;cursor:pointer;padding:9px 14px;min-height:42px}
+    .panel button:hover,.panel button.hl{background:var(--blue);color:#000}
+    .panel button .s{display:block;font-size:.76rem;color:var(--muted)}
+    .panel button:hover .s,.panel button.hl .s{color:#000;opacity:.75}
+    .chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+    .chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:4px 6px 4px 10px;font-size:.85rem}
+    .chip button{background:transparent;border:none;color:var(--subtext);cursor:pointer;font-size:1rem;padding:0 4px}
+    .uid-add{display:grid;grid-template-columns:1fr auto;gap:8px}
+    .matches button{display:block;width:100%;text-align:left;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 10px;margin-top:6px;cursor:pointer;font:inherit;font-size:.88rem}
+    .ed-ft{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px}
+    .err{color:var(--red);font-size:.88rem;margin-top:8px}
+    .hint{font-size:.78rem;color:var(--muted);margin-top:5px;line-height:1.45}
+
+    /* Week: projects down, days across */
+    .multi-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+    .multi{border-collapse:collapse;width:100%;min-width:760px;font-size:.82rem}
+    .multi th,.multi td{border-bottom:1px solid var(--border);border-left:1px solid var(--border);padding:8px;vertical-align:top;text-align:left}
+    .multi thead th{background:var(--surface2);position:sticky;top:0}
+    .multi thead th button{background:transparent;border:none;color:var(--text);font:inherit;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;padding:0;text-align:left}
+    .multi thead th button:hover{color:var(--blue)}
+    .multi thead th.today button{color:var(--blue)}
+    .multi tbody th{background:var(--orange);color:#000;font-weight:400;border-left:none;min-width:140px}
+    .multi tbody th .loc{font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:.04em;line-height:1}
+    .multi tbody th .nm{font-size:.8rem;font-weight:700}
+    .multi .tm{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--subtext);margin-bottom:3px}
+    .multi .nt{color:var(--red);font-size:.76rem;margin-bottom:3px;white-space:pre-wrap}
+    .multi .rl{color:var(--gold);font-family:'DM Mono',monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:.06em}
+    .multi .pp{line-height:1.45}
+    .multi .c{color:var(--red)}
+    .multi .none{color:var(--muted)}
+
+    .empty{border:1px dashed var(--border);border-radius:14px;padding:40px 20px;text-align:center;color:var(--subtext)}
+    .empty p{margin-bottom:14px}
+    .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
+    .footer a{color:var(--subtext)}
+    #img-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:80;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:calc(16px + env(safe-area-inset-top)) 12px 30px}
+    #img-bg.on{display:flex}
+    #img-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;width:100%;max-width:760px}
+    .img-ft{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+    #img-name{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--subtext);word-break:break-all}
+    #img-preview{display:block;width:100%;border-radius:8px;margin-top:10px;background:#fff}
+    #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--green);color:#000;font-weight:700;
+      padding:12px 18px;border-radius:10px;z-index:90;display:none;max-width:calc(100vw - 32px)}
+    #toast.on{display:block}
+    @media (max-width:560px){
+      .ed .row3{grid-template-columns:1fr 1fr}
+      .role-ed .top{grid-template-columns:1fr auto}
+      .role-ed .top .proc{grid-column:1/-1;order:3}
+    }
+  </style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="/index.html" id="back">← Hub</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand" id="brand">Master Schedule</div>
+  <div class="lang" id="lang"></div>
+</header>
+
+<main>
+  <div class="title" id="title">Master Schedule</div>
+  <div class="sub" id="sub">—</div>
+  <div class="tabs" id="tabs"></div>
+
+  <section class="view" id="view-schedule">
+    <div class="bar">
+      <button type="button" class="nav" id="prev" aria-label="Previous">‹</button>
+      <input type="date" id="date">
+      <button type="button" class="nav" id="next" aria-label="Next">›</button>
+      <span class="day-name" id="day-name"></span>
+      <span class="spacer"></span>
+      <div class="seg" id="view-seg"></div>
+      <button type="button" class="btn btn-ghost" id="png"></button>
+    </div>
+    <div class="summary" id="summary"></div>
+    <div id="board"></div>
+  </section>
+
+  <section class="view" id="view-projects">
+    <div class="bar">
+      <div class="seg" id="status-seg"></div>
+      <input type="search" id="q">
+      <button type="button" class="btn btn-gold" id="add"></button>
+    </div>
+    <div id="plist"></div>
+  </section>
+
+  <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution<br><br><a href="/schedule.html" id="old-link"></a></footer>
+</main>
+<div id="toast"></div>
+<div id="img-bg"><div id="img-box">
+  <div class="img-ft"><span id="img-name"></span><span class="spacer"></span>
+    <button type="button" class="btn btn-blue" id="img-share"></button>
+    <a class="btn btn-ghost" id="img-dl" download></a>
+    <button type="button" class="btn btn-ghost" id="img-close"></button></div>
+  <div class="hint" id="img-hint"></div>
+  <img id="img-preview" alt="">
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/config/supabase_config.js"></script>
+<script src="/operations_stations.js"></script>
+<script src="/ops_common.js"></script>
+<script src="/ops_data.js"></script>
+<script>
+// Master Schedule — the bigger jobs ("Smalls Trimming" at Adobe, "Fresh
+// Frozen Harvest" at Comstock, "Preroll Production" at Adobe), who's on them,
+// and from that the daily/weekly work schedule. Replaces Scheduling
+// (schedule.html), which is still reachable for its old day schedules.
+//
+// A project is one operations_forms row, station_key 'work_project' — no
+// table of its own, like the Labor Log and Scheduling. Its fields are
+// described above projectRunsOn in operations_stations.js: dates, the days
+// of the week and hours it runs, a status, its responsibilities (roles —
+// "Lead", "Trimmers", "Driver" — each with the people standing under it and
+// optionally its own process and hours), the UIDs worked on it, and notes.
+//
+// Schedule tab: every project running on the day (projectRunsOn) at its
+// location and hours, with its roles and people. Changes for one day only
+// (someone off, someone extra, a note, or the project not working that day)
+// go in fields.overrides[date] = { skip, note, out: [personKey], extra:
+// [{roleId, userId, name}] } and never touch the standing roles. A person on
+// two projects whose hours overlap that day is flagged on both.
+//
+// The Labor Log's "A project" option logs time against a project; the hours
+// go over the project's UIDs by pounds (laborAllocations in
+// ops_analytics.js). Its Timeline's right-click offers the projects running
+// at that time, the person's own roles first.
+//
+// Saves re-read the row first and only write if nobody saved in between
+// (updated_at), retrying once on top of their change, so two leads editing
+// different days don't undo each other. Remove sets fields.voided (anon has
+// no DELETE on operations_forms); the edit history trigger keeps who.
+(async function () {
+  mountLangToggle('lang');
+  const KEY = 'work_project';
+  const DATA_BASE = 'https://raw.githubusercontent.com/bobby2soxRC/2cw-dashboard/main/data/';
+  const me = sessionStorage.getItem('2cw_user_name') || '';
+  const LOCATIONS = WORK_LOCATIONS;
+
+  const L = {
+    title:    { en: 'Master Schedule', es: 'Plan Maestro' },
+    sub:      { en: 'Projects, responsibilities and the work schedule', es: 'Proyectos, responsabilidades y el horario de trabajo' },
+    back:     { en: '← Hub', es: '← Inicio' },
+    tabSched: { en: 'Schedule', es: 'Horario' },
+    tabProj:  { en: 'Projects', es: 'Proyectos' },
+    vDay:     { en: 'Day', es: 'Día' },
+    vWeek:    { en: 'Week', es: 'Semana' },
+    png:      { en: 'Save image', es: 'Guardar imagen' },
+    add:      { en: '+ New project', es: '+ Nuevo proyecto' },
+    search:   { en: 'Search projects, people, UIDs…', es: 'Buscar proyectos, personas, UIDs…' },
+    stActive: { en: 'Active', es: 'Activo' },
+    stPlanned:{ en: 'Planned', es: 'Planeado' },
+    stDone:   { en: 'Done', es: 'Terminado' },
+    stAll:    { en: 'All', es: 'Todos' },
+    oldLink:  { en: 'Old day schedules (Scheduling)', es: 'Horarios anteriores (Horarios)' },
+    loading:  { en: 'Loading…', es: 'Cargando…' },
+    noDb:     { en: 'Supabase isn’t connected, so projects can’t load or save.', es: 'Supabase no está conectado, así que no se pueden cargar ni guardar proyectos.' },
+    nothingDay:{ en: 'No projects running this day.', es: 'Ningún proyecto este día.' },
+    nothingHint:{ en: 'Projects show here on the days and hours they run. Create one in Projects.', es: 'Los proyectos aparecen aquí los días y horas que trabajan. Cree uno en Proyectos.' },
+    goProj:   { en: 'Go to Projects', es: 'Ir a Proyectos' },
+    noProj:   { en: 'No projects here yet.', es: 'Todavía no hay proyectos aquí.' },
+    sumLine:  { en: '{p} scheduled on {n} projects', es: '{p} programadas en {n} proyectos' },
+    sumConf:  { en: '{n} double-booked', es: '{n} con doble turno' },
+    person1:  { en: '1 person', es: '1 persona' },
+    personN:  { en: '{n} people', es: '{n} personas' },
+    allDay:   { en: 'All day', es: 'Todo el día' },
+    lead:     { en: 'Lead', es: 'Líder' },
+    nobody:   { en: 'Nobody yet', es: 'Nadie todavía' },
+    also:     { en: 'also on {p} {t}', es: 'también en {p} {t}' },
+    offToday: { en: 'Off this day: {n}', es: 'Libre este día: {n}' },
+    editDay:  { en: 'Change this day', es: 'Cambiar este día' },
+    editProj: { en: 'Edit project', es: 'Editar proyecto' },
+    skipped:  { en: 'Not working this day', es: 'No trabaja este día' },
+    skipQ:    { en: 'This project isn’t working this day', es: 'Este proyecto no trabaja este día' },
+    dayNote:  { en: 'Note for this day', es: 'Nota para este día' },
+    dayHint:  { en: 'Changes here are for {d} only — the project’s standing responsibilities don’t change. Untick someone who’s off; add someone just for this day.',
+                es: 'Estos cambios son solo para el {d} — las responsabilidades del proyecto no cambian. Desmarque a quien no venga; agregue a alguien solo para este día.' },
+    addToday: { en: 'Add someone for this day…', es: 'Agregar a alguien para este día…' },
+    hidden:   { en: 'Not working on {d}: {list}', es: 'No trabajan el {d}: {list}' },
+    restore:  { en: 'Show', es: 'Mostrar' },
+    // Projects
+    name:     { en: 'Project name', es: 'Nombre del proyecto' },
+    namePh:   { en: 'e.g. Smalls Trimming', es: 'p. ej. Recorte de pequeñas' },
+    location: { en: 'Location', es: 'Lugar' },
+    other:    { en: 'Other', es: 'Otro' },
+    otherName:{ en: 'Location name', es: 'Nombre del lugar' },
+    process:  { en: 'Process (for the Labor Log)', es: 'Proceso (para el Registro de Mano de Obra)' },
+    noProc:   { en: '— none —', es: '— ninguno —' },
+    status:   { en: 'Status', es: 'Estado' },
+    start:    { en: 'Start date', es: 'Fecha de inicio' },
+    end:      { en: 'End date (optional)', es: 'Fecha final (opcional)' },
+    days:     { en: 'Days it runs', es: 'Días que trabaja' },
+    daysHint: { en: 'None picked = every day.', es: 'Ninguno = todos los días.' },
+    tStart:   { en: 'Start time', es: 'Hora de inicio' },
+    tEnd:     { en: 'End time', es: 'Hora final' },
+    notes:    { en: 'Notes', es: 'Notas' },
+    roles:    { en: 'Responsibilities', es: 'Responsabilidades' },
+    rolesHint:{ en: 'The standing jobs on this project and who does them — e.g. Lead, Trimmers, Weigh station, Driver. These make up the daily schedule for every day the project runs.',
+                es: 'Los puestos fijos del proyecto y quién los hace — p. ej. Líder, Recortadores, Báscula, Chofer. Forman el horario diario de cada día que trabaja el proyecto.' },
+    roleName: { en: 'Responsibility', es: 'Responsabilidad' },
+    roleProc: { en: 'Process (optional)', es: 'Proceso (opcional)' },
+    roleOwn:  { en: 'Different hours from the project', es: 'Horario distinto al del proyecto' },
+    addRole:  { en: '+ Add responsibility', es: '+ Agregar responsabilidad' },
+    addPerson:{ en: 'Add a person…', es: 'Agregar persona…' },
+    addTyped: { en: 'Add “{q}” (not in Connecteam)', es: 'Agregar “{q}” (no está en Connecteam)' },
+    onOther:  { en: 'on {p}', es: 'en {p}' },
+    uids:     { en: 'UIDs on this project', es: 'UIDs en este proyecto' },
+    uidsHint: { en: 'Add the packages as the work reaches them — scan or type the full tag, or the last 4. Paste several at once separated by spaces or commas. Labor logged to the project is split over these by pounds.',
+                es: 'Agregue los paquetes conforme se trabajan — escanee o escriba la etiqueta completa, o los últimos 4. Pegue varios separados por espacios o comas. Las horas del proyecto se dividen entre estos por libras.' },
+    uidPh:    { en: 'Tag or last 4…', es: 'Etiqueta o últimos 4…' },
+    uidAdd:   { en: 'Add', es: 'Agregar' },
+    uidPick:  { en: 'Several UIDs end in {q} — pick one:', es: 'Varios UIDs terminan en {q} — elija uno:' },
+    uidNone:  { en: 'No UID ends in {q}. Type the full tag to add it as typed.', es: 'Ningún UID termina en {q}. Escriba la etiqueta completa para agregarla.' },
+    labor:    { en: 'Labor logged', es: 'Horas registradas' },
+    laborLine:{ en: '{h} h by {p}', es: '{h} h de {p}' },
+    noLabor:  { en: 'No time logged yet', es: 'Sin horas registradas' },
+    logTime:  { en: 'Log time', es: 'Registrar horas' },
+    entries:  { en: 'Labor entries', es: 'Registros' },
+    save:     { en: 'Save', es: 'Guardar' },
+    saving:   { en: 'Saving…', es: 'Guardando…' },
+    cancel:   { en: 'Cancel', es: 'Cancelar' },
+    remove:   { en: 'Remove project', es: 'Quitar proyecto' },
+    removeQ:  { en: 'Remove this project? It leaves the schedule; time already logged to it stays (in the project’s pool).', es: '¿Quitar este proyecto? Sale del horario; las horas ya registradas se quedan (en el fondo del proyecto).' },
+    saved:    { en: 'Saved', es: 'Guardado' },
+    removed:  { en: 'Project removed', es: 'Proyecto quitado' },
+    needName: { en: 'Name the project.', es: 'Escriba el nombre del proyecto.' },
+    needLoc:  { en: 'Pick the location.', es: 'Elija el lugar.' },
+    needStart:{ en: 'Pick the start date.', es: 'Elija la fecha de inicio.' },
+    badEnd:   { en: 'The end date is before the start.', es: 'La fecha final es antes del inicio.' },
+    needRole: { en: 'Name every responsibility (or remove the empty one).', es: 'Nombre cada responsabilidad (o quite la vacía).' },
+    failed:   { en: 'Could not save:', es: 'No se pudo guardar:' },
+    gone:     { en: 'This project was removed by someone else.', es: 'Alguien más quitó este proyecto.' },
+    from:     { en: 'from {d}', es: 'desde {d}' },
+    everyDay: { en: 'every day', es: 'todos los días' },
+    uidCount: { en: '{n} UIDs', es: '{n} UIDs' },
+    imgTitle: { en: 'Work schedule', es: 'Horario de trabajo' },
+    imgMade:  { en: 'made {t}', es: 'hecho {t}' },
+    imgHint:  { en: 'On a phone, Share sends it to Messages/WhatsApp; or long-press the image to save it.', es: 'En el teléfono, Compartir lo manda a Mensajes/WhatsApp; o mantenga presionada la imagen para guardarla.' },
+    share:    { en: 'Share / text', es: 'Compartir' },
+    download: { en: 'Download', es: 'Descargar' },
+    close:    { en: 'Close', es: 'Cerrar' },
+    nothingImg:{ en: 'Nothing scheduled to put in an image.', es: 'No hay nada programado para la imagen.' }
+  };
+  const DOW = { en: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'], es: ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá'] };
+  const fill = (s, vars) => Object.entries(vars).reduce((a, [k, v]) => a.split(`{${k}}`).join(v), s);
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const $ = (id) => document.getElementById(id);
+  const fold = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+  const normUid = (u) => String(u || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const tail = (uid) => uid.length > 8 ? '…' + uid.slice(-4) : uid;
+  const localDay = (d = new Date()) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  const addDays = (iso, n) => { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return localDay(d); };
+  const lang = () => getLang() === 'es' ? 'es-MX' : 'en-US';
+  const fmtDate = (iso, o) => new Date(iso + 'T12:00:00').toLocaleDateString(lang(), o || { month: 'short', day: 'numeric' });
+  const fmtMin = (m) => { const x = ((m % 1440) + 1440) % 1440; return new Date(2000, 0, 1, Math.floor(x / 60), x % 60).toLocaleTimeString(lang(), { hour: 'numeric', minute: '2-digit' }); };
+  const hoursLabel = (f, role) => { const [s, e] = projectHours(f, role); return s == null ? t(L.allDay) : `${fmtMin(s)}–${fmtMin(e)}`; };
+  const personKey = (p) => p.userId ? 'id:' + p.userId : 'name:' + fold(p.name);
+  const locName = (f) => f.location === 'other' ? (f.locationName || t(L.other)) : ((LOCATIONS.find((l) => l[0] === f.location) || [])[1] || f.location || '');
+  const locOrder = (f) => { const i = LOCATIONS.findIndex((l) => l[0] === f.location); return i < 0 ? 99 : i; };
+  const newId = () => 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const clone = (x) => JSON.parse(JSON.stringify(x || {}));
+
+  document.title = `${t(L.title)} — 2CW`;
+  $('title').textContent = t(L.title);
+  $('brand').textContent = t(L.title);
+  $('back').textContent = t(L.back);
+  $('sub').textContent = t(L.sub);
+  $('add').textContent = t(L.add);
+  $('png').textContent = t(L.png);
+  $('q').placeholder = t(L.search);
+  $('old-link').textContent = t(L.oldLink);
+
+  // Processes, as the Labor Log lists them.
+  const procTitle = (k) => t(processTitle(k));
+  function processOptions(sel) {
+    const groups = [];
+    OPERATIONS_STATIONS.filter((s) => s.key !== 'biomass_request').forEach((s) => {
+      const g = t(s.dept);
+      let grp = groups.find((x) => x.label === g);
+      if (!grp) groups.push(grp = { label: g, items: [] });
+      grp.items.push([s.key, t(s.title)]);
+    });
+    const o = ([k, l]) => `<option value="${k}" ${sel === k ? 'selected' : ''}>${esc(l)}</option>`;
+    return `<option value="">${esc(t(L.noProc))}</option>` +
+      groups.map((g) => `<optgroup label="${esc(g.label)}">${g.items.map(o).join('')}</optgroup>`).join('') +
+      Object.keys(LABOR_PROCESSES).map((k) => o([k, t(LABOR_PROCESSES[k])])).join('');
+  }
+
+  // ── Roster ──────────────────────────────────────────────────────────────
+  let roster = [];
+  try {
+    const res = await fetch(DATA_BASE + 'connecteam_roster.json?t=' + Date.now());
+    if (res.ok) roster = ((await res.json()).people || []).map((p) => ({ userId: String(p.userId), name: p.name }));
+  } catch {}
+  roster.sort((a, b) => a.name.localeCompare(b.name));
+
+  // ── Data ────────────────────────────────────────────────────────────────
+  const client = getClient();
+  let projects = [];   // operations_forms rows (not voided)
+  let labor = {};      // projectId -> {hours, people:Set}
+  async function loadProjects() {
+    if (!client) return;
+    const { data, error } = await client.from('operations_forms').select('*')
+      .eq('station_key', KEY).eq('status', 'submitted').order('work_date', { ascending: false });
+    if (error) { console.error(error); return; }
+    projects = (data || []).filter((r) => !(r.fields || {}).voided);
+  }
+  async function loadLabor() {
+    if (!client) return;
+    const by = {};
+    for (let page = 0; page < 20; page++) {
+      const { data, error } = await client.from('operations_forms').select('fields')
+        .eq('station_key', 'labor_entry').eq('status', 'submitted').not('fields->>project', 'is', null)
+        .order('id').range(page * 1000, page * 1000 + 999);
+      if (error || !data) break;
+      data.forEach((r) => {
+        const f = r.fields || {};
+        if (f.voided || !f.project) return;
+        const x = by[f.project] || (by[f.project] = { hours: 0, people: new Set() });
+        x.hours += Number(f.hours) || 0;
+        x.people.add(f.employeeId || fold(f.employeeName));
+      });
+      if (data.length < 1000) break;
+    }
+    labor = by;
+  }
+  // Read-modify-write one project: re-read it, apply `mutate(fields)`, and
+  // write only if nobody saved in between (else retry on top of theirs).
+  async function patchProject(id, mutate) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const { data: rows, error: e1 } = await client.from('operations_forms').select('*').eq('id', id).limit(1);
+      if (e1) throw e1;
+      const row = rows && rows[0];
+      if (!row || (row.fields || {}).voided) throw new Error(t(L.gone));
+      const fields = mutate(clone(row.fields));
+      fields.updatedBy = me;
+      const { data, error } = await client.from('operations_forms')
+        .update({ fields, work_date: fields.start || row.work_date, updated_by: me || null })
+        .eq('id', id).eq('updated_at', row.updated_at).select();
+      if (error) throw error;
+      if (data && data.length) {
+        const i = projects.findIndex((p) => p.id === id);
+        if (fields.voided) { if (i >= 0) projects.splice(i, 1); }
+        else if (i >= 0) projects[i] = data[0]; else projects.push(data[0]);
+        return data[0];
+      }
+    }
+    throw new Error('Someone else keeps saving this project — reload and try again.');
+  }
+
+  // ── A project on one day ────────────────────────────────────────────────
+  const ovFor = (f, date) => (f.overrides || {})[date] || {};
+  const runsOn = (p, date) => projectRunsOn(p.fields, date) && !ovFor(p.fields, date).skip;
+  // Roles with that day's changes applied: people who are off left out
+  // (listed in `off`), people added for the day in (marked extra).
+  function dayRoles(f, date) {
+    const ov = ovFor(f, date);
+    const out = new Set(ov.out || []);
+    const off = [];
+    const roles = (f.roles || []).map((r) => {
+      const people = [];
+      (r.people || []).forEach((p) => { if (out.has(personKey(p))) off.push(p); else people.push(p); });
+      (ov.extra || []).filter((x) => x.roleId === r.id).forEach((x) => people.push({ userId: x.userId || '', name: x.name, extra: true }));
+      return { ...r, people: people.sort((a, b) => (b.lead ? 1 : 0) - (a.lead ? 1 : 0)) };
+    });
+    return { roles, off, note: ov.note || '' };
+  }
+  // Everyone working that day, with their project and hours, for conflicts.
+  function dayAssignments(date) {
+    const list = [];
+    projects.filter((p) => runsOn(p, date)).forEach((p) => {
+      dayRoles(p.fields, date).roles.forEach((r) => {
+        const [s, e] = projectHours(p.fields, r);
+        r.people.forEach((x) => list.push({ key: personKey(x), pid: p.id, p, role: r, iv: s == null ? [0, 1440] : [s, e] }));
+      });
+    });
+    return list;
+  }
+  function conflictsOn(date) {
+    const list = dayAssignments(date);
+    const by = new Map();   // personKey|pid -> [other assignments]
+    list.forEach((a) => list.forEach((b) => {
+      if (a.key !== b.key || a.pid === b.pid || !(a.iv[0] < b.iv[1] && b.iv[0] < a.iv[1])) return;
+      const k = a.key + '|' + a.pid;
+      const arr = by.get(k) || by.set(k, []).get(k);
+      if (!arr.some((x) => x.pid === b.pid)) arr.push(b);
+    }));
+    return by;
+  }
+
+  // ── Tabs ────────────────────────────────────────────────────────────────
+  const params = new URLSearchParams(location.search);
+  let tab = params.get('tab') === 'projects' || params.get('id') ? 'projects' : 'schedule';
+  $('tabs').innerHTML = [['schedule', L.tabSched], ['projects', L.tabProj]].map(([k, l]) => `<button type="button" data-tab="${k}">${esc(t(l))}</button>`).join('');
+  function showTab(k) {
+    tab = k;
+    document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === k));
+    document.querySelectorAll('.view').forEach((v) => v.classList.toggle('on', v.id === 'view-' + k));
+    render();
+  }
+  $('tabs').onclick = (e) => { const b = e.target.closest('button'); if (b) showTab(b.dataset.tab); };
+
+  // ── Schedule: day / week ────────────────────────────────────────────────
+  let view = 'day';
+  try { view = localStorage.getItem('2cw_master_view') || 'day'; } catch {}
+  if (params.get('view')) view = params.get('view');
+  if (!['day', 'week'].includes(view)) view = 'day';
+  $('date').value = params.get('date') || localDay();
+  $('view-seg').innerHTML = [['day', L.vDay], ['week', L.vWeek]].map(([k, l]) => `<button type="button" data-view="${k}">${esc(t(l))}</button>`).join('');
+  $('view-seg').onclick = (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    view = b.dataset.view; dayEdit = null;
+    try { localStorage.setItem('2cw_master_view', view); } catch {}
+    render();
+  };
+  const weekDates = () => {
+    const d = $('date').value || localDay();
+    const dow = new Date(d + 'T12:00:00').getDay();
+    const mon = addDays(d, -((dow + 6) % 7));
+    return [0, 1, 2, 3, 4, 5, 6].map((i) => addDays(mon, i));
+  };
+  $('prev').onclick = () => { $('date').value = addDays($('date').value || localDay(), view === 'week' ? -7 : -1); dayEdit = null; render(); };
+  $('next').onclick = () => { $('date').value = addDays($('date').value || localDay(), view === 'week' ? 7 : 1); dayEdit = null; render(); };
+  $('date').onchange = () => { dayEdit = null; render(); };
+
+  let dayEdit = null;   // {id, date, skip, note, out:Set, extra:[]}
+  function renderSchedule() {
+    document.querySelectorAll('#view-seg button').forEach((b) => b.classList.toggle('on', b.dataset.view === view));
+    const date = $('date').value || localDay();
+    if (view === 'week') {
+      const ds = weekDates();
+      $('day-name').textContent = `${fmtDate(ds[0])} – ${fmtDate(ds[6])}`;
+      renderWeek(ds);
+      return;
+    }
+    $('day-name').textContent = fmtDate(date, { weekday: 'long' });
+    const running = projects.filter((p) => runsOn(p, date) || (dayEdit && dayEdit.id === p.id))
+      .sort((a, b) => locOrder(a.fields) - locOrder(b.fields) || (projectHours(a.fields)[0] ?? -1) - (projectHours(b.fields)[0] ?? -1));
+    const skipped = projects.filter((p) => projectRunsOn(p.fields, date) && ovFor(p.fields, date).skip && !(dayEdit && dayEdit.id === p.id));
+    const conf = conflictsOn(date);
+    const ppl = new Set(dayAssignments(date).map((a) => a.key));
+    const nConf = new Set([...conf.keys()].map((k) => k.split('|')[0])).size;
+    $('summary').innerHTML = running.length ? fill(t(L.sumLine), { p: `<b>${esc(ppl.size === 1 ? t(L.person1) : fill(t(L.personN), { n: ppl.size }))}</b>`, n: `<b>${running.length}</b>` }) +
+      (nConf ? ` · <span class="warn">${esc(fill(t(L.sumConf), { n: nConf }))}</span>` : '') : '';
+    const skippedHtml = skipped.length ? `<div class="hint" style="margin-top:12px">${esc(fill(t(L.hidden), { d: fmtDate(date), list: skipped.map((p) => p.fields.name).join(', ') }))}
+      ${skipped.map((p) => `<button type="button" class="btn btn-sm btn-ghost" data-dayedit="${p.id}">${esc(t(L.editDay))}: ${esc(p.fields.name)}</button>`).join(' ')}</div>` : '';
+    if (!running.length) {
+      $('board').innerHTML = `<div class="empty"><p>${esc(t(L.nothingDay))}</p><p class="hint">${esc(t(L.nothingHint))}</p>
+        <button type="button" class="btn btn-gold" data-goproj="1">${esc(t(L.goProj))}</button></div>` + skippedHtml;
+      return;
+    }
+    $('board').innerHTML = `<div class="grid">${running.map((p) => dayEdit && dayEdit.id === p.id ? dayEditor(p, date) : dayCard(p, date, conf)).join('')}</div>` + skippedHtml;
+    if (dayEdit) wireDayEditor();
+  }
+  function dayCard(p, date, conf) {
+    const f = p.fields;
+    const { roles, off, note } = dayRoles(f, date);
+    const rolesHtml = roles.map((r) => `<div class="role"><div class="role-hd">${esc(r.name)}${r.startTime ? `<span class="tm">${esc(hoursLabel(f, r))}</span>` : ''}</div>
+      <ul class="ppl">${r.people.length ? r.people.map((x) => {
+        const c = conf.get(personKey(x) + '|' + p.id) || [];
+        return `<li class="${x.extra ? 'extra' : ''}">${esc(x.name)}${x.lead ? `<span class="lead-tag">${esc(t(L.lead))}</span>` : ''}
+          ${c.map((o) => `<span class="conflict">${esc(fill(t(L.also), { p: o.p.fields.name, t: hoursLabel(o.p.fields, o.role) }))}</span>`).join('')}</li>`;
+      }).join('') : `<li class="none">${esc(t(L.nobody))}</li>`}</ul></div>`).join('');
+    return `<div class="card"><div class="card-hd"><div class="loc">${esc(locName(f))}</div><div class="nm">${esc(f.name)}</div>
+        <div class="time">${esc(hoursLabel(f))}${f.process ? ' · ' + esc(procTitle(f.process)) : ''}</div></div>
+      <div class="card-body">${note ? `<div class="note">${esc(note)}</div>` : ''}${rolesHtml || `<div class="s">${esc(t(L.nobody))}</div>`}
+        ${off.length ? `<div class="off">${esc(fill(t(L.offToday), { n: off.map((x) => x.name).join(', ') }))}</div>` : ''}</div>
+      <div class="card-ft"><button type="button" class="btn btn-sm btn-ghost" data-edit="${p.id}">${esc(t(L.editProj))}</button>
+        <button type="button" class="btn btn-sm" data-dayedit="${p.id}">${esc(t(L.editDay))}</button></div></div>`;
+  }
+  function dayEditor(p, date) {
+    const f = p.fields, e = dayEdit;
+    const extraFor = (rid) => e.extra.map((x, i) => ({ ...x, i })).filter((x) => x.roleId === rid);
+    return `<div class="card editing"><div class="card-hd"><div class="loc">${esc(locName(f))}</div><div class="nm">${esc(f.name)} · ${esc(fmtDate(date, { weekday: 'long', month: 'short', day: 'numeric' }))}</div></div>
+      <div class="ed">
+        <div class="hint" style="margin:0 0 12px">${esc(fill(t(L.dayHint), { d: fmtDate(date, { weekday: 'short', month: 'short', day: 'numeric' }) }))}</div>
+        <label class="check"><input type="checkbox" id="de-skip" ${e.skip ? 'checked' : ''}> ${esc(t(L.skipQ))}</label>
+        <div style="margin-bottom:12px"><label class="lbl" for="de-note">${esc(t(L.dayNote))}</label><textarea id="de-note">${esc(e.note)}</textarea></div>
+        ${(f.roles || []).map((r) => `<div class="role-ed"><div class="role-hd" style="margin-bottom:6px">${esc(r.name)}</div>
+          <ul class="ed-ppl">${(r.people || []).map((x) => `<li class="${e.out.has(personKey(x)) ? 'out' : ''}"><span class="nm">${esc(x.name)}${x.lead ? `<span class="lead-tag">${esc(t(L.lead))}</span>` : ''}</span>
+              <span></span><input type="checkbox" style="width:24px;height:24px;min-height:0" data-out="${esc(personKey(x))}" ${e.out.has(personKey(x)) ? '' : 'checked'}></li>`).join('')}
+            ${extraFor(r.id).map((x) => `<li><span class="nm">${esc(x.name)} <span style="color:var(--blue)">+</span></span><span></span><button type="button" class="x" data-rmextra="${x.i}">×</button></li>`).join('')}</ul>
+          <div class="picker"><input data-pick="${esc(r.id)}" autocomplete="off" placeholder="${esc(t(L.addToday))}"><div class="panel"></div></div></div>`).join('')}
+        <div class="err" id="de-err"></div>
+        <div class="ed-ft"><button type="button" class="btn btn-ghost" id="de-cancel">${esc(t(L.cancel))}</button>
+          <button type="button" class="btn btn-blue" id="de-save">${esc(t(L.save))}</button></div>
+      </div></div>`;
+  }
+  function wireDayEditor() {
+    const e = dayEdit;
+    $('de-skip').onchange = (ev) => { e.skip = ev.target.checked; };
+    $('de-note').oninput = (ev) => { e.note = ev.target.value; };
+    document.querySelectorAll('[data-out]').forEach((cb) => cb.onchange = () => {
+      cb.checked ? e.out.delete(cb.dataset.out) : e.out.add(cb.dataset.out);
+      cb.closest('li').classList.toggle('out', !cb.checked);
+    });
+    document.querySelectorAll('[data-rmextra]').forEach((b) => b.onclick = () => { e.extra.splice(+b.dataset.rmextra, 1); render(); });
+    document.querySelectorAll('[data-pick]').forEach((inp) => personPicker(inp, (person) => {
+      e.extra.push({ roleId: inp.dataset.pick, userId: person.userId || '', name: person.name });
+      render();
+    }, (key) => e.extra.some((x) => x.roleId === inp.dataset.pick && personKey(x) === key)));
+    $('de-cancel').onclick = () => { dayEdit = null; render(); };
+    $('de-save').onclick = async () => {
+      const btn = $('de-save');
+      btn.disabled = true; btn.textContent = t(L.saving);
+      const date = e.date;
+      try {
+        await patchProject(e.id, (f) => {
+          const ov = { ...(f.overrides || {}) };
+          const day = { skip: e.skip || undefined, note: e.note.trim() || undefined, out: e.out.size ? [...e.out] : undefined, extra: e.extra.length ? e.extra : undefined };
+          Object.keys(day).forEach((k) => day[k] === undefined && delete day[k]);
+          if (Object.keys(day).length) ov[date] = day; else delete ov[date];
+          return { ...f, overrides: ov };
+        });
+        dayEdit = null; toast(t(L.saved)); render();
+      } catch (err) { $('de-err').textContent = `${t(L.failed)} ${err.message || err}`; btn.disabled = false; btn.textContent = t(L.save); }
+    };
+  }
+  function openDayEdit(id) {
+    const p = projects.find((x) => x.id === id);
+    if (!p) return;
+    const date = $('date').value || localDay();
+    const ov = ovFor(p.fields, date);
+    dayEdit = { id, date, skip: !!ov.skip, note: ov.note || '', out: new Set(ov.out || []), extra: clone(ov.extra || []) };
+    render();
+  }
+  function renderWeek(ds) {
+    const today = localDay();
+    const shown = projects.filter((p) => ds.some((d) => runsOn(p, d)))
+      .sort((a, b) => locOrder(a.fields) - locOrder(b.fields) || String(a.fields.name).localeCompare(String(b.fields.name)));
+    const confs = Object.fromEntries(ds.map((d) => [d, conflictsOn(d)]));
+    const ppl = new Set(); ds.forEach((d) => dayAssignments(d).forEach((a) => ppl.add(a.key)));
+    $('summary').innerHTML = shown.length ? fill(t(L.sumLine), { p: `<b>${esc(ppl.size === 1 ? t(L.person1) : fill(t(L.personN), { n: ppl.size }))}</b>`, n: `<b>${shown.length}</b>` }) : '';
+    if (!shown.length) {
+      $('board').innerHTML = `<div class="empty"><p>${esc(t(L.nothingDay))}</p><button type="button" class="btn btn-gold" data-goproj="1">${esc(t(L.goProj))}</button></div>`;
+      return;
+    }
+    const head = ds.map((d) => `<th class="${d === today ? 'today' : ''}"><button type="button" data-day="${d}">${esc(fmtDate(d, { weekday: 'short', month: 'numeric', day: 'numeric' }))}</button></th>`).join('');
+    const body = shown.map((p) => {
+      const f = p.fields;
+      return `<tr><th><div class="loc">${esc(locName(f))}</div><div class="nm">${esc(f.name)}</div></th>${ds.map((d) => {
+        if (!runsOn(p, d)) return `<td class="none">—</td>`;
+        const { roles, note } = dayRoles(f, d);
+        return `<td><div class="tm">${esc(hoursLabel(f))}</div>${note ? `<div class="nt">${esc(note)}</div>` : ''}${roles.filter((r) => r.people.length).map((r) =>
+          `<div class="rl">${esc(r.name)}</div><div class="pp">${r.people.map((x) => {
+            const c = confs[d].has(personKey(x) + '|' + p.id);
+            return `<span class="${c ? 'c' : ''}">${esc(x.name)}${c ? ' ⚠' : ''}</span>`;
+          }).join(', ')}</div>`).join('')}</td>`;
+      }).join('')}</tr>`;
+    }).join('');
+    $('board').innerHTML = `<div class="multi-wrap"><table class="multi"><thead><tr><th></th>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+  }
+  $('board').addEventListener('click', (e) => {
+    const day = e.target.closest('[data-day]');
+    if (day) { $('date').value = day.dataset.day; view = 'day'; try { localStorage.setItem('2cw_master_view', view); } catch {} render(); return; }
+    const de = e.target.closest('[data-dayedit]');
+    if (de) { openDayEdit(de.dataset.dayedit); return; }
+    const ed = e.target.closest('[data-edit]');
+    if (ed) { openEditor(ed.dataset.edit); showTab('projects'); return; }
+    if (e.target.closest('[data-goproj]')) showTab('projects');
+  });
+
+  // ── People picker (roster + typed names) ────────────────────────────────
+  // Shows where else someone already has a responsibility, so leads can see
+  // who's spoken for before adding them.
+  function elsewhere(key, exceptId) {
+    return projects.filter((p) => p.id !== exceptId && (p.fields.status || 'active') !== 'done' &&
+      (p.fields.roles || []).some((r) => (r.people || []).some((x) => personKey(x) === key))).map((p) => p.fields.name);
+  }
+  function personPicker(input, onPick, taken, exceptId) {
+    const panel = input.nextElementSibling;
+    let items = [], hl = 0;
+    function draw() {
+      const q = fold(input.value);
+      const words = q.split(/\s+/).filter(Boolean);
+      items = roster.filter((p) => !taken(personKey(p)) && words.every((w) => fold(p.name).includes(w))).slice(0, 60)
+        .map((p) => ({ p, sub: elsewhere(personKey(p), exceptId) }));
+      if (q && !roster.some((p) => fold(p.name) === q)) items.push({ p: { userId: '', name: input.value.trim() }, raw: true });
+      hl = 0;
+      panel.innerHTML = items.map((it, i) => `<button type="button" data-i="${i}" class="${i === hl ? 'hl' : ''}">${it.raw ? esc(fill(t(L.addTyped), { q: it.p.name })) : esc(it.p.name)}
+        ${it.sub && it.sub.length ? `<span class="s">${esc(fill(t(L.onOther), { p: it.sub.join(', ') }))}</span>` : ''}</button>`).join('');
+      panel.classList.toggle('on', !!items.length && document.activeElement === input);
+    }
+    const pick = (i) => { const it = items[i]; if (!it) return; input.value = ''; panel.classList.remove('on'); onPick(it.p); };
+    input.addEventListener('focus', draw);
+    input.addEventListener('input', draw);
+    input.addEventListener('blur', () => setTimeout(() => panel.classList.remove('on'), 150));
+    input.addEventListener('keydown', (e) => {
+      const bs = panel.querySelectorAll('button');
+      if (e.key === 'ArrowDown') { hl = Math.min(items.length - 1, hl + 1); e.preventDefault(); }
+      else if (e.key === 'ArrowUp') { hl = Math.max(0, hl - 1); e.preventDefault(); }
+      else if (e.key === 'Enter') { e.preventDefault(); if (input.value.trim()) pick(hl); return; }
+      else if (e.key === 'Escape') { panel.classList.remove('on'); return; }
+      else return;
+      bs.forEach((b, i) => b.classList.toggle('hl', i === hl));
+      if (bs[hl]) bs[hl].scrollIntoView({ block: 'nearest' });
+    });
+    panel.addEventListener('mousedown', (e) => e.preventDefault());
+    panel.addEventListener('click', (e) => { const b = e.target.closest('button[data-i]'); if (b) pick(+b.dataset.i); });
+  }
+
+  // ── Projects list ───────────────────────────────────────────────────────
+  let statusF = 'open';   // open = active + planned
+  const STATUSES = [['active', L.stActive], ['planned', L.stPlanned], ['done', L.stDone]];
+  $('status-seg').innerHTML = [['open', { en: 'Open', es: 'Abiertos' }], ...STATUSES, ['all', L.stAll]]
+    .map(([k, l]) => `<button type="button" data-st="${k}">${esc(t(l))}</button>`).join('');
+  $('status-seg').onclick = (e) => { const b = e.target.closest('button'); if (b) { statusF = b.dataset.st; render(); } };
+  $('q').addEventListener('input', () => render());
+  $('add').onclick = () => openEditor(null);
+
+  let editing = null;   // {id|null, f: draft fields}
+  const daysLabel = (f) => !(f.days && f.days.length) ? t(L.everyDay) : [...f.days].sort().map((d) => DOW[getLang() === 'es' ? 'es' : 'en'][d]).join(' ');
+  function renderProjects() {
+    document.querySelectorAll('#status-seg button').forEach((b) => b.classList.toggle('on', b.dataset.st === statusF));
+    const q = fold($('q').value), qu = normUid($('q').value);
+    const st = (p) => p.fields.status || 'active';
+    let list = projects.filter((p) => statusF === 'all' || (statusF === 'open' ? st(p) !== 'done' : st(p) === statusF));
+    if (q) list = list.filter((p) => {
+      const f = p.fields;
+      return fold(f.name).includes(q) || fold(locName(f)).includes(q) ||
+        (f.roles || []).some((r) => fold(r.name).includes(q) || (r.people || []).some((x) => fold(x.name).includes(q))) ||
+        (qu.length >= 4 && (f.uids || []).some((u) => normUid(u.uid).includes(qu)));
+    });
+    const order = { active: 0, planned: 1, done: 2 };
+    list.sort((a, b) => order[st(a)] - order[st(b)] || locOrder(a.fields) - locOrder(b.fields) || String(a.fields.name).localeCompare(String(b.fields.name)));
+    const cards = list.filter((p) => !editing || editing.id !== p.id).map(projectCard);
+    const ed = editing ? editorHtml() : '';
+    $('plist').innerHTML = !cards.length && !ed ? `<div class="empty"><p>${esc(t(L.noProj))}</p><button type="button" class="btn btn-gold" data-new="1">${esc(t(L.add))}</button></div>`
+      : `<div class="grid">${ed}${cards.join('')}</div>`;
+    if (editing) wireEditor();
+  }
+  function projectCard(p) {
+    const f = p.fields, st = f.status || 'active';
+    const lab = labor[p.id];
+    const range = f.end ? `${fmtDate(f.start || p.work_date)} – ${fmtDate(f.end)}` : fill(t(L.from), { d: fmtDate(f.start || p.work_date) });
+    const nU = (f.uids || []).length;
+    return `<div class="card"><div class="card-hd st-${st}"><div class="loc">${esc(locName(f))}</div><div class="nm">${esc(f.name)}</div>
+        <div class="time">${esc(t((STATUSES.find((s) => s[0] === st) || STATUSES[0])[1]))}</div></div>
+      <div class="card-body">
+        <div class="meta"><b>${esc(range)}</b> · ${esc(daysLabel(f))} · ${esc(hoursLabel(f))}${f.process ? `<br>${esc(procTitle(f.process))}` : ''}
+          <br>${esc(fill(t(L.uidCount), { n: nU }))}${nU ? ': ' + (f.uids || []).slice(0, 8).map((u) => `<span class="m" title="${esc(u.uid)}">${esc(tail(u.uid))}</span>`).join(' ') + (nU > 8 ? ' …' : '') : ''}
+          <br>${esc(t(L.labor))}: ${lab ? esc(fill(t(L.laborLine), { h: fmtNum(lab.hours, 1), p: lab.people.size === 1 ? t(L.person1) : fill(t(L.personN), { n: lab.people.size }) })) : esc(t(L.noLabor))}</div>
+        ${f.notes ? `<div class="note">${esc(f.notes)}</div>` : ''}
+        ${(f.roles || []).map((r) => `<div class="role"><div class="role-hd">${esc(r.name)} (${(r.people || []).length})${r.startTime ? `<span class="tm">${esc(hoursLabel(f, r))}</span>` : ''}</div>
+          <div style="font-size:.88rem">${(r.people || []).map((x) => esc(x.name) + (x.lead ? ` <span class="lead-tag">${esc(t(L.lead))}</span>` : '')).join(', ') || `<span class="s">${esc(t(L.nobody))}</span>`}</div></div>`).join('')}
+      </div>
+      <div class="card-ft">
+        <a class="btn btn-sm btn-ghost" href="/labor_log.html?tab=list&seg=entries&all=1&q=${encodeURIComponent(f.name)}">${esc(t(L.entries))}</a>
+        <a class="btn btn-sm btn-ghost" href="/labor_log.html?project=${encodeURIComponent(p.id)}">${esc(t(L.logTime))}</a>
+        <button type="button" class="btn btn-sm" data-edit="${p.id}">${esc(t(L.editProj))}</button></div></div>`;
+  }
+  $('plist').addEventListener('click', (e) => {
+    const ed = e.target.closest('[data-edit]');
+    if (ed) { openEditor(ed.dataset.edit); return; }
+    if (e.target.closest('[data-new]')) openEditor(null);
+  });
+
+  // ── Project editor ──────────────────────────────────────────────────────
+  function openEditor(id) {
+    const p = id ? projects.find((x) => x.id === id) : null;
+    if (id && !p) return;
+    const f = p ? clone(p.fields) : { name: '', location: '', locationName: '', process: '', status: 'active', start: localDay(), end: '',
+                                      days: [], startTime: '', endTime: '', roles: [{ id: newId(), name: t(L.lead), people: [] }], uids: [], notes: '' };
+    f.roles = (f.roles || []).map((r) => ({ ...r, people: r.people || [] }));
+    f.uids = f.uids || []; f.days = f.days || [];
+    editing = { id, f };
+    loadUidIndex();
+    render();
+    window.scrollTo({ top: $('plist').getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' });
+  }
+  function editorHtml() {
+    const f = editing.f;
+    const dl = DOW[getLang() === 'es' ? 'es' : 'en'];
+    return `<div class="card editing"><div class="ed">
+      <div class="row"><div class="full"><label class="lbl" for="ed-name">${esc(t(L.name))}</label><input id="ed-name" value="${esc(f.name)}" placeholder="${esc(t(L.namePh))}"></div>
+        <div class="${f.location === 'other' ? '' : 'full'}"><label class="lbl" for="ed-loc">${esc(t(L.location))}</label>
+          <select id="ed-loc"><option value=""></option>${LOCATIONS.map(([k, n]) => `<option value="${k}" ${f.location === k ? 'selected' : ''}>${esc(n || t(L.other))}</option>`).join('')}</select></div>
+        ${f.location === 'other' ? `<div><label class="lbl" for="ed-locname">${esc(t(L.otherName))}</label><input id="ed-locname" value="${esc(f.locationName)}"></div>` : ''}</div>
+      <div class="row"><div><label class="lbl" for="ed-proc">${esc(t(L.process))}</label><select id="ed-proc">${processOptions(f.process)}</select></div>
+        <div><label class="lbl" for="ed-status">${esc(t(L.status))}</label><select id="ed-status">${STATUSES.map(([k, l]) => `<option value="${k}" ${f.status === k ? 'selected' : ''}>${esc(t(l))}</option>`).join('')}</select></div></div>
+      <div class="row"><div><label class="lbl" for="ed-start">${esc(t(L.start))}</label><input type="date" id="ed-start" value="${esc(f.start)}"></div>
+        <div><label class="lbl" for="ed-end">${esc(t(L.end))}</label><input type="date" id="ed-end" value="${esc(f.end || '')}"></div></div>
+      <div style="margin-bottom:12px"><div class="lbl">${esc(t(L.days))}</div>
+        <div class="days" id="ed-days">${[1, 2, 3, 4, 5, 6, 0].map((d) => `<button type="button" data-dow="${d}" class="${f.days.includes(d) ? 'on' : ''}">${esc(dl[d])}</button>`).join('')}</div>
+        <div class="hint">${esc(t(L.daysHint))}</div></div>
+      <div class="row"><div><label class="lbl" for="ed-ts">${esc(t(L.tStart))}</label><input type="time" id="ed-ts" value="${esc(f.startTime || '')}"></div>
+        <div><label class="lbl" for="ed-te">${esc(t(L.tEnd))}</label><input type="time" id="ed-te" value="${esc(f.endTime || '')}"></div></div>
+      <div><label class="lbl" for="ed-notes">${esc(t(L.notes))}</label><textarea id="ed-notes">${esc(f.notes || '')}</textarea></div>
+
+      <div class="sec">${esc(t(L.roles))}</div>
+      <div class="hint" style="margin:-2px 0 10px">${esc(t(L.rolesHint))}</div>
+      <div id="ed-roles">${f.roles.map((r, ri) => `<div class="role-ed">
+        <div class="top"><div><label class="lbl">${esc(t(L.roleName))}</label><input data-rname="${ri}" value="${esc(r.name)}"></div>
+          <div class="proc"><label class="lbl">${esc(t(L.roleProc))}</label><select data-rproc="${ri}">${processOptions(r.process || '')}</select></div>
+          <button type="button" class="x" data-rdel="${ri}" aria-label="×">×</button></div>
+        <label class="check" style="margin-bottom:8px;font-size:.85rem"><input type="checkbox" data-rown="${ri}" ${r.startTime || r._own ? 'checked' : ''}> ${esc(t(L.roleOwn))}</label>
+        ${r.startTime != null && r.startTime !== '' || r._own ? `<div class="times"><input type="time" data-rts="${ri}" value="${esc(r.startTime || '')}" aria-label="${esc(t(L.tStart))}">
+          <input type="time" data-rte="${ri}" value="${esc(r.endTime || '')}" aria-label="${esc(t(L.tEnd))}"></div>` : ''}
+        <ul class="ed-ppl">${r.people.map((x, pi) => `<li><span class="nm">${esc(x.name)}${x.userId ? '' : ' <span class="s">✎</span>'}</span>
+          <button type="button" class="star ${x.lead ? 'on' : ''}" data-lead="${ri}:${pi}">${esc(t(L.lead))}</button>
+          <button type="button" class="x" data-pdel="${ri}:${pi}" aria-label="×">×</button></li>`).join('')}</ul>
+        <div class="picker"><input data-padd="${ri}" autocomplete="off" placeholder="${esc(t(L.addPerson))}"><div class="panel"></div></div>
+      </div>`).join('')}</div>
+      <button type="button" class="btn btn-sm" id="ed-addrole">${esc(t(L.addRole))}</button>
+
+      <div class="sec">${esc(t(L.uids))}</div>
+      <div class="chips" id="ed-uids">${f.uids.map((u, i) => `<span class="chip" title="${esc(u.uid)}"><span class="m">${esc(tail(u.uid))}</span>${u.strain ? `<span class="s">${esc(u.strain)}</span>` : ''}<button type="button" data-udel="${i}">×</button></span>`).join('')}</div>
+      <div class="uid-add"><input id="ed-uidq" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="${esc(t(L.uidPh))}"><button type="button" class="btn" id="ed-uidadd">${esc(t(L.uidAdd))}</button></div>
+      <div class="matches" id="ed-uidm"></div>
+      <div class="hint">${esc(t(L.uidsHint))}</div>
+
+      <div class="err" id="ed-err"></div>
+      <div class="ed-ft">${editing.id ? `<button type="button" class="btn btn-danger" id="ed-rm">${esc(t(L.remove))}</button><span class="spacer"></span>` : ''}
+        <button type="button" class="btn btn-ghost" id="ed-cancel">${esc(t(L.cancel))}</button>
+        <button type="button" class="btn btn-gold" id="ed-save">${esc(t(L.save))}</button></div>
+    </div></div>`;
+  }
+  // Pull the typed-in values back into the draft before a re-render.
+  function readEditor() {
+    const f = editing.f;
+    f.name = $('ed-name').value; f.location = $('ed-loc').value;
+    if ($('ed-locname')) f.locationName = $('ed-locname').value;
+    f.process = $('ed-proc').value; f.status = $('ed-status').value;
+    f.start = $('ed-start').value; f.end = $('ed-end').value;
+    f.startTime = $('ed-ts').value; f.endTime = $('ed-te').value; f.notes = $('ed-notes').value;
+    f.roles.forEach((r, ri) => {
+      r.name = document.querySelector(`[data-rname="${ri}"]`).value;
+      r.process = document.querySelector(`[data-rproc="${ri}"]`).value;
+      const ts = document.querySelector(`[data-rts="${ri}"]`), te = document.querySelector(`[data-rte="${ri}"]`);
+      if (ts) { r.startTime = ts.value; r.endTime = te.value; }
+    });
+  }
+  const rerender = () => { readEditor(); render(); };
+  function wireEditor() {
+    const f = editing.f;
+    $('ed-loc').onchange = rerender;
+    $('ed-days').onclick = (e) => {
+      const b = e.target.closest('[data-dow]'); if (!b) return;
+      const d = +b.dataset.dow;
+      f.days = f.days.includes(d) ? f.days.filter((x) => x !== d) : [...f.days, d];
+      b.classList.toggle('on');
+    };
+    $('ed-addrole').onclick = () => { readEditor(); f.roles.push({ id: newId(), name: '', people: [] }); render();
+      const ins = document.querySelectorAll('[data-rname]'); if (ins.length) ins[ins.length - 1].focus(); };
+    $('ed-roles').onclick = (e) => {
+      const del = e.target.closest('[data-rdel]');
+      if (del) { readEditor(); f.roles.splice(+del.dataset.rdel, 1); render(); return; }
+      const ld = e.target.closest('[data-lead]');
+      if (ld) { const [ri, pi] = ld.dataset.lead.split(':').map(Number); readEditor(); f.roles[ri].people[pi].lead = !f.roles[ri].people[pi].lead; render(); return; }
+      const pd = e.target.closest('[data-pdel]');
+      if (pd) { const [ri, pi] = pd.dataset.pdel.split(':').map(Number); readEditor(); f.roles[ri].people.splice(pi, 1); render(); }
+    };
+    document.querySelectorAll('[data-rown]').forEach((cb) => cb.onchange = () => {
+      readEditor();
+      const r = f.roles[+cb.dataset.rown];
+      if (cb.checked) { r._own = true; r.startTime = r.startTime || f.startTime || ''; r.endTime = r.endTime || f.endTime || ''; }
+      else { delete r._own; r.startTime = ''; r.endTime = ''; }
+      render();
+    });
+    document.querySelectorAll('[data-padd]').forEach((inp) => {
+      const ri = +inp.dataset.padd;
+      personPicker(inp, (person) => {
+        readEditor();
+        f.roles[ri].people.push({ userId: person.userId || '', name: person.name, lead: false });
+        render();
+        const again = document.querySelector(`[data-padd="${ri}"]`); if (again) again.focus();
+      }, (key) => f.roles[ri].people.some((x) => personKey(x) === key), editing.id);
+    });
+    $('ed-uids').onclick = (e) => { const b = e.target.closest('[data-udel]'); if (b) { readEditor(); f.uids.splice(+b.dataset.udel, 1); render(); } };
+    const addUids = () => {
+      const raw = $('ed-uidq').value;
+      const toks = raw.split(/[\s,;]+/).map(normUid).filter(Boolean);
+      if (!toks.length) return;
+      if (toks.some((q) => q.length >= 4 && q.length < 10)) loadCanix();
+      const left = [];
+      let pickHtml = '';
+      toks.forEach((q) => {
+        if (f.uids.some((u) => u.uid === q)) return;
+        if (q.length >= 10) { addUid(q); return; }
+        if (q.length < 4) { left.push(q); return; }
+        const hits = uidCandidates(q).filter((u) => !f.uids.some((x) => x.uid === u.uid));
+        if (hits.length === 1) addUid(hits[0].uid, hits[0].strain);
+        else {
+          left.push(q);
+          pickHtml += hits.length ? `<div class="hint">${esc(fill(t(L.uidPick), { q }))}</div>` + hits.slice(0, 12).map((u) =>
+            `<button type="button" data-upick="${esc(u.uid)}" data-ustrain="${esc(u.strain || '')}"><span class="m">${esc(u.uid)}</span> <span class="s">${esc(u.strain || '')}</span></button>`).join('')
+            : `<div class="hint">${esc(fill(t(L.uidNone), { q }))}</div>`;
+        }
+      });
+      readEditor(); render();
+      $('ed-uidq').value = left.join(' ');
+      $('ed-uidm').innerHTML = pickHtml;
+      $('ed-uidq').focus();
+    };
+    const addUid = (uid, strain) => { if (!f.uids.some((u) => u.uid === uid)) f.uids.push({ uid, strain: strain || (uidIndex.get(uid) || {}).strain || '', addedAt: localDay(), addedBy: me }); };
+    $('ed-uidadd').onclick = addUids;
+    $('ed-uidq').onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); addUids(); } };
+    $('ed-uidm').onclick = (e) => {
+      const b = e.target.closest('[data-upick]'); if (!b) return;
+      readEditor(); addUid(b.dataset.upick, b.dataset.ustrain);
+      const q = normUid($('ed-uidq').value);
+      render();
+      $('ed-uidq').value = q.length && b.dataset.upick.endsWith(q) ? '' : q;
+    };
+    $('ed-cancel').onclick = () => { editing = null; history.replaceState(null, '', location.pathname + '?tab=projects'); render(); };
+    if ($('ed-rm')) $('ed-rm').onclick = async () => {
+      if (!confirm(t(L.removeQ))) return;
+      try {
+        await patchProject(editing.id, (fx) => ({ ...fx, voided: true, voidedBy: me, voidedAt: new Date().toISOString() }));
+        editing = null; toast(t(L.removed)); render();
+      } catch (err) { $('ed-err').textContent = `${t(L.failed)} ${err.message || err}`; }
+    };
+    $('ed-save').onclick = saveEditor;
+  }
+  async function saveEditor() {
+    readEditor();
+    const f = editing.f;
+    f.name = f.name.trim(); f.locationName = (f.locationName || '').trim();
+    f.roles.forEach((r) => { r.name = r.name.trim(); });
+    const problem = !f.name ? L.needName : !f.location || (f.location === 'other' && !f.locationName) ? L.needLoc
+      : !f.start ? L.needStart : f.end && f.end < f.start ? L.badEnd : f.roles.some((r) => !r.name) ? L.needRole : null;
+    if (problem) { $('ed-err').textContent = t(problem); return; }
+    if (!client) { $('ed-err').textContent = t(L.noDb); return; }
+    const out = {
+      name: f.name, location: f.location, locationName: f.location === 'other' ? f.locationName : '', process: f.process || '',
+      status: f.status || 'active', start: f.start, end: f.end || '', days: [...f.days].sort(), startTime: f.startTime || '', endTime: f.startTime ? f.endTime || '' : '',
+      roles: f.roles.map((r) => ({ id: r.id || newId(), name: r.name, process: r.process || '', startTime: r.startTime || '', endTime: r.startTime ? r.endTime || '' : '',
+                                   people: r.people.map((x) => ({ userId: x.userId || '', name: x.name, lead: !!x.lead })) })),
+      uids: f.uids, notes: (f.notes || '').trim()
+    };
+    const btn = $('ed-save');
+    btn.disabled = true; btn.textContent = t(L.saving);
+    try {
+      if (editing.id) {
+        // Day changes and who created it stay as they are on the saved row.
+        await patchProject(editing.id, (fx) => ({ ...fx, ...out }));
+      } else {
+        const { data, error } = await client.from('operations_forms').insert({
+          station_key: KEY, status: 'submitted', owner_user: me || null, updated_by: me || null, work_date: out.start,
+          submitted_at: new Date().toISOString(), fields: { ...out, overrides: {}, createdBy: me, updatedBy: me }
+        }).select();
+        if (error) throw error;
+        projects.push(data[0]);
+      }
+      editing = null; toast(t(L.saved));
+      history.replaceState(null, '', location.pathname + '?tab=projects');
+      render();
+    } catch (err) { $('ed-err').textContent = `${t(L.failed)} ${err.message || err}`; btn.disabled = false; btn.textContent = t(L.save); }
+  }
+
+  // UIDs seen at the stations in the last 60 days (and active Canix packages,
+  // once someone types a short tag) — for adding by the last 4.
+  const uidIndex = new Map();
+  let uidLoaded = false, canix = null, canixLoading = false;
+  async function loadUidIndex() {
+    if (uidLoaded || !client) return;
+    uidLoaded = true;
+    const since = addDays(localDay(), -60);
+    for (let page = 0; page < 6; page++) {
+      const { data, error } = await client.from('operations_forms').select('strain,fields,work_date')
+        .gte('work_date', since).not('station_key', 'in', '(buck_submission,buck_box,buck_batch_close,labor_entry,work_project,work_schedule,cost_settings)')
+        .order('work_date', { ascending: false }).range(page * 1000, page * 1000 + 999);
+      if (error || !data) break;
+      data.forEach((r) => {
+        const f = r.fields || {};
+        const note = (raw, strain) => { const u = normUid(raw); if (u.length >= 4 && !uidIndex.has(u)) uidIndex.set(u, { uid: u, strain: strain || '' }); };
+        ['sourceUid', 'batchTag', 'newBuckedUid', 'newBigLeafUid', 'incomingUid'].forEach((k) => f[k] && note(f[k], r.strain || f.strain));
+        (f.lines || []).forEach((ln) => ln && ln.sourceUid && note(ln.sourceUid, ln.strain || r.strain));
+      });
+      if (data.length < 1000) break;
+    }
+  }
+  function loadCanix() {
+    if (canix || canixLoading) return;
+    canixLoading = true;
+    fetch(DATA_BASE + 'canix_inventory.json?t=' + Date.now()).then((r) => r.ok ? r.json() : []).catch(() => []).then((rows) => {
+      canix = (rows || []).filter((p) => p && p.tag && p.is_active !== false)
+        .map((p) => ({ uid: normUid(p.tag), strain: ((p.item || {}).strain || {}).name || '' }));
+      canixLoading = false;
+    });
+  }
+  function uidCandidates(q) {
+    const out = [...uidIndex.values()].filter((u) => u.uid.endsWith(q));
+    if (canix) canix.forEach((p) => { if (p.uid.endsWith(q) && !out.some((x) => x.uid === p.uid)) out.push(p); });
+    return out;
+  }
+
+  // ── Image (PNG) of the current day/week ─────────────────────────────────
+  // Drawn straight onto a canvas, white background, for texting: each day a
+  // section of project blocks — orange header with the location, project and
+  // hours, the day's note in red, then each responsibility and its people
+  // (leads in green).
+  async function makeImage() {
+    const dates = view === 'week' ? weekDates() : [$('date').value || localDay()];
+    const days = dates.map((d) => ({ d, ps: projects.filter((p) => runsOn(p, d)).sort((a, b) => locOrder(a.fields) - locOrder(b.fields)) })).filter((x) => x.ps.length);
+    if (!days.length) { toast(t(L.nothingImg)); return; }
+    try { await document.fonts.ready; } catch {}
+    const W = 1080, PAD = 36, GAP = 16, COLS = 3;
+    const colW = (W - PAD * 2 - GAP * (COLS - 1)) / COLS;
+    const SANS = "'DM Sans', Arial, sans-serif", HEAD = "'Bebas Neue', 'Arial Narrow', Arial, sans-serif", MONO = "'DM Mono', Menlo, monospace";
+    const C = { ink: '#16181d', sub: '#5b6170', line: '#e3e5ea', orange: '#e08a3c', red: '#c62828', redBg: '#fdecea', green: '#1f8a52', gold: '#9a6b12', paper: '#ffffff' };
+    const cv = document.createElement('canvas');
+    const ctx = cv.getContext('2d');
+    const wrap = (text, font, maxW) => {
+      ctx.font = font;
+      const out = [];
+      String(text || '').split('\n').forEach((para) => {
+        let line = '';
+        para.split(/\s+/).forEach((w) => {
+          const test = line ? line + ' ' + w : w;
+          if (ctx.measureText(test).width > maxW && line) { out.push(line); line = w; } else line = test;
+        });
+        out.push(line);
+      });
+      return out;
+    };
+    const F = { title: `400 54px ${HEAD}`, range: `500 24px ${SANS}`, day: `400 40px ${HEAD}`, loc: `400 30px ${HEAD}`, proj: `700 20px ${SANS}`,
+                time: `500 18px ${MONO}`, note: `500 19px ${SANS}`, role: `500 15px ${MONO}`, name: `400 21px ${SANS}`, lead: `700 21px ${SANS}`, foot: `400 16px ${SANS}` };
+    function block(p, d, conf) {
+      const f = p.fields, inner = colW - 28;
+      const { roles, note } = dayRoles(f, d);
+      const locLines = wrap(locName(f).toUpperCase(), F.loc, inner);
+      const projLines = wrap(f.name, F.proj, inner);
+      const headH = 12 + locLines.length * 32 + projLines.length * 24 + 26;
+      const notes = note ? wrap(note, F.note, inner - 12) : [];
+      const rs = roles.filter((r) => r.people.length).map((r) => ({ r, label: (r.name + (r.startTime ? '  ' + hoursLabel(f, r) : '')).toUpperCase(),
+        people: r.people.map((x) => ({ x, conflict: conf.has(personKey(x) + '|' + p.id), lines: wrap(x.name + (x.lead ? ` — ${t(L.lead)}` : ''), x.lead ? F.lead : F.name, inner - 30) })) }));
+      let h = headH + 12 + (notes.length ? notes.length * 26 + 26 : 0);
+      rs.forEach((r) => { h += 24; r.people.forEach((x) => { h += x.lines.length * 28 + 2; }); h += 8; });
+      return { f, locLines, projLines, headH, notes, rs, h: h + 6 };
+    }
+    const sections = days.map((day) => {
+      const conf = conflictsOn(day.d);
+      const blocks = day.ps.map((p) => block(p, day.d, conf));
+      const rowsOf = [];
+      for (let i = 0; i < blocks.length; i += COLS) rowsOf.push(blocks.slice(i, i + COLS));
+      return { d: day.d, rowsOf, h: 64 + rowsOf.reduce((a, row) => a + Math.max(...row.map((b) => b.h)) + GAP, 0) };
+    });
+    const headH = 130, footH = 60;
+    const H = headH + sections.reduce((a, s) => a + s.h + 18, 0) + footH;
+    cv.width = W; cv.height = Math.ceil(H);
+    ctx.fillStyle = C.paper; ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = C.ink; ctx.font = F.title; ctx.fillText(t(L.imgTitle).toUpperCase(), PAD, PAD - 4);
+    ctx.fillStyle = C.sub; ctx.font = F.range;
+    ctx.fillText(dates.length === 1 ? fmtDate(dates[0], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+      : `${fmtDate(dates[0], { weekday: 'short', month: 'short', day: 'numeric' })} – ${fmtDate(dates[6], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}`, PAD, PAD + 56);
+    const rr = (x, yy, w, h, r) => { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, yy, w, h, r) : ctx.rect(x, yy, w, h); };
+    let y = headH;
+    sections.forEach((sec) => {
+      ctx.fillStyle = C.ink; ctx.font = F.day;
+      ctx.fillText(fmtDate(sec.d, { weekday: 'long', month: 'short', day: 'numeric' }).toUpperCase(), PAD, y + 8);
+      ctx.fillStyle = C.line; ctx.fillRect(PAD, y + 54, W - PAD * 2, 2);
+      y += 64;
+      sec.rowsOf.forEach((row) => {
+        const rowH = Math.max(...row.map((b) => b.h));
+        row.forEach((b, i) => {
+          const x = PAD + i * (colW + GAP);
+          ctx.fillStyle = C.paper; ctx.strokeStyle = C.line; ctx.lineWidth = 2;
+          rr(x, y, colW, rowH, 10); ctx.fill(); ctx.stroke();
+          ctx.save(); rr(x, y, colW, rowH, 10); ctx.clip(); ctx.fillStyle = C.orange; ctx.fillRect(x, y, colW, b.headH); ctx.restore();
+          ctx.fillStyle = '#000';
+          let hy = y + 12;
+          ctx.font = F.loc; b.locLines.forEach((ln) => { ctx.fillText(ln, x + 14, hy); hy += 32; });
+          ctx.font = F.proj; b.projLines.forEach((ln) => { ctx.fillText(ln, x + 14, hy); hy += 24; });
+          ctx.font = F.time; ctx.fillText(hoursLabel(b.f), x + 14, hy + 2);
+          let yy = y + b.headH + 12;
+          if (b.notes.length) {
+            const nh = b.notes.length * 26 + 16;
+            ctx.fillStyle = C.redBg; rr(x + 14, yy, colW - 28, nh, 6); ctx.fill();
+            ctx.fillStyle = C.red; ctx.fillRect(x + 14, yy, 4, nh);
+            ctx.font = F.note; b.notes.forEach((ln, k) => ctx.fillText(ln, x + 26, yy + 8 + k * 26));
+            yy += nh + 10;
+          }
+          b.rs.forEach((r) => {
+            ctx.fillStyle = C.gold; ctx.font = F.role; ctx.fillText(r.label, x + 14, yy + 4); yy += 24;
+            r.people.forEach((pp) => {
+              ctx.fillStyle = pp.x.lead ? C.green : C.ink; ctx.font = pp.x.lead ? F.lead : F.name;
+              pp.lines.forEach((ln, k) => {
+                ctx.fillText(ln, x + 14, yy + k * 28);
+                if (k === 0 && pp.conflict) { const c0 = ctx.fillStyle; ctx.fillStyle = C.red; ctx.fillText('⚠', x + 14 + ctx.measureText(ln).width + 6, yy); ctx.fillStyle = c0; }
+              });
+              yy += pp.lines.length * 28 + 2;
+            });
+            yy += 8;
+          });
+        });
+        y += rowH + GAP;
+      });
+      y += 18;
+    });
+    ctx.fillStyle = C.sub; ctx.font = F.foot;
+    ctx.fillText(`2CW · ${fill(t(L.imgMade), { t: new Date().toLocaleString(lang(), { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) })}`, PAD, H - footH + 18);
+    const blob = await new Promise((res) => cv.toBlob(res, 'image/png'));
+    showImage(blob, `schedule-${dates[0]}${dates.length > 1 ? '_to_' + dates[dates.length - 1] : ''}.png`);
+  }
+  let imgUrl = null, imgFile = null;
+  function showImage(blob, name) {
+    if (imgUrl) URL.revokeObjectURL(imgUrl);
+    imgUrl = URL.createObjectURL(blob);
+    imgFile = new File([blob], name, { type: 'image/png' });
+    $('img-preview').src = imgUrl;
+    $('img-name').textContent = name;
+    $('img-dl').href = imgUrl; $('img-dl').download = name; $('img-dl').textContent = t(L.download);
+    $('img-close').textContent = t(L.close);
+    $('img-hint').textContent = t(L.imgHint);
+    $('img-share').hidden = !(navigator.canShare && navigator.canShare({ files: [imgFile] }));
+    $('img-share').textContent = t(L.share);
+    $('img-bg').classList.add('on');
+  }
+  $('img-share').onclick = async () => {
+    try { await navigator.share({ files: [imgFile], title: t(L.imgTitle) }); } catch (e) { if (e && e.name !== 'AbortError') toast(String(e.message || e)); }
+  };
+  $('img-close').onclick = () => $('img-bg').classList.remove('on');
+  $('img-bg').addEventListener('click', (e) => { if (e.target === $('img-bg')) $('img-bg').classList.remove('on'); });
+  $('png').onclick = () => makeImage();
+
+  function toast(msg) {
+    const el = $('toast');
+    el.textContent = msg;
+    el.classList.add('on');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => el.classList.remove('on'), 2500);
+  }
+  function render() {
+    if (!client) { $('board').innerHTML = $('plist').innerHTML = `<div class="empty">${esc(t(L.noDb))}</div>`; return; }
+    if (tab === 'schedule') renderSchedule(); else renderProjects();
+  }
+
+  $('board').innerHTML = $('plist').innerHTML = `<div class="empty">${esc(t(L.loading))}</div>`;
+  await loadProjects();
+  showTab(tab);
+  if (params.get('id')) openEditor(params.get('id'));
+  loadLabor().then(() => { if (tab === 'projects' && !editing) render(); });
+})();
+</script>
+</body>
+</html>
