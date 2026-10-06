@@ -57,11 +57,9 @@ its Metrc UID, strain, harvest/batch name, plant count, bins/bags and wet
 weight (all required), split into one record per UID on submit. The batch
 name column has `lift: true`, so it's copied onto each UID's record like
 the UID and strain. Header fields required: farm license, harvest style,
-destination, license plate, photo of the driver's ID, crew size and labor
-hours; truck # is optional. Labor is for the whole load, so `splitShare`
-on the station divides `laborHours` and each `crew` row's hours between
-the UID records by their share of the wet weight, rather than copying the
-full time onto each one (crew size is copied as is). Photos aren't
+destination, license plate and photo of the driver's ID; truck # is
+optional. There are no crew/labor fields — harvest labor goes in the
+Labor Log. Photos aren't
 autosaved, so a resumed draft needs the driver ID photo retaken before it
 can be submitted.
 

@@ -29,11 +29,6 @@
 //            (see splitRecords in ops_form.html). Columns marked `lift: true`
 //            are copied from the UID's first row onto its record, like
 //            sourceUid and strain are.
-//   splitShare {by, fields, lineitems} — for a split station, whole-form
-//            numbers (labor) divided between the UID records by each one's
-//            share of the `by` calc instead of copied onto every record.
-//            `fields` are top-level keys; `lineitems` maps a worksheet key
-//            to the column scaled on each of its rows.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const G_PER_LB = 453.59237;
@@ -220,11 +215,8 @@ const OPERATIONS_STATIONS = [
   // Wet Intake — one form per truck load, with a worksheet row per group of
   // bins/bags carrying its own Metrc UID, strain and plant count — and split
   // on submit into one record per UID (`splitBy`), so each harvest record
-  // lines up with the package Wet Intake receives.
-  //
-  // Crew time is for the whole load, so on the split it's divided between
-  // the UIDs by their share of the wet weight (`splitShare`) instead of
-  // being copied whole onto each one.
+  // lines up with the package Wet Intake receives. Crew and hours aren't
+  // on this form — harvest labor is logged in the Labor Log.
   {
     key: 'harvest',
     dept: { en: 'Cultivation', es: 'Cultivo' },
@@ -234,7 +226,6 @@ const OPERATIONS_STATIONS = [
     color: 'green',
     headline: 'wetWeightLb',
     splitBy: 'lines',
-    splitShare: { by: 'wetWeightLb', fields: ['laborHours'], lineitems: { crew: 'hours' } },
     fields: [
       F.date(),
       F.site(),
@@ -294,10 +285,7 @@ const OPERATIONS_STATIONS = [
           return plants > 0 ? (v.lines || []).reduce((a, r) => a + num(r.weight), 0) / plants : null;
         },
         l: { en: 'Wet lbs / Plant', es: 'Lbs húmedos por planta' } },
-      F.teamLead(),
-      { ...F.crewSize(), req: true },
-      { ...F.laborHours(), req: true },
-      F.crew(), F.notes(), F.photo()
+      F.teamLead(), F.notes(), F.photo()
     ],
     flow: { lossKind: 'origin', outputs: [{ field: 'wetWeightLb', category: 'wet_whole_plant' }] }
   },
