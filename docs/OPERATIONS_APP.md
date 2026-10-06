@@ -53,8 +53,9 @@ lot. Bucking opens a batch for every Take Down released to bucking.
 
 Harvest (`harvest`) is the step before Wet Intake and is built the same
 way: one form per truck load, a worksheet row per group of bins/bags with
-its Metrc UID, strain, harvest/batch name, plant count, bins/bags and wet
-weight (all required), split into one record per UID on submit. The batch
+its Metrc UID, strain, harvest/batch name, the block and row the plants
+came from, plant count, bins/bags and wet weight (all required; block
+carries down to the next row, row doesn't), split into one record per UID on submit. The batch
 name column has `lift: true`, so it's copied onto each UID's record like
 the UID and strain. Header fields required: farm license, harvest style,
 destination, license plate and photo of the driver's ID; truck # is

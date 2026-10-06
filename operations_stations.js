@@ -213,7 +213,7 @@ const OPERATIONS_STATIONS = [
   // ── CULTIVATION: HARVEST ─────────────────────────────────────────────────
   // The step before Wet Intake: the farm side of loading a truck. Built like
   // Wet Intake — one form per truck load, with a worksheet row per group of
-  // bins/bags carrying its own Metrc UID, strain and plant count — and split
+  // bins/bags carrying its own Metrc UID, strain, block/row and plant count — and split
   // on submit into one record per UID (`splitBy`), so each harvest record
   // lines up with the package Wet Intake receives. Crew and hours aren't
   // on this form — harvest labor is logged in the Labor Log.
@@ -231,7 +231,6 @@ const OPERATIONS_STATIONS = [
       F.site(),
       { k: 'pid', t: 'select', ref: 'properties', allowOther: true, req: true,
         l: { en: 'Farm License', es: 'Licencia del rancho' } },
-      { k: 'block', t: 'text', l: { en: 'Field / Block', es: 'Campo / bloque' } },
       { k: 'round', t: 'select', allowOther: true,
         l: { en: 'Season / Round', es: 'Temporada / ronda' },
         opts: [
@@ -261,13 +260,15 @@ const OPERATIONS_STATIONS = [
                 es: 'Foto de la licencia de conducir o identificación del conductor.' } },
       { k: 'lines', t: 'lineitems', req: true,
         l: { en: 'Load — by UID', es: 'Carga — por UID' },
-        hint: { en: 'One row per group of bins/bags loaded, with its Metrc UID (the last 5 is fine), strain, plant count and wet weight. Each UID is saved as its own harvest record.',
-                es: 'Una fila por cada grupo de bins/bolsas cargado, con su UID de Metrc (los últimos 5 son suficientes), variedad, número de plantas y peso húmedo. Cada UID se guarda como su propio registro de cosecha.' },
+        hint: { en: 'One row per group of bins/bags loaded, with its Metrc UID (the last 5 is fine), strain, the block and row the plants came from, plant count and wet weight. Each UID is saved as its own harvest record.',
+                es: 'Una fila por cada grupo de bins/bolsas cargado, con su UID de Metrc (los últimos 5 son suficientes), variedad, el bloque y la hilera de donde vienen las plantas, número de plantas y peso húmedo. Cada UID se guarda como su propio registro de cosecha.' },
         cols: [
           { k: 'sourceUid', t: 'uid', req: true, carry: true, l: { en: 'Metrc UID', es: 'UID de Metrc' } },
           { k: 'strain', t: 'select', ref: 'strains', allowOther: true, req: true, carry: true, l: { en: 'Strain', es: 'Variedad' } },
           { k: 'harvestBatchName', t: 'text', req: true, carry: true, lift: true,
             l: { en: 'Harvest / Batch Name', es: 'Nombre de cosecha / lote' } },
+          { k: 'block', t: 'text', req: true, carry: true, l: { en: 'Block', es: 'Bloque' } },
+          { k: 'row', t: 'text', req: true, l: { en: 'Row', es: 'Hilera' } },
           { k: 'plantCount', t: 'number', req: true, l: { en: 'Plant Count', es: 'N.º de plantas' }, min: 0, step: 1, inputmode: 'numeric' },
           { k: 'binCount', t: 'number', req: true, l: { en: 'Bins / Bags Loaded', es: 'Bins / bolsas cargadas' }, min: 0, step: 1, inputmode: 'numeric' },
           { k: 'weight', t: 'number', req: true, l: { en: 'Wet Weight (lbs)', es: 'Peso húmedo (lbs)' }, min: 0, step: 0.01 }
