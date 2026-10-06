@@ -51,6 +51,19 @@ boxes the dried material under a new on-stem package UID. Take Down's
 `ops_analytics` aliases the on-stem UID back to the farm UID so it stays one
 lot. Bucking opens a batch for every Take Down released to bucking.
 
+Harvest (`harvest`) is the step before Wet Intake and is built the same
+way: one form per truck load, a worksheet row per group of bins/bags with
+its Metrc UID, strain, harvest/batch name, the block and row the plants
+came from, plant count, bins/bags and wet weight (all required; block
+carries down to the next row, row doesn't), split into one record per UID on submit. The batch
+name column has `lift: true`, so it's copied onto each UID's record like
+the UID and strain. Header fields required: farm license, harvest style,
+destination, license plate and photo of the driver's ID; truck # is
+optional. There are no crew/labor fields — harvest labor goes in the
+Labor Log. Photos aren't
+autosaved, so a resumed draft needs the driver ID photo retaken before it
+can be submitted.
+
 Pre-Roll Production (`preroll_production`) follows the paper pre-roll sheet
 and is the one form that stays open across days: its station entry sets
 `multiDay: true`, so the form's switcher lists every open draft on that

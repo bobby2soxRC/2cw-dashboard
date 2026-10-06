@@ -429,7 +429,8 @@
 
   // Stations with `splitBy` save one record per UID in that worksheet: each
   // gets only its own rows, the UID and strain at the top, and its calc
-  // fields (totals) worked out again from just those rows. Fields hidden on
+  // fields (totals) worked out again from just those rows (plus any `lift`
+  // columns). Fields hidden on
   // the whole form (the Metrc adjustment, once there's more than one UID)
   // aren't copied onto the pieces. The first record keeps `firstId`; the
   // rest get ids that stay fixed for this page, so a retried submit
@@ -444,8 +445,11 @@
       if (!groups.has(r.sourceUid)) groups.set(r.sourceUid, []);
       groups.get(r.sourceUid).push(r);
     });
+    const splitField = station.fields.find((f) => f.k === station.splitBy);
+    const lifted = splitField.cols.filter((c) => c.lift).map((c) => c.k);
     return [...groups.entries()].map(([uid, rows], i) => {
       const g = { ...base, [station.splitBy]: rows, sourceUid: uid, strain: rows[0].strain };
+      lifted.forEach((k) => { g[k] = rows[0][k]; });
       station.fields.filter((f) => f.t === 'calc').forEach((f) => {
         try { g[f.k] = f.calc(g); } catch { g[f.k] = null; }
       });
