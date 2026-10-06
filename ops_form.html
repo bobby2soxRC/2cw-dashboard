@@ -71,6 +71,9 @@
     textarea{resize:vertical;min-height:88px}
     select{appearance:none;background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%239aa0b0' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;background-size:12px;padding-right:38px}
     input.uid{font-family:'DM Mono',monospace;letter-spacing:.04em}
+    label.check{display:flex;align-items:center;gap:12px;min-height:52px;background:var(--surface2);border:1px solid var(--border);
+      border-radius:10px;padding:.6rem .9rem;font-size:16px;font-weight:600;cursor:pointer}
+    label.check input{width:26px;height:26px;min-height:0;flex-shrink:0;accent-color:var(--accent);cursor:pointer}
 
     .calc{display:flex;align-items:baseline;justify-content:space-between;gap:12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.75rem .9rem;min-height:52px}
     .calc .k{font-size:.72rem;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:.08em}
@@ -230,6 +233,12 @@
     }
 
     if (f.t === 'lineitems') return buildLineItems(f, wrap);
+
+    if (f.t === 'check') {
+      wrap.innerHTML = `<label class="check" for="f_${f.k}"><input type="checkbox" id="f_${f.k}">${t(f.l)}</label>` +
+                       (f.hint ? `<div class="hint">${t(f.hint)}</div>` : '');
+      return wrap;
+    }
 
     let control = '';
     if (f.t === 'select') {
@@ -488,6 +497,7 @@
     const other = f.allowOther ? document.getElementById(`o_${f.k}`) : null;
     const read = () => {
       if (f.t === 'select' && inp.value === '__other__') return other ? other.value.trim() : '';
+      if (f.t === 'check') return inp.checked;
       if (f.t === 'number') return inp.value === '' ? null : Number(inp.value);
       if (f.t === 'uid') return inp.value.trim().toUpperCase();
       return inp.value.trim();
@@ -558,6 +568,8 @@
       }
       const other = f.allowOther ? document.getElementById(`o_${f.k}`) : null;
       if (other) other.style.display = inp.value === '__other__' ? 'block' : 'none';
+    } else if (f.t === 'check') {
+      inp.checked = val === true || val === 'true';
     } else {
       inp.value = val;
     }

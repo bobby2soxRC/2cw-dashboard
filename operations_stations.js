@@ -11,10 +11,11 @@
 //
 // Field spec:
 //   k      key stored in the record
-//   t      text | number | date | time | select | textarea | uid | photo | calc | lineitems
+//   t      text | number | date | time | select | textarea | uid | photo | calc | lineitems | check
 //   l      label {en, es}
 //   req    required
 //   ref    name of a list in data/operations/reference.json to populate a select
+//          (or an array of names, merged in order)
 //   opts   inline select options [{v, l:{en,es}}]
 //   calc   (v) => number | null   — computed from the other values, read-only
 //   dp     decimal places for number/calc display (default 2)
@@ -295,8 +296,11 @@ const OPERATIONS_STATIONS = [
         l: { en: 'Person Completing Form', es: 'Persona que llena el formulario' } },
       { k: 'weighmaster', t: 'text', req: true,
         l: { en: '2CW Deputy Weighmaster', es: 'Pesador oficial adjunto de 2CW' } },
-      { k: 'dryRoom', t: 'select', ref: 'dryRooms', allowOther: true, req: true,
-        l: { en: 'Drying Location(s)', es: 'Ubicación(es) de secado' } },
+      { k: 'dryRoom', t: 'select', ref: ['dryRooms', 'freezers'], allowOther: true, req: true,
+        l: { en: 'Drying / Freezer Location(s)', es: 'Ubicación(es) de secado / congelador' } },
+      // Some material goes straight into a freezer instead of a drying room.
+      { k: 'freshFrozen', t: 'check',
+        l: { en: 'Fresh Frozen (not dried)', es: 'Fresco congelado (no se seca)' } },
       { k: 'lines', t: 'lineitems', req: true,
         l: { en: 'Weigh-In — Bins', es: 'Pesaje — bins' },
         hint: { en: 'One row per group of bins on the scale, with the farm package UID (the last 5 is fine) and strain. Weight is the scale reading; the bins’ tare is subtracted for you. Each UID is saved as its own intake.',

@@ -115,9 +115,10 @@ async function loadReference() {
 const loadStage = (key) => loadJson(`/data/operations/${key}.json`, []);
 
 // Reference lists are objects ({id,label}) or bare strains ({name}); normalise
-// both into the {v, label} shape the selects want.
+// both into the {v, label} shape the selects want. `name` can also be an array
+// of list names, merged in order (Wet Intake: drying rooms, then freezers).
 function refOptions(reference, name) {
-  const list = (reference && reference[name]) || [];
+  const list = [].concat(name).flatMap((n) => (reference && reference[n]) || []);
   return list
     .filter((item) => item.active !== false)
     .map((item) => {
