@@ -380,6 +380,11 @@
     pmTime:   { en: 'Timeline', es: 'Línea de tiempo' },
     ptToday:  { en: 'Today', es: 'Hoy' },
     ptHint:   { en: 'Green = active, blue = planned. Solid = days it works; the thin line = days off. Tap a project to edit it.', es: 'Verde = activo, azul = planeado. Sólido = días que trabaja; la línea delgada = días libres. Toque un proyecto para editarlo.' },
+    ptHintH:  { en: 'Bars are each project’s hours (green = active, blue = planned). Tap a project to edit it.', es: 'Las barras son el horario de cada proyecto (verde = activo, azul = planeado). Toque un proyecto para editarlo.' },
+    pt1:      { en: '1 day', es: '1 día' },
+    pt3:      { en: '3 days', es: '3 días' },
+    pt7:      { en: '7 days', es: '7 días' },
+    pt42:     { en: '6 weeks', es: '6 semanas' },
     ptNone:   { en: 'No projects in these weeks.', es: 'Ningún proyecto en estas semanas.' },
     stAll:    { en: 'All', es: 'Todos' },
     oldLink:  { en: 'Old day schedules (Scheduling)', es: 'Horarios anteriores (Horarios)' },
@@ -1148,7 +1153,79 @@
   if (!['cards', 'timeline'].includes(pmode)) pmode = 'cards';
   const PT_DAYS = 42;
   const mondayOf = (iso) => addDays(iso, -((new Date(iso + 'T12:00:00').getDay() + 6) % 7));
-  let ptStart = addDays(mondayOf(localDay()), -7);
+  let ptStart = addDays(mondayOf(localDay()), -7);   // 6-week view: its first Monday
+  let ptDay = localDay();                              // 1/3/7-day views: the first day
+  let ptSpan = '42';
+  try { ptSpan = localStorage.getItem('2cw_master_ptspan') || '42'; } catch {}
+  if (!['1', '3', '7', '42'].includes(ptSpan)) ptSpan = '42';
+  const PT_SPANS = [['1', L.pt1], ['3', L.pt3], ['7', L.pt7], ['42', L.pt42]];
+  function ptNav(label, step) {
+    return `<div class="pt-bar-nav"><div class="seg">${PT_SPANS.map(([k, l]) => `<button type="button" data-ptspan="${k}" class="${k === ptSpan ? 'on' : ''}">${esc(t(l))}</button>`).join('')}</div>
+      <button type="button" class="nav" data-ptmove="${-step}" aria-label="Previous">‹</button>
+      <span class="day-name">${esc(label)}</span>
+      <button type="button" class="nav" data-ptmove="${step}" aria-label="Next">›</button>
+      <button type="button" class="btn btn-sm btn-ghost" data-pttoday="1">${esc(t(L.ptToday))}</button>
+      <span class="hint" style="margin:0">${esc(t(ptSpan === '42' ? L.ptHint : L.ptHintH))}</span></div>`;
+  }
+  function ptGroups(ps) {
+    const groups = [];
+    ps.forEach((p) => { const k = p.fields.location === 'other' ? 'other:' + fold(p.fields.locationName) : p.fields.location;
+      let g = groups.find((x) => x.k === k); if (!g) groups.push(g = { k, name: locName(p.fields), order: locOrder(p.fields), ps: [] }); g.ps.push(p); });
+    groups.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
+    groups.forEach((g) => g.ps.sort((a, b) => String(a.fields.start || '').localeCompare(String(b.fields.start || '')) || String(a.fields.name).localeCompare(String(b.fields.name))));
+    return groups;
+  }
+  const ptRunsOn = (p, d) => (p.fields.status || 'active') === 'done' ? projectRunsOn({ ...p.fields, status: 'active' }, d) : runsOn(p, d);
+  function ptName(p) {
+    const f = p.fields;
+    const n = new Set(projectRoles(f).flatMap((r) => r.people.map(personKey))).size;
+    const nF = projectFlc(f).reduce((a, x) => a + x.count, 0);
+    return `<div class="tl-name"><span class="n" style="font-weight:500">${esc(f.name)}</span>
+      <span class="s">${esc(rangeLabel(p))} · ${esc(hoursLabel(f))} · ${esc(n === 1 ? t(L.person1) : fill(t(L.personN), { n }))}${nF ? ' · ' + esc(t(L.flcTag)) + ' ' + nF : ''}</span></div>`;
+  }
+  function ptRender(groups, axis, row) {
+    const ed = editing ? `<div class="grid" style="margin-bottom:16px">${editorHtml()}</div>` : '';
+    return ed + (groups.length ? `<div class="tl"><div class="tl-in">${groups.map((g) =>
+      `<div class="tl-farm"><span class="loc">${esc(g.name)}</span><span class="ct">${g.ps.length}</span></div>` + axis + g.ps.map(row).join('')).join('')}</div></div>`
+      : `<div class="empty"><p>${esc(t(L.ptNone))}</p></div>`);
+  }
+  // 1/3/7 days: an hour axis across the days, a bar for each shift at its
+  // hours (overnight ones cross midnight; the day before's carry over),
+  // all-day projects filling the day. Day changes apply as on the schedule.
+  function renderProjectHours(list) {
+    const N = +ptSpan, W = N * 1440, today = localDay();
+    const days = Array.from({ length: N }, (_, i) => addDays(ptDay, i));
+    const pct = (m) => (Math.max(0, Math.min(W, m)) / W * 100).toFixed(3) + '%';
+    const step = N === 1 ? 120 : N === 3 ? 360 : 0;
+    let bg = days.map((d, i) => `${d === today && N > 1 ? `<div class="pt-day today" style="left:${pct(i * 1440)};width:${pct(1440)}"></div>` : ''}${i ? `<div class="tl-tick" style="left:${pct(i * 1440)};background:var(--subtext);opacity:.5"></div>` : ''}`).join('');
+    if (step) for (let m = step; m < W; m += step) if (m % 1440) bg += `<div class="tl-tick" style="left:${pct(m)}"></div>`;
+    else for (let i = 0; i < N; i++) bg += `<div class="tl-tick" style="left:${pct(i * 1440 + 720)}"></div>`;
+    const dayLbl = (d) => fmtDate(d, { weekday: 'short', month: N === 7 ? undefined : 'short', day: 'numeric' });
+    let lbls = days.map((d, i) => `<span class="tl-lbl" style="left:${pct(i * 1440)};font-weight:600;color:var(--text)">${esc(dayLbl(d))}</span>`).join('');
+    if (step) for (let m = step; m < W; m += step) if (m % 1440) lbls += `<span class="tl-lbl" style="left:${pct(m)}">${esc(tickLabel(m))}</span>`;
+    const axis = `<div class="tl-row tl-axis pt-row pt-axis" style="cursor:default"><div class="tl-name"></div><div class="tl-track">${bg}${lbls}</div></div>`;
+    const shifts = (p) => {
+      const out = [];
+      [addDays(ptDay, -1), ...days].forEach((d, i) => {
+        if (!ptRunsOn(p, d)) return;
+        const [s, e] = projectHours(p.fields);
+        const base = (i - 1) * 1440;
+        const a = s == null ? base : base + s, b = s == null ? base + 1440 : base + e;
+        if (b > 0 && a < W) out.push({ a, b, label: s == null ? t(L.allDay) : hoursLabel(p.fields) });
+      });
+      return out;
+    };
+    const shown = list.filter((p) => shifts(p).length);
+    const row = (p) => {
+      const st = p.fields.status || 'active';
+      return `<div class="tl-row pt-row" data-edit="${p.id}" style="--c:${ST_COLOR[st] || ST_COLOR.active}" title="${esc(p.fields.name)}">${ptName(p)}
+        <div class="tl-track" style="height:40px">${bg}${shifts(p).map((x) => `<div class="pt-seg" style="left:calc(${pct(x.a)} + 1px);width:calc(${pct(x.b)} - ${pct(x.a)} - 2px);color:#000;font-size:.7rem;font-weight:500;line-height:22px;padding:0 6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${N < 7 ? esc(x.label) : ''}</div>`).join('')}</div></div>`;
+    };
+    const label = N === 1 ? fmtDate(ptDay, { weekday: 'long', month: 'short', day: 'numeric' })
+      : `${fmtDate(days[0], { weekday: 'short', month: 'short', day: 'numeric' })} – ${fmtDate(days[N - 1], { weekday: 'short', month: 'short', day: 'numeric' })}`;
+    $('plist').innerHTML = ptNav(label, N) + ptRender(ptGroups(shown), axis, row);
+    if (editing) wireEditor();
+  }
   $('pmode-seg').innerHTML = [['cards', L.pmCards], ['timeline', L.pmTime]].map(([k, l]) => `<button type="button" data-pm="${k}">${esc(t(l))}</button>`).join('');
   $('pmode-seg').onclick = (e) => {
     const b = e.target.closest('button'); if (!b) return;
@@ -1158,6 +1235,7 @@
   };
   const ST_COLOR = { active: 'var(--green)', planned: 'var(--blue)', done: 'var(--muted)' };
   function renderProjectTimeline(list) {
+    if (ptSpan !== '42') { renderProjectHours(list); return; }
     const days = Array.from({ length: PT_DAYS }, (_, i) => addDays(ptStart, i));
     const last = days[days.length - 1], today = localDay();
     const shown = list.filter((p) => { const f = p.fields, s0 = f.start || p.work_date; return (!s0 || s0 <= last) && (!f.end || f.end >= ptStart); });
@@ -1169,7 +1247,7 @@
       new Date(d + 'T12:00:00').getDay() === 1 ? `<span class="tl-lbl" style="left:${pct(i)}">${esc(fmtDate(d))}</span>` : '').join('')}</div></div>`;
     const row = (p) => {
       const f = p.fields, st = f.status || 'active';
-      const on = days.map((d) => (f.status || 'active') === 'done' ? projectRunsOn({ ...f, status: 'active' }, d) : runsOn(p, d));
+      const on = days.map((d) => ptRunsOn(p, d));
       const first = on.indexOf(true), lastOn = on.lastIndexOf(true);
       let segs = '';
       for (let i = 0; i < PT_DAYS; i++) {
@@ -1179,28 +1257,11 @@
         i = j;
       }
       const span = first >= 0 && lastOn > first ? `<div class="pt-span" style="left:${pct(first)};width:${pct(lastOn - first + 1)}"></div>` : '';
-      const n = new Set(projectRoles(f).flatMap((r) => r.people.map(personKey))).size;
-      const nF = projectFlc(f).reduce((a, x) => a + x.count, 0);
-      const range = rangeLabel(p);
-      return `<div class="tl-row pt-row" data-edit="${p.id}" style="--c:${ST_COLOR[st] || ST_COLOR.active}" title="${esc(f.name)}">
-        <div class="tl-name"><span class="n" style="font-weight:500">${esc(f.name)}</span>
-          <span class="s">${esc(range)} · ${esc(hoursLabel(f))} · ${esc(n === 1 ? t(L.person1) : fill(t(L.personN), { n }))}${nF ? ' · ' + esc(t(L.flcTag)) + ' ' + nF : ''}</span></div>
+      return `<div class="tl-row pt-row" data-edit="${p.id}" style="--c:${ST_COLOR[st] || ST_COLOR.active}" title="${esc(f.name)}">${ptName(p)}
         <div class="tl-track" style="height:40px">${bg}${span}${segs}</div></div>`;
     };
-    const groups = [];
-    shown.forEach((p) => { const k = p.fields.location === 'other' ? 'other:' + fold(p.fields.locationName) : p.fields.location;
-      let g = groups.find((x) => x.k === k); if (!g) groups.push(g = { k, name: locName(p.fields), order: locOrder(p.fields), ps: [] }); g.ps.push(p); });
-    groups.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
-    groups.forEach((g) => g.ps.sort((a, b) => String(a.fields.start || '').localeCompare(String(b.fields.start || '')) || String(a.fields.name).localeCompare(String(b.fields.name))));
-    const nav = `<div class="pt-bar-nav"><button type="button" class="nav" data-ptmove="-14" aria-label="Previous">‹</button>
-      <span class="day-name">${esc(fmtDate(days[0], { month: 'short', day: 'numeric' }))} – ${esc(fmtDate(last, { month: 'short', day: 'numeric', year: 'numeric' }))}</span>
-      <button type="button" class="nav" data-ptmove="14" aria-label="Next">›</button>
-      <button type="button" class="btn btn-sm btn-ghost" data-pttoday="1">${esc(t(L.ptToday))}</button>
-      <span class="hint" style="margin:0">${esc(t(L.ptHint))}</span></div>`;
-    const ed = editing ? `<div class="grid" style="margin-bottom:16px">${editorHtml()}</div>` : '';
-    $('plist').innerHTML = ed + nav + (groups.length ? `<div class="tl"><div class="tl-in">${groups.map((g) =>
-      `<div class="tl-farm"><span class="loc">${esc(g.name)}</span><span class="ct">${g.ps.length}</span></div>` + axis + g.ps.map(row).join('')).join('')}</div></div>`
-      : `<div class="empty"><p>${esc(t(L.ptNone))}</p></div>`);
+    const label = `${fmtDate(days[0], { month: 'short', day: 'numeric' })} – ${fmtDate(last, { month: 'short', day: 'numeric', year: 'numeric' })}`;
+    $('plist').innerHTML = ptNav(label, 14) + ptRender(ptGroups(shown), axis, row);
     if (editing) wireEditor();
   }
 
@@ -1231,8 +1292,10 @@
     const ed = e.target.closest('[data-edit]');
     if (ed) { openEditor(ed.dataset.edit); return; }
     const mv = e.target.closest('[data-ptmove]');
-    if (mv) { ptStart = addDays(ptStart, +mv.dataset.ptmove); render(); return; }
-    if (e.target.closest('[data-pttoday]')) { ptStart = addDays(mondayOf(localDay()), -7); render(); return; }
+    if (mv) { if (ptSpan === '42') ptStart = addDays(ptStart, +mv.dataset.ptmove); else ptDay = addDays(ptDay, +mv.dataset.ptmove); render(); return; }
+    if (e.target.closest('[data-pttoday]')) { ptStart = addDays(mondayOf(localDay()), -7); ptDay = localDay(); render(); return; }
+    const sp = e.target.closest('[data-ptspan]');
+    if (sp) { ptSpan = sp.dataset.ptspan; try { localStorage.setItem('2cw_master_ptspan', ptSpan); } catch {} render(); return; }
     const dup = e.target.closest('[data-dup]');
     if (dup) { duplicateProject(dup.dataset.dup); return; }
     if (e.target.closest('[data-new]')) openEditor(null);
