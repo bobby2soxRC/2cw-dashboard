@@ -1677,16 +1677,23 @@
   function scheduledAround(date, a, b, userId, name) {
     const out = [];
     const isMe = (p) => userId ? String(p.userId) === String(userId) : fold(p.name) === fold(name);
+    // That day's shifts, and the day before's overnight ones running past
+    // midnight into this day (their hours less 24 h).
+    const d0 = new Date(date + 'T12:00:00'); d0.setDate(d0.getDate() - 1);
+    const prev = new Date(d0.getTime() - d0.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
     projects.forEach((p) => {
       const f = p.fields;
-      if (!projectRunsOn(f, date)) return;
-      const overlaps = (role) => {
-        const [s, e] = projectHours(f, role);
-        return s == null || (s < b && e > a);
-      };
-      const mineRoles = projectRoles(f, t(L.projLead)).filter((r) => (r.people || []).some(isMe) && overlaps(r));
-      mineRoles.forEach((role) => out.push({ p, role, mine: true }));
-      if (!mineRoles.length && overlaps(null)) out.push({ p, role: null, mine: false });
+      [[date, 0], [prev, 1440]].forEach(([d, off]) => {
+        if (!projectRunsOn(f, d) || out.some((o) => o.p === p)) return;
+        const overlaps = (role) => {
+          const [s, e] = projectHours(f, role);
+          if (s == null) return !off;
+          return s - off < b && e - off > a;
+        };
+        const mineRoles = projectRoles(f, t(L.projLead)).filter((r) => (r.people || []).some(isMe) && overlaps(r));
+        mineRoles.forEach((role) => out.push({ p, role, mine: true }));
+        if (!mineRoles.length && overlaps(null)) out.push({ p, role: null, mine: false });
+      });
     });
     return out.sort((x, y) => y.mine - x.mine || String(x.p.fields.name).localeCompare(String(y.p.fields.name)));
   }

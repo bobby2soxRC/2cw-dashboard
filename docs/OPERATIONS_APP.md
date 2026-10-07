@@ -407,9 +407,11 @@ from them.
   - Cards list the days only when some were picked, or when none were
     and there's no end date ("every day"); a dated project with no days
     picked shows just its dates ("Oct 6", "Oct 6 – Oct 9").
-  - Overnight hours (end before start) start a shift on every date in
-    the range, so the editor warns that one night needs end date =
-    start date.
+  - With overnight hours (end before start) the end date is the morning
+    the last shift ends: Oct 6 – Oct 7, 10 PM–6 AM is one night, starting
+    the 6th (`projectRunsOn`). An end date equal to the start is also one
+    night. The Labor Log's right-click also offers the previous day's
+    overnight projects for time after midnight.
 - **Responsibilities** are the standing jobs on a project, like
   Trimmers, Weigh station or Driver. They're a table with columns Name,
   Process, Start and End, and each row's people listed under it (from

@@ -421,7 +421,7 @@
     end:      { en: 'End date (optional)', es: 'Fecha final (opcional)' },
     days:     { en: 'Days it runs', es: 'Días que trabaja' },
     daysHint: { en: 'None picked = every day from the start date to the end date.', es: 'Ninguno = todos los días de la fecha de inicio a la final.' },
-    overnight:{ en: 'Overnight hours: each date from start to end begins its own shift. For one night, set the end date to the start date.', es: 'Horario nocturno: cada fecha de inicio a fin comienza su propio turno. Para una sola noche, ponga la fecha final igual a la de inicio.' },
+    overnight:{ en: 'Overnight hours: the end date is the morning the last shift ends — 10 PM on the 6th to 6 AM on the 7th is one night.', es: 'Horario nocturno: la fecha final es la mañana en que termina el último turno — de 10 PM el 6 a 6 AM el 7 es una sola noche.' },
     tStart:   { en: 'Start time', es: 'Hora de inicio' },
     tEnd:     { en: 'End time', es: 'Hora final' },
     notes:    { en: 'Notes', es: 'Notas' },
@@ -1306,7 +1306,7 @@
         <div class="hint">${esc(t(L.daysHint))}</div></div>
       <div class="row"><div><label class="lbl" for="ed-ts">${esc(t(L.tStart))}</label><input type="time" id="ed-ts" value="${esc(f.startTime || '')}"></div>
         <div><label class="lbl" for="ed-te">${esc(t(L.tEnd))}</label><input type="time" id="ed-te" value="${esc(f.endTime || '')}"></div>
-        ${f.startTime && f.endTime && f.endTime <= f.startTime && f.end !== f.start ? `<div class="full hint" style="margin-top:-4px;color:var(--gold)">${esc(t(L.overnight))}</div>` : ''}</div>
+        ${f.startTime && f.endTime && f.endTime <= f.startTime ? `<div class="full hint" style="margin-top:-4px">${esc(t(L.overnight))}</div>` : ''}</div>
       <div><label class="lbl" for="ed-notes">${esc(t(L.notes))}</label><textarea id="ed-notes">${esc(f.notes || '')}</textarea></div>
 
       <div class="sec">${esc(t(L.roles))}</div>

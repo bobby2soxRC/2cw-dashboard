@@ -1036,10 +1036,14 @@ const WORK_LOCATIONS = [
 // project and the people under each — the daily/weekly schedule is every
 // project running that day with its lead and roles. A role's start or end
 // is only set when it differs from the project's.
+// With overnight hours (end before start) the end date is the morning the
+// last shift ends, so "Oct 6 – Oct 7, 10 PM–6 AM" is one night, starting the
+// 6th; with the end date equal to the start it's still that one night.
 const projectRunsOn = (f, date) => {
   if (!f || (f.status || 'active') === 'done' || !date) return false;
   if (f.start && date < f.start) return false;
   if (f.end && date > f.end) return false;
+  if (f.end && date === f.end && f.end !== f.start && projectHours(f)[1] > 1440) return false;
   const dow = new Date(date + 'T12:00:00').getDay();
   return !(f.days && f.days.length) || f.days.includes(dow);
 };
