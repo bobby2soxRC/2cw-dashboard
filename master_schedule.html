@@ -420,7 +420,8 @@
     start:    { en: 'Start date', es: 'Fecha de inicio' },
     end:      { en: 'End date (optional)', es: 'Fecha final (opcional)' },
     days:     { en: 'Days it runs', es: 'Días que trabaja' },
-    daysHint: { en: 'None picked = every day.', es: 'Ninguno = todos los días.' },
+    daysHint: { en: 'None picked = every day from the start date to the end date.', es: 'Ninguno = todos los días de la fecha de inicio a la final.' },
+    overnight:{ en: 'Overnight hours: each date from start to end begins its own shift. For one night, set the end date to the start date.', es: 'Horario nocturno: cada fecha de inicio a fin comienza su propio turno. Para una sola noche, ponga la fecha final igual a la de inicio.' },
     tStart:   { en: 'Start time', es: 'Hora de inicio' },
     tEnd:     { en: 'End time', es: 'Hora final' },
     notes:    { en: 'Notes', es: 'Notas' },
@@ -1106,7 +1107,14 @@
   $('add').onclick = () => openEditor(null);
 
   let editing = null;   // {id|null, f: draft fields}
-  const daysLabel = (f) => !(f.days && f.days.length) ? t(L.everyDay) : [...f.days].sort().map((d) => DOW[getLang() === 'es' ? 'es' : 'en'][d]).join(' ');
+  // The days it runs — only when some were picked (all 7 = every day), or
+  // when there are none and no end date (it really is every day). A dated
+  // project with no days picked shows just its dates.
+  const daysLabel = (f) => (f.days || []).length ? (f.days.length === 7 ? t(L.everyDay) : [...f.days].sort().map((d) => DOW[getLang() === 'es' ? 'es' : 'en'][d]).join(' '))
+    : f.end ? '' : t(L.everyDay);
+  // "Oct 6", "Oct 6 – Oct 9", or "from Oct 6" when open-ended.
+  const rangeLabel = (p) => { const f = p.fields, s0 = f.start || p.work_date;
+    return !f.end ? fill(t(L.from), { d: fmtDate(s0) }) : f.end === s0 ? fmtDate(s0) : `${fmtDate(s0)} – ${fmtDate(f.end)}`; };
   function renderProjects() {
     document.querySelectorAll('#status-seg button').forEach((b) => b.classList.toggle('on', b.dataset.st === statusF));
     const q = fold($('q').value), qu = normUid($('q').value);
@@ -1173,7 +1181,7 @@
       const span = first >= 0 && lastOn > first ? `<div class="pt-span" style="left:${pct(first)};width:${pct(lastOn - first + 1)}"></div>` : '';
       const n = new Set(projectRoles(f).flatMap((r) => r.people.map(personKey))).size;
       const nF = projectFlc(f).reduce((a, x) => a + x.count, 0);
-      const range = f.end ? `${fmtDate(f.start || p.work_date)} – ${fmtDate(f.end)}` : fill(t(L.from), { d: fmtDate(f.start || p.work_date) });
+      const range = rangeLabel(p);
       return `<div class="tl-row pt-row" data-edit="${p.id}" style="--c:${ST_COLOR[st] || ST_COLOR.active}" title="${esc(f.name)}">
         <div class="tl-name"><span class="n" style="font-weight:500">${esc(f.name)}</span>
           <span class="s">${esc(range)} · ${esc(hoursLabel(f))} · ${esc(n === 1 ? t(L.person1) : fill(t(L.personN), { n }))}${nF ? ' · ' + esc(t(L.flcTag)) + ' ' + nF : ''}</span></div>
@@ -1199,12 +1207,12 @@
   function projectCard(p) {
     const f = p.fields, st = f.status || 'active';
     const lab = labor[p.id];
-    const range = f.end ? `${fmtDate(f.start || p.work_date)} – ${fmtDate(f.end)}` : fill(t(L.from), { d: fmtDate(f.start || p.work_date) });
+    const range = rangeLabel(p);
     const nU = (f.uids || []).length;
     return `<div class="card"><div class="card-hd st-${st}"><div class="loc">${esc(locName(f))}</div><div class="nm">${esc(f.name)}</div>
         <div class="time">${esc(t((STATUSES.find((s) => s[0] === st) || STATUSES[0])[1]))}</div></div>
       <div class="card-body">
-        <div class="meta"><b>${esc(range)}</b> · ${esc(daysLabel(f))} · ${esc(hoursLabel(f))}${f.process ? `<br>${esc(procTitle(f.process))}` : ''}
+        <div class="meta"><b>${esc(range)}</b>${daysLabel(f) ? ' · ' + esc(daysLabel(f)) : ''} · ${esc(hoursLabel(f))}${f.process ? `<br>${esc(procTitle(f.process))}` : ''}
           <br>${esc(fill(t(L.uidCount), { n: nU }))}${nU ? ': ' + (f.uids || []).slice(0, 8).map((u) => `<span class="m" title="${esc(u.uid)}">${esc(tail(u.uid))}</span>`).join(' ') + (nU > 8 ? ' …' : '') : ''}
           <br>${esc(t(L.labor))}: ${lab ? esc(fill(t(L.laborLine), { h: fmtNum(lab.hours, 1), p: lab.people.size === 1 ? t(L.person1) : fill(t(L.personN), { n: lab.people.size }) })) : esc(t(L.noLabor))}</div>
         ${f.notes ? `<div class="note">${esc(f.notes)}</div>` : ''}
@@ -1297,7 +1305,8 @@
         <div class="days" id="ed-days">${[1, 2, 3, 4, 5, 6, 0].map((d) => `<button type="button" data-dow="${d}" class="${f.days.includes(d) ? 'on' : ''}">${esc(dl[d])}</button>`).join('')}</div>
         <div class="hint">${esc(t(L.daysHint))}</div></div>
       <div class="row"><div><label class="lbl" for="ed-ts">${esc(t(L.tStart))}</label><input type="time" id="ed-ts" value="${esc(f.startTime || '')}"></div>
-        <div><label class="lbl" for="ed-te">${esc(t(L.tEnd))}</label><input type="time" id="ed-te" value="${esc(f.endTime || '')}"></div></div>
+        <div><label class="lbl" for="ed-te">${esc(t(L.tEnd))}</label><input type="time" id="ed-te" value="${esc(f.endTime || '')}"></div>
+        ${f.startTime && f.endTime && f.endTime <= f.startTime && f.end !== f.start ? `<div class="full hint" style="margin-top:-4px;color:var(--gold)">${esc(t(L.overnight))}</div>` : ''}</div>
       <div><label class="lbl" for="ed-notes">${esc(t(L.notes))}</label><textarea id="ed-notes">${esc(f.notes || '')}</textarea></div>
 
       <div class="sec">${esc(t(L.roles))}</div>
@@ -1398,7 +1407,7 @@
       const sd = e.target.closest('[data-sdel]');
       if (sd) { const [ci, si] = sd.dataset.sdel.split(':').map(Number); readEditor(); f.contractors[ci].shifts.splice(si, 1); render(); }
     };
-    ['ed-ts', 'ed-te'].forEach((id) => $(id).addEventListener('change', rerender));
+    ['ed-ts', 'ed-te', 'ed-start', 'ed-end'].forEach((id) => $(id).addEventListener('change', rerender));
     document.querySelectorAll('[data-padd]').forEach((inp) => {
       const ri = +inp.dataset.padd;
       personPicker(inp, (person) => {

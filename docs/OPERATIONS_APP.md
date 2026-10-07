@@ -404,6 +404,12 @@ from them.
   optional process (fills in the Labor Log's process), start date,
   optional end date, the days of the week it runs (none = every day),
   start/end times, status (Active / Planned / Done) and notes.
+  - Cards list the days only when some were picked, or when none were
+    and there's no end date ("every day"); a dated project with no days
+    picked shows just its dates ("Oct 6", "Oct 6 – Oct 9").
+  - Overnight hours (end before start) start a shift on every date in
+    the range, so the editor warns that one night needs end date =
+    start date.
 - **Responsibilities** are the standing jobs on a project, like
   Trimmers, Weigh station or Driver. They're a table with columns Name,
   Process, Start and End, and each row's people listed under it (from
