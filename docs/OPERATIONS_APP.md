@@ -453,6 +453,10 @@ from them.
     the previous night's shift carries into the first morning. All-day
     projects fill the day, and days marked not working are left out.
     ‹ › move by the span.
+  - **Save image** draws the timeline as shown (span, dates, status
+    filter and search) as a PNG on white for texting, with the same
+    share / download sheet as the schedule images. The page and the image
+    are built from one model (`ptModel`), so they always match.
 - **Duplicate** (on each project card and in the editor) opens a new,
   unsaved project copying the location, lead, process, days, hours,
   notes, responsibilities with their people, and contractors. It starts

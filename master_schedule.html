@@ -385,6 +385,7 @@
     pt3:      { en: '3 days', es: '3 días' },
     pt7:      { en: '7 days', es: '7 días' },
     pt42:     { en: '6 weeks', es: '6 semanas' },
+    ptImgTitle:{ en: 'Project schedule', es: 'Calendario de proyectos' },
     ptNone:   { en: 'No projects in these weeks.', es: 'Ningún proyecto en estas semanas.' },
     stAll:    { en: 'All', es: 'Todos' },
     oldLink:  { en: 'Old day schedules (Scheduling)', es: 'Horarios anteriores (Horarios)' },
@@ -1122,6 +1123,17 @@
     return !f.end ? fill(t(L.from), { d: fmtDate(s0) }) : f.end === s0 ? fmtDate(s0) : `${fmtDate(s0)} – ${fmtDate(f.end)}`; };
   function renderProjects() {
     document.querySelectorAll('#status-seg button').forEach((b) => b.classList.toggle('on', b.dataset.st === statusF));
+    const list = currentProjectList();
+    document.querySelectorAll('#pmode-seg button').forEach((b) => b.classList.toggle('on', b.dataset.pm === pmode));
+    if (pmode === 'timeline') { renderProjectTimeline(list); return; }
+    const cards = list.filter((p) => !editing || editing.id !== p.id).map(projectCard);
+    const ed = editing ? editorHtml() : '';
+    $('plist').innerHTML = !cards.length && !ed ? `<div class="empty"><p>${esc(t(L.noProj))}</p><button type="button" class="btn btn-gold" data-new="1">${esc(t(L.add))}</button></div>`
+      : `<div class="grid">${ed}${cards.join('')}</div>`;
+    if (editing) wireEditor();
+  }
+  // The projects the status filter and search pick, in list order.
+  function currentProjectList() {
     const q = fold($('q').value), qu = normUid($('q').value);
     const st = (p) => p.fields.status || 'active';
     let list = projects.filter((p) => statusF === 'all' || (statusF === 'open' ? st(p) !== 'done' : st(p) === statusF));
@@ -1134,13 +1146,7 @@
     });
     const order = { active: 0, planned: 1, done: 2 };
     list.sort((a, b) => order[st(a)] - order[st(b)] || locOrder(a.fields) - locOrder(b.fields) || String(a.fields.name).localeCompare(String(b.fields.name)));
-    document.querySelectorAll('#pmode-seg button').forEach((b) => b.classList.toggle('on', b.dataset.pm === pmode));
-    if (pmode === 'timeline') { renderProjectTimeline(list); return; }
-    const cards = list.filter((p) => !editing || editing.id !== p.id).map(projectCard);
-    const ed = editing ? editorHtml() : '';
-    $('plist').innerHTML = !cards.length && !ed ? `<div class="empty"><p>${esc(t(L.noProj))}</p><button type="button" class="btn btn-gold" data-new="1">${esc(t(L.add))}</button></div>`
-      : `<div class="grid">${ed}${cards.join('')}</div>`;
-    if (editing) wireEditor();
+    return list;
   }
   // ── Project timeline ────────────────────────────────────────────────────
   // Six weeks from a Monday, a row per project grouped by location: solid
@@ -1165,6 +1171,7 @@
       <span class="day-name">${esc(label)}</span>
       <button type="button" class="nav" data-ptmove="${step}" aria-label="Next">›</button>
       <button type="button" class="btn btn-sm btn-ghost" data-pttoday="1">${esc(t(L.ptToday))}</button>
+      <button type="button" class="btn btn-sm btn-blue" data-ptimg="1">${esc(t(L.png))}</button>
       <span class="hint" style="margin:0">${esc(t(ptSpan === '42' ? L.ptHint : L.ptHintH))}</span></div>`;
   }
   function ptGroups(ps) {
@@ -1176,56 +1183,6 @@
     return groups;
   }
   const ptRunsOn = (p, d) => (p.fields.status || 'active') === 'done' ? projectRunsOn({ ...p.fields, status: 'active' }, d) : runsOn(p, d);
-  function ptName(p) {
-    const f = p.fields;
-    const n = new Set(projectRoles(f).flatMap((r) => r.people.map(personKey))).size;
-    const nF = projectFlc(f).reduce((a, x) => a + x.count, 0);
-    return `<div class="tl-name"><span class="n" style="font-weight:500">${esc(f.name)}</span>
-      <span class="s">${esc(rangeLabel(p))} · ${esc(hoursLabel(f))} · ${esc(n === 1 ? t(L.person1) : fill(t(L.personN), { n }))}${nF ? ' · ' + esc(t(L.flcTag)) + ' ' + nF : ''}</span></div>`;
-  }
-  function ptRender(groups, axis, row) {
-    const ed = editing ? `<div class="grid" style="margin-bottom:16px">${editorHtml()}</div>` : '';
-    return ed + (groups.length ? `<div class="tl"><div class="tl-in">${groups.map((g) =>
-      `<div class="tl-farm"><span class="loc">${esc(g.name)}</span><span class="ct">${g.ps.length}</span></div>` + axis + g.ps.map(row).join('')).join('')}</div></div>`
-      : `<div class="empty"><p>${esc(t(L.ptNone))}</p></div>`);
-  }
-  // 1/3/7 days: an hour axis across the days, a bar for each shift at its
-  // hours (overnight ones cross midnight; the day before's carry over),
-  // all-day projects filling the day. Day changes apply as on the schedule.
-  function renderProjectHours(list) {
-    const N = +ptSpan, W = N * 1440, today = localDay();
-    const days = Array.from({ length: N }, (_, i) => addDays(ptDay, i));
-    const pct = (m) => (Math.max(0, Math.min(W, m)) / W * 100).toFixed(3) + '%';
-    const step = N === 1 ? 120 : N === 3 ? 360 : 0;
-    let bg = days.map((d, i) => `${d === today && N > 1 ? `<div class="pt-day today" style="left:${pct(i * 1440)};width:${pct(1440)}"></div>` : ''}${i ? `<div class="tl-tick" style="left:${pct(i * 1440)};width:3px;margin-left:-1px;background:var(--subtext)"></div>` : ''}`).join('');
-    if (step) for (let m = step; m < W; m += step) if (m % 1440) bg += `<div class="tl-tick" style="left:${pct(m)}"></div>`;
-    else for (let i = 0; i < N; i++) bg += `<div class="tl-tick" style="left:${pct(i * 1440 + 720)}"></div>`;
-    const dayLbl = (d) => fmtDate(d, { weekday: 'short', month: N === 7 ? undefined : 'short', day: 'numeric' });
-    let lbls = days.map((d, i) => `<span class="tl-lbl" style="left:${pct(i * 1440)};font-weight:600;color:var(--text)">${esc(dayLbl(d))}</span>`).join('');
-    if (step) for (let m = step; m < W; m += step) if (m % 1440) lbls += `<span class="tl-lbl" style="left:${pct(m)}">${esc(tickLabel(m))}</span>`;
-    const axis = `<div class="tl-row tl-axis pt-row pt-axis" style="cursor:default"><div class="tl-name"></div><div class="tl-track">${bg}${lbls}</div></div>`;
-    const shifts = (p) => {
-      const out = [];
-      [addDays(ptDay, -1), ...days].forEach((d, i) => {
-        if (!ptRunsOn(p, d)) return;
-        const [s, e] = projectHours(p.fields);
-        const base = (i - 1) * 1440;
-        const a = s == null ? base : base + s, b = s == null ? base + 1440 : base + e;
-        if (b > 0 && a < W) out.push({ a, b, label: s == null ? t(L.allDay) : hoursLabel(p.fields) });
-      });
-      return out;
-    };
-    const shown = list.filter((p) => shifts(p).length);
-    const row = (p) => {
-      const st = p.fields.status || 'active';
-      return `<div class="tl-row pt-row" data-edit="${p.id}" style="--c:${ST_COLOR[st] || ST_COLOR.active}" title="${esc(p.fields.name)}">${ptName(p)}
-        <div class="tl-track" style="height:40px">${bg}${shifts(p).map((x) => `<div class="pt-seg" style="left:calc(${pct(x.a)} + 1px);width:calc(${pct(x.b)} - ${pct(x.a)} - 2px);color:#000;font-size:.7rem;font-weight:500;line-height:22px;padding:0 6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${N < 7 ? esc(x.label) : ''}</div>`).join('')}</div></div>`;
-    };
-    const label = N === 1 ? fmtDate(ptDay, { weekday: 'long', month: 'short', day: 'numeric' })
-      : `${fmtDate(days[0], { weekday: 'short', month: 'short', day: 'numeric' })} – ${fmtDate(days[N - 1], { weekday: 'short', month: 'short', day: 'numeric' })}`;
-    $('plist').innerHTML = ptNav(label, N) + ptRender(ptGroups(shown), axis, row);
-    if (editing) wireEditor();
-  }
   $('pmode-seg').innerHTML = [['cards', L.pmCards], ['timeline', L.pmTime]].map(([k, l]) => `<button type="button" data-pm="${k}">${esc(t(l))}</button>`).join('');
   $('pmode-seg').onclick = (e) => {
     const b = e.target.closest('button'); if (!b) return;
@@ -1234,35 +1191,151 @@
     render();
   };
   const ST_COLOR = { active: 'var(--green)', planned: 'var(--blue)', done: 'var(--muted)' };
+  // What the project timeline shows, for both the page and the image: an
+  // axis 0…W (days for 6 weeks, minutes for 1/3/7 days) with its ticks and
+  // shaded days, and per location the project rows with their bars.
+  //  - 6 weeks: solid blocks on the days a project works (projectRunsOn,
+  //    less days marked not working), a thin line across its days off.
+  //  - 1/3/7 days: a bar per shift at the project's hours (overnight ones
+  //    cross midnight; the day before's carries over), all-day ones filling
+  //    the day; midnights bold, labels on the bars except at 7 days.
+  function ptModel(list) {
+    const today = localDay();
+    const dow = (d) => new Date(d + 'T12:00:00').getDay();
+    if (ptSpan === '42') {
+      const days = Array.from({ length: PT_DAYS }, (_, i) => addDays(ptStart, i)), last = days[PT_DAYS - 1];
+      const rows = list.filter((p) => { const f = p.fields, s0 = f.start || p.work_date; return (!s0 || s0 <= last) && (!f.end || f.end >= ptStart); }).map((p) => {
+        const on = days.map((d) => ptRunsOn(p, d)), first = on.indexOf(true), lastOn = on.lastIndexOf(true);
+        const segs = [];
+        for (let i = 0; i < PT_DAYS; i++) {
+          if (!on[i]) continue;
+          let j = i; while (j + 1 < PT_DAYS && on[j + 1]) j++;
+          segs.push({ a: i, b: j + 1, more: j === PT_DAYS - 1 && !p.fields.end });
+          i = j;
+        }
+        return { p, segs, span: first >= 0 && lastOn > first ? [first, lastOn + 1] : null };
+      });
+      return { W: PT_DAYS, step: 14, rows,
+        label: `${fmtDate(days[0], { month: 'short', day: 'numeric' })} – ${fmtDate(last, { month: 'short', day: 'numeric', year: 'numeric' })}`,
+        shade: days.map((d, i) => d === today ? { a: i, b: i + 1, kind: 'today' } : (dow(d) === 0 || dow(d) === 6) ? { a: i, b: i + 1, kind: 'we' } : null).filter(Boolean),
+        ticks: days.map((d, i) => dow(d) === 1 ? { x: i, label: fmtDate(d), line: i > 0 } : null).filter(Boolean) };
+    }
+    const N = +ptSpan, W = N * 1440;
+    const days = Array.from({ length: N }, (_, i) => addDays(ptDay, i));
+    const step = N === 1 ? 120 : N === 3 ? 360 : 0;
+    const ticks = days.map((d, i) => ({ x: i * 1440, label: fmtDate(d, { weekday: 'short', month: N === 7 ? undefined : 'short', day: 'numeric' }), day: true, bold: i > 0, line: i > 0 }));
+    if (step) for (let m = step; m < W; m += step) { if (m % 1440) ticks.push({ x: m, label: tickLabel(m), line: true }); }
+    else days.forEach((d, i) => ticks.push({ x: i * 1440 + 720, line: true }));
+    const rows = list.map((p) => {
+      const segs = [];
+      [addDays(ptDay, -1), ...days].forEach((d, i) => {
+        if (!ptRunsOn(p, d)) return;
+        const [s, e] = projectHours(p.fields), base = (i - 1) * 1440;
+        const a = s == null ? base : base + s, b = s == null ? base + 1440 : base + e;
+        if (b > 0 && a < W) segs.push({ a: Math.max(0, a), b: Math.min(W, b), label: N < 7 ? (s == null ? t(L.allDay) : hoursLabel(p.fields)) : '' });
+      });
+      return { p, segs, span: null };
+    }).filter((r) => r.segs.length);
+    return { W, step: N, rows,
+      label: N === 1 ? fmtDate(ptDay, { weekday: 'long', month: 'short', day: 'numeric' })
+        : `${fmtDate(days[0], { weekday: 'short', month: 'short', day: 'numeric' })} – ${fmtDate(days[N - 1], { weekday: 'short', month: 'short', day: 'numeric' })}`,
+      shade: N > 1 ? days.map((d, i) => d === today ? { a: i * 1440, b: (i + 1) * 1440, kind: 'today' } : null).filter(Boolean) : [],
+      ticks };
+  }
+  function ptGroupRows(rows) {
+    const byId = new Map(rows.map((r) => [r.p.id, r]));
+    return ptGroups(rows.map((r) => r.p)).map((g) => ({ name: g.name, rows: g.ps.map((p) => byId.get(p.id)) }));
+  }
+  function ptSubline(p) {
+    const f = p.fields;
+    const n = new Set(projectRoles(f).flatMap((r) => r.people.map(personKey))).size;
+    const nF = projectFlc(f).reduce((a, x) => a + x.count, 0);
+    return `${rangeLabel(p)} · ${hoursLabel(f)} · ${n === 1 ? t(L.person1) : fill(t(L.personN), { n })}${nF ? ` · ${t(L.flcTag)} ${nF}` : ''}`;
+  }
   function renderProjectTimeline(list) {
-    if (ptSpan !== '42') { renderProjectHours(list); return; }
-    const days = Array.from({ length: PT_DAYS }, (_, i) => addDays(ptStart, i));
-    const last = days[days.length - 1], today = localDay();
-    const shown = list.filter((p) => { const f = p.fields, s0 = f.start || p.work_date; return (!s0 || s0 <= last) && (!f.end || f.end >= ptStart); });
-    const pct = (i) => (i / PT_DAYS * 100).toFixed(3) + '%';
-    const bg = days.map((d, i) => { const w = new Date(d + 'T12:00:00').getDay(); const cls = d === today ? 'today' : (w === 0 || w === 6) ? 'we' : '';
-      return cls ? `<div class="pt-day ${cls}" style="left:${pct(i)};width:${pct(1)}"></div>` : ''; }).join('') +
-      days.map((d, i) => i && new Date(d + 'T12:00:00').getDay() === 1 ? `<div class="tl-tick" style="left:${pct(i)}"></div>` : '').join('');
-    const axis = `<div class="tl-row tl-axis pt-row pt-axis" style="cursor:default"><div class="tl-name"></div><div class="tl-track">${bg}${days.map((d, i) =>
-      new Date(d + 'T12:00:00').getDay() === 1 ? `<span class="tl-lbl" style="left:${pct(i)}">${esc(fmtDate(d))}</span>` : '').join('')}</div></div>`;
-    const row = (p) => {
-      const f = p.fields, st = f.status || 'active';
-      const on = days.map((d) => ptRunsOn(p, d));
-      const first = on.indexOf(true), lastOn = on.lastIndexOf(true);
-      let segs = '';
-      for (let i = 0; i < PT_DAYS; i++) {
-        if (!on[i]) continue;
-        let j = i; while (j + 1 < PT_DAYS && on[j + 1]) j++;
-        segs += `<div class="pt-seg${j === PT_DAYS - 1 && !f.end ? ' more' : ''}" style="left:calc(${pct(i)} + 1px);width:calc(${pct(j - i + 1)} - 2px)"></div>`;
-        i = j;
-      }
-      const span = first >= 0 && lastOn > first ? `<div class="pt-span" style="left:${pct(first)};width:${pct(lastOn - first + 1)}"></div>` : '';
-      return `<div class="tl-row pt-row" data-edit="${p.id}" style="--c:${ST_COLOR[st] || ST_COLOR.active}" title="${esc(f.name)}">${ptName(p)}
-        <div class="tl-track" style="height:40px">${bg}${span}${segs}</div></div>`;
+    const m = ptModel(list);
+    const pct = (x) => (Math.max(0, Math.min(m.W, x)) / m.W * 100).toFixed(3) + '%';
+    const bg = m.shade.map((x) => `<div class="pt-day ${x.kind}" style="left:${pct(x.a)};width:calc(${pct(x.b)} - ${pct(x.a)})"></div>`).join('') +
+      m.ticks.filter((x) => x.line).map((x) => `<div class="tl-tick" style="left:${pct(x.x)}${x.bold ? ';width:3px;margin-left:-1px;background:var(--subtext)' : ''}"></div>`).join('');
+    const axis = `<div class="tl-row tl-axis pt-row pt-axis" style="cursor:default"><div class="tl-name"></div><div class="tl-track">${bg}${m.ticks.filter((x) => x.label).map((x) =>
+      `<span class="tl-lbl" style="left:${pct(x.x)}${x.day ? ';font-weight:600;color:var(--text)' : ''}">${esc(x.label)}</span>`).join('')}</div></div>`;
+    const row = (r) => {
+      const st = r.p.fields.status || 'active';
+      return `<div class="tl-row pt-row" data-edit="${r.p.id}" style="--c:${ST_COLOR[st] || ST_COLOR.active}" title="${esc(r.p.fields.name)}">
+        <div class="tl-name"><span class="n" style="font-weight:500">${esc(r.p.fields.name)}</span><span class="s">${esc(ptSubline(r.p))}</span></div>
+        <div class="tl-track" style="height:40px">${bg}${r.span ? `<div class="pt-span" style="left:${pct(r.span[0])};width:calc(${pct(r.span[1])} - ${pct(r.span[0])})"></div>` : ''}${r.segs.map((x) =>
+          `<div class="pt-seg${x.more ? ' more' : ''}" style="left:calc(${pct(x.a)} + 1px);width:calc(${pct(x.b)} - ${pct(x.a)} - 2px);color:#000;font-size:.7rem;font-weight:500;line-height:22px;padding:0 6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${esc(x.label || '')}</div>`).join('')}</div></div>`;
     };
-    const label = `${fmtDate(days[0], { month: 'short', day: 'numeric' })} – ${fmtDate(last, { month: 'short', day: 'numeric', year: 'numeric' })}`;
-    $('plist').innerHTML = ptNav(label, 14) + ptRender(ptGroups(shown), axis, row);
+    const groups = ptGroupRows(m.rows);
+    const ed = editing ? `<div class="grid" style="margin-bottom:16px">${editorHtml()}</div>` : '';
+    $('plist').innerHTML = ptNav(m.label, m.step) + ed + (groups.length ? `<div class="tl"><div class="tl-in">${groups.map((g) =>
+      `<div class="tl-farm"><span class="loc">${esc(g.name)}</span><span class="ct">${g.rows.length}</span></div>` + axis + g.rows.map(row).join('')).join('')}</div></div>`
+      : `<div class="empty"><p>${esc(t(L.ptNone))}</p></div>`);
     if (editing) wireEditor();
+  }
+  // Image of the project timeline as shown (span, dates, filter, search), on
+  // white for texting: location bands, the axis under each, a row per
+  // project with its name, dates/hours/headcount and bars in status colors.
+  async function makeProjectTimelineImage() {
+    const m = ptModel(currentProjectList());
+    const groups = ptGroupRows(m.rows);
+    if (!groups.length) { toast(t(L.nothingImg)); return; }
+    try { await document.fonts.ready; } catch {}
+    const W = 1600, PAD = 36, NAMEW = 380, ROWH = 58, AXISH = 30, FARMH = 52;
+    const SANS = "'DM Sans', Arial, sans-serif", HEAD = "'Bebas Neue', 'Arial Narrow', Arial, sans-serif", MONO = "'DM Mono', Menlo, monospace";
+    const C = { ink: '#16181d', sub: '#5b6170', line: '#e3e5ea', grid: '#eef0f3', bold: '#8a909c', orange: '#e08a3c', today: 'rgba(90,159,212,.16)', we: '#f6f7f9', paper: '#ffffff',
+                active: '#3db87a', planned: '#5a9fd4', done: '#a3a8b3' };
+    const F = { title: `400 54px ${HEAD}`, range: `500 24px ${SANS}`, farm: `400 32px ${HEAD}`, axis: `500 15px ${MONO}`, axisDay: `700 15px ${MONO}`,
+                name: `600 20px ${SANS}`, sub: `400 15px ${SANS}`, bar: `500 15px ${SANS}`, legend: `500 18px ${SANS}`, foot: `400 16px ${SANS}` };
+    const cv = document.createElement('canvas'), ctx = cv.getContext('2d');
+    const trackX = PAD + NAMEW, trackW = W - PAD - trackX;
+    const xOf = (x) => trackX + Math.max(0, Math.min(m.W, x)) / m.W * trackW;
+    const headH = 170, footH = 60;
+    const H = headH + groups.reduce((a, g) => a + FARMH + AXISH + g.rows.length * ROWH + 22, 0) + footH;
+    cv.width = W; cv.height = Math.ceil(H);
+    ctx.fillStyle = C.paper; ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = C.ink; ctx.font = F.title; ctx.fillText(t(L.ptImgTitle).toUpperCase(), PAD, PAD - 4);
+    ctx.fillStyle = C.sub; ctx.font = F.range; ctx.fillText(m.label, PAD, PAD + 56);
+    const rr = (x, y, w, h, r) => { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); };
+    let lx = PAD;
+    ctx.font = F.legend;
+    [['active', L.stActive], ['planned', L.stPlanned], ['done', L.stDone]].forEach(([k, l]) => {
+      if (!m.rows.some((r) => (r.p.fields.status || 'active') === k)) return;
+      ctx.fillStyle = C[k]; rr(lx, 132, 18, 18, 4); ctx.fill();
+      ctx.fillStyle = C.ink; ctx.fillText(t(l), lx + 26, 130);
+      lx += 26 + ctx.measureText(t(l)).width + 28;
+    });
+    const clipText = (text, maxW) => { let s0 = text; while (s0.length > 2 && ctx.measureText(s0).width > maxW) s0 = s0.slice(0, -2) + '…'; return s0; };
+    let y = headH;
+    groups.forEach((g) => {
+      ctx.fillStyle = C.orange; rr(PAD, y, W - PAD * 2, FARMH - 6, 8); ctx.fill();
+      ctx.fillStyle = '#000'; ctx.font = F.farm; ctx.fillText(g.name.toUpperCase(), PAD + 14, y + 8);
+      y += FARMH;
+      const top = y, bottom = y + AXISH + g.rows.length * ROWH;
+      m.shade.forEach((x) => { ctx.fillStyle = x.kind === 'today' ? C.today : C.we; ctx.fillRect(xOf(x.a), top, xOf(x.b) - xOf(x.a), bottom - top); });
+      m.ticks.filter((x) => x.line).forEach((x) => { ctx.fillStyle = x.bold ? C.bold : C.grid; const w = x.bold ? 3 : 1; ctx.fillRect(Math.round(xOf(x.x)) - (w > 1 ? 1 : 0), top, w, bottom - top); });
+      m.ticks.filter((x) => x.label).forEach((x) => { ctx.fillStyle = x.day ? C.ink : C.sub; ctx.font = x.day ? F.axisDay : F.axis; ctx.fillText(x.label, xOf(x.x) + 5, top + 7); });
+      y += AXISH;
+      g.rows.forEach((r) => {
+        const f = r.p.fields, col = C[f.status || 'active'] || C.active;
+        ctx.fillStyle = C.line; ctx.fillRect(PAD, y, W - PAD * 2, 1);
+        ctx.fillStyle = C.ink; ctx.font = F.name; ctx.fillText(clipText(f.name, NAMEW - 16), PAD + 4, y + 8);
+        ctx.fillStyle = C.sub; ctx.font = F.sub; ctx.fillText(clipText(ptSubline(r.p), NAMEW - 16), PAD + 4, y + 34);
+        if (r.span) { ctx.save(); ctx.globalAlpha = 0.45; ctx.fillStyle = col; ctx.fillRect(xOf(r.span[0]), y + ROWH / 2 - 1, xOf(r.span[1]) - xOf(r.span[0]), 3); ctx.restore(); }
+        r.segs.forEach((x) => {
+          const bx = xOf(x.a) + 1, bw = Math.max(4, xOf(x.b) - xOf(x.a) - 2), by = y + 14, bh = ROWH - 28;
+          ctx.fillStyle = col; rr(bx, by, bw, bh, 6); ctx.fill();
+          if (x.label && bw > 40) { ctx.fillStyle = '#000'; ctx.font = F.bar; ctx.fillText(clipText(x.label, bw - 16), bx + 8, by + 8); }
+        });
+        y += ROWH;
+      });
+      y += 22;
+    });
+    ctx.fillStyle = C.sub; ctx.font = F.foot;
+    ctx.fillText(`2CW · ${fill(t(L.imgMade), { t: new Date().toLocaleString(lang(), { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) })}`, PAD, H - footH + 18);
+    const blob = await new Promise((res) => cv.toBlob(res, 'image/png'));
+    showImage(blob, `projects-${ptSpan === '42' ? ptStart : ptDay}-${ptSpan === '42' ? '6wk' : ptSpan + 'd'}.png`);
   }
 
   function projectCard(p) {
@@ -1294,6 +1367,7 @@
     const mv = e.target.closest('[data-ptmove]');
     if (mv) { if (ptSpan === '42') ptStart = addDays(ptStart, +mv.dataset.ptmove); else ptDay = addDays(ptDay, +mv.dataset.ptmove); render(); return; }
     if (e.target.closest('[data-pttoday]')) { ptStart = addDays(mondayOf(localDay()), -7); ptDay = localDay(); render(); return; }
+    if (e.target.closest('[data-ptimg]')) { makeProjectTimelineImage(); return; }
     const sp = e.target.closest('[data-ptspan]');
     if (sp) { ptSpan = sp.dataset.ptspan; try { localStorage.setItem('2cw_master_ptspan', ptSpan); } catch {} render(); return; }
     const dup = e.target.closest('[data-dup]');
