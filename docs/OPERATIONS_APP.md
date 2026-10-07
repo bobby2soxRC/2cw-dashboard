@@ -448,7 +448,7 @@ from them.
   the editor above the timeline. The choice is remembered per device.
   - **1 day / 3 days / 7 days / 6 weeks** sets the span (remembered per
     device). The shorter spans use an hour axis across the days (2-hour
-    ticks for 1 day, 6-hour for 3, noon for 7) with a bar for each
+    ticks for 1 day, 6-hour for 3, noon for 7; midnight in bold) with a bar for each
     shift at the project's hours. Overnight shifts cross midnight, and
     the previous night's shift carries into the first morning. All-day
     projects fill the day, and days marked not working are left out.

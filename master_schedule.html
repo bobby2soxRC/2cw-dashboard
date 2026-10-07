@@ -1197,7 +1197,7 @@
     const days = Array.from({ length: N }, (_, i) => addDays(ptDay, i));
     const pct = (m) => (Math.max(0, Math.min(W, m)) / W * 100).toFixed(3) + '%';
     const step = N === 1 ? 120 : N === 3 ? 360 : 0;
-    let bg = days.map((d, i) => `${d === today && N > 1 ? `<div class="pt-day today" style="left:${pct(i * 1440)};width:${pct(1440)}"></div>` : ''}${i ? `<div class="tl-tick" style="left:${pct(i * 1440)};background:var(--subtext);opacity:.5"></div>` : ''}`).join('');
+    let bg = days.map((d, i) => `${d === today && N > 1 ? `<div class="pt-day today" style="left:${pct(i * 1440)};width:${pct(1440)}"></div>` : ''}${i ? `<div class="tl-tick" style="left:${pct(i * 1440)};width:3px;margin-left:-1px;background:var(--subtext)"></div>` : ''}`).join('');
     if (step) for (let m = step; m < W; m += step) if (m % 1440) bg += `<div class="tl-tick" style="left:${pct(m)}"></div>`;
     else for (let i = 0; i < N; i++) bg += `<div class="tl-tick" style="left:${pct(i * 1440 + 720)}"></div>`;
     const dayLbl = (d) => fmtDate(d, { weekday: 'short', month: N === 7 ? undefined : 'short', day: 'numeric' });
