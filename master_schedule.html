@@ -302,7 +302,9 @@
 //
 // Farm labor contractors (fields.contractors) are crews by headcount, not
 // people: each contractor has one or more shifts {count, startTime, endTime},
-// blank times meaning the project's. They show on the day/week/image and the
+// blank times meaning the project's; Change this day can set a different
+// count for one day (overrides[date].flc = {shiftId: count}, 0 = not
+// coming). They show on the day/week/image and the
 // timeline but stay out of projectRoles (no conflicts, no Labor Log).
 //
 // Timeline: the day grouped by location, a row per person (bars for each
@@ -348,6 +350,8 @@
     needFlcName:{ en: 'Name every farm labor contractor (or remove the empty one).', es: 'Nombre cada contratista (o quite el vacío).' },
     needFlcCount:{ en: 'Give every contractor time a number of workers.', es: 'Ponga el número de trabajadores en cada horario del contratista.' },
     sumFlc:   { en: '{n} contractor workers', es: '{n} trabajadores de contratista' },
+    flcUsual: { en: 'usually {n}', es: 'normalmente {n}' },
+    flcDayHint:{ en: 'Workers coming this day — 0 if the crew isn’t coming.', es: 'Trabajadores que vienen este día — 0 si la cuadrilla no viene.' },
     workers1: { en: '1 worker', es: '1 trabajador' },
     workersN: { en: '{n} workers', es: '{n} trabajadores' },
     png:      { en: 'Save image', es: 'Guardar imagen' },
@@ -578,17 +582,23 @@
     });
     return { roles, off, note: ov.note || '' };
   }
-  // A project's contractor crews, one per shift: {name, count, s, e, label}.
+  // A project's contractor crews, one per shift: {name, count, usual, s, e,
+  // label}. With a date, that day's count (overrides[date].flc[shiftId],
+  // 0 = not coming) replaces the usual one and crews of 0 are left out.
   const workersLabel = (n) => n === 1 ? t(L.workers1) : fill(t(L.workersN), { n });
-  function projectFlc(f) {
+  function projectFlc(f, date) {
+    const day = date ? ovFor(f, date).flc || {} : {};
     const out = [];
     (f.contractors || []).forEach((c) => (c.shifts || []).forEach((sh) => {
       const [s, e] = projectHours(f, sh);
-      out.push({ name: c.name, count: Number(sh.count) || 0, s, e, label: hoursLabel(f, sh) });
+      const usual = Number(sh.count) || 0;
+      const count = sh.id in day ? Number(day[sh.id]) || 0 : usual;
+      if (date && !count) return;
+      out.push({ name: c.name, count, usual, s, e, label: hoursLabel(f, sh) });
     }));
     return out;
   }
-  const flcTotal = (ps) => ps.reduce((a, p) => a + projectFlc(p.fields).reduce((b, x) => b + x.count, 0), 0);
+  const flcTotal = (ps, date) => ps.reduce((a, p) => a + projectFlc(p.fields, date).reduce((b, x) => b + x.count, 0), 0);
   // Everyone working that day, with their project and hours, for conflicts.
   function dayAssignments(date) {
     const list = [];
@@ -647,7 +657,7 @@
   $('next').onclick = () => { $('date').value = addDays($('date').value || localDay(), view === 'week' ? 7 : 1); dayEdit = null; render(); };
   $('date').onchange = () => { dayEdit = null; render(); };
 
-  let dayEdit = null;   // {id, date, skip, note, out:Set, extra:[]}
+  let dayEdit = null;   // {id, date, skip, note, out:Set, extra:[], flc:{shiftId: count}}
   function renderSchedule() {
     document.querySelectorAll('#view-seg button').forEach((b) => b.classList.toggle('on', b.dataset.view === view));
     const date = $('date').value || localDay();
@@ -669,7 +679,7 @@
     const conf = conflictsOn(date);
     const ppl = new Set(dayAssignments(date).map((a) => a.key));
     const nConf = new Set([...conf.keys()].map((k) => k.split('|')[0])).size;
-    const nFlc = flcTotal(running.filter((p) => runsOn(p, date)));
+    const nFlc = flcTotal(running.filter((p) => runsOn(p, date)), date);
     $('summary').innerHTML = running.length ? fill(t(L.sumLine), { p: `<b>${esc(ppl.size === 1 ? t(L.person1) : fill(t(L.personN), { n: ppl.size }))}</b>`, n: `<b>${running.length}</b>` }) +
       (nFlc ? ` · ${fill(esc(t(L.sumFlc)), { n: `<b>${nFlc}</b>` })}` : '') +
       (nConf ? ` · <span class="warn">${esc(fill(t(L.sumConf), { n: nConf }))}</span>` : '') : '';
@@ -691,7 +701,7 @@
         const c = conf.get(personKey(x) + '|' + p.id) || [];
         return `<li class="${x.extra ? 'extra' : ''}">${esc(x.name)}${x.lead ? `<span class="lead-tag">${esc(t(L.lead))}</span>` : ''}
           ${c.map((o) => `<span class="conflict">${esc(fill(t(L.also), { p: o.p.fields.name, t: hoursLabel(o.p.fields, o.role) }))}</span>`).join('')}</li>`;
-      }).join('') : `<li class="none">${esc(t(L.nobody))}</li>`}</ul></div>`).join('') + flcHtml(f);
+      }).join('') : `<li class="none">${esc(t(L.nobody))}</li>`}</ul></div>`).join('') + flcHtml(f, date);
     return `<div class="card"><div class="card-hd"><div class="loc">${esc(locName(f))}</div><div class="nm">${esc(f.name)}</div>
         <div class="time">${esc(hoursLabel(f))}${f.process ? ' · ' + esc(procTitle(f.process)) : ''}</div></div>
       <div class="card-body">${note ? `<div class="note">${esc(note)}</div>` : ''}${rolesHtml || `<div class="s">${esc(t(L.nobody))}</div>`}
@@ -699,10 +709,10 @@
       <div class="card-ft"><button type="button" class="btn btn-sm btn-ghost" data-edit="${p.id}">${esc(t(L.editProj))}</button>
         <button type="button" class="btn btn-sm" data-dayedit="${p.id}">${esc(t(L.editDay))}</button></div></div>`;
   }
-  function flcHtml(f) {
-    const list = projectFlc(f);
+  function flcHtml(f, date) {
+    const list = projectFlc(f, date);
     return list.length ? `<div class="role"><div class="role-hd" style="color:var(--purple)">${esc(t(L.flc))}</div><ul class="ppl">${list.map((x) =>
-      `<li>${esc(x.name)} <span class="m">×${x.count}</span> <span class="s">${esc(x.label)}</span></li>`).join('')}</ul></div>` : '';
+      `<li>${esc(x.name)} <span class="m">×${x.count}</span> <span class="s">${esc(x.label)}${x.count !== x.usual ? ' · ' + esc(fill(t(L.flcUsual), { n: x.usual })) : ''}</span></li>`).join('')}</ul></div>` : '';
   }
   function dayEditor(p, date) {
     const f = p.fields, e = dayEdit;
@@ -717,6 +727,11 @@
               <span></span><input type="checkbox" style="width:24px;height:24px;min-height:0" data-out="${esc(personKey(x))}" ${e.out.has(personKey(x)) ? '' : 'checked'}></li>`).join('')}
             ${extraFor(r.id).map((x) => `<li><span class="nm">${esc(x.name)} <span style="color:var(--blue)">+</span></span><span></span><button type="button" class="x" data-rmextra="${x.i}">×</button></li>`).join('')}</ul>
           <div class="picker"><input data-pick="${esc(r.id)}" autocomplete="off" placeholder="${esc(t(L.addToday))}"><div class="panel"></div></div></div>`).join('')}
+        ${(f.contractors || []).length ? `<div class="role-ed"><div class="role-hd" style="margin-bottom:4px;color:var(--purple)">${esc(t(L.flc))}</div>
+          <div class="hint" style="margin:0 0 6px">${esc(t(L.flcDayHint))}</div>
+          ${f.contractors.flatMap((c) => (c.shifts || []).map((sh) => `<div class="frow" style="grid-template-columns:minmax(0,1fr) 90px">
+            <span style="font-size:.92rem">${esc(c.name)} <span class="s">${esc(hoursLabel(f, sh))} · ${esc(fill(t(L.flcUsual), { n: Number(sh.count) || 0 }))}</span></span>
+            <input type="number" inputmode="numeric" min="0" step="1" data-dflc="${esc(sh.id)}" value="${esc(sh.id in e.flc ? e.flc[sh.id] : Number(sh.count) || 0)}" aria-label="${esc(t(L.flcCount))}"></div>`)).join('')}</div>` : ''}
         <div class="err" id="de-err"></div>
         <div class="ed-ft"><button type="button" class="btn btn-ghost" id="de-cancel">${esc(t(L.cancel))}</button>
           <button type="button" class="btn btn-blue" id="de-save">${esc(t(L.save))}</button></div>
@@ -730,6 +745,7 @@
       cb.checked ? e.out.delete(cb.dataset.out) : e.out.add(cb.dataset.out);
       cb.closest('li').classList.toggle('out', !cb.checked);
     });
+    document.querySelectorAll('[data-dflc]').forEach((inp) => inp.oninput = () => { e.flc[inp.dataset.dflc] = inp.value; });
     document.querySelectorAll('[data-rmextra]').forEach((b) => b.onclick = () => { e.extra.splice(+b.dataset.rmextra, 1); render(); });
     document.querySelectorAll('[data-pick]').forEach((inp) => personPicker(inp, (person) => {
       e.extra.push({ roleId: inp.dataset.pick, userId: person.userId || '', name: person.name });
@@ -743,7 +759,15 @@
       try {
         await patchProject(e.id, (f) => {
           const ov = { ...(f.overrides || {}) };
-          const day = { skip: e.skip || undefined, note: e.note.trim() || undefined, out: e.out.size ? [...e.out] : undefined, extra: e.extra.length ? e.extra : undefined };
+          // A day's contractor count is kept only where it differs from the usual one.
+          const flc = {};
+          (f.contractors || []).forEach((c) => (c.shifts || []).forEach((sh) => {
+            if (!(sh.id in e.flc) || String(e.flc[sh.id]).trim() === '') return;
+            const n = Math.max(0, Math.round(Number(e.flc[sh.id]) || 0));
+            if (n !== (Number(sh.count) || 0)) flc[sh.id] = n;
+          }));
+          const day = { skip: e.skip || undefined, note: e.note.trim() || undefined, out: e.out.size ? [...e.out] : undefined, extra: e.extra.length ? e.extra : undefined,
+                        flc: Object.keys(flc).length ? flc : undefined };
           Object.keys(day).forEach((k) => day[k] === undefined && delete day[k]);
           if (Object.keys(day).length) ov[date] = day; else delete ov[date];
           return { ...f, overrides: ov };
@@ -757,7 +781,7 @@
     if (!p) return;
     const date = $('date').value || localDay();
     const ov = ovFor(p.fields, date);
-    dayEdit = { id, date, skip: !!ov.skip, note: ov.note || '', out: new Set(ov.out || []), extra: clone(ov.extra || []) };
+    dayEdit = { id, date, skip: !!ov.skip, note: ov.note || '', out: new Set(ov.out || []), extra: clone(ov.extra || []), flc: { ...(ov.flc || {}) } };
     render();
   }
   function renderWeek(ds) {
@@ -781,7 +805,7 @@
           `<div class="rl">${esc(r.name)}</div><div class="pp">${r.people.map((x) => {
             const c = confs[d].has(personKey(x) + '|' + p.id);
             return `<span class="${c ? 'c' : ''}">${esc(x.name)}${c ? ' ⚠' : ''}</span>`;
-          }).join(', ')}</div>`).join('')}${projectFlc(f).length ? `<div class="rl fl">${esc(t(L.flc))}</div><div class="pp">${projectFlc(f).map((x) =>
+          }).join(', ')}</div>`).join('')}${projectFlc(f, d).length ? `<div class="rl fl">${esc(t(L.flc))}</div><div class="pp">${projectFlc(f, d).map((x) =>
             `${esc(x.name)} ×${x.count}${x.s != null && hoursLabel(f) !== x.label ? ` <span class="s">${esc(x.label)}</span>` : ''}`).join(', ')}</div>` : ''}</td>`;
       }).join('')}</tr>`;
     }).join('');
@@ -816,7 +840,7 @@
           row.bars.push({ s, e, color: color.get(p.id), time: hoursLabel(f, r), text: `${f.name} · ${r.name}`, conflict: conf.has(k + '|' + p.id) });
         });
       });
-      projectFlc(f).forEach((x) => g.crews.push({ name: x.name, count: x.count, flc: true,
+      projectFlc(f, date).forEach((x) => g.crews.push({ name: x.name, count: x.count, flc: true,
         bars: [{ s: x.s, e: x.e, color: color.get(p.id), time: x.label, text: `${f.name} · ${workersLabel(x.count)}`, flc: true }] }));
     });
     // Axis: whole hours around every timed bar (6 AM–6 PM when none has times).
@@ -851,7 +875,7 @@
   function renderTimeline(date) {
     const { ps, farms, a0, a1, ticks, color } = timelineData(date);
     const ppl = new Set(dayAssignments(date).map((a) => a.key));
-    const nFlc = flcTotal(ps);
+    const nFlc = flcTotal(ps, date);
     $('summary').innerHTML = ps.length ? fill(t(L.sumLine), { p: `<b>${esc(ppl.size === 1 ? t(L.person1) : fill(t(L.personN), { n: ppl.size }))}</b>`, n: `<b>${ps.length}</b>` }) +
       (nFlc ? ` · ${fill(esc(t(L.sumFlc)), { n: `<b>${nFlc}</b>` })}` : '') : '';
     if (!ps.length) {
@@ -983,7 +1007,7 @@
             r.people.forEach((x) => rows.push([d, locName(f), f.name, x.lead ? 'Lead' : 'Employee', r.name, x.name, 1, hhmm(s), hhmm(e), hrs(s, e), hrs(s, e),
               conf.has(personKey(x) + '|' + p.id) ? 'yes' : '', note]));
           });
-          projectFlc(f).forEach((x) => rows.push([d, locName(f), f.name, 'Contractor', '', x.name, x.count, hhmm(x.s), hhmm(x.e), hrs(x.s, x.e),
+          projectFlc(f, d).forEach((x) => rows.push([d, locName(f), f.name, 'Contractor', '', x.name, x.count, hhmm(x.s), hhmm(x.e), hrs(x.s, x.e),
             x.s == null ? '' : +(x.count * (x.e - x.s) / 60).toFixed(2), '', note]));
         });
     });
@@ -1437,7 +1461,7 @@
       const notes = note ? wrap(note, F.note, inner - 12) : [];
       const rs = roles.filter((r) => r.people.length).map((r) => ({ r, label: (r.name + (r.startTime || r.endTime ? '  ' + hoursLabel(f, r) : '')).toUpperCase(),
         people: r.people.map((x) => ({ x, conflict: conf.has(personKey(x) + '|' + p.id), lines: wrap(x.name + (x.lead ? ` — ${t(L.lead)}` : ''), x.lead ? F.lead : F.name, inner - 30) })) }));
-      const fl = projectFlc(f);
+      const fl = projectFlc(f, d);
       if (fl.length) rs.push({ label: t(L.flc).toUpperCase(), people: fl.map((x) => ({ x: {}, conflict: false, lines: wrap(`${x.name} ×${x.count} · ${x.label}`, F.name, inner - 30) })) });
       let h = headH + 12 + (notes.length ? notes.length * 26 + 26 : 0);
       rs.forEach((r) => { h += 24; r.people.forEach((x) => { h += x.lines.length * 28 + 2; }); h += 8; });

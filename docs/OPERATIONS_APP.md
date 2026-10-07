@@ -439,6 +439,9 @@ from them.
   - **Change this day** is for one day only: untick someone who's off,
     add someone just for that day, add a note, or mark the project as not
     working that day. It never changes the standing responsibilities.
+  - It also sets each contractor crew's worker count for that day
+    (0 = not coming). Only counts that differ from the usual are saved;
+    the day card shows "usually N" next to a changed count.
 - **Week** is a table with projects down the side and Mon–Sun across.
   Tap a day to open it. **Save image** draws the day or the week as a
   PNG for texting, the same way Scheduling did.
@@ -459,7 +462,7 @@ from them.
   startTime, endTime, people: [{userId, name}]}], contractors: [{id, name,
   shifts: [{id, count, startTime, endTime}]}], uids: [{uid, strain, addedAt,
   addedBy}], notes, overrides: { 'YYYY-MM-DD': { skip, note, out:
-  [personKey], extra: [{roleId, userId, name}] } }, createdBy, updatedBy
+  [personKey], extra: [{roleId, userId, name}], flc: {shiftId: count} } }, createdBy, updatedBy
   }`. There's no SQL.
 - Every save re-reads the row and writes only if `updated_at` hasn't
   changed since, retrying on top of the newer version. That way two leads
