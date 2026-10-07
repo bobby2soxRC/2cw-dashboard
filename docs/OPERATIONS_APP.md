@@ -431,6 +431,13 @@ from them.
   (stored blank when equal, like a responsibility's). They show on the
   day cards, the week table, both images and the CSV, but aren't in
   `projectRoles`, so no conflicts and nothing in the Labor Log.
+- **Cards / Timeline** switches the Projects tab between the cards and a
+  project timeline: six weeks (‹ › move two weeks, Today goes back), a
+  row per project grouped by location, with solid blocks on the days it
+  works and a thin line across days off or marked not working. Green is
+  Active, blue Planned, gray Done. Each row shows the dates, hours and
+  headcount. The status filter and search apply, and tapping a row opens
+  the editor above the timeline. The choice is remembered per device.
 - **Duplicate** (on each project card and in the editor) opens a new,
   unsaved project copying the location, lead, process, days, hours,
   notes, responsibilities with their people, and contractors. It starts

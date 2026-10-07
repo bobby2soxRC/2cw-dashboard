@@ -207,6 +207,21 @@
     .tl-legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:0 0 12px;font-size:.8rem;color:var(--subtext)}
     .tl-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--c);vertical-align:-1px;margin-right:5px}
 
+    /* Project timeline (Projects tab): a bar per project across the calendar */
+    .pt-bar-nav{display:flex;gap:10px;align-items:center;margin:0 0 12px;flex-wrap:wrap}
+    .pt-row{grid-template-columns:220px minmax(0,1fr);cursor:pointer}
+    .pt-row:hover .tl-name{background:var(--surface2)}
+    .pt-row .tl-name{flex-direction:column;align-items:flex-start;justify-content:center;gap:1px}
+    .pt-row .tl-name .s{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+    .pt-day{position:absolute;top:0;bottom:0}
+    .pt-day.we{background:rgba(255,255,255,.025)}
+    .pt-day.today{background:rgba(90,159,212,.16)}
+    .pt-seg{position:absolute;top:9px;height:22px;border-radius:5px;background:var(--c)}
+    .pt-span{position:absolute;top:19px;height:2px;background:var(--c);opacity:.45}
+    .pt-seg.more{border-top-right-radius:0;border-bottom-right-radius:0}
+    .pt-axis .tl-lbl{transform:none;margin-left:4px}
+    @media (max-width:560px){ .pt-row{grid-template-columns:140px minmax(0,1fr)} }
+
     .empty{border:1px dashed var(--border);border-radius:14px;padding:40px 20px;text-align:center;color:var(--subtext)}
     .empty p{margin-bottom:14px}
     .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
@@ -255,6 +270,7 @@
 
   <section class="view" id="view-projects">
     <div class="bar">
+      <div class="seg" id="pmode-seg"></div>
       <div class="seg" id="status-seg"></div>
       <input type="search" id="q">
       <button type="button" class="btn btn-gold" id="add"></button>
@@ -360,6 +376,11 @@
     stActive: { en: 'Active', es: 'Activo' },
     stPlanned:{ en: 'Planned', es: 'Planeado' },
     stDone:   { en: 'Done', es: 'Terminado' },
+    pmCards:  { en: 'Cards', es: 'Tarjetas' },
+    pmTime:   { en: 'Timeline', es: 'Línea de tiempo' },
+    ptToday:  { en: 'Today', es: 'Hoy' },
+    ptHint:   { en: 'Green = active, blue = planned. Solid = days it works; the thin line = days off. Tap a project to edit it.', es: 'Verde = activo, azul = planeado. Sólido = días que trabaja; la línea delgada = días libres. Toque un proyecto para editarlo.' },
+    ptNone:   { en: 'No projects in these weeks.', es: 'Ningún proyecto en estas semanas.' },
     stAll:    { en: 'All', es: 'Todos' },
     oldLink:  { en: 'Old day schedules (Scheduling)', es: 'Horarios anteriores (Horarios)' },
     loading:  { en: 'Loading…', es: 'Cargando…' },
@@ -1100,12 +1121,81 @@
     });
     const order = { active: 0, planned: 1, done: 2 };
     list.sort((a, b) => order[st(a)] - order[st(b)] || locOrder(a.fields) - locOrder(b.fields) || String(a.fields.name).localeCompare(String(b.fields.name)));
+    document.querySelectorAll('#pmode-seg button').forEach((b) => b.classList.toggle('on', b.dataset.pm === pmode));
+    if (pmode === 'timeline') { renderProjectTimeline(list); return; }
     const cards = list.filter((p) => !editing || editing.id !== p.id).map(projectCard);
     const ed = editing ? editorHtml() : '';
     $('plist').innerHTML = !cards.length && !ed ? `<div class="empty"><p>${esc(t(L.noProj))}</p><button type="button" class="btn btn-gold" data-new="1">${esc(t(L.add))}</button></div>`
       : `<div class="grid">${ed}${cards.join('')}</div>`;
     if (editing) wireEditor();
   }
+  // ── Project timeline ────────────────────────────────────────────────────
+  // Six weeks from a Monday, a row per project grouped by location: solid
+  // blocks on the days it works (projectRunsOn, less days marked not
+  // working), a thin line across its days off, colored by status. The same
+  // status filter and search as the cards; tapping a row opens the editor.
+  let pmode = 'cards';
+  try { pmode = localStorage.getItem('2cw_master_pmode') || 'cards'; } catch {}
+  if (params.get('pmode')) pmode = params.get('pmode');
+  if (!['cards', 'timeline'].includes(pmode)) pmode = 'cards';
+  const PT_DAYS = 42;
+  const mondayOf = (iso) => addDays(iso, -((new Date(iso + 'T12:00:00').getDay() + 6) % 7));
+  let ptStart = addDays(mondayOf(localDay()), -7);
+  $('pmode-seg').innerHTML = [['cards', L.pmCards], ['timeline', L.pmTime]].map(([k, l]) => `<button type="button" data-pm="${k}">${esc(t(l))}</button>`).join('');
+  $('pmode-seg').onclick = (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    pmode = b.dataset.pm;
+    try { localStorage.setItem('2cw_master_pmode', pmode); } catch {}
+    render();
+  };
+  const ST_COLOR = { active: 'var(--green)', planned: 'var(--blue)', done: 'var(--muted)' };
+  function renderProjectTimeline(list) {
+    const days = Array.from({ length: PT_DAYS }, (_, i) => addDays(ptStart, i));
+    const last = days[days.length - 1], today = localDay();
+    const shown = list.filter((p) => { const f = p.fields, s0 = f.start || p.work_date; return (!s0 || s0 <= last) && (!f.end || f.end >= ptStart); });
+    const pct = (i) => (i / PT_DAYS * 100).toFixed(3) + '%';
+    const bg = days.map((d, i) => { const w = new Date(d + 'T12:00:00').getDay(); const cls = d === today ? 'today' : (w === 0 || w === 6) ? 'we' : '';
+      return cls ? `<div class="pt-day ${cls}" style="left:${pct(i)};width:${pct(1)}"></div>` : ''; }).join('') +
+      days.map((d, i) => i && new Date(d + 'T12:00:00').getDay() === 1 ? `<div class="tl-tick" style="left:${pct(i)}"></div>` : '').join('');
+    const axis = `<div class="tl-row tl-axis pt-row pt-axis" style="cursor:default"><div class="tl-name"></div><div class="tl-track">${bg}${days.map((d, i) =>
+      new Date(d + 'T12:00:00').getDay() === 1 ? `<span class="tl-lbl" style="left:${pct(i)}">${esc(fmtDate(d))}</span>` : '').join('')}</div></div>`;
+    const row = (p) => {
+      const f = p.fields, st = f.status || 'active';
+      const on = days.map((d) => (f.status || 'active') === 'done' ? projectRunsOn({ ...f, status: 'active' }, d) : runsOn(p, d));
+      const first = on.indexOf(true), lastOn = on.lastIndexOf(true);
+      let segs = '';
+      for (let i = 0; i < PT_DAYS; i++) {
+        if (!on[i]) continue;
+        let j = i; while (j + 1 < PT_DAYS && on[j + 1]) j++;
+        segs += `<div class="pt-seg${j === PT_DAYS - 1 && !f.end ? ' more' : ''}" style="left:calc(${pct(i)} + 1px);width:calc(${pct(j - i + 1)} - 2px)"></div>`;
+        i = j;
+      }
+      const span = first >= 0 && lastOn > first ? `<div class="pt-span" style="left:${pct(first)};width:${pct(lastOn - first + 1)}"></div>` : '';
+      const n = new Set(projectRoles(f).flatMap((r) => r.people.map(personKey))).size;
+      const nF = projectFlc(f).reduce((a, x) => a + x.count, 0);
+      const range = f.end ? `${fmtDate(f.start || p.work_date)} – ${fmtDate(f.end)}` : fill(t(L.from), { d: fmtDate(f.start || p.work_date) });
+      return `<div class="tl-row pt-row" data-edit="${p.id}" style="--c:${ST_COLOR[st] || ST_COLOR.active}" title="${esc(f.name)}">
+        <div class="tl-name"><span class="n" style="font-weight:500">${esc(f.name)}</span>
+          <span class="s">${esc(range)} · ${esc(hoursLabel(f))} · ${esc(n === 1 ? t(L.person1) : fill(t(L.personN), { n }))}${nF ? ' · ' + esc(t(L.flcTag)) + ' ' + nF : ''}</span></div>
+        <div class="tl-track" style="height:40px">${bg}${span}${segs}</div></div>`;
+    };
+    const groups = [];
+    shown.forEach((p) => { const k = p.fields.location === 'other' ? 'other:' + fold(p.fields.locationName) : p.fields.location;
+      let g = groups.find((x) => x.k === k); if (!g) groups.push(g = { k, name: locName(p.fields), order: locOrder(p.fields), ps: [] }); g.ps.push(p); });
+    groups.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
+    groups.forEach((g) => g.ps.sort((a, b) => String(a.fields.start || '').localeCompare(String(b.fields.start || '')) || String(a.fields.name).localeCompare(String(b.fields.name))));
+    const nav = `<div class="pt-bar-nav"><button type="button" class="nav" data-ptmove="-14" aria-label="Previous">‹</button>
+      <span class="day-name">${esc(fmtDate(days[0], { month: 'short', day: 'numeric' }))} – ${esc(fmtDate(last, { month: 'short', day: 'numeric', year: 'numeric' }))}</span>
+      <button type="button" class="nav" data-ptmove="14" aria-label="Next">›</button>
+      <button type="button" class="btn btn-sm btn-ghost" data-pttoday="1">${esc(t(L.ptToday))}</button>
+      <span class="hint" style="margin:0">${esc(t(L.ptHint))}</span></div>`;
+    const ed = editing ? `<div class="grid" style="margin-bottom:16px">${editorHtml()}</div>` : '';
+    $('plist').innerHTML = ed + nav + (groups.length ? `<div class="tl"><div class="tl-in">${groups.map((g) =>
+      `<div class="tl-farm"><span class="loc">${esc(g.name)}</span><span class="ct">${g.ps.length}</span></div>` + axis + g.ps.map(row).join('')).join('')}</div></div>`
+      : `<div class="empty"><p>${esc(t(L.ptNone))}</p></div>`);
+    if (editing) wireEditor();
+  }
+
   function projectCard(p) {
     const f = p.fields, st = f.status || 'active';
     const lab = labor[p.id];
@@ -1132,6 +1222,9 @@
   $('plist').addEventListener('click', (e) => {
     const ed = e.target.closest('[data-edit]');
     if (ed) { openEditor(ed.dataset.edit); return; }
+    const mv = e.target.closest('[data-ptmove]');
+    if (mv) { ptStart = addDays(ptStart, +mv.dataset.ptmove); render(); return; }
+    if (e.target.closest('[data-pttoday]')) { ptStart = addDays(mondayOf(localDay()), -7); render(); return; }
     const dup = e.target.closest('[data-dup]');
     if (dup) { duplicateProject(dup.dataset.dup); return; }
     if (e.target.closest('[data-new]')) openEditor(null);
