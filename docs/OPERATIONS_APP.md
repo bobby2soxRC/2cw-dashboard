@@ -431,6 +431,11 @@ from them.
   (stored blank when equal, like a responsibility's). They show on the
   day cards, the week table, both images and the CSV, but aren't in
   `projectRoles`, so no conflicts and nothing in the Labor Log.
+- **Duplicate** (on each project card and in the editor) opens a new,
+  unsaved project copying the location, lead, process, days, hours,
+  notes, responsibilities with their people, and contractors. It starts
+  today with no end date, no UIDs and no day changes; the name gets
+  "(copy)" and a Done status becomes Active. Nothing is written until Save.
 - **Schedule tab — Day** shows every project running that day
   (`projectRunsOn`: Planned or Active, inside its dates, on one of its
   days), at its location and hours (`projectHours`), with each

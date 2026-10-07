@@ -435,6 +435,10 @@
     save:     { en: 'Save', es: 'Guardar' },
     saving:   { en: 'Saving…', es: 'Guardando…' },
     cancel:   { en: 'Cancel', es: 'Cancelar' },
+    dup:      { en: 'Duplicate', es: 'Duplicar' },
+    dupName:  { en: '{n} (copy)', es: '{n} (copia)' },
+    dupHint:  { en: 'Copy of “{n}” — same people, responsibilities and contractors. Set the name, dates and times, then Save. Nothing is saved until you do.',
+                es: 'Copia de “{n}” — mismas personas, responsabilidades y contratistas. Ponga el nombre, fechas y horas y Guarde. No se guarda nada hasta entonces.' },
     remove:   { en: 'Remove project', es: 'Quitar proyecto' },
     removeQ:  { en: 'Remove this project? It leaves the schedule; time already logged to it stays (in the project’s pool).', es: '¿Quitar este proyecto? Sale del horario; las horas ya registradas se quedan (en el fondo del proyecto).' },
     saved:    { en: 'Saved', es: 'Guardado' },
@@ -1122,11 +1126,14 @@
       <div class="card-ft">
         <a class="btn btn-sm btn-ghost" href="/labor_log.html?tab=list&seg=entries&all=1&q=${encodeURIComponent(f.name)}">${esc(t(L.entries))}</a>
         <a class="btn btn-sm btn-ghost" href="/labor_log.html?project=${encodeURIComponent(p.id)}">${esc(t(L.logTime))}</a>
+        <button type="button" class="btn btn-sm btn-ghost" data-dup="${p.id}">${esc(t(L.dup))}</button>
         <button type="button" class="btn btn-sm" data-edit="${p.id}">${esc(t(L.editProj))}</button></div></div>`;
   }
   $('plist').addEventListener('click', (e) => {
     const ed = e.target.closest('[data-edit]');
     if (ed) { openEditor(ed.dataset.edit); return; }
+    const dup = e.target.closest('[data-dup]');
+    if (dup) { duplicateProject(dup.dataset.dup); return; }
     if (e.target.closest('[data-new]')) openEditor(null);
   });
 
@@ -1160,10 +1167,30 @@
     render();
     window.scrollTo({ top: $('plist').getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' });
   }
+  // Duplicate: a new, unsaved project with the same location, lead,
+  // responsibilities and people, contractors, days and hours — starting
+  // today with no end date, no UIDs and no day changes — for the lead to
+  // set the dates and times and save.
+  function duplicateProject(id) {
+    const src = projects.find((x) => x.id === id);
+    if (!src) return;
+    const g = clone(src.fields);
+    const f = { name: fill(t(L.dupName), { n: g.name || '' }), location: g.location || '', locationName: g.locationName || '', process: g.process || '',
+                status: g.status === 'done' ? 'active' : (g.status || 'active'), start: localDay(), end: '', days: g.days || [],
+                startTime: g.startTime || '', endTime: g.endTime || '', lead: g.lead || null, notes: g.notes || '', uids: [],
+                roles: (g.roles || []).map((r) => ({ ...r, id: newId(), people: r.people || [] })),
+                contractors: (g.contractors || []).map((c) => ({ ...c, id: newId(), shifts: (c.shifts || []).map((x) => ({ ...x, id: newId() })) })) };
+    editing = { id: null, f, from: g.name };
+    loadUidIndex();
+    showTab('projects');
+    window.scrollTo({ top: $('plist').getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' });
+    const st = $('ed-start'); if (st) st.focus();
+  }
   function editorHtml() {
     const f = editing.f;
     const dl = DOW[getLang() === 'es' ? 'es' : 'en'];
     return `<div class="card editing"><div class="ed">
+      ${editing.from != null ? `<div class="note" style="border-left-color:var(--blue);background:rgba(90,159,212,.12)">${esc(fill(t(L.dupHint), { n: editing.from }))}</div>` : ''}
       <div class="row"><div class="full"><label class="lbl" for="ed-name">${esc(t(L.name))}</label><input id="ed-name" value="${esc(f.name)}" placeholder="${esc(t(L.namePh))}"></div>
         <div class="${f.location === 'other' ? '' : 'full'}"><label class="lbl" for="ed-loc">${esc(t(L.location))}</label>
           <select id="ed-loc"><option value=""></option>${LOCATIONS.map(([k, n]) => `<option value="${k}" ${f.location === k ? 'selected' : ''}>${esc(n || t(L.other))}</option>`).join('')}</select></div>
@@ -1218,7 +1245,8 @@
       <div class="hint">${esc(t(L.uidsHint))}</div>
 
       <div class="err" id="ed-err"></div>
-      <div class="ed-ft">${editing.id ? `<button type="button" class="btn btn-danger" id="ed-rm">${esc(t(L.remove))}</button><span class="spacer"></span>` : ''}
+      <div class="ed-ft">${editing.id ? `<button type="button" class="btn btn-danger" id="ed-rm">${esc(t(L.remove))}</button><span class="spacer"></span>
+          <button type="button" class="btn btn-ghost" id="ed-dup">${esc(t(L.dup))}</button>` : ''}
         <button type="button" class="btn btn-ghost" id="ed-cancel">${esc(t(L.cancel))}</button>
         <button type="button" class="btn btn-gold" id="ed-save">${esc(t(L.save))}</button></div>
     </div></div>`;
@@ -1331,6 +1359,7 @@
         editing = null; toast(t(L.removed)); render();
       } catch (err) { $('ed-err').textContent = `${t(L.failed)} ${err.message || err}`; }
     };
+    if ($('ed-dup')) $('ed-dup').onclick = () => duplicateProject(editing.id);
     $('ed-save').onclick = saveEditor;
   }
   async function saveEditor() {
