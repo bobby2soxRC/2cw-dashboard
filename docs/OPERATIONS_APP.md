@@ -423,6 +423,19 @@ from them.
   at once. Each card shows the hours logged to the project (Labor Log
   entries with `project`) with links to **Log time** (opens
   `labor_log.html?project=<id>`) and **Labor entries**.
+- **Farm labor contractors** sit under Responsibilities: crews counted
+  by headcount, not named people. Each contractor (name, with the names
+  already used on other projects offered) has one or more times — a
+  number of workers with a start and end — so part of a crew can start
+  or finish at a different time. Blank times use the project's hours
+  (stored blank when equal, like a responsibility's). They show on the
+  day cards, the week table, both images and the CSV, but aren't in
+  `projectRoles`, so no conflicts and nothing in the Labor Log.
+- **Duplicate** (on each project card and in the editor) opens a new,
+  unsaved project copying the location, lead, process, days, hours,
+  notes, responsibilities with their people, and contractors. It starts
+  today with no end date, no UIDs and no day changes; the name gets
+  "(copy)" and a Done status becomes Active. Nothing is written until Save.
 - **Schedule tab — Day** shows every project running that day
   (`projectRunsOn`: Planned or Active, inside its dates, on one of its
   days), at its location and hours (`projectHours`), with each
@@ -431,16 +444,30 @@ from them.
   - **Change this day** is for one day only: untick someone who's off,
     add someone just for that day, add a note, or mark the project as not
     working that day. It never changes the standing responsibilities.
+  - It also sets each contractor crew's worker count for that day
+    (0 = not coming). Only counts that differ from the usual are saved;
+    the day card shows "usually N" next to a changed count.
 - **Week** is a table with projects down the side and Mon–Sun across.
   Tap a day to open it. **Save image** draws the day or the week as a
   PNG for texting, the same way Scheduling did.
+- **Timeline** is one day grouped by location: a row per person, with a
+  bar for each project/responsibility they're on there (colored by
+  project, double-bookings outlined in red), and a row per contractor
+  crew (striped). The hour axis fits the day's earliest start and latest
+  end. **Save image** draws it as a PNG.
+- **Export CSV** (any view) writes the shown day or week: one line per
+  person per responsibility and per contractor crew — date, location,
+  project, type (Lead / Employee / Contractor), responsibility, name,
+  workers, 24-hour start/end, hours, total hours (workers × hours),
+  double-booked, day note.
 - Each project is one `operations_forms` row, `station_key:
   'work_project'`, `work_date` = start date, `fields = { name, location,
   locationName, process, status, start, end, days: [0–6, Sun = 0],
   startTime, endTime, lead: {userId, name}, roles: [{id, name, process,
-  startTime, endTime, people: [{userId, name}]}], uids: [{uid, strain, addedAt,
+  startTime, endTime, people: [{userId, name}]}], contractors: [{id, name,
+  shifts: [{id, count, startTime, endTime}]}], uids: [{uid, strain, addedAt,
   addedBy}], notes, overrides: { 'YYYY-MM-DD': { skip, note, out:
-  [personKey], extra: [{roleId, userId, name}] } }, createdBy, updatedBy
+  [personKey], extra: [{roleId, userId, name}], flc: {shiftId: count} } }, createdBy, updatedBy
   }`. There's no SQL.
 - Every save re-reads the row and writes only if `updated_at` hasn't
   changed since, retrying on top of the newer version. That way two leads

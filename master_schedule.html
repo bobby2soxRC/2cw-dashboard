@@ -176,6 +176,37 @@
     .multi .c{color:var(--red)}
     .multi .none{color:var(--muted)}
 
+    .multi .fl{color:var(--purple)}
+
+    /* Farm labor contractors (project editor): Workers | Start | End rows under each contractor */
+    .flc-hd{display:grid;grid-template-columns:minmax(0,1fr) 40px;gap:8px;align-items:center;margin-bottom:8px}
+    .frow{display:grid;grid-template-columns:110px 118px 118px 40px;gap:8px;align-items:center;margin-top:6px}
+    .frow.fhead{font-family:'DM Mono',monospace;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:0}
+    .frow input{min-height:42px;padding:.45rem .6rem;font-size:.92rem}
+    @media (max-width:520px){ .frow{grid-template-columns:minmax(0,.8fr) minmax(0,1fr) minmax(0,1fr) 40px} }
+    .flc-tag{white-space:nowrap;font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;background:var(--purple);color:#000;border-radius:99px;padding:2px 7px;margin-left:6px;vertical-align:middle}
+
+    /* Timeline: grouped by location, a row per person / contractor crew, bars on an hour axis */
+    .tl{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+    .tl-in{min-width:760px}
+    .tl-row{display:grid;grid-template-columns:180px minmax(0,1fr);border-top:1px solid var(--border)}
+    .tl-name{position:sticky;left:0;z-index:2;background:var(--surface);padding:6px 10px;font-size:.88rem;display:flex;align-items:center;border-right:1px solid var(--border);min-width:0}
+    .tl-name span.n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .tl-track{position:relative}
+    .tl-tick{position:absolute;top:0;bottom:0;width:1px;background:var(--border)}
+    .tl-axis .tl-name,.tl-axis{background:var(--surface2)}
+    .tl-axis .tl-track{height:30px}
+    .tl-axis .tl-lbl{position:absolute;top:8px;transform:translateX(-50%);font-family:'DM Mono',monospace;font-size:.64rem;color:var(--subtext);white-space:nowrap}
+    .tl-farm{display:flex;gap:10px;align-items:baseline;background:var(--orange);color:#000;padding:8px 12px;border-top:1px solid var(--border);position:sticky;left:0}
+    .tl-farm .loc{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.04em;line-height:1}
+    .tl-farm .ct{font-family:'DM Mono',monospace;font-size:.72rem}
+    .tl-bar{position:absolute;height:24px;border-radius:6px;background:var(--c);color:#000;font-size:.72rem;font-weight:500;line-height:24px;padding:0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .tl-bar.flc{background:repeating-linear-gradient(135deg,var(--c) 0 8px,color-mix(in srgb,var(--c) 65%,#fff) 8px 16px);border:1px dashed #000}
+    .tl-bar.conf{outline:2px solid var(--red);outline-offset:1px}
+    @media (max-width:560px){ .tl-row{grid-template-columns:132px minmax(0,1fr)} .tl-name{font-size:.8rem;padding:6px 8px} .tl-in{min-width:680px} }
+    .tl-legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:0 0 12px;font-size:.8rem;color:var(--subtext)}
+    .tl-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--c);vertical-align:-1px;margin-right:5px}
+
     .empty{border:1px dashed var(--border);border-radius:14px;padding:40px 20px;text-align:center;color:var(--subtext)}
     .empty p{margin-bottom:14px}
     .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
@@ -216,6 +247,7 @@
       <span class="spacer"></span>
       <div class="seg" id="view-seg"></div>
       <button type="button" class="btn btn-ghost" id="png"></button>
+      <button type="button" class="btn btn-ghost" id="csv"></button>
     </div>
     <div class="summary" id="summary"></div>
     <div id="board"></div>
@@ -268,6 +300,17 @@
 // [{roleId, userId, name}] } and never touch the standing roles. A person on
 // two projects whose hours overlap that day is flagged on both.
 //
+// Farm labor contractors (fields.contractors) are crews by headcount, not
+// people: each contractor has one or more shifts {count, startTime, endTime},
+// blank times meaning the project's; Change this day can set a different
+// count for one day (overrides[date].flc = {shiftId: count}, 0 = not
+// coming). They show on the day/week/image and the
+// timeline but stay out of projectRoles (no conflicts, no Labor Log).
+//
+// Timeline: the day grouped by location, a row per person (bars for each
+// project/responsibility they're on) and per contractor crew; Save image
+// draws it, Export CSV writes the shown day(s) for a spreadsheet.
+//
 // The Labor Log's "A project" option logs time against a project; the hours
 // go over the project's UIDs by pounds (laborAllocations in
 // ops_analytics.js). Its Timeline's right-click offers the projects running
@@ -292,6 +335,25 @@
     tabProj:  { en: 'Projects', es: 'Proyectos' },
     vDay:     { en: 'Day', es: 'Día' },
     vWeek:    { en: 'Week', es: 'Semana' },
+    vTime:    { en: 'Timeline', es: 'Línea de tiempo' },
+    csv:      { en: 'Export CSV', es: 'Exportar CSV' },
+    nothingCsv:{ en: 'Nothing scheduled to export.', es: 'No hay nada programado para exportar.' },
+    flc:      { en: 'Farm labor contractors', es: 'Contratistas de mano de obra' },
+    flcHint:  { en: 'Crews from a farm labor contractor — how many workers and when. Use “+ Another time” when part of the crew starts or ends at a different time. Blank times use the project’s hours ({h}).',
+                es: 'Cuadrillas de un contratista — cuántos trabajadores y a qué hora. Use “+ Otro horario” si parte de la cuadrilla entra o sale a otra hora. Horas en blanco usan las del proyecto ({h}).' },
+    flcName:  { en: 'Contractor name', es: 'Nombre del contratista' },
+    flcNamePh:{ en: 'e.g. Valley Farm Labor', es: 'p. ej. Valley Farm Labor' },
+    flcCount: { en: 'Workers', es: 'Trabajadores' },
+    flcTag:   { en: 'FLC', es: 'Contr.' },
+    addFlc:   { en: '+ Add contractor', es: '+ Agregar contratista' },
+    addShift: { en: '+ Another time', es: '+ Otro horario' },
+    needFlcName:{ en: 'Name every farm labor contractor (or remove the empty one).', es: 'Nombre cada contratista (o quite el vacío).' },
+    needFlcCount:{ en: 'Give every contractor time a number of workers.', es: 'Ponga el número de trabajadores en cada horario del contratista.' },
+    sumFlc:   { en: '{n} contractor workers', es: '{n} trabajadores de contratista' },
+    flcUsual: { en: 'usually {n}', es: 'normalmente {n}' },
+    flcDayHint:{ en: 'Workers coming this day — 0 if the crew isn’t coming.', es: 'Trabajadores que vienen este día — 0 si la cuadrilla no viene.' },
+    workers1: { en: '1 worker', es: '1 trabajador' },
+    workersN: { en: '{n} workers', es: '{n} trabajadores' },
     png:      { en: 'Save image', es: 'Guardar imagen' },
     add:      { en: '+ New project', es: '+ Nuevo proyecto' },
     search:   { en: 'Search projects, people, UIDs…', es: 'Buscar proyectos, personas, UIDs…' },
@@ -373,6 +435,10 @@
     save:     { en: 'Save', es: 'Guardar' },
     saving:   { en: 'Saving…', es: 'Guardando…' },
     cancel:   { en: 'Cancel', es: 'Cancelar' },
+    dup:      { en: 'Duplicate', es: 'Duplicar' },
+    dupName:  { en: '{n} (copy)', es: '{n} (copia)' },
+    dupHint:  { en: 'Copy of “{n}” — same people, responsibilities and contractors. Set the name, dates and times, then Save. Nothing is saved until you do.',
+                es: 'Copia de “{n}” — mismas personas, responsabilidades y contratistas. Ponga el nombre, fechas y horas y Guarde. No se guarda nada hasta entonces.' },
     remove:   { en: 'Remove project', es: 'Quitar proyecto' },
     removeQ:  { en: 'Remove this project? It leaves the schedule; time already logged to it stays (in the project’s pool).', es: '¿Quitar este proyecto? Sale del horario; las horas ya registradas se quedan (en el fondo del proyecto).' },
     saved:    { en: 'Saved', es: 'Guardado' },
@@ -421,6 +487,7 @@
   $('sub').textContent = t(L.sub);
   $('add').textContent = t(L.add);
   $('png').textContent = t(L.png);
+  $('csv').textContent = t(L.csv);
   $('q').placeholder = t(L.search);
   $('old-link').textContent = t(L.oldLink);
 
@@ -519,6 +586,23 @@
     });
     return { roles, off, note: ov.note || '' };
   }
+  // A project's contractor crews, one per shift: {name, count, usual, s, e,
+  // label}. With a date, that day's count (overrides[date].flc[shiftId],
+  // 0 = not coming) replaces the usual one and crews of 0 are left out.
+  const workersLabel = (n) => n === 1 ? t(L.workers1) : fill(t(L.workersN), { n });
+  function projectFlc(f, date) {
+    const day = date ? ovFor(f, date).flc || {} : {};
+    const out = [];
+    (f.contractors || []).forEach((c) => (c.shifts || []).forEach((sh) => {
+      const [s, e] = projectHours(f, sh);
+      const usual = Number(sh.count) || 0;
+      const count = sh.id in day ? Number(day[sh.id]) || 0 : usual;
+      if (date && !count) return;
+      out.push({ name: c.name, count, usual, s, e, label: hoursLabel(f, sh) });
+    }));
+    return out;
+  }
+  const flcTotal = (ps, date) => ps.reduce((a, p) => a + projectFlc(p.fields, date).reduce((b, x) => b + x.count, 0), 0);
   // Everyone working that day, with their project and hours, for conflicts.
   function dayAssignments(date) {
     const list = [];
@@ -558,9 +642,9 @@
   let view = 'day';
   try { view = localStorage.getItem('2cw_master_view') || 'day'; } catch {}
   if (params.get('view')) view = params.get('view');
-  if (!['day', 'week'].includes(view)) view = 'day';
+  if (!['day', 'week', 'timeline'].includes(view)) view = 'day';
   $('date').value = params.get('date') || localDay();
-  $('view-seg').innerHTML = [['day', L.vDay], ['week', L.vWeek]].map(([k, l]) => `<button type="button" data-view="${k}">${esc(t(l))}</button>`).join('');
+  $('view-seg').innerHTML = [['day', L.vDay], ['week', L.vWeek], ['timeline', L.vTime]].map(([k, l]) => `<button type="button" data-view="${k}">${esc(t(l))}</button>`).join('');
   $('view-seg').onclick = (e) => {
     const b = e.target.closest('button'); if (!b) return;
     view = b.dataset.view; dayEdit = null;
@@ -577,7 +661,7 @@
   $('next').onclick = () => { $('date').value = addDays($('date').value || localDay(), view === 'week' ? 7 : 1); dayEdit = null; render(); };
   $('date').onchange = () => { dayEdit = null; render(); };
 
-  let dayEdit = null;   // {id, date, skip, note, out:Set, extra:[]}
+  let dayEdit = null;   // {id, date, skip, note, out:Set, extra:[], flc:{shiftId: count}}
   function renderSchedule() {
     document.querySelectorAll('#view-seg button').forEach((b) => b.classList.toggle('on', b.dataset.view === view));
     const date = $('date').value || localDay();
@@ -587,6 +671,11 @@
       renderWeek(ds);
       return;
     }
+    if (view === 'timeline') {
+      $('day-name').textContent = fmtDate(date, { weekday: 'long' });
+      renderTimeline(date);
+      return;
+    }
     $('day-name').textContent = fmtDate(date, { weekday: 'long' });
     const running = projects.filter((p) => runsOn(p, date) || (dayEdit && dayEdit.id === p.id))
       .sort((a, b) => locOrder(a.fields) - locOrder(b.fields) || (projectHours(a.fields)[0] ?? -1) - (projectHours(b.fields)[0] ?? -1));
@@ -594,7 +683,9 @@
     const conf = conflictsOn(date);
     const ppl = new Set(dayAssignments(date).map((a) => a.key));
     const nConf = new Set([...conf.keys()].map((k) => k.split('|')[0])).size;
+    const nFlc = flcTotal(running.filter((p) => runsOn(p, date)), date);
     $('summary').innerHTML = running.length ? fill(t(L.sumLine), { p: `<b>${esc(ppl.size === 1 ? t(L.person1) : fill(t(L.personN), { n: ppl.size }))}</b>`, n: `<b>${running.length}</b>` }) +
+      (nFlc ? ` · ${fill(esc(t(L.sumFlc)), { n: `<b>${nFlc}</b>` })}` : '') +
       (nConf ? ` · <span class="warn">${esc(fill(t(L.sumConf), { n: nConf }))}</span>` : '') : '';
     const skippedHtml = skipped.length ? `<div class="hint" style="margin-top:12px">${esc(fill(t(L.hidden), { d: fmtDate(date), list: skipped.map((p) => p.fields.name).join(', ') }))}
       ${skipped.map((p) => `<button type="button" class="btn btn-sm btn-ghost" data-dayedit="${p.id}">${esc(t(L.editDay))}: ${esc(p.fields.name)}</button>`).join(' ')}</div>` : '';
@@ -614,13 +705,18 @@
         const c = conf.get(personKey(x) + '|' + p.id) || [];
         return `<li class="${x.extra ? 'extra' : ''}">${esc(x.name)}${x.lead ? `<span class="lead-tag">${esc(t(L.lead))}</span>` : ''}
           ${c.map((o) => `<span class="conflict">${esc(fill(t(L.also), { p: o.p.fields.name, t: hoursLabel(o.p.fields, o.role) }))}</span>`).join('')}</li>`;
-      }).join('') : `<li class="none">${esc(t(L.nobody))}</li>`}</ul></div>`).join('');
+      }).join('') : `<li class="none">${esc(t(L.nobody))}</li>`}</ul></div>`).join('') + flcHtml(f, date);
     return `<div class="card"><div class="card-hd"><div class="loc">${esc(locName(f))}</div><div class="nm">${esc(f.name)}</div>
         <div class="time">${esc(hoursLabel(f))}${f.process ? ' · ' + esc(procTitle(f.process)) : ''}</div></div>
       <div class="card-body">${note ? `<div class="note">${esc(note)}</div>` : ''}${rolesHtml || `<div class="s">${esc(t(L.nobody))}</div>`}
         ${off.length ? `<div class="off">${esc(fill(t(L.offToday), { n: off.map((x) => x.name).join(', ') }))}</div>` : ''}</div>
       <div class="card-ft"><button type="button" class="btn btn-sm btn-ghost" data-edit="${p.id}">${esc(t(L.editProj))}</button>
         <button type="button" class="btn btn-sm" data-dayedit="${p.id}">${esc(t(L.editDay))}</button></div></div>`;
+  }
+  function flcHtml(f, date) {
+    const list = projectFlc(f, date);
+    return list.length ? `<div class="role"><div class="role-hd" style="color:var(--purple)">${esc(t(L.flc))}</div><ul class="ppl">${list.map((x) =>
+      `<li>${esc(x.name)} <span class="m">×${x.count}</span> <span class="s">${esc(x.label)}${x.count !== x.usual ? ' · ' + esc(fill(t(L.flcUsual), { n: x.usual })) : ''}</span></li>`).join('')}</ul></div>` : '';
   }
   function dayEditor(p, date) {
     const f = p.fields, e = dayEdit;
@@ -635,6 +731,11 @@
               <span></span><input type="checkbox" style="width:24px;height:24px;min-height:0" data-out="${esc(personKey(x))}" ${e.out.has(personKey(x)) ? '' : 'checked'}></li>`).join('')}
             ${extraFor(r.id).map((x) => `<li><span class="nm">${esc(x.name)} <span style="color:var(--blue)">+</span></span><span></span><button type="button" class="x" data-rmextra="${x.i}">×</button></li>`).join('')}</ul>
           <div class="picker"><input data-pick="${esc(r.id)}" autocomplete="off" placeholder="${esc(t(L.addToday))}"><div class="panel"></div></div></div>`).join('')}
+        ${(f.contractors || []).length ? `<div class="role-ed"><div class="role-hd" style="margin-bottom:4px;color:var(--purple)">${esc(t(L.flc))}</div>
+          <div class="hint" style="margin:0 0 6px">${esc(t(L.flcDayHint))}</div>
+          ${f.contractors.flatMap((c) => (c.shifts || []).map((sh) => `<div class="frow" style="grid-template-columns:minmax(0,1fr) 90px">
+            <span style="font-size:.92rem">${esc(c.name)} <span class="s">${esc(hoursLabel(f, sh))} · ${esc(fill(t(L.flcUsual), { n: Number(sh.count) || 0 }))}</span></span>
+            <input type="number" inputmode="numeric" min="0" step="1" data-dflc="${esc(sh.id)}" value="${esc(sh.id in e.flc ? e.flc[sh.id] : Number(sh.count) || 0)}" aria-label="${esc(t(L.flcCount))}"></div>`)).join('')}</div>` : ''}
         <div class="err" id="de-err"></div>
         <div class="ed-ft"><button type="button" class="btn btn-ghost" id="de-cancel">${esc(t(L.cancel))}</button>
           <button type="button" class="btn btn-blue" id="de-save">${esc(t(L.save))}</button></div>
@@ -648,6 +749,7 @@
       cb.checked ? e.out.delete(cb.dataset.out) : e.out.add(cb.dataset.out);
       cb.closest('li').classList.toggle('out', !cb.checked);
     });
+    document.querySelectorAll('[data-dflc]').forEach((inp) => inp.oninput = () => { e.flc[inp.dataset.dflc] = inp.value; });
     document.querySelectorAll('[data-rmextra]').forEach((b) => b.onclick = () => { e.extra.splice(+b.dataset.rmextra, 1); render(); });
     document.querySelectorAll('[data-pick]').forEach((inp) => personPicker(inp, (person) => {
       e.extra.push({ roleId: inp.dataset.pick, userId: person.userId || '', name: person.name });
@@ -661,7 +763,15 @@
       try {
         await patchProject(e.id, (f) => {
           const ov = { ...(f.overrides || {}) };
-          const day = { skip: e.skip || undefined, note: e.note.trim() || undefined, out: e.out.size ? [...e.out] : undefined, extra: e.extra.length ? e.extra : undefined };
+          // A day's contractor count is kept only where it differs from the usual one.
+          const flc = {};
+          (f.contractors || []).forEach((c) => (c.shifts || []).forEach((sh) => {
+            if (!(sh.id in e.flc) || String(e.flc[sh.id]).trim() === '') return;
+            const n = Math.max(0, Math.round(Number(e.flc[sh.id]) || 0));
+            if (n !== (Number(sh.count) || 0)) flc[sh.id] = n;
+          }));
+          const day = { skip: e.skip || undefined, note: e.note.trim() || undefined, out: e.out.size ? [...e.out] : undefined, extra: e.extra.length ? e.extra : undefined,
+                        flc: Object.keys(flc).length ? flc : undefined };
           Object.keys(day).forEach((k) => day[k] === undefined && delete day[k]);
           if (Object.keys(day).length) ov[date] = day; else delete ov[date];
           return { ...f, overrides: ov };
@@ -675,7 +785,7 @@
     if (!p) return;
     const date = $('date').value || localDay();
     const ov = ovFor(p.fields, date);
-    dayEdit = { id, date, skip: !!ov.skip, note: ov.note || '', out: new Set(ov.out || []), extra: clone(ov.extra || []) };
+    dayEdit = { id, date, skip: !!ov.skip, note: ov.note || '', out: new Set(ov.out || []), extra: clone(ov.extra || []), flc: { ...(ov.flc || {}) } };
     render();
   }
   function renderWeek(ds) {
@@ -699,11 +809,223 @@
           `<div class="rl">${esc(r.name)}</div><div class="pp">${r.people.map((x) => {
             const c = confs[d].has(personKey(x) + '|' + p.id);
             return `<span class="${c ? 'c' : ''}">${esc(x.name)}${c ? ' ⚠' : ''}</span>`;
-          }).join(', ')}</div>`).join('')}</td>`;
+          }).join(', ')}</div>`).join('')}${projectFlc(f, d).length ? `<div class="rl fl">${esc(t(L.flc))}</div><div class="pp">${projectFlc(f, d).map((x) =>
+            `${esc(x.name)} ×${x.count}${x.s != null && hoursLabel(f) !== x.label ? ` <span class="s">${esc(x.label)}</span>` : ''}`).join(', ')}</div>` : ''}</td>`;
       }).join('')}</tr>`;
     }).join('');
     $('board').innerHTML = `<div class="multi-wrap"><table class="multi"><thead><tr><th></th>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
   }
+  // ── Timeline ────────────────────────────────────────────────────────────
+  // The day by location: a row per person (a bar for each project /
+  // responsibility they're on there) and per contractor crew. Bars that
+  // overlap in one row stack in lanes; all-day ones span the whole axis.
+  // Each project gets a color for the day.
+  const TL_COLORS = ['#5a9fd4', '#d4a843', '#9b7fd4', '#3db87a', '#e08a3c', '#4fb8b0', '#d47a9b', '#a0a85a'];
+  function timelineData(date) {
+    const ps = projects.filter((p) => runsOn(p, date))
+      .sort((a, b) => locOrder(a.fields) - locOrder(b.fields) || (projectHours(a.fields)[0] ?? -1) - (projectHours(b.fields)[0] ?? -1));
+    const color = new Map(ps.map((p, i) => [p.id, TL_COLORS[i % TL_COLORS.length]]));
+    const conf = conflictsOn(date);
+    const farms = [];
+    const farmOf = (f) => {
+      const k = f.location === 'other' ? 'other:' + fold(f.locationName) : f.location;
+      let g = farms.find((x) => x.key === k);
+      if (!g) farms.push(g = { key: k, name: locName(f), people: new Map(), crews: [] });
+      return g;
+    };
+    ps.forEach((p) => {
+      const f = p.fields, g = farmOf(f);
+      dayRoles(f, date).roles.forEach((r) => {
+        const [s, e] = projectHours(f, r);
+        r.people.forEach((x) => {
+          const k = personKey(x);
+          const row = g.people.get(k) || g.people.set(k, { name: x.name, lead: false, bars: [] }).get(k);
+          if (x.lead) row.lead = true;
+          row.bars.push({ s, e, color: color.get(p.id), time: hoursLabel(f, r), text: `${f.name} · ${r.name}`, conflict: conf.has(k + '|' + p.id) });
+        });
+      });
+      projectFlc(f, date).forEach((x) => g.crews.push({ name: x.name, count: x.count, flc: true,
+        bars: [{ s: x.s, e: x.e, color: color.get(p.id), time: x.label, text: `${f.name} · ${workersLabel(x.count)}`, flc: true }] }));
+    });
+    // Axis: whole hours around every timed bar (6 AM–6 PM when none has times).
+    const timed = farms.flatMap((g) => [...g.people.values(), ...g.crews].flatMap((r) => r.bars)).filter((b) => b.s != null);
+    const a0 = timed.length ? Math.floor(Math.min(...timed.map((b) => b.s)) / 60) * 60 : 360;
+    let a1 = timed.length ? Math.ceil(Math.max(...timed.map((b) => b.e)) / 60) * 60 : 1080;
+    if (a1 - a0 < 240) a1 = a0 + 240;
+    farms.forEach((g) => {
+      const first = (r) => Math.min(...r.bars.map((b) => b.s ?? a0));
+      g.nPeople = g.people.size;
+      g.nFlc = g.crews.reduce((a, c) => a + c.count, 0);
+      g.rows = [...[...g.people.values()].sort((a, b) => (b.lead - a.lead) || first(a) - first(b) || a.name.localeCompare(b.name)),
+                ...g.crews.sort((a, b) => a.name.localeCompare(b.name) || first(a) - first(b))];
+      g.rows.forEach((r) => {
+        const ends = [];
+        r.bars.sort((a, b) => (a.s ?? a0) - (b.s ?? a0)).forEach((b) => {
+          b.x0 = b.s == null ? a0 : b.s; b.x1 = b.s == null ? a1 : b.e;
+          let lane = ends.findIndex((x) => x <= b.x0);
+          if (lane < 0) { lane = ends.length; ends.push(0); }
+          ends[lane] = b.x1; b.lane = lane;
+        });
+        r.lanes = Math.max(1, ends.length);
+      });
+    });
+    const step = a1 - a0 > 14 * 60 ? 120 : 60;
+    a1 = a0 + Math.ceil((a1 - a0) / step) * step;
+    const ticks = [];
+    for (let m = a0; m <= a1; m += step) ticks.push(m);
+    return { ps, farms, a0, a1, ticks, color };
+  }
+  const tickLabel = (m) => fmtMin(m).replace(/:00(?=\D)/, '');
+  function renderTimeline(date) {
+    const { ps, farms, a0, a1, ticks, color } = timelineData(date);
+    const ppl = new Set(dayAssignments(date).map((a) => a.key));
+    const nFlc = flcTotal(ps, date);
+    $('summary').innerHTML = ps.length ? fill(t(L.sumLine), { p: `<b>${esc(ppl.size === 1 ? t(L.person1) : fill(t(L.personN), { n: ppl.size }))}</b>`, n: `<b>${ps.length}</b>` }) +
+      (nFlc ? ` · ${fill(esc(t(L.sumFlc)), { n: `<b>${nFlc}</b>` })}` : '') : '';
+    if (!ps.length) {
+      $('board').innerHTML = `<div class="empty"><p>${esc(t(L.nothingDay))}</p><button type="button" class="btn btn-gold" data-goproj="1">${esc(t(L.goProj))}</button></div>`;
+      return;
+    }
+    const pct = (m) => ((m - a0) / (a1 - a0) * 100).toFixed(3) + '%';
+    const LANE = 30;
+    const grid = ticks.map((m) => `<div class="tl-tick" style="left:${pct(m)}"></div>`).join('');
+    const axis = `<div class="tl-row tl-axis"><div class="tl-name"></div><div class="tl-track">${grid}${ticks.map((m, i) =>
+      `<span class="tl-lbl" style="left:${pct(m)};${i === 0 ? 'transform:none;margin-left:4px' : i === ticks.length - 1 ? 'transform:translateX(-100%);margin-left:-4px' : ''}">${esc(tickLabel(m))}</span>`).join('')}</div></div>`;
+    const row = (r) => `<div class="tl-row"><div class="tl-name"><span class="n">${esc(r.name)}</span>${r.lead ? `<span class="lead-tag">${esc(t(L.lead))}</span>` : ''}${r.flc ? `<span class="flc-tag">${esc(t(L.flcTag))} ×${r.count}</span>` : ''}</div>
+      <div class="tl-track" style="height:${r.lanes * LANE + 6}px">${grid}${r.bars.map((b) =>
+        `<div class="tl-bar${b.flc ? ' flc' : ''}${b.conflict ? ' conf' : ''}" style="--c:${b.color};left:${pct(b.x0)};width:calc(${pct(b.x1)} - ${pct(b.x0)});top:${b.lane * LANE + 4}px" title="${esc(b.time + ' · ' + b.text)}">${b.conflict ? '⚠ ' : ''}${esc(b.time + ' · ' + b.text)}</div>`).join('')}</div></div>`;
+    const legend = `<div class="tl-legend">${ps.map((p) => `<span><i style="--c:${color.get(p.id)}"></i>${esc(p.fields.name)} <span class="s">${esc(locName(p.fields))} · ${esc(hoursLabel(p.fields))}</span></span>`).join('')}</div>`;
+    $('board').innerHTML = legend + `<div class="tl"><div class="tl-in">${farms.map((g) =>
+      `<div class="tl-farm"><span class="loc">${esc(g.name)}</span><span class="ct">${esc(g.nPeople === 1 ? t(L.person1) : fill(t(L.personN), { n: g.nPeople }))}${g.nFlc ? ' · ' + esc(fill(t(L.sumFlc), { n: g.nFlc })) : ''}</span></div>` +
+      axis + g.rows.map(row).join('')).join('')}</div></div>`;
+  }
+
+  // Image of the timeline: same layout on white — location bands, an hour
+  // axis under each, a row per person / crew with the bars colored by project.
+  async function makeTimelineImage() {
+    const date = $('date').value || localDay();
+    const { ps, farms, a0, a1, ticks, color } = timelineData(date);
+    if (!ps.length) { toast(t(L.nothingImg)); return; }
+    try { await document.fonts.ready; } catch {}
+    const W = 1600, PAD = 36, NAMEW = 300, LANE = 36, AXISH = 30, FARMH = 52;
+    const SANS = "'DM Sans', Arial, sans-serif", HEAD = "'Bebas Neue', 'Arial Narrow', Arial, sans-serif", MONO = "'DM Mono', Menlo, monospace";
+    const C = { ink: '#16181d', sub: '#5b6170', line: '#e3e5ea', grid: '#eef0f3', orange: '#e08a3c', red: '#c62828', green: '#1f8a52', purple: '#6b4fb0', paper: '#ffffff' };
+    const F = { title: `400 54px ${HEAD}`, range: `500 24px ${SANS}`, farm: `400 32px ${HEAD}`, ct: `500 17px ${MONO}`, axis: `500 15px ${MONO}`,
+                name: `400 20px ${SANS}`, lead: `700 20px ${SANS}`, tag: `700 13px ${MONO}`, bar: `500 15px ${SANS}`, legend: `500 18px ${SANS}`, foot: `400 16px ${SANS}` };
+    const cv = document.createElement('canvas');
+    const ctx = cv.getContext('2d');
+    const trackX = PAD + NAMEW, trackW = W - PAD - trackX;
+    const xOf = (m) => trackX + (m - a0) / (a1 - a0) * trackW;
+    // Legend lines (swatch + project name), wrapped to the width.
+    ctx.font = F.legend;
+    const legend = [[]];
+    let lx = 0;
+    ps.forEach((p) => {
+      const label = `${p.fields.name} — ${locName(p.fields)}`;
+      const w = 26 + ctx.measureText(label).width + 28;
+      if (lx + w > W - PAD * 2 && legend[legend.length - 1].length) { legend.push([]); lx = 0; }
+      legend[legend.length - 1].push({ label, color: color.get(p.id), x: lx });
+      lx += w;
+    });
+    const headH = 130 + legend.length * 30 + 10, footH = 60;
+    const farmH = (g) => FARMH + AXISH + g.rows.reduce((a, r) => a + r.lanes * LANE + 8, 0) + 22;
+    const H = headH + farms.reduce((a, g) => a + farmH(g), 0) + footH;
+    cv.width = W; cv.height = Math.ceil(H);
+    ctx.fillStyle = C.paper; ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = C.ink; ctx.font = F.title; ctx.fillText(t(L.imgTitle).toUpperCase(), PAD, PAD - 4);
+    ctx.fillStyle = C.sub; ctx.font = F.range;
+    ctx.fillText(fmtDate(date, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }), PAD, PAD + 56);
+    const rr = (x, y, w, h, r) => { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); };
+    ctx.font = F.legend;
+    legend.forEach((line, i) => line.forEach((it) => {
+      const y = 130 + i * 30;
+      ctx.fillStyle = it.color; rr(PAD + it.x, y + 2, 18, 18, 4); ctx.fill();
+      ctx.fillStyle = C.ink; ctx.fillText(it.label, PAD + it.x + 26, y);
+    }));
+    let y = headH;
+    farms.forEach((g) => {
+      ctx.fillStyle = C.orange; rr(PAD, y, W - PAD * 2, FARMH - 6, 8); ctx.fill();
+      ctx.fillStyle = '#000'; ctx.font = F.farm; ctx.fillText(g.name.toUpperCase(), PAD + 14, y + 8);
+      const nm = ctx.measureText(g.name.toUpperCase()).width;
+      ctx.font = F.ct;
+      ctx.fillText((g.nPeople === 1 ? t(L.person1) : fill(t(L.personN), { n: g.nPeople })) + (g.nFlc ? ' · ' + fill(t(L.sumFlc), { n: g.nFlc }) : ''), PAD + 30 + nm, y + 17);
+      y += FARMH;
+      const top = y, bottom = y + AXISH + g.rows.reduce((a, r) => a + r.lanes * LANE + 8, 0);
+      ctx.fillStyle = C.grid;
+      ticks.forEach((m) => ctx.fillRect(Math.round(xOf(m)), top + AXISH - 6, 1, bottom - top - AXISH + 6));
+      ctx.fillStyle = C.sub; ctx.font = F.axis;
+      ticks.forEach((m, i) => {
+        const lbl = tickLabel(m), w = ctx.measureText(lbl).width;
+        ctx.fillText(lbl, i === 0 ? xOf(m) : i === ticks.length - 1 ? xOf(m) - w : xOf(m) - w / 2, top + 4);
+      });
+      y += AXISH;
+      g.rows.forEach((r) => {
+        const h = r.lanes * LANE + 8;
+        ctx.fillStyle = C.line; ctx.fillRect(PAD, y, W - PAD * 2, 1);
+        ctx.fillStyle = r.lead ? C.green : C.ink; ctx.font = r.lead ? F.lead : F.name;
+        let label = r.name + (r.flc ? ` ×${r.count}` : '');
+        const tag = r.lead ? t(L.lead).toUpperCase() : r.flc ? t(L.flcTag).toUpperCase() : '';
+        const maxW = NAMEW - 24 - (tag ? 60 : 0);
+        while (ctx.measureText(label).width > maxW && label.length > 4) label = label.slice(0, -2) + '…';
+        ctx.fillText(label, PAD + 4, y + 12);
+        if (tag) { const lw = ctx.measureText(label).width; ctx.font = F.tag; ctx.fillStyle = r.lead ? C.green : C.purple; ctx.fillText(tag, PAD + 12 + lw, y + 17); }
+        r.bars.forEach((b) => {
+          const bx = xOf(b.x0), bw = Math.max(4, xOf(b.x1) - bx), by = y + 6 + b.lane * LANE, bh = LANE - 6;
+          ctx.save();
+          ctx.globalAlpha = b.flc ? 0.55 : 1;
+          ctx.fillStyle = b.color; rr(bx, by, bw, bh, 6); ctx.fill();
+          ctx.restore();
+          if (b.flc) { ctx.save(); ctx.setLineDash([6, 4]); ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5; rr(bx, by, bw, bh, 6); ctx.stroke(); ctx.restore(); }
+          if (b.conflict) { ctx.strokeStyle = C.red; ctx.lineWidth = 3; rr(bx - 2, by - 2, bw + 4, bh + 4, 7); ctx.stroke(); }
+          ctx.save(); ctx.beginPath(); ctx.rect(bx + 6, by, bw - 12, bh); ctx.clip();
+          ctx.fillStyle = '#000'; ctx.font = F.bar; ctx.fillText(`${b.conflict ? '⚠ ' : ''}${b.time} · ${b.text}`, bx + 8, by + 7);
+          ctx.restore();
+        });
+        y += h;
+      });
+      y += 22;
+    });
+    ctx.fillStyle = C.sub; ctx.font = F.foot;
+    ctx.fillText(`2CW · ${fill(t(L.imgMade), { t: new Date().toLocaleString(lang(), { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) })}`, PAD, H - footH + 18);
+    const blob = await new Promise((res) => cv.toBlob(res, 'image/png'));
+    showImage(blob, `timeline-${date}.png`);
+  }
+
+  // ── CSV of the shown day(s) ─────────────────────────────────────────────
+  // One line per person per responsibility, and per contractor crew, with
+  // 24-hour times so it sorts and sums in a spreadsheet.
+  function exportCsv() {
+    const dates = view === 'week' ? weekDates() : [$('date').value || localDay()];
+    const hhmm = (m) => m == null ? '' : `${String(Math.floor((m % 1440) / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+    const hrs = (s, e) => s == null ? '' : +((e - s) / 60).toFixed(2);
+    const rows = [['Date', 'Location', 'Project', 'Type', 'Responsibility', 'Name', 'Workers', 'Start', 'End', 'Hours', 'Total hours', 'Double-booked', 'Day note']];
+    dates.forEach((d) => {
+      const conf = conflictsOn(d);
+      projects.filter((p) => runsOn(p, d))
+        .sort((a, b) => locOrder(a.fields) - locOrder(b.fields) || (projectHours(a.fields)[0] ?? -1) - (projectHours(b.fields)[0] ?? -1))
+        .forEach((p) => {
+          const f = p.fields, { roles, note } = dayRoles(f, d);
+          roles.forEach((r) => {
+            const [s, e] = projectHours(f, r);
+            r.people.forEach((x) => rows.push([d, locName(f), f.name, x.lead ? 'Lead' : 'Employee', r.name, x.name, 1, hhmm(s), hhmm(e), hrs(s, e), hrs(s, e),
+              conf.has(personKey(x) + '|' + p.id) ? 'yes' : '', note]));
+          });
+          projectFlc(f, d).forEach((x) => rows.push([d, locName(f), f.name, 'Contractor', '', x.name, x.count, hhmm(x.s), hhmm(x.e), hrs(x.s, x.e),
+            x.s == null ? '' : +(x.count * (x.e - x.s) / 60).toFixed(2), '', note]));
+        });
+    });
+    if (rows.length === 1) { toast(t(L.nothingCsv)); return; }
+    const cell = (v) => { const s = String(v == null ? '' : v); return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+    const blob = new Blob(['﻿' + rows.map((r) => r.map(cell).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `schedule-${dates[0]}${dates.length > 1 ? '_to_' + dates[dates.length - 1] : ''}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  }
+  $('csv').onclick = () => exportCsv();
+
   $('board').addEventListener('click', (e) => {
     const day = e.target.closest('[data-day]');
     if (day) { $('date').value = day.dataset.day; view = 'day'; try { localStorage.setItem('2cw_master_view', view); } catch {} render(); return; }
@@ -773,6 +1095,7 @@
       const f = p.fields;
       return fold(f.name).includes(q) || fold(locName(f)).includes(q) ||
         projectRoles(f).some((r) => fold(r.name).includes(q) || r.people.some((x) => fold(x.name).includes(q))) ||
+        (f.contractors || []).some((c) => fold(c.name).includes(q)) ||
         (qu.length >= 4 && (f.uids || []).some((u) => normUid(u.uid).includes(qu)));
     });
     const order = { active: 0, planned: 1, done: 2 };
@@ -798,15 +1121,19 @@
         ${f.lead && f.lead.name ? `<div class="meta" style="margin-bottom:6px">${esc(t(L.projLead))}: <b>${esc(f.lead.name)}</b> <span class="lead-tag">${esc(t(L.lead))}</span></div>` : ''}
         ${(f.roles || []).map((r) => `<div class="role"><div class="role-hd">${esc(r.name)} (${(r.people || []).length})${r.startTime || r.endTime ? `<span class="tm">${esc(hoursLabel(f, r))}</span>` : ''}${r.process ? `<span class="tm">${esc(procTitle(r.process))}</span>` : ''}</div>
           <div style="font-size:.88rem">${(r.people || []).map((x) => esc(x.name)).join(', ') || `<span class="s">${esc(t(L.nobody))}</span>`}</div></div>`).join('')}
+        ${flcHtml(f)}
       </div>
       <div class="card-ft">
         <a class="btn btn-sm btn-ghost" href="/labor_log.html?tab=list&seg=entries&all=1&q=${encodeURIComponent(f.name)}">${esc(t(L.entries))}</a>
         <a class="btn btn-sm btn-ghost" href="/labor_log.html?project=${encodeURIComponent(p.id)}">${esc(t(L.logTime))}</a>
+        <button type="button" class="btn btn-sm btn-ghost" data-dup="${p.id}">${esc(t(L.dup))}</button>
         <button type="button" class="btn btn-sm" data-edit="${p.id}">${esc(t(L.editProj))}</button></div></div>`;
   }
   $('plist').addEventListener('click', (e) => {
     const ed = e.target.closest('[data-edit]');
     if (ed) { openEditor(ed.dataset.edit); return; }
+    const dup = e.target.closest('[data-dup]');
+    if (dup) { duplicateProject(dup.dataset.dup); return; }
     if (e.target.closest('[data-new]')) openEditor(null);
   });
 
@@ -831,18 +1158,39 @@
     const p = id ? projects.find((x) => x.id === id) : null;
     if (id && !p) return;
     const f = p ? clone(p.fields) : { name: '', location: '', locationName: '', process: '', status: 'active', start: localDay(), end: '',
-                                      days: [], startTime: '', endTime: '', lead: null, roles: [{ id: newId(), name: '', process: '', startTime: '', endTime: '', people: [] }], uids: [], notes: '' };
+                                      days: [], startTime: '', endTime: '', lead: null, roles: [{ id: newId(), name: '', process: '', startTime: '', endTime: '', people: [] }], contractors: [], uids: [], notes: '' };
     f.roles = (f.roles || []).map((r) => ({ ...r, people: r.people || [] }));
+    f.contractors = (f.contractors || []).map((c) => ({ ...c, shifts: (c.shifts || []).map((x) => ({ ...x })) }));
     f.uids = f.uids || []; f.days = f.days || [];
     editing = { id, f };
     loadUidIndex();
     render();
     window.scrollTo({ top: $('plist').getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' });
   }
+  // Duplicate: a new, unsaved project with the same location, lead,
+  // responsibilities and people, contractors, days and hours — starting
+  // today with no end date, no UIDs and no day changes — for the lead to
+  // set the dates and times and save.
+  function duplicateProject(id) {
+    const src = projects.find((x) => x.id === id);
+    if (!src) return;
+    const g = clone(src.fields);
+    const f = { name: fill(t(L.dupName), { n: g.name || '' }), location: g.location || '', locationName: g.locationName || '', process: g.process || '',
+                status: g.status === 'done' ? 'active' : (g.status || 'active'), start: localDay(), end: '', days: g.days || [],
+                startTime: g.startTime || '', endTime: g.endTime || '', lead: g.lead || null, notes: g.notes || '', uids: [],
+                roles: (g.roles || []).map((r) => ({ ...r, id: newId(), people: r.people || [] })),
+                contractors: (g.contractors || []).map((c) => ({ ...c, id: newId(), shifts: (c.shifts || []).map((x) => ({ ...x, id: newId() })) })) };
+    editing = { id: null, f, from: g.name };
+    loadUidIndex();
+    showTab('projects');
+    window.scrollTo({ top: $('plist').getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' });
+    const st = $('ed-start'); if (st) st.focus();
+  }
   function editorHtml() {
     const f = editing.f;
     const dl = DOW[getLang() === 'es' ? 'es' : 'en'];
     return `<div class="card editing"><div class="ed">
+      ${editing.from != null ? `<div class="note" style="border-left-color:var(--blue);background:rgba(90,159,212,.12)">${esc(fill(t(L.dupHint), { n: editing.from }))}</div>` : ''}
       <div class="row"><div class="full"><label class="lbl" for="ed-name">${esc(t(L.name))}</label><input id="ed-name" value="${esc(f.name)}" placeholder="${esc(t(L.namePh))}"></div>
         <div class="${f.location === 'other' ? '' : 'full'}"><label class="lbl" for="ed-loc">${esc(t(L.location))}</label>
           <select id="ed-loc"><option value=""></option>${LOCATIONS.map(([k, n]) => `<option value="${k}" ${f.location === k ? 'selected' : ''}>${esc(n || t(L.other))}</option>`).join('')}</select></div>
@@ -876,6 +1224,20 @@
       <div class="hint" style="margin:6px 0 10px">${esc(fill(t(L.timesHint), { h: hoursLabel(f) }))}</div>
       <button type="button" class="btn btn-sm" id="ed-addrole">${esc(t(L.addRole))}</button>
 
+      <div class="sec" style="color:var(--purple)">${esc(t(L.flc))}</div>
+      <div class="hint" style="margin:-2px 0 10px">${esc(fill(t(L.flcHint), { h: hoursLabel(f) }))}</div>
+      <div id="ed-flc">${f.contractors.map((c, ci) => `<div class="role-ed">
+        <div class="flc-hd"><input data-cname="${ci}" value="${esc(c.name)}" list="flc-names" autocomplete="off" aria-label="${esc(t(L.flcName))}" placeholder="${esc(t(L.flcName))} — ${esc(t(L.flcNamePh))}">
+          <button type="button" class="x" data-cdel="${ci}" aria-label="×">×</button></div>
+        <div class="frow fhead"><span>${esc(t(L.flcCount))}</span><span>${esc(t(L.colStart))}</span><span>${esc(t(L.colEnd))}</span><span></span></div>
+        ${c.shifts.map((x, si) => `<div class="frow"><input type="number" inputmode="numeric" min="1" step="1" data-scount="${ci}:${si}" value="${esc(x.count || '')}" aria-label="${esc(t(L.flcCount))}">
+          <input type="time" data-sts="${ci}:${si}" value="${esc(x.startTime || '')}" aria-label="${esc(t(L.colStart))}">
+          <input type="time" data-ste="${ci}:${si}" value="${esc(x.endTime || '')}" aria-label="${esc(t(L.colEnd))}">
+          ${c.shifts.length > 1 ? `<button type="button" class="x" data-sdel="${ci}:${si}" aria-label="×">×</button>` : '<span></span>'}</div>`).join('')}
+        <button type="button" class="btn btn-sm btn-ghost" style="margin-top:8px" data-sadd="${ci}">${esc(t(L.addShift))}</button></div>`).join('')}</div>
+      <datalist id="flc-names">${[...new Set(projects.flatMap((p) => (p.fields.contractors || []).map((c) => c.name)).filter(Boolean))].sort().map((n) => `<option value="${esc(n)}">`).join('')}</datalist>
+      <button type="button" class="btn btn-sm" id="ed-addflc">${esc(t(L.addFlc))}</button>
+
       <div class="sec">${esc(t(L.uids))}</div>
       <div class="chips" id="ed-uids">${f.uids.map((u, i) => `<span class="chip" title="${esc(u.uid)}"><span class="m">${esc(tail(u.uid))}</span>${u.strain ? `<span class="s">${esc(u.strain)}</span>` : ''}<button type="button" data-udel="${i}">×</button></span>`).join('')}</div>
       <div class="uid-add"><input id="ed-uidq" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="${esc(t(L.uidPh))}"><button type="button" class="btn" id="ed-uidadd">${esc(t(L.uidAdd))}</button></div>
@@ -883,7 +1245,8 @@
       <div class="hint">${esc(t(L.uidsHint))}</div>
 
       <div class="err" id="ed-err"></div>
-      <div class="ed-ft">${editing.id ? `<button type="button" class="btn btn-danger" id="ed-rm">${esc(t(L.remove))}</button><span class="spacer"></span>` : ''}
+      <div class="ed-ft">${editing.id ? `<button type="button" class="btn btn-danger" id="ed-rm">${esc(t(L.remove))}</button><span class="spacer"></span>
+          <button type="button" class="btn btn-ghost" id="ed-dup">${esc(t(L.dup))}</button>` : ''}
         <button type="button" class="btn btn-ghost" id="ed-cancel">${esc(t(L.cancel))}</button>
         <button type="button" class="btn btn-gold" id="ed-save">${esc(t(L.save))}</button></div>
     </div></div>`;
@@ -903,6 +1266,15 @@
       r.startTime = document.querySelector(`[data-rts="${ri}"]`).value;
       r.endTime = document.querySelector(`[data-rte="${ri}"]`).value;
     });
+    f.contractors.forEach((c, ci) => {
+      c.name = document.querySelector(`[data-cname="${ci}"]`).value;
+      c.shifts.forEach((x, si) => {
+        const k = `${ci}:${si}`;
+        x.count = document.querySelector(`[data-scount="${k}"]`).value;
+        x.startTime = document.querySelector(`[data-sts="${k}"]`).value;
+        x.endTime = document.querySelector(`[data-ste="${k}"]`).value;
+      });
+    });
   }
   const rerender = () => { readEditor(); render(); };
   function wireEditor() {
@@ -921,6 +1293,17 @@
       if (del) { readEditor(); f.roles.splice(+del.dataset.rdel, 1); render(); return; }
       const pd = e.target.closest('[data-pdel]');
       if (pd) { const [ri, pi] = pd.dataset.pdel.split(':').map(Number); readEditor(); f.roles[ri].people.splice(pi, 1); render(); }
+    };
+    const newShift = () => ({ id: newId(), count: '', startTime: '', endTime: '' });
+    $('ed-addflc').onclick = () => { readEditor(); f.contractors.push({ id: newId(), name: '', shifts: [newShift()] }); render();
+      const ins = document.querySelectorAll('[data-cname]'); if (ins.length) ins[ins.length - 1].focus(); };
+    $('ed-flc').onclick = (e) => {
+      const cd = e.target.closest('[data-cdel]');
+      if (cd) { readEditor(); f.contractors.splice(+cd.dataset.cdel, 1); render(); return; }
+      const sa = e.target.closest('[data-sadd]');
+      if (sa) { readEditor(); f.contractors[+sa.dataset.sadd].shifts.push(newShift()); render(); return; }
+      const sd = e.target.closest('[data-sdel]');
+      if (sd) { const [ci, si] = sd.dataset.sdel.split(':').map(Number); readEditor(); f.contractors[ci].shifts.splice(si, 1); render(); }
     };
     ['ed-ts', 'ed-te'].forEach((id) => $(id).addEventListener('change', rerender));
     document.querySelectorAll('[data-padd]').forEach((inp) => {
@@ -976,6 +1359,7 @@
         editing = null; toast(t(L.removed)); render();
       } catch (err) { $('ed-err').textContent = `${t(L.failed)} ${err.message || err}`; }
     };
+    if ($('ed-dup')) $('ed-dup').onclick = () => duplicateProject(editing.id);
     $('ed-save').onclick = saveEditor;
   }
   async function saveEditor() {
@@ -985,8 +1369,12 @@
     f.roles.forEach((r) => { r.name = r.name.trim(); });
     // A blank row nobody filled in is just dropped.
     f.roles = f.roles.filter((r) => r.name || r.people.length || r.process || r.startTime || r.endTime);
+    f.contractors.forEach((c) => { c.name = c.name.trim(); c.shifts = c.shifts.filter((x) => x.count !== '' || x.startTime || x.endTime); });
+    f.contractors = f.contractors.filter((c) => c.name || c.shifts.length);
     const problem = !f.name ? L.needName : !f.location || (f.location === 'other' && !f.locationName) ? L.needLoc
-      : !f.start ? L.needStart : f.end && f.end < f.start ? L.badEnd : f.roles.some((r) => !r.name) ? L.needRole : null;
+      : !f.start ? L.needStart : f.end && f.end < f.start ? L.badEnd : f.roles.some((r) => !r.name) ? L.needRole
+      : f.contractors.some((c) => !c.name) ? L.needFlcName
+      : f.contractors.some((c) => !c.shifts.length || c.shifts.some((x) => !(Math.round(Number(x.count)) >= 1))) ? L.needFlcCount : null;
     if (problem) { $('ed-err').textContent = t(problem); return; }
     if (!client) { $('ed-err').textContent = t(L.noDb); return; }
     const out = {
@@ -998,6 +1386,11 @@
                                    startTime: r.startTime && r.startTime !== f.startTime ? r.startTime : '',
                                    endTime: r.endTime && r.endTime !== f.endTime ? r.endTime : '',
                                    people: r.people.map((x) => ({ userId: x.userId || '', name: x.name })) })),
+      // Contractor crews by headcount; times, like a responsibility's, only where they differ.
+      contractors: f.contractors.map((c) => ({ id: c.id || newId(), name: c.name,
+                                               shifts: c.shifts.map((x) => ({ id: x.id || newId(), count: Math.round(Number(x.count)),
+                                                 startTime: x.startTime && x.startTime !== f.startTime ? x.startTime : '',
+                                                 endTime: x.endTime && x.endTime !== f.endTime ? x.endTime : '' })) })),
       uids: f.uids, notes: (f.notes || '').trim()
     };
     const btn = $('ed-save');
@@ -1097,6 +1490,8 @@
       const notes = note ? wrap(note, F.note, inner - 12) : [];
       const rs = roles.filter((r) => r.people.length).map((r) => ({ r, label: (r.name + (r.startTime || r.endTime ? '  ' + hoursLabel(f, r) : '')).toUpperCase(),
         people: r.people.map((x) => ({ x, conflict: conf.has(personKey(x) + '|' + p.id), lines: wrap(x.name + (x.lead ? ` — ${t(L.lead)}` : ''), x.lead ? F.lead : F.name, inner - 30) })) }));
+      const fl = projectFlc(f, d);
+      if (fl.length) rs.push({ label: t(L.flc).toUpperCase(), people: fl.map((x) => ({ x: {}, conflict: false, lines: wrap(`${x.name} ×${x.count} · ${x.label}`, F.name, inner - 30) })) });
       let h = headH + 12 + (notes.length ? notes.length * 26 + 26 : 0);
       rs.forEach((r) => { h += 24; r.people.forEach((x) => { h += x.lines.length * 28 + 2; }); h += 8; });
       return { f, locLines, projLines, headH, notes, rs, h: h + 6 };
@@ -1185,7 +1580,7 @@
   };
   $('img-close').onclick = () => $('img-bg').classList.remove('on');
   $('img-bg').addEventListener('click', (e) => { if (e.target === $('img-bg')) $('img-bg').classList.remove('on'); });
-  $('png').onclick = () => makeImage();
+  $('png').onclick = () => view === 'timeline' ? makeTimelineImage() : makeImage();
 
   function toast(msg) {
     const el = $('toast');
