@@ -193,6 +193,9 @@
     .tl-name{position:sticky;left:0;z-index:2;background:var(--surface);padding:6px 10px;font-size:.88rem;display:flex;align-items:center;border-right:1px solid var(--border);min-width:0}
     .tl-name span.n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .tl-track{position:relative}
+    /* Now line on today's timeline (page only, not the saved image). */
+    .tl-now{position:absolute;top:0;bottom:0;width:0;border-left:2px solid var(--red);z-index:3;pointer-events:none;display:none}
+    .tl-axis .tl-now span{position:absolute;bottom:2px;left:3px;font-family:'DM Mono',monospace;font-size:.62rem;font-weight:600;color:var(--red);white-space:nowrap}
     .tl-tick{position:absolute;top:0;bottom:0;width:1px;background:var(--border)}
     .tl-axis .tl-name,.tl-axis{background:var(--surface2)}
     .tl-axis .tl-track{height:30px}
@@ -917,16 +920,37 @@
     const pct = (m) => ((m - a0) / (a1 - a0) * 100).toFixed(3) + '%';
     const LANE = 30;
     const grid = ticks.map((m) => `<div class="tl-tick" style="left:${pct(m)}"></div>`).join('');
-    const axis = `<div class="tl-row tl-axis"><div class="tl-name"></div><div class="tl-track">${grid}${ticks.map((m, i) =>
+    const axis = `<div class="tl-row tl-axis"><div class="tl-name"></div><div class="tl-track">${grid}<div class="tl-now"><span></span></div>${ticks.map((m, i) =>
       `<span class="tl-lbl" style="left:${pct(m)};${i === 0 ? 'transform:none;margin-left:4px' : i === ticks.length - 1 ? 'transform:translateX(-100%);margin-left:-4px' : ''}">${esc(tickLabel(m))}</span>`).join('')}</div></div>`;
+    tlNow = { date, a0, a1 };
     const row = (r) => `<div class="tl-row"><div class="tl-name"><span class="n">${esc(r.name)}</span>${r.lead ? `<span class="lead-tag">${esc(t(L.lead))}</span>` : ''}${r.flc ? `<span class="flc-tag">${esc(t(L.flcTag))} ×${r.count}</span>` : ''}</div>
-      <div class="tl-track" style="height:${r.lanes * LANE + 6}px">${grid}${r.bars.map((b) =>
+      <div class="tl-track" style="height:${r.lanes * LANE + 6}px">${grid}<div class="tl-now"></div>${r.bars.map((b) =>
         `<div class="tl-bar${b.flc ? ' flc' : ''}${b.conflict ? ' conf' : ''}" style="--c:${b.color};left:${pct(b.x0)};width:calc(${pct(b.x1)} - ${pct(b.x0)});top:${b.lane * LANE + 4}px" title="${esc(b.time + ' · ' + b.text)}">${b.conflict ? '⚠ ' : ''}${esc(b.time + ' · ' + b.text)}</div>`).join('')}</div></div>`;
     const legend = `<div class="tl-legend">${ps.map((p) => `<span><i style="--c:${color.get(p.id)}"></i>${esc(p.fields.name)} <span class="s">${esc(locName(p.fields))} · ${esc(hoursLabel(p.fields))}</span></span>`).join('')}</div>`;
     $('board').innerHTML = legend + `<div class="tl"><div class="tl-in">${farms.map((g) =>
       `<div class="tl-farm"><span class="loc">${esc(g.name)}</span><span class="ct">${esc(g.nPeople === 1 ? t(L.person1) : fill(t(L.personN), { n: g.nPeople }))}${g.nFlc ? ' · ' + esc(fill(t(L.sumFlc), { n: g.nFlc })) : ''}</span></div>` +
       axis + g.rows.map(row).join('')).join('')}</div></div>`;
+    placeNow();
   }
+  // The red now line: shown when the timeline's day includes the current
+  // time (today, or yesterday's overnight hours), moved every minute.
+  let tlNow = null;
+  function placeNow() {
+    const lines = document.querySelectorAll('#board .tl-now');
+    if (!tlNow || !lines.length) return;
+    const { date, a0, a1 } = tlNow;
+    const m = (Date.now() - new Date(date + 'T00:00:00').getTime()) / 60000;
+    const on = m >= a0 && m <= a1;
+    const left = ((m - a0) / (a1 - a0) * 100).toFixed(3) + '%';
+    const lbl = fmtMin(Math.floor(m) % 1440);
+    lines.forEach((el) => {
+      el.style.display = on ? 'block' : 'none';
+      el.style.left = left;
+      const sp = el.querySelector('span');
+      if (sp) { sp.textContent = lbl; sp.style.left = (m - a0) / (a1 - a0) > 0.85 ? 'auto' : '3px'; sp.style.right = (m - a0) / (a1 - a0) > 0.85 ? '3px' : 'auto'; }
+    });
+  }
+  setInterval(placeNow, 60000);
 
   // Image of the timeline: same layout on white — location bands, an hour
   // axis under each, a row per person / crew with the bars colored by project.
