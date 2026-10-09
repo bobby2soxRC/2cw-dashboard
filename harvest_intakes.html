@@ -49,6 +49,7 @@
     .pills{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
     .pill{flex:0 0 auto;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border-radius:99px;border:1px solid var(--border);white-space:nowrap}
     .pill.draft{border-color:var(--gold);color:var(--gold)}
+    .pill.dry{border-color:var(--blue);color:var(--blue)}
     .pill.ok{border-color:var(--green);color:var(--green)}
     .pill.warn{border-color:var(--red);color:var(--red)}
     .row-facts{margin-top:10px;display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:.8rem}
@@ -193,6 +194,13 @@
     laborOther:{ en: 'Other / general', es: 'Otro / general' },
     back:      { en: '← Hub', es: '← Inicio' },
     all:       { en: 'All', es: 'Todas' },
+    drying:    { en: 'Currently drying', es: 'Secando ahora' },
+    histTab:   { en: 'Historical', es: 'Históricas' },
+    dryingP:   { en: 'Drying', es: 'Secando' },
+    daysP:     { en: 'd', es: 'd' },
+    takenP:    { en: 'Taken down', es: 'Bajada' },
+    dryP:      { en: 'dry', es: 'seco' },
+    frozenP:   { en: 'Fresh frozen', es: 'Fresco congelado' },
     metrcTodo: { en: 'Metrc not adjusted', es: 'Metrc sin ajustar' },
     drafts:    { en: 'In progress', es: 'En curso' },
     search:    { en: 'Search strain, UID, farm license, CID, manifest…', es: 'Buscar variedad, UID, licencia, CID, manifiesto…' },
@@ -250,9 +258,14 @@
   const board = document.getElementById('board');
   if (!access) { board.innerHTML = `<div class="empty">${esc(t(L.noAccess))}</div>`; return; }
 
-  const [reference, rowsOrNull] = await Promise.all([loadReference(), listStationForms(STATION_KEY)]);
+  const [reference, rowsOrNull, takeDowns] = await Promise.all([loadReference(), listStationForms(STATION_KEY), loadSubmitted('dry_check')]);
   if (!rowsOrNull) { board.innerHTML = `<div class="empty">${esc(t(L.noData))}</div>`; return; }
   const rows = rowsOrNull;
+  // Each submitted intake's Take Down, if it's had one (matchTakeDowns in
+  // ops_common.js). Until then it's drying — a draft is too (a truck still
+  // being unloaded is already on the racks) — unless it went to a freezer.
+  const takenDown = matchTakeDowns(rows.filter((r) => r.status === 'submitted').map(flattenRecord), takeDowns || []);
+  const isDrying = (r) => !r._deleted && !isFreshFrozen(r.fields || {}) && (r.status === 'draft' || !takenDown.has(r.id));
 
   // Edit history and deleted intakes, for people with See edit history.
   // history: every logged event, grouped by record; deletedRows: each
@@ -317,7 +330,19 @@
   function pills(r) {
     if (r._deleted) return `<span class="pill deleted">${t(L.deletedP)}</span>`;
     const n = editCount(r);
-    return metrcPill(r) + (n ? `<span class="pill edited">${t(L.editedP)}${n > 1 ? ' ×' + n : ''}</span>` : '');
+    return dryPill(r) + metrcPill(r) + (n ? `<span class="pill edited">${t(L.editedP)}${n > 1 ? ' ×' + n : ''}</span>` : '');
+  }
+
+  function dryPill(r) {
+    if (r.status === 'draft') return '';
+    if (isFreshFrozen(r.fields || {})) return `<span class="pill">${t(L.frozenP)}</span>`;
+    const d = takenDown.get(r.id);
+    if (d) {
+      const lb = Number(d.dryWeightLb);
+      return `<span class="pill">${t(L.takenP)} ${esc(fmtDate(d.date))}${lb > 0 ? ' · ' + fmtNum(lb, 1) + ' lb ' + t(L.dryP) : ''}</span>`;
+    }
+    const days = r.work_date ? Math.floor((Date.now() - new Date(`${r.work_date}T12:00:00`).getTime()) / 86400000) : null;
+    return `<span class="pill dry">${t(L.dryingP)}${days >= 0 && days !== null ? ' · ' + days + ' ' + t(L.daysP) : ''}</span>`;
   }
 
   function metrcPill(r) {
@@ -330,8 +355,8 @@
   }
 
   // ── Filters ────────────────────────────────────────────────────────────────
-  let mode = 'all', query = '';
-  const FILTERS = [['all', L.all], ['metrc', L.metrcTodo], ['draft', L.drafts]]
+  let mode = 'drying', query = '';
+  const FILTERS = [['drying', L.drying], ['history', L.histTab], ['all', L.all], ['metrc', L.metrcTodo], ['draft', L.drafts]]
     .concat(canHistory ? [['deleted', L.deletedF]] : []);
   const filtersEl = document.getElementById('filters');
   filtersEl.innerHTML = FILTERS.map(([k, l]) => `<button data-k="${k}" class="${k === mode ? 'on' : ''}">${t(l)}</button>`).join('') +
@@ -344,6 +369,8 @@
   function matches(r) {
     if (mode === 'metrc' && !(r.status === 'submitted' && val(r, 'metrcAdjusted') !== 'yes')) return false;
     if (mode === 'draft' && r.status !== 'draft') return false;
+    if (mode === 'drying' && !isDrying(r)) return false;
+    if (mode === 'history' && (r.status !== 'submitted' || isDrying(r))) return false;
     if ((mode === 'deleted') !== !!r._deleted) return false;
     if (!query) return true;
     const hay = [r.strain, uids(r), val(r, 'pid'), shown(r, 'pid'), val(r, 'cid'), shown(r, 'cid'),

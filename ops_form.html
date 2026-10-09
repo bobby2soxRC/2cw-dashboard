@@ -223,6 +223,14 @@
   }
 
   const PERSON_FIELDS = new Set(['teamLead', 'checkedBy', 'requestedBy', 'completedBy']);
+  // The drying-package picker (Take Down) — see fillPicker.
+  const PK = {
+    loading:   { en: 'Loading what’s drying…', es: 'Cargando lo que está secando…' },
+    roomFirst: { en: 'Pick the drying room first', es: 'Elija primero el cuarto de secado' },
+    choose:    { en: 'Choose the package…', es: 'Elija el paquete…' },
+    none:      { en: 'Nothing drying in this room', es: 'Nada secando en este cuarto' },
+    typed:     { en: 'Not listed — type the UID', es: 'No aparece — escriba el UID' }
+  };
   const reference = await loadReference();
   const form = document.getElementById('form');
   const values = {};          // live form state, keyed by field key
@@ -279,6 +287,12 @@
       control = `<input type="date" id="f_${f.k}">`;
     } else if (f.t === 'time') {
       control = `<input type="time" id="f_${f.k}">`;
+    } else if (f.t === 'uid' && f.picker) {
+      // Picked from a list (fillPicker below); the text box only shows for
+      // "Not listed — type the UID".
+      control = `<select id="pk_${f.k}"><option value="">${escapeHtml(t(PK.loading))}</option></select>` +
+                `<input type="text" id="f_${f.k}" class="uid" inputmode="latin" autocapitalize="characters" placeholder="1A40603…  ${t(UI.other) === 'Otro…' ? 'o' : 'or'} 1008" style="display:none;margin-top:10px">` +
+                `<div class="match" id="m_${f.k}"></div>`;
     } else if (f.t === 'uid') {
       control = `<input type="text" id="f_${f.k}" class="uid" inputmode="latin" autocapitalize="characters" placeholder="1A40603…  ${t(UI.other) === 'Otro…' ? 'o' : 'or'} 1008">` +
                 `<div class="match" id="m_${f.k}"></div>`;
@@ -544,11 +558,17 @@
   // ── Prefill from the upstream stage ───────────────────────────────────────
   // Bucking should not have to re-weigh what the post-dry check already
   // recorded; typing the last 4 of the tag pulls it forward.
-  async function tryPrefill(uid, key) {
+  // `record` is the upstream record itself when it was picked from a list.
+  // A value an earlier prefill put in is replaced (picking another package
+  // swaps its strain, weight, …); anything typed over it is left alone.
+  const lastPrefill = {};
+  const isBlank = (x) => x === undefined || x === null || x === '';
+  const prefilledHere = (here) => !isBlank(values[here]) && here in lastPrefill && String(values[here]) === String(lastPrefill[here]);
+  async function tryPrefill(uid, key, record) {
     const spec = PREFILL_MAP[station.key];
     const note = document.getElementById(`m_${key}`);
     if (!spec || !uid || uid.length < 4) return;
-    const upstream = await findUpstream(spec.from, uid);
+    const upstream = record || await findUpstream(spec.from, uid);
     if (!upstream) {
       if (note) { note.style.display = 'block'; note.style.color = 'var(--muted)'; note.textContent = t(UI.noMatch); }
       return;
@@ -557,9 +577,10 @@
       const val = upstream[there];
       if (val === undefined || val === null || val === '') return;
       const inp = document.getElementById(`f_${here}`);
-      if (!inp || (values[here] !== undefined && values[here] !== null && values[here] !== '')) return;
+      if (!inp || (!isBlank(values[here]) && !prefilledHere(here))) return;
       inp.value = val;
       values[here] = val;
+      lastPrefill[here] = val;
       // A strain that isn't on the reference list still needs to show up.
       if (inp.tagName === 'SELECT' && inp.value !== String(val)) {
         const opt = document.createElement('option');
@@ -574,6 +595,109 @@
     recompute();
     markDirty();
   }
+
+  // Undo a prefill (the picked package was cleared): empty whatever it put
+  // in that nobody has changed since.
+  function clearPrefill(key) {
+    Object.keys(lastPrefill).forEach((here) => {
+      if (prefilledHere(here)) {
+        const inp = document.getElementById(`f_${here}`);
+        if (inp) inp.value = '';
+        values[here] = '';
+      }
+      delete lastPrefill[here];
+    });
+    const note = document.getElementById(`m_${key}`);
+    if (note) note.style.display = 'none';
+    recompute();
+  }
+
+  // ── Pick from what's drying ───────────────────────────────────────────────
+  // A uid field with `picker` (Take Down's farm package) is chosen from the
+  // Wet Intakes still drying (no Take Down submitted yet — currentlyDrying
+  // in ops_common.js) in the room picked above it, listed as "Strain - last
+  // 4". The room dropdown shows how many are drying in each room.
+  const pickerFields = station.fields.filter((f) => f.t === 'uid' && f.picker);
+  const pickLists = {};   // field key -> the records its options point at
+  const typing = {};      // field key -> true while "Not listed" is chosen
+  let drying = [], dryingReady = false;
+  const dryingLoaded = pickerFields.length ? (async () => {
+    const [intakes, downs] = await Promise.all([loadSubmitted(pickerFields[0].picker.from), loadSubmitted(station.key)]);
+    drying = currentlyDrying(intakes || [], downs || []);
+  })().catch((err) => { console.error('drying list', err); }) : null;
+
+  function fillPicker(f) {
+    const sel = document.getElementById(`pk_${f.k}`);
+    const inp = document.getElementById(`f_${f.k}`);
+    if (!sel) return;
+    const room = values[f.picker.room];
+    const list = room ? drying.filter((i) => inDryRoom(i.dryRoom, room))
+      .sort((a, b) => String(a.strain || '').localeCompare(String(b.strain || '')) || String(a.date || '').localeCompare(String(b.date || ''))) : [];
+    pickLists[f.k] = list;
+    const base = (i) => `${i.strain || '—'} - ${normUid(i.sourceUid).slice(-4)}`;
+    const dup = (i) => list.filter((x) => base(x) === base(i)).length > 1;
+    const shortDate = (d) => d ? new Date(`${d}T12:00:00`).toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric' }) : '';
+    const label = (i) => base(i) + (dup(i) ? ` (${[shortDate(i.date), i.totalWetLb ? fmtNum(i.totalWetLb, 0) + ' lb' : ''].filter(Boolean).join(', ')})` : '');
+    const first = !dryingReady ? t(PK.loading) : !room ? t(PK.roomFirst) : list.length ? t(PK.choose) : t(PK.none);
+    sel.innerHTML = `<option value="">${escapeHtml(first)}</option>` +
+      list.map((i, ix) => `<option value="${ix}">${escapeHtml(label(i))}</option>`).join('') +
+      `<option value="__type__">${escapeHtml(t(PK.typed))}</option>`;
+    const cur = values[f.k];
+    const ix = cur ? list.findIndex((i) => normUid(i.sourceUid) === normUid(cur)) : -1;
+    if (ix >= 0 && !typing[f.k]) sel.value = String(ix);
+    else if (cur || typing[f.k]) { typing[f.k] = true; sel.value = '__type__'; }
+    else sel.value = '';
+    inp.style.display = typing[f.k] ? 'block' : 'none';
+  }
+
+  // "Room 1A · 3" — how many packages are drying in each room.
+  function countRooms(f) {
+    const sel = document.getElementById(`f_${f.picker.room}`);
+    if (!sel) return;
+    [...sel.options].forEach((o) => {
+      if (!o.value || o.value === '__other__') return;
+      if (o.dataset.label === undefined) o.dataset.label = o.textContent;
+      const n = drying.filter((i) => inDryRoom(i.dryRoom, o.value)).length;
+      o.textContent = n ? `${o.dataset.label} · ${n}` : o.dataset.label;
+    });
+  }
+
+  pickerFields.forEach((f) => {
+    const sel = document.getElementById(`pk_${f.k}`);
+    const inp = document.getElementById(`f_${f.k}`);
+    const setUid = (uid) => { inp.value = uid; values[f.k] = uid; };
+    sel.addEventListener('change', () => {
+      if (sel.value === '__type__') {
+        typing[f.k] = true;
+        inp.style.display = 'block';
+        inp.focus();
+        return;
+      }
+      typing[f.k] = false;
+      inp.style.display = 'none';
+      const rec = sel.value === '' ? null : pickLists[f.k][Number(sel.value)];
+      if (!rec) { setUid(''); clearPrefill(f.k); }
+      else { setUid(normUid(rec.sourceUid)); tryPrefill(values[f.k], f.k, rec); }
+      recompute();
+      markDirty();
+    });
+    // A new room means a new list — a package picked from the old one goes.
+    const roomEl = document.getElementById(`f_${f.picker.room}`);
+    const onRoom = () => {
+      const picked = values[f.k] && !typing[f.k];
+      fillPicker(f);
+      if (picked && sel.value === '__type__') {
+        typing[f.k] = false;
+        setUid('');
+        clearPrefill(f.k);
+        fillPicker(f);
+        markDirty();
+      }
+    };
+    roomEl.addEventListener('change', onRoom);
+    const other = document.getElementById(`o_${f.picker.room}`);
+    if (other) other.addEventListener('change', onRoom);
+  });
 
   // ── Hydrate from a saved draft (resume, possibly on a different device) ────
   function setFieldValue(f, val) {
@@ -1109,6 +1233,23 @@
     if (station.dailySummary) loadSummary(values.date || todayStr());
   } else {
     applyLinkPrefill();
+  }
+
+  // The drying list loads alongside the draft; once it's in, fill the
+  // pickers — keeping a resumed draft's package, and treating the values
+  // that match it as prefilled, so picking another package replaces them.
+  if (dryingLoaded) {
+    await dryingLoaded;
+    dryingReady = true;
+    const spec = PREFILL_MAP[station.key];
+    pickerFields.forEach((f) => {
+      countRooms(f);
+      fillPicker(f);
+      const rec = (pickLists[f.k] || []).find((i) => values[f.k] && normUid(i.sourceUid) === normUid(values[f.k]));
+      if (rec && spec) Object.entries(spec.map).forEach(([here, there]) => {
+        if (!isBlank(values[here]) && String(values[here]) === String(rec[there])) lastPrefill[here] = values[here];
+      });
+    });
   }
 
   // Starting values carried in the link as ?set_<fieldKey>=value — e.g. the

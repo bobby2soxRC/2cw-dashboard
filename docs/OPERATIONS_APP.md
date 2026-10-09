@@ -47,10 +47,25 @@ the station; `splitRecords` in `ops_form.html`), each holding only its own
 rows and totals, so everything downstream still sees one package per
 record. With more than one UID on the form the Metrc-adjustment fields hide;
 they're filled in per intake afterwards from Harvest Intakes. Take Down (station key `dry_check`)
-boxes the dried material under a new on-stem package UID. Take Down's
-`incomingUid` pulls strain/farm license/CID/wet weight from the intake record, and
+boxes the dried material under a new on-stem package UID. The form starts
+with the drying room, then the package from a dropdown of what's still
+drying in that room ("Strain - last 4 of UID"; "Not listed" falls back to
+typing the UID); the room dropdown shows how many are drying in each. Picking
+it pulls strain/farm license/CID/wet weight from the intake record (picking
+another replaces those), and
 `ops_analytics` aliases the on-stem UID back to the farm UID so it stays one
 lot. Bucking opens a batch for every Take Down released to bucking.
+
+**Currently drying** means a submitted Wet Intake with no submitted Take Down
+for its farm UID (`currentlyDrying` / `matchTakeDowns` in `ops_common.js`;
+UIDs match when one ends with the other, 4+ characters). Fresh-frozen intakes
+never count as drying. Any submitted Take Down counts, whatever its Release
+(hold/rework included). The same rule drives the Take Down picker, Harvest
+Intakes' **Currently drying** / **Historical** filters (Currently drying is
+the default; drafts count as drying; Historical is taken-down and
+fresh-frozen intakes), and Canix Inventory → Processing → Currently Drying,
+which leaves out Canix packages that already have a Take Down until Metrc and
+the next sync catch up.
 
 Harvest (`harvest`) is the step before Wet Intake and is built the same
 way: one form per truck load, a worksheet row per group of bins/bags with

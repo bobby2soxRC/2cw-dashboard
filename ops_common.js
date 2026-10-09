@@ -139,6 +139,50 @@ function uidMatches(candidate, query) {
   return c === q || c.endsWith(q);
 }
 
+// ── Currently drying ────────────────────────────────────────────────────────
+// A Wet Intake is drying until a Take Down (dry_check) is submitted for its
+// farm package (`incomingUid`). Fresh-frozen intakes go to a freezer and
+// never dry. Either side may hold only the tail of the tag, so two UIDs
+// match when one ends with the other (4+ characters).
+const normUid = (u) => String(u || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+function uidTailMatch(a, b) {
+  a = normUid(a); b = normUid(b);
+  if (Math.min(a.length, b.length) < 4) return false;
+  return a.endsWith(b) || b.endsWith(a);
+}
+const isFreshFrozen = (i) => i.freshFrozen === true || i.freshFrozen === 'true';
+
+// Which intake each take down took down, as Map(intake id → take-down
+// record). Both lists are flat records ({id, sourceUid, date, freshFrozen} /
+// {incomingUid, date}). An exact UID wins; otherwise, of the intakes not
+// already taken down, the newest one on or before the take-down date.
+function matchTakeDowns(intakes, downs) {
+  const out = new Map();
+  [...downs].sort((a, b) => String(a.date || '').localeCompare(String(b.date || ''))).forEach((d) => {
+    const pool = intakes.filter((i) => !isFreshFrozen(i) && uidTailMatch(i.sourceUid, d.incomingUid));
+    const exact = pool.find((i) => normUid(i.sourceUid) === normUid(d.incomingUid));
+    const open = pool.filter((i) => !out.has(i.id))
+      .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+    const hit = exact || open.find((i) => !d.date || !i.date || i.date <= d.date) || open[0];
+    if (hit) out.set(hit.id, d);
+  });
+  return out;
+}
+
+// Submitted intakes with no take down yet.
+function currentlyDrying(intakes, downs) {
+  const taken = matchTakeDowns(intakes, downs);
+  return intakes.filter((i) => !isFreshFrozen(i) && !taken.has(i.id));
+}
+
+// Whether an intake's Drying Location ("1A", "Room 2B", "1A, 1B") includes
+// `room` (a dryRooms id, or whatever was typed under Other).
+const dryRoomKey = (s) => String(s || '').toUpperCase().replace(/ROOM|[^A-Z0-9]/g, '');
+function inDryRoom(dryRoom, room) {
+  const k = dryRoomKey(room);
+  return !!k && String(dryRoom || '').split(/[,&/+]|\band\b|\by\b/i).some((p) => dryRoomKey(p) === k);
+}
+
 // Find the most recent record on `stageKey` whose sourceUid / newBuckedUid /
 // newBigLeafUid matches, so downstream stages can prefill their input weight.
 // loadSubmitted (ops_data.js) reads finalized Supabase rows when a project

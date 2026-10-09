@@ -394,10 +394,15 @@ const OPERATIONS_STATIONS = [
     headline: 'dryWeightLb',
     fields: [
       F.date(),
-      { k: 'incomingUid', t: 'uid', req: true, prefill: 'lookup',
-        l: { en: 'Incoming Package UID — Farm', es: 'UID del paquete entrante — rancho' },
-        hint: { en: 'The farm package from Wet Intake. Type the last 4–5 to pull in the intake details.',
-                es: 'El paquete del rancho de la recepción húmeda. Escriba los últimos 4–5 para traer los datos de recepción.' } },
+      // Pick the room first, then the package from what's still drying
+      // there (`picker`: Wet Intakes with no Take Down yet, as "Strain -
+      // last 4"). "Not listed" falls back to typing the UID.
+      { k: 'dryRoom', t: 'select', ref: 'dryRooms', allowOther: true, req: true,
+        l: { en: 'Drying Room', es: 'Cuarto de secado' } },
+      { k: 'incomingUid', t: 'uid', req: true, prefill: 'lookup', picker: { from: 'intake_wet', room: 'dryRoom' },
+        l: { en: 'Package Drying — Farm UID', es: 'Paquete secando — UID del rancho' },
+        hint: { en: 'Strain and last 4 of the farm package UID from Wet Intake. Pick it to pull in the intake details.',
+                es: 'Variedad y últimos 4 del UID del paquete del rancho de la recepción húmeda. Elíjalo para traer los datos de recepción.' } },
       { k: 'sourceUid', t: 'uid', req: true,
         l: { en: 'Package UID — On Stem', es: 'UID del paquete — en tallo' },
         hint: { en: 'The new Metrc tag for the dried, on-stem package. This is the batch Bucking will see.',
@@ -407,8 +412,6 @@ const OPERATIONS_STATIONS = [
       { k: 'pid', t: 'select', ref: 'properties', allowOther: true, prefill: 'lookup',
         l: { en: 'Farm License', es: 'Licencia del rancho' } },
       { k: 'cid', t: 'select', ref: 'customers', allowOther: true, prefill: 'lookup', l: { en: 'Customer ID (CID)', es: 'ID de cliente (CID)' } },
-      { k: 'dryRoom', t: 'select', ref: 'dryRooms', allowOther: true, prefill: 'lookup',
-        l: { en: 'Dried In', es: 'Secado en' } },
       { k: 'completedBy', t: 'text', req: true,
         l: { en: 'Person Completing Form', es: 'Persona que llena el formulario' } },
       { k: 'weighmaster', t: 'text', req: true,
@@ -1001,8 +1004,9 @@ const OPERATIONS_STATIONS = [
 // field on that stage supplies each prefilled key.
 const PREFILL_MAP = {
   // Take Down looks up the farm package by its `incomingUid` (the only uid
-  // field there with prefill: 'lookup' — the on-stem UID is a new tag).
-  dry_check:   { from: 'intake_wet',   map: { strain: 'strain', pid: 'pid', cid: 'cid', dryRoom: 'dryRoom', wetIntakeLb: 'totalWetLb' } },
+  // field there with prefill: 'lookup' — the on-stem UID is a new tag). Its
+  // room isn't mapped: it's picked first, to narrow the package list.
+  dry_check:   { from: 'intake_wet',   map: { strain: 'strain', pid: 'pid', cid: 'cid', wetIntakeLb: 'totalWetLb' } },
   // Bucking has its own custom page (buck_station.html) now, not the generic
   // form, so it does its own upstream lookups directly rather than through
   // this table — no 'buck' entry needed here.
