@@ -109,6 +109,7 @@
     .li-table input[type=date]{min-width:150px}
     .li-table input[type=time]{min-width:120px}
     .li-calc{font-family:'DM Mono',monospace;color:var(--subtext);white-space:nowrap}
+    .li-num{display:inline-block;min-width:3ch;text-align:center;color:var(--text);font-size:1.05rem}
     .li-del{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;width:100%;min-height:48px;font-size:20px;line-height:1;cursor:pointer}
     .li-del:hover{border-color:var(--red);color:var(--red)}
     .li-add{width:100%;margin-top:4px;background:transparent;border:1px dashed var(--border);color:var(--subtext);border-radius:10px;min-height:52px;font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer}
@@ -314,12 +315,24 @@
     wrap.innerHTML = labelHtml(f) +
       (f.hint ? `<div class="hint" style="margin-top:0;margin-bottom:10px">${t(f.hint)}</div>` : '') +
       `<div class="li-scroll"><table class="li-table"><thead><tr>` +
-      f.cols.map((c) => `<th>${t(c.l)}${c.req ? '<span class="req">*</span>' : ''}</th>`).join('') + `<th></th></tr></thead><tbody id="li_${f.k}"></tbody></table></div>` +
+      f.cols.map((c) => `<th${c.t === 'rownum' ? ' style="white-space:nowrap"' : ''}>${t(c.l)}${c.req ? '<span class="req">*</span>' : ''}</th>`).join('') + `<th></th></tr></thead><tbody id="li_${f.k}"></tbody></table></div>` +
       `<button type="button" class="li-add" id="add_${f.k}">${t(UI.addRow)}</button>` +
       `<div class="li-total"><span class="k">${t(UI.subtotal)}</span><span class="v" id="lit_${f.k}">0</span></div>`;
 
     setTimeout(() => {
       const tbody = wrap.querySelector(`#li_${f.k}`);
+      const numCols = f.cols.filter((c) => c.t === 'rownum');
+      const renumber = () => {
+        if (!numCols.length) return;
+        const spans = tbody.querySelectorAll('.li-num');
+        values[f.k].forEach((r, i) => {
+          numCols.forEach((c, j) => {
+            r[c.k] = i + 1;
+            const el = spans[i * numCols.length + j];
+            if (el) el.textContent = String(i + 1);
+          });
+        });
+      };
       const addRow = (prefill) => {
         const row = {};
         const above = values[f.k][values[f.k].length - 1];
@@ -336,6 +349,14 @@
         });
         f.cols.forEach((c) => {
           const td = document.createElement('td');
+          // A row number (Take Down's Box #) is filled in 1, 2, 3… down the
+          // worksheet, never typed — see renumber().
+          if (c.t === 'rownum') {
+            const el = document.createElement('span');
+            el.className = 'li-calc li-num';
+            td.appendChild(el); tr.appendChild(td);
+            return;
+          }
           if (c.t === 'calc') {
             const el = document.createElement('span');
             el.className = 'li-calc';
@@ -414,10 +435,11 @@
         del.onclick = () => {
           const i = values[f.k].indexOf(row);
           if (i > -1) values[f.k].splice(i, 1);
-          tr.remove(); recompute(); updateVisibility(); markDirty();
+          tr.remove(); renumber(); recompute(); updateVisibility(); markDirty();
         };
         tdDel.appendChild(del); tr.appendChild(tdDel);
         tbody.appendChild(tr);
+        renumber();
         recalcRow();
         if (!prefill) { const first = tr.querySelector('input, select'); if (first) first.focus(); }
       };
@@ -434,7 +456,7 @@
   // (UID, strain, tare) or a calc result alone doesn't make it real.
   function rowHasData(f, r) {
     return f.cols.some((c) => {
-      if (c.t === 'calc' || c.carry) return false;
+      if (c.t === 'calc' || c.t === 'rownum' || c.carry) return false;
       const x = r[c.k];
       if (x === '' || x === null || x === undefined) return false;
       return !(c.def !== undefined && String(x) === String(c.def)) && !(c.t === 'date' && c.today);
@@ -1046,8 +1068,11 @@
 
     // Drop empty worksheet rows before sending.
     const payload = { ...values };
+    // Row numbers count only the rows that are kept: 1, 2, 3… with no gaps.
     station.fields.filter((f) => f.t === 'lineitems').forEach((f) => {
-      payload[f.k] = (payload[f.k] || []).filter((r) => rowHasData(f, r));
+      const nums = f.cols.filter((c) => c.t === 'rownum');
+      payload[f.k] = (payload[f.k] || []).filter((r) => rowHasData(f, r))
+        .map((r, i) => nums.length ? { ...r, ...Object.fromEntries(nums.map((c) => [c.k, i + 1])) } : r);
     });
 
     let result;

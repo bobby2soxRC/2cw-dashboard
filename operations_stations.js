@@ -425,7 +425,7 @@ const OPERATIONS_STATIONS = [
         hint: { en: 'One row per box. Weight is the scale reading; the box tare is subtracted for you.',
                 es: 'Una fila por caja. El peso es la lectura de la báscula; la tara de la caja se resta automáticamente.' },
         cols: [
-          { k: 'boxNo', t: 'text', l: { en: 'Box #', es: 'Caja #' }, inputmode: 'numeric' },
+          { k: 'boxNo', t: 'rownum', l: { en: 'Box #', es: 'Caja #' } },
           { k: 'tareLb', t: 'number', l: { en: 'Tare (lbs)', es: 'Tara (lbs)' }, min: 0, step: 0.01 },
           { k: 'weight', t: 'number', l: { en: 'Weight (lbs)', es: 'Peso (lbs)' }, min: 0, step: 0.01 }
         ],

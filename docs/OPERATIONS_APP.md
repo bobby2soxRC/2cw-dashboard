@@ -57,6 +57,9 @@ pulls strain/farm license/CID/wet weight from the intake record; picking
 another package replaces those, and
 `ops_analytics` aliases the on-stem UID back to the farm UID so it stays one
 lot. Bucking opens a batch for every Take Down released to bucking.
+Its Boxes worksheet numbers the boxes itself (Box # is a `rownum` column:
+1, 2, 3… down the rows, renumbered when a row is removed, and on submit
+counted over the filled-in rows only, so there are no gaps).
 
 **Currently drying** means a submitted Wet Intake with no submitted Take Down
 for its farm UID (`currentlyDrying` / `matchTakeDowns` in `ops_common.js`;
