@@ -460,13 +460,16 @@ const OPERATIONS_STATIONS = [
           { v: 'no', l: { en: 'Not yet', es: 'Todavía no' } }
         ] },
       // Bucking only opens a batch for a 'pass' record — a normal take down
-      // goes straight to bucking, so it defaults there.
+      // goes straight to bucking, so it defaults there. 'rework' is the
+      // quality hold (its old value, kept so older records still read);
+      // 'hold' (needs more dry time) is gone — that material just isn't
+      // taken down yet — but stays readable on old records.
       { k: 'result', t: 'select', req: true, def: 'pass',
         l: { en: 'Release', es: 'Liberación' },
         opts: [
           { v: 'pass', l: { en: 'Release to bucking', es: 'Liberar a desvarado' } },
-          { v: 'hold', l: { en: 'Hold — needs more dry time', es: 'En espera — necesita más secado' } },
-          { v: 'rework', l: { en: 'Rework — quality issue', es: 'Reproceso — problema de calidad' } }
+          { v: 'rework', l: { en: 'Hold — quality issue', es: 'En espera — problema de calidad' } },
+          { v: 'hold_order', l: { en: 'Hold — until needed for an order', es: 'En espera — hasta que se necesite para un pedido' } }
         ] },
       F.notes(), F.photo()
     ],

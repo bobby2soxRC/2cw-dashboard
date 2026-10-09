@@ -744,9 +744,12 @@ function exceptions(stages, asOf) {
   });
 
   (stages.dry_check || []).forEach((r) => {
+    // A quality hold ('rework') is flagged; a hold until an order needs it
+    // ('hold_order') is planned, so it isn't. 'hold' is on older records.
     if (r.result === 'hold' || r.result === 'rework') {
+      const why = r.result === 'rework' ? { en: 'quality issue', es: 'problema de calidad' } : { en: 'needs more dry time', es: 'necesita más secado' };
       out.push({ kind: 'dry_hold', stage: 'dry_check', date: dayOf(r), uid: r.sourceUid, strain: r.strain,
-                 detail: { en: `Held at post-dry check (${r.result})`, es: `Retenido en verificación post-secado (${r.result})` } });
+                 detail: { en: `Held at Take Down — ${why.en}`, es: `Retenido en la bajada — ${why.es}` } });
     }
   });
 

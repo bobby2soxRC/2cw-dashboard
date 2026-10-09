@@ -59,8 +59,11 @@ lot. Bucking opens a batch for every Take Down released to bucking.
 **Currently drying** means a submitted Wet Intake with no submitted Take Down
 for its farm UID (`currentlyDrying` / `matchTakeDowns` in `ops_common.js`;
 UIDs match when one ends with the other, 4+ characters). Fresh-frozen intakes
-never count as drying. Any submitted Take Down counts, whatever its Release
-(hold/rework included). The same rule drives the Take Down picker, Harvest
+never count as drying. Any submitted Take Down counts, whatever its Release.
+Release is **Release to bucking** (`pass`, the default — the only one Bucking
+opens a batch for), **Hold — quality issue** (`rework`) or **Hold — until
+needed for an order** (`hold_order`). Material that needs more dry time just
+isn't taken down yet; the old `hold` value only appears on older records. The same rule drives the Take Down picker, Harvest
 Intakes' **Currently drying** / **Historical** filters (Currently drying is
 the default; drafts count as drying; Historical is taken-down and
 fresh-frozen intakes), and Canix Inventory → Processing → Currently Drying,
