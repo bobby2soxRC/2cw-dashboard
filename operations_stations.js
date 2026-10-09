@@ -388,8 +388,8 @@ const OPERATIONS_STATIONS = [
     key: 'dry_check',
     dept: { en: 'Processing', es: 'Procesamiento' },
     title: { en: 'Take Down — Dry', es: 'Bajada — seca' },
-    desc: { en: 'Take dried material down off the stem racks — box it, weigh it, and tag the on-stem package for bucking.',
-            es: 'Baje el material seco de los racks — empáquelo en cajas, péselo y etiquete el paquete en tallo para desvarado.' },
+    desc: { en: 'Take dried material down off the stem racks — box it, weigh it, and tag the new dry package for bucking.',
+            es: 'Baje el material seco de los racks — empáquelo en cajas, péselo y etiquete el paquete seco nuevo para desvarado.' },
     color: 'blue',
     headline: 'dryWeightLb',
     fields: [
@@ -400,13 +400,15 @@ const OPERATIONS_STATIONS = [
       { k: 'dryRoom', t: 'select', ref: 'dryRooms', allowOther: true, req: true,
         l: { en: 'Drying Room', es: 'Cuarto de secado' } },
       { k: 'incomingUid', t: 'uid', req: true, prefill: 'lookup', picker: { from: 'intake_wet', room: 'dryRoom' },
-        l: { en: 'Package Drying — Farm UID', es: 'Paquete secando — UID del rancho' },
-        hint: { en: 'Strain and last 4 of the farm package UID from Wet Intake. Pick it to pull in the intake details.',
-                es: 'Variedad y últimos 4 del UID del paquete del rancho de la recepción húmeda. Elíjalo para traer los datos de recepción.' } },
+        l: { en: 'Package Drying', es: 'Paquete secando' },
+        // Shown under the dropdown once a package is picked (its full UID).
+        pickedLabel: { en: 'Intake UID', es: 'UID de recepción' },
+        hint: { en: 'Strain and last 4 of the intake package UID from Wet Intake. Pick it to pull in the intake details.',
+                es: 'Variedad y últimos 4 del UID del paquete de la recepción húmeda. Elíjalo para traer los datos de recepción.' } },
       { k: 'sourceUid', t: 'uid', req: true,
-        l: { en: 'Package UID — On Stem', es: 'UID del paquete — en tallo' },
-        hint: { en: 'Filled in with the farm UID when you pick the package — change it if the dried package got a new Metrc tag. This is the batch Bucking will see.',
-                es: 'Se llena con el UID del rancho al elegir el paquete — cámbielo si el paquete seco tiene una etiqueta Metrc nueva. Este es el lote que verá Desvarado.' } },
+        l: { en: 'New Dry UID', es: 'UID nuevo — seco' },
+        hint: { en: 'The new Metrc tag for the dried package. This is the batch Bucking will see.',
+                es: 'La nueva etiqueta Metrc del paquete seco. Este es el lote que verá Desvarado.' } },
       { k: 'strain', t: 'select', ref: 'strains', allowOther: true, req: true, prefill: 'lookup',
         l: { en: 'Strain', es: 'Variedad (cepa)' } },
       { k: 'pid', t: 'select', ref: 'properties', allowOther: true, prefill: 'lookup',
@@ -1010,10 +1012,8 @@ const OPERATIONS_STATIONS = [
 const PREFILL_MAP = {
   // Take Down looks up the farm package by its `incomingUid` (the only uid
   // field there with prefill: 'lookup' — the on-stem UID is a new tag). Its
-  // room isn't mapped: it's picked first, to narrow the package list. The
-  // on-stem UID starts as the farm UID — still editable when Metrc gave the
-  // dried package a new tag.
-  dry_check:   { from: 'intake_wet',   map: { sourceUid: 'sourceUid', strain: 'strain', pid: 'pid', cid: 'cid', wetIntakeLb: 'totalWetLb' } },
+  // room isn't mapped: it's picked first, to narrow the package list.
+  dry_check:   { from: 'intake_wet',   map: { strain: 'strain', pid: 'pid', cid: 'cid', wetIntakeLb: 'totalWetLb' } },
   // Bucking has its own custom page (buck_station.html) now, not the generic
   // form, so it does its own upstream lookups directly rather than through
   // this table — no 'buck' entry needed here.

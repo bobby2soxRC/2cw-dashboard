@@ -291,6 +291,8 @@
       // Picked from a list (fillPicker below); the text box only shows for
       // "Not listed — type the UID".
       control = `<select id="pk_${f.k}"><option value="">${escapeHtml(t(PK.loading))}</option></select>` +
+                (f.pickedLabel ? `<div id="pv_${f.k}" style="display:none;margin-top:10px"><label class="lbl">${escapeHtml(t(f.pickedLabel))}</label>` +
+                  `<input type="text" class="uid" readonly tabindex="-1" style="opacity:.85"></div>` : '') +
                 `<input type="text" id="f_${f.k}" class="uid" inputmode="latin" autocapitalize="characters" placeholder="1A40603…  ${t(UI.other) === 'Otro…' ? 'o' : 'or'} 1008" style="display:none;margin-top:10px">` +
                 `<div class="match" id="m_${f.k}"></div>`;
     } else if (f.t === 'uid') {
@@ -648,6 +650,16 @@
     else if (cur || typing[f.k]) { typing[f.k] = true; sel.value = '__type__'; }
     else sel.value = '';
     inp.style.display = typing[f.k] ? 'block' : 'none';
+    showPicked(f);
+  }
+
+  // The picked package's full UID, read-only under the dropdown.
+  function showPicked(f) {
+    const box = document.getElementById(`pv_${f.k}`);
+    if (!box) return;
+    const on = !typing[f.k] && !!values[f.k];
+    box.style.display = on ? 'block' : 'none';
+    box.querySelector('input').value = on ? values[f.k] : '';
   }
 
   // "Room 1A · 3" — how many packages are drying in each room.
@@ -670,6 +682,7 @@
       if (sel.value === '__type__') {
         typing[f.k] = true;
         inp.style.display = 'block';
+        showPicked(f);
         inp.focus();
         return;
       }
@@ -678,6 +691,7 @@
       const rec = sel.value === '' ? null : pickLists[f.k][Number(sel.value)];
       if (!rec) { setUid(''); clearPrefill(f.k); }
       else { setUid(normUid(rec.sourceUid)); tryPrefill(values[f.k], f.k, rec); }
+      showPicked(f);
       recompute();
       markDirty();
     });

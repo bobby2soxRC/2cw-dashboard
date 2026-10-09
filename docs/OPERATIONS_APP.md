@@ -47,13 +47,14 @@ the station; `splitRecords` in `ops_form.html`), each holding only its own
 rows and totals, so everything downstream still sees one package per
 record. With more than one UID on the form the Metrc-adjustment fields hide;
 they're filled in per intake afterwards from Harvest Intakes. Take Down (station key `dry_check`)
-boxes the dried material under a new on-stem package UID. The form starts
+boxes the dried material under a new package UID (**New Dry UID**, field
+`sourceUid`). The form starts
 with the drying room, then the package from a dropdown of what's still
 drying in that room ("Strain - last 4 of UID"; "Not listed" falls back to
 typing the UID); the room dropdown shows how many are drying in each. Picking
-it pulls strain/farm license/CID/wet weight from the intake record and
-starts the on-stem UID as the farm UID (editable, for when Metrc gave the
-dried package a new tag); picking another package replaces those, and
+it shows its full **Intake UID** (`incomingUid`) under the dropdown and
+pulls strain/farm license/CID/wet weight from the intake record; picking
+another package replaces those, and
 `ops_analytics` aliases the on-stem UID back to the farm UID so it stays one
 lot. Bucking opens a batch for every Take Down released to bucking.
 
