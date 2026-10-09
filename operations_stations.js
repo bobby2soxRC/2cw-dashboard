@@ -466,6 +466,8 @@ const OPERATIONS_STATIONS = [
       // taken down yet — but stays readable on old records.
       { k: 'result', t: 'select', req: true, def: 'pass',
         l: { en: 'Release', es: 'Liberación' },
+        hint: { en: 'A held package waits under Bucking → Batches → On hold until someone releases it there.',
+                es: 'Un paquete en espera queda en Desvarado → Lotes → En espera hasta que alguien lo libere ahí.' },
         opts: [
           { v: 'pass', l: { en: 'Release to bucking', es: 'Liberar a desvarado' } },
           { v: 'rework', l: { en: 'Hold — quality issue', es: 'En espera — problema de calidad' } },

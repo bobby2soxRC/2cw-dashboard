@@ -70,6 +70,41 @@ async function listOpenBatches() {
   } catch (e) { console.error('listOpenBatches', e); return []; }
 }
 
+// ── On hold (dry_check records held at Take Down) ──────────────────────────
+// A Take Down can be held for a quality issue ('rework') or until an order
+// needs it ('hold_order'; 'hold' is on older records). It isn't a batch
+// until it's released: releaseHeldBatch flips the record's result to 'pass'
+// (keeping why it was held, and who released it when), and from then on
+// listOpenBatches picks it up like any other. The edit history trigger logs
+// the change. Only the newest Take Down per on-stem UID counts.
+const HELD_RESULTS = ['rework', 'hold_order', 'hold'];
+
+async function listHeldBatches() {
+  const client = buckClient();
+  if (!client) return [];
+  try {
+    const { data, error } = await client.from(BUCK_TABLE).select('*')
+      .eq('station_key', 'dry_check').eq('status', 'submitted')
+      .order('submitted_at', { ascending: false });
+    if (error) { console.error('listHeldBatches', error); return []; }
+    const seen = new Set();
+    return (data || []).filter((r) => {
+      const uid = String((r.fields || {}).sourceUid || '').toUpperCase();
+      if (!uid || seen.has(uid)) return false;
+      seen.add(uid);
+      return HELD_RESULTS.includes(r.fields.result);
+    }).sort((a, b) => String(a.work_date || '').localeCompare(String(b.work_date || '')));
+  } catch (e) { console.error('listHeldBatches', e); return []; }
+}
+
+// Needs a connection — a release isn't queued, so the batch never shows up
+// as open on one tablet while the record still says held.
+async function releaseHeldBatch(rec, owner) {
+  const fields = { ...rec.fields, result: 'pass', heldFor: rec.fields.result,
+    releasedBy: owner || null, releasedAt: new Date().toISOString() };
+  return updateSubmitted(rec.id, { strain: rec.strain || fields.strain, date: rec.work_date, fields, editor: owner || null });
+}
+
 // ── Offline queue ────────────────────────────────────────────────────────────
 // The quick-entry bar is the one write in this station that has to survive a
 // dropped connection at the moment it happens — a team lead standing at the

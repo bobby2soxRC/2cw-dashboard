@@ -77,6 +77,10 @@
   .batch-card.on{border-color:var(--gold);background:var(--surface2)}
   .batch-card .bname{font-weight:600}
   .batch-card .bmeta{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--subtext)}
+  .held-title{font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+  .batch-card.held{cursor:default;border-color:rgba(212,168,67,.4);flex-wrap:wrap}
+  .held-why{display:inline-block;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:99px;border:1px solid var(--gold);color:var(--gold);margin-top:6px}
+  .held-why.quality{border-color:var(--red);color:var(--red)}
   .toggle-closed{background:transparent;border:1px solid var(--border);color:var(--subtext);border-radius:8px;padding:.5rem 1rem;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;margin-bottom:14px}
 
   .detail{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px}
@@ -165,6 +169,7 @@
   <!-- ── BATCHES ───────────────────────────────────────────────────────── -->
   <section class="tab-panel" id="panel-batches">
     <button class="toggle-closed" id="toggle-closed">Show closed batches</button>
+    <div id="held-mount"></div>
     <div class="batch-list" id="batch-list"></div>
     <div class="detail" id="batch-detail" hidden></div>
   </section>
@@ -278,7 +283,15 @@
     uid: { en: 'UID', es: 'UID' },
     box: { en: 'Box', es: 'Caja' },
     time: { en: 'Time', es: 'Hora' },
-    lbs: { en: 'lbs', es: 'lbs' }
+    lbs: { en: 'lbs', es: 'lbs' },
+    onHold: { en: 'On hold — not open for bucking yet', es: 'En espera — aún no abiertos para desvarado' },
+    heldQuality: { en: 'Quality issue', es: 'Problema de calidad' },
+    heldOrder: { en: 'Until needed for an order', es: 'Hasta que se necesite para un pedido' },
+    heldOld: { en: 'On hold', es: 'En espera' },
+    release: { en: 'Release to bucking', es: 'Liberar a desvarado' },
+    releasing: { en: 'Releasing…', es: 'Liberando…' },
+    releaseAsk: { en: 'Release {batch} to bucking? It opens as a batch here.', es: '¿Liberar {batch} a desvarado? Se abrirá como lote aquí.' },
+    releaseFail: { en: 'Could not release — check the connection and try again.', es: 'No se pudo liberar — revise la conexión e intente de nuevo.' }
   };
 
   document.getElementById('back').textContent = t(L.back);
@@ -426,9 +439,47 @@
 
   async function loadBatches() {
     batchesLoaded = true;
-    openBatches = await listOpenBatches();
+    [openBatches, heldBatches] = await Promise.all([listOpenBatches(), listHeldBatches()]);
     renderBatchList();
+    renderHeld();
   }
+
+  // ── On hold ── Take Downs held for quality or for an order. Releasing one
+  // (releaseHeldBatch in buck_data.js) makes it an open batch.
+  let heldBatches = [];
+  function renderHeld() {
+    const mount = document.getElementById('held-mount');
+    if (!heldBatches.length) { mount.innerHTML = ''; return; }
+    const why = (r) => r === 'rework' ? `<span class="held-why quality">${esc(t(L.heldQuality))}</span>`
+      : `<span class="held-why">${esc(t(r === 'hold_order' ? L.heldOrder : L.heldOld))}</span>`;
+    mount.innerHTML = `<div class="held-title">${esc(t(L.onHold))}</div><div class="batch-list">` +
+      heldBatches.map((r) => `
+      <div class="batch-card held" data-id="${esc(r.id)}">
+        <div><div class="bname">${esc(r.fields.strain || r.strain || '')}</div>
+          <div class="bmeta">${esc(shortUid(r.fields.sourceUid))} · ${esc(r.work_date || '')}${r.fields.dryWeightLb != null ? ' · ' + round2(r.fields.dryWeightLb).toFixed(2) + ' lb' : ''}</div>
+          ${why(r.fields.result)}</div>
+        <button type="button" class="btn btn-gold" data-release="${esc(r.id)}">${esc(t(L.release))}</button>
+      </div>`).join('') + `</div>`;
+  }
+  document.getElementById('held-mount').addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-release]');
+    if (!btn) return;
+    const rec = heldBatches.find((r) => r.id === btn.dataset.release);
+    if (!rec) return;
+    const name = `${rec.fields.strain || ''} …${shortUid(rec.fields.sourceUid)}`.trim();
+    if (!confirm(t(L.releaseAsk).replace('{batch}', name))) return;
+    btn.disabled = true;
+    btn.textContent = t(L.releasing);
+    const res = await releaseHeldBatch(rec, sessionStorage.getItem('2cw_user_name'));
+    if (!res.ok) {
+      btn.disabled = false;
+      btn.textContent = t(L.release);
+      alert(t(L.releaseFail));
+      return;
+    }
+    await loadBatches();
+    await loadOpenBatchesIntoPicker();
+  });
 
   function renderBatchList() {
     const mount = document.getElementById('batch-list');

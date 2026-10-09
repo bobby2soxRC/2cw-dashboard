@@ -63,7 +63,13 @@ never count as drying. Any submitted Take Down counts, whatever its Release.
 Release is **Release to bucking** (`pass`, the default — the only one Bucking
 opens a batch for), **Hold — quality issue** (`rework`) or **Hold — until
 needed for an order** (`hold_order`). Material that needs more dry time just
-isn't taken down yet; the old `hold` value only appears on older records. The same rule drives the Take Down picker, Harvest
+isn't taken down yet; the old `hold` value only appears on older records.
+Held Take Downs wait under **Bucking → Batches → On hold** (`listHeldBatches`
+in `buck_data.js`, newest Take Down per on-stem UID) until someone taps
+**Release to bucking**: `releaseHeldBatch` sets the record's `result` to
+`pass` and adds `heldFor` (the old result), `releasedBy` and `releasedAt`, so
+it opens as a batch like any other. Releasing needs a connection (it isn't
+queued), and the edit history trigger logs it. The same rule drives the Take Down picker, Harvest
 Intakes' **Currently drying** / **Historical** filters (Currently drying is
 the default; drafts count as drying; Historical is taken-down and
 fresh-frozen intakes), and Canix Inventory → Processing → Currently Drying,
