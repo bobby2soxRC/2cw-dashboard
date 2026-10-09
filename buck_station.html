@@ -81,6 +81,17 @@
   .batch-card.held{cursor:default;border-color:rgba(212,168,67,.4);flex-wrap:wrap}
   .held-why{display:inline-block;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:99px;border:1px solid var(--gold);color:var(--gold);margin-top:6px}
   .held-why.quality{border-color:var(--red);color:var(--red)}
+  .rel-done{margin-top:4px}
+  .rel-panel{flex:1 0 100%;border-top:1px solid var(--border);padding-top:12px;display:grid;gap:10px}
+  .rel-opt{display:flex;align-items:center;gap:10px;font-size:.95rem;cursor:pointer}
+  .rel-opt input{width:20px;height:20px;min-height:0;accent-color:var(--gold)}
+  .rel-part{display:grid;gap:10px}
+  .rel-part:not([hidden]){display:grid}
+  .rel-part[hidden],.rel-err[hidden]{display:none}
+  .rel-hint{font-size:.78rem;color:var(--subtext)}
+  .rel-uid{text-transform:uppercase;font-family:'DM Mono',monospace}
+  .rel-err{color:var(--red);font-size:.85rem}
+  .rel-btns{display:flex;gap:10px;flex-wrap:wrap}
   .toggle-closed{background:transparent;border:1px solid var(--border);color:var(--subtext);border-radius:8px;padding:.5rem 1rem;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;margin-bottom:14px}
 
   .detail{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px}
@@ -290,7 +301,23 @@
     heldOld: { en: 'On hold', es: 'En espera' },
     release: { en: 'Release to bucking', es: 'Liberar a desvarado' },
     releasing: { en: 'Releasing…', es: 'Liberando…' },
-    releaseAsk: { en: 'Release {batch} to bucking? It opens as a batch here.', es: '¿Liberar {batch} a desvarado? Se abrirá como lote aquí.' },
+    releaseAsk: { en: 'Release all of {batch} to bucking? It opens as a batch here.', es: '¿Liberar todo {batch} a desvarado? Se abrirá como lote aquí.' },
+    releasePartAsk: { en: 'Release {lb} of {batch} to bucking as {uid}? It opens as its own batch; the rest stays on hold.',
+                      es: '¿Liberar {lb} de {batch} a desvarado como {uid}? Se abre como su propio lote; el resto sigue en espera.' },
+    relAll: { en: 'All of it', es: 'Todo' },
+    relPart: { en: 'Part — split to a new tag', es: 'Una parte — dividida a una etiqueta nueva' },
+    relLb: { en: 'Pounds released', es: 'Libras liberadas' },
+    relUid: { en: 'New package UID', es: 'UID del paquete nuevo' },
+    relUidHint: { en: 'The tag you split this part off to in Metrc. It becomes its own batch.', es: 'La etiqueta a la que dividió esta parte en Metrc. Se vuelve su propio lote.' },
+    relNeedLb: { en: 'Enter the pounds being released.', es: 'Ingrese las libras que se liberan.' },
+    relTooMuch: { en: 'Only {left} is left — to release all of it, choose “All of it”.', es: 'Solo quedan {left} — para liberar todo, elija “Todo”.' },
+    relNeedUid: { en: 'Enter the new package UID.', es: 'Ingrese el UID del paquete nuevo.' },
+    relDupUid: { en: 'That UID is already in use — enter the new tag.', es: 'Ese UID ya está en uso — ingrese la etiqueta nueva.' },
+    relDone: { en: 'Released {lb} as …{uid} · {date}', es: 'Liberado {lb} como …{uid} · {date}' },
+    leftOf: { en: '{left} left of {all}', es: 'quedan {left} de {all}' },
+    releaseChanged: { en: 'Someone else just changed this one — the list has been refreshed.', es: 'Alguien más acaba de cambiar este — la lista se actualizó.' },
+    cancel: { en: 'Cancel', es: 'Cancelar' },
+    splitFrom: { en: 'part of …{uid}', es: 'parte de …{uid}' },
     releaseFail: { en: 'Could not release — check the connection and try again.', es: 'No se pudo liberar — revise la conexión e intente de nuevo.' }
   };
 
@@ -444,39 +471,90 @@
     renderHeld();
   }
 
-  // ── On hold ── Take Downs held for quality or for an order. Releasing one
-  // (releaseHeldBatch in buck_data.js) makes it an open batch.
+  // ── On hold ── Take Downs held for quality or for an order. Release all
+  // of it, or part — split off in Metrc under a new tag first — which opens
+  // as its own batch while the rest stays here (buck_data.js).
   let heldBatches = [];
+  let releasingId = null;   // the card whose release panel is open
+  const lbTxt = (x) => round2(x).toFixed(2) + ' lb';
   function renderHeld() {
     const mount = document.getElementById('held-mount');
     if (!heldBatches.length) { mount.innerHTML = ''; return; }
     const why = (r) => r === 'rework' ? `<span class="held-why quality">${esc(t(L.heldQuality))}</span>`
       : `<span class="held-why">${esc(t(r === 'hold_order' ? L.heldOrder : L.heldOld))}</span>`;
     mount.innerHTML = `<div class="held-title">${esc(t(L.onHold))}</div><div class="batch-list">` +
-      heldBatches.map((r) => `
+      heldBatches.map((r) => {
+        const f = r.fields, rels = f.releases || [], left = remainingLb(f);
+        const weight = f.dryWeightLb == null ? '' : rels.length
+          ? ' · ' + t(L.leftOf).replace('{left}', lbTxt(left)).replace('{all}', lbTxt(f.dryWeightLb)) : ' · ' + lbTxt(f.dryWeightLb);
+        const panel = releasingId !== r.id ? '' : `
+          <div class="rel-panel">
+            <label class="rel-opt"><input type="radio" name="rel-${esc(r.id)}" value="all" checked> ${esc(t(L.relAll))}${left != null ? ` (${lbTxt(left)})` : ''}</label>
+            <label class="rel-opt"><input type="radio" name="rel-${esc(r.id)}" value="part"> ${esc(t(L.relPart))}</label>
+            <div class="rel-part" hidden>
+              <div><label class="lbl">${esc(t(L.relLb))}</label><input type="number" inputmode="decimal" step="0.01" min="0" class="rel-lb"></div>
+              <div><label class="lbl">${esc(t(L.relUid))}</label><input type="text" class="rel-uid" autocapitalize="characters" placeholder="1A40603…"></div>
+              <div class="rel-hint">${esc(t(L.relUidHint))}</div>
+            </div>
+            <div class="rel-err" hidden></div>
+            <div class="rel-btns"><button type="button" class="btn btn-gold" data-go="${esc(r.id)}">${esc(t(L.release))}</button>
+              <button type="button" class="btn btn-ghost" data-cancel="1">${esc(t(L.cancel))}</button></div>
+          </div>`;
+        return `
       <div class="batch-card held" data-id="${esc(r.id)}">
-        <div><div class="bname">${esc(r.fields.strain || r.strain || '')}</div>
-          <div class="bmeta">${esc(shortUid(r.fields.sourceUid))} · ${esc(r.work_date || '')}${r.fields.dryWeightLb != null ? ' · ' + round2(r.fields.dryWeightLb).toFixed(2) + ' lb' : ''}</div>
-          ${why(r.fields.result)}</div>
-        <button type="button" class="btn btn-gold" data-release="${esc(r.id)}">${esc(t(L.release))}</button>
-      </div>`).join('') + `</div>`;
+        <div><div class="bname">${esc(f.strain || r.strain || '')}</div>
+          <div class="bmeta">${esc(shortUid(f.sourceUid))} · ${esc(r.work_date || '')}${esc(weight)}</div>
+          ${why(f.result)}
+          ${rels.map((x) => `<div class="bmeta rel-done">${esc(t(L.relDone).replace('{lb}', lbTxt(x.lb)).replace('{uid}', shortUid(x.uid)).replace('{date}', String(x.at || '').slice(0, 10)))}</div>`).join('')}</div>
+        ${releasingId === r.id ? '' : `<button type="button" class="btn btn-gold" data-release="${esc(r.id)}">${esc(t(L.release))}</button>`}
+        ${panel}
+      </div>`;
+      }).join('') + `</div>`;
   }
-  document.getElementById('held-mount').addEventListener('click', async (e) => {
-    const btn = e.target.closest('[data-release]');
-    if (!btn) return;
-    const rec = heldBatches.find((r) => r.id === btn.dataset.release);
+  const heldMount = document.getElementById('held-mount');
+  heldMount.addEventListener('change', (e) => {
+    if (e.target.type !== 'radio') return;
+    const card = e.target.closest('.batch-card');
+    card.querySelector('.rel-part').hidden = e.target.value !== 'part';
+    if (e.target.value === 'part') card.querySelector('.rel-lb').focus();
+  });
+  heldMount.addEventListener('click', async (e) => {
+    if (e.target.closest('[data-release]')) { releasingId = e.target.closest('[data-release]').dataset.release; renderHeld(); return; }
+    if (e.target.closest('[data-cancel]')) { releasingId = null; renderHeld(); return; }
+    const go = e.target.closest('[data-go]');
+    if (!go) return;
+    const rec = heldBatches.find((r) => r.id === go.dataset.go);
     if (!rec) return;
-    const name = `${rec.fields.strain || ''} …${shortUid(rec.fields.sourceUid)}`.trim();
-    if (!confirm(t(L.releaseAsk).replace('{batch}', name))) return;
-    btn.disabled = true;
-    btn.textContent = t(L.releasing);
-    const res = await releaseHeldBatch(rec, sessionStorage.getItem('2cw_user_name'));
-    if (!res.ok) {
-      btn.disabled = false;
-      btn.textContent = t(L.release);
-      alert(t(L.releaseFail));
-      return;
+    const card = go.closest('.batch-card');
+    const err = card.querySelector('.rel-err');
+    const fail = (msg) => { err.textContent = msg; err.hidden = false; };
+    const part = card.querySelector('input[type=radio]:checked').value === 'part';
+    const f = rec.fields, left = remainingLb(f);
+    let lb = null, uid = '';
+    if (part) {
+      lb = Number(card.querySelector('.rel-lb').value);
+      uid = card.querySelector('.rel-uid').value.trim().toUpperCase().replace(/\s/g, '');
+      if (!(lb > 0)) return fail(t(L.relNeedLb));
+      if (left != null && lb >= left) return fail(t(L.relTooMuch).replace('{left}', lbTxt(left)));
+      if (uid.length < 4) return fail(t(L.relNeedUid));
+      const taken = [f.sourceUid, ...(f.releases || []).map((x) => x.uid)].map((u) => String(u || '').toUpperCase());
+      if (taken.includes(uid) || openBatches.some((b) => String(b.uid).toUpperCase() === uid)) return fail(t(L.relDupUid));
     }
+    const name = `${f.strain || ''} …${shortUid(f.sourceUid)}`.trim();
+    const ask = part ? t(L.releasePartAsk).replace('{lb}', lbTxt(lb)).replace('{uid}', uid).replace('{batch}', name)
+      : t(L.releaseAsk).replace('{batch}', name);
+    if (!confirm(ask)) return;
+    go.disabled = true;
+    go.textContent = t(L.releasing);
+    const who = sessionStorage.getItem('2cw_user_name');
+    const res = part ? await releaseHeldPart(rec, { uid, lb }, who) : await releaseHeldBatch(rec, who);
+    if (!res.ok) {
+      go.disabled = false;
+      go.textContent = t(L.release);
+      if (res.reason === 'gone' || res.reason === 'too-much') { alert(t(L.releaseChanged)); releasingId = null; await loadBatches(); return; }
+      return fail(t(L.releaseFail));
+    }
+    releasingId = null;
     await loadBatches();
     await loadOpenBatchesIntoPicker();
   });
@@ -485,7 +563,7 @@
     const mount = document.getElementById('batch-list');
     const openHtml = openBatches.map((b) => `
       <div class="batch-card ${activeBatch && activeBatch.kind === 'open' && activeBatch.uid === b.uid ? 'on' : ''}" data-kind="open" data-uid="${esc(b.uid)}">
-        <div><div class="bname">${esc(b.strain)}</div><div class="bmeta">${esc(shortUid(b.uid))} · ${esc(b.openedDate || '')}</div></div>
+        <div><div class="bname">${esc(b.strain)}</div><div class="bmeta">${esc(shortUid(b.uid))} · ${esc(b.openedDate || '')}${b.splitFrom ? ' · ' + esc(t(L.splitFrom).replace('{uid}', shortUid(b.splitFrom))) : ''}</div></div>
         <div class="bmeta">${b.dryWeightLb != null ? round2(b.dryWeightLb).toFixed(2) + ' lb' : ''}</div>
       </div>`).join('');
     const closedHtml = showClosed ? closedBatches.map((r) => `

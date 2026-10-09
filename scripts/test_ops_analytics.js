@@ -258,5 +258,15 @@ check('a manufacturing run is not an exception', exc.filter((e) => e.stage === '
 check('no intake_variance exceptions exist anymore', exc.filter((e) => e.kind === 'intake_variance').length, 0);
 check('total exceptions', exc.length, 1);
 
+// A part released off a held Take Down under a new tag (Bucking → On hold)
+// chains back through the on-stem tag to the farm package.
+{
+  const st = { dry_check: [{ incomingUid: 'FARM0001', sourceUid: 'STEM0001', dryWeightLb: 100, releases: [{ uid: 'PART0001', lb: 40 }] }],
+               buck: [{ sourceUid: 'PART0001', newBuckedUid: 'BUCK0001' }] };
+  const al = A.buildAliasMap(st);
+  check('released part rolls up to the farm package', A.rootUid(al, 'PART0001') === 'FARM0001', true);
+  check('its bucked output does too', A.rootUid(al, 'BUCK0001') === 'FARM0001', true);
+}
+
 console.log(failures ? `\n${failures} test(s) failed\n` : '\nAll tests passed\n');
 process.exit(failures ? 1 : 0);

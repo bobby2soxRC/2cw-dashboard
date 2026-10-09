@@ -39,14 +39,21 @@ function newId() {
 }
 
 // ── Open batches (dry_check 'pass' records not yet closed) ─────────────────
+// Plus every part released off a held Take Down (its `releases`, below) —
+// each one is a batch of its own under its new tag. A Take Down that had
+// parts released before the rest was opens with only what's left.
+
+const releasedLb = (f) => ((f && f.releases) || []).reduce((a, x) => a + (Number(x.lb) || 0), 0);
+const remainingLb = (f) => (f && f.dryWeightLb != null && f.dryWeightLb !== '')
+  ? Math.max(0, Math.round((Number(f.dryWeightLb) - releasedLb(f)) * 100) / 100) : null;
 
 async function listOpenBatches() {
   const client = buckClient();
   if (!client) return [];
   try {
-    const [{ data: passed, error: e1 }, { data: closed, error: e2 }] = await Promise.all([
+    const [{ data: downs, error: e1 }, { data: closed, error: e2 }] = await Promise.all([
       client.from(BUCK_TABLE).select('*')
-        .eq('station_key', 'dry_check').eq('status', 'submitted').eq('fields->>result', 'pass')
+        .eq('station_key', 'dry_check').eq('status', 'submitted')
         .order('submitted_at', { ascending: false }),
       client.from(BUCK_TABLE).select('fields')
         .eq('station_key', 'buck_batch_close').eq('status', 'submitted')
@@ -55,14 +62,19 @@ async function listOpenBatches() {
 
     const closedUids = new Set((closed || []).map((r) => String(r.fields.batchUid || '').toUpperCase()));
     const byUid = new Map();
-    (passed || []).forEach((r) => {
-      const uid = String(r.fields.sourceUid || '').toUpperCase();
-      if (!uid || closedUids.has(uid)) return;
-      if (byUid.has(uid)) return; // most-recent dry_check record wins (already ordered desc)
-      byUid.set(uid, {
-        uid: r.fields.sourceUid,
-        strain: r.fields.strain || '',
-        dryWeightLb: r.fields.dryWeightLb || null,
+    const add = (uid, batch) => {
+      const key = String(uid || '').toUpperCase();
+      if (!key || closedUids.has(key) || byUid.has(key)) return; // most-recent record wins (ordered desc)
+      byUid.set(key, batch);
+    };
+    (downs || []).forEach((r) => {
+      const f = r.fields || {};
+      (f.releases || []).forEach((x) => add(x.uid, {
+        uid: x.uid, strain: f.strain || '', dryWeightLb: Number(x.lb) || null,
+        openedDate: String(x.at || r.work_date || '').slice(0, 10), splitFrom: f.sourceUid
+      }));
+      if (f.result === 'pass') add(f.sourceUid, {
+        uid: f.sourceUid, strain: f.strain || '', dryWeightLb: (f.releases || []).length ? remainingLb(f) : (f.dryWeightLb || null),
         openedDate: r.work_date
       });
     });
@@ -73,10 +85,20 @@ async function listOpenBatches() {
 // ── On hold (dry_check records held at Take Down) ──────────────────────────
 // A Take Down can be held for a quality issue ('rework') or until an order
 // needs it ('hold_order'; 'hold' is on older records). It isn't a batch
-// until it's released: releaseHeldBatch flips the record's result to 'pass'
-// (keeping why it was held, and who released it when), and from then on
-// listOpenBatches picks it up like any other. The edit history trigger logs
-// the change. Only the newest Take Down per on-stem UID counts.
+// until it's released, all of it or part:
+//   all   releaseHeldBatch flips the record's result to 'pass' (keeping why
+//         it was held, and who released it when); listOpenBatches then
+//         opens it under its own UID, with whatever's left on it.
+//   part  releaseHeldPart adds { uid, lb, by, at } to the record's
+//         `releases` — split off in Metrc under a new tag first — and that
+//         opens as its own batch while the rest stays on hold. The dry
+//         weight stays on the Take Down alone (ops_analytics aliases the new
+//         tag back to it), so nothing is counted twice.
+// Both re-read the record before writing, so two tablets releasing at once
+// don't overwrite each other. Neither is queued offline — a batch never
+// shows up as open on one tablet while the record still says held. The edit
+// history trigger logs every release. Only the newest Take Down per on-stem
+// UID counts.
 const HELD_RESULTS = ['rework', 'hold_order', 'hold'];
 
 async function listHeldBatches() {
@@ -97,12 +119,32 @@ async function listHeldBatches() {
   } catch (e) { console.error('listHeldBatches', e); return []; }
 }
 
-// Needs a connection — a release isn't queued, so the batch never shows up
-// as open on one tablet while the record still says held.
+async function _freshHeld(rec) {
+  const cur = await getDraft(rec.id);
+  if (!cur || cur.status !== 'submitted' || !HELD_RESULTS.includes((cur.fields || {}).result)) {
+    return { ok: false, reason: 'gone' };
+  }
+  return { ok: true, cur };
+}
+
 async function releaseHeldBatch(rec, owner) {
-  const fields = { ...rec.fields, result: 'pass', heldFor: rec.fields.result,
+  const got = await _freshHeld(rec);
+  if (!got.ok) return got;
+  const { cur } = got;
+  const fields = { ...cur.fields, result: 'pass', heldFor: cur.fields.result,
     releasedBy: owner || null, releasedAt: new Date().toISOString() };
-  return updateSubmitted(rec.id, { strain: rec.strain || fields.strain, date: rec.work_date, fields, editor: owner || null });
+  return updateSubmitted(cur.id, { strain: cur.strain || fields.strain, date: cur.work_date, fields, editor: owner || null });
+}
+
+async function releaseHeldPart(rec, { uid, lb }, owner) {
+  const got = await _freshHeld(rec);
+  if (!got.ok) return got;
+  const { cur } = got;
+  const left = remainingLb(cur.fields);
+  if (left != null && Number(lb) >= left) return { ok: false, reason: 'too-much' };
+  const fields = { ...cur.fields, releases: [...(cur.fields.releases || []),
+    { uid: String(uid).trim().toUpperCase(), lb: Math.round(Number(lb) * 100) / 100, by: owner || null, at: new Date().toISOString() }] };
+  return updateSubmitted(cur.id, { strain: cur.strain || fields.strain, date: cur.work_date, fields, editor: owner || null });
 }
 
 // ── Offline queue ────────────────────────────────────────────────────────────

@@ -34,6 +34,11 @@ function buildAliasMap(stages) {
     const src = normUid(r.incomingUid);
     const n = normUid(r.sourceUid);
     if (src && n && n !== src) alias[n] = src;
+    // A part released off a held Take Down under a new tag is still this lot.
+    (r.releases || []).forEach((x) => {
+      const p = normUid(x.uid);
+      if (p && n && p !== n) alias[p] = n;
+    });
   });
   (stages.buck || []).forEach((r) => {
     const src = normUid(r.sourceUid);
