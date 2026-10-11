@@ -146178,8 +146178,8 @@
     "_facility_license_number": "CCL26-0000027"
   },
   {
-    "id": 34639918,
-    "tag": "1A4060300089ABD000000024",
+    "id": 34639914,
+    "tag": "1A4060300089ABD000000022",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
@@ -146228,8 +146228,8 @@
       "updated_at": "2026-10-11T05:01:01.301Z"
     },
     "facility_id": 5095,
-    "weight": 1722.0,
-    "original_weight": 1722.0,
+    "weight": 1895.5,
+    "original_weight": 1895.5,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-10-10T00:00:00.000Z",
@@ -146244,7 +146244,7 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [],
     "destination_packages": [],
-    "source_harvests": "AGP0027-GG-T12-10-10-2026",
+    "source_harvests": "AGP0027-GG-T10-10-10-2026",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -146263,11 +146263,11 @@
     },
     "harvests": [
       {
-        "id": 358659,
-        "name": "AGP0027-GG-T12-10-10-2026"
+        "id": 358657,
+        "name": "AGP0027-GG-T10-10-10-2026"
       }
     ],
-    "updated_at": "2026-10-11T05:01:02.991Z",
+    "updated_at": "2026-10-11T01:54:48.228Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -146382,8 +146382,8 @@
     "_facility_license_number": "CCL26-0000027"
   },
   {
-    "id": 34639914,
-    "tag": "1A4060300089ABD000000022",
+    "id": 34639918,
+    "tag": "1A4060300089ABD000000024",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
@@ -146429,11 +146429,11 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-10-11T05:01:01.301Z"
+      "updated_at": "2026-10-11T06:19:03.643Z"
     },
     "facility_id": 5095,
-    "weight": 1895.5,
-    "original_weight": 1895.5,
+    "weight": 1722.0,
+    "original_weight": 1722.0,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-10-10T00:00:00.000Z",
@@ -146448,7 +146448,7 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [],
     "destination_packages": [],
-    "source_harvests": "AGP0027-GG-T10-10-10-2026",
+    "source_harvests": "AGP0027-GG-T12-10-10-2026",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -146467,11 +146467,113 @@
     },
     "harvests": [
       {
-        "id": 358657,
-        "name": "AGP0027-GG-T10-10-10-2026"
+        "id": 358659,
+        "name": "AGP0027-GG-T12-10-10-2026"
       }
     ],
-    "updated_at": "2026-10-11T01:54:48.228Z",
+    "updated_at": "2026-10-11T05:01:02.991Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
+    "_facility_license_number": "CCL26-0000027"
+  },
+  {
+    "id": 34639920,
+    "tag": "1A4060300089ABD000000025",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Transit",
+    "item": {
+      "id": 3486232,
+      "name": "Wet Flower - Grape Gas",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 5095,
+      "type": {
+        "id": 123268,
+        "name": "Fresh Cannabis Plant",
+        "quantity_type": "WeightBased",
+        "product_category": "Plants"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 735893,
+        "name": "Grape Gas"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-11T06:19:03.643Z"
+    },
+    "facility_id": 5095,
+    "weight": 1758.5,
+    "original_weight": 1758.5,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-10T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [],
+    "destination_packages": [],
+    "source_harvests": "AGP0027-GG-T13-10-10-2026",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [
+      {
+        "id": 358660,
+        "name": "AGP0027-GG-T13-10-10-2026"
+      }
+    ],
+    "updated_at": "2026-10-11T06:22:14.602Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
