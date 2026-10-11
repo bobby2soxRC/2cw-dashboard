@@ -37,3 +37,21 @@ login button in `index.html` (the style already exists) and bump
 Related, also deferred: `app_users` is anon-readable, so PINs, emails and
 phones are visible from the browser. Moving the PIN check server-side would
 fix that.
+
+### Harvest status report for Ned (requested 2026-10-11)
+
+A recurring report to show at a glance that harvest is going well, emailed
+out once a sender exists (see the PIN reset entry — same blocker). Ned
+agreed these are "an amazing start":
+- Pounds harvested each day, last 7 days (`intake_wet` forms, `totalWetLb`
+  by `work_date`; fresh frozen = lines/forms with `freshFrozen` ticked).
+- Labor spent, last 7 days: Connecteam hours (`data/connecteam_shifts.json`)
+  × a blended $/hr (Robert OK'd blended; rate still to be given — the real
+  per-person rates in `labor_rates` are service-role only).
+- That labor as $ per wet lb, and estimated $ per lb of dried flower
+  (needs a wet→dry yield; see "Stage yields" in `ops_analytics.js`).
+- % of each farm left to harvest (expected `drying_intakes.est_wet_lb` /
+  `harvests[].lb` vs wet lb received so far).
+
+Blocked in Claude cloud sessions until the environment's network access
+allows `ugtxmyciyuelxxzqmrdx.supabase.co`.
