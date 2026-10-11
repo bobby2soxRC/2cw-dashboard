@@ -135670,7 +135670,7 @@
       }
     },
     "lab_test_url": null,
-    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/effe2d1a/Package5468_COAfromMetrc_effe2d1a.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261011%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261011T002153Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=665a1b6772d777867d42c3693d09fd8beae2364d74b80906f34cbceca6cbbdf1",
+    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/effe2d1a/Package5468_COAfromMetrc_effe2d1a.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261011%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261011T061338Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=2db04982f6199d64b81f37f0a869fe0873f7dd3cf889d900d7a7c7e36d8bb03d",
     "lab_test_info": {
       "testing_facility_name": "SC LABORATORIES CALIFORNIA, LLC",
       "testing_facility_license": "C8-0000013-LIC"
@@ -145081,20 +145081,20 @@
     "_facility_license_number": "CCL22-0001284"
   },
   {
-    "id": 34639911,
-    "tag": "1A4060300089ABD000000021",
+    "id": 34639563,
+    "tag": "1A4060300089ABD000000012",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
-    "status": "In Transit",
+    "status": "In Progress",
     "item": {
-      "id": 3486230,
-      "name": "Wet Flower - PDST",
+      "id": 3480161,
+      "name": "Wet Flower - Pack Mule",
       "sku": null,
-      "is_active": true,
-      "facility_id": 5095,
+      "is_active": false,
+      "facility_id": 4923,
       "type": {
-        "id": 123268,
+        "id": 119081,
         "name": "Fresh Cannabis Plant",
         "quantity_type": "WeightBased",
         "product_category": "Plants"
@@ -145108,8 +145108,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 713757,
-        "name": "PDST"
+        "id": 649597,
+        "name": "Pack Mule"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -145118,7 +145118,7 @@
       "case_quantity_unit": null,
       "description": "",
       "allergens": "",
-      "transfer_source_license": null,
+      "transfer_source_license": "CCL26-0000027",
       "sage_item": null,
       "leaflink_item": null,
       "dutchie_product": null,
@@ -145128,17 +145128,17 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-10-10T23:48:23.744Z"
+      "updated_at": "2026-10-11T00:01:55.822Z"
     },
-    "facility_id": 5095,
-    "weight": 1379.0,
-    "original_weight": 1379.0,
+    "facility_id": 4923,
+    "weight": 1805.0,
+    "original_weight": 1805.0,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-10-10T00:00:00.000Z",
     "expiration_date": null,
     "location": null,
-    "received_date": null,
+    "received_date": "2026-10-10T23:58:00.000Z",
     "production_batch": null,
     "lot_id": null,
     "cultivation_tax": null,
@@ -145147,9 +145147,9 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [],
     "destination_packages": [],
-    "source_harvests": "AGP0027-PDST-T9-10-10-26",
-    "source_facility": null,
-    "source_facility_name": null,
+    "source_harvests": "AGP0027-PM-T2-10-10-26",
+    "source_facility": "CCL26-0000027",
+    "source_facility_name": "ALL GOOD PROPERTIES, INC.",
     "notes": null,
     "brand": null,
     "cogs": {
@@ -145164,13 +145164,8 @@
       "cannabis": null,
       "total": null
     },
-    "harvests": [
-      {
-        "id": 358656,
-        "name": "AGP0027-PDST-T9-10-10-26"
-      }
-    ],
-    "updated_at": "2026-10-10T23:48:25.072Z",
+    "harvests": [],
+    "updated_at": "2026-10-11T00:01:57.855Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -145179,24 +145174,24 @@
       "testing_facility_license": null
     },
     "_license_key_label": "All Facilities",
-    "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
-    "_facility_license_number": "CCL26-0000027"
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
   },
   {
-    "id": 34639910,
-    "tag": "1A4060300089ABD000000020",
+    "id": 34639597,
+    "tag": "1A4060300089ABD000000013",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
-    "status": "In Transit",
+    "status": "In Progress",
     "item": {
-      "id": 3486228,
-      "name": "Wet Flower - PLM",
+      "id": 3480161,
+      "name": "Wet Flower - Pack Mule",
       "sku": null,
-      "is_active": true,
-      "facility_id": 5095,
+      "is_active": false,
+      "facility_id": 4923,
       "type": {
-        "id": 123268,
+        "id": 119081,
         "name": "Fresh Cannabis Plant",
         "quantity_type": "WeightBased",
         "product_category": "Plants"
@@ -145210,8 +145205,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 713780,
-        "name": "PLM"
+        "id": 649597,
+        "name": "Pack Mule"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -145220,7 +145215,7 @@
       "case_quantity_unit": null,
       "description": "",
       "allergens": "",
-      "transfer_source_license": null,
+      "transfer_source_license": "CCL26-0000027",
       "sage_item": null,
       "leaflink_item": null,
       "dutchie_product": null,
@@ -145230,17 +145225,17 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-10-10T23:48:23.632Z"
+      "updated_at": "2026-10-11T00:01:55.822Z"
     },
-    "facility_id": 5095,
-    "weight": 655.0,
-    "original_weight": 655.0,
+    "facility_id": 4923,
+    "weight": 2129.0,
+    "original_weight": 2129.0,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-10-10T00:00:00.000Z",
     "expiration_date": null,
     "location": null,
-    "received_date": null,
+    "received_date": "2026-10-10T23:58:05.000Z",
     "production_batch": null,
     "lot_id": null,
     "cultivation_tax": null,
@@ -145249,9 +145244,9 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [],
     "destination_packages": [],
-    "source_harvests": "AGP0027-PLM-T9-10-10-26",
-    "source_facility": null,
-    "source_facility_name": null,
+    "source_harvests": "AGP0027-PM-T3-10-10-26",
+    "source_facility": "CCL26-0000027",
+    "source_facility_name": "ALL GOOD PROPERTIES, INC.",
     "notes": null,
     "brand": null,
     "cogs": {
@@ -145266,13 +145261,8 @@
       "cannabis": null,
       "total": null
     },
-    "harvests": [
-      {
-        "id": 358655,
-        "name": "AGP0027-PLM-T9-10-10-26"
-      }
-    ],
-    "updated_at": "2026-10-10T23:48:24.765Z",
+    "harvests": [],
+    "updated_at": "2026-10-11T00:01:57.224Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -145281,24 +145271,24 @@
       "testing_facility_license": null
     },
     "_license_key_label": "All Facilities",
-    "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
-    "_facility_license_number": "CCL26-0000027"
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
   },
   {
-    "id": 34639906,
-    "tag": "1A4060300089ABD000000019",
+    "id": 34639739,
+    "tag": "1A4060300089ABD000000014",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
-    "status": "In Transit",
+    "status": "In Progress",
     "item": {
-      "id": 3486228,
-      "name": "Wet Flower - PLM",
+      "id": 3480161,
+      "name": "Wet Flower - Pack Mule",
       "sku": null,
-      "is_active": true,
-      "facility_id": 5095,
+      "is_active": false,
+      "facility_id": 4923,
       "type": {
-        "id": 123268,
+        "id": 119081,
         "name": "Fresh Cannabis Plant",
         "quantity_type": "WeightBased",
         "product_category": "Plants"
@@ -145312,8 +145302,299 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 713780,
-        "name": "PLM"
+        "id": 649597,
+        "name": "Pack Mule"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": "CCL26-0000027",
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-11T00:01:55.822Z"
+    },
+    "facility_id": 4923,
+    "weight": 2016.5,
+    "original_weight": 2016.5,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-10T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": "2026-10-10T23:58:49.000Z",
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [],
+    "destination_packages": [],
+    "source_harvests": "AGP0027-PM-T4-10-10-26",
+    "source_facility": "CCL26-0000027",
+    "source_facility_name": "ALL GOOD PROPERTIES, INC.",
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-10-11T00:01:55.936Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 34639740,
+    "tag": "1A4060300089ABD000000015",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3486219,
+      "name": "Wet Flower - Lavender Jack",
+      "sku": null,
+      "is_active": false,
+      "facility_id": 4923,
+      "type": {
+        "id": 119081,
+        "name": "Fresh Cannabis Plant",
+        "quantity_type": "WeightBased",
+        "product_category": "Plants"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 735892,
+        "name": "Lavender Jack (HVN)"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": "CCL26-0000027",
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-11T00:01:54.079Z"
+    },
+    "facility_id": 4923,
+    "weight": 371.0,
+    "original_weight": 371.0,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-10T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": "2026-10-10T23:58:49.000Z",
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [],
+    "destination_packages": [],
+    "source_harvests": "AGP0027-LJ-T4-10-10-16",
+    "source_facility": "CCL26-0000027",
+    "source_facility_name": "ALL GOOD PROPERTIES, INC.",
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-10-11T00:01:56.275Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 34639827,
+    "tag": "1A4060300089ABD000000016",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3486219,
+      "name": "Wet Flower - Lavender Jack",
+      "sku": null,
+      "is_active": false,
+      "facility_id": 4923,
+      "type": {
+        "id": 119081,
+        "name": "Fresh Cannabis Plant",
+        "quantity_type": "WeightBased",
+        "product_category": "Plants"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 735892,
+        "name": "Lavender Jack (HVN)"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": "CCL26-0000027",
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-11T00:01:54.079Z"
+    },
+    "facility_id": 4923,
+    "weight": 1794.0,
+    "original_weight": 1794.0,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-10T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": "2026-10-10T23:59:06.000Z",
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [],
+    "destination_packages": [],
+    "source_harvests": "AGP0027-LJ-T5-10-10-26",
+    "source_facility": "CCL26-0000027",
+    "source_facility_name": "ALL GOOD PROPERTIES, INC.",
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-10-11T00:01:54.257Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 34639838,
+    "tag": "1A4060300049C18000000035",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Transit",
+    "item": {
+      "id": 3486221,
+      "name": "Fresh Frozen - BBJ",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 5011,
+      "type": {
+        "id": 121141,
+        "name": "Fresh Cannabis Plant",
+        "quantity_type": "WeightBased",
+        "product_category": "Plants"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 663048,
+        "name": "Garlic & Bananas"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -145332,11 +145613,11 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-10-10T23:48:23.632Z"
+      "updated_at": "2026-10-10T20:42:40.000Z"
     },
-    "facility_id": 5095,
-    "weight": 1819.0,
-    "original_weight": 1819.0,
+    "facility_id": 5011,
+    "weight": 849.8,
+    "original_weight": 849.8,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-10-10T00:00:00.000Z",
@@ -145351,7 +145632,7 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [],
     "destination_packages": [],
-    "source_harvests": "AGP0027-PLM-T8-10-10-26",
+    "source_harvests": "WLD2182-BBJ-T1-10-10-26",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -145370,11 +145651,113 @@
     },
     "harvests": [
       {
-        "id": 358651,
-        "name": "AGP0027-PLM-T8-10-10-26"
+        "id": 358639,
+        "name": "WLD2182-BBJ-T1-10-10-26"
       }
     ],
-    "updated_at": "2026-10-10T23:18:51.469Z",
+    "updated_at": "2026-10-10T20:42:42.168Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Wildcat: CCL21-0002182",
+    "_facility_license_number": "CCL21-0002182"
+  },
+  {
+    "id": 34639851,
+    "tag": "1A4060300089ABD000000017",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Transit",
+    "item": {
+      "id": 3486218,
+      "name": "Wet Flower - Lavender Jack",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 5095,
+      "type": {
+        "id": 123268,
+        "name": "Fresh Cannabis Plant",
+        "quantity_type": "WeightBased",
+        "product_category": "Plants"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 708525,
+        "name": "Lavender Jack (HVN)"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-10T20:51:57.251Z"
+    },
+    "facility_id": 5095,
+    "weight": 1664.0,
+    "original_weight": 1664.0,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-10T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [],
+    "destination_packages": [],
+    "source_harvests": "AGP0027-LJ-T6-10-10-26",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [
+      {
+        "id": 358644,
+        "name": "AGP0027-LJ-T6-10-10-26"
+      }
+    ],
+    "updated_at": "2026-10-10T20:51:58.528Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -145489,15 +145872,15 @@
     "_facility_license_number": "CCL26-0000027"
   },
   {
-    "id": 34639851,
-    "tag": "1A4060300089ABD000000017",
+    "id": 34639906,
+    "tag": "1A4060300089ABD000000019",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "In Transit",
     "item": {
-      "id": 3486218,
-      "name": "Wet Flower - Lavender Jack",
+      "id": 3486228,
+      "name": "Wet Flower - PLM",
       "sku": null,
       "is_active": true,
       "facility_id": 5095,
@@ -145516,8 +145899,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 708525,
-        "name": "Lavender Jack (HVN)"
+        "id": 713780,
+        "name": "PLM"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -145536,11 +145919,11 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-10-10T20:51:57.251Z"
+      "updated_at": "2026-10-10T23:48:23.632Z"
     },
     "facility_id": 5095,
-    "weight": 1664.0,
-    "original_weight": 1664.0,
+    "weight": 1819.0,
+    "original_weight": 1819.0,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-10-10T00:00:00.000Z",
@@ -145555,7 +145938,7 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [],
     "destination_packages": [],
-    "source_harvests": "AGP0027-LJ-T6-10-10-26",
+    "source_harvests": "AGP0027-PLM-T8-10-10-26",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -145574,11 +145957,11 @@
     },
     "harvests": [
       {
-        "id": 358644,
-        "name": "AGP0027-LJ-T6-10-10-26"
+        "id": 358651,
+        "name": "AGP0027-PLM-T8-10-10-26"
       }
     ],
-    "updated_at": "2026-10-10T20:51:58.528Z",
+    "updated_at": "2026-10-10T23:18:51.469Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -145591,20 +145974,20 @@
     "_facility_license_number": "CCL26-0000027"
   },
   {
-    "id": 34639838,
-    "tag": "1A4060300049C18000000035",
+    "id": 34639910,
+    "tag": "1A4060300089ABD000000020",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "In Transit",
     "item": {
-      "id": 3486221,
-      "name": "Fresh Frozen - BBJ",
+      "id": 3486228,
+      "name": "Wet Flower - PLM",
       "sku": null,
       "is_active": true,
-      "facility_id": 5011,
+      "facility_id": 5095,
       "type": {
-        "id": 121141,
+        "id": 123268,
         "name": "Fresh Cannabis Plant",
         "quantity_type": "WeightBased",
         "product_category": "Plants"
@@ -145618,8 +146001,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 663048,
-        "name": "Garlic & Bananas"
+        "id": 713780,
+        "name": "PLM"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -145638,11 +146021,11 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-10-10T20:42:40.000Z"
+      "updated_at": "2026-10-10T23:48:23.632Z"
     },
-    "facility_id": 5011,
-    "weight": 849.8,
-    "original_weight": 849.8,
+    "facility_id": 5095,
+    "weight": 655.0,
+    "original_weight": 655.0,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-10-10T00:00:00.000Z",
@@ -145657,7 +146040,7 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [],
     "destination_packages": [],
-    "source_harvests": "WLD2182-BBJ-T1-10-10-26",
+    "source_harvests": "AGP0027-PLM-T9-10-10-26",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -145676,11 +146059,11 @@
     },
     "harvests": [
       {
-        "id": 358639,
-        "name": "WLD2182-BBJ-T1-10-10-26"
+        "id": 358655,
+        "name": "AGP0027-PLM-T9-10-10-26"
       }
     ],
-    "updated_at": "2026-10-10T20:42:42.168Z",
+    "updated_at": "2026-10-10T23:48:24.765Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -145689,24 +146072,24 @@
       "testing_facility_license": null
     },
     "_license_key_label": "All Facilities",
-    "_facility_name": "Wildcat: CCL21-0002182",
-    "_facility_license_number": "CCL21-0002182"
+    "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
+    "_facility_license_number": "CCL26-0000027"
   },
   {
-    "id": 34639827,
-    "tag": "1A4060300089ABD000000016",
+    "id": 34639911,
+    "tag": "1A4060300089ABD000000021",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
-    "status": "In Progress",
+    "status": "In Transit",
     "item": {
-      "id": 3486219,
-      "name": "Wet Flower - Lavender Jack",
+      "id": 3486230,
+      "name": "Wet Flower - PDST",
       "sku": null,
-      "is_active": false,
-      "facility_id": 4923,
+      "is_active": true,
+      "facility_id": 5095,
       "type": {
-        "id": 119081,
+        "id": 123268,
         "name": "Fresh Cannabis Plant",
         "quantity_type": "WeightBased",
         "product_category": "Plants"
@@ -145720,8 +146103,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 735892,
-        "name": "Lavender Jack (HVN)"
+        "id": 713757,
+        "name": "PDST"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -145730,7 +146113,7 @@
       "case_quantity_unit": null,
       "description": "",
       "allergens": "",
-      "transfer_source_license": "CCL26-0000027",
+      "transfer_source_license": null,
       "sage_item": null,
       "leaflink_item": null,
       "dutchie_product": null,
@@ -145740,17 +146123,17 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-10-11T00:01:54.079Z"
+      "updated_at": "2026-10-10T23:48:23.744Z"
     },
-    "facility_id": 4923,
-    "weight": 1794.0,
-    "original_weight": 1794.0,
+    "facility_id": 5095,
+    "weight": 1379.0,
+    "original_weight": 1379.0,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-10-10T00:00:00.000Z",
     "expiration_date": null,
     "location": null,
-    "received_date": "2026-10-10T23:59:06.000Z",
+    "received_date": null,
     "production_batch": null,
     "lot_id": null,
     "cultivation_tax": null,
@@ -145759,9 +146142,9 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [],
     "destination_packages": [],
-    "source_harvests": "AGP0027-LJ-T5-10-10-26",
-    "source_facility": "CCL26-0000027",
-    "source_facility_name": "ALL GOOD PROPERTIES, INC.",
+    "source_harvests": "AGP0027-PDST-T9-10-10-26",
+    "source_facility": null,
+    "source_facility_name": null,
     "notes": null,
     "brand": null,
     "cogs": {
@@ -145776,8 +146159,13 @@
       "cannabis": null,
       "total": null
     },
-    "harvests": [],
-    "updated_at": "2026-10-11T00:01:54.257Z",
+    "harvests": [
+      {
+        "id": 358656,
+        "name": "AGP0027-PDST-T9-10-10-26"
+      }
+    ],
+    "updated_at": "2026-10-10T23:48:25.072Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -145786,24 +146174,24 @@
       "testing_facility_license": null
     },
     "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
+    "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
+    "_facility_license_number": "CCL26-0000027"
   },
   {
-    "id": 34639740,
-    "tag": "1A4060300089ABD000000015",
+    "id": 34639918,
+    "tag": "1A4060300089ABD000000024",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
-    "status": "In Progress",
+    "status": "In Transit",
     "item": {
-      "id": 3486219,
-      "name": "Wet Flower - Lavender Jack",
+      "id": 3486232,
+      "name": "Wet Flower - Grape Gas",
       "sku": null,
-      "is_active": false,
-      "facility_id": 4923,
+      "is_active": true,
+      "facility_id": 5095,
       "type": {
-        "id": 119081,
+        "id": 123268,
         "name": "Fresh Cannabis Plant",
         "quantity_type": "WeightBased",
         "product_category": "Plants"
@@ -145817,8 +146205,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 735892,
-        "name": "Lavender Jack (HVN)"
+        "id": 735893,
+        "name": "Grape Gas"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -145827,7 +146215,7 @@
       "case_quantity_unit": null,
       "description": "",
       "allergens": "",
-      "transfer_source_license": "CCL26-0000027",
+      "transfer_source_license": null,
       "sage_item": null,
       "leaflink_item": null,
       "dutchie_product": null,
@@ -145837,17 +146225,17 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-10-11T00:01:54.079Z"
+      "updated_at": "2026-10-11T05:01:01.301Z"
     },
-    "facility_id": 4923,
-    "weight": 371.0,
-    "original_weight": 371.0,
+    "facility_id": 5095,
+    "weight": 1722.0,
+    "original_weight": 1722.0,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-10-10T00:00:00.000Z",
     "expiration_date": null,
     "location": null,
-    "received_date": "2026-10-10T23:58:49.000Z",
+    "received_date": null,
     "production_batch": null,
     "lot_id": null,
     "cultivation_tax": null,
@@ -145856,9 +146244,9 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [],
     "destination_packages": [],
-    "source_harvests": "AGP0027-LJ-T4-10-10-16",
-    "source_facility": "CCL26-0000027",
-    "source_facility_name": "ALL GOOD PROPERTIES, INC.",
+    "source_harvests": "AGP0027-GG-T12-10-10-2026",
+    "source_facility": null,
+    "source_facility_name": null,
     "notes": null,
     "brand": null,
     "cogs": {
@@ -145873,8 +146261,13 @@
       "cannabis": null,
       "total": null
     },
-    "harvests": [],
-    "updated_at": "2026-10-11T00:01:56.275Z",
+    "harvests": [
+      {
+        "id": 358659,
+        "name": "AGP0027-GG-T12-10-10-2026"
+      }
+    ],
+    "updated_at": "2026-10-11T05:01:02.991Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -145883,24 +146276,24 @@
       "testing_facility_license": null
     },
     "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
+    "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
+    "_facility_license_number": "CCL26-0000027"
   },
   {
-    "id": 34639739,
-    "tag": "1A4060300089ABD000000014",
+    "id": 34639917,
+    "tag": "1A4060300089ABD000000023",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
-    "status": "In Progress",
+    "status": "In Transit",
     "item": {
-      "id": 3480161,
-      "name": "Wet Flower - Pack Mule",
+      "id": 3486232,
+      "name": "Wet Flower - Grape Gas",
       "sku": null,
-      "is_active": false,
-      "facility_id": 4923,
+      "is_active": true,
+      "facility_id": 5095,
       "type": {
-        "id": 119081,
+        "id": 123268,
         "name": "Fresh Cannabis Plant",
         "quantity_type": "WeightBased",
         "product_category": "Plants"
@@ -145914,8 +146307,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 649597,
-        "name": "Pack Mule"
+        "id": 735893,
+        "name": "Grape Gas"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -145924,7 +146317,7 @@
       "case_quantity_unit": null,
       "description": "",
       "allergens": "",
-      "transfer_source_license": "CCL26-0000027",
+      "transfer_source_license": null,
       "sage_item": null,
       "leaflink_item": null,
       "dutchie_product": null,
@@ -145934,17 +146327,17 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-10-11T00:01:55.822Z"
+      "updated_at": "2026-10-11T05:01:01.301Z"
     },
-    "facility_id": 4923,
-    "weight": 2016.5,
-    "original_weight": 2016.5,
+    "facility_id": 5095,
+    "weight": 2141.0,
+    "original_weight": 2141.0,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-10-10T00:00:00.000Z",
     "expiration_date": null,
     "location": null,
-    "received_date": "2026-10-10T23:58:49.000Z",
+    "received_date": null,
     "production_batch": null,
     "lot_id": null,
     "cultivation_tax": null,
@@ -145953,9 +146346,9 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [],
     "destination_packages": [],
-    "source_harvests": "AGP0027-PM-T4-10-10-26",
-    "source_facility": "CCL26-0000027",
-    "source_facility_name": "ALL GOOD PROPERTIES, INC.",
+    "source_harvests": "AGP0027-GG-T11-10-10-2026",
+    "source_facility": null,
+    "source_facility_name": null,
     "notes": null,
     "brand": null,
     "cogs": {
@@ -145970,8 +146363,13 @@
       "cannabis": null,
       "total": null
     },
-    "harvests": [],
-    "updated_at": "2026-10-11T00:01:55.936Z",
+    "harvests": [
+      {
+        "id": 358658,
+        "name": "AGP0027-GG-T11-10-10-2026"
+      }
+    ],
+    "updated_at": "2026-10-11T03:09:52.917Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -145980,24 +146378,24 @@
       "testing_facility_license": null
     },
     "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
+    "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
+    "_facility_license_number": "CCL26-0000027"
   },
   {
-    "id": 34639597,
-    "tag": "1A4060300089ABD000000013",
+    "id": 34639914,
+    "tag": "1A4060300089ABD000000022",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
-    "status": "In Progress",
+    "status": "In Transit",
     "item": {
-      "id": 3480161,
-      "name": "Wet Flower - Pack Mule",
+      "id": 3486232,
+      "name": "Wet Flower - Grape Gas",
       "sku": null,
-      "is_active": false,
-      "facility_id": 4923,
+      "is_active": true,
+      "facility_id": 5095,
       "type": {
-        "id": 119081,
+        "id": 123268,
         "name": "Fresh Cannabis Plant",
         "quantity_type": "WeightBased",
         "product_category": "Plants"
@@ -146011,8 +146409,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 649597,
-        "name": "Pack Mule"
+        "id": 735893,
+        "name": "Grape Gas"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -146021,7 +146419,7 @@
       "case_quantity_unit": null,
       "description": "",
       "allergens": "",
-      "transfer_source_license": "CCL26-0000027",
+      "transfer_source_license": null,
       "sage_item": null,
       "leaflink_item": null,
       "dutchie_product": null,
@@ -146031,17 +146429,17 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-10-11T00:01:55.822Z"
+      "updated_at": "2026-10-11T05:01:01.301Z"
     },
-    "facility_id": 4923,
-    "weight": 2129.0,
-    "original_weight": 2129.0,
+    "facility_id": 5095,
+    "weight": 1895.5,
+    "original_weight": 1895.5,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-10-10T00:00:00.000Z",
     "expiration_date": null,
     "location": null,
-    "received_date": "2026-10-10T23:58:05.000Z",
+    "received_date": null,
     "production_batch": null,
     "lot_id": null,
     "cultivation_tax": null,
@@ -146050,9 +146448,9 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [],
     "destination_packages": [],
-    "source_harvests": "AGP0027-PM-T3-10-10-26",
-    "source_facility": "CCL26-0000027",
-    "source_facility_name": "ALL GOOD PROPERTIES, INC.",
+    "source_harvests": "AGP0027-GG-T10-10-10-2026",
+    "source_facility": null,
+    "source_facility_name": null,
     "notes": null,
     "brand": null,
     "cogs": {
@@ -146067,8 +146465,13 @@
       "cannabis": null,
       "total": null
     },
-    "harvests": [],
-    "updated_at": "2026-10-11T00:01:57.224Z",
+    "harvests": [
+      {
+        "id": 358657,
+        "name": "AGP0027-GG-T10-10-10-2026"
+      }
+    ],
+    "updated_at": "2026-10-11T01:54:48.228Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -146077,104 +146480,7 @@
       "testing_facility_license": null
     },
     "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 34639563,
-    "tag": "1A4060300089ABD000000012",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Progress",
-    "item": {
-      "id": 3480161,
-      "name": "Wet Flower - Pack Mule",
-      "sku": null,
-      "is_active": false,
-      "facility_id": 4923,
-      "type": {
-        "id": 119081,
-        "name": "Fresh Cannabis Plant",
-        "quantity_type": "WeightBased",
-        "product_category": "Plants"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 649597,
-        "name": "Pack Mule"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": "CCL26-0000027",
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-10-11T00:01:55.822Z"
-    },
-    "facility_id": 4923,
-    "weight": 1805.0,
-    "original_weight": 1805.0,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-10-10T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": "2026-10-10T23:58:00.000Z",
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [],
-    "destination_packages": [],
-    "source_harvests": "AGP0027-PM-T2-10-10-26",
-    "source_facility": "CCL26-0000027",
-    "source_facility_name": "ALL GOOD PROPERTIES, INC.",
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-10-11T00:01:57.855Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
+    "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
+    "_facility_license_number": "CCL26-0000027"
   }
 ]
