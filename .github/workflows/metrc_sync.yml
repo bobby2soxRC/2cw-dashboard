@@ -1,0 +1,43 @@
+name: Metrc Sync
+
+on:
+  schedule:
+    - cron: '45 * * * *'  # Hourly at :45 (the other syncs run at :00, :15 and :30)
+  workflow_dispatch:       # Allows manual trigger from the Actions tab
+
+concurrency:
+  group: metrc-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      # Writes to Supabase only (metrc_packages / metrc_sync_runs) — nothing
+      # is committed. Without METRC_VENDOR_KEY + METRC_USER_KEY it falls back
+      # to Canix's copy of Metrc (data/canix_inventory.json in this checkout).
+      - name: Run Metrc sync
+        env:
+          METRC_VENDOR_KEY: ${{ secrets.METRC_VENDOR_KEY }}
+          METRC_USER_KEY: ${{ secrets.METRC_USER_KEY }}
+          METRC_LICENSES: ${{ secrets.METRC_LICENSES }}
+          METRC_BASE_URL: ${{ secrets.METRC_BASE_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python scripts/metrc_sync.py

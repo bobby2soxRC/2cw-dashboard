@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Metrc Actions — 2CW</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<meta name="theme-color" content="#0c0d0f">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0c0d0f;--surface:#13151a;--surface2:#181b21;--border:#1e2129;--border2:rgba(255,255,255,.11);
+    --green:#3db87a;--gold:#d4a843;--blue:#5a9fd4;--purple:#9b7fd4;--red:#ef5350;--slate:#7d8899;
+    --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;
+  }
+  html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:48px 48px;opacity:.3;pointer-events:none;z-index:0}
+  a{color:inherit}
+  .hdr{min-height:calc(54px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:12px;position:sticky;top:0;z-index:20}
+  .hdr-back{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
+  .hdr-div{width:1px;height:18px;background:var(--border)}
+  .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hdr-link{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
+  .lang{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .lang button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:12px;font-weight:600;padding:7px 11px;cursor:pointer}
+  .lang button.on{background:var(--blue);color:#000}
+  @media (max-width:560px){ .hdr-link{display:none} }
+
+  main{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:24px 16px 80px}
+  h1{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:.03em}
+  h2.sec{font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--subtext);margin:26px 0 10px;font-weight:500}
+  .sub{color:var(--subtext);font-size:.88rem;margin:2px 0 10px;max-width:760px}
+  .syncline{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);margin-bottom:8px}
+  .syncline.warn{color:var(--gold)} .syncline.bad{color:var(--red)}
+
+  .actions-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+  .act{background:var(--surface);border:1px dashed var(--border);border-radius:12px;padding:14px;opacity:.7}
+  .act .t{font-weight:600;margin-bottom:4px}
+  .act .d{font-size:.8rem;color:var(--subtext)}
+  .act .soon{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:8px}
+
+  .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+  .chip{background:transparent;border:1px solid var(--border);color:var(--subtext);border-radius:999px;padding:.4rem .8rem;font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+  .chip.on{border-color:var(--blue);color:var(--blue);background:rgba(90,159,212,.1)}
+  .chip .n{color:var(--muted);margin-left:4px}
+  .sel,.search{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:.5rem .75rem;font-family:inherit;font-size:.88rem;outline:none}
+  .search{flex:1;min-width:180px}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:grid;grid-template-columns:1fr auto;gap:6px 14px}
+  .c-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+  .tag{font-family:'DM Mono',monospace;font-size:.8rem;word-break:break-all}
+  .tag b{color:var(--blue);font-weight:500}
+  .pill{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;border:1px solid var(--border);color:var(--subtext);white-space:nowrap}
+  .pill.metrc_only{color:var(--purple);border-color:rgba(155,127,212,.45)}
+  .pill.app_only{color:var(--blue);border-color:rgba(90,159,212,.45)}
+  .pill.weight{color:var(--gold);border-color:rgba(212,168,67,.45)}
+  .c-meta{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 18px;font-size:.82rem;color:var(--subtext)}
+  .c-meta b{color:var(--text);font-weight:500}
+  .c-todo{grid-column:1/-1;font-size:.82rem;color:var(--text);background:var(--surface2);border-radius:8px;padding:8px 10px}
+  .c-todo .k{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-right:6px}
+  .changed{grid-column:1/-1;font-size:.74rem;color:var(--gold)}
+  .c-actions{display:flex;gap:6px;align-items:flex-start}
+  .neg{color:var(--red)} .pos{color:var(--gold)}
+
+  .btn{padding:.45rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer;background:transparent;color:var(--text);text-decoration:none;white-space:nowrap;display:inline-block}
+  .btn:hover{border-color:var(--muted)}
+  .btn-blue{background:var(--blue);color:#0c0d0f;border-color:var(--blue)}
+  .btn:disabled{opacity:.5;cursor:default}
+
+  .empty,.err{color:var(--subtext);font-size:.9rem;padding:24px;text-align:center;background:var(--surface);border:1px dashed var(--border);border-radius:12px}
+  .err{color:var(--red)}
+
+  .backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;overflow-y:auto;padding:24px 16px}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;max-width:480px;margin:8vh auto;padding:20px}
+  .modal h2{font-size:1.05rem;margin-bottom:2px}
+  .modal .m-sub{color:var(--subtext);font-size:.82rem;margin-bottom:14px;font-family:'DM Mono',monospace;word-break:break-all}
+  .modal label{display:block;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+  .modal textarea{width:100%;min-height:80px;background:#0c0d0f;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:.6rem .7rem;font-family:inherit;font-size:.9rem;outline:none}
+  .m-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+  @media (max-width:560px){ .card{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="hdr">
+  <a class="hdr-back" href="/index.html" id="back">← Hub</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand" id="brand">Metrc Actions</div>
+  <a class="hdr-link" href="/metrc_recon.html" id="toRecon">App vs Metrc →</a>
+  <div class="lang" id="lang"></div>
+</div>
+
+<main>
+  <h1 id="h1"></h1>
+  <div class="sub" id="intro"></div>
+  <div class="syncline" id="syncline"></div>
+
+  <h2 class="sec" id="secAttn"></h2>
+  <div class="bar" id="bar">
+    <button class="chip on" data-k=""></button>
+    <button class="chip" data-k="metrc_only"></button>
+    <button class="chip" data-k="app_only"></button>
+    <button class="chip" data-k="weight"></button>
+    <select class="sel" id="license"></select>
+    <input class="search" id="search" type="search"/>
+  </div>
+  <div id="list"></div>
+
+  <h2 class="sec" id="secSoon"></h2>
+  <div class="actions-grid" id="soon"></div>
+</main>
+
+<div class="backdrop" id="backdrop"><div class="modal" id="modal"></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/config/supabase_config.js"></script>
+<script src="/operations_stations.js"></script>
+<script src="/ops_common.js"></script>
+<script src="/ops_data.js"></script>
+<script src="/metrc_recon.js"></script>
+<script src="/metrc_data.js"></script>
+<script>
+const L = {
+  title: { en: 'Metrc Actions', es: 'Acciones Metrc' },
+  hub: { en: '← Hub', es: '← Inicio' },
+  toRecon: { en: 'App vs Metrc →', es: 'App vs Metrc →' },
+  h1: { en: 'Metrc Actions', es: 'Acciones Metrc' },
+  intro: { en: 'What needs doing in Metrc. For now: every App vs Metrc difference still marked Needs Attention. Fix it in Metrc or the App, or mark it Known.',
+           es: 'Lo que hay que hacer en Metrc. Por ahora: cada diferencia App vs Metrc aún marcada Requiere atención. Corríjala en Metrc o en la App, o márquela Conocida.' },
+  sec_attn: { en: 'Needs attention', es: 'Requiere atención' },
+  sec_soon: { en: 'Coming next — actions from the forms', es: 'Próximamente — acciones desde los formularios' },
+  all: { en: 'All', es: 'Todos' },
+  all_lic: { en: 'All licenses', es: 'Todas las licencias' },
+  search: { en: 'Search tag, strain, item…', es: 'Buscar etiqueta, variedad, artículo…' },
+  loading: { en: 'Loading…', es: 'Cargando…' },
+  metrc: { en: 'Metrc', es: 'Metrc' },
+  app: { en: 'App', es: 'App' },
+  diff: { en: 'Diff', es: 'Dif.' },
+  last: { en: 'Last App form', es: 'Último formulario' },
+  todo: { en: 'To do', es: 'Por hacer' },
+  todo_metrc_only: { en: 'Find the App form this package belongs to and fix its UID, or log the missing form. If the App doesn’t track this package, mark it Known.',
+                     es: 'Busque el formulario de la App de este paquete y corrija su UID, o registre el formulario que falta. Si la App no rastrea este paquete, márquelo Conocido.' },
+  todo_app_only: { en: 'Check the package in Metrc. If it was finished or retagged, log that in the App; if the App’s UID is a typo, fix the form.',
+                   es: 'Revise el paquete en Metrc. Si se terminó o se reetiquetó, regístrelo en la App; si el UID en la App tiene un error, corrija el formulario.' },
+  todo_weight: { en: 'Adjust the package weight in Metrc to match the App, or correct the App form if the App is wrong.',
+                 es: 'Ajuste el peso del paquete en Metrc para que coincida con la App, o corrija el formulario si la App está mal.' },
+  todo_used_up: { en: 'The App’s forms used this package up — finish it in Metrc (or adjust it to zero) if that’s right.',
+                  es: 'Los formularios de la App agotaron este paquete — termínelo en Metrc (o ajústelo a cero) si es correcto.' },
+  changed: { en: 'Was marked Known, but its weights have changed since.', es: 'Estaba marcado Conocido, pero sus pesos cambiaron desde entonces.' },
+  mark_known: { en: 'Mark known', es: 'Marcar conocido' },
+  m_known: { en: 'Mark as Known', es: 'Marcar como conocido' },
+  m_note: { en: 'Why is this OK / what’s going on? (optional)', es: '¿Por qué está bien / qué pasa? (opcional)' },
+  cancel: { en: 'Cancel', es: 'Cancelar' },
+  save: { en: 'Save', es: 'Guardar' },
+  saving: { en: 'Saving…', es: 'Guardando…' },
+  none: { en: 'Nothing needs attention — App and Metrc agree, or every difference is marked Known.', es: 'Nada requiere atención — la App y Metrc coinciden, o cada diferencia está marcada Conocida.' },
+  none_match: { en: 'Nothing matches this filter.', es: 'Nada coincide con este filtro.' },
+  synced: { en: 'Metrc packages synced', es: 'Paquetes de Metrc sincronizados' },
+  via_canix: { en: 'via Canix', es: 'vía Canix' },
+  never: { en: 'Metrc packages have never been synced.', es: 'Los paquetes de Metrc nunca se han sincronizado.' },
+  last_failed: { en: 'The last sync failed:', es: 'La última sincronización falló:' },
+  soon: { en: 'Coming soon', es: 'Próximamente' },
+  err_load: { en: 'Could not load — has supabase/schema.sql been re-run?', es: 'No se pudo cargar — ¿se volvió a ejecutar supabase/schema.sql?' }
+};
+// Actions planned for this page: each will take a submitted form and set up
+// the matching Metrc change (new packages / UIDs, adjustments).
+const UPCOMING = [
+  { t: { en: 'Intakes', es: 'Recepciones' }, d: { en: 'Receive the farm packages from a Wet Intake form.', es: 'Recibir los paquetes del rancho desde una recepción húmeda.' } },
+  { t: { en: 'Dry Take Downs', es: 'Bajadas secas' }, d: { en: 'Create the new dry package (UID) and record moisture loss from a Take Down.', es: 'Crear el paquete seco nuevo (UID) y registrar la pérdida de humedad desde una bajada.' } },
+  { t: { en: 'Processing', es: 'Procesamiento' }, d: { en: 'Packages and adjustments from Bucking and Trim runs.', es: 'Paquetes y ajustes desde desvarado y recorte.' } },
+  { t: { en: 'Pre-Rolls', es: 'Prerolls' }, d: { en: 'Pre-roll and waste packages from a finished Pre-Roll Production batch.', es: 'Paquetes de prerolls y desecho desde un lote de producción terminado.' } }
+];
+const locale = () => (getLang() === 'es' ? 'es-US' : 'en-US');
+const currentUser = (sessionStorage.getItem('2cw_user_name') || '').trim();
+if (!sessionStorage.getItem('2cw_pin')) location.replace('/index.html');
+
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let data = null;
+let kindFilter = '';
+let editing = null;
+
+const attention = () => (data ? data.issues.filter((i) => i.status === 'needs_attention') : []);
+
+function paintSync() {
+  const el = document.getElementById('syncline');
+  const run = data.lastRun;
+  el.className = 'syncline';
+  if (!run) { el.textContent = t(L.never); el.classList.add('warn'); return; }
+  let txt = `${t(L.synced)} ${new Date(run.finished_at).toLocaleString(locale(), { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`;
+  if (run.source === 'canix') { txt += ` ${t(L.via_canix)}`; el.classList.add('warn'); }
+  if (data.latestRun && data.latestRun.error) { txt += ` · ${t(L.last_failed)} ${data.latestRun.error}`; el.classList.add('bad'); }
+  el.textContent = txt;
+}
+
+function cardHtml(i) {
+  const tag = esc(i.tag);
+  const tagHtml = tag.length > 6 ? `${tag.slice(0, -6)}<b>${tag.slice(-6)}</b>` : `<b>${tag}</b>`;
+  const diffCls = i.diff == null ? '' : i.diff < 0 ? 'neg' : 'pos';
+  const meta = [
+    i.strain || i.item ? `<span>${[i.strain, i.item].filter(Boolean).map(esc).join(' · ')}</span>` : '',
+    i.license ? `<span>${esc(i.license)}</span>` : '',
+    i.metrcValue != null ? `<span>${t(L.metrc)} <b>${metrcFmtAmount(i.metrcValue, i.unit)}</b></span>` : '',
+    i.appValue != null ? `<span>${t(L.app)} <b>${metrcFmtAmount(i.appValue, i.unit)}</b></span>` : '',
+    i.diff != null ? `<span>${t(L.diff)} <b class="${diffCls}">${i.diff > 0 ? '+' : ''}${metrcFmtAmount(i.diff, i.unit)}</b></span>` : '',
+    i.lastStation ? `<span>${t(L.last)} <b>${esc(metrcStationTitle(i.lastStation))}</b> ${esc(i.lastDate)}</span>` : ''
+  ].filter(Boolean).join('');
+  const todo = i.usedUpInApp ? L.todo_used_up : L['todo_' + i.kind];
+  return `<div class="card">
+    <div class="c-top"><span class="tag">${tagHtml}</span><span class="pill ${i.kind}">${t(METRC_KIND[i.kind])}</span></div>
+    <div class="c-actions"><button class="btn btn-blue" data-key="${esc(i.key)}">${t(L.mark_known)}</button></div>
+    <div class="c-meta">${meta}</div>
+    ${i.changed ? `<div class="changed">${t(L.changed)}</div>` : ''}
+    <div class="c-todo"><span class="k">${t(L.todo)}</span>${t(todo)}</div>
+  </div>`;
+}
+
+function render() {
+  const all = attention();
+  document.querySelectorAll('#bar .chip').forEach((c) => {
+    const k = c.dataset.k;
+    const n = k ? all.filter((i) => i.kind === k).length : all.length;
+    c.innerHTML = `${esc(k ? t(METRC_KIND[k]) : t(L.all))}<span class="n">${n}</span>`;
+    c.classList.toggle('on', k === kindFilter);
+  });
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  const list = all.filter((i) => (!kindFilter || i.kind === kindFilter) &&
+    (!q || [i.tag, i.appUid, i.strain, i.item, i.license].some((v) => String(v || '').toLowerCase().includes(q))));
+  const el = document.getElementById('list');
+  if (!all.length) { el.innerHTML = `<div class="empty">${t(L.none)}</div>`; return; }
+  if (!list.length) { el.innerHTML = `<div class="empty">${t(L.none_match)}</div>`; return; }
+  el.innerHTML = list.map(cardHtml).join('');
+  el.querySelectorAll('button[data-key]').forEach((b) => {
+    b.onclick = () => openModal(data.issues.find((i) => i.key === b.dataset.key));
+  });
+}
+
+function openModal(iss) {
+  editing = iss;
+  document.getElementById('modal').innerHTML = `
+    <h2>${t(L.m_known)}</h2>
+    <div class="m-sub">${esc(iss.tag)} · ${t(METRC_KIND[iss.kind])}</div>
+    <label for="m-note">${t(L.m_note)}</label>
+    <textarea id="m-note">${esc(iss.note || '')}</textarea>
+    <div class="m-actions"><button class="btn" id="m-cancel">${t(L.cancel)}</button>
+      <button class="btn btn-blue" id="m-save">${t(L.save)}</button></div>`;
+  document.getElementById('backdrop').style.display = 'block';
+  document.getElementById('m-note').focus();
+  document.getElementById('m-cancel').onclick = closeModal;
+  document.getElementById('m-save').onclick = async (ev) => {
+    const btn = ev.target;
+    btn.disabled = true; btn.textContent = t(L.saving);
+    try {
+      const row = await saveMetrcStatus(editing, 'known', document.getElementById('m-note').value.trim(), currentUser);
+      Object.assign(editing, { status: 'known', changed: false, note: row.note || '' });
+      closeModal();
+      render();
+    } catch (e) {
+      btn.disabled = false; btn.textContent = t(L.save);
+      alert(e.message);
+    }
+  };
+}
+function closeModal() { editing = null; document.getElementById('backdrop').style.display = 'none'; }
+document.getElementById('backdrop').onclick = (e) => { if (e.target.id === 'backdrop') closeModal(); };
+
+async function refresh() {
+  try {
+    data = await loadMetrcRecon({ license: metrcLicense(), toleranceLb: metrcTolerance() });
+  } catch (e) {
+    document.getElementById('list').innerHTML = `<div class="err">${t(L.err_load)}<br>${esc(e.message)}</div>`;
+    return;
+  }
+  const lic = metrcLicense();
+  document.getElementById('license').innerHTML = `<option value="">${t(L.all_lic)}</option>` +
+    data.licenses.map((l) => `<option value="${esc(l)}" ${l === lic ? 'selected' : ''}>${esc(l)}</option>`).join('');
+  paintSync();
+  render();
+}
+
+function paintStatic() {
+  mountLangToggle('lang');
+  document.title = `${t(L.title)} — 2CW`;
+  document.getElementById('back').textContent = t(L.hub);
+  document.getElementById('brand').textContent = t(L.title);
+  document.getElementById('toRecon').textContent = t(L.toRecon);
+  document.getElementById('h1').textContent = t(L.h1);
+  document.getElementById('intro').textContent = t(L.intro);
+  document.getElementById('secAttn').textContent = t(L.sec_attn);
+  document.getElementById('secSoon').textContent = t(L.sec_soon);
+  document.getElementById('search').placeholder = t(L.search);
+  document.getElementById('soon').innerHTML = UPCOMING.map((a) =>
+    `<div class="act"><div class="t">${esc(t(a.t))}</div><div class="d">${esc(t(a.d))}</div><div class="soon">${t(L.soon)}</div></div>`).join('');
+  document.getElementById('list').innerHTML = `<div class="empty">${t(L.loading)}</div>`;
+}
+paintStatic();
+
+document.querySelectorAll('#bar .chip').forEach((c) => { c.onclick = () => { kindFilter = c.dataset.k; render(); }; });
+document.getElementById('search').oninput = () => data && render();
+document.getElementById('license').onchange = (e) => { setMetrcLicense(e.target.value); refresh(); };
+refresh();
+</script>
+<script src="/sw_register.js"></script>
+</body>
+</html>

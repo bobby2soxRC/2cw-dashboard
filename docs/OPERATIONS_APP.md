@@ -29,6 +29,10 @@ the existing Operations Hub — same login, same Netlify deploy.
 | `data/operations/reference.json` | Farms, dry rooms, machines, brands; fallback strain list (the live one is the Strain Library) |
 | `data/operations/<station>.json` | Fallback data source when Supabase isn't configured; otherwise unused |
 | `scripts/test_ops_analytics.js` | `node scripts/test_ops_analytics.js` |
+| `metrc_recon.html` / `metrc_actions.html` | Operations → Metrc: App vs Metrc, and Metrc Actions — see "Metrc" below |
+| `metrc_recon.js` / `metrc_data.js` | App package ledger + reconciliation (pure, tested) / browser loading and status saves |
+| `scripts/metrc_sync.py` | Copies active Metrc packages into `metrc_packages` (GitHub Action `metrc_sync.yml`, hourly) |
+| `scripts/test_metrc_recon.js` | `node scripts/test_metrc_recon.js` |
 | `scripts/seed_demo_operations.js` | Demo data for the static-fallback dashboard; `--clear` to empty |
 
 ## Stations
@@ -784,6 +788,65 @@ The dashboard's Labor tab loads `labor_entry` alongside the stations, and
 name, keyed on the Connecteam user id. The Today board ignores them because
 it only shows station keys.
 
+## Metrc — App vs Metrc and Metrc Actions
+
+Operations → **Metrc** has two pages (hub cards `metrc_recon` and
+`metrc_actions`, granted per person in the admin panel like any other card).
+
+**Where the Metrc side comes from.** `scripts/metrc_sync.py` runs hourly
+(`.github/workflows/metrc_sync.yml`, :45) and upserts every active package for
+the licenses in `METRC_LICENSES` into Supabase `metrc_packages`; packages it
+doesn't see any more are set `is_active = false`. Each run is logged in
+`metrc_sync_runs`, and the pages show when the last one finished, from which
+source, and the error if it failed. Two sources:
+- **Metrc API** (`/packages/v2/active`, paged) when the GitHub secrets
+  `METRC_VENDOR_KEY` and `METRC_USER_KEY` are set. The vendor key is the
+  integrator key (Metrc issues it to registered software integrators); the
+  user key comes from a Metrc user's profile, and only sees licenses that user
+  has package permissions on. `METRC_BASE_URL` defaults to
+  `https://api-ca.metrc.com`.
+- **Canix** otherwise: `data/canix_inventory.json`, which is Canix's copy of
+  Metrc (same tags and weights, up to ~3 hours behind). The pages say "via
+  Canix" in amber while this is the source.
+
+Secrets needed: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (already there for
+the Canix sync), `METRC_LICENSES` (comma-separated; optional for Canix, where
+it narrows the licenses), and the two Metrc keys when you have them.
+
+**Where the App side comes from.** `buildAppPackages` in `metrc_recon.js`
+replays every submitted station form oldest first and keeps a running weight
+per UID (`STATION_EFFECTS`):
+- *sets the weight*: Harvest (`wetWeightLb`), Wet Intake (`totalWetLb`), Fresh
+  Frozen (`totalLb`), Take Down (`dryWeightLb` minus parts released under new
+  tags, and each released part as its own package), Bucking close-out
+  (`buckedFlowerLb` — bucking keeps the tag), Pre-Roll Production's new
+  pre-roll UID (a count, `totalPrerolls`) and waste UID (`totalWasteG`).
+- *takes weight out*: Machine Trim, Hand Trim, Smalls Trim, Manufacturing Run
+  and Pre-Roll Production, by their starting/input weight.
+- *closes*: Take Down closes the farm package it retagged (`incomingUid`).
+Short UIDs (last 4–5) resolve to the one Metrc tag ending in them.
+
+**Differences.** Reconciled against every license, then narrowed to the one
+picked on the page:
+- *In Metrc, not in App* — active in Metrc, no App form ever named it.
+- *In App, not in Metrc* — the App still has weight on it, but it isn't active
+  in Metrc. Shown under every license filter (the App doesn't know licenses).
+- *Weight mismatch* — both have it and Metrc − App is over the tolerance (lbs,
+  default 0.01, set on the page and remembered per device; unit packages
+  compare counts exactly). "Used up in App" means the App's forms consumed it
+  all but Metrc still has it open.
+
+**Status.** Every difference starts as **Needs Attention**. Marking one
+**Known** (with an optional note) writes `metrc_recon_status` keyed
+`<kind>:<tag>`, along with the weights it had then; if those weights change, it
+shows as Needs Attention again ("weights changed since it was marked Known").
+
+**Metrc Actions** lists the Needs Attention differences with what to do about
+each. It's where actions that turn a submitted form into Metrc changes (new
+packages/UIDs from Intakes, Dry Take Downs, Processing, Pre-Rolls) will go —
+shown as "coming soon" for now. Creating packages through the API needs the
+Metrc API keys (Canix's copy is read-only).
+
 ## Setting up Supabase (do this before going live)
 
 Drafts, autosave, cross-device resume, and the live Today board all need a
@@ -920,6 +983,7 @@ to `KNOWN_STATIONS` in both `netlify/functions/submit-operations.js` and
 `netlify/functions/upload-operations-photo.js`. Create an empty
 `data/operations/<key>.json` containing `[]` for the static fallback.
 
+Run `node scripts/test_metrc_recon.js` after touching `metrc_recon.js`.
 Run `node scripts/test_ops_analytics.js` after touching `ops_analytics.js` or
 any station's `flow` block.
 

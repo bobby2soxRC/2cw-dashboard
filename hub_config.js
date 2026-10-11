@@ -19,7 +19,7 @@ const DIRECTORY_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTvUb2y2U
 // cards can be pinned, they all show up together; everything else lives
 // under its dept, optionally one level deeper
 // under `subdept` (Operations is the only department with subdepts today —
-// Cultivation/Processing/Manufacturing, plus Workforce (Labor Log, Master Schedule), matching operations_stations.js's
+// Cultivation/Processing/Manufacturing, plus Workforce (Labor Log, Master Schedule) and Metrc (App vs Metrc, Metrc Actions), matching operations_stations.js's
 // own `dept` field on each station, which buildTree() merges in alongside
 // these cards). A department with zero visible cards for a user simply
 // doesn't appear — Marketing and Finance aren't referenced anywhere yet
@@ -237,6 +237,26 @@ const CARD_DEFS = [
     href: '/master_schedule.html'
   },
   {
+    key: 'metrc_recon',
+    color: 'blue',
+    label: 'Metrc',
+    dept: 'operations',
+    subdept: 'metrc',
+    title: 'App vs Metrc',
+    desc: 'Packages in Metrc but not the App, in the App but not Metrc, and weights that don’t match — each marked Needs Attention or Known.',
+    href: '/metrc_recon.html'
+  },
+  {
+    key: 'metrc_actions',
+    color: 'blue',
+    label: 'Metrc',
+    dept: 'operations',
+    subdept: 'metrc',
+    title: 'Metrc Actions',
+    desc: 'What needs doing in Metrc — every App vs Metrc difference still marked Needs Attention, with what to do about it.',
+    href: '/metrc_actions.html'
+  },
+  {
     key: 'staff_hours',
     color: 'blue',
     label: 'Operations',
@@ -322,6 +342,8 @@ const CARD_ES = {
   brand_assets:        { title: 'Recursos de Marca', desc: 'Logotipos, fotografía y guías de marca de 2CW y marcas socias — carpeta compartida de Drive.' },
   scheduling:          { title: 'Plan Maestro', desc: 'Proyectos como Recorte de Pequeñas o Cosecha Fresca Congelada — dónde, cuándo, las responsabilidades y quién está en ellas — y de ahí el horario diario y semanal.' },
   labor_log:           { title: 'Registro de Mano de Obra', desc: 'Asigna las horas de cada persona a los UIDs que trabajó — elige el proceso, el equipo de Connecteam, y uno o varios UIDs para dividir el tiempo.' },
+  metrc_recon:         { title: 'App vs Metrc', desc: 'Paquetes en Metrc que no están en la App, en la App que no están en Metrc, y pesos que no coinciden — cada uno marcado Requiere atención o Conocido.' },
+  metrc_actions:       { title: 'Acciones Metrc', desc: 'Lo que hay que hacer en Metrc — cada diferencia App vs Metrc aún marcada Requiere atención, con qué hacer.' },
   staff_hours:         { title: 'Horas del Personal', desc: 'Quién está marcado en este momento, horas diarias/semanales y cumplimiento del horario — sincronizado cada hora desde Connecteam.' },
   tasks_dashboard:     { title: 'Plan de Operaciones', desc: 'El plan 30/60/90 del VP de Operaciones como tareas y subtareas editables — estado, responsables, fechas y carga de CSV.' },
   task_oversight:      { title: 'Actividad de Tareas (Todo el Personal)', desc: 'Todas las tareas asignadas en el equipo — quién tiene qué, estado, vencidas y cuánto tardan en cerrarse.' },
@@ -341,6 +363,7 @@ const HUB_WORDS_ES = {
   'Processing': 'Procesamiento',
   'Manufacturing': 'Manufactura',
   'Workforce': 'Personal',
+  'Metrc': 'Metrc',
   'Folder': 'Carpeta'
 };
 

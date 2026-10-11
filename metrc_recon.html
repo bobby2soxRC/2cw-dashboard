@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>App vs Metrc — 2CW</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<meta name="theme-color" content="#0c0d0f">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0c0d0f;--surface:#13151a;--surface2:#181b21;--border:#1e2129;--border2:rgba(255,255,255,.11);
+    --green:#3db87a;--gold:#d4a843;--blue:#5a9fd4;--purple:#9b7fd4;--red:#ef5350;--slate:#7d8899;
+    --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;
+  }
+  html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:48px 48px;opacity:.3;pointer-events:none;z-index:0}
+  a{color:inherit}
+  .hdr{min-height:calc(54px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:12px;position:sticky;top:0;z-index:20}
+  .hdr-back{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
+  .hdr-div{width:1px;height:18px;background:var(--border)}
+  .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hdr-link{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
+  .lang{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .lang button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:12px;font-weight:600;padding:7px 11px;cursor:pointer}
+  .lang button.on{background:var(--blue);color:#000}
+
+  main{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:24px 16px 80px}
+  h1{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:.03em}
+  .sub{color:var(--subtext);font-size:.88rem;margin:2px 0 10px;max-width:760px}
+  .syncline{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);margin-bottom:18px}
+  .syncline.warn{color:var(--gold)} .syncline.bad{color:var(--red)}
+
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:18px}
+  .tile{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;cursor:pointer;text-align:left;color:inherit;font-family:inherit}
+  .tile:hover{border-color:var(--border2)}
+  .tile.on{border-color:var(--blue)}
+  .tile .k{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .tile .v{font-family:'DM Mono',monospace;font-size:1.5rem;margin-top:4px}
+  .tile .s{font-size:.75rem;color:var(--subtext);margin-top:2px}
+  .tile.warn .v{color:var(--gold)}
+
+  .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px}
+  .chip{background:transparent;border:1px solid var(--border);color:var(--subtext);border-radius:999px;padding:.4rem .8rem;font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+  .chip.on{border-color:var(--blue);color:var(--blue);background:rgba(90,159,212,.1)}
+  .sep{width:1px;height:22px;background:var(--border)}
+  .search,.sel,.num{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:.5rem .75rem;font-family:inherit;font-size:.88rem;outline:none}
+  .search{flex:1;min-width:180px}
+  .num{width:80px;font-family:'DM Mono',monospace}
+  .search:focus,.sel:focus,.num:focus{border-color:var(--blue)}
+  .lbl-inline{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+  .group{margin-bottom:22px}
+  .group-hd{display:flex;align-items:baseline;gap:10px;margin-bottom:8px;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext)}
+  .group-hd .n{color:var(--muted)}
+  .group-hint{font-size:.8rem;color:var(--muted);margin:-4px 0 8px}
+
+  .tbl{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:.84rem}
+  .tbl th{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 10px;border-bottom:1px solid var(--border);font-weight:500;white-space:nowrap}
+  .tbl td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+  .tbl tr:last-child td{border-bottom:none}
+  .tbl .r{text-align:right;font-family:'DM Mono',monospace;white-space:nowrap}
+  .tag{font-family:'DM Mono',monospace;font-size:.78rem;word-break:break-all}
+  .tag b{color:var(--blue);font-weight:500}
+  .muted{color:var(--muted);font-size:.76rem}
+  .neg{color:var(--red)} .pos{color:var(--gold)}
+  .pill{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;border:1px solid var(--border);white-space:nowrap;display:inline-block}
+  .pill.needs_attention{color:var(--gold);border-color:rgba(212,168,67,.45)}
+  .pill.known{color:var(--green);border-color:rgba(61,184,122,.45)}
+  .note{font-size:.76rem;color:var(--subtext);margin-top:4px;white-space:pre-wrap}
+  .changed{font-size:.72rem;color:var(--gold);margin-top:4px}
+
+  .btn{padding:.45rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer;background:transparent;color:var(--text);text-decoration:none;white-space:nowrap;display:inline-block}
+  .btn:hover{border-color:var(--muted)}
+  .btn-blue{background:var(--blue);color:#0c0d0f;border-color:var(--blue)}
+  .btn:disabled{opacity:.5;cursor:default}
+
+  .empty,.err{color:var(--subtext);font-size:.9rem;padding:24px;text-align:center;background:var(--surface);border:1px dashed var(--border);border-radius:12px}
+  .err{color:var(--red)}
+
+  .backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;overflow-y:auto;padding:24px 16px}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;max-width:480px;margin:8vh auto;padding:20px}
+  .modal h2{font-size:1.05rem;margin-bottom:2px}
+  .modal .m-sub{color:var(--subtext);font-size:.82rem;margin-bottom:14px;font-family:'DM Mono',monospace;word-break:break-all}
+  .modal label{display:block;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+  .modal textarea{width:100%;min-height:80px;background:#0c0d0f;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:.6rem .7rem;font-family:inherit;font-size:.9rem;outline:none}
+  .m-err{color:var(--red);font-size:.85rem;margin:8px 0;display:none}
+  .m-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+
+  @media (max-width:760px){
+    .tbl thead{display:none}
+    .tbl,.tbl tbody,.tbl tr,.tbl td{display:block;width:100%}
+    .tbl tr{border-bottom:1px solid var(--border);padding:8px 0}
+    .tbl td{border:none;padding:3px 12px}
+    .tbl td.r{text-align:left}
+    .tbl td[data-l]::before{content:attr(data-l) ' ';font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+    .hdr-link{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="hdr">
+  <a class="hdr-back" href="/index.html" id="back">← Hub</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand" id="brand">App vs Metrc</div>
+  <a class="hdr-link" href="/metrc_actions.html" id="toActions">Metrc Actions →</a>
+  <div class="lang" id="lang"></div>
+</div>
+
+<main>
+  <h1 id="h1"></h1>
+  <div class="sub" id="intro"></div>
+  <div class="syncline" id="syncline"></div>
+
+  <div class="tiles" id="tiles"></div>
+
+  <div class="bar" id="bar">
+    <button class="chip on" data-s="needs_attention"></button>
+    <button class="chip" data-s="known"></button>
+    <button class="chip" data-s="all"></button>
+    <span class="sep"></span>
+    <select class="sel" id="license"></select>
+    <span class="lbl-inline" id="tolLbl"></span>
+    <input class="num" id="tol" type="number" min="0" step="0.01"/>
+    <input class="search" id="search" type="search"/>
+  </div>
+
+  <div id="list"></div>
+</main>
+
+<div class="backdrop" id="backdrop"><div class="modal" id="modal"></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/config/supabase_config.js"></script>
+<script src="/operations_stations.js"></script>
+<script src="/ops_common.js"></script>
+<script src="/ops_data.js"></script>
+<script src="/metrc_recon.js"></script>
+<script src="/metrc_data.js"></script>
+<script>
+const L = {
+  title: { en: 'App vs Metrc', es: 'App vs Metrc' },
+  hub: { en: '← Hub', es: '← Inicio' },
+  toActions: { en: 'Metrc Actions →', es: 'Acciones Metrc →' },
+  h1: { en: 'App vs Metrc', es: 'App vs Metrc' },
+  intro: { en: 'Every package Metrc has that the App doesn’t, every package the App has that Metrc doesn’t, and every package where the two weights disagree. New differences start as Needs Attention — mark one Known once it’s understood. A Known one comes back if its weights change.',
+           es: 'Cada paquete que Metrc tiene y la App no, cada paquete que la App tiene y Metrc no, y cada paquete donde los pesos no coinciden. Las diferencias nuevas empiezan como Requiere atención — márquela Conocida una vez entendida. Vuelve si sus pesos cambian.' },
+  loading: { en: 'Loading…', es: 'Cargando…' },
+  search: { en: 'Search tag, strain, item…', es: 'Buscar etiqueta, variedad, artículo…' },
+  s_needs_attention: { en: 'Needs Attention', es: 'Requiere atención' },
+  s_known: { en: 'Known', es: 'Conocido' },
+  s_all: { en: 'All', es: 'Todos' },
+  all_lic: { en: 'All licenses', es: 'Todas las licencias' },
+  tol: { en: 'Tolerance (lb)', es: 'Tolerancia (lb)' },
+  t_attn: { en: 'Needs attention', es: 'Requiere atención' },
+  t_known: { en: 'Known', es: 'Conocido' },
+  t_metrc_pk: { en: 'Active in Metrc', es: 'Activos en Metrc' },
+  of_attn: { en: 'need attention', es: 'requieren atención' },
+  synced: { en: 'Metrc packages synced', es: 'Paquetes de Metrc sincronizados' },
+  via_canix: { en: 'via Canix (Metrc API keys not set up yet — a few hours behind Metrc)', es: 'vía Canix (sin claves de la API de Metrc aún — unas horas atrás de Metrc)' },
+  via_metrc: { en: 'from the Metrc API', es: 'desde la API de Metrc' },
+  never: { en: 'Metrc packages have never been synced — run the “Metrc Sync” GitHub Action.', es: 'Los paquetes de Metrc nunca se han sincronizado — ejecute la acción “Metrc Sync” de GitHub.' },
+  last_failed: { en: 'The last sync failed:', es: 'La última sincronización falló:' },
+  stale: { en: '— more than 3 hours ago', es: '— hace más de 3 horas' },
+  h_metrc_only: { en: 'Active in Metrc, but no App form has ever named this tag. Either the work wasn’t logged in the App, or the UID was typed differently.',
+                  es: 'Activo en Metrc, pero ningún formulario de la App ha nombrado esta etiqueta. O el trabajo no se registró en la App, o el UID se escribió diferente.' },
+  h_app_only: { en: 'The App still has weight on this package, but it isn’t active in Metrc. It may have been finished, moved or retagged in Metrc without a matching App form.',
+                es: 'La App todavía tiene peso en este paquete, pero no está activo en Metrc. Pudo terminarse, moverse o reetiquetarse en Metrc sin un formulario en la App.' },
+  h_weight: { en: 'Metrc − App. Positive: Metrc has more than the App. “Used up in App”: the App’s forms consumed it all, but Metrc still has it open.',
+              es: 'Metrc − App. Positivo: Metrc tiene más que la App. “Agotado en la App”: los formularios de la App lo consumieron todo, pero Metrc aún lo tiene abierto.' },
+  c_tag: { en: 'Package', es: 'Paquete' },
+  c_what: { en: 'Strain / item', es: 'Variedad / artículo' },
+  c_metrc: { en: 'Metrc', es: 'Metrc' },
+  c_app: { en: 'App', es: 'App' },
+  c_diff: { en: 'Diff', es: 'Dif.' },
+  c_last: { en: 'Last App form', es: 'Último formulario' },
+  c_status: { en: 'Status', es: 'Estado' },
+  used_up: { en: 'Used up in App', es: 'Agotado en la App' },
+  unit_mm: { en: 'Units differ', es: 'Unidades distintas' },
+  changed: { en: 'Weights changed since it was marked Known.', es: 'Los pesos cambiaron desde que se marcó Conocido.' },
+  mark_known: { en: 'Mark known', es: 'Marcar conocido' },
+  reopen: { en: 'Needs attention', es: 'Requiere atención' },
+  edit_note: { en: 'Note', es: 'Nota' },
+  m_known: { en: 'Mark as Known', es: 'Marcar como conocido' },
+  m_note: { en: 'Why is this OK / what’s going on? (optional)', es: '¿Por qué está bien / qué pasa? (opcional)' },
+  cancel: { en: 'Cancel', es: 'Cancelar' },
+  save: { en: 'Save', es: 'Guardar' },
+  saving: { en: 'Saving…', es: 'Guardando…' },
+  by: { en: 'by', es: 'por' },
+  none: { en: 'Nothing here — App and Metrc agree.', es: 'Nada aquí — la App y Metrc coinciden.' },
+  none_match: { en: 'Nothing matches this filter.', es: 'Nada coincide con este filtro.' },
+  err_load: { en: 'Could not load — has supabase/schema.sql been re-run?', es: 'No se pudo cargar — ¿se volvió a ejecutar supabase/schema.sql?' }
+};
+const locale = () => (getLang() === 'es' ? 'es-US' : 'en-US');
+const currentUser = (sessionStorage.getItem('2cw_user_name') || '').trim();
+if (!sessionStorage.getItem('2cw_pin')) location.replace('/index.html');
+
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let data = null;
+let statusFilter = 'needs_attention';
+let kindFilter = '';
+let editing = null;
+
+function fmtWhen(iso) {
+  return new Date(iso).toLocaleString(locale(), { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+
+function paintSync() {
+  const el = document.getElementById('syncline');
+  const run = data.lastRun;
+  const latest = data.latestRun;
+  el.className = 'syncline';
+  if (!run) { el.textContent = t(L.never); el.classList.add('warn'); return; }
+  const stale = Date.now() - new Date(run.finished_at).getTime() > 3 * 3600 * 1000;
+  let txt = `${t(L.synced)} ${fmtWhen(run.finished_at)} ${run.source === 'canix' ? t(L.via_canix) : t(L.via_metrc)}`;
+  if (stale) { txt += ` ${t(L.stale)}`; el.classList.add('warn'); }
+  if (run.source === 'canix') el.classList.add('warn');
+  if (latest && latest.error) { txt += ` · ${t(L.last_failed)} ${latest.error}`; el.classList.add('bad'); }
+  el.textContent = txt;
+}
+
+function paintTiles() {
+  const by = (k) => data.issues.filter((i) => i.kind === k);
+  const tile = (k, label, list) => {
+    const attn = list.filter((i) => i.status === 'needs_attention').length;
+    return `<button class="tile ${attn ? 'warn' : ''} ${kindFilter === k ? 'on' : ''}" data-k="${k}">
+      <div class="k">${esc(label)}</div><div class="v">${list.length}</div>
+      <div class="s">${attn} ${t(L.of_attn)}</div></button>`;
+  };
+  const attn = data.issues.filter((i) => i.status === 'needs_attention').length;
+  const lic = metrcLicense();
+  const pk = data.packages.filter((p) => !lic || p.license_number === lic).length;
+  document.getElementById('tiles').innerHTML =
+    tile('metrc_only', t(METRC_KIND.metrc_only), by('metrc_only')) +
+    tile('app_only', t(METRC_KIND.app_only), by('app_only')) +
+    tile('weight', t(METRC_KIND.weight), by('weight')) +
+    `<div class="tile" style="cursor:default"><div class="k">${t(L.t_attn)}</div><div class="v" style="color:${attn ? 'var(--gold)' : 'var(--green)'}">${attn}</div>
+       <div class="s">${t(L.t_metrc_pk)}: ${pk.toLocaleString()}</div></div>`;
+  document.querySelectorAll('#tiles .tile[data-k]').forEach((b) => {
+    b.onclick = () => { kindFilter = kindFilter === b.dataset.k ? '' : b.dataset.k; render(); };
+  });
+}
+
+function rowHtml(i) {
+  const tag = esc(i.tag);
+  const tagHtml = tag.length > 6 ? `${tag.slice(0, -6)}<b>${tag.slice(-6)}</b>` : `<b>${tag}</b>`;
+  const what = [i.strain, i.item].filter(Boolean).map(esc).join(' · ') || '<span class="muted">—</span>';
+  const sub = [i.license, i.location].filter(Boolean).map(esc).join(' · ');
+  const diffCls = i.diff == null ? '' : i.diff < 0 ? 'neg' : i.diff > 0 ? 'pos' : '';
+  const diff = i.diff == null ? '—' : `${i.diff > 0 ? '+' : ''}${metrcFmtAmount(i.diff, i.unit)}`;
+  const flags = [i.usedUpInApp ? t(L.used_up) : '', i.unitMismatch ? t(L.unit_mm) : ''].filter(Boolean)
+    .map((f) => `<div class="muted">${esc(f)}</div>`).join('');
+  const last = i.lastStation
+    ? `${esc(metrcStationTitle(i.lastStation))}<div class="muted">${esc(i.lastDate)}${i.appUid && i.appUid !== i.tag ? ` · ${t(L.c_app)} UID ${esc(i.appUid)}` : ''}</div>`
+    : '<span class="muted">—</span>';
+  const btn = i.status === 'known'
+    ? `<button class="btn" data-act="reopen" data-key="${esc(i.key)}">${t(L.reopen)}</button>`
+    : `<button class="btn btn-blue" data-act="known" data-key="${esc(i.key)}">${t(L.mark_known)}</button>`;
+  const who = i.updatedBy ? `<div class="muted">${t(L.by)} ${esc(i.updatedBy)}${i.updatedAt ? ` · ${esc(fmtWhen(i.updatedAt))}` : ''}</div>` : '';
+  return `<tr>
+    <td data-l=""><div class="tag">${tagHtml}</div>${sub ? `<div class="muted">${sub}</div>` : ''}</td>
+    <td data-l="">${what}</td>
+    <td class="r" data-l="${t(L.c_metrc)}">${metrcFmtAmount(i.metrcValue, i.unit)}</td>
+    <td class="r" data-l="${t(L.c_app)}">${metrcFmtAmount(i.appValue, i.unit)}${flags}</td>
+    <td class="r ${diffCls}" data-l="${t(L.c_diff)}">${diff}</td>
+    <td data-l="">${last}</td>
+    <td data-l=""><span class="pill ${i.status}">${t(METRC_STATUS[i.status])}</span>${who}
+      ${i.changed ? `<div class="changed">${t(L.changed)}</div>` : ''}
+      ${i.note ? `<div class="note">${esc(i.note)}</div>` : ''}
+      <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">${btn}
+        ${i.status === 'known' ? `<button class="btn" data-act="note" data-key="${esc(i.key)}">${t(L.edit_note)}</button>` : ''}</div></td>
+  </tr>`;
+}
+
+function render() {
+  paintTiles();
+  document.querySelectorAll('#bar .chip').forEach((c) => c.classList.toggle('on', c.dataset.s === statusFilter));
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  const list = data.issues.filter((i) =>
+    (statusFilter === 'all' || i.status === statusFilter) &&
+    (!kindFilter || i.kind === kindFilter) &&
+    (!q || [i.tag, i.appUid, i.strain, i.item, i.license, i.note].some((v) => String(v || '').toLowerCase().includes(q))));
+  const el = document.getElementById('list');
+  if (!data.issues.length) { el.innerHTML = `<div class="empty">${t(L.none)}</div>`; return; }
+  if (!list.length) { el.innerHTML = `<div class="empty">${t(L.none_match)}</div>`; return; }
+  el.innerHTML = ['metrc_only', 'app_only', 'weight'].map((k) => {
+    const rows = list.filter((i) => i.kind === k);
+    if (!rows.length) return '';
+    return `<div class="group">
+      <div class="group-hd">${t(METRC_KIND[k])} <span class="n">${rows.length}</span></div>
+      <div class="group-hint">${t(L['h_' + k])}</div>
+      <table class="tbl"><thead><tr>
+        <th>${t(L.c_tag)}</th><th>${t(L.c_what)}</th><th class="r">${t(L.c_metrc)}</th><th class="r">${t(L.c_app)}</th>
+        <th class="r">${t(L.c_diff)}</th><th>${t(L.c_last)}</th><th>${t(L.c_status)}</th>
+      </tr></thead><tbody>${rows.map(rowHtml).join('')}</tbody></table></div>`;
+  }).join('');
+  el.querySelectorAll('button[data-act]').forEach((b) => {
+    const iss = data.issues.find((i) => i.key === b.dataset.key);
+    b.onclick = () => {
+      if (b.dataset.act === 'reopen') return setStatus(iss, 'needs_attention', iss.note, b);
+      openModal(iss);
+    };
+  });
+}
+
+async function setStatus(iss, status, note, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = t(L.saving); }
+  try {
+    const row = await saveMetrcStatus(iss, status, note, currentUser);
+    Object.assign(iss, { status, changed: false, note: row.note || '', updatedBy: row.updated_by || '', updatedAt: row.updated_at || '' });
+    render();
+    return true;
+  } catch (e) {
+    if (btn) { btn.disabled = false; }
+    alert(e.message);
+    return false;
+  }
+}
+
+function openModal(iss) {
+  editing = iss;
+  document.getElementById('modal').innerHTML = `
+    <h2>${t(L.m_known)}</h2>
+    <div class="m-sub">${esc(iss.tag)} · ${t(METRC_KIND[iss.kind])}</div>
+    <label for="m-note">${t(L.m_note)}</label>
+    <textarea id="m-note">${esc(iss.note || '')}</textarea>
+    <div class="m-err" id="m-err"></div>
+    <div class="m-actions"><button class="btn" id="m-cancel">${t(L.cancel)}</button>
+      <button class="btn btn-blue" id="m-save">${t(L.save)}</button></div>`;
+  document.getElementById('backdrop').style.display = 'block';
+  document.getElementById('m-note').focus();
+  document.getElementById('m-cancel').onclick = closeModal;
+  document.getElementById('m-save').onclick = async (ev) => {
+    const ok = await setStatus(editing, 'known', document.getElementById('m-note').value.trim(), ev.target);
+    if (ok) closeModal();
+  };
+}
+function closeModal() { editing = null; document.getElementById('backdrop').style.display = 'none'; }
+document.getElementById('backdrop').onclick = (e) => { if (e.target.id === 'backdrop') closeModal(); };
+
+async function refresh() {
+  try {
+    data = await loadMetrcRecon({ license: metrcLicense(), toleranceLb: metrcTolerance() });
+  } catch (e) {
+    document.getElementById('list').innerHTML = `<div class="err">${t(L.err_load)}<br>${esc(e.message)}</div>`;
+    return;
+  }
+  const sel = document.getElementById('license');
+  const lic = metrcLicense();
+  sel.innerHTML = `<option value="">${t(L.all_lic)}</option>` +
+    data.licenses.map((l) => `<option value="${esc(l)}" ${l === lic ? 'selected' : ''}>${esc(l)}</option>`).join('');
+  paintSync();
+  render();
+}
+
+function paintStatic() {
+  mountLangToggle('lang');
+  document.title = `${t(L.title)} — 2CW`;
+  document.getElementById('back').textContent = t(L.hub);
+  document.getElementById('brand').textContent = t(L.title);
+  document.getElementById('toActions').textContent = t(L.toActions);
+  document.getElementById('h1').textContent = t(L.h1);
+  document.getElementById('intro').textContent = t(L.intro);
+  document.getElementById('search').placeholder = t(L.search);
+  document.getElementById('tolLbl').textContent = t(L.tol);
+  document.getElementById('tol').value = metrcTolerance();
+  document.querySelectorAll('#bar .chip').forEach((c) => { c.textContent = t(L['s_' + c.dataset.s]); });
+  document.getElementById('list').innerHTML = `<div class="empty">${t(L.loading)}</div>`;
+}
+paintStatic();
+
+document.querySelectorAll('#bar .chip').forEach((c) => { c.onclick = () => { statusFilter = c.dataset.s; render(); }; });
+document.getElementById('search').oninput = () => data && render();
+document.getElementById('license').onchange = (e) => { setMetrcLicense(e.target.value); refresh(); };
+document.getElementById('tol').onchange = (e) => {
+  const v = parseFloat(e.target.value);
+  if (Number.isFinite(v) && v >= 0) { setMetrcTolerance(v); refresh(); }
+};
+refresh();
+</script>
+<script src="/sw_register.js"></script>
+</body>
+</html>

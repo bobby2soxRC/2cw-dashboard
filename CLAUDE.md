@@ -22,6 +22,16 @@ the user's PIN session (`app_users.auth_user_id`). Still to do: self-serve
 linking, server functions accepting the Google login instead of `2cw_pin`,
 then cutover. Plan and setup: "Google sign-in" in `docs/USER_ADMIN.md`.
 
+### Metrc section (started 2026-10-11)
+
+Operations → Metrc: `metrc_recon.html` (App vs Metrc) and `metrc_actions.html`.
+Packages come from `scripts/metrc_sync.py` → `metrc_packages`; it reads Canix's
+copy of Metrc until `METRC_VENDOR_KEY` / `METRC_USER_KEY` are set as GitHub
+secrets. The App's package weights are worked out in `metrc_recon.js`
+(`STATION_EFFECTS`) — update it when a station starts creating or using up
+UIDs. Next: Metrc Actions that create packages from Intake / Take Down /
+processing / pre-roll forms. Details: "Metrc" in `docs/OPERATIONS_APP.md`.
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)

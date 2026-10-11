@@ -698,7 +698,7 @@ async function buildTree(){
   const editList = JSON.parse(sessionStorage.getItem('2cw_ops_edit_access') || 'null') || [];
 
   const salesChildren = [], partnersChildren = [], opsDirect = [];
-  const cultChildren = [], procChildren = [], mfgChildren = [], workChildren = [];
+  const cultChildren = [], procChildren = [], mfgChildren = [], workChildren = [], metrcChildren = [];
   const pinnedLeaves = []; // root-level cards like Executive and Ops Gameplan Tracker — any number can be pinned
 
   hubState.defaultOrder.forEach((key) => {
@@ -713,6 +713,7 @@ async function buildTree(){
       if(def.subdept === 'processing') procChildren.push(leaf);
       else if(def.subdept === 'manufacturing') mfgChildren.push(leaf);
       else if(def.subdept === 'workforce') workChildren.push(leaf);
+      else if(def.subdept === 'metrc') metrcChildren.push(leaf);
       else opsDirect.push(leaf);
     }
   });
@@ -755,7 +756,8 @@ async function buildTree(){
     mkFolder('cultivation', hubWord('Cultivation'), 'green', cultChildren),
     mkFolder('processing', hubWord('Processing'), 'gold', procChildren),
     mkFolder('manufacturing', hubWord('Manufacturing'), 'purple', mfgChildren),
-    mkFolder('workforce', hubWord('Workforce'), 'gold', workChildren)
+    mkFolder('workforce', hubWord('Workforce'), 'gold', workChildren),
+    mkFolder('metrc', hubWord('Metrc'), 'blue', metrcChildren)
   ].filter(Boolean);
 
   const rootChildren = [

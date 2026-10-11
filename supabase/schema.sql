@@ -1196,3 +1196,89 @@ create table if not exists labor_rates (
 alter table labor_rates enable row level security;   -- no policies: service role only
 revoke all on public.labor_rates from anon;
 grant select, insert, update, delete on public.labor_rates to service_role;
+
+-- ── Metrc (metrc_recon.html, metrc_actions.html) ─────────────────────────
+-- metrc_packages is a copy of the active Metrc packages for the licenses in
+-- the METRC_LICENSES secret, written by scripts/metrc_sync.py (GitHub
+-- Actions, hourly) with the service role key: anon can read it, never write.
+-- One row per package tag (Metrc "Label"). A package that drops out of the
+-- active list is kept with is_active = false rather than deleted.
+-- `source` says where the row came from: 'metrc' (the Metrc API) or 'canix'
+-- (Canix's copy of Metrc, used until Metrc API keys are set up).
+create table if not exists metrc_packages (
+  tag              text primary key,
+  license_number   text,
+  metrc_id         bigint,
+  item_name        text,
+  item_category    text,
+  strain           text,
+  quantity         numeric,
+  unit             text,
+  packaged_date    date,
+  location         text,
+  on_hold          boolean not null default false,
+  is_active        boolean not null default true,
+  source           text not null default 'metrc',
+  last_modified    timestamptz,
+  synced_at        timestamptz not null default now()
+);
+create index if not exists idx_metrc_packages_license on metrc_packages (license_number, is_active);
+
+alter table metrc_packages enable row level security;
+drop policy if exists "anon read" on metrc_packages;
+create policy "anon read" on metrc_packages for select using (true);
+grant select on public.metrc_packages to anon;
+grant select, insert, update, delete on public.metrc_packages to service_role;
+
+-- One row per sync run, so the pages can show when Metrc was last read and
+-- whether the last run failed.
+create table if not exists metrc_sync_runs (
+  id           bigint generated always as identity primary key,
+  source       text not null,
+  licenses     text[],
+  packages     integer,
+  error        text,
+  started_at   timestamptz not null default now(),
+  finished_at  timestamptz
+);
+alter table metrc_sync_runs enable row level security;
+drop policy if exists "anon read" on metrc_sync_runs;
+create policy "anon read" on metrc_sync_runs for select using (true);
+grant select on public.metrc_sync_runs to anon;
+grant select, insert, update, delete on public.metrc_sync_runs to service_role;
+
+-- What the team decided about each App-vs-Metrc difference. Differences
+-- themselves aren't stored — metrc_recon.js works them out on every page
+-- load — only the status someone set. issue_key is '<kind>:<tag>' (kind is
+-- metrc_only, app_only or weight). Anything without a row here is Needs
+-- Attention. `signature` is the weights the issue had when it was marked
+-- Known; if they change, the page treats it as Needs Attention again. Same
+-- open anon posture as preroll_plans.
+create table if not exists metrc_recon_status (
+  issue_key    text primary key,
+  kind         text not null check (kind in ('metrc_only', 'app_only', 'weight')),
+  tag          text not null,
+  status       text not null default 'needs_attention' check (status in ('needs_attention', 'known')),
+  signature    text,
+  note         text,
+  updated_by   text,
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+
+drop trigger if exists trg_touch_metrc_recon_status on metrc_recon_status;
+create trigger trg_touch_metrc_recon_status
+  before update on metrc_recon_status
+  for each row execute function touch_operations_forms();
+
+alter table metrc_recon_status enable row level security;
+drop policy if exists "anon read" on metrc_recon_status;
+create policy "anon read" on metrc_recon_status for select using (true);
+drop policy if exists "anon write" on metrc_recon_status;
+create policy "anon write" on metrc_recon_status for insert with check (true);
+drop policy if exists "anon update" on metrc_recon_status;
+create policy "anon update" on metrc_recon_status for update using (true) with check (true);
+drop policy if exists "anon delete" on metrc_recon_status;
+create policy "anon delete" on metrc_recon_status for delete using (true);
+
+grant select, insert, update, delete on public.metrc_recon_status to anon;
