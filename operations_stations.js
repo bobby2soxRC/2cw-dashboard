@@ -425,7 +425,7 @@ const OPERATIONS_STATIONS = [
         l: { en: 'Person Completing Form', es: 'Persona que llena el formulario' } },
       { k: 'weighmaster', t: 'text', req: true,
         l: { en: 'Deputy Weighmaster', es: 'Pesador oficial adjunto' } },
-      { k: 'storageLocation', t: 'text', req: true,
+      { k: 'storageLocation', t: 'select', ref: 'dryRooms', allowOther: true, req: true,
         l: { en: 'Storage Location(s)', es: 'Ubicación(es) de almacenamiento' } },
       { k: 'boxes', t: 'lineitems', req: true,
         l: { en: 'Boxes', es: 'Cajas' },
