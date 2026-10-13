@@ -151,10 +151,26 @@ async function listStationForms(stationKey) {
   return data || [];
 }
 
+// Deletes an open form — only ever a draft, never a submitted record.
+// `deleted` is false when there was no draft by that id (already gone, or
+// submitted in the meantime).
 async function deleteDraft(id) {
   const client = getClient();
-  if (!client || !id) return;
-  await client.from(TABLE).delete().eq('id', id).eq('status', 'draft');
+  if (!client || !id) return { ok: false, reason: 'not-configured' };
+  const { data, error } = await client.from(TABLE).delete().eq('id', id).eq('status', 'draft').select('id');
+  if (error) { console.error('deleteDraft', error); return { ok: false, reason: error.message }; }
+  return { ok: true, deleted: !!(data && data.length) };
+}
+
+// Like getDraft, but tells "it isn't there" ({ ok: true, row: null }) apart
+// from "couldn't check" ({ ok: false }) — so a page can notice it was
+// deleted on another tablet without mistaking a dropped connection for it.
+async function checkDraft(id) {
+  const client = getClient();
+  if (!client || !id) return { ok: false };
+  const { data, error } = await client.from(TABLE).select('*').eq('id', id).maybeSingle();
+  if (error) return { ok: false };
+  return { ok: true, row: data || null };
 }
 
 // ── Live "Today" board ───────────────────────────────────────────────────────

@@ -68,6 +68,9 @@
     .q-note{font-size:.8rem;color:var(--muted);margin-bottom:8px}
     @media (max-width:520px){ .q-row{flex-wrap:wrap} .q-lbs{flex:1 0 100%;justify-content:flex-end} .q-go{flex:1 0 100%;text-align:center} }
     body.on-queue #form, body.on-queue #summary, body.on-queue #banner, body.on-queue .actions{display:none !important}
+    .del-page{width:100%;margin-top:24px;background:transparent;border:1px solid var(--red);color:var(--red);border-radius:12px;min-height:52px;font-family:inherit;font-size:.95rem;font-weight:700;cursor:pointer}
+    .del-page:disabled{opacity:.5;cursor:not-allowed}
+    body.on-queue .del-page{display:none}
     .page-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
     .page-links a{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);text-decoration:none;border:1px solid var(--border);border-radius:8px;padding:9px 12px}
     .dept{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
@@ -200,6 +203,7 @@
   <div class="ftabs" id="ftabs" style="display:none"></div>
   <section class="panel" id="queue-panel" style="display:none"></section>
   <form class="panel" id="form" autocomplete="off"></form>
+  <button type="button" class="del-page" id="del-page" style="display:none"></button>
   <div class="banner" id="banner"></div>
   <section class="panel summary" id="summary" style="display:none"></section>
 </main>
@@ -1083,17 +1087,23 @@
   }
 
   async function doAutosave() {
+    if (isClosed) return;
     // A page with running logs reads the saved copy first and merges in
     // whatever another tablet logged — and stops if that tablet already
-    // submitted it, rather than turning the record back into a draft.
+    // submitted it (rather than turning the record back into a draft), or
+    // deleted it (rather than bringing it back).
     if (entryFields.length) {
-      const saved = await getDraft(draftId);
+      const chk = await checkDraft(draftId);
+      if (isClosed) return;
+      const saved = chk.ok ? chk.row : null;
       if (saved && saved.status === 'submitted') { if (!submittedHere) closedElsewhere(); return; }
+      if (chk.ok && !saved && onServer) { closedElsewhere(DE); return; }
       if (saved) mergeEntries(saved.fields || {});
     }
     const sentTouched = new Set(touched);
     const res = await saveDraft(draftId, draftPayload());
     if (res.ok) {
+      onServer = true;
       sentTouched.forEach((k) => touched.delete(k));
       autosaveEl.className = 'autosave saved';
       autosaveTxt.textContent = `${t(AS.saved)} ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
@@ -1109,15 +1119,20 @@
   // Someone else submitted this page while it was open here.
   const CE = { en: 'This page was submitted on another tablet — nothing more can be added. Pick an open page above or start a new one.',
                es: 'Esta hoja se envió en otra tableta — ya no se puede agregar nada. Elija una hoja abierta arriba o empiece una nueva.' };
+  // …or deleted it.
+  const DE = { en: 'This page was deleted on another tablet. Pick an open page above or start a new one.',
+               es: 'Esta hoja se borró en otra tableta. Elija una hoja abierta arriba o empiece una nueva.' };
   let isClosed = false;
   let submittedHere = false;
-  function closedElsewhere() {
+  let onServer = false;   // this page has been saved at least once
+  function closedElsewhere(msg) {
     isClosed = true;
     clearTimeout(autosaveTimer);
     autosaveEl.style.display = 'none';
     localStorage.removeItem(mirrorKey());
     banner.className = 'banner error';
-    banner.textContent = t(CE);
+    banner.textContent = t(msg || CE);
+    document.getElementById('del-page').style.display = 'none';
     document.getElementById('switcher').after(banner);
     form.querySelectorAll('input, select, textarea, button').forEach((el) => { el.disabled = true; });
     btn.disabled = true;
@@ -1128,8 +1143,10 @@
   async function pollEntries() {
     if (!entryFields.length || !draftsOn || editMode || isClosed || pendingSubmits.length) return;
     if (autosaveEl.classList.contains('saving') || autosaveEl.classList.contains('offline')) return;
-    const saved = await getDraft(draftId);
-    if (!saved) return;
+    const chk = await checkDraft(draftId);
+    if (!chk.ok || isClosed) return;
+    const saved = chk.row;
+    if (!saved) { if (onServer) closedElsewhere(DE); return; }
     if (saved.status === 'submitted') { if (!submittedHere) closedElsewhere(); return; }
     mergeEntries(saved.fields || {});
     if (station.dailySummary && SUM.date) loadSummary(SUM.date);
@@ -1497,6 +1514,63 @@
     });
   }
 
+  // ── Delete this page (station.canDelete — Bucking) ───────────────────────
+  // For a page started by mistake: asks first, then deletes the open page
+  // (a draft only — never a submitted record) and starts a blank one. Other
+  // tablets on it lock on their next check (see DE above).
+  const DP = {
+    btn:      { en: 'Delete this page', es: 'Borrar esta hoja' },
+    deleting: { en: 'Deleting…', es: 'Borrando…' },
+    ask:      { en: 'Delete this bucking page{what}?{logged}\n\nThis can’t be undone.',
+                es: '¿Borrar esta hoja de desvarado{what}?{logged}\n\nNo se puede deshacer.' },
+    logged:   { en: '\n\nIt has {list} logged — those go too.', es: '\n\nTiene {list} registrados — también se borran.' },
+    done:     { en: '✓ Page deleted.', es: '✓ Hoja borrada.' },
+    tooLate:  { en: 'This page was already submitted, so it can’t be deleted.', es: 'Esta hoja ya se envió, así que no se puede borrar.' },
+    failed:   { en: 'Could not delete the page — check the connection and try again.', es: 'No se pudo borrar la hoja — revise la conexión e intente de nuevo.' }
+  };
+  const delBtn = document.getElementById('del-page');
+  if (station.canDelete && draftsOn && !editMode) {
+    delBtn.textContent = t(DP.btn);
+    delBtn.style.display = 'block';
+    delBtn.addEventListener('click', async () => {
+      const what = [values.strain, values.sourceUid ? `…${String(values.sourceUid).slice(-4)}` : ''].filter(Boolean).join(' ');
+      const counts = entryFields.map((f) => [(values[f.k] || []).length, t(f.l)]).filter(([n]) => n > 0)
+        .map(([n, l]) => `${n} × ${l}`);
+      const msg = t(DP.ask).replace('{what}', what ? ` (${what})` : '')
+        .replace('{logged}', counts.length ? t(DP.logged).replace('{list}', counts.join(', ')) : '');
+      if (!confirm(msg)) return;
+      // Stop autosaving first, so a save in flight can't bring it back.
+      isClosed = true;
+      clearTimeout(autosaveTimer);
+      delBtn.disabled = true;
+      delBtn.textContent = t(DP.deleting);
+      const res = onServer ? await deleteDraft(draftId) : { ok: true, deleted: true };
+      if (!res.ok || !res.deleted) {
+        // Not deleted: either it couldn't reach the server, or there was no
+        // open page to delete — check which before saying so.
+        const chk = res.ok ? await checkDraft(draftId) : { ok: false };
+        if (chk.ok && chk.row && chk.row.status === 'submitted') { closedElsewhere(); alert(t(DP.tooLate)); return; }
+        if (!(chk.ok && !chk.row)) {
+          isClosed = false;
+          delBtn.disabled = false;
+          delBtn.textContent = t(DP.btn);
+          alert(t(DP.failed));
+          markDirty();
+          return;
+        }
+      }
+      localStorage.removeItem(mirrorKey());
+      location.href = `/ops_form.html?station=${station.key}&deleted=1`;
+    });
+  }
+  if (params.get('deleted')) {
+    banner.className = 'banner success';
+    banner.textContent = t(DP.done);
+    const url = new URL(location.href);
+    url.searchParams.delete('deleted');
+    history.replaceState(null, '', url);
+  }
+
   // ── Queue tab (station.queueTab — Bucking) ───────────────────────────────
   // The order to buck in, set by a manager on the On-Stem Flower page
   // (buck_hold.html): each package's strain, UID and the starting weight to
@@ -1606,6 +1680,7 @@
     // this browser's local mirror so nothing typed gets lost.
     const existing = await getDraft(draftId);
     if (existing) {
+      onServer = existing.status === 'draft';
       hydrate(existing.fields || {});
     } else {
       const mirrored = localStorage.getItem(mirrorKey());

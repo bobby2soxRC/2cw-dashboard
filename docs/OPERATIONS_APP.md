@@ -321,6 +321,15 @@ on hold at Take Down shows a warning to release it first. The
 **On-Stem Flower** link at the top (station `links`) opens
 `buck_hold.html`.
 
+**Deleting a page.** "Delete this page" under the form (station
+`canDelete`) is for a page started by mistake. It asks first (naming the
+strain / UID and how many boxes, bucked and trim rows go with it), then
+deletes the open page — `deleteDraft` only ever removes a draft, never a
+submitted record — and opens a blank one. Another tablet with that page
+open locks on its next check ("deleted on another tablet") instead of
+re-creating it on its next autosave (`checkDraft` tells a missing page
+apart from a dropped connection).
+
 **Merged dry UIDs.** Several farm packages of one strain can be taken down
 into one new dry UID (a Metrc merge): each gets its own Take Down with the
 same New Dry UID. Everything treats them as one package — `takeDownGroups`
@@ -750,6 +759,17 @@ tooltip says the same, and the search matches places as well as names.
 The clock-in GPS address Connecteam also sends is deliberately left out of
 the file, because the repo's data files are public and an address can be
 someone's home.
+
+Each shift also carries **what they said they did** (`activity`): the
+Connecteam sub-job if they punched into one (jobs are mapped as
+"Site › Task", the site goes in `job`, the task leads `activity`), then
+their answers to the time clock's clock-in/out questions (the shift's
+`shiftAttachments`, with drop-down picks named from
+`/time-clock/v1/time-clocks/{id}/shift-attachments`). Free text, numbers and
+drop-down picks are kept, up to 120 characters. Photos, files, signatures and
+locations are left out. Each hatched stretch is labeled with its shift's
+place and activity, and the tooltips show both. Tapping a stretch also
+picks the process when the activity names one ("Bucking").
 
 Totals per row and for the team: clocked, logged, not logged
 (clocked − logged), and % allocated. There's also an "only people with time

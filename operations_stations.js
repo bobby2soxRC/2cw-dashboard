@@ -520,6 +520,8 @@ const OPERATIONS_STATIONS = [
     // A Queue tab next to the form: the order to buck in (set on the
     // On-Stem Flower page), with the strain, UID and starting weight.
     queueTab: true,
+    // "Delete this page" under the form, for a page started by mistake.
+    canDelete: true,
     // The daily tally: person × flavor for one day. Each logged row carries
     // the day it was weighed (`day`), so a batch that runs three days shows
     // only that day's pounds.
