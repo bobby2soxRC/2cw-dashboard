@@ -175,33 +175,64 @@ function currentlyDrying(intakes, downs) {
   return intakes.filter((i) => !isFreshFrozen(i) && !taken.has(i.id));
 }
 
-// What's ready to buck, from the submitted Take Downs (flat records, newest
-// one per on-stem UID): each one released to bucking (`pass`), with what's
-// left on it after any parts, plus each part released off a held one under
-// its own tag — less any UID that already has a submitted Bucking record.
-// Same shape findUpstream returns (sourceUid, strain, unbuckedLb), so
-// picking one fills the form the way typing its UID would.
+// The submitted Take Downs (flat records) grouped by on-stem UID, as
+// Map(on-stem UID → records, newest first). Several farm packages of one
+// strain can be taken down into one new dry UID (a Metrc merge), so a group
+// can hold several Take Downs; each farm package counts once (its newest
+// Take Down — a resubmitted one replaces the earlier one).
+function takeDownGroups(downs) {
+  const groups = new Map();
+  const seen = new Set();
+  [...(downs || [])].sort((a, b) => String(b.submittedAt || '').localeCompare(String(a.submittedAt || ''))).forEach((r) => {
+    const uid = normUid(r.sourceUid);
+    if (!uid) return;
+    const farm = `${uid}|${normUid(r.incomingUid) || r.id}`;
+    if (seen.has(farm)) return;
+    seen.add(farm);
+    if (!groups.has(uid)) groups.set(uid, []);
+    groups.get(uid).push(r);
+  });
+  return groups;
+}
+
+// One on-stem package from its group of Take Downs: the newest one's
+// details, `dryWeightLb` added up over all of them, `unbuckedLb` what's
+// still there to buck (released ones, less any parts split off), and
+// `result` 'pass' once every Take Down in it is released. `farmUids` lists
+// the farm packages merged into it.
+function combineTakeDowns(uid, members) {
+  const lb = (x) => (x === undefined || x === null || x === '' ? null : Number(x));
+  const r2 = (x) => Math.round(x * 100) / 100;
+  const parts = (r) => (r.releases || []).reduce((a, x) => a + (Number(x.lb) || 0), 0);
+  const weighed = members.filter((r) => lb(r.dryWeightLb) !== null);
+  const pass = weighed.filter((r) => r.result === 'pass');
+  const held = members.find((r) => r.result !== 'pass');
+  return { ...members[0], sourceUid: uid,
+    dryWeightLb: weighed.length ? r2(weighed.reduce((a, r) => a + Number(r.dryWeightLb), 0)) : null,
+    unbuckedLb: pass.length ? Math.max(0, r2(pass.reduce((a, r) => a + Number(r.dryWeightLb) - parts(r), 0))) : null,
+    result: held ? held.result : 'pass',
+    farmUids: members.map((r) => r.incomingUid).filter(Boolean) };
+}
+
+// What's ready to buck: each on-stem package released to bucking (all its
+// Take Downs combined — combineTakeDowns — counting only the released
+// ones), plus each part released off a held one under its own tag — less
+// any UID that already has a submitted Bucking record. Same shape
+// findUpstream returns (sourceUid, strain, unbuckedLb), so picking one fills
+// the form the way typing its UID would.
 function buckablePackages(downs, bucked) {
   const done = (bucked || []).map((b) => b.sourceUid).filter(Boolean);
   const isDone = (uid) => done.some((d) => uidTailMatch(d, uid));
   const lb = (x) => (x === undefined || x === null || x === '' ? null : Number(x));
-  const seen = new Set();
   const out = [];
-  [...(downs || [])].sort((a, b) => String(b.submittedAt || '').localeCompare(String(a.submittedAt || ''))).forEach((r) => {
-    const uid = normUid(r.sourceUid);
-    if (!uid || seen.has(uid)) return;
-    seen.add(uid);
-    const parts = r.releases || [];
-    parts.forEach((x) => {
+  takeDownGroups(downs).forEach((members, uid) => {
+    members.forEach((r) => (r.releases || []).forEach((x) => {
       const p = normUid(x.uid);
       if (p && !isDone(p)) out.push({ ...r, sourceUid: p, dryWeightLb: lb(x.lb), unbuckedLb: lb(x.lb), result: 'pass',
         releasedFrom: uid, date: String(x.at || r.date || '').slice(0, 10) });
-    });
-    if (r.result === 'pass' && !isDone(uid)) {
-      const dry = lb(r.dryWeightLb);
-      const left = dry === null ? null : Math.max(0, Math.round((dry - parts.reduce((a, x) => a + (Number(x.lb) || 0), 0)) * 100) / 100);
-      out.push({ ...r, sourceUid: uid, unbuckedLb: left });
-    }
+    }));
+    const pass = members.filter((r) => r.result === 'pass');
+    if (pass.length && !isDone(uid)) out.push({ ...combineTakeDowns(uid, pass), date: pass[pass.length - 1].date });
   });
   return out;
 }
@@ -270,12 +301,18 @@ async function findUpstream(stageKey, uid) {
     if (uidMatches(x.uid, uid)) parts.push({ ...r, sourceUid: x.uid, dryWeightLb: Number(x.lb) || null, unbuckedLb: Number(x.lb) || null,
       result: 'pass', releasedFrom: r.sourceUid, submittedAt: x.at || r.submittedAt });
   }));
-  const hits = rows.filter((r) =>
+  let hits = rows.filter((r) =>
     uidMatches(r.sourceUid, uid) || uidMatches(r.newBuckedUid, uid) ||
     uidMatches(r.newBigLeafUid, uid) || uidMatches(r.harvestBatchName, uid))
     .map((r) => (r.releases || []).length && r.dryWeightLb != null
       ? { ...r, unbuckedLb: Math.max(0, Math.round((Number(r.dryWeightLb) - released(r)) * 100) / 100) }
       : { ...r, unbuckedLb: r.dryWeightLb });
+  // Take Downs merged into one dry UID come back as one package, weights
+  // added up (combineTakeDowns).
+  if (stageKey === 'dry_check') {
+    hits = [...takeDownGroups(hits).entries()].map(([u, members]) =>
+      (members.length > 1 ? { ...combineTakeDowns(u, members), submittedAt: members[0].submittedAt } : members[0]));
+  }
   const all = [...hits, ...parts];
   if (!all.length) return null;
   return all.sort((a, b) => String(b.submittedAt || '').localeCompare(String(a.submittedAt || '')))[0];

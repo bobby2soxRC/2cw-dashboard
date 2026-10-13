@@ -321,6 +321,17 @@ on hold at Take Down shows a warning to release it first. The
 **On-Stem Flower** link at the top (station `links`) opens
 `buck_hold.html`.
 
+**Merged dry UIDs.** Several farm packages of one strain can be taken down
+into one new dry UID (a Metrc merge): each gets its own Take Down with the
+same New Dry UID. Everything treats them as one package — `takeDownGroups`
+/ `combineTakeDowns` in `ops_common.js` add the dry weights up (each farm
+package counted once, its newest Take Down), for the queue, the Bucking
+dropdown and a typed UID — and `buildAliasMap` in `ops_analytics.js` makes
+them one lot under the dry UID (each farm UID points at it), so wet, dry
+and bucked weights add up on the dashboard. Each Take Down is still held
+or released on its own (one On hold card each); the package's starting
+weight counts only the released ones.
+
 **Bucking queue.** On-Stem Flower lists what's ready to buck
 (`loadBuckingQueue` in `ops_data.js`) in the order a manager sets with ▲ ▼
 / Top. The order is one shared `operations_forms` row (`station_key:

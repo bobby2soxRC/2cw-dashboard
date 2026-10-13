@@ -270,5 +270,26 @@ check('total exceptions', exc.length, 1);
   check('its bucked output does too', A.rootUid(al, 'BUCK0001') === 'FARM0001', true);
 }
 
+// Several farm packages of one strain taken down into one new dry UID (a
+// Metrc merge) are one lot from then on: wet, dry and bucked all add up
+// under the dry UID instead of landing on whichever farm package was last.
+{
+  const st = {
+    intake_wet: [{ id: 'i1', date: '2026-10-01', sourceUid: 'FARMA001', strain: 'Gelato #41', totalWetLb: 306 },
+                 { id: 'i2', date: '2026-10-01', sourceUid: 'FARMA002', strain: 'Gelato #41', totalWetLb: 1732.5 }],
+    dry_check: [{ id: 'd1', date: '2026-10-08', incomingUid: 'FARMA001', sourceUid: 'DRYMERGE5', strain: 'Gelato #41', wetIntakeLb: 306, dryWeightLb: 87, result: 'pass' },
+                { id: 'd2', date: '2026-10-08', incomingUid: 'FARMA002', sourceUid: 'DRYMERGE5', strain: 'Gelato #41', wetIntakeLb: 1732.5, dryWeightLb: 548, result: 'pass' }],
+    buck: [{ id: 'b1', date: '2026-10-10', sourceUid: 'DRYMERGE5', strain: 'Gelato #41', startingDryLb: 635, buckedFlowerLb: 500, trimLb: 60, stemLb: 70 }]
+  };
+  const al = A.buildAliasMap(st);
+  check('merged farm packages point at the dry UID', [A.rootUid(al, 'FARMA001'), A.rootUid(al, 'FARMA002'), A.rootUid(al, 'DRYMERGE5')], ['DRYMERGE5', 'DRYMERGE5', 'DRYMERGE5']);
+  const ls = A.buildLots(st, '2026-10-13');
+  const g = ls.filter((l) => l.strain === 'Gelato #41');
+  check('…and make one lot', g.length, 1);
+  check('its wet weight is both intakes', g[0].stages.intake_wet.outputLb, 2038.5);
+  check('its dry weight is both take downs', g[0].stages.dry_check.outputLb, 635);
+  check('bucking lands on the same lot', g[0].stages.buck.inputLb, 635);
+}
+
 console.log(failures ? `\n${failures} test(s) failed\n` : '\nAll tests passed\n');
 process.exit(failures ? 1 : 0);

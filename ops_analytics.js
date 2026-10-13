@@ -29,11 +29,24 @@ const dayOf = (r) => String(r.date || r.submittedAt || '').slice(0, 10);
 // the tag it created, which is the link we follow back to the root.
 function buildAliasMap(stages) {
   const alias = {};
-  // Take Down retags the farm package as a new on-stem package.
+  // Take Down retags the farm package as a new on-stem package. Usually
+  // one farm package → one on-stem tag, and the lot keeps the farm UID.
+  // When several farm packages (same strain, different intakes) are taken
+  // down into one on-stem tag — a Metrc merge — they become one lot under
+  // the on-stem tag: each farm UID points at it instead.
+  const farmsInto = {};
   (stages.dry_check || []).forEach((r) => {
     const src = normUid(r.incomingUid);
     const n = normUid(r.sourceUid);
-    if (src && n && n !== src) alias[n] = src;
+    if (src && n && n !== src) (farmsInto[n] = farmsInto[n] || new Set()).add(src);
+  });
+  (stages.dry_check || []).forEach((r) => {
+    const src = normUid(r.incomingUid);
+    const n = normUid(r.sourceUid);
+    if (src && n && n !== src) {
+      if (farmsInto[n].size > 1) alias[src] = n;
+      else alias[n] = src;
+    }
     // A part released off a held Take Down under a new tag is still this lot.
     (r.releases || []).forEach((x) => {
       const p = normUid(x.uid);

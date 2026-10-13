@@ -166,6 +166,8 @@
     leftLb: { en: 'Remaining', es: 'Restante' },
     inProgress: { en: 'being bucked', es: 'desvarándose' },
     partOf: { en: 'part of …{uid}', es: 'parte de …{uid}' },
+    fromFarm: { en: 'from …{uid}', es: 'de …{uid}' },
+    merged: { en: '{n} intakes combined', es: '{n} recepciones combinadas' },
     up: { en: 'Move up', es: 'Subir' },
     down: { en: 'Move down', es: 'Bajar' },
     top: { en: 'Top', es: 'Arriba' },
@@ -236,13 +238,18 @@
     if (error) { console.error('loadDowns', error); return null; }
     return data || [];
   }
+  // Each held Take Down is its own card — several farm packages can be
+  // taken down into one dry UID, and each is held or released on its own.
+  // A farm package counts once (its newest Take Down).
   function heldList() {
     const seen = new Set();
     return downs.filter((r) => {
-      const uid = upper((r.fields || {}).sourceUid);
-      if (!uid || seen.has(uid)) return false;
-      seen.add(uid);
-      return HELD_RESULTS.includes(r.fields.result);
+      const f = r.fields || {};
+      const uid = upper(f.sourceUid);
+      const key = `${uid}|${upper(f.incomingUid) || r.id}`;
+      if (!uid || seen.has(key)) return false;
+      seen.add(key);
+      return HELD_RESULTS.includes(f.result);
     }).sort((a, b) => String(a.work_date || '').localeCompare(String(b.work_date || '')));
   }
   // Every tag a Take Down or a release already uses — a part needs a new one.
@@ -292,7 +299,7 @@
         </div>`;
       return `<div class="q-row"><div class="q-n">${i + 1}</div>
         <div class="q-main"><div class="q-strain">${esc(p.strain || '—')}${abbr ? ` · ${esc(abbr)}` : ''}${p.draftId ? `<span class="q-tag">${esc(t(L.inProgress))}</span>` : ''}</div>
-          <div class="q-uid">${esc(p.sourceUid)}${p.releasedFrom ? ' · ' + esc(t(L.partOf).replace('{uid}', shortUid(p.releasedFrom))) : ''}</div></div>
+          <div class="q-uid">${esc(p.sourceUid)}${p.releasedFrom ? ' · ' + esc(t(L.partOf).replace('{uid}', shortUid(p.releasedFrom))) : ''}${(p.farmUids || []).length > 1 ? ' · ' + esc(t(L.merged).replace('{n}', p.farmUids.length)) : ''}</div></div>
         <div class="q-lbs">
           <div class="q-lb"><span class="k">${esc(t(L.initLb))}</span>${p.unbuckedLb == null ? '—' : lbTxt(p.unbuckedLb)}</div>
           <div class="q-lb"><span class="k">${esc(t(L.pulledLb))}</span>${lbTxt(p.pulledLb || 0)}</div>
@@ -351,7 +358,7 @@
       return `
       <div class="batch-card" data-id="${esc(r.id)}">
         <div><div class="bname">${esc(f.strain || r.strain || '')}</div>
-          <div class="bmeta">…${esc(shortUid(f.sourceUid))} · ${esc(r.work_date || '')}${esc(weight)}</div>
+          <div class="bmeta">…${esc(shortUid(f.sourceUid))}${f.incomingUid ? ` (${esc(t(L.fromFarm).replace('{uid}', shortUid(f.incomingUid)))})` : ''} · ${esc(r.work_date || '')}${esc(weight)}</div>
           ${why(f.result)}
           ${rels.map((x) => `<div class="bmeta rel-done">${esc(t(L.relDone).replace('{lb}', lbTxt(x.lb)).replace('{uid}', shortUid(x.uid)).replace('{date}', String(x.at || '').slice(0, 10)))}</div>`).join('')}</div>
         ${!canRelease || releasingId === r.id ? '' : `<button type="button" class="btn btn-gold" data-release="${esc(r.id)}">${esc(t(L.release))}</button>`}
