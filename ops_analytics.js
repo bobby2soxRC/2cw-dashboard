@@ -360,7 +360,8 @@ function crewThroughput(stages, filter) {
 }
 
 // The per-employee crew log, flattened across every station that has a
-// `crew` lineitems field (plus hand_trim's and smalls_trim's per-bag weighing worksheets, which
+// `crew` lineitems field (plus hand_trim's and smalls_trim's per-bag weighing worksheets and
+// Bucking's by-person log, which
 // already ties an employee number to a batch the same way). This is the seam
 // for a future payroll/timeclock join: match employeeNo + date here against
 // employeeNo + date in a timeclock export to get real labor cost per batch —
@@ -389,6 +390,16 @@ function crewLaborLog(stages, filter) {
           // record the touch so the batch/employee link exists; hours stays
           // null until the worksheet captures time, or payroll supplies it.
           out.push({ employeeNo: emp, hours: null, date: dayOf(r), stationKey: station.key,
+                     stationTitle: station.title, uid: r.sourceUid || '', batch: '', strain: r.strain || '' });
+        });
+      }
+      // Bucking's by-person log: an employee # or, for someone without one,
+      // a name — each on the day it was weighed.
+      if (station.key === 'buck') {
+        (r.bucked || []).forEach((w) => {
+          const emp = String(w.who || '').trim();
+          if (!emp) return;
+          out.push({ employeeNo: emp, hours: null, date: w.day || dayOf(r), stationKey: station.key,
                      stationTitle: station.title, uid: r.sourceUid || '', batch: '', strain: r.strain || '' });
         });
       }

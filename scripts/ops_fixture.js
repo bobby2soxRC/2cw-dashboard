@@ -39,16 +39,16 @@ const stages = {
       boxes: [{ boxNo: '1', tareLb: 2, weight: 53 }, { boxNo: '2', tareLb: 2, weight: 53 }],
       wetIntakeLb: 310, dryWeightLb: 102, result: 'pass' }
   ],
-  // Bucking no longer mints a new UID when it finishes — the summary record
-  // (what buck_station.html writes when a batch closes, rolled up from many
-  // small employee/box submissions) stays tagged under the same dried-batch
-  // UID dry_check produced. See operations_stations.js's 'buck' entry.
+  // Bucking doesn't mint a new UID — the record stays tagged under the
+  // dried-batch UID dry_check produced. `bucked` is the by-person log (an
+  // employee #, or a name for someone without one). Big leaf and waste are
+  // the older paper-form fields, still counted in the flow.
   buck: [
     { id: 'b1', date: '2026-08-19', sourceUid: DRY_UID, strain: 'Lemon Cherry Gelato',
       startingDryLb: 102,
       buckedFlowerLb: 60, bigLeafLb: 22, stemLb: 16, wasteLb: 4,
       laborHours: 8, crewSize: 4,
-      crew: [{ employeeNo: '42', hours: 4 }, { employeeNo: '58', hours: 4 }] }
+      bucked: [{ who: '42', weightLb: 32, day: '2026-08-19' }, { who: 'Maria', weightLb: 28, day: '2026-08-20' }] }
   ],
   machine_trim: [
     { id: 'm1', date: '2026-08-22', sourceUid: DRY_UID, strain: 'Lemon Cherry Gelato',

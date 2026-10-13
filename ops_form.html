@@ -117,6 +117,20 @@
     .li-total .k{font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
     .li-total .v{font-family:'DM Mono',monospace;font-size:1.3rem;color:var(--accent)}
 
+    /* Running log (lineitems with entry: true): one entry bar, rows below. */
+    .entry-bar{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px}
+    .entry-in{flex:1 1 130px;min-width:0}
+    .entry-in .k{display:block;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+    .entry-add{flex:0 0 auto;min-width:96px;min-height:52px;background:var(--accent);color:#000;border:none;border-radius:10px;font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer}
+    .entry-in .req{color:var(--red);margin-left:3px}
+    .entry-msg{font-size:.8rem;color:var(--red);margin-top:8px;display:none}
+    .entry-table{margin-top:12px;font-family:'DM Mono',monospace;font-size:.9rem}
+    .entry-table td{padding:8px 8px 8px 0;border-bottom:1px solid var(--border)}
+    .entry-table td.at{color:var(--muted);font-size:.78rem;white-space:nowrap}
+    .entry-table tr.fresh td{color:var(--accent)}
+    .entry-table .li-del{min-height:40px}
+    .entry-empty{color:var(--muted);font-size:.85rem;margin-top:12px}
+
     .photo-wrap{display:flex;gap:12px;align-items:center}
     .photo-wrap img{width:72px;height:72px;object-fit:cover;border-radius:10px;border:1px solid var(--border);display:none}
 
@@ -251,7 +265,7 @@
       return wrap;
     }
 
-    if (f.t === 'lineitems') return buildLineItems(f, wrap);
+    if (f.t === 'lineitems') return f.entry ? buildEntryLog(f, wrap) : buildLineItems(f, wrap);
 
     if (f.t === 'check') {
       wrap.innerHTML = `<label class="check" for="f_${f.k}"><input type="checkbox" id="f_${f.k}">${t(f.l)}</label>` +
@@ -413,6 +427,151 @@
     return wrap;
   }
 
+  // A running log (`entry: true`, Bucking's boxes / bucked / trim): instead
+  // of a grid of empty rows, one entry bar with the row's columns and an Add
+  // button, and the rows logged so far underneath, newest first. Each row
+  // gets an id, the day and time, and who logged it, so two tablets on the
+  // same page merge their rows (mergeEntries) instead of the last save
+  // winning.
+  const EL = {
+    add:     { en: 'Add', es: 'Agregar' },
+    time:    { en: 'Time', es: 'Hora' },
+    none:    { en: 'Nothing logged yet.', es: 'Nada registrado todavía.' },
+    entry:   { en: 'entry', es: 'registro' },
+    entries: { en: 'entries', es: 'registros' },
+    remove:  { en: 'Remove this entry?', es: '¿Quitar este registro?' },
+    fill:    { en: 'Fill in:', es: 'Complete:' }
+  };
+  const entryRenderers = {};
+  function buildEntryLog(f, wrap) {
+    values[f.k] = [];
+    const cols = f.cols.filter((c) => c.t !== 'calc');
+    wrap.innerHTML = labelHtml(f) +
+      (f.hint ? `<div class="hint" style="margin-top:0;margin-bottom:10px">${t(f.hint)}</div>` : '') +
+      `<div class="entry-bar">` +
+      cols.map((c) => `<label class="entry-in"><span class="k">${t(c.l)}${c.req ? '<span class="req">*</span>' : ''}</span>` +
+        (c.t === 'number'
+          ? `<input type="number" id="e_${f.k}_${c.k}" inputmode="decimal" step="${c.step || 'any'}"${c.min !== undefined ? ` min="${c.min}"` : ''}>`
+          : `<input type="text" id="e_${f.k}_${c.k}"${c.inputmode ? ` inputmode="${c.inputmode}"` : ''}>`) +
+        `</label>`).join('') +
+      `<button type="button" class="entry-add" id="add_${f.k}">${t(EL.add)}</button></div>` +
+      `<div class="entry-msg" id="em_${f.k}"></div>` +
+      `<div class="li-scroll"><table class="li-table entry-table"><tbody id="li_${f.k}"></tbody></table></div>` +
+      `<div class="entry-empty" id="ee_${f.k}">${t(EL.none)}</div>` +
+      `<div class="li-total"><span class="k" id="lic_${f.k}"></span><span class="v" id="lit_${f.k}">0</span></div>`;
+
+    const inp = (c) => wrap.querySelector(`#e_${f.k}_${c.k}`);
+    const msg = wrap.querySelector(`#em_${f.k}`);
+    let freshId = null;
+
+    const render = () => {
+      const rows = values[f.k] || [];
+      const tbody = wrap.querySelector(`#li_${f.k}`);
+      tbody.innerHTML = '';
+      rows.slice().reverse().forEach((r) => {
+        const tr = document.createElement('tr');
+        if (r._id && r._id === freshId) tr.className = 'fresh';
+        const at = r.at ? new Date(r.at) : null;
+        const when = at ? ((r.day && r.day !== todayStr() ? new Date(`${r.day}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' : '') +
+          at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) : '';
+        tr.innerHTML = cols.map((c) => `<td>${escapeHtml(c.t === 'number' ? fmtNum(r[c.k], c.dp === undefined ? 2 : c.dp) : (r[c.k] ?? ''))}</td>`).join('') +
+          `<td class="at">${escapeHtml(when)}</td><td></td>`;
+        const del = document.createElement('button');
+        del.type = 'button'; del.className = 'li-del'; del.textContent = '×';
+        del.setAttribute('aria-label', t(UI.remove));
+        del.onclick = () => {
+          if (!confirm(t(EL.remove))) return;
+          const i = values[f.k].indexOf(r);
+          if (i > -1) values[f.k].splice(i, 1);
+          if (r._id) values._deleted = [...(values._deleted || []), r._id];
+          render(); recompute(); markDirty();
+        };
+        tr.lastChild.appendChild(del);
+        tbody.appendChild(tr);
+      });
+      // A numbered column (box #) suggests the next number, until someone
+      // types over it.
+      cols.filter((c) => c.autoInc && (!inp(c).value || inp(c).dataset.auto)).forEach((c) => {
+        const nums = rows.map((r) => Number(r[c.k])).filter(Number.isInteger);
+        inp(c).value = nums.length ? String(Math.max(...nums) + 1) : '';
+        inp(c).dataset.auto = '1';
+      });
+      wrap.querySelector(`#ee_${f.k}`).style.display = rows.length ? 'none' : 'block';
+      wrap.querySelector(`#lic_${f.k}`).textContent = `${rows.length} ${t(rows.length === 1 ? EL.entry : EL.entries)}`;
+    };
+    entryRenderers[f.k] = render;
+
+    const add = () => {
+      const row = {};
+      const short = [];
+      cols.forEach((c) => {
+        const raw = inp(c).value.trim();
+        row[c.k] = c.t === 'number' ? (raw === '' ? null : Number(raw)) : raw;
+        if (c.req && (raw === '' || (c.t === 'number' && !(Number(raw) > 0)))) short.push(c);
+      });
+      if (short.length) {
+        msg.textContent = `${t(EL.fill)} ${short.map((c) => t(c.l)).join(', ')}`;
+        msg.style.display = 'block';
+        inp(short[0]).focus();
+        return;
+      }
+      msg.style.display = 'none';
+      Object.assign(row, { _id: crypto.randomUUID(), day: todayStr(), at: new Date().toISOString(), by: owner });
+      values[f.k].push(row);
+      freshId = row._id;
+      cols.forEach((c) => { inp(c).value = ''; delete inp(c).dataset.auto; });
+      render(); recompute(); markDirty();
+      const next = cols.find((c) => !inp(c).value) || cols[0];
+      inp(next).focus();
+    };
+    wrap.querySelector(`#add_${f.k}`).onclick = add;
+    cols.forEach((c) => inp(c).addEventListener('input', () => { delete inp(c).dataset.auto; }));
+    // Enter moves to the next empty box, and adds once they're all filled.
+    cols.forEach((c) => inp(c).addEventListener('keydown', (ev) => {
+      if (ev.key !== 'Enter') return;
+      ev.preventDefault();
+      const empty = cols.find((x) => x.req && !inp(x).value.trim());
+      if (empty) inp(empty).focus(); else add();
+    }));
+
+    // hydrate() clears the tbody and values, then calls this once per row.
+    lineitemAdders[f.k] = (prefill) => { values[f.k].push({ ...prefill }); render(); };
+    render();
+    return wrap;
+  }
+
+  // Merges another tablet's rows into this page's running logs: rows it
+  // added appear here, rows it removed go away here. Returns true if
+  // anything changed. Plain fields this tablet hasn't touched since its
+  // last save take the saved value too, so stems typed on one tablet don't
+  // get blanked by another.
+  const entryFields = station.fields.filter((f) => f.t === 'lineitems' && f.entry);
+  const touched = new Set();
+  function mergeEntries(saved) {
+    if (!saved || !entryFields.length) return false;
+    const gone = new Set([...(values._deleted || []), ...(saved._deleted || [])]);
+    values._deleted = [...gone];
+    let changed = false;
+    entryFields.forEach((f) => {
+      const mine = (values[f.k] || []).filter((r) => !r._id || !gone.has(r._id));
+      const have = new Set(mine.map((r) => r._id));
+      const theirs = (saved[f.k] || []).filter((r) => r._id && !have.has(r._id) && !gone.has(r._id));
+      if (mine.length === (values[f.k] || []).length && !theirs.length) return;
+      values[f.k] = [...mine, ...theirs].sort((a, b) => String(a.at || '').localeCompare(String(b.at || '')));
+      entryRenderers[f.k]();
+      changed = true;
+    });
+    station.fields.forEach((f) => {
+      if (['calc', 'lineitems', 'photo'].includes(f.t) || touched.has(f.k)) return;
+      const v = saved[f.k];
+      if (v === undefined || v === null || v === '' || v === values[f.k]) return;
+      setFieldValue(f, v);
+      changed = true;
+    });
+    if (changed) { updateVisibility(); recompute(); }
+    return changed;
+  }
+
   // A worksheet row counts once someone typed into it — a column's default
   // (container type, today's date), a value carried down from the row above
   // (UID, strain, tare) or a calc result alone doesn't make it real.
@@ -528,13 +687,14 @@
     const onChange = () => {
       if (other) other.style.display = inp.value === '__other__' ? 'block' : 'none';
       values[f.k] = read();
+      touched.add(f.k);
       recompute();
       updateVisibility();
       markDirty();
     };
     inp.addEventListener('input', onChange);
     inp.addEventListener('change', onChange);
-    if (other) other.addEventListener('input', () => { values[f.k] = read(); recompute(); markDirty(); });
+    if (other) other.addEventListener('input', () => { values[f.k] = read(); touched.add(f.k); recompute(); markDirty(); });
 
     // Only the uid marked prefill: 'lookup' names the upstream package — Take
     // Down also has the on-stem UID, a brand-new tag nothing upstream knows.
@@ -599,6 +759,7 @@
   }
 
   function hydrate(fields) {
+    if (Array.isArray(fields._deleted)) values._deleted = fields._deleted;
     station.fields.forEach((f) => {
       if (f.t === 'calc' || f.t === 'photo') return;
       if (f.t === 'lineitems') {
@@ -688,7 +849,7 @@
   }
 
   function markDirty() {
-    if (!draftsOn || editMode) return;
+    if (!draftsOn || editMode || isClosed) return;
     // The "pages already open" note goes once they start on a new flavor.
     const b = document.getElementById('banner');
     if (b.dataset.openPages) { delete b.dataset.openPages; b.className = 'banner'; }
@@ -701,8 +862,18 @@
   }
 
   async function doAutosave() {
+    // A page with running logs reads the saved copy first and merges in
+    // whatever another tablet logged — and stops if that tablet already
+    // submitted it, rather than turning the record back into a draft.
+    if (entryFields.length) {
+      const saved = await getDraft(draftId);
+      if (saved && saved.status === 'submitted') { if (!submittedHere) closedElsewhere(); return; }
+      if (saved) mergeEntries(saved.fields || {});
+    }
+    const sentTouched = new Set(touched);
     const res = await saveDraft(draftId, draftPayload());
     if (res.ok) {
+      sentTouched.forEach((k) => touched.delete(k));
       autosaveEl.className = 'autosave saved';
       autosaveTxt.textContent = `${t(AS.saved)} ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
       localStorage.removeItem(mirrorKey());
@@ -712,6 +883,35 @@
       // Not reachable right now — try again shortly rather than losing the change.
       autosaveTimer = setTimeout(doAutosave, 8000);
     }
+  }
+
+  // Someone else submitted this page while it was open here.
+  const CE = { en: 'This page was submitted on another tablet — nothing more can be added. Pick an open page above or start a new one.',
+               es: 'Esta hoja se envió en otra tableta — ya no se puede agregar nada. Elija una hoja abierta arriba o empiece una nueva.' };
+  let isClosed = false;
+  let submittedHere = false;
+  function closedElsewhere() {
+    isClosed = true;
+    clearTimeout(autosaveTimer);
+    autosaveEl.style.display = 'none';
+    localStorage.removeItem(mirrorKey());
+    banner.className = 'banner error';
+    banner.textContent = t(CE);
+    document.getElementById('switcher').after(banner);
+    form.querySelectorAll('input, select, textarea, button').forEach((el) => { el.disabled = true; });
+    btn.disabled = true;
+  }
+
+  // While a page with running logs is open, pick up the other tablets'
+  // rows every 15 seconds (when nothing is waiting to save here).
+  async function pollEntries() {
+    if (!entryFields.length || !draftsOn || editMode || isClosed || pendingSubmits.length) return;
+    if (autosaveEl.classList.contains('saving') || autosaveEl.classList.contains('offline')) return;
+    const saved = await getDraft(draftId);
+    if (!saved) return;
+    if (saved.status === 'submitted') { if (!submittedHere) closedElsewhere(); return; }
+    mergeEntries(saved.fields || {});
+    if (station.dailySummary && SUM.date) loadSummary(SUM.date);
   }
 
   // ── Strain switcher ──────────────────────────────────────────────────────
@@ -787,6 +987,7 @@
     hint:   { en: 'Every smalls page for the day, in grams. Open pages included.', es: 'Todas las hojas de smalls del día, en gramos. Incluye hojas abiertas.' },
     emp:    { en: 'Employee #', es: 'N.º empl.' },
     total:  { en: 'Total g', es: 'Total g' },
+    totalLb:{ en: 'Total lbs', es: 'Total lbs' },
     lbs:    { en: 'lbs', es: 'lbs' },
     allEmp: { en: 'Total', es: 'Total' },
     none:   { en: 'Nothing weighed out yet for this day.', es: 'Aún no hay nada pesado para este día.' },
@@ -796,7 +997,13 @@
   async function loadSummary(date) {
     SUM.date = date;
     const req = SUM.req = (SUM.req || 0) + 1;
-    const rows = await listToday(date);
+    // Rows stamped with their own day (`dateCol`) can belong to a page
+    // started days earlier, so look back over the pages from the last few
+    // weeks rather than only the ones dated that day.
+    const cfg = station.dailySummary;
+    const rows = cfg.dateCol
+      ? await listStationRange(station.key, shiftDate(date, -45), date)
+      : await listToday(date);
     if (SUM.req !== req) return;   // a newer load was started meanwhile
     SUM.rows = rows.filter((r) => r.station_key === station.key);
     renderSummary();
@@ -822,12 +1029,16 @@
     // Pages for the day: saved rows, with this page swapped for its live values.
     const pages = SUM.rows.filter((r) => r.id !== draftId)
       .map((r) => ({ id: r.id, status: r.status, f: r.fields || {}, strain: r.strain || (r.fields || {}).strain }));
-    if ((values.date || todayStr()) === SUM.date) pages.push({ id: draftId, status: editMode ? 'submitted' : 'draft', f: values, strain: values.strain, cur: true });
-    const used = pages.filter((p) => (p.f[cfg.lines] || []).some((r) => num(r[cfg.valueCol]) > 0) || p.cur);
+    if (cfg.dateCol || (values.date || todayStr()) === SUM.date) pages.push({ id: draftId, status: editMode ? 'submitted' : 'draft', f: values, strain: values.strain, cur: true });
+    const onDay = (r) => !cfg.dateCol || String(r[cfg.dateCol] || '') === SUM.date;
+    const used = pages.filter((p) => (p.f[cfg.lines] || []).some((r) => onDay(r) && num(r[cfg.valueCol]) > 0) || p.cur);
     used.sort((a, b) => String(a.strain || '').localeCompare(String(b.strain || '')));
 
-    const grid = {};   // emp -> page id -> grams
-    used.forEach((p) => (p.f[cfg.lines] || []).forEach((r) => {
+    // Grams (Smalls) or pounds (Bucking).
+    const inLb = cfg.unit === 'lb';
+    const dp = inLb ? 2 : 0;
+    const grid = {};   // emp -> page id -> grams (or lbs)
+    used.forEach((p) => (p.f[cfg.lines] || []).filter(onDay).forEach((r) => {
       const emp = String(r[cfg.empCol] || '').trim();
       const g = num(r[cfg.valueCol]);
       if (!emp || !g) return;
@@ -836,7 +1047,7 @@
     }));
     const emps = Object.keys(grid).sort((a, b) => (Number(a) - Number(b)) || a.localeCompare(b));
 
-    const head = `<div class="sum-head"><div><h2>${t(SM.title)}</h2><div class="hint">${t(SM.hint)}</div></div>` +
+    const head = `<div class="sum-head"><div><h2>${t(cfg.title || SM.title)}</h2><div class="hint">${t(cfg.hint || SM.hint)}</div></div>` +
       `<input type="date" id="sum-date" value="${escapeAttr(SUM.date)}"></div>`;
     if (!emps.length) {
       box.innerHTML = head + `<div class="sum-empty">${t(SM.none)}</div>`;
@@ -845,14 +1056,15 @@
       const colTot = (p) => emps.reduce((a, e) => a + (grid[e][p.id] || 0), 0);
       const empTot = (e) => Object.values(grid[e]).reduce((a, g) => a + g, 0);
       const all = emps.reduce((a, e) => a + empTot(e), 0);
-      box.innerHTML = head + `<div class="li-scroll"><table class="sum-table"><thead><tr><th>${t(SM.emp)}</th>` +
+      const lbCol = (g) => inLb ? '' : `<td class="tot">${fmtNum(g / G_PER_LB, 2)}</td>`;
+      box.innerHTML = head + `<div class="li-scroll"><table class="sum-table"><thead><tr><th>${t(cfg.empLabel || SM.emp)}</th>` +
         used.map((p) => `<th class="${p.cur ? 'cur' : ''}">${escapeHtml(p.strain || t(SW.untitled))}<br>${escapeHtml(uid4(p))}${p.status === 'draft' ? ` · ${t(SM.open)}` : ''}</th>`).join('') +
-        `<th class="tot">${t(SM.total)}</th><th class="tot">${t(SM.lbs)}</th></tr></thead><tbody>` +
+        `<th class="tot">${t(inLb ? SM.totalLb : SM.total)}</th>${inLb ? '' : `<th class="tot">${t(SM.lbs)}</th>`}</tr></thead><tbody>` +
         emps.map((e) => `<tr><td>${escapeHtml(e)}</td>` +
-          used.map((p) => grid[e][p.id] ? `<td>${fmtNum(grid[e][p.id], 0)}</td>` : '<td class="zero">·</td>').join('') +
-          `<td class="tot">${fmtNum(empTot(e), 0)}</td><td class="tot">${fmtNum(empTot(e) / G_PER_LB, 2)}</td></tr>`).join('') +
-        `</tbody><tfoot><tr><td>${t(SM.allEmp)}</td>` + used.map((p) => `<td>${fmtNum(colTot(p), 0)}</td>`).join('') +
-        `<td class="tot">${fmtNum(all, 0)}</td><td class="tot">${fmtNum(all / G_PER_LB, 2)}</td></tr></tfoot></table></div>`;
+          used.map((p) => grid[e][p.id] ? `<td>${fmtNum(grid[e][p.id], dp)}</td>` : '<td class="zero">·</td>').join('') +
+          `<td class="tot">${fmtNum(empTot(e), dp)}</td>${lbCol(empTot(e))}</tr>`).join('') +
+        `</tbody><tfoot><tr><td>${t(SM.allEmp)}</td>` + used.map((p) => `<td>${fmtNum(colTot(p), dp)}</td>`).join('') +
+        `<td class="tot">${fmtNum(all, dp)}</td>${lbCol(all)}</tr></tfoot></table></div>`;
     }
     document.getElementById('sum-date').addEventListener('change', (ev) => { if (ev.target.value) loadSummary(ev.target.value); });
   }
@@ -886,6 +1098,18 @@
     banner.className = 'banner';
     form.querySelectorAll('.field.invalid').forEach((e) => e.classList.remove('invalid'));
 
+    // Pull in the other tablets' last rows before closing the page out.
+    if (entryFields.length && draftsOn && !editMode) {
+      const saved = await getDraft(draftId);
+      if (saved && saved.status === 'submitted') { closedElsewhere(); return; }
+      if (saved && mergeEntries(saved.fields || {})) {
+        banner.className = 'banner warn';
+        banner.textContent = t({ en: 'Rows from another tablet were just added — check the totals, then submit again.',
+                                 es: 'Se acaban de agregar filas de otra tableta — revise los totales y envíe de nuevo.' });
+        return;
+      }
+    }
+
     const missing = station.fields.filter((f) => {
       if (!f.req || f.t === 'calc') return false;
       if (f.showIf && !f.showIf(values)) return false;
@@ -905,9 +1129,11 @@
     btn.disabled = true;
     btn.textContent = t(UI.submitting);
     clearTimeout(autosaveTimer);
+    submittedHere = true;
 
     // Drop empty worksheet rows before sending.
     const payload = { ...values };
+    delete payload._deleted;
     station.fields.filter((f) => f.t === 'lineitems').forEach((f) => {
       payload[f.k] = (payload[f.k] || []).filter((r) => rowHasData(f, r));
     });
@@ -980,6 +1206,7 @@
 
     btn.disabled = false;
     btn.textContent = t(UI.submit);
+    if (!result.ok) submittedHere = false;
 
     if (result.ok) {
       banner.className = result.queued ? 'banner warn' : 'banner success';
@@ -1021,6 +1248,7 @@
     setTimeout(() => { location.href = `/ops_form.html?station=${station.key}`; }, 1200);
   }
   window.addEventListener('online', attemptPendingSubmit);
+  if (entryFields.length) setInterval(pollEntries, 15000);
   setInterval(attemptPendingSubmit, 20000);
 
   // Photo downscale — same approach as the field forms, kept local so this page

@@ -64,6 +64,25 @@ async function listOpenDrafts(stationKey) {
   return data || [];
 }
 
+// Every form on one station dated between two days (YYYY-MM-DD, inclusive),
+// drafts and submitted — the daily summary for a station whose pages run
+// over several days.
+async function listStationRange(stationKey, fromDate, toDate) {
+  const client = getClient();
+  if (!client) return [];
+  const { data, error } = await client.from(TABLE).select('*')
+    .eq('station_key', stationKey).gte('work_date', fromDate).lte('work_date', toDate)
+    .order('work_date', { ascending: false });
+  if (error) { console.error('listStationRange', error); return []; }
+  return data || [];
+}
+
+const shiftDate = (date, days) => {
+  const d = new Date(`${date}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+};
+
 // One draft by id, for `?draft=<id>` deep links (what makes cross-device
 // resume work — the id is the only state that needs to travel).
 async function getDraft(id) {

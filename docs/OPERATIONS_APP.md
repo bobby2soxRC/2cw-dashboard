@@ -12,8 +12,6 @@ the existing Operations Hub — same login, same Netlify deploy.
 |---|---|
 | `operations.html` | Station picker, grouped by department, with "continue" chips for your open drafts |
 | `ops_form.html` | The form for every station, rendered from the schema, with autosave + resume |
-| `buck_station.html` | Bucking's own 4-tab page (Today / Batches / Employee / Historical) — see below, doesn't use `ops_form.html` |
-| `buck_data.js` | Bucking's data layer — submissions, boxes, batch close-out. Reuses `operations_forms`, no schema changes |
 | `labor_log.html` | Labor Log — people's hours (Connecteam roster) against UIDs, split across several UIDs when needed — see below |
 | `master_schedule.html` | Master Schedule — projects, their responsibilities and people, UIDs, and the day/week work schedule (replaced `schedule.html`) — see below |
 | `operations_today.html` | Live board — every form in progress or finished today, for anyone with view access |
@@ -50,7 +48,7 @@ they're filled in per intake afterwards from Harvest Intakes. Take Down (station
 boxes the dried material under a new on-stem package UID. Take Down's
 `incomingUid` pulls strain/farm license/CID/wet weight from the intake record, and
 `ops_analytics` aliases the on-stem UID back to the farm UID so it stays one
-lot. Bucking opens a batch for every Take Down released to bucking.
+lot. Bucking's page for a lot starts from that on-stem UID.
 
 Harvest (`harvest`) is the step before Wet Intake and is built the same
 way: one form per truck load, a worksheet row per group of bins/bags with
@@ -257,63 +255,52 @@ last 4 of the Metrc tag and bucking fills in the dry weight the post-dry check
 recorded. Every stage totals its own outputs and shows the variance against
 what went in, live, while the operator is still standing at the scale.
 
-## Bucking — a different shape from every other station
+## Bucking
 
-Every other station is one record per work order: fill out a form, submit
-it, done. Bucking isn't, because the real floor doesn't work that way —
-several strains get bucked at once by a rotating crew, a batch can span
-several days, and the crew needs to log a scale reading the instant it
-happens, not fill out a form at the end of a shift. So Bucking gets its own
-page, `buck_station.html` (linked via `customHref` on the `buck` entry in
-`operations_stations.js` instead of `ops_form.html`), with four tabs:
+Bucking (`buck`) is built like Smalls: one page per on-stem UID (flavor), on
+`ops_form.html` with `sharedDay: true`, so the switcher at the top lists
+every open bucking page from anyone, plus "+ New flavor". A batch can take
+several days; an older page stays in the switcher (with its start date)
+until it's submitted. Type the last 4 of the on-stem tag and the strain and
+**dry unbucked weight** come in from Take Down (`PREFILL_MAP.buck`).
 
-- **Today** — a quick-entry bar (batch, employee #, box #, weight) team
-  leads use all day, plus a live roster grid — employees × strains, exactly
-  the paper "Miercoles" tally sheet — built automatically from every
-  submission, not filled in by hand.
-- **Batches** — pick a batch (the on-stem UID a Take Down already produced;
-  Bucking never creates one, just watches for `dry_check` "pass" records
-  with no closing record yet) to see every submission against it, log
-  starting weight / waste / stems / big leaf / A+ / A / B trim **per box**,
-  and close it out when done.
-- **Employee** — one person's production over a date range.
-- **Historical** — everything, filterable by date / strain / UID.
+The page has three running logs — `lineitems` with `entry: true`: an entry
+bar (the row's boxes plus Add; Enter moves to the next box and adds once
+they're filled), and the rows logged so far underneath, newest first:
+- `boxes` — each box taken off the dry unbucked weight: box # (counts up
+  by itself) and lbs. Totals to `startingDryLb`, and "Dry Unbucked Left" is
+  the Take Down weight minus that.
+- `bucked` — bucked flower by person: `who` is the employee #, or a name for
+  someone without one, and lbs. Totals to `buckedFlowerLb`.
+- `trim` — trim weighed during the batch, lbs. Totals to `trimLb`.
 
-**No new schema, no new Supabase project changes.** This reuses the same
-`operations_forms` table as everything else (see `buck_data.js`), just with
-station keys of its own instead of the one-record-per-form shape:
+Then at close-out the stems (`stemLb`, "Palo" in Spanish, required) and the
+summary: total out (bucked + trim + stems), loss ("Podrido") in lbs and %,
+and bucked yield %. Submit closes the batch. The record keeps the old field
+names, so Machine Trim's prefill (`buckedFlowerLb`), the yield calc and the
+dashboard read it as before. Bucking doesn't mint a UID: the record stays
+under the on-stem tag, and that's what Machine Trim looks up.
 
-- `buck_submission` — insert-only. One row per scale trip: employee, batch,
-  box, weight, timestamp. This is the log the roster and history read.
-- `buck_box` — one row per (batch, box #), **patched, not replaced**, as
-  different fields get filled in at different times by different people.
-  Every save is read-merge-write client-side, so submitting just the waste
-  weight later never blanks out the starting weight someone already logged.
-- `buck_batch_close` — insert-only marker that a batch is done.
+Each logged row carries `_id`, `day`, `at` and `by`. That's what lets
+several tablets work one page: before every autosave, every 15 seconds,
+and before Submit, the page reads the saved copy and merges in rows another
+tablet added (and drops rows it removed, kept in `_deleted`). Plain fields
+(strain, stems, …) this tablet hasn't changed since its last save take the
+saved value. If another tablet already submitted the page, this one locks
+instead of turning the record back into a draft.
 
-Closing a batch also writes a normal `station_key: 'buck'` record — the
-rolled-up totals from every submission and box against it, in the exact
-same field shape the OLD single-form Bucking used (`startingDryLb`,
-`buckedFlowerLb`, `bigLeafLb`, `stemLb`, `wasteLb`, plus new `aPlusTrimLb` /
-`aTrimLb` / `bTrimLb`). That's deliberate: Machine Trim's prefill, the
-yield/variance calc, and the dashboard all keep reading `buck` exactly like
-before — they have no idea the data came from many small submissions
-instead of one big form. **Bucking does not mint a new UID when it
-finishes** — the summary record stays tagged under the same UID Post-Dry
-Check produced, and that's what an operator types in at Machine Trim.
+The daily summary under the form (`dailySummary` with `dateCol: 'day'`,
+`unit: 'lb'`) is person × flavor for one day, in lbs, counting only rows
+weighed that day — so a three-day batch shows up on each of its days.
+Bucking's by-person rows also feed `crewLaborLog` (a touch, no hours; hours
+come from the Labor Log).
 
-**Works offline too.** Quick-entry, box saves, and closing a batch all queue
-locally (`localStorage`, key `2cw_buck_queue`) on any write failure and
-retry when the connection comes back — same idea as the rest of the app's
-offline queue, just pointed at Supabase directly instead of the Netlify
-function the old single-form queue uses. The tricky part was keeping the
-box merge-safety guarantee across a dropped connection: a queued box save
-doesn't store a pre-merged row, it stores "retry this exact call" — so
-whenever it actually runs (now or after reconnecting), it re-reads
-whatever's really on the server at that moment and merges into *that*,
-never stale or guessed data. A submission made offline shows up on the
-Today roster immediately too (merged in locally from the queue until its
-real row lands), so an operator isn't left wondering whether it took.
+Older records: the paper-form imports in `data/operations/buck.json` have
+big leaf, waste and A+/A/B trim. Those fields are off the form but still in
+the station's `flow`, so those records still balance. The earlier
+four-tab Bucking page (`buck_station.html`, `buck_data.js`, station keys
+`buck_submission` / `buck_box` / `buck_batch_close`) was removed on
+2026-10-13; it had no live rows.
 
 ## Things the forms do that the paper doesn't
 

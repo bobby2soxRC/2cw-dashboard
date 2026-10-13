@@ -96,13 +96,15 @@ check('bucking lbs per labor hour', crew.find((c) => c.key === 'buck').lbPerLabo
 console.log('\ncrew labor log (employee × batch, the payroll-join seam)');
 const laborLog = A.crewLaborLog(stages);
 const buckTouches = laborLog.filter((e) => e.stationKey === 'buck');
-check('two crew rows off the buck record', buckTouches.length, 2);
+check('two by-person rows off the buck record', buckTouches.length, 2);
+check('a bucker without a number is logged by name, on the day weighed', [buckTouches[1].employeeNo, buckTouches[1].date], ['Maria', '2026-08-20']);
 check('crew row carries the batch UID forward', buckTouches[0].uid, DRY_UID);
 check('hand-trim worksheet contributes touches with no hours yet', laborLog.some((e) => e.stationKey === 'hand_trim' && e.hours === null), true);
 
 const byEmp = A.crewLaborByEmployee(stages);
 const emp42 = byEmp.find((e) => e.employeeNo === '42');
-check('employee 42 shows 4 hours', emp42.hours, 4);
+// Bucking's by-person log has pounds, not hours (those come from the Labor Log).
+check('employee 42 (bucking) shows a touch, no hours', [emp42.hours, emp42.touches], [0, 1]);
 check('employee 42 touched one distinct batch', emp42.batchCount, 1);
 const emp79 = byEmp.find((e) => e.employeeNo === '79');
 check('employee 79 (hand-trim only) shows 0 logged hours, 1 touch', [emp79.hours, emp79.touches], [0, 1]);

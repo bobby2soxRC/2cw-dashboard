@@ -1,7 +1,7 @@
 // One-off: push the converted paper-form records (data/operations/{buck,hand_trim,
 // machine_trim}.json, produced by convert_intake_csvs.js) into the live Supabase
-// operations_forms table, so buck_station.html's Historical tab and
-// operations_dashboard.html actually show them (both prefer live Supabase data over
+// operations_forms table, so operations_dashboard.html actually shows them
+// (it prefers live Supabase data over
 // the local JSON fallback whenever config/supabase_config.js is filled in, which it is).
 //
 // Every inserted row is tagged owner_user='paper_import' (and updated_by too) so this
