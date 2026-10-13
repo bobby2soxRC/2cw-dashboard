@@ -387,35 +387,40 @@ const OPERATIONS_STATIONS = [
   // The take-down half of the paper log: the dried material comes down 5–10
   // days after intake, gets boxed and weighed, and goes into Metrc under a
   // new on-stem package UID. The key stays 'dry_check' (it was "Post-Dry
-  // Check") because Bucking opens a batch off every dry_check record with a
-  // 'pass' result, keyed on its sourceUid — which is the on-stem UID here.
+  // Check") because Bucking looks up dry_check records by their sourceUid —
+  // which is the on-stem UID here.
   // `incomingUid` is the farm package from Wet Intake; ops_analytics aliases
   // the on-stem UID back to it, so the dashboard sees one lot.
   {
     key: 'dry_check',
     dept: { en: 'Processing', es: 'Procesamiento' },
     title: { en: 'Take Down — Dry', es: 'Bajada — seca' },
-    desc: { en: 'Take dried material down off the stem racks — box it, weigh it, and tag the on-stem package for bucking.',
-            es: 'Baje el material seco de los racks — empáquelo en cajas, péselo y etiquete el paquete en tallo para desvarado.' },
+    desc: { en: 'Take dried material down off the stem racks — box it, weigh it, and tag the new dry package for bucking.',
+            es: 'Baje el material seco de los racks — empáquelo en cajas, péselo y etiquete el paquete seco nuevo para desvarado.' },
     color: 'blue',
     headline: 'dryWeightLb',
     fields: [
       F.date(),
-      { k: 'incomingUid', t: 'uid', req: true, prefill: 'lookup',
-        l: { en: 'Incoming Package UID — Farm', es: 'UID del paquete entrante — rancho' },
-        hint: { en: 'The farm package from Wet Intake. Type the last 4–5 to pull in the intake details.',
-                es: 'El paquete del rancho de la recepción húmeda. Escriba los últimos 4–5 para traer los datos de recepción.' } },
+      // Pick the room first, then the package from what's still drying
+      // there (`picker`: Wet Intakes with no Take Down yet, as "Strain -
+      // last 4"). "Not listed" falls back to typing the UID.
+      { k: 'dryRoom', t: 'select', ref: 'dryRooms', allowOther: true, req: true,
+        l: { en: 'Drying Room', es: 'Cuarto de secado' } },
+      { k: 'incomingUid', t: 'uid', req: true, prefill: 'lookup', picker: { from: 'intake_wet', room: 'dryRoom' },
+        l: { en: 'Package Drying', es: 'Paquete secando' },
+        // Shown under the dropdown once a package is picked (its full UID).
+        pickedLabel: { en: 'Intake UID', es: 'UID de recepción' },
+        hint: { en: 'Strain and last 4 of the intake package UID from Wet Intake. Pick it to pull in the intake details.',
+                es: 'Variedad y últimos 4 del UID del paquete de la recepción húmeda. Elíjalo para traer los datos de recepción.' } },
       { k: 'sourceUid', t: 'uid', req: true,
-        l: { en: 'Package UID — On Stem', es: 'UID del paquete — en tallo' },
-        hint: { en: 'The new Metrc tag for the dried, on-stem package. This is the batch Bucking will see.',
-                es: 'La nueva etiqueta Metrc del paquete seco en tallo. Este es el lote que verá Desvarado.' } },
+        l: { en: 'New Dry UID', es: 'UID nuevo — seco' },
+        hint: { en: 'The new Metrc tag for the dried package. This is the batch Bucking will see.',
+                es: 'La nueva etiqueta Metrc del paquete seco. Este es el lote que verá Desvarado.' } },
       { k: 'strain', t: 'select', ref: 'strains', allowOther: true, req: true, prefill: 'lookup',
         l: { en: 'Strain', es: 'Variedad (cepa)' } },
       { k: 'pid', t: 'select', ref: 'properties', allowOther: true, prefill: 'lookup',
         l: { en: 'Farm License', es: 'Licencia del rancho' } },
       { k: 'cid', t: 'select', ref: 'customers', allowOther: true, prefill: 'lookup', l: { en: 'Customer ID (CID)', es: 'ID de cliente (CID)' } },
-      { k: 'dryRoom', t: 'select', ref: 'dryRooms', allowOther: true, prefill: 'lookup',
-        l: { en: 'Dried In', es: 'Secado en' } },
       { k: 'completedBy', t: 'text', req: true,
         l: { en: 'Person Completing Form', es: 'Persona que llena el formulario' } },
       { k: 'weighmaster', t: 'text', req: true,
@@ -427,7 +432,7 @@ const OPERATIONS_STATIONS = [
         hint: { en: 'One row per box. Weight is the scale reading; the box tare is subtracted for you.',
                 es: 'Una fila por caja. El peso es la lectura de la báscula; la tara de la caja se resta automáticamente.' },
         cols: [
-          { k: 'boxNo', t: 'text', l: { en: 'Box #', es: 'Caja #' }, inputmode: 'numeric' },
+          { k: 'boxNo', t: 'rownum', l: { en: 'Box #', es: 'Caja #' } },
           { k: 'tareLb', t: 'number', l: { en: 'Tare (lbs)', es: 'Tara (lbs)' }, min: 0, step: 0.01 },
           { k: 'weight', t: 'number', l: { en: 'Weight (lbs)', es: 'Peso (lbs)' }, min: 0, step: 0.01 }
         ],
@@ -463,14 +468,19 @@ const OPERATIONS_STATIONS = [
           { v: 'yes', l: { en: 'Yes — done', es: 'Sí — hecho' } },
           { v: 'no', l: { en: 'Not yet', es: 'Todavía no' } }
         ] },
-      // Bucking only opens a batch for a 'pass' record — a normal take down
-      // goes straight to bucking, so it defaults there.
+      // Bucking warns on anything but a 'pass' record — a normal take down
+      // goes straight to bucking, so it defaults there. 'rework' is the
+      // quality hold (its old value, kept so older records still read);
+      // 'hold' (needs more dry time) is gone — that material just isn't
+      // taken down yet — but stays readable on old records.
       { k: 'result', t: 'select', req: true, def: 'pass',
         l: { en: 'Release', es: 'Liberación' },
+        hint: { en: 'A held package waits on Bucking → On hold until someone releases it there.',
+                es: 'Un paquete en espera queda en Desvarado → En espera hasta que alguien lo libere ahí.' },
         opts: [
           { v: 'pass', l: { en: 'Release to bucking', es: 'Liberar a desvarado' } },
-          { v: 'hold', l: { en: 'Hold — needs more dry time', es: 'En espera — necesita más secado' } },
-          { v: 'rework', l: { en: 'Rework — quality issue', es: 'Reproceso — problema de calidad' } }
+          { v: 'rework', l: { en: 'Hold — quality issue', es: 'En espera — problema de calidad' } },
+          { v: 'hold_order', l: { en: 'Hold — until needed for an order', es: 'En espera — hasta que se necesite para un pedido' } }
         ] },
       F.notes(), F.photo()
     ],
@@ -503,6 +513,9 @@ const OPERATIONS_STATIONS = [
     color: 'gold',
     headline: 'buckedFlowerLb',
     sharedDay: true,
+    // Take Downs held for quality or for an order wait on their own page
+    // until someone releases them (buck_hold.html).
+    links: [{ href: '/buck_hold.html', l: { en: 'On hold — release to bucking →', es: 'En espera — liberar a desvarado →' } }],
     // The daily tally: person × flavor for one day. Each logged row carries
     // the day it was weighed (`day`), so a batch that runs three days shows
     // only that day's pounds.
@@ -1065,10 +1078,16 @@ const OPERATIONS_STATIONS = [
 // field on that stage supplies each prefilled key.
 const PREFILL_MAP = {
   // Take Down looks up the farm package by its `incomingUid` (the only uid
-  // field there with prefill: 'lookup' — the on-stem UID is a new tag).
-  dry_check:   { from: 'intake_wet',   map: { strain: 'strain', pid: 'pid', cid: 'cid', dryRoom: 'dryRoom', wetIntakeLb: 'totalWetLb' } },
-  // Bucking looks up the on-stem package Take Down made.
-  buck:        { from: 'dry_check',    map: { strain: 'strain', dryUnbuckedLb: 'dryWeightLb' } },
+  // field there with prefill: 'lookup' — the on-stem UID is a new tag). Its
+  // room isn't mapped: it's picked first, to narrow the package list.
+  dry_check:   { from: 'intake_wet',   map: { strain: 'strain', pid: 'pid', cid: 'cid', wetIntakeLb: 'totalWetLb' } },
+  // Bucking looks up the on-stem package Take Down made (or a part released
+  // off a held one under its own tag), and warns when it's still on hold.
+  buck:        { from: 'dry_check',    map: { strain: 'strain', dryUnbuckedLb: 'unbuckedLb' },
+                 warn: (up) => (up.result && up.result !== 'pass'
+                   ? { en: 'This package is on hold at Take Down. Release it on the On hold page before bucking it.',
+                       es: 'Este paquete está en espera en la bajada. Libérelo en la página En espera antes de desvararlo.' }
+                   : null) },
   machine_trim:{ from: 'buck',         map: { strain: 'strain', inputBuckedLb: 'buckedFlowerLb' } },
   hand_trim:   { from: 'machine_trim', map: { strain: 'strain', startingBuckedLb: 'flowerALb' } }
 };

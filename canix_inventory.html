@@ -230,6 +230,25 @@ async function loadIntakeRooms() {
   }
 }
 
+// Farm package UIDs that have had a Take Down — Dry (station dry_check,
+// field incomingUid). Once the dried material is taken down the wet package
+// is done, but Canix keeps listing it until Metrc finishes it and the next
+// sync runs, so the Currently Drying view leaves these out itself.
+async function loadTakeDownUids() {
+  const client = getSupabaseClient();
+  if (!client) return [];
+  try {
+    const { data, error } = await client.from('operations_forms')
+      .select('fields').eq('station_key', 'dry_check').eq('status', 'submitted');
+    if (error) throw error;
+    return (data || []).map(r => String((r.fields || {}).incomingUid || '').toUpperCase().replace(/[^A-Z0-9]/g, ''))
+      .filter(u => u.length >= 4);
+  } catch (e) {
+    console.warn('Could not load take downs:', e);
+    return [];
+  }
+}
+
 // CID code → "Name: CID 012" label, from the admin panel's ref_codes table
 // (what the intake form's CID dropdown reads). Codes not in the table —
 // typed in via the form's "Other" — just show as entered.
@@ -258,6 +277,7 @@ let FACILITY_CONFIG = {};
 let CURRENT_STAGE = 'All';
 let CURRENT_PAGE = 'inventory'; // 'inventory' | 'forecast'
 let INTAKE_ROOMS = []; // [{ uid, dryRoom, cid }] from Harvest Intake — Wet forms, newest first
+let TAKE_DOWN_UIDS = []; // farm package UIDs (or their last 4–5) with a Take Down
 let CID_LABELS = {};   // CID code → display label (ref_codes)
 // Rows expanded in the drying view's tables, kept across re-renders.
 const OPEN_ROWS = { cid: new Set(), room: new Set() };
@@ -392,8 +412,28 @@ function isDrying(p) {
   return /^fresh cannabis plant$/i.test((p.item?.type?.name || '').trim());
 }
 
-function dryingPackages() {
+// Every Fresh Cannabis Plant package Canix lists, taken down or not.
+function freshPackages() {
   return visiblePackages().filter(isDrying);
+}
+
+// Fresh packages that have had a Take Down: an exact tag match, or a last
+// 4–5 that points at only one fresh package (the same rule as intakeForTag).
+function takenDownPackages() {
+  const fresh = freshPackages();
+  const tags = fresh.map(p => String(p.tag || '').toUpperCase());
+  const taken = new Set();
+  TAKE_DOWN_UIDS.forEach(u => {
+    if (tags.includes(u)) { taken.add(u); return; }
+    const hits = tags.filter(tag => tag.endsWith(u));
+    if (hits.length === 1) taken.add(hits[0]);
+  });
+  return fresh.filter(p => taken.has(String(p.tag || '').toUpperCase()));
+}
+
+function dryingPackages() {
+  const taken = new Set(takenDownPackages());
+  return freshPackages().filter(p => !taken.has(p));
 }
 
 function toLbs(pkg) {
@@ -433,7 +473,7 @@ function intakeForTag(tag) {
   const exact = INTAKE_ROOMS.find(i => i.uid === tag);
   if (exact) return exact;
   return INTAKE_ROOMS.find(i => i.uid.length >= 4 && i.uid.length < tag.length && tag.endsWith(i.uid) &&
-    dryingPackages().filter(p => String(p.tag || '').toUpperCase().endsWith(i.uid)).length === 1) || null;
+    freshPackages().filter(p => String(p.tag || '').toUpperCase().endsWith(i.uid)).length === 1) || null;
 }
 
 // Returns the drying room(s) (["1A"], or several if the intake lists more
@@ -490,6 +530,7 @@ function attachSubtabListeners() {
 
 function renderDrying() {
   const all = dryingPackages();
+  const takenCount = takenDownPackages().length;
   const pkgs = applySearch(all);
 
   // Capacity is a property of the rooms, so it's always computed from every
@@ -618,6 +659,7 @@ function renderDrying() {
   const sorted = [...pkgs].sort((a, b) => (a.packaged_date || '').localeCompare(b.packaged_date || ''));
   const listCard = `<div class="card">
     <div class="card-hd"><h2>Currently Drying</h2><div class="rollup"><b>${pkgs.length}</b> package(s)</div></div>
+    ${takenCount ? `<div class="note">${takenCount} package(s) already taken down (Take Down — Dry form) are left out — Canix still lists them until they're finished in Metrc and the next sync runs.</div>` : ''}
     ${!all.length ? '<div class="empty">Nothing drying right now. Fresh Cannabis Plant packages from Canix show up here as soon as they are created.</div>'
       : !pkgs.length ? '<div class="empty">No drying packages match the search.</div>'
       : `<div class="scroll"><table>
@@ -882,7 +924,7 @@ document.getElementById('pageTabs').querySelectorAll('button').forEach(btn => {
 
 async function load() {
   try {
-    const [inv, batches, cfg, meta, forecastInputs, intakeRooms, cidLabels] = await Promise.all([
+    const [inv, batches, cfg, meta, forecastInputs, intakeRooms, cidLabels, takeDownUids] = await Promise.all([
       fetch(INVENTORY_URL).then(r => r.json()),
       fetch(PLANT_BATCHES_URL).then(r => r.json()).catch(() => []),
       loadFacilityConfig(),
@@ -890,8 +932,10 @@ async function load() {
       loadForecastInputs(),
       loadIntakeRooms(),
       loadCidLabels(),
+      loadTakeDownUids(),
     ]);
     INTAKE_ROOMS = intakeRooms;
+    TAKE_DOWN_UIDS = takeDownUids;
     CID_LABELS = cidLabels;
     ALL_PACKAGES = inv;
     PLANT_BATCHES = batches;

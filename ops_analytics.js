@@ -34,6 +34,11 @@ function buildAliasMap(stages) {
     const src = normUid(r.incomingUid);
     const n = normUid(r.sourceUid);
     if (src && n && n !== src) alias[n] = src;
+    // A part released off a held Take Down under a new tag is still this lot.
+    (r.releases || []).forEach((x) => {
+      const p = normUid(x.uid);
+      if (p && n && p !== n) alias[p] = n;
+    });
   });
   (stages.buck || []).forEach((r) => {
     const src = normUid(r.sourceUid);
@@ -755,9 +760,12 @@ function exceptions(stages, asOf) {
   });
 
   (stages.dry_check || []).forEach((r) => {
+    // A quality hold ('rework') is flagged; a hold until an order needs it
+    // ('hold_order') is planned, so it isn't. 'hold' is on older records.
     if (r.result === 'hold' || r.result === 'rework') {
+      const why = r.result === 'rework' ? { en: 'quality issue', es: 'problema de calidad' } : { en: 'needs more dry time', es: 'necesita más secado' };
       out.push({ kind: 'dry_hold', stage: 'dry_check', date: dayOf(r), uid: r.sourceUid, strain: r.strain,
-                 detail: { en: `Held at post-dry check (${r.result})`, es: `Retenido en verificación post-secado (${r.result})` } });
+                 detail: { en: `Held at Take Down — ${why.en}`, es: `Retenido en la bajada — ${why.es}` } });
     }
   });
 

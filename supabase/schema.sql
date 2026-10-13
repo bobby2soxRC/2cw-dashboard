@@ -288,6 +288,13 @@ create unique index if not exists idx_app_users_pin_active on app_users (pin) wh
 create unique index if not exists idx_app_users_email_active on app_users (email) where active and email is not null;
 create index if not exists idx_app_users_reports_to on app_users (reports_to);
 
+-- Google sign-in (moving off PINs — see "Google sign-in" in
+-- docs/USER_ADMIN.md). The Supabase Auth user a person signs in to Google
+-- as; null until their account is linked. Only
+-- netlify/functions/google-login.js reads it, with the service role.
+alter table app_users add column if not exists auth_user_id uuid references auth.users(id) on delete set null;
+create unique index if not exists idx_app_users_auth_user on app_users (auth_user_id) where auth_user_id is not null;
+
 drop trigger if exists trg_touch_app_users on app_users;
 create trigger trg_touch_app_users
   before update on app_users

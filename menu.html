@@ -43,6 +43,12 @@
   .tb-btn.primary{background:#00c9a7;color:#04120e;border-color:#00c9a7;font-weight:700;margin-left:auto}
   .tb-btn.primary:hover{opacity:.88;color:#04120e}
   .updated-note{font-family:'DM Mono',monospace;font-size:10px;color:#5a6070;margin-left:auto}
+  .seg{display:flex;border:1.5px solid #2a2f42;border-radius:16px;overflow:hidden}
+  .seg button{background:#1e2333;color:#7b8099;border:0;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+  .seg button+button{border-left:1px solid #2a2f42}
+  .seg button.on{background:rgba(0,201,167,.18);color:#fff}
+  .seg button:disabled{opacity:.4;cursor:default}
+  .tb-group.muted{opacity:.4}
 
   .loading{display:flex;align-items:center;gap:10px;color:#7b8099;font-size:13px;padding:60px 24px;justify-content:center}
   .spinner{width:18px;height:18px;border:2px solid #2a2f42;border-top-color:#00c9a7;border-radius:50%;animation:spin .7s linear infinite}
@@ -153,6 +159,15 @@
   <div class="nav-brand">2CW <span>Menu</span></div>
   <div class="toolbar">
     <div class="tb-group">
+      <span class="tb-label">Source</span>
+      <div class="seg">
+        <button type="button" id="srcLive" onclick="setSource('live')">Live data</button>
+        <button type="button" id="srcSheet" onclick="setSource('sheet')" disabled title="Upload a KSS menu spreadsheet first">Spreadsheet</button>
+      </div>
+      <button class="tb-btn" id="uploadBtn" onclick="$('sheetFile').click()">⬆ Upload sheet</button>
+      <input type="file" id="sheetFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="uploadSheet(this.files[0]); this.value=''">
+    </div>
+    <div class="tb-group">
       <span class="tb-label">Warehouse</span>
       <div id="loc-chips" style="display:flex;gap:6px"></div>
     </div>
@@ -168,12 +183,12 @@
       <input type="range" min="0" max="20" step="1" value="1" id="minSlider" class="slider-input">
       <span class="slider-val" id="minVal">1</span>
     </div>
-    <div class="tb-group">
+    <div class="tb-group age-group" title="">
       <span class="tb-label">Days Old — Min</span>
       <input type="range" min="0" max="180" step="1" value="0" id="minAgeSlider" class="slider-input">
       <span class="slider-val" id="minAgeVal">0</span>
     </div>
-    <div class="tb-group">
+    <div class="tb-group age-group" title="">
       <span class="tb-label">Days Old — Max</span>
       <input type="range" min="0" max="180" step="1" value="180" id="maxAgeSlider" class="slider-input">
       <span class="slider-val" id="maxAgeVal">180</span>
@@ -258,18 +273,34 @@ async function probeAllAssets(){
 // Brands render in this fixed order regardless of what order menu.json lists them in.
 const BRAND_ORDER = ['Soma Rosa Farms', 'Howie Roll', 'Mendo'];
 
+// Two possible menus: LIVE_MENU from data/menu.json, SHEET_MENU built from an
+// uploaded KSS menu spreadsheet (kept in this browser's localStorage so it
+// survives a reload). The Source switch picks which one MENU points at.
+let LIVE_MENU = null;
+let SHEET_MENU = loadStoredSheetMenu();
+let menuSource = (localStorage.getItem('2cw_menu_source') === 'sheet' && SHEET_MENU) ? 'sheet' : 'live';
+
+function loadStoredSheetMenu(){
+  try{ return JSON.parse(localStorage.getItem('2cw_menu_sheet') || 'null'); }catch(e){ return null; }
+}
+
 async function loadAll(){
   $('global-loading').style.display = 'flex';
   $('global-error').style.display = 'none';
   $('page-outer').style.display = 'none';
   try{
-    const res = await fetch('/data/menu.json?t=' + Date.now());
-    if(!res.ok) throw new Error('HTTP ' + res.status);
-    MENU = await res.json();
-    MENU.brands.sort((a, b) => BRAND_ORDER.indexOf(a.brand) - BRAND_ORDER.indexOf(b.brand));
+    if(menuSource === 'live' || !LIVE_MENU){
+      try{
+        const res = await fetch('/data/menu.json?t=' + Date.now());
+        if(!res.ok) throw new Error('HTTP ' + res.status);
+        LIVE_MENU = await res.json();
+        LIVE_MENU.brands.sort((a, b) => BRAND_ORDER.indexOf(a.brand) - BRAND_ORDER.indexOf(b.brand));
+      }catch(err){
+        if(menuSource === 'live') throw err; // spreadsheet mode can still render without it
+      }
+    }
     await probeAllAssets();
-    initControls();
-    render();
+    applySource();
     $('global-loading').style.display = 'none';
     $('page-outer').style.display = 'block';
   }catch(err){
@@ -279,8 +310,76 @@ async function loadAll(){
   }
 }
 
+function applySource(){
+  MENU = menuSource === 'sheet' ? SHEET_MENU : LIVE_MENU;
+  $('srcLive').classList.toggle('on', menuSource === 'live');
+  $('srcSheet').classList.toggle('on', menuSource === 'sheet');
+  $('srcSheet').disabled = !SHEET_MENU;
+  $('srcSheet').title = SHEET_MENU ? `${SHEET_MENU.fileName} · uploaded ${SHEET_MENU.updated}` : 'Upload a KSS menu spreadsheet first';
+  // The spreadsheet has no batch dates, so the Days Old filters do nothing there.
+  document.querySelectorAll('.age-group').forEach(el => {
+    el.classList.toggle('muted', menuSource === 'sheet');
+    el.title = menuSource === 'sheet' ? 'Not available for spreadsheet menus (no batch dates)' : '';
+  });
+  if(!MENU) return;
+  initControls();
+  render();
+}
+
+function setSource(src){
+  if(src === 'sheet' && !SHEET_MENU) return;
+  menuSource = src;
+  try{ localStorage.setItem('2cw_menu_source', src); }catch(e){}
+  if(src === 'live' && !LIVE_MENU){ loadAll(); return; }
+  applySource();
+}
+
+let _xlsxPromise = null;
+function loadXLSX(){
+  if(window.XLSX) return Promise.resolve();
+  return _xlsxPromise ||= new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+    s.onload = resolve;
+    s.onerror = () => { _xlsxPromise = null; reject(new Error('Could not load the spreadsheet reader')); };
+    document.head.appendChild(s);
+  });
+}
+
+async function uploadSheet(file){
+  if(!file) return;
+  const btn = $('uploadBtn');
+  btn.textContent = '⏳ Reading…';
+  btn.disabled = true;
+  try{
+    await loadXLSX();
+    const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+    const tabs = {};
+    wb.SheetNames.forEach(name => {
+      tabs[name] = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, raw: false, defval: '' });
+    });
+    const uploaded = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD, same as menu.json
+    const menu = buildMenuFromSheet(tabs, uploaded);
+    menu.fileName = file.name;
+    menu.brands.sort((a, b) => BRAND_ORDER.indexOf(a.brand) - BRAND_ORDER.indexOf(b.brand));
+    const skipped = menu.unparsed.length;
+    delete menu.unparsed;
+    SHEET_MENU = menu;
+    try{ localStorage.setItem('2cw_menu_sheet', JSON.stringify(menu)); }catch(e){}
+    const n = menu.brands.reduce((t, b) => t + b.cards.reduce((u, c) => u + c.groups.reduce((v, g) => v + g.strains.length, 0), 0), 0);
+    setSource('sheet');
+    if(skipped) alert(`Loaded ${n} products from ${file.name}. ${skipped} line(s) weren't recognized and were left off.`);
+  }catch(err){
+    alert('Could not read that spreadsheet: ' + err.message);
+  }
+  btn.textContent = '⬆ Upload sheet';
+  btn.disabled = false;
+}
+
 function initControls(){
-  $('updated-note').textContent = 'Updated ' + MENU.updated;
+  $('updated-note').textContent = MENU.source === 'sheet'
+    ? `Spreadsheet · ${MENU.fileName} · ${MENU.updated}`
+    : 'Updated ' + MENU.updated;
   $('promoToggle').checked = showPromo;
   $('promoToggle').onchange = function(){
     showPromo = this.checked;
@@ -451,7 +550,7 @@ function renderCard(card, cls, brandName){
 
   const unitPrice = card.unitPrice != null ? `$${card.unitPrice.toFixed(2)}` : '—';
   const casePrice = card.casePrice != null ? `$${card.casePrice.toFixed(2)}` : '—';
-  const imgUrl = CARD_IMAGES[card.title + '|' + brandName];
+  const imgUrl = CARD_IMAGES[(card.imageTitle || card.title) + '|' + brandName];
   const imgHtml = imgUrl && ASSET_OK[imgUrl] ? `<div class="wm-card-img" style="background-image:url('${imgUrl}')"></div>` : '';
 
   return `<div class="wm-card ${cls}">
@@ -467,6 +566,170 @@ function renderCard(card, cls, brandName){
     <div class="wm-flavors-hdr">AVAILABLE FLAVORS</div>
     <div class="wm-flavors">${groupsHtml}</div>
   </div>`;
+}
+
+// ─── SPREADSHEET SOURCE ─────────────────────────────────────
+// Builds the same MENU shape as data/menu.json from a copy-paste of the KSS
+// Live storefront ("menu inventory.xlsx"): one tab per warehouse (tab name
+// contains "nor"/"so"), one product per line, e.g.
+//   NewHowie RollFlower: Eighth - 16ctHybridFlower 3.5g Hybrid Gastro Pop 16ct< 25 Cases27.77% THC*$5.50/unit$88.00/case
+// Sale items carry the crossed-out price too: "$18.00/unit$20.00 /unit- $2.00$144.00/case".
+// Everything else on the page (headers, "No POS Data", "Cases", footer) is ignored.
+const SHEET_LINE_RE = /^(?:New)?(Howie Roll|Soma Rosa|Mendo)(Concentrate|Flower|Pre-Roll|Vape|Edible)[^:]*:\s*(.+?)\s+-\s+(\d+)ct(?:Hybrid|Indica|Sativa|unknown)?(.+?)(<\s*\d+\s*Cases|In Stock)\s*([\d.]+)%\s*THC\*?\s*\$([\d.,]+)\/unit(?:\$[\d.,]+\s*\/unit\s*-\s*\$[\d.,]+)?\s*\$([\d.,]+)\/case$/i;
+const SHEET_BRANDS = { 'howie roll': 'Howie Roll', 'soma rosa': 'Soma Rosa Farms', 'mendo': 'Mendo' };
+
+// KSS only shows a stock band, not a count — use the band's floor so the
+// Min Cases slider still means "at least this many": < 5 → 1, < 10 → 5, …
+function sheetCasesFromBand(band){
+  if(/in stock/i.test(band)) return 50;
+  const n = +band.match(/\d+/)[0];
+  return { 5: 1, 10: 5, 25: 10, 50: 25 }[n] ?? Math.max(1, Math.round(n / 2));
+}
+
+function sheetLocKey(tabName){
+  const t = tabName.toLowerCase();
+  if(t.includes('nor') || t.includes('alameda')) return 'norcal';
+  if(t.includes('so') || t.includes('van nuys')) return 'socal';
+  return null;
+}
+
+// Description is e.g. "Flower 3.5g Hybrid Gastro Pop 16ct", "Preroll 0.5g Indica Sharpie 28pk",
+// "Preroll 0.5g Indica Zkittlez 10pk 5.0g", "Farms x Nameless Flower 3.5g Hybrid 8ct".
+function parseSheetDescription(desc){
+  const m = desc.match(/^(.*?)\s*(\d+(?:\.\d+)?)\s*g\s+(Hybrid|Indica|Sativa)\b\s*(.*)$/i);
+  if(!m) return null;
+  let [, kind, grams, type, rest] = m;
+  const pk = rest.match(/\b(\d+)\s*pk\b/i);
+  rest = rest.replace(/\s*\b\d+(?:\.\d+)?\s*(?:ct|pk|g)\b/gi, '').trim();
+  return {
+    kind: kind.trim(),
+    grams: +grams * (pk ? +pk[1] : 1),
+    type: type[0].toUpperCase() + type.slice(1).toLowerCase(),
+    strain: rest,
+  };
+}
+
+function sheetSizeLabel(g){
+  if(g <= 1) return '1G';
+  if(g <= 3.6) return '1/8';
+  if(g <= 5) return '5G';
+  if(g <= 14) return '14G';
+  return '28G';
+}
+
+// Same section names kss_transform.py gives the live menu, so card photos match.
+function sheetCardTitle(brand, category, format, kind, size){
+  const f = format.toLowerCase(), k = kind.toLowerCase();
+  if(category === 'Concentrate' && f.includes('all-in-one')) return 'All-In-One Vape';
+  if(category === 'Vape') return 'All-In-One Vape';
+  if(category === 'Concentrate' && f.includes('rosin')) return 'Live Rosin';
+  if(category === 'Concentrate' && f.includes('resin')) return 'Live Resin Sauce';
+  if(category === 'Pre-Roll'){
+    if(size === '1G') return 'Pre-Rolls — Single 1g';
+    if(size === '14G') return 'Pre-Roll Party Packs — 28ct';
+    if(size === '5G') return 'Pre-Roll 10-Pack';
+    return 'Pre-Roll Multipack';
+  }
+  if(category === 'Flower'){
+    if(brand === 'Howie Roll') return 'Premium Smalls';
+    if(brand === 'Mendo') return 'Indoor Flower';
+    // collab packs: "Soma Rosa" + "Farms x Nameless Flower"
+    if(k.includes(' x ')) return `${brand.replace(/ Farms$/, '')} ${kind.replace(/\s*flower$/i, '')}`;
+    return 'Flower';
+  }
+  return `${format} ${category}`.trim();
+}
+
+function buildMenuFromSheet(tabs, uploadedLabel){
+  // cards[cardKey] = {brand, title, size, unitPrice, casePrice, caseUnits, strains: {type|strain: {...}}}
+  const cards = new Map();
+  let matched = 0;
+  const locsSeen = new Set();
+  const unparsed = [];
+
+  for(const [tabName, rows] of Object.entries(tabs)){
+    const loc = sheetLocKey(tabName);
+    if(!loc) continue;
+    for(const row of rows){
+      for(const cell of row){
+        const line = String(cell ?? '').trim();
+        if(!/\/case$/i.test(line)) continue;
+        const m = line.match(SHEET_LINE_RE);
+        const d = m && parseSheetDescription(m[5]);
+        if(!d){ unparsed.push(line); continue; }
+        matched++;
+        locsSeen.add(loc);
+        const brand = SHEET_BRANDS[m[1].toLowerCase()];
+        const category = { concentrate: 'Concentrate', flower: 'Flower', 'pre-roll': 'Pre-Roll', vape: 'Vape', edible: 'Edible' }[m[2].toLowerCase()];
+        const caseUnits = +m[4];
+        const unitPrice = +m[8].replace(/,/g, '');
+        const casePrice = +m[9].replace(/,/g, '');
+        const size = sheetSizeLabel(d.grams);
+        const title = sheetCardTitle(brand, category, m[3], d.kind, size);
+        // collab packs like "Soma Rosa Farms x Nameless" have no strain after the type
+        const strain = d.strain || title;
+
+        const key = [brand, title, size, caseUnits, unitPrice].join('|');
+        if(!cards.has(key)) cards.set(key, { brand, title, size, unitPrice, casePrice, caseUnits, strains: new Map() });
+        const card = cards.get(key);
+        const sKey = d.type + '|' + strain;
+        if(!card.strains.has(sKey)) card.strains.set(sKey, { strain, type: d.type, thc: null, thcCases: -1, cases: { socal: 0, norcal: 0 } });
+        const s = card.strains.get(sKey);
+        const cases = sheetCasesFromBand(m[6]);
+        s.cases[loc] = Math.max(s.cases[loc], cases);
+        if(cases > s.thcCases){ s.thc = (+m[7]).toFixed(2) + '%'; s.thcCases = cases; }
+      }
+    }
+  }
+
+  if(!matched) throw new Error('No product lines found. Expected a copy of the KSS Live menu with a NorCal and a SoCal tab.');
+
+  const TYPE_ORDER = { Sativa: 0, Hybrid: 1, Indica: 2 };
+  const SIZE_ORDER = { '1G': 0, '1/8': 1, '5G': 2, '14G': 3, '28G': 4 };
+  const byBrand = new Map();
+  for(const c of cards.values()){
+    const byType = {};
+    for(const s of c.strains.values()){
+      (byType[s.type] ||= []).push({ strain: s.strain, thc: s.thc || '—', daysOld: null, cases: s.cases });
+    }
+    const groups = Object.keys(byType)
+      .sort((a, b) => (TYPE_ORDER[a] ?? 9) - (TYPE_ORDER[b] ?? 9))
+      .map(type => ({ type, strains: byType[type].sort((a, b) => a.strain.localeCompare(b.strain)) }));
+    if(!byBrand.has(c.brand)) byBrand.set(c.brand, []);
+    byBrand.get(c.brand).push({
+      title: c.title, size: c.size, unitPrice: c.unitPrice, caseUnits: c.caseUnits,
+      casePrice: c.casePrice, groups,
+    });
+  }
+
+  const brands = [];
+  for(const [brand, list] of byBrand){
+    // Same disambiguation as the live menu: two "Premium Smalls" cards become
+    // "(1/8)" and "(14G)". imageTitle is what CARD_IMAGES is keyed on.
+    const bySize = {};
+    list.forEach(c => (bySize[c.title] ||= new Set()).add(c.size));
+    list.forEach(c => { if(bySize[c.title].size > 1) c.title = `${c.title} (${c.size})`; c.imageTitle = c.title; });
+    // Anything still colliding (same format at two prices or pack counts) gets told apart by those.
+    const seen = {};
+    list.forEach(c => (seen[c.title] ||= []).push(c));
+    Object.values(seen).filter(g => g.length > 1).forEach(g => {
+      const packsDiffer = new Set(g.map(c => c.caseUnits)).size > 1;
+      g.forEach(c => { c.title += packsDiffer ? ` — ${c.caseUnits}ct case` : ` — $${c.unitPrice.toFixed(2)}`; });
+    });
+    list.sort((a, b) => a.title.localeCompare(b.title) || (SIZE_ORDER[a.size] ?? 9) - (SIZE_ORDER[b.size] ?? 9));
+    brands.push({ brand, brandColor: brand === 'Howie Roll' ? 'howie' : brand === 'Soma Rosa Farms' ? 'soma' : 'mendo', cards: list });
+  }
+
+  return {
+    updated: uploadedLabel,
+    source: 'sheet',
+    unparsed,
+    locations: {
+      socal: { label: 'SoCal', sublabel: 'Van Nuys' },
+      norcal: { label: 'NorCal', sublabel: 'Alameda' },
+    },
+    brands,
+  };
 }
 
 // ─── PDF PUBLISH ────────────────────────────────────────────

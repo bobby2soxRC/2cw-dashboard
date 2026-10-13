@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Bucking On Hold — 2CW Operations</title>
+<script>
+  (function(){ if (!sessionStorage.getItem('2cw_pin')) { window.location.replace('/index.html'); } })();
+</script>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0c0d0f">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0c0d0f;--surface:#13151a;--surface2:#181b21;--border:#1e2129;
+    --green:#3db87a;--gold:#d4a843;--blue:#5a9fd4;--purple:#9b7fd4;--red:#ef5350;
+    --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;--accent:var(--gold);
+  }
+  html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-text-size-adjust:100%}
+  body{padding-bottom:40px}
+
+  .hdr{min-height:calc(54px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:12px;position:sticky;top:0;z-index:20}
+  .hdr-back{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
+  .hdr-div{width:1px;height:18px;background:var(--border)}
+  .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lang{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .lang button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:12px;font-weight:600;padding:8px 12px;cursor:pointer;min-height:36px}
+  .lang button.on{background:var(--accent);color:#000}
+
+  main{padding:24px 16px 40px;max-width:720px;margin:0 auto}
+  .title{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,6vw,44px);letter-spacing:.04em;line-height:1}
+  .subtitle{margin-top:6px;margin-bottom:20px;font-size:.85rem;color:var(--subtext);line-height:1.5}
+
+  input{width:100%;background:#0c0d0f;border:1px solid var(--border);color:var(--text);
+    padding:.75rem .85rem;border-radius:10px;font-size:16px;font-family:inherit;outline:none;min-height:50px}
+  input:focus{border-color:var(--accent)}
+  label.lbl{display:block;font-size:.68rem;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem}
+
+  .batch-list{display:grid;gap:10px}
+  .batch-card{background:var(--surface);border:1px solid rgba(212,168,67,.4);border-radius:12px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .batch-card .bname{font-weight:600}
+  .batch-card .bmeta{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--subtext)}
+  .held-why{display:inline-block;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:99px;border:1px solid var(--gold);color:var(--gold);margin-top:6px}
+  .held-why.quality{border-color:var(--red);color:var(--red)}
+  .rel-done{margin-top:4px}
+  .rel-panel{flex:1 0 100%;border-top:1px solid var(--border);padding-top:12px;display:grid;gap:10px}
+  .rel-opt{display:flex;align-items:center;gap:10px;font-size:.95rem;cursor:pointer}
+  .rel-opt input{width:20px;height:20px;min-height:0;accent-color:var(--gold)}
+  .rel-part{display:grid;gap:10px}
+  .rel-part[hidden],.rel-err[hidden]{display:none}
+  .rel-hint{font-size:.78rem;color:var(--subtext)}
+  .rel-uid{text-transform:uppercase;font-family:'DM Mono',monospace}
+  .rel-err{color:var(--red);font-size:.85rem}
+  .rel-btns{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{padding:.75rem 1.2rem;border:1px solid var(--border);border-radius:10px;font-family:'DM Mono',monospace;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;cursor:pointer;background:transparent;color:var(--text);min-height:48px}
+  .btn-gold{background:var(--gold);color:#000;border-color:var(--gold)}
+  .btn-ghost{color:var(--subtext)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .empty-note{color:var(--subtext);font-size:.9rem;padding:24px;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:12px}
+  .done{margin-bottom:16px;padding:.9rem 1rem;border-radius:10px;font-family:'DM Mono',monospace;font-size:.85rem;line-height:1.5;background:rgba(61,184,122,.12);color:var(--green);border:1px solid var(--green)}
+  .done a{color:inherit}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="/ops_form.html?station=buck" id="back">← Bucking</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand" id="brand">On hold</div>
+  <div class="lang" id="lang"></div>
+</header>
+
+<main>
+  <div class="title" id="title"></div>
+  <div class="subtitle" id="subtitle"></div>
+  <div id="done" class="done" hidden></div>
+  <div id="held-mount"></div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/config/supabase_config.js"></script>
+<script src="/operations_stations.js"></script>
+<script src="/ops_common.js"></script>
+<script src="/ops_data.js"></script>
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// Bucking → On hold. A Take Down (dry_check) can be held for a quality issue
+// ('rework') or until an order needs it ('hold_order'; 'hold' is on older
+// records). It waits here until someone releases it, all of it or part:
+//   all   flips the record's result to 'pass' (keeping why it was held, and
+//         who released it when). Its on-stem UID can then be bucked, with
+//         whatever's left on it.
+//   part  adds { uid, lb, by, at } to the record's `releases` — split off in
+//         Metrc under a new tag first — and that tag can be bucked on its
+//         own while the rest stays here. The dry weight stays on the Take
+//         Down alone (ops_analytics aliases the new tag back to it), so
+//         nothing is counted twice; findUpstream gives Bucking the part's
+//         pounds when its tag is typed in.
+// Both re-read the record before writing, so two tablets releasing at once
+// don't overwrite each other. Neither is queued offline. The edit history
+// trigger logs every release. Only the newest Take Down per on-stem UID
+// counts.
+// ─────────────────────────────────────────────────────────────────────────────
+(async function () {
+  const allowed = JSON.parse(sessionStorage.getItem('2cw_ops_edit_access') || 'null');
+  if (allowed && allowed !== 'all' && !allowed.includes('buck')) {
+    location.replace('/index.html');
+    return;
+  }
+  mountLangToggle('lang');
+
+  const L = {
+    brand: { en: 'On hold', es: 'En espera' },
+    title: { en: 'Bucking — On Hold', es: 'Desvarado — en espera' },
+    subtitle: { en: 'Take Downs held for quality or for an order. Release all of one, or part of it under a new Metrc tag, and it can be bucked.',
+                es: 'Bajadas en espera por calidad o por un pedido. Libere todo, o una parte bajo una etiqueta Metrc nueva, y se puede desvarar.' },
+    back: { en: '← Bucking', es: '← Desvarado' },
+    none: { en: 'Nothing is on hold.', es: 'No hay nada en espera.' },
+    offline: { en: 'Can’t load the list — check the connection.', es: 'No se pudo cargar la lista — revise la conexión.' },
+    heldQuality: { en: 'Quality issue', es: 'Problema de calidad' },
+    heldOrder: { en: 'Until needed for an order', es: 'Hasta que se necesite para un pedido' },
+    heldOld: { en: 'On hold', es: 'En espera' },
+    release: { en: 'Release to bucking', es: 'Liberar a desvarado' },
+    releasing: { en: 'Releasing…', es: 'Liberando…' },
+    releaseAsk: { en: 'Release all of {batch} to bucking?', es: '¿Liberar todo {batch} a desvarado?' },
+    releasePartAsk: { en: 'Release {lb} of {batch} to bucking as {uid}? The rest stays on hold.',
+                      es: '¿Liberar {lb} de {batch} a desvarado como {uid}? El resto sigue en espera.' },
+    relAll: { en: 'All of it', es: 'Todo' },
+    relPart: { en: 'Part — split to a new tag', es: 'Una parte — dividida a una etiqueta nueva' },
+    relLb: { en: 'Pounds released', es: 'Libras liberadas' },
+    relUid: { en: 'New package UID', es: 'UID del paquete nuevo' },
+    relUidHint: { en: 'The tag you split this part off to in Metrc. Bucking it is a page of its own.', es: 'La etiqueta a la que dividió esta parte en Metrc. Se desvara en su propia hoja.' },
+    relNeedLb: { en: 'Enter the pounds being released.', es: 'Ingrese las libras que se liberan.' },
+    relTooMuch: { en: 'Only {left} is left — to release all of it, choose “All of it”.', es: 'Solo quedan {left} — para liberar todo, elija “Todo”.' },
+    relNeedUid: { en: 'Enter the new package UID.', es: 'Ingrese el UID del paquete nuevo.' },
+    relDupUid: { en: 'That UID is already in use — enter the new tag.', es: 'Ese UID ya está en uso — ingrese la etiqueta nueva.' },
+    relDone: { en: 'Released {lb} as …{uid} · {date}', es: 'Liberado {lb} como …{uid} · {date}' },
+    leftOf: { en: '{left} left of {all}', es: 'quedan {left} de {all}' },
+    released: { en: '✓ Released {what} — open a Bucking page for UID …{uid}.', es: '✓ Liberado {what} — abra una hoja de desvarado para el UID …{uid}.' },
+    startBucking: { en: 'Start bucking it →', es: 'Empezar a desvarar →' },
+    releaseChanged: { en: 'Someone else just changed this one — the list has been refreshed.', es: 'Alguien más acaba de cambiar este — la lista se actualizó.' },
+    cancel: { en: 'Cancel', es: 'Cancelar' },
+    releaseFail: { en: 'Could not release — check the connection and try again.', es: 'No se pudo liberar — revise la conexión e intente de nuevo.' }
+  };
+  document.getElementById('back').textContent = t(L.back);
+  document.getElementById('brand').textContent = t(L.brand);
+  document.getElementById('title').textContent = t(L.title);
+  document.getElementById('subtitle').textContent = t(L.subtitle);
+  document.title = `${t(L.title)} — 2CW Operations`;
+
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const shortUid = (u) => String(u || '').slice(-4);
+  const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+  const lbTxt = (x) => round2(x).toFixed(2) + ' lb';
+  const upper = (u) => String(u || '').toUpperCase().replace(/\s/g, '');
+
+  // ── Data ──────────────────────────────────────────────────────────────────
+  const HELD_RESULTS = ['rework', 'hold_order', 'hold'];
+  const releasedLb = (f) => ((f && f.releases) || []).reduce((a, x) => a + (Number(x.lb) || 0), 0);
+  const remainingLb = (f) => (f && f.dryWeightLb != null && f.dryWeightLb !== '')
+    ? Math.max(0, Math.round((Number(f.dryWeightLb) - releasedLb(f)) * 100) / 100) : null;
+
+  let downs = [];   // every submitted Take Down, newest first
+  async function loadDowns() {
+    const client = getClient();
+    if (!client) return null;
+    const { data, error } = await client.from('operations_forms').select('*')
+      .eq('station_key', 'dry_check').eq('status', 'submitted')
+      .order('submitted_at', { ascending: false });
+    if (error) { console.error('loadDowns', error); return null; }
+    return data || [];
+  }
+  function heldList() {
+    const seen = new Set();
+    return downs.filter((r) => {
+      const uid = upper((r.fields || {}).sourceUid);
+      if (!uid || seen.has(uid)) return false;
+      seen.add(uid);
+      return HELD_RESULTS.includes(r.fields.result);
+    }).sort((a, b) => String(a.work_date || '').localeCompare(String(b.work_date || '')));
+  }
+  // Every tag a Take Down or a release already uses — a part needs a new one.
+  const usedUids = () => new Set(downs.flatMap((r) => [r.fields.sourceUid, ...(r.fields.releases || []).map((x) => x.uid)]).map(upper).filter(Boolean));
+
+  async function freshHeld(rec) {
+    const cur = await getDraft(rec.id);
+    if (!cur || cur.status !== 'submitted' || !HELD_RESULTS.includes((cur.fields || {}).result)) return { ok: false, reason: 'gone' };
+    return { ok: true, cur };
+  }
+  async function releaseAll(rec, owner) {
+    const got = await freshHeld(rec);
+    if (!got.ok) return got;
+    const { cur } = got;
+    const fields = { ...cur.fields, result: 'pass', heldFor: cur.fields.result,
+      releasedBy: owner || null, releasedAt: new Date().toISOString() };
+    return updateSubmitted(cur.id, { strain: cur.strain || fields.strain, date: cur.work_date, fields, editor: owner || null });
+  }
+  async function releasePart(rec, { uid, lb }, owner) {
+    const got = await freshHeld(rec);
+    if (!got.ok) return got;
+    const { cur } = got;
+    const left = remainingLb(cur.fields);
+    if (left != null && Number(lb) >= left) return { ok: false, reason: 'too-much' };
+    const fields = { ...cur.fields, releases: [...(cur.fields.releases || []),
+      { uid: upper(uid), lb: round2(lb), by: owner || null, at: new Date().toISOString() }] };
+    return updateSubmitted(cur.id, { strain: cur.strain || fields.strain, date: cur.work_date, fields, editor: owner || null });
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────
+  const mount = document.getElementById('held-mount');
+  let releasingId = null;   // the card whose release panel is open
+  async function load() {
+    const rows = await loadDowns();
+    if (rows === null) { mount.innerHTML = `<div class="empty-note">${esc(t(L.offline))}</div>`; return; }
+    downs = rows;
+    render();
+  }
+  function render() {
+    const held = heldList();
+    if (!held.length) { mount.innerHTML = `<div class="empty-note">${esc(t(L.none))}</div>`; return; }
+    const why = (r) => r === 'rework' ? `<span class="held-why quality">${esc(t(L.heldQuality))}</span>`
+      : `<span class="held-why">${esc(t(r === 'hold_order' ? L.heldOrder : L.heldOld))}</span>`;
+    mount.innerHTML = `<div class="batch-list">` + held.map((r) => {
+      const f = r.fields, rels = f.releases || [], left = remainingLb(f);
+      const weight = f.dryWeightLb == null ? '' : rels.length
+        ? ' · ' + t(L.leftOf).replace('{left}', lbTxt(left)).replace('{all}', lbTxt(f.dryWeightLb)) : ' · ' + lbTxt(f.dryWeightLb);
+      const panel = releasingId !== r.id ? '' : `
+        <div class="rel-panel">
+          <label class="rel-opt"><input type="radio" name="rel-${esc(r.id)}" value="all" checked> ${esc(t(L.relAll))}${left != null ? ` (${lbTxt(left)})` : ''}</label>
+          <label class="rel-opt"><input type="radio" name="rel-${esc(r.id)}" value="part"> ${esc(t(L.relPart))}</label>
+          <div class="rel-part" hidden>
+            <div><label class="lbl">${esc(t(L.relLb))}</label><input type="number" inputmode="decimal" step="0.01" min="0" class="rel-lb"></div>
+            <div><label class="lbl">${esc(t(L.relUid))}</label><input type="text" class="rel-uid" autocapitalize="characters" placeholder="1A40603…"></div>
+            <div class="rel-hint">${esc(t(L.relUidHint))}</div>
+          </div>
+          <div class="rel-err" hidden></div>
+          <div class="rel-btns"><button type="button" class="btn btn-gold" data-go="${esc(r.id)}">${esc(t(L.release))}</button>
+            <button type="button" class="btn btn-ghost" data-cancel="1">${esc(t(L.cancel))}</button></div>
+        </div>`;
+      return `
+      <div class="batch-card" data-id="${esc(r.id)}">
+        <div><div class="bname">${esc(f.strain || r.strain || '')}</div>
+          <div class="bmeta">…${esc(shortUid(f.sourceUid))} · ${esc(r.work_date || '')}${esc(weight)}</div>
+          ${why(f.result)}
+          ${rels.map((x) => `<div class="bmeta rel-done">${esc(t(L.relDone).replace('{lb}', lbTxt(x.lb)).replace('{uid}', shortUid(x.uid)).replace('{date}', String(x.at || '').slice(0, 10)))}</div>`).join('')}</div>
+        ${releasingId === r.id ? '' : `<button type="button" class="btn btn-gold" data-release="${esc(r.id)}">${esc(t(L.release))}</button>`}
+        ${panel}
+      </div>`;
+    }).join('') + `</div>`;
+  }
+
+  mount.addEventListener('change', (e) => {
+    if (e.target.type !== 'radio') return;
+    const card = e.target.closest('.batch-card');
+    card.querySelector('.rel-part').hidden = e.target.value !== 'part';
+    if (e.target.value === 'part') card.querySelector('.rel-lb').focus();
+  });
+  mount.addEventListener('click', async (e) => {
+    if (e.target.closest('[data-release]')) { releasingId = e.target.closest('[data-release]').dataset.release; render(); return; }
+    if (e.target.closest('[data-cancel]')) { releasingId = null; render(); return; }
+    const go = e.target.closest('[data-go]');
+    if (!go) return;
+    const rec = downs.find((r) => r.id === go.dataset.go);
+    if (!rec) return;
+    const card = go.closest('.batch-card');
+    const err = card.querySelector('.rel-err');
+    const fail = (msg) => { err.textContent = msg; err.hidden = false; };
+    const part = card.querySelector('input[type=radio]:checked').value === 'part';
+    const f = rec.fields, left = remainingLb(f);
+    let lb = null, uid = '';
+    if (part) {
+      lb = Number(card.querySelector('.rel-lb').value);
+      uid = upper(card.querySelector('.rel-uid').value);
+      if (!(lb > 0)) return fail(t(L.relNeedLb));
+      if (left != null && lb >= left) return fail(t(L.relTooMuch).replace('{left}', lbTxt(left)));
+      if (uid.length < 4) return fail(t(L.relNeedUid));
+      if (usedUids().has(uid)) return fail(t(L.relDupUid));
+    }
+    const name = `${f.strain || ''} …${shortUid(f.sourceUid)}`.trim();
+    const ask = part ? t(L.releasePartAsk).replace('{lb}', lbTxt(lb)).replace('{uid}', uid).replace('{batch}', name)
+      : t(L.releaseAsk).replace('{batch}', name);
+    if (!confirm(ask)) return;
+    go.disabled = true;
+    go.textContent = t(L.releasing);
+    const who = sessionStorage.getItem('2cw_user_name');
+    const res = part ? await releasePart(rec, { uid, lb }, who) : await releaseAll(rec, who);
+    if (!res.ok) {
+      go.disabled = false;
+      go.textContent = t(L.release);
+      if (res.reason === 'gone' || res.reason === 'too-much') { alert(t(L.releaseChanged)); releasingId = null; await load(); return; }
+      return fail(t(L.releaseFail));
+    }
+    // Point straight at a Bucking page for what was just released.
+    const relUid = part ? uid : f.sourceUid;
+    const done = document.getElementById('done');
+    done.innerHTML = esc(t(L.released).replace('{what}', part ? lbTxt(lb) : name).replace('{uid}', shortUid(relUid))) +
+      ` <a href="/ops_form.html?station=buck&set_sourceUid=${encodeURIComponent(relUid)}">${esc(t(L.startBucking))}</a>`;
+    done.hidden = false;
+    releasingId = null;
+    await load();
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>

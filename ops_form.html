@@ -45,6 +45,8 @@
     main{padding:24px 16px 40px;max-width:720px;margin:0 auto}
     .title{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,6vw,44px);letter-spacing:.04em;line-height:1}
     .subtitle{margin-top:6px;font-size:.85rem;color:var(--subtext);line-height:1.5}
+    .page-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    .page-links a{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);text-decoration:none;border:1px solid var(--border);border-radius:8px;padding:9px 12px}
     .dept{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
 
     /* "Your open forms" strain switcher — lets someone bounce between the
@@ -109,6 +111,7 @@
     .li-table input[type=date]{min-width:150px}
     .li-table input[type=time]{min-width:120px}
     .li-calc{font-family:'DM Mono',monospace;color:var(--subtext);white-space:nowrap}
+    .li-num{display:inline-block;min-width:3ch;text-align:center;color:var(--text);font-size:1.05rem}
     .li-del{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;width:100%;min-height:48px;font-size:20px;line-height:1;cursor:pointer}
     .li-del:hover{border-color:var(--red);color:var(--red)}
     .li-add{width:100%;margin-top:4px;background:transparent;border:1px dashed var(--border);color:var(--subtext);border-radius:10px;min-height:52px;font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer}
@@ -166,6 +169,7 @@
   <div class="dept" id="dept"></div>
   <div class="title" id="title"></div>
   <div class="subtitle" id="subtitle"></div>
+  <div class="page-links" id="page-links" style="display:none"></div>
   <div class="switcher-lbl" id="switcher-lbl" style="display:none"></div>
   <div class="switcher" id="switcher" style="display:none"></div>
   <form class="panel" id="form" autocomplete="off"></form>
@@ -220,6 +224,12 @@
   document.getElementById('dept').textContent = t(station.dept);
   document.getElementById('title').textContent = t(station.title);
   document.getElementById('subtitle').textContent = t(station.desc);
+  // Pages that go with this station (Bucking → On hold).
+  if (station.links && station.links.length) {
+    const pl = document.getElementById('page-links');
+    pl.innerHTML = station.links.map((x) => `<a href="${x.href}">${t(x.l)}</a>`).join('');
+    pl.style.display = 'flex';
+  }
   document.title = `${t(station.title)} — 2CW Operations`;
 
   const owner = sessionStorage.getItem('2cw_user_name') || null;
@@ -237,6 +247,14 @@
   }
 
   const PERSON_FIELDS = new Set(['teamLead', 'checkedBy', 'requestedBy', 'completedBy']);
+  // The drying-package picker (Take Down) — see fillPicker.
+  const PK = {
+    loading:   { en: 'Loading what’s drying…', es: 'Cargando lo que está secando…' },
+    roomFirst: { en: 'Pick the drying room first', es: 'Elija primero el cuarto de secado' },
+    choose:    { en: 'Choose the package…', es: 'Elija el paquete…' },
+    none:      { en: 'Nothing drying in this room', es: 'Nada secando en este cuarto' },
+    typed:     { en: 'Not listed — type the UID', es: 'No aparece — escriba el UID' }
+  };
   const reference = await loadReference();
   const form = document.getElementById('form');
   const values = {};          // live form state, keyed by field key
@@ -293,6 +311,14 @@
       control = `<input type="date" id="f_${f.k}">`;
     } else if (f.t === 'time') {
       control = `<input type="time" id="f_${f.k}">`;
+    } else if (f.t === 'uid' && f.picker) {
+      // Picked from a list (fillPicker below); the text box only shows for
+      // "Not listed — type the UID".
+      control = `<select id="pk_${f.k}"><option value="">${escapeHtml(t(PK.loading))}</option></select>` +
+                (f.pickedLabel ? `<div id="pv_${f.k}" style="display:none;margin-top:10px"><label class="lbl">${escapeHtml(t(f.pickedLabel))}</label>` +
+                  `<input type="text" class="uid" readonly tabindex="-1" style="opacity:.85"></div>` : '') +
+                `<input type="text" id="f_${f.k}" class="uid" inputmode="latin" autocapitalize="characters" placeholder="1A40603…  ${t(UI.other) === 'Otro…' ? 'o' : 'or'} 1008" style="display:none;margin-top:10px">` +
+                `<div class="match" id="m_${f.k}"></div>`;
     } else if (f.t === 'uid') {
       control = `<input type="text" id="f_${f.k}" class="uid" inputmode="latin" autocapitalize="characters" placeholder="1A40603…  ${t(UI.other) === 'Otro…' ? 'o' : 'or'} 1008">` +
                 `<div class="match" id="m_${f.k}"></div>`;
@@ -312,12 +338,24 @@
     wrap.innerHTML = labelHtml(f) +
       (f.hint ? `<div class="hint" style="margin-top:0;margin-bottom:10px">${t(f.hint)}</div>` : '') +
       `<div class="li-scroll"><table class="li-table"><thead><tr>` +
-      f.cols.map((c) => `<th>${t(c.l)}${c.req ? '<span class="req">*</span>' : ''}</th>`).join('') + `<th></th></tr></thead><tbody id="li_${f.k}"></tbody></table></div>` +
+      f.cols.map((c) => `<th${c.t === 'rownum' ? ' style="white-space:nowrap"' : ''}>${t(c.l)}${c.req ? '<span class="req">*</span>' : ''}</th>`).join('') + `<th></th></tr></thead><tbody id="li_${f.k}"></tbody></table></div>` +
       `<button type="button" class="li-add" id="add_${f.k}">${t(UI.addRow)}</button>` +
       `<div class="li-total"><span class="k">${t(UI.subtotal)}</span><span class="v" id="lit_${f.k}">0</span></div>`;
 
     setTimeout(() => {
       const tbody = wrap.querySelector(`#li_${f.k}`);
+      const numCols = f.cols.filter((c) => c.t === 'rownum');
+      const renumber = () => {
+        if (!numCols.length) return;
+        const spans = tbody.querySelectorAll('.li-num');
+        values[f.k].forEach((r, i) => {
+          numCols.forEach((c, j) => {
+            r[c.k] = i + 1;
+            const el = spans[i * numCols.length + j];
+            if (el) el.textContent = String(i + 1);
+          });
+        });
+      };
       const addRow = (prefill) => {
         const row = {};
         const above = values[f.k][values[f.k].length - 1];
@@ -334,6 +372,14 @@
         });
         f.cols.forEach((c) => {
           const td = document.createElement('td');
+          // A row number (Take Down's Box #) is filled in 1, 2, 3… down the
+          // worksheet, never typed — see renumber().
+          if (c.t === 'rownum') {
+            const el = document.createElement('span');
+            el.className = 'li-calc li-num';
+            td.appendChild(el); tr.appendChild(td);
+            return;
+          }
           if (c.t === 'calc') {
             const el = document.createElement('span');
             el.className = 'li-calc';
@@ -412,10 +458,11 @@
         del.onclick = () => {
           const i = values[f.k].indexOf(row);
           if (i > -1) values[f.k].splice(i, 1);
-          tr.remove(); recompute(); updateVisibility(); markDirty();
+          tr.remove(); renumber(); recompute(); updateVisibility(); markDirty();
         };
         tdDel.appendChild(del); tr.appendChild(tdDel);
         tbody.appendChild(tr);
+        renumber();
         recalcRow();
         if (!prefill) { const first = tr.querySelector('input, select'); if (first) first.focus(); }
       };
@@ -577,7 +624,7 @@
   // (UID, strain, tare) or a calc result alone doesn't make it real.
   function rowHasData(f, r) {
     return f.cols.some((c) => {
-      if (c.t === 'calc' || c.carry) return false;
+      if (c.t === 'calc' || c.t === 'rownum' || c.carry) return false;
       const x = r[c.k];
       if (x === '' || x === null || x === undefined) return false;
       return !(c.def !== undefined && String(x) === String(c.def)) && !(c.t === 'date' && c.today);
@@ -704,11 +751,17 @@
   // ── Prefill from the upstream stage ───────────────────────────────────────
   // Bucking should not have to re-weigh what the post-dry check already
   // recorded; typing the last 4 of the tag pulls it forward.
-  async function tryPrefill(uid, key) {
+  // `record` is the upstream record itself when it was picked from a list.
+  // A value an earlier prefill put in is replaced (picking another package
+  // swaps its strain, weight, …); anything typed over it is left alone.
+  const lastPrefill = {};
+  const isBlank = (x) => x === undefined || x === null || x === '';
+  const prefilledHere = (here) => !isBlank(values[here]) && here in lastPrefill && String(values[here]) === String(lastPrefill[here]);
+  async function tryPrefill(uid, key, record) {
     const spec = PREFILL_MAP[station.key];
     const note = document.getElementById(`m_${key}`);
     if (!spec || !uid || uid.length < 4) return;
-    const upstream = await findUpstream(spec.from, uid);
+    const upstream = record || await findUpstream(spec.from, uid);
     if (!upstream) {
       if (note) { note.style.display = 'block'; note.style.color = 'var(--muted)'; note.textContent = t(UI.noMatch); }
       return;
@@ -717,9 +770,11 @@
       const val = upstream[there];
       if (val === undefined || val === null || val === '') return;
       const inp = document.getElementById(`f_${here}`);
-      if (!inp || (values[here] !== undefined && values[here] !== null && values[here] !== '')) return;
+      if (!inp || (!isBlank(values[here]) && !prefilledHere(here))) return;
       inp.value = val;
       values[here] = val;
+      lastPrefill[here] = val;
+      touched.add(here);
       // A strain that isn't on the reference list still needs to show up.
       if (inp.tagName === 'SELECT' && inp.value !== String(val)) {
         const opt = document.createElement('option');
@@ -728,12 +783,128 @@
       }
     });
     if (note) {
-      note.style.display = 'block'; note.style.color = 'var(--green)';
-      note.textContent = `${t(UI.matched)}: ${upstream.strain || ''} ${upstream.harvestBatchName || ''}`.trim();
+      const warn = spec.warn && spec.warn(upstream);
+      note.style.display = 'block'; note.style.color = warn ? 'var(--gold)' : 'var(--green)';
+      note.textContent = `${t(UI.matched)}: ${upstream.strain || ''} ${upstream.harvestBatchName || ''}`.trim() + (warn ? ` — ${t(warn)}` : '');
     }
     recompute();
     markDirty();
   }
+
+  // Undo a prefill (the picked package was cleared): empty whatever it put
+  // in that nobody has changed since.
+  function clearPrefill(key) {
+    Object.keys(lastPrefill).forEach((here) => {
+      if (prefilledHere(here)) {
+        const inp = document.getElementById(`f_${here}`);
+        if (inp) inp.value = '';
+        values[here] = '';
+      }
+      delete lastPrefill[here];
+    });
+    const note = document.getElementById(`m_${key}`);
+    if (note) note.style.display = 'none';
+    recompute();
+  }
+
+  // ── Pick from what's drying ───────────────────────────────────────────────
+  // A uid field with `picker` (Take Down's farm package) is chosen from the
+  // Wet Intakes still drying (no Take Down submitted yet — currentlyDrying
+  // in ops_common.js) in the room picked above it, listed as "Strain - last
+  // 4". The room dropdown shows how many are drying in each room.
+  const pickerFields = station.fields.filter((f) => f.t === 'uid' && f.picker);
+  const pickLists = {};   // field key -> the records its options point at
+  const typing = {};      // field key -> true while "Not listed" is chosen
+  let drying = [], dryingReady = false;
+  const dryingLoaded = pickerFields.length ? (async () => {
+    const [intakes, downs] = await Promise.all([loadSubmitted(pickerFields[0].picker.from), loadSubmitted(station.key)]);
+    drying = currentlyDrying(intakes || [], downs || []);
+  })().catch((err) => { console.error('drying list', err); }) : null;
+
+  function fillPicker(f) {
+    const sel = document.getElementById(`pk_${f.k}`);
+    const inp = document.getElementById(`f_${f.k}`);
+    if (!sel) return;
+    const room = values[f.picker.room];
+    const list = room ? drying.filter((i) => inDryRoom(i.dryRoom, room))
+      .sort((a, b) => String(a.strain || '').localeCompare(String(b.strain || '')) || String(a.date || '').localeCompare(String(b.date || ''))) : [];
+    pickLists[f.k] = list;
+    const base = (i) => `${i.strain || '—'} - ${normUid(i.sourceUid).slice(-4)}`;
+    const dup = (i) => list.filter((x) => base(x) === base(i)).length > 1;
+    const shortDate = (d) => d ? new Date(`${d}T12:00:00`).toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric' }) : '';
+    const label = (i) => base(i) + (dup(i) ? ` (${[shortDate(i.date), i.totalWetLb ? fmtNum(i.totalWetLb, 0) + ' lb' : ''].filter(Boolean).join(', ')})` : '');
+    const first = !dryingReady ? t(PK.loading) : !room ? t(PK.roomFirst) : list.length ? t(PK.choose) : t(PK.none);
+    sel.innerHTML = `<option value="">${escapeHtml(first)}</option>` +
+      list.map((i, ix) => `<option value="${ix}">${escapeHtml(label(i))}</option>`).join('') +
+      `<option value="__type__">${escapeHtml(t(PK.typed))}</option>`;
+    const cur = values[f.k];
+    const ix = cur ? list.findIndex((i) => normUid(i.sourceUid) === normUid(cur)) : -1;
+    if (ix >= 0 && !typing[f.k]) sel.value = String(ix);
+    else if (cur || typing[f.k]) { typing[f.k] = true; sel.value = '__type__'; }
+    else sel.value = '';
+    inp.style.display = typing[f.k] ? 'block' : 'none';
+    showPicked(f);
+  }
+
+  // The picked package's full UID, read-only under the dropdown.
+  function showPicked(f) {
+    const box = document.getElementById(`pv_${f.k}`);
+    if (!box) return;
+    const on = !typing[f.k] && !!values[f.k];
+    box.style.display = on ? 'block' : 'none';
+    box.querySelector('input').value = on ? values[f.k] : '';
+  }
+
+  // "Room 1A · 3" — how many packages are drying in each room.
+  function countRooms(f) {
+    const sel = document.getElementById(`f_${f.picker.room}`);
+    if (!sel) return;
+    [...sel.options].forEach((o) => {
+      if (!o.value || o.value === '__other__') return;
+      if (o.dataset.label === undefined) o.dataset.label = o.textContent;
+      const n = drying.filter((i) => inDryRoom(i.dryRoom, o.value)).length;
+      o.textContent = n ? `${o.dataset.label} · ${n}` : o.dataset.label;
+    });
+  }
+
+  pickerFields.forEach((f) => {
+    const sel = document.getElementById(`pk_${f.k}`);
+    const inp = document.getElementById(`f_${f.k}`);
+    const setUid = (uid) => { inp.value = uid; values[f.k] = uid; };
+    sel.addEventListener('change', () => {
+      if (sel.value === '__type__') {
+        typing[f.k] = true;
+        inp.style.display = 'block';
+        showPicked(f);
+        inp.focus();
+        return;
+      }
+      typing[f.k] = false;
+      inp.style.display = 'none';
+      const rec = sel.value === '' ? null : pickLists[f.k][Number(sel.value)];
+      if (!rec) { setUid(''); clearPrefill(f.k); }
+      else { setUid(normUid(rec.sourceUid)); tryPrefill(values[f.k], f.k, rec); }
+      showPicked(f);
+      recompute();
+      markDirty();
+    });
+    // A new room means a new list — a package picked from the old one goes.
+    const roomEl = document.getElementById(`f_${f.picker.room}`);
+    const onRoom = () => {
+      const picked = values[f.k] && !typing[f.k];
+      fillPicker(f);
+      if (picked && sel.value === '__type__') {
+        typing[f.k] = false;
+        setUid('');
+        clearPrefill(f.k);
+        fillPicker(f);
+        markDirty();
+      }
+    };
+    roomEl.addEventListener('change', onRoom);
+    const other = document.getElementById(`o_${f.picker.room}`);
+    if (other) other.addEventListener('change', onRoom);
+  });
 
   // ── Hydrate from a saved draft (resume, possibly on a different device) ────
   function setFieldValue(f, val) {
@@ -1134,8 +1305,11 @@
     // Drop empty worksheet rows before sending.
     const payload = { ...values };
     delete payload._deleted;
+    // Row numbers count only the rows that are kept: 1, 2, 3… with no gaps.
     station.fields.filter((f) => f.t === 'lineitems').forEach((f) => {
-      payload[f.k] = (payload[f.k] || []).filter((r) => rowHasData(f, r));
+      const nums = f.cols.filter((c) => c.t === 'rownum');
+      payload[f.k] = (payload[f.k] || []).filter((r) => rowHasData(f, r))
+        .map((r, i) => nums.length ? { ...r, ...Object.fromEntries(nums.map((c) => [c.k, i + 1])) } : r);
     });
 
     let result;
@@ -1339,6 +1513,23 @@
     applyLinkPrefill();
   }
 
+  // The drying list loads alongside the draft; once it's in, fill the
+  // pickers — keeping a resumed draft's package, and treating the values
+  // that match it as prefilled, so picking another package replaces them.
+  if (dryingLoaded) {
+    await dryingLoaded;
+    dryingReady = true;
+    const spec = PREFILL_MAP[station.key];
+    pickerFields.forEach((f) => {
+      countRooms(f);
+      fillPicker(f);
+      const rec = (pickLists[f.k] || []).find((i) => values[f.k] && normUid(i.sourceUid) === normUid(values[f.k]));
+      if (rec && spec) Object.entries(spec.map).forEach(([here, there]) => {
+        if (!isBlank(values[here]) && String(values[here]) === String(rec[there])) lastPrefill[here] = values[here];
+      });
+    });
+  }
+
   // Starting values carried in the link as ?set_<fieldKey>=value — e.g. the
   // Pre-Roll Dashboard's "Start batch" fills in the PR#, strain and source
   // UID. Only ever applied to a brand-new form, never over a saved draft.
@@ -1352,6 +1543,9 @@
     if (!Object.keys(fields).length) return;
     hydrate(fields);
     markDirty();
+    // A UID handed over this way still pulls in its upstream details.
+    station.fields.filter((f) => f.t === 'uid' && f.prefill === 'lookup' && fields[f.k])
+      .forEach((f) => tryPrefill(String(fields[f.k]).trim(), f.k));
   }
 })();
 </script>

@@ -138,6 +138,12 @@
 
     /* loading state */
     .loading-msg{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);text-align:center;margin-top:1rem}
+    .login-or{display:flex;align-items:center;gap:.75rem;margin:1.25rem 0 .75rem;color:var(--muted);font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase}
+    .login-or::before,.login-or::after{content:'';flex:1;height:1px;background:var(--border)}
+    .google-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:.6rem;padding:.8rem;background:#fff;color:#1f1f1f;border:1px solid var(--border2);border-radius:10px;font-size:.95rem;font-weight:600;font-family:inherit;cursor:pointer;transition:opacity .2s}
+    .google-btn:hover{opacity:.9}
+    .google-btn:disabled{opacity:.6;cursor:default}
+    .google-btn svg{width:18px;height:18px;flex:none}
     .forgot-link{display:block;margin-top:1.25rem;text-align:center;color:var(--subtext);font-size:.82rem;text-decoration:none}
     .forgot-link:hover{color:var(--text);text-decoration:underline}
     .hidden{display:none!important}
@@ -166,6 +172,11 @@
       </div>
     </div>
     <button class="login-btn" onclick="doLogin()" data-i18n="access">Access Dashboard</button>
+    <div class="login-or" data-i18n="or">or</div>
+    <button class="google-btn" id="google-btn" type="button" onclick="startGoogleLogin()">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+      <span data-i18n="google">Sign in with Google</span>
+    </button>
     <div class="login-err" id="login-err"></div>
     <div class="loading-msg" id="loading-msg" style="display:none" data-i18n="loadingDir">Loading directory…</div>
   </div>
@@ -249,6 +260,10 @@ const UI_ES = {
   show: 'Mostrar',
   nothingHere: 'Aún no hay nada aquí.',
   live: '● En vivo',
+  or: 'o',
+  google: 'Entrar con Google',
+  googleNotLinked: 'Tu cuenta de Google ({email}) aún no está vinculada a un usuario. Por ahora entra con tu PIN.',
+  googleFailed: 'No se pudo entrar con Google. Inténtalo de nuevo o usa tu PIN.',
   pinShort: 'Ingresa tu PIN de 4 dígitos.',
   pinWrong: 'PIN incorrecto. Inténtalo de nuevo.',
   noDirectory: 'No se pudo cargar el directorio. Revisa tu conexión.'
@@ -256,6 +271,8 @@ const UI_ES = {
 const UI_EN = {
   customize: 'Customize', editing: 'Editing…', save: 'Save', saving: 'Saving…',
   show: 'Show', nothingHere: 'Nothing here yet.', live: '● Live',
+  googleNotLinked: 'Your Google account ({email}) isn’t linked to a dashboard user yet. Sign in with your PIN for now.',
+  googleFailed: 'Google sign-in didn’t work. Try again, or use your PIN.',
   pinShort: 'Please enter your 4-digit PIN.',
   pinWrong: 'Incorrect PIN. Please try again.',
   noDirectory: 'Could not load directory. Please check your connection.'
@@ -419,6 +436,108 @@ async function doLogin(){
   currentUser = user;
   sessionStorage.setItem('2cw_pin', pin);
   await buildHub(user);
+}
+
+// ── GOOGLE SIGN-IN ───────────────────────────────────────
+// Runs alongside the PIN while everyone moves over (docs/USER_ADMIN.md,
+// "Google sign-in"). Google → Supabase Auth → back here with ?code=…;
+// netlify/functions/google-login.js checks the token and returns the linked
+// user's PIN, and from there it's an ordinary PIN login, so every other page
+// keeps working off '2cw_pin' unchanged.
+//
+// The Supabase session lives under its own storageKey and is signed out as
+// soon as it's been exchanged: under the default key, every other page's
+// Supabase client would pick it up and query as 'authenticated' instead of
+// 'anon', and the tables are only granted to anon.
+const GOOGLE_LOGIN_ENDPOINT = '/.netlify/functions/google-login';
+let googleAuthClient = null;
+function getGoogleAuthClient(){
+  if(!googleAuthClient){
+    googleAuthClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { storageKey: '2cw_google_auth', flowType: 'pkce', detectSessionInUrl: true, persistSession: true, autoRefreshToken: false }
+    });
+  }
+  return googleAuthClient;
+}
+
+function showLoginError(msg){
+  const err = document.getElementById('login-err');
+  err.textContent = msg;
+  err.style.display = 'block';
+}
+
+async function startGoogleLogin(){
+  const btn = document.getElementById('google-btn');
+  btn.disabled = true;
+  document.getElementById('login-err').style.display = 'none';
+  const { error } = await getGoogleAuthClient().auth.signInWithOAuth({
+    provider: 'google',
+    // select_account: always show the account chooser, so on a shared
+    // device the next person doesn't land in the last person's account.
+    options: { redirectTo: location.origin + '/index.html', queryParams: { prompt: 'select_account' } }
+  });
+  if(error){
+    console.warn('Google sign-in failed to start', error);
+    btn.disabled = false;
+    showLoginError(ui('googleFailed'));
+  }
+}
+
+// Called on load when the URL carries Google's ?code= (or ?error=). Returns
+// true if it logged the person in.
+async function finishGoogleLogin(){
+  const loadMsg = document.getElementById('loading-msg');
+  loadMsg.style.display = 'block';
+  const client = getGoogleAuthClient();
+  let session = null;
+  try {
+    // getSession() waits for the client to swap ?code= for a session.
+    ({ data: { session } } = await client.auth.getSession());
+  } catch(e){
+    console.warn('Google sign-in exchange failed', e);
+  }
+  history.replaceState(null, '', location.pathname);
+  if(!session){
+    loadMsg.style.display = 'none';
+    showLoginError(ui('googleFailed'));
+    return false;
+  }
+
+  let result = null;
+  try {
+    const res = await fetch(GOOGLE_LOGIN_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accessToken: session.access_token })
+    });
+    result = await res.json();
+  } catch(e){
+    console.warn('google-login call failed', e);
+  }
+  try { await client.auth.signOut({ scope: 'local' }); } catch(e){}
+  loadMsg.style.display = 'none';
+
+  if(result && result.notLinked){
+    showLoginError(ui('googleNotLinked').replace('{email}', result.email || 'Google'));
+    return false;
+  }
+  if(!result || !result.ok || !result.pin){
+    if(result && result.error) console.warn('google-login:', result.error);
+    showLoginError(ui('googleFailed'));
+    return false;
+  }
+
+  if(!directory) directory = await loadDirectory();
+  const pin = String(result.pin).padStart(4,'0');
+  const user = directory && directory.find(u => String(u.pin).padStart(4,'0') === pin);
+  if(!user){
+    showLoginError(ui(directory ? 'googleFailed' : 'noDirectory'));
+    return false;
+  }
+  currentUser = user;
+  sessionStorage.setItem('2cw_pin', String(result.pin));
+  await buildHub(user);
+  return true;
 }
 
 // ── BUILD HUB ────────────────────────────────────────────
@@ -996,6 +1115,13 @@ function doLogout(){
 
 // Auto-login: if a valid PIN is already in sessionStorage, skip the login screen
 window.addEventListener('load', async () => {
+  // Back from Google: finish that sign-in instead of the saved-PIN check.
+  const params = new URLSearchParams(location.search);
+  if(params.has('code') || params.has('error')){
+    if(await finishGoogleLogin()) return;
+    document.getElementById('login-screen').style.display = 'flex';
+    return;
+  }
   const savedPin = sessionStorage.getItem('2cw_pin');
   if(savedPin){
     if(!directory) directory = await loadDirectory();

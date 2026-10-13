@@ -1467,7 +1467,7 @@
         <div class="hint">${esc(t(L.daysHint))}</div></div>
       <div class="row"><div><label class="lbl" for="ed-ts">${esc(t(L.tStart))}</label><input type="time" id="ed-ts" value="${esc(f.startTime || '')}"></div>
         <div><label class="lbl" for="ed-te">${esc(t(L.tEnd))}</label><input type="time" id="ed-te" value="${esc(f.endTime || '')}"></div>
-        ${f.startTime && f.endTime && f.endTime <= f.startTime ? `<div class="full hint" style="margin-top:-4px">${esc(t(L.overnight))}</div>` : ''}</div>
+        <div class="full hint" id="ed-overnight" style="margin-top:-4px"${f.startTime && f.endTime && f.endTime <= f.startTime ? '' : ' hidden'}>${esc(t(L.overnight))}</div></div>
       <div><label class="lbl" for="ed-notes">${esc(t(L.notes))}</label><textarea id="ed-notes">${esc(f.notes || '')}</textarea></div>
 
       <div class="sec">${esc(t(L.roles))}</div>
@@ -1484,11 +1484,11 @@
             <div class="picker"><input data-padd="${ri}" autocomplete="off" placeholder="${esc(t(L.addPerson))}"><div class="panel"></div></div></div>
         </div>`).join('')}
       </div>
-      <div class="hint" style="margin:6px 0 10px">${esc(fill(t(L.timesHint), { h: hoursLabel(f) }))}</div>
+      <div class="hint" id="ed-timeshint" style="margin:6px 0 10px">${esc(fill(t(L.timesHint), { h: hoursLabel(f) }))}</div>
       <button type="button" class="btn btn-sm" id="ed-addrole">${esc(t(L.addRole))}</button>
 
       <div class="sec" style="color:var(--purple)">${esc(t(L.flc))}</div>
-      <div class="hint" style="margin:-2px 0 10px">${esc(fill(t(L.flcHint), { h: hoursLabel(f) }))}</div>
+      <div class="hint" id="ed-flchint" style="margin:-2px 0 10px">${esc(fill(t(L.flcHint), { h: hoursLabel(f) }))}</div>
       <div id="ed-flc">${f.contractors.map((c, ci) => `<div class="role-ed">
         <div class="flc-hd"><input data-cname="${ci}" value="${esc(c.name)}" list="flc-names" autocomplete="off" aria-label="${esc(t(L.flcName))}" placeholder="${esc(t(L.flcName))} — ${esc(t(L.flcNamePh))}">
           <button type="button" class="x" data-cdel="${ci}" aria-label="×">×</button></div>
@@ -1568,7 +1568,15 @@
       const sd = e.target.closest('[data-sdel]');
       if (sd) { const [ci, si] = sd.dataset.sdel.split(':').map(Number); readEditor(); f.contractors[ci].shifts.splice(si, 1); render(); }
     };
-    ['ed-ts', 'ed-te', 'ed-start', 'ed-end'].forEach((id) => $(id).addEventListener('change', rerender));
+    // Update the hints in place: re-rendering here would replace the input
+    // and close its date/time picker while it's still being used.
+    const syncTimes = () => {
+      f.startTime = $('ed-ts').value; f.endTime = $('ed-te').value;
+      $('ed-overnight').hidden = !(f.startTime && f.endTime && f.endTime <= f.startTime);
+      $('ed-timeshint').textContent = fill(t(L.timesHint), { h: hoursLabel(f) });
+      $('ed-flchint').textContent = fill(t(L.flcHint), { h: hoursLabel(f) });
+    };
+    ['ed-ts', 'ed-te'].forEach((id) => $(id).addEventListener('change', syncTimes));
     document.querySelectorAll('[data-padd]').forEach((inp) => {
       const ri = +inp.dataset.padd;
       personPicker(inp, (person) => {

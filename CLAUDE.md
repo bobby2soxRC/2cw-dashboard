@@ -11,6 +11,17 @@ live data. Docs live in `docs/` — `OPERATIONS_APP.md` (station forms,
   the Supabase SQL editor **before** pushing code that reads/writes the new
   columns.
 
+## In progress
+
+### Google sign-in (started 2026-10-10)
+
+Moving everyone from PINs to Google over a few weeks. Step 1 is built: a
+"Sign in with Google" button on `index.html` and
+`netlify/functions/google-login.js`, which turns a linked Google login into
+the user's PIN session (`app_users.auth_user_id`). Still to do: self-serve
+linking, server functions accepting the Google login instead of `2cw_pin`,
+then cutover. Plan and setup: "Google sign-in" in `docs/USER_ADMIN.md`.
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)

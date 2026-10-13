@@ -288,6 +288,86 @@ and phone numbers can be read by anyone who opens the site's developer
 tools. Moving the PIN check server-side would close that; it hasn't been
 done yet.
 
+## Google sign-in (moving off PINs)
+
+The plan, over a few weeks: Google sign-in runs alongside the PIN, each
+person's Google account gets linked to their `app_users` row, then the PIN
+login is switched off.
+
+1. **Google button next to the PIN** — done (this section).
+2. **Self-serve linking** — not built yet. Until then, link people by hand
+   (SQL below).
+3. **Server functions accept the Google login instead of the PIN** — not
+   built yet. Pages and functions still run on `2cw_pin` in
+   `sessionStorage`.
+4. **Cutover** — hide the PIN box, drop the `pin` column, close anon read on
+   `app_users`. That also makes the parked PIN-reset-by-email work moot.
+
+**How it works today.** "Sign in with Google" on `index.html` goes through
+Supabase Auth and comes back to `index.html?code=…`.
+`netlify/functions/google-login.js` checks the token with Supabase, finds
+the active `app_users` row whose `auth_user_id` is that Google account, and
+returns its PIN. From there it's an ordinary PIN login, so no other page has
+to change yet. A Google account with no linked row gets "isn't linked yet —
+sign in with your PIN". The Supabase session is stored under its own key and
+signed out right after the exchange. Under the default key, every other
+page's Supabase client would query as `authenticated`, and the tables are
+only granted to `anon`.
+
+**Setup (one time):**
+1. **Supabase SQL editor:** run `supabase/schema.sql`. This adds
+   `app_users.auth_user_id`.
+2. **Google Cloud Console** (console.cloud.google.com, signed in with a
+   company account):
+   - Create a project, e.g. "2CW Dashboard".
+   - *Google Auth Platform → Branding / OAuth consent screen:* app name
+     "2CW Dashboard", support email, and your site's domain under
+     authorized domains. Audience: **Internal** if everyone is on one
+     Google Workspace (only that domain can sign in); otherwise
+     **External**, then **Publish app**. Left in *Testing*, only listed
+     test users can sign in, and logins expire after 7 days. With just
+     email/profile scopes, publishing needs no Google review.
+   - *Clients → Create client → Web application:*
+     - Authorized JavaScript origins: the site URL, e.g.
+       `https://<your-site>.netlify.app` (and the custom domain if there
+       is one).
+     - Authorized redirect URI:
+       `https://ugtxmyciyuelxxzqmrdx.supabase.co/auth/v1/callback`
+     - Copy the Client ID and Client secret.
+3. **Supabase dashboard:**
+   - *Authentication → Sign In / Providers → Google:* enable it, then paste
+     the Client ID and secret.
+   - *Authentication → URL Configuration:* set Site URL to the live site,
+     and add `https://<your-site>/index.html` under Redirect URLs (add
+     `http://localhost:8888/index.html` too if you test locally with
+     `netlify dev`). If the redirect URL isn't listed, Supabase sends people
+     to the Site URL instead of `index.html` and the sign-in never finishes.
+4. **Netlify:** nothing new. `google-login.js` uses `SUPABASE_URL` and
+   `SUPABASE_SERVICE_ROLE_KEY`, which `admin.js` already has.
+
+**Linking someone by hand (until step 2 exists).** They click "Sign in with
+Google" once. It will say "not linked yet", but that first sign-in creates
+their Supabase Auth user. Then, in the SQL editor:
+
+```sql
+update app_users
+   set auth_user_id = (select id from auth.users where email = 'their.google@email.com')
+ where name = 'Their Name' and active;
+```
+
+Check who's linked with
+`select name, auth_user_id is not null as linked from app_users where active order by name;`.
+
+**Notes:**
+- The button always shows Google's account chooser
+  (`prompt=select_account`), so on a shared device the next person doesn't
+  land in the previous person's account. They should still sign out of
+  Google on shared devices.
+- Anyone with a Google account can complete the Google step (it creates a
+  row in Supabase's `auth.users`), but without a linked `app_users` row they
+  get nothing. The link is what grants access.
+- Tested offline by `node scripts/test_google_login.js`.
+
 ## Labor rates
 
 The **Labor Rates** tab sets each person's loaded hourly cost for the Labor

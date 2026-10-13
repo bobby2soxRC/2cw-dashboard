@@ -12,6 +12,7 @@ the existing Operations Hub — same login, same Netlify deploy.
 |---|---|
 | `operations.html` | Station picker, grouped by department, with "continue" chips for your open drafts |
 | `ops_form.html` | The form for every station, rendered from the schema, with autosave + resume |
+| `buck_hold.html` | Bucking → On hold: Take Downs held for quality or an order, and the Release to bucking buttons (all, or part under a new tag) |
 | `labor_log.html` | Labor Log — people's hours (Connecteam roster) against UIDs, split across several UIDs when needed — see below |
 | `master_schedule.html` | Master Schedule — projects, their responsibilities and people, UIDs, and the day/week work schedule (replaced `schedule.html`) — see below |
 | `operations_today.html` | Live board — every form in progress or finished today, for anyone with view access |
@@ -45,10 +46,54 @@ the station; `splitRecords` in `ops_form.html`), each holding only its own
 rows and totals, so everything downstream still sees one package per
 record. With more than one UID on the form the Metrc-adjustment fields hide;
 they're filled in per intake afterwards from Harvest Intakes. Take Down (station key `dry_check`)
-boxes the dried material under a new on-stem package UID. Take Down's
-`incomingUid` pulls strain/farm license/CID/wet weight from the intake record, and
+boxes the dried material under a new package UID (**New Dry UID**, field
+`sourceUid`). The form starts
+with the drying room, then the package from a dropdown of what's still
+drying in that room ("Strain - last 4 of UID"; "Not listed" falls back to
+typing the UID); the room dropdown shows how many are drying in each. Picking
+it shows its full **Intake UID** (`incomingUid`) under the dropdown and
+pulls strain/farm license/CID/wet weight from the intake record; picking
+another package replaces those, and
 `ops_analytics` aliases the on-stem UID back to the farm UID so it stays one
 lot. Bucking's page for a lot starts from that on-stem UID.
+Its Boxes worksheet numbers the boxes itself (Box # is a `rownum` column:
+1, 2, 3… down the rows, renumbered when a row is removed, and on submit
+counted over the filled-in rows only, so there are no gaps).
+
+**Currently drying** means a submitted Wet Intake with no submitted Take Down
+for its farm UID (`currentlyDrying` / `matchTakeDowns` in `ops_common.js`;
+UIDs match when one ends with the other, 4+ characters). Fresh-frozen intakes
+never count as drying. Any submitted Take Down counts, whatever its Release.
+Release is **Release to bucking** (`pass`, the default; Bucking warns on
+anything else), **Hold — quality issue** (`rework`) or **Hold — until
+needed for an order** (`hold_order`). Material that needs more dry time just
+isn't taken down yet; the old `hold` value only appears on older records.
+Held Take Downs wait on **Bucking → On hold** (`buck_hold.html`, linked
+from the top of the Bucking page; newest Take Down per on-stem UID) until
+someone taps **Release to bucking** and picks:
+- **All of it** — sets the record's `result` to `pass` and adds `heldFor`
+  (the old result), `releasedBy` and `releasedAt`, so its on-stem UID can be
+  bucked with whatever is left on it.
+- **Part** — for an order: split it off in Metrc under a new tag first, then
+  enter the pounds and the new UID. That appends `{uid, lb, by, at}` to the
+  record's `releases`; the new tag is bucked on a page of its own and the
+  rest stays on hold showing what's left. The pounds must be less than
+  what's left (for the rest, use All of it). The dry weight stays on the
+  Take Down only — `buildAliasMap` aliases each release tag back to the
+  on-stem tag — so lots and yields don't count it twice. `findUpstream`
+  finds a release by its tag and gives Bucking its pounds (`unbuckedLb`);
+  for the on-stem tag, `unbuckedLb` is the dry weight less any parts.
+
+After a release the page links straight to a new Bucking page for that UID
+(`?set_sourceUid=`).
+Both re-read the record before writing (two tablets can't overwrite each
+other), need a connection (not queued), and are logged by the edit history
+trigger. The same rule drives the Take Down picker, Harvest
+Intakes' **Currently drying** / **Historical** filters (Currently drying is
+the default; drafts count as drying; Historical is taken-down and
+fresh-frozen intakes), and Canix Inventory → Processing → Currently Drying,
+which leaves out Canix packages that already have a Take Down until Metrc and
+the next sync catch up.
 
 Harvest (`harvest`) is the step before Wet Intake and is built the same
 way: one form per truck load, a worksheet row per group of bins/bags with
@@ -261,8 +306,10 @@ Bucking (`buck`) is built like Smalls: one page per on-stem UID (flavor), on
 `ops_form.html` with `sharedDay: true`, so the switcher at the top lists
 every open bucking page from anyone, plus "+ New flavor". A batch can take
 several days; an older page stays in the switcher (with its start date)
-until it's submitted. Type the last 4 of the on-stem tag and the strain and
-**dry unbucked weight** come in from Take Down (`PREFILL_MAP.buck`).
+until it's submitted. Type the last 4 of the on-stem tag (or a part's new tag) and the strain and
+**dry unbucked weight** come in from Take Down (`PREFILL_MAP.buck`); a UID
+still on hold at Take Down shows a warning to release it first. The
+**On hold** link at the top (station `links`) opens `buck_hold.html`.
 
 The page has three running logs — `lineitems` with `entry: true`: an entry
 bar (the row's boxes plus Add; Enter moves to the next box and adds once
@@ -300,7 +347,7 @@ big leaf, waste and A+/A/B trim. Those fields are off the form but still in
 the station's `flow`, so those records still balance. The earlier
 four-tab Bucking page (`buck_station.html`, `buck_data.js`, station keys
 `buck_submission` / `buck_box` / `buck_batch_close`) was removed on
-2026-10-13; it had no live rows.
+2026-10-13; it had no live rows. Its On hold list moved to `buck_hold.html`.
 
 ## Things the forms do that the paper doesn't
 
