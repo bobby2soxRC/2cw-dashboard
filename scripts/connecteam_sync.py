@@ -337,7 +337,8 @@ def shift_activity(s, attachment_defs):
             continue
         d = attachment_defs.get(str(att.get("shiftAttachmentId")), {})
         for t in _answer_texts(att.get("attachment"), d.get("items", {})):
-            if t not in out:
+            # "Not Applicable" on the Customer question says nothing.
+            if t not in out and t.strip().lower() not in ("not applicable", "n/a", "na", "none"):
                 out.append(t)
     return " · ".join(out)[:120]
 
