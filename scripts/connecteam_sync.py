@@ -122,8 +122,13 @@ def api_get_all(path, params=None, list_path=("data",), page_size=200):
         out.extend(records)
         got = len(records)
         print(f"    {path} offset={offset}: {got} record(s) (running total: {len(out)})")
-        if got < page_size:
+        # No "paging" in the body (time-activities): the endpoint isn't
+        # paged and ignores offset, returning everyone every time — so asking
+        # again would loop forever once there are page_size+ users.
+        if got < page_size or not (isinstance(body, dict) and "paging" in body):
             break
+        if offset >= page_size * 50:
+            raise RuntimeError(f"{path}: more than 50 pages — paging looks broken, giving up")
         offset += page_size
         time.sleep(REQUEST_PACE_SECONDS)
     return out
