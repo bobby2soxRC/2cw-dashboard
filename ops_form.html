@@ -1516,7 +1516,8 @@
 
   // ── Delete this page (station.canDelete — Bucking) ───────────────────────
   // For a page started by mistake: asks first, then deletes the open page
-  // (a draft only — never a submitted record) and starts a blank one. Other
+  // through operations-records.js (deleteOpenPage — a draft only, never a
+  // submitted record; logged with who did it) and starts a blank one. Other
   // tablets on it lock on their next check (see DE above).
   const DP = {
     btn:      { en: 'Delete this page', es: 'Borrar esta hoja' },
@@ -1544,20 +1545,16 @@
       clearTimeout(autosaveTimer);
       delBtn.disabled = true;
       delBtn.textContent = t(DP.deleting);
-      const res = onServer ? await deleteDraft(draftId) : { ok: true, deleted: true };
-      if (!res.ok || !res.deleted) {
-        // Not deleted: either it couldn't reach the server, or there was no
-        // open page to delete — check which before saying so.
-        const chk = res.ok ? await checkDraft(draftId) : { ok: false };
-        if (chk.ok && chk.row && chk.row.status === 'submitted') { closedElsewhere(); alert(t(DP.tooLate)); return; }
-        if (!(chk.ok && !chk.row)) {
-          isClosed = false;
-          delBtn.disabled = false;
-          delBtn.textContent = t(DP.btn);
-          alert(t(DP.failed));
-          markDirty();
-          return;
-        }
+      // Never saved (nothing typed yet) → nothing on the server to delete.
+      const res = onServer ? await deleteOpenPage(station.key, draftId) : { ok: true };
+      if (!res.ok && res.code === 'submitted') { closedElsewhere(); alert(t(DP.tooLate)); return; }
+      if (!res.ok && res.code !== 'gone') {
+        isClosed = false;
+        delBtn.disabled = false;
+        delBtn.textContent = t(DP.btn);
+        alert(res.error || t(DP.failed));
+        markDirty();
+        return;
       }
       localStorage.removeItem(mirrorKey());
       location.href = `/ops_form.html?station=${station.key}&deleted=1`;

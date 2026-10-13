@@ -151,15 +151,24 @@ async function listStationForms(stationKey) {
   return data || [];
 }
 
-// Deletes an open form — only ever a draft, never a submitted record.
-// `deleted` is false when there was no draft by that id (already gone, or
-// submitted in the meantime).
-async function deleteDraft(id) {
-  const client = getClient();
-  if (!client || !id) return { ok: false, reason: 'not-configured' };
-  const { data, error } = await client.from(TABLE).delete().eq('id', id).eq('status', 'draft').select('id');
-  if (error) { console.error('deleteDraft', error); return { ok: false, reason: error.message }; }
-  return { ok: true, deleted: !!(data && data.length) };
+// Deletes an open (not yet submitted) page — e.g. a Bucking page started by
+// mistake. The browser can't delete forms itself (no anon DELETE — see
+// supabase/schema.sql), so this goes through operations-records.js, which
+// checks the PIN and the person's edit access to the station, never deletes
+// a submitted record, and logs who did it. code: 'submitted' | 'gone' |
+// undefined (couldn't reach it, or not allowed — see error).
+async function deleteOpenPage(stationKey, id) {
+  try {
+    const res = await fetch('/.netlify/functions/operations-records', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete_open', pin: sessionStorage.getItem('2cw_pin') || '', stationKey, id })
+    });
+    const data = await res.json().catch(() => ({}));
+    return { ok: !!(res.ok && data.ok), code: data.code, error: data.error };
+  } catch (e) {
+    return { ok: false, error: null };
+  }
 }
 
 // Like getDraft, but tells "it isn't there" ({ ok: true, row: null }) apart

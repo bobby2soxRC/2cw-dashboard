@@ -324,8 +324,12 @@ on hold at Take Down shows a warning to release it first. The
 **Deleting a page.** "Delete this page" under the form (station
 `canDelete`) is for a page started by mistake. It asks first (naming the
 strain / UID and how many boxes, bucked and trim rows go with it), then
-deletes the open page — `deleteDraft` only ever removes a draft, never a
-submitted record — and opens a blank one. Another tablet with that page
+deletes the open page and opens a blank one. The browser can't delete
+forms (no anon DELETE), so it goes through `operations-records.js`
+(`action: 'delete_open'`, `deleteOpenPage` in `ops_data.js`): it checks the
+PIN and the person's edit access to the station (`OPEN_PAGE_DELETE` lists
+the stations allowed), refuses a submitted record, and deletes through
+`delete_operations_form`, so the history log records who did it. Another tablet with that page
 open locks on its next check ("deleted on another tablet") instead of
 re-creating it on its next autosave (`checkDraft` tells a missing page
 apart from a dropped connection).

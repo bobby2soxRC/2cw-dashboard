@@ -7,6 +7,11 @@
 //
 // POST {action:'history', pin, stationKey}            -> {ok, history, deleted}
 // POST {action:'delete',  pin, stationKey, id, reason} -> {ok}
+// POST {action:'delete_open', pin, stationKey, id}     -> {ok} | {ok:false, code}
+//   An open (not yet submitted) page the station's own crew can delete —
+//   a Bucking page started by mistake. Needs edit access to that station
+//   ('production edit stations'), not a separate checkbox. code is
+//   'submitted' (too late — never deleted this way) or 'gone'.
 //
 // Required env vars (Netlify site config), same as admin.js:
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
@@ -16,6 +21,9 @@
 const STATIONS = {
   intake_wet: { delete: 'harvest intakes delete', history: 'harvest intakes history' }
 };
+
+// Stations whose open pages their crew can delete (delete_open).
+const OPEN_PAGE_DELETE = new Set(['buck']);
 
 const HISTORY_LIMIT = 5000;
 
@@ -50,6 +58,36 @@ async function userForPin(supaUrl, serviceKey, pin) {
 
 const allowed = (user, col) => String((user.columns || {})[col] || '').toUpperCase() === 'TRUE';
 
+// Station edit access, read the way the hub login reads it (index.html):
+// 'production edit stations' (or the older 'production stations') is 'all'
+// or a comma-separated list of station keys.
+function canEditStation(user, key) {
+  const c = user.columns || {};
+  const raw = String(c['production edit stations'] || c['production stations'] || '').trim();
+  if (raw.toLowerCase() === 'all') return true;
+  return raw.split(',').map((s) => s.trim()).includes(key);
+}
+
+async function deleteOpenPage(supaUrl, serviceKey, user, stationKey, id) {
+  if (!OPEN_PAGE_DELETE.has(stationKey)) return json(400, { ok: false, error: 'Unknown action or station' });
+  if (!canEditStation(user, stationKey)) return json(403, { ok: false, error: 'You don’t have permission to do that.' });
+  if (!/^[0-9a-f-]{36}$/i.test(String(id || ''))) return json(400, { ok: false, error: 'Invalid record id' });
+  const chk = await supaFetch(supaUrl, serviceKey, `operations_forms?id=eq.${id}&select=station_key,status`);
+  if (!chk.ok) throw new Error(`record lookup failed: ${chk.status} ${await chk.text()}`);
+  const rec = (await chk.json())[0];
+  if (!rec) return json(404, { ok: false, code: 'gone', error: 'That page is already gone.' });
+  if (rec.station_key !== stationKey) return json(403, { ok: false, error: 'Record is not on this station' });
+  if (rec.status !== 'draft') return json(409, { ok: false, code: 'submitted', error: 'That page was already submitted, so it can’t be deleted.' });
+  // Same path as any other delete, so the history log records who did it.
+  const del = await supaFetch(supaUrl, serviceKey, 'rpc/delete_operations_form', {
+    method: 'POST',
+    body: JSON.stringify({ p_id: id, p_actor: user.name, p_reason: 'Open page deleted (started by mistake)' })
+  });
+  if (!del.ok) throw new Error(`delete failed: ${del.status} ${await del.text()}`);
+  if (!(await del.json())) return json(404, { ok: false, code: 'gone', error: 'That page is already gone.' });
+  return json(200, { ok: true });
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return json(405, { ok: false, error: 'Method not allowed' });
 
@@ -61,12 +99,14 @@ exports.handler = async (event) => {
   try { body = JSON.parse(event.body || '{}'); } catch { return json(400, { ok: false, error: 'Invalid JSON body' }); }
   const { action, pin, stationKey } = body;
   const cols = STATIONS[stationKey];
-  if (!cols || !cols[action]) return json(400, { ok: false, error: 'Unknown action or station' });
+  const openDelete = action === 'delete_open';
+  if (!openDelete && (!cols || !cols[action])) return json(400, { ok: false, error: 'Unknown action or station' });
   if (typeof pin !== 'string' || !pin.trim()) return json(401, { ok: false, error: 'Not logged in' });
 
   try {
     const user = await userForPin(supaUrl, serviceKey, pin.trim());
     if (!user) return json(401, { ok: false, error: 'PIN not recognized — log in again.' });
+    if (openDelete) return await deleteOpenPage(supaUrl, serviceKey, user, stationKey, body.id);
     if (!allowed(user, cols[action])) return json(403, { ok: false, error: 'You don’t have permission to do that.' });
     const actor = user.name;  // same name the app logs everywhere else (2cw_user_name)
 
