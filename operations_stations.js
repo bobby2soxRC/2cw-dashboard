@@ -24,7 +24,8 @@
 //   prefill 'lookup' — pull from the upstream stage record matching sourceUid
 //   entry  (lineitems) a running log instead of a grid: an entry bar plus Add,
 //          rows stamped with an id/day/time and merged across tablets (see
-//          buildEntryLog in ops_form.html). A column with `autoInc` counts up.
+//          buildEntryLog in ops_form.html). A `rownum` column numbers the
+//          rows 1, 2, 3… by itself (Take Down's and Bucking's Box #).
 //
 // Station option:
 //   splitBy  key of a lineitems field whose rows carry sourceUid/strain — on
@@ -515,7 +516,10 @@ const OPERATIONS_STATIONS = [
     sharedDay: true,
     // Take Downs held for quality or for an order wait on their own page
     // until someone releases them (buck_hold.html).
-    links: [{ href: '/buck_hold.html', l: { en: 'On hold →', es: 'En espera →' } }],
+    links: [{ href: '/buck_hold.html', l: { en: 'On-Stem Flower →', es: 'Flor en tallo →' } }],
+    // A Queue tab next to the form: the order to buck in (set on the
+    // On-Stem Flower page), with the strain, UID and starting weight.
+    queueTab: true,
     // The daily tally: person × flavor for one day. Each logged row carries
     // the day it was weighed (`day`), so a batch that runs three days shows
     // only that day's pounds.
@@ -546,7 +550,7 @@ const OPERATIONS_STATIONS = [
         hint: { en: 'Log each box as it comes off the dry unbucked weight.',
                 es: 'Registre cada caja al sacarla del peso seco sin desvarar.' },
         cols: [
-          { k: 'boxNo', t: 'text', l: { en: 'Box #', es: 'Caja #' }, inputmode: 'numeric', req: true, autoInc: true },
+          { k: 'boxNo', t: 'rownum', l: { en: 'Box #', es: 'Caja #' } },
           { k: 'weightLb', t: 'number', l: { en: 'Weight (lbs)', es: 'Peso (lbs)' }, min: 0, step: 0.01, req: true, dp: 2 }
         ],
         totalCol: 'weightLb' },
@@ -1089,8 +1093,8 @@ const PREFILL_MAP = {
   // off a held one under its own tag), and warns when it's still on hold.
   buck:        { from: 'dry_check',    map: { strain: 'strain', dryUnbuckedLb: 'unbuckedLb' },
                  warn: (up) => (up.result && up.result !== 'pass'
-                   ? { en: 'This package is on hold at Take Down. A manager has to release it (On hold page) before it’s bucked.',
-                       es: 'Este paquete está en espera en la bajada. Un gerente tiene que liberarlo (página En espera) antes de desvararlo.' }
+                   ? { en: 'This package is on hold at Take Down. A manager has to release it (On-Stem Flower page) before it’s bucked.',
+                       es: 'Este paquete está en espera en la bajada. Un gerente tiene que liberarlo (página Flor en tallo) antes de desvararlo.' }
                    : null) },
   machine_trim:{ from: 'buck',         map: { strain: 'strain', inputBuckedLb: 'buckedFlowerLb' } },
   hand_trim:   { from: 'machine_trim', map: { strain: 'strain', startingBuckedLb: 'flowerALb' } }

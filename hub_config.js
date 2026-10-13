@@ -177,12 +177,12 @@ const CARD_DEFS = [
     label: 'Processing',
     dept: 'operations',
     subdept: 'processing',
-    // A manager's job: releasing a held Take Down to bucking. The admin
-    // panel checkbox ('buck release') shows this card and the Release
-    // buttons on buck_hold.html. Bucking crew can still open the list from
-    // the Bucking page, read-only.
-    title: 'Bucking — On Hold',
-    desc: 'Take Downs held for quality or for an order. Release all of one, or part under a new tag, so it can be bucked.',
+    // A manager's job: ordering the bucking queue and releasing a held Take
+    // Down to bucking. The admin panel checkbox ('buck release') shows this
+    // card and the controls on buck_hold.html. Bucking crew can still open
+    // it from the Bucking page, read-only.
+    title: 'On-Stem Flower',
+    desc: 'The bucking queue — set the order packages get bucked in — and what’s on hold, with Release to bucking.',
     href: '/buck_hold.html'
   },
   {

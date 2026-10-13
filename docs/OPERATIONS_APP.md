@@ -12,7 +12,7 @@ the existing Operations Hub — same login, same Netlify deploy.
 |---|---|
 | `operations.html` | Station picker, grouped by department, with "continue" chips for your open drafts |
 | `ops_form.html` | The form for every station, rendered from the schema, with autosave + resume |
-| `buck_hold.html` | Bucking → On hold: Take Downs held for quality or an order, and the Release to bucking buttons (all, or part under a new tag) |
+| `buck_hold.html` | On-Stem Flower: the bucking queue (managers set the order) and Take Downs on hold, with the Release to bucking buttons (all, or part under a new tag) |
 | `labor_log.html` | Labor Log — people's hours (Connecteam roster) against UIDs, split across several UIDs when needed — see below |
 | `master_schedule.html` | Master Schedule — projects, their responsibilities and people, UIDs, and the day/week work schedule (replaced `schedule.html`) — see below |
 | `operations_today.html` | Live board — every form in progress or finished today, for anyone with view access |
@@ -68,8 +68,8 @@ Release is **Release to bucking** (`pass`, the default; Bucking warns on
 anything else), **Hold — quality issue** (`rework`) or **Hold — until
 needed for an order** (`hold_order`). Material that needs more dry time just
 isn't taken down yet; the old `hold` value only appears on older records.
-Held Take Downs wait on **Bucking → On hold** (`buck_hold.html`, the
-hub's "Bucking — On Hold" card, also linked from the top of the Bucking
+Held Take Downs wait on the **On-Stem Flower** page (`buck_hold.html`, the
+hub's "On-Stem Flower" card, also linked from the top of the Bucking
 page; newest Take Down per on-stem UID) until a manager taps **Release to
 bucking** — only users with the `buck release` checkbox (see
 `USER_ADMIN.md`); the Bucking crew sees the list read-only — and picks:
@@ -318,13 +318,30 @@ abbreviation is the strain library's `abbreviation`, "—" if none). Picking
 one fills the UID, strain and **dry unbucked weight** (`PREFILL_MAP.buck`).
 "Not listed — type the UID" still allows typing a tag; a typed UID still
 on hold at Take Down shows a warning to release it first. The
-**On hold** link at the top (station `links`) opens `buck_hold.html`.
+**On-Stem Flower** link at the top (station `links`) opens
+`buck_hold.html`.
+
+**Bucking queue.** On-Stem Flower lists what's ready to buck
+(`loadBuckingQueue` in `ops_data.js`) in the order a manager sets with ▲ ▼
+/ Top. The order is one shared `operations_forms` row (`station_key:
+'buck_queue'`, fixed id `BUCK_QUEUE_ID`, `fields.order` = UIDs), like the
+trim cost split; `orderBuckQueue` in `ops_common.js` puts anything not in
+it last, oldest Take Down first, and a package drops off once its Bucking
+record is submitted. A package open on a bucking page shows "being
+bucked". Each row shows the **starting weight** (`unbuckedLb`), the pounds
+**pulled** so far (the boxes logged on its open bucking page — `withPulled`
+in `ops_data.js`) and what's **remaining**. The Bucking form's **Queue** tab
+(station `queueTab`) shows the same list — number, strain, UID, starting weight,
+pulled and remaining (this page's own boxes live, as typed) — with **Start →** (a
+new page with that UID, `?set_sourceUid=`) or **Open →** (the page it's
+on), and the package dropdown lists in the same order.
 
 The page has three running logs — `lineitems` with `entry: true`: an entry
 bar (the row's boxes plus Add; Enter moves to the next box and adds once
 they're filled), and the rows logged so far underneath, newest first:
-- `boxes` — each box taken off the dry unbucked weight: box # (counts up
-  by itself) and lbs. Totals to `startingDryLb`, and "Dry Unbucked Left" is
+- `boxes` — each box taken off the dry unbucked weight: lbs, with Box #
+  filled in by itself (a `rownum` column: 1, 2, 3… in the order logged,
+  renumbered when one is removed). Totals to `startingDryLb`, and "Dry Unbucked Left" is
   the Take Down weight minus that.
 - `bucked` — bucked flower by person: `who` is the employee #, or a name for
   someone without one, and lbs. Totals to `buckedFlowerLb`.

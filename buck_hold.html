@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>Bucking On Hold — 2CW Operations</title>
+<title>On-Stem Flower — 2CW Operations</title>
 <script>
   (function(){ if (!sessionStorage.getItem('2cw_pin')) { window.location.replace('/index.html'); } })();
 </script>
@@ -61,13 +61,35 @@
   .empty-note{color:var(--subtext);font-size:.9rem;padding:24px;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:12px}
   .done{margin-bottom:16px;padding:.9rem 1rem;border-radius:10px;font-family:'DM Mono',monospace;font-size:.85rem;line-height:1.5;background:rgba(61,184,122,.12);color:var(--green);border:1px solid var(--green)}
   .done a{color:inherit}
+
+  .sec{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:.04em;margin:28px 0 4px}
+  .sec:first-of-type{margin-top:8px}
+  .sec-hint{font-size:.8rem;color:var(--muted);margin-bottom:12px;line-height:1.45}
+  .q-list{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:4px 14px}
+  .q-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+  .q-row:last-child{border-bottom:none}
+  .q-n{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--gold);min-width:34px;text-align:center}
+  .q-main{flex:1;min-width:0}
+  .q-strain{font-weight:700}
+  .q-uid{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--subtext);overflow-wrap:anywhere}
+  .q-lbs{display:flex;gap:14px;flex:0 0 auto}
+  .q-lb{font-family:'DM Mono',monospace;font-size:1rem;white-space:nowrap;text-align:right}
+  .q-lb .k{display:block;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .q-lb.left{color:var(--gold)}
+  .q-lb.neg{color:var(--red)}
+  .q-tag{display:inline-block;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);border:1px solid var(--gold);border-radius:99px;padding:2px 7px;margin-left:6px;vertical-align:middle}
+  .q-move{display:flex;gap:6px;flex:0 0 auto}
+  .q-move button{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;min-width:44px;min-height:44px;font-size:1rem;cursor:pointer;font-family:'DM Mono',monospace}
+  .q-move button:hover:not(:disabled){border-color:var(--gold);color:var(--gold)}
+  .q-move button:disabled{opacity:.3;cursor:default}
+  @media (max-width:560px){ .q-row{flex-wrap:wrap} .q-lbs{flex:1 0 100%;justify-content:flex-end} .q-move{flex:1 0 100%;justify-content:flex-end} }
 </style>
 </head>
 <body>
 <header class="hdr">
   <a class="hdr-back" href="/ops_form.html?station=buck" id="back">← Bucking</a>
   <div class="hdr-div"></div>
-  <div class="hdr-brand" id="brand">On hold</div>
+  <div class="hdr-brand" id="brand">On-Stem Flower</div>
   <div class="lang" id="lang"></div>
 </header>
 
@@ -75,6 +97,11 @@
   <div class="title" id="title"></div>
   <div class="subtitle" id="subtitle"></div>
   <div id="done" class="done" hidden></div>
+  <h2 class="sec" id="q-title"></h2>
+  <div class="sec-hint" id="q-hint"></div>
+  <div id="queue-mount"></div>
+  <h2 class="sec" id="h-title"></h2>
+  <div class="sec-hint" id="h-hint"></div>
   <div id="held-mount"></div>
 </main>
 
@@ -85,7 +112,14 @@
 <script src="/ops_data.js"></script>
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
-// Bucking → On hold. A Take Down (dry_check) can be held for a quality issue
+// On-Stem Flower: the dried, on-stem packages between Take Down and Bucking.
+//
+// Bucking queue — what's ready to buck (loadBuckingQueue in ops_data.js), in
+// the order a manager sets with ▲ ▼ / Top, saved as one shared row
+// (saveBuckQueue). The Bucking form's Queue tab and its package dropdown
+// follow the same order. Anything not ordered yet goes last, oldest first.
+//
+// On hold — a Take Down (dry_check) can be held for a quality issue
 // ('rework') or until an order needs it ('hold_order'; 'hold' is on older
 // records). It waits here until someone releases it, all of it or part:
 //   all   flips the record's result to 'pass' (keeping why it was held, and
@@ -103,8 +137,8 @@
 // counts.
 // ─────────────────────────────────────────────────────────────────────────────
 (async function () {
-  // Managers ('buck release' in the admin panel) release; the Bucking crew
-  // can see the list, read-only.
+  // Managers ('buck release' in the admin panel) order the queue and
+  // release; the Bucking crew can see both, read-only.
   const canRelease = sessionStorage.getItem('2cw_buck_release') === 'true';
   const allowed = JSON.parse(sessionStorage.getItem('2cw_ops_edit_access') || 'null');
   const buckCrew = allowed === 'all' || (Array.isArray(allowed) && allowed.includes('buck'));
@@ -117,14 +151,32 @@
   mountLangToggle('lang');
 
   const L = {
-    brand: { en: 'On hold', es: 'En espera' },
-    title: { en: 'Bucking — On Hold', es: 'Desvarado — en espera' },
-    subtitle: { en: 'Take Downs held for quality or for an order. Release all of one, or part of it under a new Metrc tag, and it can be bucked.',
-                es: 'Bajadas en espera por calidad o por un pedido. Libere todo, o una parte bajo una etiqueta Metrc nueva, y se puede desvarar.' },
+    brand: { en: 'On-Stem Flower', es: 'Flor en tallo' },
+    title: { en: 'On-Stem Flower', es: 'Flor en tallo' },
+    subtitle: { en: 'Dried packages from Take Down, waiting to be bucked: the queue they get bucked in, and what’s on hold.',
+                es: 'Paquetes secos de la bajada que esperan desvararse: la fila en que se desvaran y lo que está en espera.' },
+    qTitle: { en: 'Bucking Queue', es: 'Fila de desvarado' },
+    qHint: { en: 'Released to bucking, in the order the crew should buck them. They see this on the Bucking page’s Queue tab.',
+             es: 'Liberados a desvarado, en el orden en que el equipo debe desvararlos. Lo ven en la pestaña Fila de la página de desvarado.' },
+    qHintEdit: { en: 'Released to bucking, in the order the crew should buck them. Use ▲ ▼ or Top to change it — the crew sees it on the Bucking page’s Queue tab.',
+                 es: 'Liberados a desvarado, en el orden en que el equipo debe desvararlos. Use ▲ ▼ o Arriba para cambiarlo — el equipo lo ve en la pestaña Fila de la página de desvarado.' },
+    qNone: { en: 'Nothing is ready to buck.', es: 'No hay nada listo para desvarar.' },
+    initLb: { en: 'Starting weight', es: 'Peso inicial' },
+    pulledLb: { en: 'Pulled', es: 'Sacado' },
+    leftLb: { en: 'Remaining', es: 'Restante' },
+    inProgress: { en: 'being bucked', es: 'desvarándose' },
+    partOf: { en: 'part of …{uid}', es: 'parte de …{uid}' },
+    up: { en: 'Move up', es: 'Subir' },
+    down: { en: 'Move down', es: 'Bajar' },
+    top: { en: 'Top', es: 'Arriba' },
+    saveFail: { en: 'Could not save the order — check the connection and try again.', es: 'No se pudo guardar el orden — revise la conexión e intente de nuevo.' },
+    hTitle: { en: 'On Hold', es: 'En espera' },
+    hHint: { en: 'Held at Take Down for quality or for an order. Release all of one, or part of it under a new Metrc tag, and it joins the end of the queue.',
+             es: 'Retenidos en la bajada por calidad o por un pedido. Libere todo, o una parte bajo una etiqueta Metrc nueva, y entra al final de la fila.' },
     back: { en: '← Bucking', es: '← Desvarado' },
     backHub: { en: '← Hub', es: '← Inicio' },
-    viewOnly: { en: 'Only a manager can release these. Ask a manager to release a package before bucking it.',
-                es: 'Solo un gerente puede liberarlos. Pida a un gerente que libere el paquete antes de desvararlo.' },
+    viewOnly: { en: 'Only a manager can change the order or release these.',
+                es: 'Solo un gerente puede cambiar el orden o liberarlos.' },
     none: { en: 'Nothing is on hold.', es: 'No hay nada en espera.' },
     offline: { en: 'Can’t load the list — check the connection.', es: 'No se pudo cargar la lista — revise la conexión.' },
     heldQuality: { en: 'Quality issue', es: 'Problema de calidad' },
@@ -156,6 +208,10 @@
   document.getElementById('brand').textContent = t(L.brand);
   document.getElementById('title').textContent = t(L.title);
   document.getElementById('subtitle').textContent = t(L.subtitle) + (canRelease ? '' : ' ' + t(L.viewOnly));
+  document.getElementById('q-title').textContent = t(L.qTitle);
+  document.getElementById('q-hint').textContent = t(canRelease ? L.qHintEdit : L.qHint);
+  document.getElementById('h-title').textContent = t(L.hTitle);
+  document.getElementById('h-hint').textContent = t(L.hHint);
   document.title = `${t(L.title)} — 2CW Operations`;
 
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -216,7 +272,52 @@
     return updateSubmitted(cur.id, { strain: cur.strain || fields.strain, date: cur.work_date, fields, editor: owner || null });
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // ── Bucking queue ─────────────────────────────────────────────────────────
+  const reference = await loadReference();
+  const qMount = document.getElementById('queue-mount');
+  let queue = [];   // what's ready to buck, in queue order
+  let savingOrder = false;
+  async function loadQueue() {
+    queue = (await loadBuckingQueue()).items;
+    renderQueue();
+  }
+  function renderQueue() {
+    if (!queue.length) { qMount.innerHTML = `<div class="empty-note">${esc(t(L.qNone))}</div>`; return; }
+    qMount.innerHTML = `<div class="q-list">` + queue.map((p, i) => {
+      const abbr = strainAbbr(reference, p.strain);
+      const move = !canRelease ? '' : `<div class="q-move">
+          <button type="button" data-move="top" data-i="${i}" ${i === 0 || savingOrder ? 'disabled' : ''}>${esc(t(L.top))}</button>
+          <button type="button" data-move="up" data-i="${i}" aria-label="${esc(t(L.up))}" ${i === 0 || savingOrder ? 'disabled' : ''}>▲</button>
+          <button type="button" data-move="down" data-i="${i}" aria-label="${esc(t(L.down))}" ${i === queue.length - 1 || savingOrder ? 'disabled' : ''}>▼</button>
+        </div>`;
+      return `<div class="q-row"><div class="q-n">${i + 1}</div>
+        <div class="q-main"><div class="q-strain">${esc(p.strain || '—')}${abbr ? ` · ${esc(abbr)}` : ''}${p.draftId ? `<span class="q-tag">${esc(t(L.inProgress))}</span>` : ''}</div>
+          <div class="q-uid">${esc(p.sourceUid)}${p.releasedFrom ? ' · ' + esc(t(L.partOf).replace('{uid}', shortUid(p.releasedFrom))) : ''}</div></div>
+        <div class="q-lbs">
+          <div class="q-lb"><span class="k">${esc(t(L.initLb))}</span>${p.unbuckedLb == null ? '—' : lbTxt(p.unbuckedLb)}</div>
+          <div class="q-lb"><span class="k">${esc(t(L.pulledLb))}</span>${lbTxt(p.pulledLb || 0)}</div>
+          <div class="q-lb left${p.leftLb != null && p.leftLb < 0 ? ' neg' : ''}"><span class="k">${esc(t(L.leftLb))}</span>${p.leftLb == null ? '—' : lbTxt(p.leftLb)}</div>
+        </div>
+        ${move}</div>`;
+    }).join('') + `</div>`;
+  }
+  qMount.addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-move]');
+    if (!b || !canRelease || savingOrder) return;
+    const i = Number(b.dataset.i);
+    const to = b.dataset.move === 'top' ? 0 : b.dataset.move === 'up' ? i - 1 : i + 1;
+    if (to < 0 || to >= queue.length || to === i) return;
+    const [item] = queue.splice(i, 1);
+    queue.splice(to, 0, item);
+    savingOrder = true;
+    renderQueue();
+    const res = await saveBuckQueue(queue.map((p) => upper(p.sourceUid)), sessionStorage.getItem('2cw_user_name'));
+    savingOrder = false;
+    if (!res.ok) { alert(t(L.saveFail)); await loadQueue(); return; }
+    renderQueue();
+  });
+
+  // ── On hold ───────────────────────────────────────────────────────────────
   const mount = document.getElementById('held-mount');
   let releasingId = null;   // the card whose release panel is open
   async function load() {
@@ -308,10 +409,11 @@
       ` <a href="/ops_form.html?station=buck&set_sourceUid=${encodeURIComponent(relUid)}">${esc(t(L.startBucking))}</a>`;
     done.hidden = false;
     releasingId = null;
-    await load();
+    await Promise.all([load(), loadQueue()]);
   });
 
   load();
+  loadQueue();
 })();
 </script>
 </body>

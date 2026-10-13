@@ -223,6 +223,53 @@ async function loadSubmitted(stationKey) {
 // operations_forms row (station_key 'cost_settings', fixed id) so it needs no
 // table of its own; the edit history trigger logs each change. It's a
 // business ratio, not pay, so the open anon access is fine here.
+// ── Bucking queue (On-Stem Flower → the order to buck in) ─────────────────
+// One shared operations_forms row (station_key 'buck_queue', fixed id), like
+// the trim split below: `order` is the on-stem / part UIDs in the order a
+// manager set. Anything not in it goes after, by Take Down date
+// (orderBuckQueue in ops_common.js). Open anon access like the rest; the
+// edit history trigger logs each change.
+const BUCK_QUEUE_ID = '6275636b-7175-4000-8000-000000000001';
+async function getBuckQueue() {
+  const client = getClient();
+  if (!client) return { order: [] };
+  const { data } = await client.from(TABLE).select('fields').eq('id', BUCK_QUEUE_ID).maybeSingle();
+  const f = (data && data.fields) || {};
+  return { order: Array.isArray(f.order) ? f.order : [], updatedBy: f.updatedBy || '', updatedAt: f.updatedAt || '' };
+}
+async function saveBuckQueue(order, who) {
+  const client = getClient();
+  if (!client) return { ok: false, reason: 'not-configured' };
+  const { error } = await client.from(TABLE).upsert({
+    id: BUCK_QUEUE_ID, station_key: 'buck_queue', status: 'submitted', owner_user: who || null, updated_by: who || null,
+    submitted_at: new Date().toISOString(),
+    fields: { order, updatedBy: who || '', updatedAt: new Date().toISOString() }
+  });
+  return error ? { ok: false, reason: error.message } : { ok: true };
+}
+
+// The bucking queue as both pages show it: what's ready to buck, in queue
+// order, each marked with the bucking page it's open on (`draftId`), if any,
+// and the pounds pulled off it so far (`pulledLb`: the boxes logged on that
+// page) and what's left (`leftLb`, from the starting weight `unbuckedLb`).
+async function loadBuckingQueue() {
+  const [downs, bucked, open, queue] = await Promise.all([
+    loadSubmitted('dry_check'), loadSubmitted('buck'), listOpenDrafts('buck'), getBuckQueue()]);
+  const drafts = (open || []).filter((d) => d.fields && d.fields.sourceUid);
+  const items = orderBuckQueue(buckablePackages(downs || [], bucked || []), queue).map((p) => {
+    const d = drafts.find((x) => uidTailMatch(x.fields.sourceUid, p.sourceUid));
+    return withPulled(d ? { ...p, draftId: d.id } : p, d ? d.fields.boxes : []);
+  });
+  return { items, queue, downs: downs || [] };
+}
+
+// Pounds pulled so far (the bucking page's boxes) and what's left.
+function withPulled(p, boxes) {
+  const pulledLb = Math.round((boxes || []).reduce((a, r) => a + (Number(r.weightLb) || 0), 0) * 100) / 100;
+  const leftLb = p.unbuckedLb == null ? null : Math.round((Number(p.unbuckedLb) - pulledLb) * 100) / 100;
+  return { ...p, pulledLb, leftLb };
+}
+
 const COST_SETTINGS_ID = '636f7374-7370-4000-8000-000000000001';
 async function getTrimSplit() {
   const client = getClient();

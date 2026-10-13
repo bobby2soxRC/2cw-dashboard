@@ -392,13 +392,14 @@ including people typed into the Labor Log by name.
   Anyone with it can work out each person's rate from the costs shown, so
   give it only to people who could see pay anyway.
 
-## Releasing held Take Downs (Bucking — On Hold)
+## On-Stem Flower (bucking queue and releasing held Take Downs)
 
-Releasing a held Take Down to bucking is a manager's job. The user
-editor's **Bucking — On Hold** card checkbox (column `buck release`) shows
-that card on the hub and the Release buttons on `buck_hold.html`
-(`2cw_buck_release` in the session). People with Bucking edit access but
-not this checkbox can open the list from the Bucking page, read-only. Like
+Setting the bucking queue's order and releasing a held Take Down to
+bucking are a manager's job. The user editor's **On-Stem Flower** card
+checkbox (column `buck release`) shows that card on the hub and the ▲ ▼ /
+Top and Release buttons on `buck_hold.html` (`2cw_buck_release` in the
+session). People with Bucking edit access but not this checkbox can open
+the page from the Bucking page, read-only. Like
 the other station access, this is checked in the browser only — the
 release itself is a direct Supabase update with the anon key.
 

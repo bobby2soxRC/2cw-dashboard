@@ -206,6 +206,15 @@ function buckablePackages(downs, bucked) {
   return out;
 }
 
+// The bucking queue in order: packages in the manager's saved order first,
+// then any not in it yet, oldest Take Down first.
+function orderBuckQueue(pkgs, queue) {
+  const order = (queue && queue.order) || [];
+  const pos = (p) => { const i = order.findIndex((u) => uidTailMatch(u, p.sourceUid)); return i < 0 ? Infinity : i; };
+  return [...(pkgs || [])].sort((a, b) => (pos(a) - pos(b)) || String(a.date || '').localeCompare(String(b.date || ''))
+    || String(a.strain || '').localeCompare(String(b.strain || '')));
+}
+
 // A strain's short code from the strain library (by name or another
 // spelling), or '' if it has none.
 function strainAbbr(reference, name) {

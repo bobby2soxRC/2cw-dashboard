@@ -45,6 +45,29 @@
     main{padding:24px 16px 40px;max-width:720px;margin:0 auto}
     .title{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,6vw,44px);letter-spacing:.04em;line-height:1}
     .subtitle{margin-top:6px;font-size:.85rem;color:var(--subtext);line-height:1.5}
+    /* Form / Queue tabs (Bucking) */
+    .ftabs{display:flex;gap:4px;margin-top:20px;border-bottom:1px solid var(--border)}
+    .ftabs button{flex:1;background:transparent;border:none;border-bottom:3px solid transparent;color:var(--subtext);font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:14px 10px;cursor:pointer;min-height:48px}
+    .ftabs button.on{color:var(--accent);border-bottom-color:var(--accent)}
+    .ftabs + .panel{margin-top:16px}
+    .q-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+    .q-row:last-child{border-bottom:none}
+    .q-n{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--accent);min-width:34px;text-align:center}
+    .q-main{flex:1;min-width:0}
+    .q-strain{font-weight:700}
+    .q-uid{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--subtext);overflow-wrap:anywhere}
+    .q-lbs{display:flex;gap:14px;flex:0 0 auto}
+    .q-lb{font-family:'DM Mono',monospace;font-size:1rem;white-space:nowrap;text-align:right}
+    .q-lb .k{display:block;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+    .q-lb.left{color:var(--accent)}
+    .q-lb.neg{color:var(--red)}
+    .q-go{flex:0 0 auto;background:var(--accent);color:#000;border-radius:10px;padding:12px 14px;font-weight:700;font-size:.85rem;text-decoration:none;white-space:nowrap}
+    .q-go.open{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+    .q-tag{display:inline-block;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:99px;padding:2px 7px;margin-left:6px;vertical-align:middle}
+    .q-empty{color:var(--muted);font-size:.9rem}
+    .q-note{font-size:.8rem;color:var(--muted);margin-bottom:8px}
+    @media (max-width:520px){ .q-row{flex-wrap:wrap} .q-lbs{flex:1 0 100%;justify-content:flex-end} .q-go{flex:1 0 100%;text-align:center} }
+    body.on-queue #form, body.on-queue #summary, body.on-queue #banner, body.on-queue .actions{display:none !important}
     .page-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
     .page-links a{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);text-decoration:none;border:1px solid var(--border);border-radius:8px;padding:9px 12px}
     .dept{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
@@ -126,6 +149,8 @@
     .entry-in .k{display:block;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
     .entry-add{flex:0 0 auto;min-width:96px;min-height:52px;background:var(--accent);color:#000;border:none;border-radius:10px;font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer}
     .entry-in .req{color:var(--red);margin-left:3px}
+    .entry-in.entry-num{flex:0 0 auto}
+    .entry-next{min-height:52px;min-width:64px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:1.2rem;color:var(--accent);border:1px dashed var(--border);border-radius:10px;padding:0 12px}
     .entry-msg{font-size:.8rem;color:var(--red);margin-top:8px;display:none}
     .entry-table{margin-top:12px;font-family:'DM Mono',monospace;font-size:.9rem}
     .entry-table td{padding:8px 8px 8px 0;border-bottom:1px solid var(--border)}
@@ -172,6 +197,8 @@
   <div class="page-links" id="page-links" style="display:none"></div>
   <div class="switcher-lbl" id="switcher-lbl" style="display:none"></div>
   <div class="switcher" id="switcher" style="display:none"></div>
+  <div class="ftabs" id="ftabs" style="display:none"></div>
+  <section class="panel" id="queue-panel" style="display:none"></section>
   <form class="panel" id="form" autocomplete="off"></form>
   <div class="banner" id="banner"></div>
   <section class="panel summary" id="summary" style="display:none"></section>
@@ -495,12 +522,18 @@
   const entryRenderers = {};
   function buildEntryLog(f, wrap) {
     values[f.k] = [];
+    // A `rownum` column (box #) isn't typed: rows are numbered 1, 2, 3… in
+    // the order they were logged, renumbered when one is removed, and the
+    // entry bar shows the number the next one gets.
     const cols = f.cols.filter((c) => c.t !== 'calc');
+    const ins = cols.filter((c) => c.t !== 'rownum');
+    const nums = cols.filter((c) => c.t === 'rownum');
     wrap.innerHTML = labelHtml(f) +
       (f.hint ? `<div class="hint" style="margin-top:0;margin-bottom:10px">${t(f.hint)}</div>` : '') +
       `<div class="entry-bar">` +
-      cols.map((c) => `<label class="entry-in"><span class="k">${t(c.l)}${c.req ? '<span class="req">*</span>' : ''}</span>` +
-        (c.t === 'number'
+      cols.map((c) => `<label class="entry-in${c.t === 'rownum' ? ' entry-num' : ''}"><span class="k">${t(c.l)}${c.req ? '<span class="req">*</span>' : ''}</span>` +
+        (c.t === 'rownum' ? `<div class="entry-next" id="en_${f.k}_${c.k}">1</div>`
+        : c.t === 'number'
           ? `<input type="number" id="e_${f.k}_${c.k}" inputmode="decimal" step="${c.step || 'any'}"${c.min !== undefined ? ` min="${c.min}"` : ''}>`
           : `<input type="text" id="e_${f.k}_${c.k}"${c.inputmode ? ` inputmode="${c.inputmode}"` : ''}>`) +
         `</label>`).join('') +
@@ -516,6 +549,8 @@
 
     const render = () => {
       const rows = values[f.k] || [];
+      rows.forEach((r, i) => nums.forEach((c) => { r[c.k] = i + 1; }));
+      nums.forEach((c) => { wrap.querySelector(`#en_${f.k}_${c.k}`).textContent = String(rows.length + 1); });
       const tbody = wrap.querySelector(`#li_${f.k}`);
       tbody.innerHTML = '';
       rows.slice().reverse().forEach((r) => {
@@ -539,13 +574,6 @@
         tr.lastChild.appendChild(del);
         tbody.appendChild(tr);
       });
-      // A numbered column (box #) suggests the next number, until someone
-      // types over it.
-      cols.filter((c) => c.autoInc && (!inp(c).value || inp(c).dataset.auto)).forEach((c) => {
-        const nums = rows.map((r) => Number(r[c.k])).filter(Number.isInteger);
-        inp(c).value = nums.length ? String(Math.max(...nums) + 1) : '';
-        inp(c).dataset.auto = '1';
-      });
       wrap.querySelector(`#ee_${f.k}`).style.display = rows.length ? 'none' : 'block';
       wrap.querySelector(`#lic_${f.k}`).textContent = `${rows.length} ${t(rows.length === 1 ? EL.entry : EL.entries)}`;
     };
@@ -554,7 +582,7 @@
     const add = () => {
       const row = {};
       const short = [];
-      cols.forEach((c) => {
+      ins.forEach((c) => {
         const raw = inp(c).value.trim();
         row[c.k] = c.t === 'number' ? (raw === '' ? null : Number(raw)) : raw;
         if (c.req && (raw === '' || (c.t === 'number' && !(Number(raw) > 0)))) short.push(c);
@@ -569,18 +597,16 @@
       Object.assign(row, { _id: crypto.randomUUID(), day: todayStr(), at: new Date().toISOString(), by: owner });
       values[f.k].push(row);
       freshId = row._id;
-      cols.forEach((c) => { inp(c).value = ''; delete inp(c).dataset.auto; });
+      ins.forEach((c) => { inp(c).value = ''; });
       render(); recompute(); markDirty();
-      const next = cols.find((c) => !inp(c).value) || cols[0];
-      inp(next).focus();
+      inp(ins[0]).focus();
     };
     wrap.querySelector(`#add_${f.k}`).onclick = add;
-    cols.forEach((c) => inp(c).addEventListener('input', () => { delete inp(c).dataset.auto; }));
     // Enter moves to the next empty box, and adds once they're all filled.
-    cols.forEach((c) => inp(c).addEventListener('keydown', (ev) => {
+    ins.forEach((c) => inp(c).addEventListener('keydown', (ev) => {
       if (ev.key !== 'Enter') return;
       ev.preventDefault();
-      const empty = cols.find((x) => x.req && !inp(x).value.trim());
+      const empty = ins.find((x) => x.req && !inp(x).value.trim());
       if (empty) inp(empty).focus(); else add();
     }));
 
@@ -824,13 +850,13 @@
   const pickLists = {};   // field key -> the records its options point at
   const typing = {};      // field key -> true while "Not listed" is chosen
   const buckPick = pickerFields.some((f) => f.picker.list === 'buckable');
-  let pickPool = [], pickReady = false;
+  let pickPool = [], pickReady = false, queueItems = null;
   const pickLoaded = pickerFields.length ? (async () => {
     if (buckPick) {
-      const [downs, bucked, open] = await Promise.all([loadSubmitted('dry_check'), loadSubmitted(station.key),
-        draftsOn ? listOpenDrafts(station.key) : []]);
-      const busy = (open || []).filter((d) => d.id !== draftId).map((d) => (d.fields || {}).sourceUid).filter(Boolean);
-      pickPool = buckablePackages(downs || [], bucked || []).filter((p) => !busy.some((u) => uidTailMatch(u, p.sourceUid)));
+      // In the bucking queue's order (On-Stem Flower page).
+      const { items } = await loadBuckingQueue();
+      queueItems = items;
+      pickPool = items.filter((p) => !p.draftId || p.draftId === draftId);
       return;
     }
     const [intakes, downs] = await Promise.all([loadSubmitted(pickerFields[0].picker.from), loadSubmitted(station.key)]);
@@ -843,8 +869,9 @@
     if (!sel) return;
     const buck = f.picker.list === 'buckable';
     const room = f.picker.room ? values[f.picker.room] : null;
-    const list = (f.picker.room ? (room ? pickPool.filter((i) => inDryRoom(i.dryRoom, room)) : []) : pickPool.slice())
-      .sort((a, b) => String(a.strain || '').localeCompare(String(b.strain || '')) || String(a.date || '').localeCompare(String(b.date || '')));
+    const list = buck ? pickPool.slice()
+      : (room ? pickPool.filter((i) => inDryRoom(i.dryRoom, room)) : [])
+        .sort((a, b) => String(a.strain || '').localeCompare(String(b.strain || '')) || String(a.date || '').localeCompare(String(b.date || '')));
     pickLists[f.k] = list;
     const last4 = (i) => normUid(i.sourceUid).slice(-4);
     const base = buck
@@ -1470,6 +1497,76 @@
     });
   }
 
+  // ── Queue tab (station.queueTab — Bucking) ───────────────────────────────
+  // The order to buck in, set by a manager on the On-Stem Flower page
+  // (buck_hold.html): each package's strain, UID and the starting weight to
+  // pull, with Start (a new bucking page for it) or Open (the page it's
+  // already open on).
+  const QT = {
+    form:    { en: 'Bucking page', es: 'Hoja de desvarado' },
+    queue:   { en: 'Queue', es: 'Fila' },
+    note:    { en: 'Buck in this order. A manager sets it on the On-Stem Flower page.',
+               es: 'Desvare en este orden. Un gerente lo fija en la página Flor en tallo.' },
+    loading: { en: 'Loading the queue…', es: 'Cargando la fila…' },
+    none:    { en: 'Nothing in the queue — nothing is released to bucking right now.',
+               es: 'No hay nada en la fila — nada está liberado a desvarado ahora.' },
+    initLb:  { en: 'Starting weight', es: 'Peso inicial' },
+    pulledLb:{ en: 'Pulled', es: 'Sacado' },
+    leftLb:  { en: 'Remaining', es: 'Restante' },
+    start:   { en: 'Start →', es: 'Empezar →' },
+    open:    { en: 'Open →', es: 'Abrir →' },
+    here:    { en: 'This page', es: 'Esta hoja' },
+    busy:    { en: 'in progress', es: 'en curso' },
+    part:    { en: 'part of …{uid}', es: 'parte de …{uid}' }
+  };
+  const ftabs = document.getElementById('ftabs');
+  function showTab(tab) {
+    ftabs.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
+    const q = tab === 'queue';
+    document.body.classList.toggle('on-queue', q);
+    document.getElementById('queue-panel').style.display = q ? 'block' : 'none';
+    if (q) renderQueueTab();
+  }
+  function queueTabLabel(n) {
+    const b = ftabs.querySelector('[data-tab="queue"]');
+    if (b) b.textContent = n ? `${t(QT.queue)} (${n})` : t(QT.queue);
+  }
+  if (station.queueTab && draftsOn && !editMode) {
+    ftabs.innerHTML = `<button type="button" data-tab="form" class="on">${t(QT.form)}</button>` +
+      `<button type="button" data-tab="queue">${t(QT.queue)}</button>`;
+    ftabs.style.display = 'flex';
+    ftabs.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) showTab(b.dataset.tab); });
+  }
+  async function renderQueueTab() {
+    const box = document.getElementById('queue-panel');
+    if (!queueItems) box.innerHTML = `<div class="q-empty">${escapeHtml(t(QT.loading))}</div>`;
+    // This page's own boxes come from what's typed here, not its last save.
+    queueItems = (await loadBuckingQueue()).items.map((p) => (p.draftId && p.draftId === draftId ? withPulled(p, values.boxes) : p));
+    queueTabLabel(queueItems.length);
+    if (!queueItems.length) { box.innerHTML = `<div class="q-empty">${escapeHtml(t(QT.none))}</div>`; return; }
+    box.innerHTML = `<div class="q-note">${escapeHtml(t(QT.note))}</div>` + queueItems.map((p, i) => {
+      const here = p.draftId && p.draftId === draftId;
+      const go = here
+        ? `<a class="q-go open" href="#" data-here="1">${escapeHtml(t(QT.here))}</a>`
+        : p.draftId
+          ? `<a class="q-go open" href="/ops_form.html?station=${station.key}&draft=${encodeURIComponent(p.draftId)}">${escapeHtml(t(QT.open))}</a>`
+          : `<a class="q-go" href="/ops_form.html?station=${station.key}&set_sourceUid=${encodeURIComponent(p.sourceUid)}">${escapeHtml(t(QT.start))}</a>`;
+      const abbr = strainAbbr(reference, p.strain);
+      return `<div class="q-row"><div class="q-n">${i + 1}</div>` +
+        `<div class="q-main"><div class="q-strain">${escapeHtml(p.strain || '—')}${abbr ? ` · ${escapeHtml(abbr)}` : ''}` +
+        (p.draftId ? `<span class="q-tag">${escapeHtml(t(QT.busy))}</span>` : '') + `</div>` +
+        `<div class="q-uid">${escapeHtml(p.sourceUid)}${p.releasedFrom ? ' · ' + escapeHtml(t(QT.part).replace('{uid}', String(p.releasedFrom).slice(-4))) : ''}</div></div>` +
+        `<div class="q-lbs">` +
+        `<div class="q-lb"><span class="k">${escapeHtml(t(QT.initLb))}</span>${p.unbuckedLb == null ? '—' : fmtNum(p.unbuckedLb, 2) + ' lb'}</div>` +
+        `<div class="q-lb"><span class="k">${escapeHtml(t(QT.pulledLb))}</span>${fmtNum(p.pulledLb || 0, 2)} lb</div>` +
+        `<div class="q-lb left${p.leftLb != null && p.leftLb < 0 ? ' neg' : ''}"><span class="k">${escapeHtml(t(QT.leftLb))}</span>${p.leftLb == null ? '—' : fmtNum(p.leftLb, 2) + ' lb'}</div>` +
+        `</div>` +
+        go + `</div>`;
+    }).join('');
+    const hereBtn = box.querySelector('[data-here]');
+    if (hereBtn) hereBtn.addEventListener('click', (e) => { e.preventDefault(); showTab('form'); });
+  }
+
   // ── Boot ─────────────────────────────────────────────────────────────────
   updateVisibility();
   recompute();
@@ -1542,6 +1639,7 @@
   if (pickLoaded) {
     await pickLoaded;
     pickReady = true;
+    if (station.queueTab && queueItems) queueTabLabel(queueItems.length);
     const spec = PREFILL_MAP[station.key];
     pickerFields.forEach((f) => {
       if (f.picker.room) countRooms(f);
