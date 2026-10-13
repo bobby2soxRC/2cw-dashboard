@@ -154,8 +154,12 @@
     .tl .entry{height:20px;background:var(--blue);border:none;cursor:pointer;padding:0;
       color:#000;font:600 .66rem/1 'DM Mono',monospace;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;display:flex;align-items:center;padding-left:5px;
       box-shadow:0 0 0 2px var(--surface)}
-    .tl .gap{height:20px;border:1px solid var(--gold);cursor:pointer;padding:0;
-      background:repeating-linear-gradient(45deg,rgba(212,168,67,.55) 0 3px,transparent 3px 7px)}
+    .tl .gap{height:20px;border:1px solid var(--gold);cursor:pointer;padding:0 4px;overflow:hidden;
+      background:repeating-linear-gradient(45deg,rgba(212,168,67,.55) 0 3px,transparent 3px 7px);
+      display:flex;align-items:center;color:var(--text);font:600 .66rem/1 'DM Mono',monospace}
+    /* Where they clocked in / what they said they did, on a dark pill so it
+       reads over the hatching. */
+    .tl .gap span{background:var(--surface);border-radius:3px;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
     .tl .gap:hover,.tl .gap:focus-visible{background:rgba(212,168,67,.6);outline:none}
     .tl .outside{height:24px;border:2px solid var(--red);background:transparent;pointer-events:none}
     .tl .now{position:absolute;top:0;bottom:0;border-left:2px solid var(--green);z-index:2}
@@ -518,6 +522,7 @@
     tlGapTip:  { en: 'Not logged: {a}–{b} ({h} h). Tap to log this time.', es: 'Sin registrar: {a}–{b} ({h} h). Toque para registrar este tiempo.' },
     tlShiftTip:{ en: 'Clocked in {a}–{b} ({h} h)', es: 'Marcado {a}–{b} ({h} h)' },
     tlAt:      { en: 'at {p}', es: 'en {p}' },
+    tlActivity:{ en: 'Activity: {x}', es: 'Actividad: {x}' },
     tlNoData:  { en: 'Couldn’t load Connecteam clock times — the timeline needs data/connecteam_shifts.json from the hourly sync.',
                  es: 'No se pudieron cargar las horas de Connecteam — la línea de tiempo necesita data/connecteam_shifts.json de la sincronización.' },
     tlNote:    { en: 'Clock times come from Connecteam, synced hourly ({t}), so the last hour may be missing. Entries saved with only hours (no start/end) count toward Logged but can’t be placed on the line. Unpaid breaks show as not-logged time unless people clock out for them.',
@@ -1541,6 +1546,14 @@
     renderTimeline(shifts);
   }
 
+  // The clock-in a not-logged stretch overlaps most (a gap never spans two,
+  // but be safe), for its place and activity.
+  function gapShift(r, a, b) {
+    let best = null, most = 0;
+    r.shiftInfo.forEach((s) => { const o = Math.min(b, s.b) - Math.max(a, s.a); if (o > most) { most = o; best = s; } });
+    return best;
+  }
+
   function renderTimeline() {
     const date = $('tl-date').value || localDay();
     const day0 = dayStart(date).getTime();
@@ -1560,8 +1573,10 @@
       const row = rowFor(String(sh.userId), sh.name, String(sh.userId));
       row.shifts.push([Math.max(0, a), Math.min(1440, b)]);
       // Where they clocked in: the Connecteam job, else the time clock's name.
+      // What they said they did: the Connecteam sub-job and/or their answers
+      // to the clock-in/out questions.
       const place = sh.job || sh.clock || '';
-      row.shiftInfo.push({ a: Math.max(0, a), b: Math.min(1440, b), place });
+      row.shiftInfo.push({ a: Math.max(0, a), b: Math.min(1440, b), place, activity: sh.activity || '' });
       if (place) row.places.add(place);
       if (openShift && isToday) row.open = true;
     });
@@ -1617,8 +1632,9 @@
       <div class="hd num">${esc(t(L.tlClocked))}</div><div class="hd num">${esc(t(L.tlLogged))}</div><div class="hd num">${esc(t(L.tlUnalloc))}</div>`];
     list.forEach((r, ri) => {
       const segs = [];
-      r.shiftInfo.slice().sort((x, y) => x.a - y.a).forEach(({ a, b, place }) => segs.push(`<div class="seg shift" style="left:${X(a)};width:${W(a, b)}" data-tip="${tip(
-        esc(fill(t(L.tlShiftTip), { a: hhmm(a), b: b === nowMin ? '…' : hhmm(b), h: fmtNum((b - a) / 60, 2) })) + (place ? '<br>' + esc(fill(t(L.tlAt), { p: place })) : ''))}"></div>`));
+      r.shiftInfo.slice().sort((x, y) => x.a - y.a).forEach(({ a, b, place, activity }) => segs.push(`<div class="seg shift" style="left:${X(a)};width:${W(a, b)}" data-tip="${tip(
+        esc(fill(t(L.tlShiftTip), { a: hhmm(a), b: b === nowMin ? '…' : hhmm(b), h: fmtNum((b - a) / 60, 2) })) + (place ? '<br>' + esc(fill(t(L.tlAt), { p: place })) : '') +
+        (activity ? '<br>' + esc(fill(t(L.tlActivity), { x: activity })) : ''))}"></div>`));
       r.timed.forEach((e, ei) => {
         const f = e.f;
         const label = [procTitle(f.process), entryOn(f) || (f.uids || []).map((u) => tail(u.uid)).join(' ')].filter(Boolean).join(' · ');
@@ -1626,8 +1642,17 @@
           `<b>${esc(f.start)}–${esc(f.end)}</b> · ${fmtH(num(f.hours))} h<br>${esc(procTitle(f.process))}<br>${entryOn(f) ? esc(entryOn(f)) : (f.uids || []).map((u) => `<b>${esc(tail(u.uid))}</b> ${esc(u.strain || '')}`).join('<br>') || `<span class="s">${esc(t(L.noUid))}</span>`}${f.notes ? `<br><span class="s">${esc(f.notes)}</span>` : ''}`)}">${esc(label)}</div>`);
       });
       r.outside.forEach(([a, b]) => segs.push(`<div class="seg outside" style="left:${X(a)};width:${W(a, b)}"></div>`));
-      r.gaps.forEach(([a, b]) => segs.push(`<button type="button" class="seg gap" style="left:${X(a)};width:${W(a, b)}" aria-label="${esc(fill(t(L.tlGapTip), { a: hhmm(a), b: hhmm(b), h: fmtNum((b - a) / 60, 2) }))}"
-        data-row="${ri}" data-a="${Math.round(a)}" data-b="${Math.round(b)}" data-tip="${tip(esc(fill(t(L.tlGapTip), { a: hhmm(a), b: hhmm(b), h: fmtNum((b - a) / 60, 2) })))}"></button>`));
+      r.gaps.forEach(([a, b]) => {
+        // The clock-in this stretch falls in: its place and activity label
+        // the hatching, to make it easier to log to the right task.
+        const sh = gapShift(r, a, b);
+        const label = sh ? [sh.place, sh.activity].filter(Boolean).join(' · ') : '';
+        const gapTip = esc(fill(t(L.tlGapTip), { a: hhmm(a), b: hhmm(b), h: fmtNum((b - a) / 60, 2) }));
+        segs.push(`<button type="button" class="seg gap" style="left:${X(a)};width:${W(a, b)}" aria-label="${gapTip}${label ? ' ' + esc(label) : ''}"
+          data-row="${ri}" data-a="${Math.round(a)}" data-b="${Math.round(b)}" data-tip="${tip(gapTip +
+          (sh && sh.place ? '<br>' + esc(fill(t(L.tlAt), { p: sh.place })) : '') +
+          (sh && sh.activity ? '<br>' + esc(fill(t(L.tlActivity), { x: sh.activity })) : ''))}">${label ? `<span>${esc(label)}</span>` : ''}</button>`);
+      });
       const sub = [r.places.size ? `<span style="color:var(--text)">${esc([...r.places].join(', '))}</span>` : '',
                    r.open ? `<span style="color:var(--green)">● ${esc(t(L.tlOnClock))}</span>` : '',
                    !r.userId ? esc(t(L.tlNotCt)) : '',
@@ -1666,6 +1691,11 @@
     $('start').value = hhmm(+g.dataset.a);
     $('end').value = hhmm(+g.dataset.b);
     fromTimes();
+    // Their Connecteam activity names a process ("Bucking")? Pick it.
+    const sh = gapShift(r, +g.dataset.a, +g.dataset.b);
+    const act = fold((sh && sh.activity) || '');
+    const opt = act && [...$('process').options].find((o) => o.value && act.includes(fold(o.textContent)));
+    if (opt) { $('process').value = opt.value; $('process').dispatchEvent(new Event('change')); }
     showTab('log');
     window.scrollTo(0, 0);
     $('process').focus();

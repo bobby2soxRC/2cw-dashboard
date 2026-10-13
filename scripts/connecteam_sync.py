@@ -18,6 +18,7 @@ Requirements:
 
 import json
 import os
+import re
 import time
 import requests
 from datetime import datetime, timedelta, timezone
@@ -247,9 +248,93 @@ def sync_jobs():
         jid = _first(j, "jobId", "id")
         if jid is None:
             continue
-        names[str(jid)] = _first(j, "title", "name", default="") or ""
+        title = _first(j, "title", "name", default="") or ""
+        names[str(jid)] = title
+        # Sub-jobs (e.g. a task under a site): a shift punched into one
+        # carries the sub-job's id, so map it as "Site › Task" — the Labor Log
+        # shows the site as the place and the task as the activity.
+        for sj in j.get("subJobs") or []:
+            sid = _first(sj, "jobId", "subJobId", "id") if isinstance(sj, dict) else None
+            if sid is not None:
+                names[str(sid)] = f"{title} › {_first(sj, 'title', 'name', default='') or ''}"
     print(f"  → {len(names)} job(s): {sorted(set(n for n in names.values() if n))[:60]}")
     return names
+
+
+def sync_shift_attachments(clock_ids):
+    """The questions a time clock asks at clock-in/out ("What did you work
+    on?" etc.): attachment id → {"name", "type", "items": {item id → label}},
+    so a shift's answers (shiftAttachments) can be turned into text. A
+    failure here never stops the sync; shifts just go out without them."""
+    print("\n[2c] Shift attachments (clock-in/out questions)")
+    defs = {}
+    for cid in clock_ids:
+        try:
+            body = api_get(f"/time-clock/v1/time-clocks/{cid}/shift-attachments")
+        except RuntimeError as e:
+            print(f"    [WARN] clock {cid}: couldn't read shift attachments: {e}")
+            continue
+        print(f"    [shape] /time-clock/v1/time-clocks/{cid}/shift-attachments → {_shape(body, depth=4)}")
+        data = body.get("data") if isinstance(body, dict) else None
+        lst = data if isinstance(data, list) else next(
+            (v for v in (data or {}).values() if isinstance(v, list)), [])
+        for a in lst:
+            if not isinstance(a, dict):
+                continue
+            aid = _first(a, "id", "shiftAttachmentId", "attachmentId")
+            if aid is None:
+                continue
+            items = {}
+            for it in _first(a, "items", "options", "dropdownItems", "listItems", "values", default=[]) or []:
+                if isinstance(it, dict):
+                    iid = _first(it, "id", "itemId", "optionId")
+                    if iid is not None:
+                        items[str(iid)] = str(_first(it, "name", "title", "label", "value", "text", default="") or "")
+            defs[str(aid)] = {"name": _first(a, "name", "title", "question", "label", default="") or "",
+                              "type": _first(a, "type", default="") or "", "items": items}
+    print(f"  → {len(defs)} question(s): {[(d['name'], d['type']) for d in defs.values()]}")
+    return defs
+
+
+# Answer keys holding a file/photo/signature/place rather than words — never
+# published (the shifts file is public).
+_SKIP_ANSWER_KEYS = ("url", "file", "image", "photo", "signature", "location", "gps", "address", "latitude", "longitude")
+_ID_LIKE = re.compile(r"^[0-9a-f-]{16,}$", re.I)
+
+
+def _answer_texts(value, items, key=""):
+    """Every readable answer inside one shiftAttachments[].attachment: free
+    text, numbers, and drop-down picks (item ids looked up in `items`).
+    Shape-agnostic, since the attachment's layout varies by question type."""
+    if any(k in key.lower() for k in _SKIP_ANSWER_KEYS):
+        return []
+    if isinstance(value, dict):
+        return [t for k, v in value.items() if k not in ("type", "id", "shiftAttachmentId")
+                for t in _answer_texts(v, items, k)]
+    if isinstance(value, list):
+        return [t for v in value for t in _answer_texts(v, items, key)]
+    if isinstance(value, bool) or value is None:
+        return []
+    text = str(value).strip()
+    if text in items:
+        return [items[text]] if items[text] else []
+    if not text or _ID_LIKE.match(text):
+        return []
+    return [text]
+
+
+def shift_activity(s, attachment_defs):
+    """What they said they did, from the shift's clock-in/out questions, as
+    one short line ("Bucking · Room 3")."""
+    out = []
+    for att in s.get("shiftAttachments") or []:
+        if not isinstance(att, dict):
+            continue
+        d = attachment_defs.get(str(att.get("shiftAttachmentId")), {})
+        for t in _answer_texts(att.get("attachment"), d.get("items", {})):
+            if t not in out:
+                out.append(t)
+    return " · ".join(out)[:120]
 
 
 def sync_time_activities(clock_ids, start_date, end_date):
@@ -261,7 +346,7 @@ def sync_time_activities(clock_ids, start_date, end_date):
     # keeps everything downstream (build_hours_json) working unchanged.
     print("\n[3/3] Time Activities")
     all_shifts = []
-    shift_shape_logged = False
+    shift_shape_logged = attachment_shape_logged = False
     for clock_id in clock_ids:
         per_user = api_get_all(
             f"/time-clock/v1/time-clocks/{clock_id}/time-activities",
@@ -274,6 +359,11 @@ def sync_time_activities(clock_ids, start_date, end_date):
             if shifts and not shift_shape_logged:
                 print(f"    [shape] shift record → {_shape(shifts[0], depth=3)}")
                 shift_shape_logged = True
+            if not attachment_shape_logged:
+                att = next((s["shiftAttachments"][0] for s in shifts if s.get("shiftAttachments")), None)
+                if att is not None:
+                    print(f"    [shape] shiftAttachments[0] → {_shape(att, depth=5)}")
+                    attachment_shape_logged = True
             for s in shifts:
                 s = dict(s)
                 s["userId"] = uid
@@ -346,7 +436,7 @@ def build_hours_json(users, shifts):
     }
 
 
-def build_shifts_json(users, shifts, since, jobs=None):
+def build_shifts_json(users, shifts, since, jobs=None, attachment_defs=None):
     """Every shift that started on or after `since`, as clock-in/clock-out
     times — what the Labor Log's timeline (labor_log.html) draws each
     person's day from. `end` is null while someone is still clocked in.
@@ -364,16 +454,21 @@ def build_shifts_json(users, shifts, since, jobs=None):
         # this file is public, and an address can be someone's home.
         if isinstance(s.get("start"), dict) and s["start"].get("locationData"):
             with_gps += 1
-        job_id = _first(s, "jobId")
+        job_id = _first(s, "subJobId", "jobId")
         end = _to_dt(_first(s, "end", "shiftEndTime", "endTime", "clockOut"))
         uid = str(_first(s, "userId", "employeeId"))
+        # A sub-job ("Site › Task"): the site is the place, and the task leads
+        # the activity, ahead of their clock-in/out answers.
+        job, _, task = (jobs.get(str(job_id), "") if job_id else "").partition(" › ")
+        activity = " · ".join(x for x in (task, shift_activity(s, attachment_defs or {})) if x)
         out.append({
             "userId": uid, "name": users.get(uid, {}).get("name", f"User {uid}"),
             "start": start.isoformat(), "end": end.isoformat() if end else None,
-            "job": jobs.get(str(job_id), "") if job_id else "",
+            "job": job, "activity": activity,
             "clock": CLOCK_NAMES.get(str(s.get("clockId")), ""),
         })
     print(f"  [shifts] {len(out)} in range · {sum(1 for x in out if x['job'])} with a job name · "
+          f"{sum(1 for x in out if x['activity'])} with an activity · "
           f"{with_gps} with clock-in GPS (not published) · clocks: {sorted(set(x['clock'] for x in out))}")
     out.sort(key=lambda x: (x["start"], x["name"]))
     return {"last_sync": datetime.now(timezone.utc).isoformat(), "days": SHIFT_DAYS, "shifts": out}
@@ -400,6 +495,7 @@ def main():
         if not clock_ids:
             raise RuntimeError("No time clocks found on this Connecteam account")
         jobs = sync_jobs()
+        attachment_defs = sync_shift_attachments(clock_ids)
         shifts = sync_time_activities(clock_ids, fetch_from_str, today_str)
     except RuntimeError as e:
         print(f"\n\nFATAL ERROR: {e}")
@@ -409,7 +505,7 @@ def main():
     save("connecteam_hours.json", result)
     roster = build_roster_json(users)
     save("connecteam_roster.json", roster)
-    shift_file = build_shifts_json(users, shifts, shifts_since, jobs)
+    shift_file = build_shifts_json(users, shifts, shifts_since, jobs, attachment_defs)
     save("connecteam_shifts.json", shift_file)
 
     elapsed = (datetime.now(timezone.utc) - started).total_seconds()
