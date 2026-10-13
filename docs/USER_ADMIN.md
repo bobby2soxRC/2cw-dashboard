@@ -392,6 +392,16 @@ including people typed into the Labor Log by name.
   Anyone with it can work out each person's rate from the costs shown, so
   give it only to people who could see pay anyway.
 
+## Releasing held Take Downs (Bucking — On Hold)
+
+Releasing a held Take Down to bucking is a manager's job. The user
+editor's **Bucking — On Hold** card checkbox (column `buck release`) shows
+that card on the hub and the Release buttons on `buck_hold.html`
+(`2cw_buck_release` in the session). People with Bucking edit access but
+not this checkbox can open the list from the Bucking page, read-only. Like
+the other station access, this is checked in the browser only — the
+release itself is a direct Supabase update with the anon key.
+
 ## Why `app_users` isn't as open as `operations_forms`
 
 `operations_forms`' RLS intentionally allows anonymous read/write — see the

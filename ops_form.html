@@ -247,12 +247,15 @@
   }
 
   const PERSON_FIELDS = new Set(['teamLead', 'checkedBy', 'requestedBy', 'completedBy']);
-  // The drying-package picker (Take Down) — see fillPicker.
+  // The package pickers (Take Down: what's drying; Bucking: what's ready to
+  // buck) — see fillPicker.
   const PK = {
     loading:   { en: 'Loading what’s drying…', es: 'Cargando lo que está secando…' },
+    loadingBuck: { en: 'Loading what’s ready to buck…', es: 'Cargando lo que está listo para desvarar…' },
     roomFirst: { en: 'Pick the drying room first', es: 'Elija primero el cuarto de secado' },
     choose:    { en: 'Choose the package…', es: 'Elija el paquete…' },
     none:      { en: 'Nothing drying in this room', es: 'Nada secando en este cuarto' },
+    noneBuck:  { en: 'Nothing ready to buck — check On hold', es: 'Nada listo para desvarar — revise En espera' },
     typed:     { en: 'Not listed — type the UID', es: 'No aparece — escriba el UID' }
   };
   const reference = await loadReference();
@@ -314,7 +317,7 @@
     } else if (f.t === 'uid' && f.picker) {
       // Picked from a list (fillPicker below); the text box only shows for
       // "Not listed — type the UID".
-      control = `<select id="pk_${f.k}"><option value="">${escapeHtml(t(PK.loading))}</option></select>` +
+      control = `<select id="pk_${f.k}"><option value="">${escapeHtml(t(f.picker.list === 'buckable' ? PK.loadingBuck : PK.loading))}</option></select>` +
                 (f.pickedLabel ? `<div id="pv_${f.k}" style="display:none;margin-top:10px"><label class="lbl">${escapeHtml(t(f.pickedLabel))}</label>` +
                   `<input type="text" class="uid" readonly tabindex="-1" style="opacity:.85"></div>` : '') +
                 `<input type="text" id="f_${f.k}" class="uid" inputmode="latin" autocapitalize="characters" placeholder="1A40603…  ${t(UI.other) === 'Otro…' ? 'o' : 'or'} 1008" style="display:none;margin-top:10px">` +
@@ -807,33 +810,52 @@
     recompute();
   }
 
-  // ── Pick from what's drying ───────────────────────────────────────────────
-  // A uid field with `picker` (Take Down's farm package) is chosen from the
-  // Wet Intakes still drying (no Take Down submitted yet — currentlyDrying
-  // in ops_common.js) in the room picked above it, listed as "Strain - last
-  // 4". The room dropdown shows how many are drying in each room.
+  // ── Pick a package from a list ────────────────────────────────────────────
+  // A uid field with `picker` is chosen from a dropdown instead of typed:
+  //   Take Down's farm package — the Wet Intakes still drying (no Take Down
+  //     submitted yet — currentlyDrying in ops_common.js) in the room picked
+  //     above it, "Strain - last 4". The room dropdown shows how many are
+  //     drying in each room.
+  //   Bucking's package (`list: 'buckable'`) — what's ready to buck
+  //     (buckablePackages in ops_common.js), "Strain || abbreviation || last
+  //     4", less any package another bucking page already has open.
+  // Picking one fills the UID and its upstream details (strain, …).
   const pickerFields = station.fields.filter((f) => f.t === 'uid' && f.picker);
   const pickLists = {};   // field key -> the records its options point at
   const typing = {};      // field key -> true while "Not listed" is chosen
-  let drying = [], dryingReady = false;
-  const dryingLoaded = pickerFields.length ? (async () => {
+  const buckPick = pickerFields.some((f) => f.picker.list === 'buckable');
+  let pickPool = [], pickReady = false;
+  const pickLoaded = pickerFields.length ? (async () => {
+    if (buckPick) {
+      const [downs, bucked, open] = await Promise.all([loadSubmitted('dry_check'), loadSubmitted(station.key),
+        draftsOn ? listOpenDrafts(station.key) : []]);
+      const busy = (open || []).filter((d) => d.id !== draftId).map((d) => (d.fields || {}).sourceUid).filter(Boolean);
+      pickPool = buckablePackages(downs || [], bucked || []).filter((p) => !busy.some((u) => uidTailMatch(u, p.sourceUid)));
+      return;
+    }
     const [intakes, downs] = await Promise.all([loadSubmitted(pickerFields[0].picker.from), loadSubmitted(station.key)]);
-    drying = currentlyDrying(intakes || [], downs || []);
-  })().catch((err) => { console.error('drying list', err); }) : null;
+    pickPool = currentlyDrying(intakes || [], downs || []);
+  })().catch((err) => { console.error('picker list', err); }) : null;
 
   function fillPicker(f) {
     const sel = document.getElementById(`pk_${f.k}`);
     const inp = document.getElementById(`f_${f.k}`);
     if (!sel) return;
-    const room = values[f.picker.room];
-    const list = room ? drying.filter((i) => inDryRoom(i.dryRoom, room))
-      .sort((a, b) => String(a.strain || '').localeCompare(String(b.strain || '')) || String(a.date || '').localeCompare(String(b.date || ''))) : [];
+    const buck = f.picker.list === 'buckable';
+    const room = f.picker.room ? values[f.picker.room] : null;
+    const list = (f.picker.room ? (room ? pickPool.filter((i) => inDryRoom(i.dryRoom, room)) : []) : pickPool.slice())
+      .sort((a, b) => String(a.strain || '').localeCompare(String(b.strain || '')) || String(a.date || '').localeCompare(String(b.date || '')));
     pickLists[f.k] = list;
-    const base = (i) => `${i.strain || '—'} - ${normUid(i.sourceUid).slice(-4)}`;
+    const last4 = (i) => normUid(i.sourceUid).slice(-4);
+    const base = buck
+      ? (i) => `${i.strain || '—'} || ${strainAbbr(reference, i.strain) || '—'} || ${last4(i)}`
+      : (i) => `${i.strain || '—'} - ${last4(i)}`;
     const dup = (i) => list.filter((x) => base(x) === base(i)).length > 1;
     const shortDate = (d) => d ? new Date(`${d}T12:00:00`).toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric' }) : '';
-    const label = (i) => base(i) + (dup(i) ? ` (${[shortDate(i.date), i.totalWetLb ? fmtNum(i.totalWetLb, 0) + ' lb' : ''].filter(Boolean).join(', ')})` : '');
-    const first = !dryingReady ? t(PK.loading) : !room ? t(PK.roomFirst) : list.length ? t(PK.choose) : t(PK.none);
+    const weight = (i) => buck ? i.unbuckedLb : i.totalWetLb;
+    const label = (i) => base(i) + (dup(i) ? ` (${[shortDate(i.date), weight(i) ? fmtNum(weight(i), 0) + ' lb' : ''].filter(Boolean).join(', ')})` : '');
+    const first = !pickReady ? t(buck ? PK.loadingBuck : PK.loading) : (f.picker.room && !room) ? t(PK.roomFirst)
+      : list.length ? t(PK.choose) : t(buck ? PK.noneBuck : PK.none);
     sel.innerHTML = `<option value="">${escapeHtml(first)}</option>` +
       list.map((i, ix) => `<option value="${ix}">${escapeHtml(label(i))}</option>`).join('') +
       `<option value="__type__">${escapeHtml(t(PK.typed))}</option>`;
@@ -862,7 +884,7 @@
     [...sel.options].forEach((o) => {
       if (!o.value || o.value === '__other__') return;
       if (o.dataset.label === undefined) o.dataset.label = o.textContent;
-      const n = drying.filter((i) => inDryRoom(i.dryRoom, o.value)).length;
+      const n = pickPool.filter((i) => inDryRoom(i.dryRoom, o.value)).length;
       o.textContent = n ? `${o.dataset.label} · ${n}` : o.dataset.label;
     });
   }
@@ -889,6 +911,7 @@
       markDirty();
     });
     // A new room means a new list — a package picked from the old one goes.
+    if (!f.picker.room) return;
     const roomEl = document.getElementById(`f_${f.picker.room}`);
     const onRoom = () => {
       const picked = values[f.k] && !typing[f.k];
@@ -1516,12 +1539,12 @@
   // The drying list loads alongside the draft; once it's in, fill the
   // pickers — keeping a resumed draft's package, and treating the values
   // that match it as prefilled, so picking another package replaces them.
-  if (dryingLoaded) {
-    await dryingLoaded;
-    dryingReady = true;
+  if (pickLoaded) {
+    await pickLoaded;
+    pickReady = true;
     const spec = PREFILL_MAP[station.key];
     pickerFields.forEach((f) => {
-      countRooms(f);
+      if (f.picker.room) countRooms(f);
       fillPicker(f);
       const rec = (pickLists[f.k] || []).find((i) => values[f.k] && normUid(i.sourceUid) === normUid(values[f.k]));
       if (rec && spec) Object.entries(spec.map).forEach(([here, there]) => {

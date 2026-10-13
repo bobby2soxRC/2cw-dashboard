@@ -68,9 +68,11 @@ Release is **Release to bucking** (`pass`, the default; Bucking warns on
 anything else), **Hold — quality issue** (`rework`) or **Hold — until
 needed for an order** (`hold_order`). Material that needs more dry time just
 isn't taken down yet; the old `hold` value only appears on older records.
-Held Take Downs wait on **Bucking → On hold** (`buck_hold.html`, linked
-from the top of the Bucking page; newest Take Down per on-stem UID) until
-someone taps **Release to bucking** and picks:
+Held Take Downs wait on **Bucking → On hold** (`buck_hold.html`, the
+hub's "Bucking — On Hold" card, also linked from the top of the Bucking
+page; newest Take Down per on-stem UID) until a manager taps **Release to
+bucking** — only users with the `buck release` checkbox (see
+`USER_ADMIN.md`); the Bucking crew sees the list read-only — and picks:
 - **All of it** — sets the record's `result` to `pass` and adds `heldFor`
   (the old result), `releasedBy` and `releasedAt`, so its on-stem UID can be
   bucked with whatever is left on it.
@@ -306,9 +308,16 @@ Bucking (`buck`) is built like Smalls: one page per on-stem UID (flavor), on
 `ops_form.html` with `sharedDay: true`, so the switcher at the top lists
 every open bucking page from anyone, plus "+ New flavor". A batch can take
 several days; an older page stays in the switcher (with its start date)
-until it's submitted. Type the last 4 of the on-stem tag (or a part's new tag) and the strain and
-**dry unbucked weight** come in from Take Down (`PREFILL_MAP.buck`); a UID
-still on hold at Take Down shows a warning to release it first. The
+until it's submitted. The package is picked from a dropdown of what's **ready to buck**
+(`picker: { list: 'buckable' }`; `buckablePackages` in `ops_common.js`):
+every Take Down released to bucking (newest per on-stem UID, with what's
+left after any parts) and every part released off a held one under its own
+tag, less any UID that already has a submitted Bucking record or is open on
+another bucking page. Each reads **Strain || abbreviation || last 4** (the
+abbreviation is the strain library's `abbreviation`, "—" if none). Picking
+one fills the UID, strain and **dry unbucked weight** (`PREFILL_MAP.buck`).
+"Not listed — type the UID" still allows typing a tag; a typed UID still
+on hold at Take Down shows a warning to release it first. The
 **On hold** link at the top (station `links`) opens `buck_hold.html`.
 
 The page has three running logs — `lineitems` with `entry: true`: an entry

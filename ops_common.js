@@ -102,7 +102,7 @@ async function loadReference() {
     getStrains()
   ]);
   if (strains && strains.length) {
-    ref.strains = strains.map((s) => ({ name: s.name, sources: s.sources, aliases: s.aliases, active: s.active }));
+    ref.strains = strains.map((s) => ({ name: s.name, abbreviation: s.abbreviation, sources: s.sources, aliases: s.aliases, active: s.active }));
   }
   if (codes && codes.length) {
     const pick = (kind, idKey) => codes.filter((r) => r.kind === kind)
@@ -173,6 +173,47 @@ function matchTakeDowns(intakes, downs) {
 function currentlyDrying(intakes, downs) {
   const taken = matchTakeDowns(intakes, downs);
   return intakes.filter((i) => !isFreshFrozen(i) && !taken.has(i.id));
+}
+
+// What's ready to buck, from the submitted Take Downs (flat records, newest
+// one per on-stem UID): each one released to bucking (`pass`), with what's
+// left on it after any parts, plus each part released off a held one under
+// its own tag — less any UID that already has a submitted Bucking record.
+// Same shape findUpstream returns (sourceUid, strain, unbuckedLb), so
+// picking one fills the form the way typing its UID would.
+function buckablePackages(downs, bucked) {
+  const done = (bucked || []).map((b) => b.sourceUid).filter(Boolean);
+  const isDone = (uid) => done.some((d) => uidTailMatch(d, uid));
+  const lb = (x) => (x === undefined || x === null || x === '' ? null : Number(x));
+  const seen = new Set();
+  const out = [];
+  [...(downs || [])].sort((a, b) => String(b.submittedAt || '').localeCompare(String(a.submittedAt || ''))).forEach((r) => {
+    const uid = normUid(r.sourceUid);
+    if (!uid || seen.has(uid)) return;
+    seen.add(uid);
+    const parts = r.releases || [];
+    parts.forEach((x) => {
+      const p = normUid(x.uid);
+      if (p && !isDone(p)) out.push({ ...r, sourceUid: p, dryWeightLb: lb(x.lb), unbuckedLb: lb(x.lb), result: 'pass',
+        releasedFrom: uid, date: String(x.at || r.date || '').slice(0, 10) });
+    });
+    if (r.result === 'pass' && !isDone(uid)) {
+      const dry = lb(r.dryWeightLb);
+      const left = dry === null ? null : Math.max(0, Math.round((dry - parts.reduce((a, x) => a + (Number(x.lb) || 0), 0)) * 100) / 100);
+      out.push({ ...r, sourceUid: uid, unbuckedLb: left });
+    }
+  });
+  return out;
+}
+
+// A strain's short code from the strain library (by name or another
+// spelling), or '' if it has none.
+function strainAbbr(reference, name) {
+  const n = String(name || '').trim().toLowerCase();
+  if (!n) return '';
+  const hit = ((reference && reference.strains) || []).find((s) =>
+    String(s.name || '').toLowerCase() === n || (s.aliases || []).some((a) => String(a).toLowerCase() === n));
+  return (hit && hit.abbreviation) || '';
 }
 
 // Whether an intake's Drying Location ("1A", "Room 2B", "1A, 1B") includes

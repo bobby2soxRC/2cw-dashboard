@@ -572,6 +572,10 @@ async function buildHub(user){
   if (laborCosts) user['labor log'] = 'TRUE';
   sessionStorage.setItem('2cw_labor_costs', laborCosts ? 'true' : 'false');
 
+  // Releasing held Take Downs to bucking (buck_hold.html) is a manager's
+  // job — the 'buck release' checkbox, which is also the On Hold card.
+  sessionStorage.setItem('2cw_buck_release', (user['buck release'] || '').toUpperCase() === 'TRUE' ? 'true' : 'false');
+
   // Operations access has two independent axes: EDIT (create/autosave/submit
   // forms for a station) and VIEW (see it on the live Today board without
   // being able to touch it — a plant manager watching bucking, say). Each is
@@ -1092,6 +1096,7 @@ function doLogout(){
   sessionStorage.removeItem('2cw_user_name');
   sessionStorage.removeItem('2cw_form_access');
   sessionStorage.removeItem('2cw_pr_access');
+  sessionStorage.removeItem('2cw_buck_release');
   sessionStorage.removeItem('2cw_labor_costs');
   sessionStorage.removeItem('2cw_ops_edit_access');
   sessionStorage.removeItem('2cw_ops_view_access');

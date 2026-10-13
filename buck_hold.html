@@ -103,11 +103,17 @@
 // counts.
 // ─────────────────────────────────────────────────────────────────────────────
 (async function () {
+  // Managers ('buck release' in the admin panel) release; the Bucking crew
+  // can see the list, read-only.
+  const canRelease = sessionStorage.getItem('2cw_buck_release') === 'true';
   const allowed = JSON.parse(sessionStorage.getItem('2cw_ops_edit_access') || 'null');
-  if (allowed && allowed !== 'all' && !allowed.includes('buck')) {
+  const buckCrew = allowed === 'all' || (Array.isArray(allowed) && allowed.includes('buck'));
+  if (!canRelease && !buckCrew) {
     location.replace('/index.html');
     return;
   }
+  // A manager who came from the hub goes back there, not into Bucking.
+  if (canRelease && !buckCrew) document.getElementById('back').href = '/index.html';
   mountLangToggle('lang');
 
   const L = {
@@ -116,6 +122,9 @@
     subtitle: { en: 'Take Downs held for quality or for an order. Release all of one, or part of it under a new Metrc tag, and it can be bucked.',
                 es: 'Bajadas en espera por calidad o por un pedido. Libere todo, o una parte bajo una etiqueta Metrc nueva, y se puede desvarar.' },
     back: { en: '← Bucking', es: '← Desvarado' },
+    backHub: { en: '← Hub', es: '← Inicio' },
+    viewOnly: { en: 'Only a manager can release these. Ask a manager to release a package before bucking it.',
+                es: 'Solo un gerente puede liberarlos. Pida a un gerente que libere el paquete antes de desvararlo.' },
     none: { en: 'Nothing is on hold.', es: 'No hay nada en espera.' },
     offline: { en: 'Can’t load the list — check the connection.', es: 'No se pudo cargar la lista — revise la conexión.' },
     heldQuality: { en: 'Quality issue', es: 'Problema de calidad' },
@@ -143,10 +152,10 @@
     cancel: { en: 'Cancel', es: 'Cancelar' },
     releaseFail: { en: 'Could not release — check the connection and try again.', es: 'No se pudo liberar — revise la conexión e intente de nuevo.' }
   };
-  document.getElementById('back').textContent = t(L.back);
+  document.getElementById('back').textContent = t(canRelease && !buckCrew ? L.backHub : L.back);
   document.getElementById('brand').textContent = t(L.brand);
   document.getElementById('title').textContent = t(L.title);
-  document.getElementById('subtitle').textContent = t(L.subtitle);
+  document.getElementById('subtitle').textContent = t(L.subtitle) + (canRelease ? '' : ' ' + t(L.viewOnly));
   document.title = `${t(L.title)} — 2CW Operations`;
 
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -244,7 +253,7 @@
           <div class="bmeta">…${esc(shortUid(f.sourceUid))} · ${esc(r.work_date || '')}${esc(weight)}</div>
           ${why(f.result)}
           ${rels.map((x) => `<div class="bmeta rel-done">${esc(t(L.relDone).replace('{lb}', lbTxt(x.lb)).replace('{uid}', shortUid(x.uid)).replace('{date}', String(x.at || '').slice(0, 10)))}</div>`).join('')}</div>
-        ${releasingId === r.id ? '' : `<button type="button" class="btn btn-gold" data-release="${esc(r.id)}">${esc(t(L.release))}</button>`}
+        ${!canRelease || releasingId === r.id ? '' : `<button type="button" class="btn btn-gold" data-release="${esc(r.id)}">${esc(t(L.release))}</button>`}
         ${panel}
       </div>`;
     }).join('') + `</div>`;
@@ -257,6 +266,7 @@
     if (e.target.value === 'part') card.querySelector('.rel-lb').focus();
   });
   mount.addEventListener('click', async (e) => {
+    if (!canRelease) return;
     if (e.target.closest('[data-release]')) { releasingId = e.target.closest('[data-release]').dataset.release; render(); return; }
     if (e.target.closest('[data-cancel]')) { releasingId = null; render(); return; }
     const go = e.target.closest('[data-go]');

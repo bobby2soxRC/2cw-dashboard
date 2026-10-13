@@ -172,6 +172,20 @@ const CARD_DEFS = [
     href: '/drying_schedule.html'
   },
   {
+    key: 'buck_hold',
+    color: 'gold',
+    label: 'Processing',
+    dept: 'operations',
+    subdept: 'processing',
+    // A manager's job: releasing a held Take Down to bucking. The admin
+    // panel checkbox ('buck release') shows this card and the Release
+    // buttons on buck_hold.html. Bucking crew can still open the list from
+    // the Bucking page, read-only.
+    title: 'Bucking — On Hold',
+    desc: 'Take Downs held for quality or for an order. Release all of one, or part under a new tag, so it can be bucked.',
+    href: '/buck_hold.html'
+  },
+  {
     key: 'harvest_intakes',
     color: 'blue',
     label: 'Processing',
@@ -384,7 +398,8 @@ const CARD_SHEET_COLS = {
   menu_health: 'menu health',
   brand_assets: 'brand assets',
   staff_hours: 'staff hours',
-  labor_log: 'labor log'
+  labor_log: 'labor log',
+  buck_hold: 'buck release'
 };
 // production, production_dashboard, and production_today are not sheet
 // columns — they're derived from 'production edit stations' / 'production

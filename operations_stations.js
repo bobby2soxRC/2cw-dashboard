@@ -515,7 +515,7 @@ const OPERATIONS_STATIONS = [
     sharedDay: true,
     // Take Downs held for quality or for an order wait on their own page
     // until someone releases them (buck_hold.html).
-    links: [{ href: '/buck_hold.html', l: { en: 'On hold — release to bucking →', es: 'En espera — liberar a desvarado →' } }],
+    links: [{ href: '/buck_hold.html', l: { en: 'On hold →', es: 'En espera →' } }],
     // The daily tally: person × flavor for one day. Each logged row carries
     // the day it was weighed (`day`), so a batch that runs three days shows
     // only that day's pounds.
@@ -526,10 +526,14 @@ const OPERATIONS_STATIONS = [
                     empLabel: { en: 'Employee # / Name', es: 'N.º / nombre' } },
     fields: [
       F.date(),
-      { k: 'sourceUid', t: 'uid', req: true, prefill: 'lookup',
-        l: { en: 'Package UID — On Stem', es: 'UID del paquete — en tallo' },
-        hint: { en: 'The on-stem tag from Take Down — the last 4 is enough. Pulls in the strain and dry weight.',
-                es: 'La etiqueta en tallo de la bajada — basta con los últimos 4. Trae la variedad y el peso seco.' } },
+      // Picked from what's ready to buck (`picker`: released Take Downs and
+      // released parts with no Bucking record yet, as "Strain || abbreviation
+      // || last 4"). "Not listed" falls back to typing the UID.
+      { k: 'sourceUid', t: 'uid', req: true, prefill: 'lookup', picker: { list: 'buckable' },
+        l: { en: 'Package to Buck', es: 'Paquete para desvarar' },
+        pickedLabel: { en: 'Package UID — On Stem', es: 'UID del paquete — en tallo' },
+        hint: { en: 'Packages released to bucking at Take Down. Picking one fills in the UID, strain and dry weight.',
+                es: 'Paquetes liberados a desvarado en la bajada. Al elegir uno se llenan el UID, la variedad y el peso seco.' } },
       { k: 'strain', t: 'select', ref: 'strains', allowOther: true, req: true, prefill: 'lookup',
         l: { en: 'Strain (flavor)', es: 'Variedad (sabor)' } },
       { k: 'dryUnbuckedLb', t: 'number', min: 0, step: 0.01, prefill: 'lookup',
@@ -1085,8 +1089,8 @@ const PREFILL_MAP = {
   // off a held one under its own tag), and warns when it's still on hold.
   buck:        { from: 'dry_check',    map: { strain: 'strain', dryUnbuckedLb: 'unbuckedLb' },
                  warn: (up) => (up.result && up.result !== 'pass'
-                   ? { en: 'This package is on hold at Take Down. Release it on the On hold page before bucking it.',
-                       es: 'Este paquete está en espera en la bajada. Libérelo en la página En espera antes de desvararlo.' }
+                   ? { en: 'This package is on hold at Take Down. A manager has to release it (On hold page) before it’s bucked.',
+                       es: 'Este paquete está en espera en la bajada. Un gerente tiene que liberarlo (página En espera) antes de desvararlo.' }
                    : null) },
   machine_trim:{ from: 'buck',         map: { strain: 'strain', inputBuckedLb: 'buckedFlowerLb' } },
   hand_trim:   { from: 'machine_trim', map: { strain: 'strain', startingBuckedLb: 'flowerALb' } }
