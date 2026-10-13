@@ -223,6 +223,10 @@
     .pt-span{position:absolute;top:19px;height:2px;background:var(--c);opacity:.45}
     .pt-seg.more{border-top-right-radius:0;border-bottom-right-radius:0}
     .pt-axis .tl-lbl{transform:none;margin-left:4px}
+    /* Bold now line on the project timeline, its time on the axis. */
+    .pt-now{position:absolute;top:0;bottom:0;width:0;border-left:4px solid var(--red);margin-left:-2px;z-index:3;pointer-events:none}
+    .pt-now span{position:absolute;top:6px;left:2px;background:var(--red);color:#fff;border-radius:4px;padding:1px 5px;font-family:'DM Mono',monospace;font-size:.64rem;font-weight:600;white-space:nowrap}
+    .pt-now span.r{left:auto;right:2px}
     @media (max-width:560px){ .pt-row{grid-template-columns:140px minmax(0,1fr)} }
 
     .empty{border:1px dashed var(--border);border-radius:14px;padding:40px 20px;text-align:center;color:var(--subtext)}
@@ -276,6 +280,7 @@
       <div class="seg" id="pmode-seg"></div>
       <div class="seg" id="status-seg"></div>
       <input type="search" id="q">
+      <button type="button" class="btn btn-ghost" id="now-img"></button>
       <button type="button" class="btn btn-gold" id="add"></button>
     </div>
     <div id="plist"></div>
@@ -389,6 +394,10 @@
     pt7:      { en: '7 days', es: '7 días' },
     pt42:     { en: '6 weeks', es: '6 semanas' },
     ptImgTitle:{ en: 'Project schedule', es: 'Calendario de proyectos' },
+    nowImg:   { en: 'Right now', es: 'Ahora mismo' },
+    nowTitle: { en: 'Right now', es: 'Ahora mismo' },
+    nowLbl:   { en: 'Now', es: 'Ahora' },
+    nowNone:  { en: 'No open projects today.', es: 'No hay proyectos abiertos hoy.' },
     ptNone:   { en: 'No projects in these weeks.', es: 'Ningún proyecto en estas semanas.' },
     stAll:    { en: 'All', es: 'Todos' },
     oldLink:  { en: 'Old day schedules (Scheduling)', es: 'Horarios anteriores (Horarios)' },
@@ -517,6 +526,7 @@
   $('back').textContent = t(L.back);
   $('sub').textContent = t(L.sub);
   $('add').textContent = t(L.add);
+  $('now-img').textContent = '● ' + t(L.nowImg);
   $('png').textContent = t(L.png);
   $('csv').textContent = t(L.csv);
   $('q').placeholder = t(L.search);
@@ -1135,6 +1145,7 @@
   $('status-seg').onclick = (e) => { const b = e.target.closest('button'); if (b) { statusF = b.dataset.st; render(); } };
   $('q').addEventListener('input', () => render());
   $('add').onclick = () => openEditor(null);
+  $('now-img').onclick = () => makeProjectTimelineImage(true);
 
   let editing = null;   // {id|null, f: draft fields}
   // The days it runs — only when some were picked (all 7 = every day), or
@@ -1182,6 +1193,11 @@
   if (params.get('pmode')) pmode = params.get('pmode');
   if (!['cards', 'timeline'].includes(pmode)) pmode = 'cards';
   const PT_DAYS = 42;
+  // Where now falls on a project timeline model (0…W), null when off it.
+  const ptNowX = (m) => { const x = (Date.now() - m.t0) / m.unit; return x >= 0 && x <= m.W ? x : null; };
+  const nowTime = () => { const d = new Date(); return fmtMin(d.getHours() * 60 + d.getMinutes()); };
+  const nowLabel = () => `${t(L.nowLbl)} ${nowTime()}`;
+  let ptNowAt = null;   // the shown project timeline's axis, for its now line
   const mondayOf = (iso) => addDays(iso, -((new Date(iso + 'T12:00:00').getDay() + 6) % 7));
   let ptStart = addDays(mondayOf(localDay()), -7);   // 6-week view: its first Monday
   let ptDay = localDay();                              // 1/3/7-day views: the first day
@@ -1239,7 +1255,7 @@
         }
         return { p, segs, span: first >= 0 && lastOn > first ? [first, lastOn + 1] : null };
       });
-      return { W: PT_DAYS, step: 14, rows,
+      return { W: PT_DAYS, step: 14, rows, t0: new Date(ptStart + 'T00:00:00').getTime(), unit: 86400000,
         label: `${fmtDate(days[0], { month: 'short', day: 'numeric' })} – ${fmtDate(last, { month: 'short', day: 'numeric', year: 'numeric' })}`,
         shade: days.map((d, i) => d === today ? { a: i, b: i + 1, kind: 'today' } : (dow(d) === 0 || dow(d) === 6) ? { a: i, b: i + 1, kind: 'we' } : null).filter(Boolean),
         ticks: days.map((d, i) => dow(d) === 1 ? { x: i, label: fmtDate(d), line: i > 0 } : null).filter(Boolean) };
@@ -1260,7 +1276,7 @@
       });
       return { p, segs, span: null };
     }).filter((r) => r.segs.length);
-    return { W, step: N, rows,
+    return { W, step: N, rows, t0: new Date(ptDay + 'T00:00:00').getTime(), unit: 60000,
       label: N === 1 ? fmtDate(ptDay, { weekday: 'long', month: 'short', day: 'numeric' })
         : `${fmtDate(days[0], { weekday: 'short', month: 'short', day: 'numeric' })} – ${fmtDate(days[N - 1], { weekday: 'short', month: 'short', day: 'numeric' })}`,
       shade: N > 1 ? days.map((d, i) => d === today ? { a: i * 1440, b: (i + 1) * 1440, kind: 'today' } : null).filter(Boolean) : [],
@@ -1291,26 +1307,53 @@
           `<div class="pt-seg${x.more ? ' more' : ''}" style="left:calc(${pct(x.a)} + 1px);width:calc(${pct(x.b)} - ${pct(x.a)} - 2px);color:#000;font-size:.7rem;font-weight:500;line-height:22px;padding:0 6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${esc(x.label || '')}</div>`).join('')}</div></div>`;
     };
     const groups = ptGroupRows(m.rows);
+    ptNowAt = { t0: m.t0, unit: m.unit, W: m.W };
     const ed = editing ? `<div class="grid" style="margin-bottom:16px">${editorHtml()}</div>` : '';
     $('plist').innerHTML = ptNav(m.label, m.step) + ed + (groups.length ? `<div class="tl"><div class="tl-in">${groups.map((g) =>
       `<div class="tl-farm"><span class="loc">${esc(g.name)}</span><span class="ct">${g.rows.length}</span></div>` + axis + g.rows.map(row).join('')).join('')}</div></div>`
       : `<div class="empty"><p>${esc(t(L.ptNone))}</p></div>`);
     if (editing) wireEditor();
+    placePtNow();
   }
+  // The bold red now line down every track of the project timeline (the
+  // axis one carries the time), moved every minute.
+  function placePtNow() {
+    document.querySelectorAll('#plist .pt-now').forEach((el) => el.remove());
+    if (!ptNowAt || pmode !== 'timeline') return;
+    const x = ptNowX(ptNowAt);
+    if (x == null) return;
+    const left = (x / ptNowAt.W * 100).toFixed(3) + '%', right = x / ptNowAt.W > 0.85;
+    document.querySelectorAll('#plist .pt-row .tl-track').forEach((tr) => {
+      const el = document.createElement('div');
+      el.className = 'pt-now'; el.style.left = left;
+      if (tr.closest('.pt-axis')) { const sp = document.createElement('span'); sp.textContent = nowLabel(); if (right) sp.className = 'r'; el.appendChild(sp); }
+      tr.appendChild(el);
+    });
+  }
+  setInterval(placePtNow, 60000);
   // Image of the project timeline as shown (span, dates, filter, search), on
   // white for texting: location bands, the axis under each, a row per
   // project with its name, dates/hours/headcount and bars in status colors.
-  async function makeProjectTimelineImage() {
-    const m = ptModel(currentProjectList());
+  // With rightNow: today alone, every open project (not the filter or
+  // search) — the "what's going on right now" picture. Both draw the bold
+  // now line when now is on the axis.
+  async function makeProjectTimelineImage(rightNow) {
+    let m;
+    if (rightNow) {
+      const keep = [ptSpan, ptDay];
+      ptSpan = '1'; ptDay = localDay();
+      try { m = ptModel(projects.filter((p) => (p.fields.status || 'active') !== 'done')); } finally { [ptSpan, ptDay] = keep; }
+    } else m = ptModel(currentProjectList());
     const groups = ptGroupRows(m.rows);
-    if (!groups.length) { toast(t(L.nothingImg)); return; }
+    if (!groups.length) { toast(t(rightNow ? L.nowNone : L.nothingImg)); return; }
+    const nowX = ptNowX(m);
     try { await document.fonts.ready; } catch {}
     const W = 1600, PAD = 36, NAMEW = 380, ROWH = 58, AXISH = 30, FARMH = 52;
     const SANS = "'DM Sans', Arial, sans-serif", HEAD = "'Bebas Neue', 'Arial Narrow', Arial, sans-serif", MONO = "'DM Mono', Menlo, monospace";
     const C = { ink: '#16181d', sub: '#5b6170', line: '#e3e5ea', grid: '#eef0f3', bold: '#8a909c', orange: '#e08a3c', today: 'rgba(90,159,212,.16)', we: '#f6f7f9', paper: '#ffffff',
-                active: '#3db87a', planned: '#5a9fd4', done: '#a3a8b3' };
+                active: '#3db87a', planned: '#5a9fd4', done: '#a3a8b3', now: '#e0443c' };
     const F = { title: `400 54px ${HEAD}`, range: `500 24px ${SANS}`, farm: `400 32px ${HEAD}`, axis: `500 15px ${MONO}`, axisDay: `700 15px ${MONO}`,
-                name: `600 20px ${SANS}`, sub: `400 15px ${SANS}`, bar: `500 15px ${SANS}`, legend: `500 18px ${SANS}`, foot: `400 16px ${SANS}` };
+                name: `600 20px ${SANS}`, sub: `400 15px ${SANS}`, bar: `500 15px ${SANS}`, legend: `500 18px ${SANS}`, foot: `400 16px ${SANS}`, nowTag: `700 15px ${MONO}` };
     const cv = document.createElement('canvas'), ctx = cv.getContext('2d');
     const trackX = PAD + NAMEW, trackW = W - PAD - trackX;
     const xOf = (x) => trackX + Math.max(0, Math.min(m.W, x)) / m.W * trackW;
@@ -1319,7 +1362,7 @@
     cv.width = W; cv.height = Math.ceil(H);
     ctx.fillStyle = C.paper; ctx.fillRect(0, 0, W, H);
     ctx.textBaseline = 'top';
-    ctx.fillStyle = C.ink; ctx.font = F.title; ctx.fillText(t(L.ptImgTitle).toUpperCase(), PAD, PAD - 4);
+    ctx.fillStyle = C.ink; ctx.font = F.title; ctx.fillText((rightNow ? `${t(L.nowTitle)} · ${nowTime()}` : t(L.ptImgTitle)).toUpperCase(), PAD, PAD - 4);
     ctx.fillStyle = C.sub; ctx.font = F.range; ctx.fillText(m.label, PAD, PAD + 56);
     const rr = (x, y, w, h, r) => { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); };
     let lx = PAD;
@@ -1354,12 +1397,23 @@
         });
         y += ROWH;
       });
+      if (nowX != null) {
+        // Bold red now line over the bars, its time in a tag on the axis.
+        const nx = Math.round(xOf(nowX));
+        ctx.fillStyle = C.now; ctx.fillRect(nx - 2, top, 5, bottom - top);
+        ctx.font = F.nowTag;
+        const tag = nowLabel(), tw = ctx.measureText(tag).width + 14;
+        const tx = nx + 6 + tw > W - PAD ? nx - 6 - tw : nx + 6;
+        rr(tx, top + 3, tw, AXISH - 6, 5); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.fillText(tag, tx + 7, top + 7);
+      }
       y += 22;
     });
     ctx.fillStyle = C.sub; ctx.font = F.foot;
     ctx.fillText(`2CW · ${fill(t(L.imgMade), { t: new Date().toLocaleString(lang(), { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) })}`, PAD, H - footH + 18);
     const blob = await new Promise((res) => cv.toBlob(res, 'image/png'));
-    showImage(blob, `projects-${ptSpan === '42' ? ptStart : ptDay}-${ptSpan === '42' ? '6wk' : ptSpan + 'd'}.png`);
+    const stamp = () => { const d = new Date(); return String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0'); };
+    showImage(blob, rightNow ? `right-now-${localDay()}-${stamp()}.png` : `projects-${ptSpan === '42' ? ptStart : ptDay}-${ptSpan === '42' ? '6wk' : ptSpan + 'd'}.png`);
   }
 
   function projectCard(p) {
