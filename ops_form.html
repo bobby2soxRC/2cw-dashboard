@@ -146,6 +146,13 @@
     .li-total .k{font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
     .li-total .v{font-family:'DM Mono',monospace;font-size:1.3rem;color:var(--accent)}
 
+    /* fill button (Bucking's Calculate) */
+    .fill-btn{width:100%;min-height:52px;background:transparent;border:1px solid var(--accent);color:var(--accent);border-radius:10px;font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer}
+    .fill-btn:hover{background:var(--surface2)}
+    .fill-msg{font-family:'DM Mono',monospace;font-size:.82rem;margin-top:8px;display:none}
+    .fill-msg.ok{display:block;color:var(--green)}
+    .fill-msg.err{display:block;color:var(--gold)}
+
     /* Running log (lineitems with entry: true): one entry bar, rows below. */
     .entry-bar{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px}
     .entry-in{flex:1 1 130px;min-width:0}
@@ -318,6 +325,7 @@
     }
 
     if (f.t === 'lineitems') return f.entry ? buildEntryLog(f, wrap) : buildLineItems(f, wrap);
+    if (f.t === 'fill') return buildFill(f, wrap);
 
     if (f.t === 'check') {
       wrap.innerHTML = `<label class="check" for="f_${f.k}"><input type="checkbox" id="f_${f.k}">${t(f.l)}</label>` +
@@ -505,6 +513,40 @@
       addRow(); addRow(); addRow();   // start with a few rows ready to fill
     }, 0);
 
+    return wrap;
+  }
+
+  // A `fill` button (Bucking's Calculate): with all but one of `f.keys`
+  // filled in, works out the missing one with `f.fill(values, key)` and
+  // fills it in — still editable after.
+  const FL = {
+    needOne: { en: 'Fill in all but one of: {list}', es: 'Llene todos menos uno de: {list}' },
+    allSet:  { en: 'All of {list} are filled in already — clear the one to work out, then Calculate.',
+               es: 'Ya están llenos {list} — borre el que quiere calcular y luego Calcular.' },
+    negative:{ en: 'That comes out below zero ({n} lb) — more is logged coming out than went in. Check the boxes and weights.',
+               es: 'Da menos de cero ({n} lb) — se registró más salida que entrada. Revise las cajas y los pesos.' },
+    filled:  { en: '✓ {field}: {n} lb', es: '✓ {field}: {n} lb' }
+  };
+  function buildFill(f, wrap) {
+    wrap.innerHTML = `<button type="button" class="fill-btn" id="fb_${f.k}">${escapeHtml(t(f.l))}</button>` +
+      `<div class="fill-msg" id="fm_${f.k}"></div>` + (f.hint ? `<div class="hint">${t(f.hint)}</div>` : '');
+    const msg = wrap.querySelector(`#fm_${f.k}`);
+    const say = (text, ok) => { msg.textContent = text; msg.className = `fill-msg ${ok ? 'ok' : 'err'}`; };
+    wrap.querySelector(`#fb_${f.k}`).addEventListener('click', () => {
+      const fields = f.keys.map((k) => station.fields.find((x) => x.k === k));
+      const names = fields.map((x) => t(x.l)).join(', ');
+      const blank = fields.filter((x) => values[x.k] === undefined || values[x.k] === null || values[x.k] === '');
+      if (blank.length === 0) return say(t(FL.allSet).replace('{list}', names));
+      if (blank.length > 1) return say(t(FL.needOne).replace('{list}', names));
+      const target = blank[0];
+      recompute();   // totals from what's logged right now
+      const n = Math.round(f.fill(values, target.k) * 100) / 100;
+      if (!Number.isFinite(n) || n < 0) return say(t(FL.negative).replace('{n}', fmtNum(n, 2)));
+      setFieldValue(target, n);
+      touched.add(target.k);
+      recompute(); updateVisibility(); markDirty();
+      say(t(FL.filled).replace('{field}', t(target.l)).replace('{n}', fmtNum(n, 2)), true);
+    });
     return wrap;
   }
 

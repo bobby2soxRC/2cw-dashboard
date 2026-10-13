@@ -371,9 +371,13 @@ they're filled), and the rows logged so far underneath, newest first:
   someone without one, and lbs. Totals to `buckedFlowerLb`.
 - `trim` — trim weighed during the batch, lbs. Totals to `trimLb`.
 
-Then at close-out the stems (`stemLb`, "Palo" in Spanish, required) and the
-summary: total out (bucked + trim + stems), loss ("Podrido") in lbs and %,
-and bucked yield %. Submit closes the batch. The record keeps the old field
+Then at close-out the stems (`stemLb`, "Palo" in Spanish, required), mold
+(`moldLb`) and floor waste (`floorWasteLb`), with a **Calculate** button
+(a `fill` field): with two of the three weighed, it fills in the third as
+Total Boxes Taken minus everything else that came out (bucked + trim + the
+other two), so the loss comes to zero. Then the summary: total out
+(bucked + trim + stems + mold + floor waste), loss in lbs and %, and
+bucked yield %. Mold and floor waste count as `waste` in the flow. Submit closes the batch. The record keeps the old field
 names, so Machine Trim's prefill (`buckedFlowerLb`), the yield calc and the
 dashboard read it as before. Bucking doesn't mint a UID: the record stays
 under the on-stem tag, and that's what Machine Trim looks up.

@@ -22,6 +22,9 @@
 //   hint   {en, es} helper text under the field
 //   showIf (v) => bool
 //   prefill 'lookup' — pull from the upstream stage record matching sourceUid
+//   fill   a button, not a value: { keys: [three field keys], fill: (v, key) =>
+//          number } — with all but one of `keys` filled in, works out the
+//          missing one (Bucking's Calculate for stems / mold / floor waste)
 //   entry  (lineitems) a running log instead of a grid: an entry bar plus Add,
 //          rows stamped with an id/day/time and merged across tablets (see
 //          buildEntryLog in ops_form.html). A `rownum` column numbers the
@@ -131,7 +134,7 @@ function totalsBlock(inputKey, outputKeys) {
 
 // What Bucking's loss is worked out against: everything that comes out of
 // the boxes.
-const BUCK_OUTPUTS = ['buckedFlowerLb', 'trimLb', 'stemLb'];
+const BUCK_OUTPUTS = ['buckedFlowerLb', 'trimLb', 'stemLb', 'moldLb', 'floorWasteLb'];
 
 const OPERATIONS_STATIONS = [
   // ── CULTIVATION (PLACEHOLDER) ────────────────────────────────────────────
@@ -590,20 +593,32 @@ const OPERATIONS_STATIONS = [
         calc: (v) => (v.trim || []).reduce((a, r) => a + num(r.weightLb), 0),
         l: { en: 'Total Trim (lbs)', es: 'Recorte total (lbs)' } },
 
-      // Close-out: stems, then the summary, then Submit.
+      // Close-out: stems, mold and floor waste — weigh two and Calculate
+      // fills in the third — then the summary, then Submit.
       { k: 'stemLb', t: 'number', req: true, min: 0, step: 0.01,
         l: { en: 'Stems (lbs)', es: 'Palo (lbs)' },
         hint: { en: 'Weigh the stems when the batch is done, then submit.',
                 es: 'Pese el palo al terminar el lote y luego envíe.' } },
+      { k: 'moldLb', t: 'number', min: 0, step: 0.01,
+        l: { en: 'Mold (lbs)', es: 'Moho (lbs)' } },
+      { k: 'floorWasteLb', t: 'number', min: 0, step: 0.01,
+        l: { en: 'Floor Waste (lbs)', es: 'Desperdicio del piso (lbs)' } },
+      { k: 'closeOutFill', t: 'fill', keys: ['stemLb', 'moldLb', 'floorWasteLb'],
+        // The missing one is what's left of the boxes taken once everything
+        // else coming out is counted, so the loss comes to zero.
+        fill: (v, key) => num(v.startingDryLb) - sum(v, BUCK_OUTPUTS.filter((k) => k !== key)),
+        l: { en: 'Calculate', es: 'Calcular' },
+        hint: { en: 'Weighed two of Stems, Mold and Floor Waste? Calculate fills in the third: Total Boxes Taken minus everything else that came out.',
+                es: '¿Pesó dos de Palo, Moho y Desperdicio del piso? Calcular llena el tercero: total de cajas menos todo lo demás que salió.' } },
       { k: 'totalOutputLb', t: 'calc', calc: (v) => sum(v, BUCK_OUTPUTS),
-        l: { en: 'Total — Bucked + Trim + Stems (lbs)', es: 'Total — desvarado + recorte + palo (lbs)' } },
+        l: { en: 'Total Out — Bucked + Trim + Stems + Mold + Floor Waste (lbs)', es: 'Total — desvarado + recorte + palo + moho + desperdicio (lbs)' } },
       { k: 'lossLb', t: 'calc', calc: (v) => (num(v.startingDryLb) > 0 ? num(v.startingDryLb) - sum(v, BUCK_OUTPUTS) : null),
-        l: { en: 'Loss (lbs)', es: 'Podrido (lbs)' },
+        l: { en: 'Loss (lbs)', es: 'Pérdida (lbs)' },
         hint: { en: 'Boxes taken minus the total. A negative number means more came out than was logged going in.',
                 es: 'Cajas menos el total. Un número negativo indica que salió más de lo registrado al entrar.' } },
       { k: 'lossPct', t: 'calc', fmt: 'pct',
         calc: (v) => pct(num(v.startingDryLb) - sum(v, BUCK_OUTPUTS), v.startingDryLb),
-        l: { en: 'Loss %', es: '% podrido' },
+        l: { en: 'Loss %', es: '% de pérdida' },
         flag: (x) => x < 0 || x > 0.05 },
       { k: 'buckYieldPct', t: 'calc', fmt: 'pct', calc: (v) => pct(v.buckedFlowerLb, v.startingDryLb),
         l: { en: 'Bucked Flower Yield %', es: '% de rendimiento de flor desvarada' } },
@@ -619,6 +634,8 @@ const OPERATIONS_STATIONS = [
               { field: 'buckedFlowerLb', category: 'bucked_flower' },
               { field: 'trimLb', category: 'trim' },
               { field: 'stemLb', category: 'stems' },
+              { field: 'moldLb', category: 'waste' },
+              { field: 'floorWasteLb', category: 'waste' },
               { field: 'bigLeafLb', category: 'big_leaf' },
               { field: 'wasteLb', category: 'waste' },
               { field: 'aPlusTrimLb', category: 'trim_a_plus' },
