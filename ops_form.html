@@ -1658,7 +1658,7 @@
     });
   }
 
-  // ── Delete this page (station.canDelete — Bucking) ───────────────────────
+  // ── Delete this page (station.canDelete — Bucking, Hand Trim) ────────────
   // For a page started by mistake: asks first, then deletes the open page
   // through operations-records.js (deleteOpenPage — a draft only, never a
   // submitted record; logged with who did it) and starts a blank one. Other
@@ -1666,8 +1666,11 @@
   const DP = {
     btn:      { en: 'Delete this page', es: 'Borrar esta hoja' },
     deleting: { en: 'Deleting…', es: 'Borrando…' },
-    ask:      { en: 'Delete this bucking page{what}?{logged}\n\nThis can’t be undone.',
-                es: '¿Borrar esta hoja de desvarado{what}?{logged}\n\nNo se puede deshacer.' },
+    ask:      station.key === 'hand_trim'
+      ? { en: 'Delete this hand trim page{what}?{logged}\n\nThis can’t be undone.',
+          es: '¿Borrar esta hoja de corte a mano{what}?{logged}\n\nNo se puede deshacer.' }
+      : { en: 'Delete this bucking page{what}?{logged}\n\nThis can’t be undone.',
+          es: '¿Borrar esta hoja de desvarado{what}?{logged}\n\nNo se puede deshacer.' },
     logged:   { en: '\n\nIt has {list} logged — those go too.', es: '\n\nTiene {list} registrados — también se borran.' },
     done:     { en: '✓ Page deleted.', es: '✓ Hoja borrada.' },
     tooLate:  { en: 'This page was already submitted, so it can’t be deleted.', es: 'Esta hoja ya se envió, así que no se puede borrar.' },

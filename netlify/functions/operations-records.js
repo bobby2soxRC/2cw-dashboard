@@ -9,7 +9,7 @@
 // POST {action:'delete',  pin, stationKey, id, reason} -> {ok}
 // POST {action:'delete_open', pin, stationKey, id}     -> {ok} | {ok:false, code}
 //   An open (not yet submitted) page the station's own crew can delete —
-//   a Bucking page started by mistake. Needs edit access to that station
+//   a Bucking or Hand Trim page started by mistake. Needs edit access to that station
 //   ('production edit stations'), not a separate checkbox. code is
 //   'submitted' (too late — never deleted this way) or 'gone'.
 //
@@ -23,7 +23,7 @@ const STATIONS = {
 };
 
 // Stations whose open pages their crew can delete (delete_open).
-const OPEN_PAGE_DELETE = new Set(['buck']);
+const OPEN_PAGE_DELETE = new Set(['buck', 'hand_trim']);
 
 const HISTORY_LIMIT = 5000;
 
