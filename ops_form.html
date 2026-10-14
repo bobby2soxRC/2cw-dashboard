@@ -161,6 +161,12 @@
     .entry-in .req{color:var(--red);margin-left:3px}
     .entry-in.entry-num{flex:0 0 auto}
     .entry-next{min-height:52px;min-width:64px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:1.2rem;color:var(--accent);border:1px dashed var(--border);border-radius:10px;padding:0 12px}
+    /* Bags stepper (Hand Trim): − [n] + */
+    .qty{display:flex;gap:4px;align-items:stretch}
+    .qty input{width:64px;text-align:center;padding:.8rem .3rem;-moz-appearance:textfield}
+    .qty input::-webkit-inner-spin-button,.qty input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+    .qty-btn{min-width:44px;min-height:52px;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:1.3rem;cursor:pointer}
+    .qty-btn:active{border-color:var(--accent);color:var(--accent)}
     .entry-msg{font-size:.8rem;color:var(--red);margin-top:8px;display:none}
     .entry-table{margin-top:12px;font-family:'DM Mono',monospace;font-size:.9rem}
     .entry-table td{padding:8px 8px 8px 0;border-bottom:1px solid var(--border)}
@@ -597,10 +603,22 @@
     const cols = f.cols.filter((c) => c.t !== 'calc');
     const ins = cols.filter((c) => c.t !== 'rownum');
     const nums = cols.filter((c) => c.t === 'rownum');
+    // `multi` (Hand Trim's bags): the value column is entered as Bags × each
+    // plus a Partial, each bag becoming its own row.
+    const M = f.multi || null;
+    const multiBar = !M ? '' :
+      `<label class="entry-in entry-num"><span class="k">${t(M.qty)}</span><div class="qty">` +
+        `<button type="button" class="qty-btn" data-qty="-1" aria-label="−">−</button>` +
+        `<input type="number" id="eq_${f.k}" inputmode="numeric" step="1" min="0" value="1">` +
+        `<button type="button" class="qty-btn" data-qty="1" aria-label="+">+</button></div></label>` +
+      `<label class="entry-in"><span class="k">${t(M.each)}</span>` +
+        `<input type="number" id="e_${f.k}_${M.col}" inputmode="decimal" step="any" min="0" value="${M.def}"></label>` +
+      `<label class="entry-in"><span class="k">${t(M.partial)}</span>` +
+        `<input type="number" id="ep_${f.k}" inputmode="decimal" step="any" min="0"></label>`;
     wrap.innerHTML = labelHtml(f) +
       (f.hint ? `<div class="hint" style="margin-top:0;margin-bottom:10px">${t(f.hint)}</div>` : '') +
       `<div class="entry-bar">` +
-      cols.map((c) => `<label class="entry-in${c.t === 'rownum' ? ' entry-num' : ''}"><span class="k">${t(c.l)}${c.req ? '<span class="req">*</span>' : ''}</span>` +
+      cols.map((c) => (M && c.k === M.col) ? multiBar : `<label class="entry-in${c.t === 'rownum' ? ' entry-num' : ''}"><span class="k">${t(c.l)}${c.req ? '<span class="req">*</span>' : ''}</span>` +
         (c.t === 'rownum' ? `<div class="entry-next" id="en_${f.k}_${c.k}">1</div>`
         : c.t === 'number'
           ? `<input type="number" id="e_${f.k}_${c.k}" inputmode="decimal" step="${c.step || 'any'}"${c.min !== undefined ? ` min="${c.min}"` : ''}>`
@@ -614,7 +632,7 @@
 
     const inp = (c) => wrap.querySelector(`#e_${f.k}_${c.k}`);
     const msg = wrap.querySelector(`#em_${f.k}`);
-    let freshId = null;
+    let fresh = new Set();   // ids of the row(s) just added
 
     const render = () => {
       const rows = values[f.k] || [];
@@ -624,7 +642,7 @@
       tbody.innerHTML = '';
       rows.slice().reverse().forEach((r) => {
         const tr = document.createElement('tr');
-        if (r._id && r._id === freshId) tr.className = 'fresh';
+        if (r._id && fresh.has(r._id)) tr.className = 'fresh';
         const at = r.at ? new Date(r.at) : null;
         const when = at ? ((r.day && r.day !== todayStr() ? new Date(`${r.day}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' : '') +
           at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) : '';
@@ -648,7 +666,41 @@
     };
     entryRenderers[f.k] = render;
 
+    const qtyIn = M ? wrap.querySelector(`#eq_${f.k}`) : null;
+    const partIn = M ? wrap.querySelector(`#ep_${f.k}`) : null;
+    if (M) wrap.querySelectorAll('.qty-btn').forEach((b) => b.addEventListener('click', () => {
+      qtyIn.value = String(Math.max(0, (parseInt(qtyIn.value, 10) || 0) + Number(b.dataset.qty)));
+    }));
+    // Bags × each + Partial → one row per bag, same employee # and time.
+    const addMulti = () => {
+      const base = {};
+      const short = [];
+      ins.filter((c) => c.k !== M.col).forEach((c) => {
+        const raw = inp(c).value.trim();
+        base[c.k] = c.t === 'number' ? (raw === '' ? null : Number(raw)) : raw;
+        if (c.req && raw === '') short.push(c);
+      });
+      const qty = Math.max(0, parseInt(qtyIn.value, 10) || 0);
+      const each = Number(inp({ k: M.col }).value) || 0;
+      const part = Number(partIn.value) || 0;
+      const fail = (cs, focus) => { msg.textContent = `${t(EL.fill)} ${cs.map((l) => t(l)).join(', ')}`; msg.style.display = 'block'; focus.focus(); };
+      if (short.length) return fail(short.map((c) => c.l), inp(short[0]));
+      if (qty > 0 && !(each > 0)) return fail([M.each], inp({ k: M.col }));
+      if (!(qty > 0 && each > 0) && !(part > 0)) return fail([M.qty, M.partial], qtyIn);
+      msg.style.display = 'none';
+      const at = new Date().toISOString();
+      const grams = [...Array(qty > 0 && each > 0 ? qty : 0).fill(each), ...(part > 0 ? [part] : [])];
+      grams.forEach((g) => values[f.k].push({ ...base, [M.col]: g, _id: crypto.randomUUID(), day: todayStr(), at, by: owner }));
+      fresh = new Set(values[f.k].slice(-grams.length).map((r) => r._id));
+      ins.filter((c) => c.k !== M.col).forEach((c) => { inp(c).value = ''; });
+      qtyIn.value = '1';
+      partIn.value = '';
+      render(); recompute(); markDirty();
+      inp(ins[0]).focus();
+    };
+
     const add = () => {
+      if (M) return addMulti();
       const row = {};
       const short = [];
       ins.forEach((c) => {
@@ -665,7 +717,7 @@
       msg.style.display = 'none';
       Object.assign(row, { _id: crypto.randomUUID(), day: todayStr(), at: new Date().toISOString(), by: owner });
       values[f.k].push(row);
-      freshId = row._id;
+      fresh = new Set([row._id]);
       ins.forEach((c) => { inp(c).value = ''; });
       render(); recompute(); markDirty();
       inp(ins[0]).focus();
@@ -677,6 +729,11 @@
       ev.preventDefault();
       const empty = ins.find((x) => x.req && !inp(x).value.trim());
       if (empty) inp(empty).focus(); else add();
+    }));
+    if (M) [qtyIn, partIn].forEach((el) => el.addEventListener('keydown', (ev) => {
+      if (ev.key !== 'Enter') return;
+      ev.preventDefault();
+      add();
     }));
 
     // hydrate() clears the tbody and values, then calls this once per row.
@@ -1429,13 +1486,15 @@
     const used = pages.filter((p) => (p.f[cfg.lines] || []).some((r) => onDay(r) && num(r[cfg.valueCol]) > 0) || p.cur);
     used.sort((a, b) => String(a.strain || '').localeCompare(String(b.strain || '')));
 
-    // Grams (Smalls) or pounds (Bucking).
+    // Grams (Smalls) or pounds (Bucking; Hand Trim weighs in grams and
+    // shows pounds — `fromGrams`).
     const inLb = cfg.unit === 'lb';
     const dp = inLb ? 2 : 0;
+    const scale = cfg.fromGrams ? 1 / G_PER_LB : 1;
     const grid = {};   // emp -> page id -> grams (or lbs)
     used.forEach((p) => (p.f[cfg.lines] || []).filter(onDay).forEach((r) => {
       const emp = String(r[cfg.empCol] || '').trim();
-      const g = num(r[cfg.valueCol]);
+      const g = num(r[cfg.valueCol]) * scale;
       if (!emp || !g) return;
       grid[emp] = grid[emp] || {};
       grid[emp][p.id] = (grid[emp][p.id] || 0) + g;

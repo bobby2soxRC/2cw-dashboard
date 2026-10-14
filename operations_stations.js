@@ -733,6 +733,12 @@ const OPERATIONS_STATIONS = [
     // Orders page), with the strain, UID and bucked weight.
     queueTab: true,
     links: [{ href: '/work_orders.html?tab=trim', l: { en: 'Work Orders →', es: 'Órdenes de trabajo →' } }],
+    // The table under the form: pounds of finished flower per person, per
+    // lot, for one day (each bag carries the day it was weighed).
+    dailySummary: { lines: 'weights', empCol: 'employeeNo', valueCol: 'grams', dateCol: 'day', unit: 'lb', fromGrams: true,
+                    title: { en: 'Daily Summary — Pounds by Person', es: 'Resumen del día — libras por persona' },
+                    hint: { en: 'Finished flower weighed that day on every hand trim page, in pounds. Open pages included.',
+                            es: 'Flor terminada pesada ese día en todas las hojas de corte a mano, en libras. Incluye hojas abiertas.' } },
     fields: [
       F.date(),
       // Picked from every lot that's been bucked (`picker`: buckedLots in
@@ -763,12 +769,19 @@ const OPERATIONS_STATIONS = [
       // Bucking's) so two tablets on one lot merge their bags.
       { k: 'weights', t: 'lineitems', entry: true, req: true,
         l: { en: 'Finished Flower — Weighing Worksheet', es: 'Flor terminada — hoja de pesaje' },
-        hint: { en: 'Log every bag as it’s weighed out. The same employee # can be logged many times.',
-                es: 'Registre cada bolsa al pesarla. El mismo n.º de empleado puede registrarse muchas veces.' },
+        hint: { en: 'Employee #, how many full bags and their grams each (454 = 1 lb), plus any partial bag — Add logs a line for each bag.',
+                es: 'N.º de empleado, cuántas bolsas llenas y sus gramos c/u (454 = 1 lb), más una bolsa parcial — Agregar registra una línea por bolsa.' },
         cols: [
           { k: 'employeeNo', t: 'text', l: { en: 'Employee #', es: 'N.º de empleado' }, inputmode: 'numeric', req: true },
           { k: 'grams', t: 'number', l: { en: 'Weight (gm)', es: 'Peso (gm)' }, min: 0, step: 1, req: true, dp: 0 }
         ],
+        // The entry bar takes several full bags at once: Bags × Grams each
+        // (454 — a pound — stays filled in) plus one Partial, and Add logs a
+        // row per bag, all under the one employee #.
+        multi: { col: 'grams', def: 454,
+                 qty: { en: 'Bags', es: 'Bolsas' },
+                 each: { en: 'Grams each', es: 'Gramos c/u' },
+                 partial: { en: 'Partial (gm)', es: 'Parcial (gm)' } },
         totalCol: 'grams' },
 
       { k: 'totalGrams', t: 'calc', dp: 0,
