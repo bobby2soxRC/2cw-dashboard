@@ -121,12 +121,22 @@ once QC and the secondary verification are done. The log is the station's
 Two people editing the same open batch at the same moment can overwrite each
 other's rows (last save wins), so one tablet per batch is safest.
 
-**Hand Trim / Hand Touch** (`hand_trim`) starts from bucked flower. Its
-Lot Number is a dropdown of every lot with a submitted Bucking record
-(`picker: { list: 'bucked' }` — `buckedLots` in `ops_common.js`, newest
-first, one per UID); picking one fills the package UID, strain, starting
-bucked weight (Bucking's `buckedFlowerLb`) and the customer ID, traced back
-through Take Down to Wet Intake. "Other — not on the list" is for bucked
+**Hand Trim / Hand Touch** (`hand_trim`) runs like Bucking: one page per
+lot (`sharedDay` — every open page, anyone's, is in the "Lots open"
+switcher; a lot open on another page drops out of the dropdown), autosaved
+until submitted, with Delete this page (`canDelete`). The weighing worksheet
+is a running log (`entry: true`) so two tablets on one lot merge their bags;
+blank rows saved back when it was a grid are skipped on load. It starts from bucked flower. Its
+Lot Number is a dropdown of every bucked lot (`picker: { list: 'bucked' }` —
+`buckedLots` in `ops_common.js`, one per UID): submitted Bucking records,
+plus lots still on an open Bucking page with some flower logged ("— bucking
+in progress", `buckedFlowerLb` = bucked so far, and a warning to update the
+starting weight if more comes over). The trimming queue's lots come first in
+queue order, then the already-trimmed ones, newest first. Picking one fills
+the package UID, strain, starting bucked weight (Bucking's `buckedFlowerLb`)
+and the customer ID, traced back through Take Down to Wet Intake. A Queue tab
+(`queueTab`) shows the trimming queue; Start opens a new page with
+`set_sourceUid`, which is resolved against the lot list once it loads. "Other — not on the list" is for bucked
 flower brought in from elsewhere: a popup (`otherPopup`) asks for the strain
 and package UID, and the CID is entered by hand. Outputs: the weighing
 worksheet's finished flower, smalls, Normal Trim (`normTrimLb`, category
@@ -134,6 +144,27 @@ worksheet's finished flower, smalls, Normal Trim (`normTrimLb`, category
 farm license, trim style and starting bins were dropped in October 2026;
 `sugarTrimLb` is off the form but stays in the totals and flow for older
 records.
+
+**Work Orders** (`work_orders.html`, hub card `work_orders` under
+Processing) puts the work queues on one page, a tab each (`?tab=buck|trim|preroll`):
+- **Bucking** — `loadBuckingQueue`, the same list and order as the On-Stem
+  Flower page (which still has it, with the holds).
+- **Hand Trim** — `loadTrimQueue` (`ops_data.js`): every bucked lot,
+  including ones still being bucked, with no submitted Hand Trim yet, with
+  bucked and trimmed-so-far pounds. The order is one shared
+  `operations_forms` row like the bucking queue (`TRIM_QUEUE_ID`,
+  station_key `trim_queue`); unordered lots go last, oldest bucked first
+  (`orderTrimQueue`).
+- **Pre-Roll** — the Pre-Roll Dashboard's queue in a frame
+  (`preroll_dashboard.html?embed=queue`, which hides everything else and
+  opens links in the whole window), so ordering, adding and Start batch work
+  exactly as on the dashboard, which keeps its queue too.
+
+Bucking and Hand Trim are reordered by 'buck release' managers; others see
+the order. Tabs show by access: Bucking / Hand Trim to their station's edit
+access or 'buck release', Pre-Roll to `preroll_production` edit access or the
+Pre-Roll Dashboard card (`2cw_preroll_dash`, set at login). The card is
+`ambient`, so someone with only one station still lands straight on it.
 
 **Smalls Hand Trim** (`smalls_trim`) is the paper "Work Order Form (Smalls |
 By the Hourly)": one page per flavor per day — package UID, strain, starting

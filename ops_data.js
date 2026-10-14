@@ -288,6 +288,53 @@ async function loadBuckingQueue() {
   return { items, queue, downs: downs || [] };
 }
 
+// The trimming queue: one shared row like the bucking queue (station_key
+// 'trim_queue', fixed id), `order` = bucked-lot UIDs in the order a manager
+// set on the Work Orders page.
+const TRIM_QUEUE_ID = '7472696d-7175-4000-8000-000000000001';
+async function getTrimQueue() {
+  const client = getClient();
+  if (!client) return { order: [] };
+  const { data } = await client.from(TABLE).select('fields').eq('id', TRIM_QUEUE_ID).maybeSingle();
+  const f = (data && data.fields) || {};
+  return { order: Array.isArray(f.order) ? f.order : [], updatedBy: f.updatedBy || '', updatedAt: f.updatedAt || '' };
+}
+async function saveTrimQueue(order, who) {
+  const client = getClient();
+  if (!client) return { ok: false, reason: 'not-configured' };
+  const { error } = await client.from(TABLE).upsert({
+    id: TRIM_QUEUE_ID, station_key: 'trim_queue', status: 'submitted', owner_user: who || null, updated_by: who || null,
+    submitted_at: new Date().toISOString(),
+    fields: { order, updatedBy: who || '', updatedAt: new Date().toISOString() }
+  });
+  return error ? { ok: false, reason: error.message } : { ok: true };
+}
+
+// The trimming queue as the Work Orders page and Hand Trim's Queue tab show
+// it: every bucked lot (buckedLots — including ones still being bucked) with
+// no submitted Hand Trim yet, in queue order, each marked with the Hand Trim
+// page it's open on (`draftId`) and the finished flower weighed there so far
+// (`trimmedLb`). `all` is every bucked lot, for Hand Trim's dropdown.
+async function loadTrimQueue() {
+  const [bucks, openBucks, downs, intakes, trimmed, openTrims, queue] = await Promise.all([
+    loadSubmitted('buck'), listOpenDrafts('buck'), loadSubmitted('dry_check'), loadSubmitted('intake_wet'),
+    loadSubmitted('hand_trim'), listOpenDrafts('hand_trim'), getTrimQueue()]);
+  const all = buckedLots(bucks || [], downs || [], intakes || [], openBucks || []);
+  const done = (trimmed || []).map((r) => r.sourceUid).filter(Boolean);
+  const drafts = (openTrims || []).filter((d) => d.fields && d.fields.sourceUid);
+  const items = orderTrimQueue(all.filter((l) => !done.some((u) => uidTailMatch(u, l.sourceUid))), queue).map((l) => {
+    const d = drafts.find((x) => uidTailMatch(x.fields.sourceUid, l.sourceUid));
+    return withTrimmed(d ? { ...l, draftId: d.id } : l, d ? d.fields.weights : []);
+  });
+  return { items, all, queue, openTrims: openTrims || [] };
+}
+
+// Finished flower weighed so far on a Hand Trim page (grams → lbs).
+function withTrimmed(p, weights) {
+  const g = (weights || []).reduce((a, r) => a + (Number(r.grams) || 0), 0);
+  return { ...p, trimmedLb: Math.round(g / G_PER_LB * 100) / 100 };
+}
+
 // Pounds pulled so far (the bucking page's boxes) and what's left.
 function withPulled(p, boxes) {
   const pulledLb = Math.round((boxes || []).reduce((a, r) => a + (Number(r.weightLb) || 0), 0) * 100) / 100;

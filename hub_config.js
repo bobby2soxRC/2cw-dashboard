@@ -186,6 +186,20 @@ const CARD_DEFS = [
     href: '/buck_hold.html'
   },
   {
+    key: 'work_orders',
+    color: 'purple',
+    label: 'Processing',
+    dept: 'operations',
+    subdept: 'processing',
+    // Not a sheet column: shown to anyone who works or manages Bucking,
+    // Hand Trim or Pre-Roll (see buildHub in index.html). Ambient, so a
+    // trimmer with just Hand Trim still lands straight on their form.
+    ambient: true,
+    title: 'Work Orders',
+    desc: 'The work queues in one place — Bucking, Hand Trim and Pre-Roll — in the order to work them, with Start or Open for each.',
+    href: '/work_orders.html'
+  },
+  {
     key: 'harvest_intakes',
     color: 'blue',
     label: 'Processing',
@@ -330,6 +344,7 @@ const CARD_ES = {
   menu:                { title: 'Menú', desc: 'El menú de esta semana de Howie Roll, Soma Rosa y Mendo — cambia entre NorCal (Alameda) y SoCal (Van Nuys) para ver qué hay en cada almacén.' },
   production_dashboard:{ title: 'Panel de Procesamiento', desc: 'Dónde está cada lote, rendimiento y merma por etapa y cepa, biomasa disponible y producción de los trimmers.' },
   drying_schedule:     { title: 'Calendario de Secado', desc: 'Granjas externas para las que secamos — granja, licencia, tamaño, fechas estimadas de entrada y peso húmedo, con la carga semanal.' },
+  work_orders:         { title: 'Órdenes de Trabajo', desc: 'Las filas de trabajo en un solo lugar — desvarado, corte a mano y prerolls — en el orden de trabajo, con Empezar o Abrir para cada uno.' },
   harvest_intakes:     { title: 'Recepciones de Cosecha', desc: 'Todas las recepciones de cosecha húmeda — abre una para ver el registro completo, o corrígela y registra el ajuste en Metrc si tienes acceso de edición.' },
   information_hub:     { title: 'Centro de Información', desc: 'Las listas de referencia que usa el resto de la app — variedades, instalaciones de Canix, pronósticos de rendimiento, licencias de ranchos e IDs de clientes.' },
   production_today:    { title: 'Hoy — En Vivo', desc: 'Cada formulario en progreso o terminado hoy, actualizado en vivo — para quien tenga acceso de vista, pueda editarlo o no.' },

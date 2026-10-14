@@ -240,8 +240,10 @@ function buckablePackages(downs, bucked) {
 // Every lot that's been through Bucking (Hand Trim's Lot Number list),
 // newest first, one per UID (its latest submitted Bucking record), with the
 // customer ID traced back through Take Down to Wet Intake when Take Down
-// didn't carry it.
-function buckedLots(bucks, downs, intakes) {
+// didn't carry it. `openBucks` (Bucking pages still open) adds the lots
+// still being bucked that have some flower logged, `inProgress: true`, with
+// `buckedFlowerLb` what's been bucked so far and `buckDraftId` the page.
+function buckedLots(bucks, downs, intakes, openBucks) {
   const groups = takeDownGroups(downs);
   const takeDownFor = (uid) => {
     for (const [u, members] of groups) {
@@ -258,11 +260,29 @@ function buckedLots(bucks, downs, intakes) {
     const i = (intakes || []).find((x) => uidTailMatch(x.sourceUid, d.incomingUid));
     return (i && i.cid) || '';
   };
+  const r2 = (x) => Math.round(x * 100) / 100;
+  const open = (openBucks || []).filter((d) => d.fields && d.fields.sourceUid).map((d) => ({
+    ...d.fields, strain: d.fields.strain || d.strain || '', date: d.fields.date || d.work_date || '',
+    buckedFlowerLb: r2((d.fields.bucked || []).reduce((a, x) => a + (Number(x.weightLb) || 0), 0)),
+    inProgress: true, buckDraftId: d.id }))
+    // Nothing bucked yet means nothing to trim yet.
+    .filter((l) => l.buckedFlowerLb > 0);
+  const newest = (a, b) => String(b.date || '').localeCompare(String(a.date || '')) || String(b.submittedAt || '').localeCompare(String(a.submittedAt || ''));
   const seen = new Set();
-  return [...(bucks || [])]
-    .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || String(b.submittedAt || '').localeCompare(String(a.submittedAt || '')))
+  // A submitted Bucking record wins over a page still open on the same UID.
+  return [...[...(bucks || [])].sort(newest), ...open.sort(newest)]
     .filter((r) => { const u = normUid(r.sourceUid); if (!u || seen.has(u)) return false; seen.add(u); return true; })
+    .sort(newest)
     .map((r) => ({ ...r, sourceUid: normUid(r.sourceUid), cid: r.cid || cidFor(r.sourceUid) }));
+}
+
+// The trimming queue in order: lots in the manager's saved order first,
+// then any not in it yet, oldest bucked first.
+function orderTrimQueue(lots, queue) {
+  const order = (queue && queue.order) || [];
+  const pos = (p) => { const i = order.findIndex((u) => uidTailMatch(u, p.sourceUid)); return i < 0 ? Infinity : i; };
+  return [...(lots || [])].sort((a, b) => (pos(a) - pos(b)) || String(a.date || '').localeCompare(String(b.date || ''))
+    || String(a.strain || '').localeCompare(String(b.strain || '')));
 }
 
 // The bucking queue in order: packages in the manager's saved order first,

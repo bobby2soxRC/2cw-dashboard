@@ -134,6 +134,11 @@
   .m-err{color:var(--red);font-size:.85rem;margin-bottom:10px;display:none}
   .m-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
   @media (max-width:560px){ .card{grid-template-columns:1fr} .c-actions{justify-content:flex-start} .row2{grid-template-columns:1fr} }
+
+  /* ?embed=queue — just the queue, inside the Work Orders page. */
+  body.embed::before, body.embed .hdr, body.embed #h1, body.embed #intro, body.embed #tiles,
+  body.embed #q-title, body.embed #r-title, body.embed #bar, body.embed #list{display:none}
+  body.embed main{padding:4px 0 24px;max-width:none}
 </style>
 </head>
 <body>
@@ -200,6 +205,14 @@
 // `fields.order` = refs (PR# or PQ-#). Anything not in it goes last, by
 // Ready Date / when it was added. An item drops off once a Pre-Roll
 // Production form carrying its ref is submitted.
+// ?embed=queue: only the queue, for the Work Orders page's Pre-Roll tab —
+// its links (Start / Open batch) open in the whole window, not the frame.
+if (new URLSearchParams(location.search).get('embed') === 'queue') {
+  document.body.classList.add('embed');
+  const base = document.createElement('base');
+  base.target = '_top';
+  document.head.appendChild(base);
+}
 const PRODUCTION_REQUESTS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQkx0gxPTulAOv3WMXayY8HOqcoYByZ_kOXrLvd84-9ReSwGa-6Or-KTx4SdPfT0rC5_qOCE3LHz_mT/pub?gid=1857304423&single=true&output=csv';
 const REFRESH_MS = 60 * 1000;
 const PREROLL_QUEUE_ID = '70726571-7565-4000-8000-000000000001';

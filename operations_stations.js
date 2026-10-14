@@ -519,7 +519,8 @@ const OPERATIONS_STATIONS = [
     sharedDay: true,
     // Take Downs held for quality or for an order wait on their own page
     // until someone releases them (buck_hold.html).
-    links: [{ href: '/buck_hold.html', l: { en: 'On-Stem Flower →', es: 'Flor en tallo →' } }],
+    links: [{ href: '/buck_hold.html', l: { en: 'On-Stem Flower →', es: 'Flor en tallo →' } },
+            { href: '/work_orders.html?tab=buck', l: { en: 'Work Orders →', es: 'Órdenes de trabajo →' } }],
     // A Queue tab next to the form: the order to buck in (set on the
     // On-Stem Flower page), with the strain, UID and starting weight.
     queueTab: true,
@@ -706,6 +707,15 @@ const OPERATIONS_STATIONS = [
             es: 'La orden de trabajo de corte — pese la flor terminada de cada persona y sume la corrida.' },
     color: 'purple',
     headline: 'finishedFlowerLb',
+    // One page per lot, built like Bucking: every open page (anyone's) is in
+    // the switcher at the top, several lots run at once, and a page stays
+    // open across days until it's submitted.
+    sharedDay: true,
+    canDelete: true,
+    // A Queue tab next to the form: the trimming queue (set on the Work
+    // Orders page), with the strain, UID and bucked weight.
+    queueTab: true,
+    links: [{ href: '/work_orders.html?tab=trim', l: { en: 'Work Orders →', es: 'Órdenes de trabajo →' } }],
     fields: [
       F.date(),
       // Picked from every lot that's been bucked (`picker`: buckedLots in
@@ -732,14 +742,15 @@ const OPERATIONS_STATIONS = [
       { k: 'startingBuckedLb', t: 'number', req: true, min: 0, step: 0.01, prefill: 'lookup',
         l: { en: 'Total Starting Bucked Weight (lbs)', es: 'Peso desvarado inicial total (lbs)' } },
 
-      // The weighing worksheet from the paper form: one row per trimmer.
-      { k: 'weights', t: 'lineitems', req: true,
+      // The weighing worksheet from the paper form, as a running log (like
+      // Bucking's) so two tablets on one lot merge their bags.
+      { k: 'weights', t: 'lineitems', entry: true, req: true,
         l: { en: 'Finished Flower — Weighing Worksheet', es: 'Flor terminada — hoja de pesaje' },
-        hint: { en: 'One row per trimmer. Add a row for every bag weighed out.',
-                es: 'Una fila por persona. Agregue una fila por cada bolsa pesada.' },
+        hint: { en: 'Log every bag as it’s weighed out. The same employee # can be logged many times.',
+                es: 'Registre cada bolsa al pesarla. El mismo n.º de empleado puede registrarse muchas veces.' },
         cols: [
-          { k: 'employeeNo', t: 'text', l: { en: 'Employee #', es: 'N.º de empleado' }, inputmode: 'numeric' },
-          { k: 'grams', t: 'number', l: { en: 'Weight (gm)', es: 'Peso (gm)' }, min: 0, step: 1 }
+          { k: 'employeeNo', t: 'text', l: { en: 'Employee #', es: 'N.º de empleado' }, inputmode: 'numeric', req: true },
+          { k: 'grams', t: 'number', l: { en: 'Weight (gm)', es: 'Peso (gm)' }, min: 0, step: 1, req: true, dp: 0 }
         ],
         totalCol: 'grams' },
 
@@ -1122,7 +1133,11 @@ const PREFILL_MAP = {
   machine_trim:{ from: 'buck',         map: { strain: 'strain', inputBuckedLb: 'buckedFlowerLb' } },
   // Hand Trim starts from bucked flower; `cid` only comes with a lot picked
   // from the list (buckedLots traces it back to the intake).
-  hand_trim:   { from: 'buck',         map: { strain: 'strain', cid: 'cid', startingBuckedLb: 'buckedFlowerLb' } }
+  hand_trim:   { from: 'buck',         map: { strain: 'strain', cid: 'cid', startingBuckedLb: 'buckedFlowerLb' },
+                 warn: (up) => (up.inProgress
+                   ? { en: 'Still being bucked — the starting weight is what’s been bucked so far. Update it if more comes over.',
+                       es: 'Todavía se está desvarando — el peso inicial es lo desvarado hasta ahora. Actualícelo si llega más.' }
+                   : null) }
 };
 
 // Order of the pipeline, for the dashboard's stage funnel.

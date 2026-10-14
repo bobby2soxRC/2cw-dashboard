@@ -597,6 +597,17 @@ async function buildHub(user){
   user.production_dashboard = (hasEdit || hasView) ? 'TRUE' : 'FALSE';  // historical yields/biomass
   user.production_today = (hasEdit || hasView) ? 'TRUE' : 'FALSE';       // live board
 
+  // Work Orders (work_orders.html): the Bucking / Hand Trim / Pre-Roll
+  // queues, for anyone who works or manages one of them. The page shows only
+  // the tabs a person has: Bucking and Hand Trim by station edit access or
+  // 'buck release' (who can also reorder those two), Pre-Roll by station
+  // edit access or the Pre-Roll Dashboard card.
+  const canEdit = (k) => editList === 'all' || (Array.isArray(editList) && editList.includes(k));
+  const prerollDash = (user.preroll_dashboard || '').toUpperCase() === 'TRUE';
+  sessionStorage.setItem('2cw_preroll_dash', prerollDash ? 'true' : 'false');
+  const buckRelease = (user['buck release'] || '').toUpperCase() === 'TRUE';
+  user.work_orders = (buckRelease || prerollDash || ['buck', 'hand_trim', 'preroll_production'].some(canEdit)) ? 'TRUE' : 'FALSE';
+
   // Harvest Intakes page: view, or view + edit submitted intakes. Edit
   // implies view. Read by harvest_intakes.html and ops_form.html's edit mode.
   // Delete and edit history are separate checkboxes, each implying view;
@@ -1097,6 +1108,7 @@ function doLogout(){
   sessionStorage.removeItem('2cw_form_access');
   sessionStorage.removeItem('2cw_pr_access');
   sessionStorage.removeItem('2cw_buck_release');
+  sessionStorage.removeItem('2cw_preroll_dash');
   sessionStorage.removeItem('2cw_labor_costs');
   sessionStorage.removeItem('2cw_ops_edit_access');
   sessionStorage.removeItem('2cw_ops_view_access');

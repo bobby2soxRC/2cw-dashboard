@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Work Orders — 2CW Operations</title>
+<script>
+  (function(){ if (!sessionStorage.getItem('2cw_pin')) { window.location.replace('/index.html'); } })();
+</script>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0c0d0f">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0c0d0f;--surface:#13151a;--surface2:#181b21;--border:#1e2129;
+    --green:#3db87a;--gold:#d4a843;--blue:#5a9fd4;--purple:#9b7fd4;--red:#ef5350;
+    --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;--accent:var(--purple);
+  }
+  html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-text-size-adjust:100%}
+  body{padding-bottom:40px}
+
+  .hdr{min-height:calc(54px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:12px;position:sticky;top:0;z-index:20}
+  .hdr-back{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
+  .hdr-div{width:1px;height:18px;background:var(--border)}
+  .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lang{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .lang button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:12px;font-weight:600;padding:8px 12px;cursor:pointer;min-height:36px}
+  .lang button.on{background:var(--accent);color:#000}
+
+  main{padding:24px 16px 40px;max-width:1000px;margin:0 auto}
+  .title{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,6vw,44px);letter-spacing:.04em;line-height:1}
+  .subtitle{margin-top:6px;font-size:.85rem;color:var(--subtext);line-height:1.5}
+
+  .tabs{display:flex;gap:4px;margin:20px 0 16px;border-bottom:1px solid var(--border)}
+  .tabs button{flex:1;background:transparent;border:none;border-bottom:3px solid transparent;color:var(--subtext);font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:14px 10px;cursor:pointer;min-height:48px}
+  .tabs button.on{border-bottom-color:currentColor}
+  .tabs button[data-tab="buck"].on{color:var(--gold)}
+  .tabs button[data-tab="trim"].on{color:var(--purple)}
+  .tabs button[data-tab="preroll"].on{color:var(--blue)}
+
+  .sec-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+  .sec-hint{font-size:.82rem;color:var(--subtext);line-height:1.45;max-width:640px}
+  .links{display:flex;gap:8px;flex-wrap:wrap}
+  .links a{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--tc);text-decoration:none;border:1px solid var(--border);border-radius:8px;padding:9px 12px;white-space:nowrap}
+
+  .panel{--tc:var(--purple)}
+  .panel[data-tab="buck"]{--tc:var(--gold)}
+  .panel[data-tab="preroll"]{--tc:var(--blue)}
+  .q-list{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:4px 14px}
+  .q-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+  .q-row:last-child{border-bottom:none}
+  .q-n{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--tc);min-width:34px;text-align:center}
+  .q-main{flex:1;min-width:0}
+  .q-strain{font-weight:700}
+  .q-uid{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--subtext);overflow-wrap:anywhere}
+  .q-lbs{display:flex;gap:14px;flex:0 0 auto}
+  .q-lb{font-family:'DM Mono',monospace;font-size:1rem;white-space:nowrap;text-align:right}
+  .q-lb .k{display:block;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .q-lb.left{color:var(--tc)}
+  .q-lb.neg{color:var(--red)}
+  .q-tag{display:inline-block;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--tc);border:1px solid var(--tc);border-radius:99px;padding:2px 7px;margin-left:6px;vertical-align:middle}
+  .q-tag.gold{color:var(--gold);border-color:var(--gold)}
+  .q-move{display:flex;gap:6px;flex:0 0 auto}
+  .q-move button{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;min-width:44px;min-height:44px;font-size:1rem;cursor:pointer;font-family:'DM Mono',monospace}
+  .q-move button:hover:not(:disabled){border-color:var(--tc);color:var(--tc)}
+  .q-move button:disabled{opacity:.3;cursor:default}
+  .q-go{flex:0 0 auto;background:var(--tc);color:#000;border-radius:10px;padding:12px 14px;font-weight:700;font-size:.85rem;text-decoration:none;white-space:nowrap}
+  .q-go.open{background:transparent;color:var(--tc);border:1px solid var(--tc)}
+  @media (max-width:640px){ .q-row{flex-wrap:wrap} .q-lbs{flex:1 0 100%;justify-content:flex-end} .q-move{margin-left:auto} }
+  .empty-note{color:var(--subtext);font-size:.9rem;padding:24px;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:12px}
+  iframe.embed{width:100%;height:calc(100vh - 260px);min-height:480px;border:none;background:transparent;display:block}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="/index.html" id="back">← Hub</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand" id="brand">Work Orders</div>
+  <div class="lang" id="lang"></div>
+</header>
+
+<main>
+  <div class="title" id="title"></div>
+  <div class="subtitle" id="subtitle"></div>
+  <div class="tabs" id="tabs"></div>
+  <section class="panel" id="panel"></section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/config/supabase_config.js"></script>
+<script src="/operations_stations.js"></script>
+<script src="/ops_common.js"></script>
+<script src="/ops_data.js"></script>
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// Work Orders: Processing's work queues in one place, one tab each.
+//   Bucking   — what's released to bucking (loadBuckingQueue), the same list
+//               and order as the On-Stem Flower page and Bucking's Queue tab.
+//   Hand Trim — every bucked lot, including ones still being bucked, with no
+//               submitted Hand Trim yet (loadTrimQueue), the order Hand
+//               Trim's Queue tab and lot dropdown follow.
+//   Pre-Roll  — the Pre-Roll Dashboard's queue, embedded (?embed=queue), so
+//               ordering, adding and Start batch work exactly as they do there.
+// Bucking and Hand Trim are reordered with ▲ ▼ / Top by managers ('buck
+// release'); everyone else sees the order. Start opens a new form page for
+// that package; Open goes to the page it's already open on.
+// ─────────────────────────────────────────────────────────────────────────────
+(async function () {
+  const edit = JSON.parse(sessionStorage.getItem('2cw_ops_edit_access') || 'null');
+  const canEdit = (k) => edit === 'all' || (Array.isArray(edit) && edit.includes(k));
+  const manager = sessionStorage.getItem('2cw_buck_release') === 'true';
+  const prerollDash = sessionStorage.getItem('2cw_preroll_dash') === 'true';
+  const TABS = [
+    { key: 'buck', show: manager || canEdit('buck'), l: { en: 'Bucking', es: 'Desvarado' } },
+    { key: 'trim', show: manager || canEdit('hand_trim'), l: { en: 'Hand Trim', es: 'Corte a mano' } },
+    { key: 'preroll', show: prerollDash || canEdit('preroll_production'), l: { en: 'Pre-Roll', es: 'Prerolls' } }
+  ].filter((x) => x.show);
+  if (!TABS.length) { location.replace('/index.html'); return; }
+  mountLangToggle('lang');
+
+  const L = {
+    title: { en: 'Work Orders', es: 'Órdenes de trabajo' },
+    subtitle: { en: 'What to work on next, in order. Start opens a new page for it; Open goes to the page it’s already on.',
+                es: 'Qué trabajar después, en orden. Empezar abre una hoja nueva; Abrir va a la hoja donde ya está.' },
+    backHub: { en: '← Hub', es: '← Inicio' },
+    loading: { en: 'Loading…', es: 'Cargando…' },
+    offline: { en: 'Can’t load the queue — check the connection.', es: 'No se pudo cargar la fila — revise la conexión.' },
+    hintEdit: { en: 'Use ▲ ▼ or Top to change the order — the crew sees it on the form’s Queue tab.',
+                es: 'Use ▲ ▼ o Arriba para cambiar el orden — el equipo lo ve en la pestaña Fila del formulario.' },
+    hintView: { en: 'A manager sets the order.', es: 'Un gerente fija el orden.' },
+    up: { en: 'Move up', es: 'Subir' }, down: { en: 'Move down', es: 'Bajar' }, top: { en: 'Top', es: 'Arriba' },
+    start: { en: 'Start →', es: 'Empezar →' }, open: { en: 'Open →', es: 'Abrir →' },
+    busy: { en: 'in progress', es: 'en curso' },
+    saveFail: { en: 'Could not save the order — check the connection and try again.', es: 'No se pudo guardar el orden — revise la conexión e intente de nuevo.' },
+    // Bucking
+    bHint: { en: 'Released to bucking at Take Down.', es: 'Liberados a desvarado en la bajada.' },
+    bNone: { en: 'Nothing is ready to buck.', es: 'No hay nada listo para desvarar.' },
+    bHold: { en: 'On-Stem Flower (on hold) →', es: 'Flor en tallo (en espera) →' },
+    bForm: { en: 'Bucking form →', es: 'Formulario de desvarado →' },
+    initLb: { en: 'Starting weight', es: 'Peso inicial' }, pulledLb: { en: 'Pulled', es: 'Sacado' }, leftLb: { en: 'Remaining', es: 'Restante' },
+    partOf: { en: 'part of …{uid}', es: 'parte de …{uid}' },
+    merged: { en: '{n} intakes combined', es: '{n} recepciones combinadas' },
+    // Hand Trim
+    tHint: { en: 'Every bucked lot not hand trimmed yet — including lots still being bucked.',
+             es: 'Cada lote desvarado que aún no se corta a mano — incluso los que se siguen desvarando.' },
+    tNone: { en: 'Nothing waiting — every bucked lot has been hand trimmed.', es: 'Nada en espera — todos los lotes desvarados ya se cortaron a mano.' },
+    tForm: { en: 'Hand Trim form →', es: 'Formulario de corte →' },
+    bucking: { en: 'bucking', es: 'desvarándose' },
+    buckedLb: { en: 'Bucked', es: 'Desvarado' }, trimmedLb: { en: 'Trimmed', es: 'Cortado' },
+    // Pre-Roll
+    pDash: { en: 'Pre-Roll Dashboard →', es: 'Tablero de prerolls →' }
+  };
+  document.getElementById('back').textContent = t(L.backHub);
+  document.getElementById('brand').textContent = t(L.title);
+  document.getElementById('title').textContent = t(L.title);
+  document.getElementById('subtitle').textContent = t(L.subtitle);
+  document.title = `${t(L.title)} — 2CW Operations`;
+
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const lbTxt = (x) => (Math.round((Number(x) || 0) * 100) / 100).toFixed(2) + ' lb';
+  const reference = await loadReference();
+  const panel = document.getElementById('panel');
+  const tabsEl = document.getElementById('tabs');
+
+  // ── Tabs ──────────────────────────────────────────────────────────────────
+  const want = new URLSearchParams(location.search).get('tab');
+  let tab = (TABS.find((x) => x.key === want) || TABS[0]).key;
+  tabsEl.innerHTML = TABS.map((x) => `<button type="button" data-tab="${x.key}">${esc(t(x.l))}</button>`).join('');
+  if (TABS.length < 2) tabsEl.style.display = 'none';
+  tabsEl.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b || b.dataset.tab === tab) return;
+    tab = b.dataset.tab;
+    const url = new URL(location.href);
+    url.searchParams.set('tab', tab);
+    history.replaceState(null, '', url);
+    show();
+  });
+
+  let items = [];          // the shown queue
+  let savingOrder = false;
+  function show() {
+    tabsEl.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
+    panel.dataset.tab = tab;
+    if (tab === 'preroll') {
+      // The embedded queue brings its own hint.
+      panel.innerHTML = head(null, [['/preroll_dashboard.html', L.pDash]], true) +
+        `<iframe class="embed" src="/preroll_dashboard.html?embed=queue" title="${esc(t(L.title))}"></iframe>`;
+      return;
+    }
+    panel.innerHTML = head(tab === 'buck' ? L.bHint : L.tHint,
+      tab === 'buck' ? [['/ops_form.html?station=buck', L.bForm], ['/buck_hold.html', L.bHold]] : [['/ops_form.html?station=hand_trim', L.tForm]]) +
+      `<div id="q"><div class="empty-note">${esc(t(L.loading))}</div></div>`;
+    load();
+  }
+  function head(hint, links, noOrderHint) {
+    return `<div class="sec-row"><div class="sec-hint">${hint ? esc(t(hint)) : ''}${noOrderHint ? '' : ' ' + esc(t(manager ? L.hintEdit : L.hintView))}</div>` +
+      `<div class="links">${links.map(([href, l]) => `<a href="${href}">${esc(t(l))}</a>`).join('')}</div></div>`;
+  }
+
+  // ── Bucking / Hand Trim queues ────────────────────────────────────────────
+  async function load() {
+    const which = tab;
+    try {
+      items = which === 'buck' ? (await loadBuckingQueue()).items : (await loadTrimQueue()).items;
+    } catch (err) {
+      console.error('work orders', err);
+      if (tab === which) document.getElementById('q').innerHTML = `<div class="empty-note">${esc(t(L.offline))}</div>`;
+      return;
+    }
+    if (tab === which) render();
+  }
+  function render() {
+    const box = document.getElementById('q');
+    if (!box) return;
+    const buck = tab === 'buck';
+    const station = buck ? 'buck' : 'hand_trim';
+    if (!items.length) { box.innerHTML = `<div class="empty-note">${esc(t(buck ? L.bNone : L.tNone))}</div>`; return; }
+    box.innerHTML = `<div class="q-list">` + items.map((p, i) => {
+      const abbr = strainAbbr(reference, p.strain);
+      const move = !manager ? '' : `<div class="q-move">
+          <button type="button" data-move="top" data-i="${i}" ${i === 0 || savingOrder ? 'disabled' : ''}>${esc(t(L.top))}</button>
+          <button type="button" data-move="up" data-i="${i}" aria-label="${esc(t(L.up))}" ${i === 0 || savingOrder ? 'disabled' : ''}>▲</button>
+          <button type="button" data-move="down" data-i="${i}" aria-label="${esc(t(L.down))}" ${i === items.length - 1 || savingOrder ? 'disabled' : ''}>▼</button>
+        </div>`;
+      const go = p.draftId
+        ? `<a class="q-go open" href="/ops_form.html?station=${station}&draft=${encodeURIComponent(p.draftId)}">${esc(t(L.open))}</a>`
+        : `<a class="q-go" href="/ops_form.html?station=${station}&set_sourceUid=${encodeURIComponent(p.sourceUid)}">${esc(t(L.start))}</a>`;
+      const tags = (p.inProgress ? `<span class="q-tag gold">${esc(t(L.bucking))}</span>` : '') +
+        (p.draftId ? `<span class="q-tag">${esc(t(L.busy))}</span>` : '');
+      const sub = buck
+        ? `${esc(p.sourceUid)}${p.releasedFrom ? ' · ' + esc(t(L.partOf).replace('{uid}', String(p.releasedFrom).slice(-4))) : ''}${(p.farmUids || []).length > 1 ? ' · ' + esc(t(L.merged).replace('{n}', p.farmUids.length)) : ''}`
+        : `${esc(p.sourceUid)}${p.cid ? ' · ' + esc(p.cid) : ''}`;
+      const lbs = buck
+        ? `<div class="q-lb"><span class="k">${esc(t(L.initLb))}</span>${p.unbuckedLb == null ? '—' : lbTxt(p.unbuckedLb)}</div>
+           <div class="q-lb"><span class="k">${esc(t(L.pulledLb))}</span>${lbTxt(p.pulledLb || 0)}</div>
+           <div class="q-lb left${p.leftLb != null && p.leftLb < 0 ? ' neg' : ''}"><span class="k">${esc(t(L.leftLb))}</span>${p.leftLb == null ? '—' : lbTxt(p.leftLb)}</div>`
+        : `<div class="q-lb"><span class="k">${esc(t(L.buckedLb))}</span>${p.buckedFlowerLb == null ? '—' : lbTxt(p.buckedFlowerLb)}</div>
+           <div class="q-lb left"><span class="k">${esc(t(L.trimmedLb))}</span>${lbTxt(p.trimmedLb || 0)}</div>`;
+      return `<div class="q-row"><div class="q-n">${i + 1}</div>
+        <div class="q-main"><div class="q-strain">${esc(p.strain || '—')}${abbr ? ` · ${esc(abbr)}` : ''}${tags}</div>
+          <div class="q-uid">${sub}</div></div>
+        <div class="q-lbs">${lbs}</div>
+        ${move}${go}</div>`;
+    }).join('') + `</div>`;
+  }
+  panel.addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-move]');
+    if (!b || !manager || savingOrder) return;
+    const i = Number(b.dataset.i);
+    const to = b.dataset.move === 'top' ? 0 : b.dataset.move === 'up' ? i - 1 : i + 1;
+    if (to < 0 || to >= items.length || to === i) return;
+    const [item] = items.splice(i, 1);
+    items.splice(to, 0, item);
+    savingOrder = true;
+    render();
+    const order = items.map((p) => normUid(p.sourceUid));
+    const who = sessionStorage.getItem('2cw_user_name');
+    const res = tab === 'buck' ? await saveBuckQueue(order, who) : await saveTrimQueue(order, who);
+    savingOrder = false;
+    if (!res.ok) { alert(t(L.saveFail)); await load(); return; }
+    render();
+  });
+
+  show();
+})();
+</script>
+<script src="/sw_register.js"></script>
+</body>
+</html>

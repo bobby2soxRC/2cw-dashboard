@@ -308,7 +308,8 @@
     loadingBucked: { en: 'Loading bucked flower…', es: 'Cargando flor desvarada…' },
     noneBucked: { en: 'No bucked flower yet — pick Other', es: 'Aún no hay flor desvarada — elija Otro' },
     chooseLot: { en: 'Choose the lot…', es: 'Elija el lote…' },
-    otherLot:  { en: 'Other — not on the list', es: 'Otro — no aparece' }
+    otherLot:  { en: 'Other — not on the list', es: 'Otro — no aparece' },
+    bucking:   { en: 'bucking in progress', es: 'desvarándose' }
   };
   const pkLoading = (f) => t(f.picker.list === 'buckable' ? PK.loadingBuck : f.picker.list === 'bucked' ? PK.loadingBucked : PK.loading);
   const reference = await loadReference();
@@ -913,14 +914,22 @@
   // instead of just showing the UID box.
   const pickerFields = station.fields.filter((f) => f.t === 'uid' && f.picker);
   const pickLists = {};   // field key -> the records its options point at
+  const linkPicked = new Set();  // picker fields given a UID in the link (?set_…)
   const typing = {};      // field key -> true while "Not listed" is chosen
   const buckPick = pickerFields.some((f) => f.picker.list === 'buckable');
   const buckedPick = pickerFields.some((f) => f.picker.list === 'bucked');
   let pickPool = [], pickReady = false, queueItems = null;
   const pickLoaded = pickerFields.length ? (async () => {
     if (buckedPick) {
-      const [bucks, downs, intakes] = await Promise.all([loadSubmitted('buck'), loadSubmitted('dry_check'), loadSubmitted('intake_wet')]);
-      pickPool = buckedLots(bucks || [], downs || [], intakes || []);
+      // The trimming queue's lots first, in its order, then the rest of
+      // what's been bucked (already hand trimmed), newest first.
+      const tq = await loadTrimQueue();
+      queueItems = tq.items;
+      // A lot already open on another page is in the switcher, not here.
+      const elsewhere = tq.openTrims.filter((d) => d.id !== draftId && d.fields && d.fields.sourceUid).map((d) => d.fields.sourceUid);
+      const queued = new Set(tq.items.map((l) => l.sourceUid));
+      pickPool = [...tq.items, ...tq.all.filter((l) => !queued.has(l.sourceUid))]
+        .filter((l) => !elsewhere.some((u) => uidTailMatch(u, l.sourceUid)));
       return;
     }
     if (buckPick) {
@@ -952,7 +961,8 @@
     const dup = (i) => list.filter((x) => base(x) === base(i)).length > 1;
     const shortDate = (d) => d ? new Date(`${d}T12:00:00`).toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric' }) : '';
     const weight = (i) => lots ? i.buckedFlowerLb : buck ? i.unbuckedLb : i.totalWetLb;
-    const label = (i) => base(i) + (dup(i) ? ` (${[shortDate(i.date), weight(i) ? fmtNum(weight(i), 0) + ' lb' : ''].filter(Boolean).join(', ')})` : '');
+    const label = (i) => base(i) + (dup(i) ? ` (${[shortDate(i.date), weight(i) ? fmtNum(weight(i), 0) + ' lb' : ''].filter(Boolean).join(', ')})` : '') +
+      (lots && i.inProgress ? ` — ${t(PK.bucking)}` : '');
     const first = !pickReady ? pkLoading(f) : (f.picker.room && !room) ? t(PK.roomFirst)
       : list.length ? t(lots ? PK.chooseLot : PK.choose) : t(lots ? PK.noneBucked : buck ? PK.noneBuck : PK.none);
     sel.innerHTML = `<option value="">${escapeHtml(first)}</option>` +
@@ -1126,7 +1136,9 @@
         // Records from before the UID/strain moved into the rows carry them
         // once at the top — put them on each row so the split keeps them.
         const lift = station.splitBy === f.k ? { sourceUid: fields.sourceUid, strain: fields.strain } : {};
-        rows.forEach((r) => lineitemAdders[f.k] && lineitemAdders[f.k]({ ...lift, ...r }));
+        // A running log skips blank rows (a page saved back when it was a grid).
+        rows.filter((r) => !f.entry || rowHasData(f, r))
+          .forEach((r) => lineitemAdders[f.k] && lineitemAdders[f.k]({ ...lift, ...r }));
         return;
       }
       setFieldValue(f, fields[f.k]);
@@ -1284,7 +1296,8 @@
 
   // ── Strain switcher ──────────────────────────────────────────────────────
   const SW = { newForm: { en: '+ New', es: '+ Nuevo' }, untitled: { en: 'Untitled', es: 'Sin título' }, started: { en: 'Started', es: 'Inicio' },
-               newFlavor: { en: '+ New flavor', es: '+ Nuevo sabor' }, flavors: { en: 'Flavors open', es: 'Sabores abiertos' } };
+               newFlavor: { en: '+ New flavor', es: '+ Nuevo sabor' }, flavors: { en: 'Flavors open', es: 'Sabores abiertos' },
+               newLot: { en: '+ New lot', es: '+ Nuevo lote' }, lots: { en: 'Lots open', es: 'Lotes abiertos' } };
   async function renderSwitcher() {
     if (!draftsOn || (!owner && !station.sharedDay)) return;
     // A multi-day batch has to be findable by whoever works it next, on any
@@ -1306,13 +1319,14 @@
       if (isNew && drafts.length && !banner.className.includes('success')) {
         banner.className = 'banner warn';
         banner.dataset.openPages = '1';
-        banner.textContent = t({ en: `${drafts.length} flavor page${drafts.length > 1 ? 's are' : ' is'} already open — tap ${drafts.length > 1 ? 'one' : 'it'} above to keep working on it. This blank page is only for a new flavor.`,
-                                 es: `Ya hay ${drafts.length} hoja${drafts.length > 1 ? 's' : ''} de sabor abierta${drafts.length > 1 ? 's' : ''} — tóquela arriba para seguir trabajando. Esta hoja en blanco es solo para un sabor nuevo.` });
+        const lot = station.key === 'hand_trim';
+        banner.textContent = t({ en: `${drafts.length} ${lot ? 'lot' : 'flavor'} page${drafts.length > 1 ? 's are' : ' is'} already open — tap ${drafts.length > 1 ? 'one' : 'it'} above to keep working on it. This blank page is only for a new ${lot ? 'lot' : 'flavor'}.`,
+                                 es: `Ya hay ${drafts.length} hoja${drafts.length > 1 ? 's' : ''} de ${lot ? 'lote' : 'sabor'} abierta${drafts.length > 1 ? 's' : ''} — tóquela arriba para seguir trabajando. Esta hoja en blanco es solo para un ${lot ? 'lote' : 'sabor'} nuevo.` });
         banner.style.marginTop = '12px';
         document.getElementById('switcher').after(banner);
       }
       if (isNew) drafts.unshift({ id: draftId, strain: values.strain, fields: values, work_date: values.date || todayStr() });
-      lblEl.textContent = t(SW.flavors);
+      lblEl.textContent = t(station.key === 'hand_trim' ? SW.lots : SW.flavors);
       lblEl.style.display = 'block';
     } else if (!drafts.length) { el.style.display = 'none'; return; }
     el.style.display = 'flex';
@@ -1330,7 +1344,7 @@
           <span class="cs">${escapeHtml(chipTop(d))}</span>
           <span class="cv">${escapeHtml(chipLabel(d))}</span>
         </a>`).join('') +
-        `<a class="chip new" href="/ops_form.html?station=${station.key}">${t(SW.newFlavor)}</a>`;
+        `<a class="chip new" href="/ops_form.html?station=${station.key}">${t(station.key === 'hand_trim' ? SW.newLot : SW.newFlavor)}</a>`;
       return;
     }
     el.innerHTML = drafts.map((d) => `
@@ -1721,6 +1735,19 @@
     part:    { en: 'part of …{uid}', es: 'parte de …{uid}' },
     merged:  { en: '{n} intakes combined', es: '{n} recepciones combinadas' }
   };
+  // Hand Trim's Queue tab: the trimming queue (loadTrimQueue in ops_data.js),
+  // ordered on the Work Orders page.
+  const trimQ = station.key === 'hand_trim';
+  if (trimQ) Object.assign(QT, {
+    form:    { en: 'Hand trim page', es: 'Hoja de corte' },
+    note:    { en: 'Trim in this order. A manager sets it on the Work Orders page.',
+               es: 'Corte en este orden. Un gerente lo fija en la página Órdenes de trabajo.' },
+    none:    { en: 'Nothing in the queue — every bucked lot has been hand trimmed.',
+               es: 'No hay nada en la fila — todos los lotes desvarados ya se cortaron a mano.' },
+    initLb:  { en: 'Bucked', es: 'Desvarado' },
+    pulledLb:{ en: 'Trimmed', es: 'Cortado' },
+    bucking: { en: 'bucking', es: 'desvarándose' }
+  });
   const ftabs = document.getElementById('ftabs');
   function showTab(tab) {
     ftabs.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
@@ -1742,8 +1769,10 @@
   async function renderQueueTab() {
     const box = document.getElementById('queue-panel');
     if (!queueItems) box.innerHTML = `<div class="q-empty">${escapeHtml(t(QT.loading))}</div>`;
-    // This page's own boxes come from what's typed here, not its last save.
-    queueItems = (await loadBuckingQueue()).items.map((p) => (p.draftId && p.draftId === draftId ? withPulled(p, values.boxes) : p));
+    // This page's own boxes / bags come from what's typed here, not its last save.
+    queueItems = trimQ
+      ? (await loadTrimQueue()).items.map((p) => (p.draftId && p.draftId === draftId ? withTrimmed(p, values.weights) : p))
+      : (await loadBuckingQueue()).items.map((p) => (p.draftId && p.draftId === draftId ? withPulled(p, values.boxes) : p));
     queueTabLabel(queueItems.length);
     if (!queueItems.length) { box.innerHTML = `<div class="q-empty">${escapeHtml(t(QT.none))}</div>`; return; }
     box.innerHTML = `<div class="q-note">${escapeHtml(t(QT.note))}</div>` + queueItems.map((p, i) => {
@@ -1754,6 +1783,16 @@
           ? `<a class="q-go open" href="/ops_form.html?station=${station.key}&draft=${encodeURIComponent(p.draftId)}">${escapeHtml(t(QT.open))}</a>`
           : `<a class="q-go" href="/ops_form.html?station=${station.key}&set_sourceUid=${encodeURIComponent(p.sourceUid)}">${escapeHtml(t(QT.start))}</a>`;
       const abbr = strainAbbr(reference, p.strain);
+      const lbs = trimQ
+        ? `<div class="q-lbs">` +
+          `<div class="q-lb"><span class="k">${escapeHtml(t(QT.initLb))}</span>${p.buckedFlowerLb == null ? '—' : fmtNum(p.buckedFlowerLb, 2) + ' lb'}</div>` +
+          `<div class="q-lb left"><span class="k">${escapeHtml(t(QT.pulledLb))}</span>${fmtNum(p.trimmedLb || 0, 2)} lb</div></div>`
+        : null;
+      if (trimQ) return `<div class="q-row"><div class="q-n">${i + 1}</div>` +
+        `<div class="q-main"><div class="q-strain">${escapeHtml(p.strain || '—')}${abbr ? ` · ${escapeHtml(abbr)}` : ''}` +
+        (p.inProgress ? `<span class="q-tag">${escapeHtml(t(QT.bucking))}</span>` : '') +
+        (p.draftId ? `<span class="q-tag">${escapeHtml(t(QT.busy))}</span>` : '') + `</div>` +
+        `<div class="q-uid">${escapeHtml(p.sourceUid)}${p.cid ? ' · ' + escapeHtml(p.cid) : ''}</div></div>` + lbs + go + `</div>`;
       return `<div class="q-row"><div class="q-n">${i + 1}</div>` +
         `<div class="q-main"><div class="q-strain">${escapeHtml(p.strain || '—')}${abbr ? ` · ${escapeHtml(abbr)}` : ''}` +
         (p.draftId ? `<span class="q-tag">${escapeHtml(t(QT.busy))}</span>` : '') + `</div>` +
@@ -1848,6 +1887,7 @@
       if (f.picker.room) countRooms(f);
       fillPicker(f);
       const rec = (pickLists[f.k] || []).find((i) => values[f.k] && normUid(i.sourceUid) === normUid(values[f.k]));
+      if (rec && linkPicked.has(f.k)) { tryPrefill(values[f.k], f.k, rec); return; }
       if (rec && spec) Object.entries(spec.map).forEach(([here, there]) => {
         if (!isBlank(values[here]) && String(values[here]) === String(rec[there])) lastPrefill[here] = values[here];
       });
@@ -1867,9 +1907,13 @@
     if (!Object.keys(fields).length) return;
     hydrate(fields);
     markDirty();
-    // A UID handed over this way still pulls in its upstream details.
-    station.fields.filter((f) => f.t === 'uid' && f.prefill === 'lookup' && fields[f.k])
-      .forEach((f) => tryPrefill(String(fields[f.k]).trim(), f.k));
+    // A UID handed over this way still pulls in its upstream details —
+    // Hand Trim's from the lot list once it's loaded (it has the customer
+    // ID and lots still being bucked, which a plain lookup doesn't).
+    station.fields.filter((f) => f.t === 'uid' && f.prefill === 'lookup' && fields[f.k]).forEach((f) => {
+      if (f.picker && f.picker.list === 'bucked') linkPicked.add(f.k);
+      else tryPrefill(String(fields[f.k]).trim(), f.k);
+    });
   }
 })();
 </script>
