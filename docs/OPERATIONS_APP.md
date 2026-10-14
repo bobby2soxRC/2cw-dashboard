@@ -297,6 +297,29 @@ schedule editor lists them for users with `customer documents` access, via
 `customer-docs.js` (`request_docs` / `request_doc_url`). Uploads are capped at
 100 an hour; files from a form that's never submitted stay in `requests/`.
 
+**Service Agreement PDF** — `msa_agreement.js` fills the Master Service
+Agreement (the 10-1-2026 wording, typed into the file) with a customer's
+details and builds the PDF in the browser with jsPDF (loaded from jsDelivr on
+first use; Times, letter, page numbers). Two ways in: the **Service Agreement
+PDF** button in the Drying Schedule editor, which uses what's on the screen
+(unsaved edits included), and the same button under Signed MSA on a
+customer's Documents sheet (Customer IDs tab), which offers every drying
+request in a "Fill from a drying request" list and preselects one whose farm
+or legal name matches the CID. Either way a dialog shows each fill-in for
+checking: legal name, entity type (guessed from the name — "LLC" → Limited
+Liability Company), state of formation, effective date, the Notices address
+block, signer name and title, and the Exhibit B lines. Exhibit B lists
+every service we offer with its unit and rate — so a customer who adds a
+service later doesn't need an amendment — and the ones they asked for get
+the details: drying the estimated wet lbs and harvest dates, farm support
+its dates and crew. The request form
+doesn't ask for a mailing address or the signer's title, so those are typed
+in the dialog; anything left blank prints as a line to fill in by hand.
+Nothing is saved — upload the signed copy under Signed MSA as before. When
+the agreement's wording changes, edit `blocks()` in `msa_agreement.js` (and
+bump `CACHE_VERSION`); new services need an `EXB` entry there as well as in
+`drying_services.js`.
+
 Each stage pulls its input weight forward from the stage before it: type the
 last 4 of the Metrc tag and bucking fills in the dry weight the post-dry check
 recorded. Every stage totals its own outputs and shows the variance against

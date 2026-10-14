@@ -197,6 +197,7 @@
 <script src="/config/supabase_config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/drying_services.js"></script>
+<script src="/msa_agreement.js"></script>
 <script>
 // One row per client per season, in the drying_intakes table (see
 // supabase/schema.sql): farm details, a list of harvest windows, the
@@ -617,6 +618,8 @@ function openEditor(id) {
       <div class="fld"><label class="lbl" for="e-slast">Signer last name</label>${inp('e-slast', r.signer_last_name)}</div>
       <div class="fld"><label class="lbl" for="e-semail">Signer email</label>${inp('e-semail', r.signer_email, 'type="email"')}</div>
     </div>
+    <div class="fld"><button type="button" class="btn btn-sm" onclick="openAgreement()">Service Agreement PDF</button>
+      <div class="hint">Fills the Master Service Agreement with what’s on this screen — check it and add the address and signer’s title before downloading.</div></div>
     ${id ? '<div class="fld" id="e-docs"></div>' : ''}
 
     <div class="sect">Harvest dates</div>
@@ -707,6 +710,22 @@ async function openRequestDoc(docId) {
     const j = await callDocs({ action: 'request_doc_url', id: docId });
     if (win) win.location = j.url; else location.href = j.url;
   } catch (e) { if (win) win.close(); alert(e.message); }
+}
+
+// The MSA filled from the editor as it stands now (unsaved edits included).
+// Half-filled date rows just get left out here — Save is where they're flagged.
+function openAgreement() {
+  const val = (id) => document.getElementById(id).value.trim();
+  const wins = (boxId, cls, key) => [...document.querySelectorAll(`#${boxId} .win-row`)].map((row) => ({
+    start: row.querySelector('.w-start').value, days: row.querySelector('.w-days').value.trim() || 1, [key]: row.querySelector(cls).value.trim()
+  })).filter((w) => w.start);
+  MSA.open(MSA.fromIntake({
+    farm_name: val('e-farm'), legal_business_name: val('e-legal'), state_incorporated: val('e-state'),
+    contact_name: val('e-cname'), contact_phone: val('e-cphone'), contact_email: val('e-cemail'),
+    signer_first_name: val('e-sfirst'), signer_last_name: val('e-slast'), signer_email: val('e-semail'),
+    est_wet_lb: val('e-lb'), harvests: wins('e-harv', '.w-lb', 'lb'), farm_support: wins('e-sup', '.w-people', 'people'),
+    services: [...document.querySelectorAll('#e-svc input:checked')].map((c) => c.value)
+  }));
 }
 
 function closeEditor() {
