@@ -430,6 +430,9 @@
     name:     { en: 'Project name', es: 'Nombre del proyecto' },
     namePh:   { en: 'e.g. Smalls Trimming', es: 'p. ej. Recorte de pequeñas' },
     location: { en: 'Location', es: 'Lugar' },
+    customer: { en: 'Customer (CID)', es: 'Cliente (CID)' },
+    customerHint: { en: 'Whose work this is, for billing — hours logged to the project show on that customer’s invoice requests. Leave blank for 2CW’s own work.',
+                    es: 'De quién es este trabajo, para cobrar — las horas registradas en el proyecto aparecen en las solicitudes de factura de ese cliente. Déjelo en blanco para trabajo propio de 2CW.' },
     other:    { en: 'Other', es: 'Otro' },
     otherName:{ en: 'Location name', es: 'Nombre del lugar' },
     process:  { en: 'Process (for the Labor Log)', es: 'Proceso (para el Registro de Mano de Obra)' },
@@ -515,6 +518,15 @@
   const fmtMin = (m) => { const x = ((m % 1440) + 1440) % 1440; return new Date(2000, 0, 1, Math.floor(x / 60), x % 60).toLocaleTimeString(lang(), { hour: 'numeric', minute: '2-digit' }); };
   const hoursLabel = (f, role) => { const [s, e] = projectHours(f, role); return s == null ? t(L.allDay) : `${fmtMin(s)}–${fmtMin(e)}`; };
   const personKey = (p) => p.userId ? 'id:' + p.userId : 'name:' + fold(p.name);
+  // Customer IDs (Information Hub → Customer IDs) for the project's Customer
+  // field — invoice_services.js bills a project's Labor Log hours to it.
+  let customers = [];
+  if (typeof getRefCodes === 'function') getRefCodes().then((rows) => { customers = (rows || []).filter((r) => r.kind === 'cid'); });
+  const customerOptions = (cur) => `<option value=""></option>` + customers
+    .filter((r) => r.active || r.code === cur)
+    .sort((a, b) => String(a.name || a.code).localeCompare(String(b.name || b.code)))
+    .map((r) => `<option value="${esc(r.code)}" ${r.code === cur ? 'selected' : ''}>${esc(refCodeLabel(r))}</option>`).join('')
+    + (cur && !customers.some((r) => r.code === cur) ? `<option value="${esc(cur)}" selected>CID ${esc(cur)}</option>` : '');
   const locName = (f) => f.location === 'other' ? (f.locationName || t(L.other)) : ((LOCATIONS.find((l) => l[0] === f.location) || [])[1] || f.location || '');
   const locOrder = (f) => { const i = LOCATIONS.findIndex((l) => l[0] === f.location); return i < 0 ? 99 : i; };
   const newId = () => 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -1491,7 +1503,7 @@
     const src = projects.find((x) => x.id === id);
     if (!src) return;
     const g = clone(src.fields);
-    const f = { name: fill(t(L.dupName), { n: g.name || '' }), location: g.location || '', locationName: g.locationName || '', process: g.process || '',
+    const f = { name: fill(t(L.dupName), { n: g.name || '' }), location: g.location || '', locationName: g.locationName || '', cid: g.cid || '', process: g.process || '',
                 status: g.status === 'done' ? 'active' : (g.status || 'active'), start: localDay(), end: '', days: g.days || [],
                 startTime: g.startTime || '', endTime: g.endTime || '', lead: g.lead || null, notes: g.notes || '', uids: [],
                 roles: (g.roles || []).map((r) => ({ ...r, id: newId(), people: r.people || [] })),
@@ -1511,6 +1523,8 @@
         <div class="${f.location === 'other' ? '' : 'full'}"><label class="lbl" for="ed-loc">${esc(t(L.location))}</label>
           <select id="ed-loc"><option value=""></option>${LOCATIONS.map(([k, n]) => `<option value="${k}" ${f.location === k ? 'selected' : ''}>${esc(n || t(L.other))}</option>`).join('')}</select></div>
         ${f.location === 'other' ? `<div><label class="lbl" for="ed-locname">${esc(t(L.otherName))}</label><input id="ed-locname" value="${esc(f.locationName)}"></div>` : ''}
+        <div class="full"><label class="lbl" for="ed-cid">${esc(t(L.customer))}</label><select id="ed-cid">${customerOptions(f.cid || '')}</select>
+          <div class="hint">${esc(t(L.customerHint))}</div></div>
         <div class="full"><label class="lbl" for="ed-lead">${esc(t(L.projLead))}</label><select id="ed-lead">${leadOptions(f.lead)}</select></div></div>
       <div class="row"><div><label class="lbl" for="ed-proc">${esc(t(L.process))}</label><select id="ed-proc">${processOptions(f.process)}</select></div>
         <div><label class="lbl" for="ed-status">${esc(t(L.status))}</label><select id="ed-status">${STATUSES.map(([k, l]) => `<option value="${k}" ${f.status === k ? 'selected' : ''}>${esc(t(l))}</option>`).join('')}</select></div></div>
@@ -1571,7 +1585,7 @@
   // Pull the typed-in values back into the draft before a re-render.
   function readEditor() {
     const f = editing.f;
-    f.name = $('ed-name').value; f.location = $('ed-loc').value;
+    f.name = $('ed-name').value; f.location = $('ed-loc').value; f.cid = $('ed-cid').value;
     if ($('ed-locname')) f.locationName = $('ed-locname').value;
     f.process = $('ed-proc').value; f.status = $('ed-status').value;
     f.start = $('ed-start').value; f.end = $('ed-end').value;
@@ -1703,7 +1717,7 @@
     if (problem) { $('ed-err').textContent = t(problem); return; }
     if (!client) { $('ed-err').textContent = t(L.noDb); return; }
     const out = {
-      name: f.name, location: f.location, locationName: f.location === 'other' ? f.locationName : '', process: f.process || '',
+      name: f.name, location: f.location, locationName: f.location === 'other' ? f.locationName : '', cid: f.cid || '', process: f.process || '',
       status: f.status || 'active', start: f.start, end: f.end || '', days: [...f.days].sort(), startTime: f.startTime || '', endTime: f.startTime ? f.endTime || '' : '',
       lead: f.lead && f.lead.name ? { userId: f.lead.userId || '', name: f.lead.name } : null,
       // A responsibility's start/end are kept only where they differ from the project's.

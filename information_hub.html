@@ -132,6 +132,7 @@
 <script src="/hub_config.js"></script>
 <script src="/drying_services.js"></script>
 <script src="/msa_agreement.js"></script>
+<script src="/invoice_services.js"></script>
 <script>
 // Information Hub — the reference lists the rest of the app runs on, one tab
 // per INFO_HUB_SECTIONS entry (hub_config.js). Which tabs show, and whether
@@ -557,8 +558,11 @@
       license: { en: 'Licenses', es: 'Licencias' },
       w9:      { en: 'W-9', es: 'W-9' },
       makeMsa: { en: 'Service Agreement PDF', es: 'PDF del contrato de servicio' },
-      makeMsaHint: { en: 'Fills the Master Service Agreement for this customer, from their drying request if they sent one.',
-                     es: 'Llena el contrato de servicio para este cliente, con su solicitud de secado si la envió.' },
+      makeMsaHint: { en: 'Fills the Master Service Agreement for this customer, from their drying request if they sent one. Its Exhibit B rates are saved as this customer’s contract rates for invoice requests.',
+                     es: 'Llena el contrato de servicio para este cliente, con su solicitud de secado si la envió. Sus tarifas del Anexo B se guardan como las tarifas de contrato del cliente para solicitudes de factura.' },
+      invoice: { en: 'Invoice request to Finance', es: 'Solicitud de factura a Finanzas' },
+      invoiceHint: { en: 'Bill services done for a customer — drying, bucking, trimming, transport, labor — at their contract rates, as a PDF for Finance.',
+                     es: 'Cobrar servicios hechos para un cliente — secado, desvarado, recorte, transporte, mano de obra — a sus tarifas de contrato, en un PDF para Finanzas.' },
       none:    { en: 'None on file', es: 'Nada en archivo' },
       missing: { en: 'missing', es: 'falta' },
       expired: { en: 'expired', es: 'vencida' },
@@ -662,12 +666,15 @@
                 ${uploadForm(type)}
               </div>`;
             }).join('')}
+            <div style="margin-bottom:18px"><button type="button" class="btn" data-act="invoice">${t(D.invoice)}</button>
+              <div class="hint" style="margin-top:4px">${t(D.invoiceHint)}</div></div>
             <div class="ed-actions"><button type="button" class="btn" id="d-close">${t(D.close)}</button></div>`;
           ed.querySelector('#d-close').onclick = close;
           ed.querySelectorAll('[data-get]').forEach((a) => { a.onclick = (e) => { e.preventDefault(); getDoc(a.dataset.get); }; });
           ed.querySelectorAll('[data-rm]').forEach((b) => { b.onclick = () => removeDoc(b); });
           ed.querySelectorAll('[data-act=up]').forEach((b) => { b.onclick = () => upload(b); });
           ed.querySelector('[data-act=msa]').onclick = makeAgreement;
+          ed.querySelector('[data-act=invoice]').onclick = () => { close(); InvoiceServices.open({ cid: r.code }); };
         };
         const close = () => { bg.classList.remove('on'); document.body.style.overflow = ''; render(); };
         bg.onclick = (e) => { if (e.target === bg) close(); };
@@ -680,7 +687,10 @@
           const norm = (x) => String(x || '').toLowerCase().replace(/[^a-z0-9]/g, '');
           const me = norm(r.name);
           const match = me && intakes.find((x) => [x.farm_name, x.legal_business_name].some((n) => norm(n) && (norm(n) === me || norm(n).startsWith(me) || me.startsWith(norm(n)))));
-          MSA.open(match ? MSA.fromIntake(match) : { legal_name: r.name || '', entity: MSA.guessEntity(r.name) }, { intakes, pick: match && match.id });
+          MSA.open(match ? MSA.fromIntake(match) : { legal_name: r.name || '', entity: MSA.guessEntity(r.name) }, { intakes, pick: match && match.id,
+            // The agreement's Exhibit B rates become this customer's contract
+            // rates (invoice_services.js reads them for invoice requests).
+            onDownload: (d) => InvoiceServices.saveContractRates(r.code, InvoiceServices.ratesFromLines(d.lines), 'msa', client) });
         }
         async function getDoc(id) {
           // Open the tab now, while it still counts as the click — a popup
@@ -747,7 +757,8 @@
             </div></td>
           </tr>`;
         el.innerHTML = `
-          <div class="sec-head"><div><div class="sec-title">${t(K.title)}</div><div class="sub">${rows.length} ${t(K.noun)}</div></div></div>
+          <div class="sec-head"><div><div class="sec-title">${t(K.title)}</div><div class="sub">${rows.length} ${t(K.noun)}</div></div>
+            ${kind === 'cid' ? `<button type="button" class="btn" id="inv-open" title="${esc(t(D.invoiceHint))}">${t(D.invoice)}</button>` : ''}</div>
           <div class="note">${t(K.intro)}</div>
           ${canEdit && seen.length ? `<div class="note warn" style="margin-bottom:0">${t(L.seen)}</div><div class="chips">${seen.map((v) => `<button type="button" class="mini" data-seen="${esc(v)}">+ ${esc(v)}</button>`).join('')}</div>` : ''}
           ${!rows.length && !canEdit ? `<div class="empty">${t(L.empty)}</div>` : `
@@ -757,6 +768,8 @@
           </table></div>`}`;
         if (docsErr) el.querySelector('.note').insertAdjacentHTML('afterend', `<div class="note warn">${esc(docsErr)}</div>`);
         el.querySelectorAll('[data-docs]').forEach((b) => { b.onclick = () => openDocs(rows.find((r) => r.id === b.dataset.docs)); });
+        const invBtn = el.querySelector('#inv-open');
+        if (invBtn) invBtn.onclick = () => InvoiceServices.open();
         if (!canEdit) return;
         el.querySelectorAll('[data-seen]').forEach((b) => {
           b.onclick = () => {

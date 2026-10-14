@@ -420,6 +420,54 @@ drying rate, and shows the deposit live: 20% of lbs × rate (MSA section
 Finance, with the logged-in name as requester, and also lists the expected
 harvests and the other services requested (to bill as performed).
 
+**Invoice request for services** — for work already done, the
+**Invoice request to Finance** button on the Customer IDs tab (top of the
+tab, and on each customer's Documents sheet) opens `invoice_services.js`
+(`InvoiceServices.open`). Pick the customer, then a process, and the work done
+for them there is listed to tick onto the request:
+
+- **Drying** — their Wet Intakes (by CID), net wet lbs.
+- **Bucking** — bucked lots, the CID traced back through Take Down to Wet
+  Intake (`buckedLots`); quantity is the dry weight bucked (boxes taken).
+- **Machine / Hand trim** — the record's CID or one traced from its UID;
+  quantity is the bucked pounds in.
+- **Transport** — Labor Log hours with process Transport, one item per day
+  (and project). A truck runs once however many ride in it, so the quantity
+  is the longest anyone logged that day; the vehicle (box truck, cargo van,
+  reefer) is picked on the line, and the box truck takes its 8-hour rate at
+  8 hours or more.
+- **Farm labor** — Labor Log hours at Harvest, Wet Intake, Take Down or Other,
+  per day / process / project, in person-hours.
+- **Other** — any service from the price list (storage, batching, testing) or
+  a blank line, which can be negative (e.g. less the deposit already invoiced).
+
+Labor Log hours belong to a customer when they're logged to one of the
+customer's Master Schedule projects — the project's **Customer (CID)** field,
+or else the CIDs its UIDs trace back to — to UIDs that trace back to them, or
+to a farm license their Wet Intakes used. Hours logged to nothing are offered
+when one of the customer's projects ran that day (marked as such), and "Also
+show hours not tied to any customer" lists the rest.
+
+Each line starts at the customer's **contract rate** and the rate can be
+changed (a rate under contract shows the % off); the whole request can take a
+% or $ discount. Any discount or rate under contract needs a reason, which
+prints on the PDF with the contract rate, the rate charged and the totals.
+Contract rates are kept per customer in `operations_forms` rows with
+`station_key 'customer_rates'` (`{ cid, rates: { service key: $ }, source }`):
+making the Service Agreement PDF from a customer's Documents sheet saves its
+Exhibit B rates there, and the dialog's "Contract rates → View / edit" changes
+them. Without one, the standard rates (`EXB` in `msa_agreement.js`) apply.
+
+**Save & download PDF** saves the request as an `operations_forms` row with
+`station_key 'invoice_request'` (number `IR-<CID>-<date>-<n>`, bill-to, lines
+with the record / labor entry ids they cover, discount and totals) and then
+downloads the PDF. Anything on a saved request shows as invoiced (red ✓,
+under "Already invoiced") and can't be ticked again; part-invoiced labor days
+show only the hours not billed yet. "Earlier requests" on the dialog
+re-downloads a request's PDF or voids it (with a reason), which frees its
+work to invoice again. Both row types use the open anon access the rest of
+`operations_forms` has, and the history trigger logs edits — no schema change.
+
 When the agreement's wording changes, edit `blocks()` in `msa_agreement.js` (and
 bump `CACHE_VERSION`); new services need an `EXB` entry there as well as in
 `drying_services.js`.
