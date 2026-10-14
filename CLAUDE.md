@@ -3,6 +3,9 @@
 Static site on Netlify (`netlify/functions/` for server code), Supabase for
 live data. Docs live in `docs/` — `OPERATIONS_APP.md` (station forms,
 `operations_stations.js`) and `USER_ADMIN.md` (users, admin panel).
+`CA_REGULATIONS.md` summarises the California DCC rules that touch the app
+(Metrc, waste, sanitation, testing, trade samples) and lists recommended
+compliance features — check it before changing a station or a sales flow.
 
 - `sw.js` serves the app shell cache-first: bump `CACHE_VERSION` whenever a
   shell file changes (HTML pages, `operations_stations.js`, `ops_*.js`, …)
