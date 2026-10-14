@@ -287,6 +287,8 @@ waiting, and setting one to Tentative or Confirmed puts it on the schedule.
 If you add a service, add its key to `ALLOWED_SERVICES` in the function too.
 
 The form also requires the legal business name, state incorporated, the
+business street address (street, city, state, zip — `business_*` columns),
+the
 Service Agreement signer (first/last name, email) — columns on
 `drying_intakes`, editable in the schedule editor — and two attachments: the
 cultivation license and a W-9. Those go to the private `customer-docs` bucket
@@ -312,9 +314,8 @@ block, signer name and title, and the Exhibit B lines. Exhibit B lists
 every service we offer with its unit and rate — so a customer who adds a
 service later doesn't need an amendment — and the ones they asked for get
 the details: drying the estimated wet lbs and harvest dates, farm support
-its dates and crew. The request form
-doesn't ask for a mailing address or the signer's title, so those are typed
-in the dialog; anything left blank prints as a line to fill in by hand.
+its dates and crew. The mailing address comes from the request's business
+address; the signer's title isn't on the form, so it's typed in the dialog; anything left blank prints as a line to fill in by hand.
 Nothing is saved — upload the signed copy under Signed MSA as before.
 
 **Invoice request to Finance** — a separate button in the Drying Schedule

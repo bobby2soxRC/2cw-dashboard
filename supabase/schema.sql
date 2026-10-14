@@ -971,6 +971,13 @@ alter table drying_intakes add column if not exists signer_first_name   text;
 alter table drying_intakes add column if not exists signer_last_name    text;
 alter table drying_intakes add column if not exists signer_email        text;
 
+-- Drying schedule v4: the business's street address, for the Service
+-- Agreement's Notices block and the deposit invoice request.
+alter table drying_intakes add column if not exists business_street text;
+alter table drying_intakes add column if not exists business_city   text;
+alter table drying_intakes add column if not exists business_state  text;   -- two-letter code, e.g. CA
+alter table drying_intakes add column if not exists business_zip    text;
+
 -- The cultivation license and W-9 the client form requires. The files go in
 -- the PRIVATE `customer-docs` bucket under requests/ (a W-9 carries a tax
 -- ID), and this table has no anon policy — unlike drying_intakes, which is
