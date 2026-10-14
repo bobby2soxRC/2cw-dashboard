@@ -478,7 +478,7 @@ pulled and remaining (this page's own boxes live, as typed) — with **Start →
 new page with that UID, `?set_sourceUid=`) or **Open →** (the page it's
 on), and the package dropdown lists in the same order.
 
-The page has three running logs — `lineitems` with `entry: true`: an entry
+The page has four running logs — `lineitems` with `entry: true`: an entry
 bar (the row's boxes plus Add; Enter moves to the next box and adds once
 they're filled), and the rows logged so far underneath, newest first:
 - `boxes` — each box taken off the dry unbucked weight: lbs, with Box #
@@ -488,12 +488,18 @@ they're filled), and the rows logged so far underneath, newest first:
 - `bucked` — bucked flower by person: `who` is the employee #, or a name for
   someone without one, and lbs. Totals to `buckedFlowerLb`.
 - `trim` — trim weighed during the batch, lbs. Totals to `trimLb`.
+- `stems` — stems ("Palo" in Spanish, required) weighed at close-out, lbs,
+  one row per bin or bag. Totals to `stemLb`. Pages saved when stems was a
+  single number open with that number as the log's first row
+  (`legacyTotal: 'stemLb'`, fixed `_id` `legacy-stems` so two tablets don't
+  both add it).
 
-Then at close-out the stems (`stemLb`, "Palo" in Spanish, required), mold
-(`moldLb`) and floor waste (`floorWasteLb`), with a **Calculate** button
-(a `fill` field): with two of the three weighed, it fills in the third as
-Total Boxes Taken minus everything else that came out (bucked + trim + the
-other two), so the loss comes to zero. Then the summary: total out
+Then at close-out the stems log, mold (`moldLb`) and floor waste
+(`floorWasteLb`), with a **Calculate** button (a `fill` field): with two of
+the three weighed (stems counts as weighed once it has a row), it fills in
+the third as Total Boxes Taken minus everything else that came out (bucked
++ trim + the other two), so the loss comes to zero. Worked out for stems,
+it's added to the log as one row. Then the summary: total out
 (bucked + trim + stems + mold + floor waste), loss in lbs and %, and
 bucked yield %. Mold and floor waste count as `waste` in the flow. Submit closes the batch. The record keeps the old field
 names, so Machine Trim's prefill (`buckedFlowerLb`), the yield calc and the

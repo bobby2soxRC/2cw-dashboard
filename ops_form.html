@@ -551,15 +551,22 @@
     wrap.querySelector(`#fb_${f.k}`).addEventListener('click', () => {
       const fields = f.keys.map((k) => station.fields.find((x) => x.k === k));
       const names = fields.map((x) => t(x.l)).join(', ');
-      const blank = fields.filter((x) => values[x.k] === undefined || values[x.k] === null || values[x.k] === '');
+      const blank = fields.filter((x) => (x.t === 'lineitems' ? !(values[x.k] || []).length
+        : values[x.k] === undefined || values[x.k] === null || values[x.k] === ''));
       if (blank.length === 0) return say(t(FL.allSet).replace('{list}', names));
       if (blank.length > 1) return say(t(FL.needOne).replace('{list}', names));
       const target = blank[0];
       recompute();   // totals from what's logged right now
       const n = Math.round(f.fill(values, target.k) * 100) / 100;
       if (!Number.isFinite(n) || n < 0) return say(t(FL.negative).replace('{n}', fmtNum(n, 2)));
-      setFieldValue(target, n);
-      touched.add(target.k);
+      // An entry log (Bucking's stems) gets it as one logged row.
+      if (target.t === 'lineitems') {
+        values[target.k].push({ [target.totalCol]: n, _id: crypto.randomUUID(), day: todayStr(), at: new Date().toISOString(), by: owner });
+        entryRenderers[target.k]();
+      } else {
+        setFieldValue(target, n);
+        touched.add(target.k);
+      }
       recompute(); updateVisibility(); markDirty();
       say(t(FL.filled).replace('{field}', t(target.l)).replace('{n}', fmtNum(n, 2)), true);
     });
@@ -1128,7 +1135,13 @@
     station.fields.forEach((f) => {
       if (f.t === 'calc' || f.t === 'photo') return;
       if (f.t === 'lineitems') {
-        const rows = fields[f.k];
+        let rows = fields[f.k];
+        // Saved when this field was one number (Bucking's stemLb): that
+        // number becomes the first row. A fixed id, so two tablets opening
+        // the same old page don't each add it.
+        if ((!Array.isArray(rows) || !rows.length) && f.legacyTotal && Number(fields[f.legacyTotal]) > 0) {
+          rows = [{ [f.totalCol]: Number(fields[f.legacyTotal]), _id: `legacy-${f.k}`, day: fields.date || todayStr(), at: null, by: null }];
+        }
         if (!Array.isArray(rows) || !rows.length) return;
         // Clear the blank starter rows, then rebuild from the saved data.
         document.getElementById(`li_${f.k}`).innerHTML = '';

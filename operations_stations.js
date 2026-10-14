@@ -24,11 +24,16 @@
 //   prefill 'lookup' — pull from the upstream stage record matching sourceUid
 //   fill   a button, not a value: { keys: [three field keys], fill: (v, key) =>
 //          number } — with all but one of `keys` filled in, works out the
-//          missing one (Bucking's Calculate for stems / mold / floor waste)
+//          missing one (Bucking's Calculate for stems / mold / floor waste).
+//          A key can be an entry log: it's blank with no rows, and the
+//          worked-out number goes in as one row.
 //   entry  (lineitems) a running log instead of a grid: an entry bar plus Add,
 //          rows stamped with an id/day/time and merged across tablets (see
 //          buildEntryLog in ops_form.html). A `rownum` column numbers the
 //          rows 1, 2, 3… by itself (Take Down's and Bucking's Box #).
+//   legacyTotal (entry log) a record saved with no rows but this key set
+//          (the field was one number before) opens with that number as
+//          its first row (Bucking's stems).
 //
 // Station option:
 //   splitBy  key of a lineitems field whose rows carry sourceUid/strain — on
@@ -497,13 +502,14 @@ const OPERATIONS_STATIONS = [
   // One page per on-stem UID (flavor), built like Smalls: the switcher at the
   // top lists every open bucking page from anyone, and older pages stay
   // there until they're submitted, because a batch can take several days.
-  // The page holds three running logs (`entry: true`: type the row, tap
+  // The page holds four running logs (`entry: true`: type the row, tap
   // Add, type the next one):
   //   boxes:  each box taken off the dry unbucked weight (box #, lbs)
   //   bucked: bucked flower by person (employee #, or a name if they have
   //           no number, and lbs)
   //   trim:   trim weighed during the batch (lbs)
-  // Submitting closes the batch, once the stems (palo) are weighed. The
+  //   stems:  stems (palo) weighed at close-out (lbs), as many bins as needed
+  // Submitting closes the batch, once the stems are weighed. The
   // record keeps the old Bucking field names (startingDryLb, buckedFlowerLb,
   // stemLb), so Machine Trim's prefill and the dashboard read it as before.
   // Bucking never mints a UID: the record stays under the on-stem tag Take
@@ -595,19 +601,30 @@ const OPERATIONS_STATIONS = [
         l: { en: 'Total Trim (lbs)', es: 'Recorte total (lbs)' } },
 
       // Close-out: stems, mold and floor waste — weigh two and Calculate
-      // fills in the third — then the summary, then Submit.
-      { k: 'stemLb', t: 'number', req: true, min: 0, step: 0.01,
-        l: { en: 'Stems (lbs)', es: 'Palo (lbs)' },
-        hint: { en: 'Weigh the stems when the batch is done, then submit.',
-                es: 'Pese el palo al terminar el lote y luego envíe.' } },
+      // fills in the third — then the summary, then Submit. Stems are a
+      // running log too (several bins or bags), totalled into stemLb.
+      // Pages saved when stems were one number come back with that number
+      // as their first row (`legacyTotal`).
+      { k: 'stems', t: 'lineitems', entry: true, req: true, legacyTotal: 'stemLb',
+        l: { en: 'Stems', es: 'Palo' },
+        hint: { en: 'Each bin or bag of stems as it’s weighed. Add as many as you need, then submit.',
+                es: 'Cada bote o bolsa de palo al pesarla. Agregue los que necesite y luego envíe.' },
+        cols: [
+          { k: 'weightLb', t: 'number', l: { en: 'Weight (lbs)', es: 'Peso (lbs)' }, min: 0, step: 0.01, req: true, dp: 2 }
+        ],
+        totalCol: 'weightLb' },
+      { k: 'stemLb', t: 'calc',
+        calc: (v) => (v.stems || []).reduce((a, r) => a + num(r.weightLb), 0),
+        l: { en: 'Total Stems (lbs)', es: 'Palo total (lbs)' } },
       { k: 'moldLb', t: 'number', min: 0, step: 0.01,
         l: { en: 'Mold (lbs)', es: 'Moho (lbs)' } },
       { k: 'floorWasteLb', t: 'number', min: 0, step: 0.01,
         l: { en: 'Floor Waste (lbs)', es: 'Desperdicio del piso (lbs)' } },
-      { k: 'closeOutFill', t: 'fill', keys: ['stemLb', 'moldLb', 'floorWasteLb'],
+      { k: 'closeOutFill', t: 'fill', keys: ['stems', 'moldLb', 'floorWasteLb'],
         // The missing one is what's left of the boxes taken once everything
-        // else coming out is counted, so the loss comes to zero.
-        fill: (v, key) => num(v.startingDryLb) - sum(v, BUCK_OUTPUTS.filter((k) => k !== key)),
+        // else coming out is counted, so the loss comes to zero. Worked out
+        // for the stems log, it's added as one row.
+        fill: (v, key) => num(v.startingDryLb) - sum(v, BUCK_OUTPUTS.filter((k) => k !== (key === 'stems' ? 'stemLb' : key))),
         l: { en: 'Calculate', es: 'Calcular' },
         hint: { en: 'Weighed two of Stems, Mold and Floor Waste? Calculate fills in the third: Total Boxes Taken minus everything else that came out.',
                 es: '¿Pesó dos de Palo, Moho y Desperdicio del piso? Calcular llena el tercero: total de cajas menos todo lo demás que salió.' } },
