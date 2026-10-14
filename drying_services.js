@@ -3,7 +3,8 @@
 // (drying_request.html). The keys are what's stored in
 // drying_intakes.services — add new ones freely, but don't rename a key once
 // clients have it saved, and add any new key to ALLOWED_SERVICES in
-// netlify/functions/drying-request.js too.
+// netlify/functions/drying-request.js too, and its Exhibit B unit and rate
+// to EXB in msa_agreement.js.
 const DRYING_SERVICES = [
   { group: 'Drying', items: [
     { k: 'drying', l: 'Drying', short: 'Drying', rate: '$3.00 / wet lb' }] },
