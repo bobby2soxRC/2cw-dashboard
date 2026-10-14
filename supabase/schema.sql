@@ -887,6 +887,48 @@ create policy "anon delete" on preroll_plans for delete using (true);
 
 grant select, insert, update, delete on public.preroll_plans to anon;
 
+-- ── Pre-roll queue items (preroll_dashboard.html) ───────────────────────
+-- Pre-roll batches added to the queue by hand, without a production
+-- request: brand, strain, source UID and how many. Each gets a queue number
+-- shown as "PQ-<queue_no>", which a batch started from it carries in its
+-- prNum field, so progress is read back the same way as for a PR. Open
+-- pre-roll requests from the Sheet join the same queue; the order of both is
+-- one shared operations_forms row (station_key 'preroll_queue'), like the
+-- bucking queue. Removing an item only stamps removed_at.
+
+create table if not exists preroll_queue_items (
+  id          uuid primary key default gen_random_uuid(),
+  queue_no    bigserial unique,
+  brand       text,
+  strain      text,
+  source_uid  text,
+  quantity    integer not null check (quantity > 0),
+  notes       text,
+  created_by  text,
+  updated_by  text,
+  removed_at  timestamptz,
+  removed_by  text,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+
+drop trigger if exists trg_touch_preroll_queue_items on preroll_queue_items;
+create trigger trg_touch_preroll_queue_items
+  before update on preroll_queue_items
+  for each row execute function touch_operations_forms();
+
+alter table preroll_queue_items enable row level security;
+
+drop policy if exists "anon read" on preroll_queue_items;
+create policy "anon read" on preroll_queue_items for select using (true);
+drop policy if exists "anon write" on preroll_queue_items;
+create policy "anon write" on preroll_queue_items for insert with check (true);
+drop policy if exists "anon update" on preroll_queue_items;
+create policy "anon update" on preroll_queue_items for update using (true) with check (true);
+
+grant select, insert, update on public.preroll_queue_items to anon;
+grant usage, select on sequence preroll_queue_items_queue_no_seq to anon;
+
 -- ── Drying schedule (drying_schedule.html) ───────────────────────────────
 -- Outside clients whose wet material we take in to dry. One row per planned
 -- intake: who it's from (farm, license, contact), how big the farm is, and

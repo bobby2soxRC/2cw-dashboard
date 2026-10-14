@@ -158,6 +158,20 @@ submitted one means done, and the total pre-rolls made shows as progress.
 A request is late if its plan finishes after the Sheet's Ready Date, or the
 Ready Date has passed. English/Spanish via the shared `2cw_lang` toggle.
 
+**Pre-Roll Queue** (top of the Pre-Roll Dashboard) is the order to make
+things in, like the bucking queue. It lists every open pre-roll request that
+isn't on hold, plus batches added by hand with **+ Add to queue** (brand,
+strain, source UID, quantity, notes — `preroll_queue_items`, shown as
+`PQ-<queue_no>`). Each row shows brand · strain, the ref (PR# or PQ-#), the
+source UID, the quantity and how many are made, with ▲ ▼ / Top, Edit plan /
+Edit, and Start batch / Open batch. The order is one shared `operations_forms`
+row (`station_key: 'preroll_queue'`, fixed id `PREROLL_QUEUE_ID`,
+`fields.order` = refs); anything not in it goes last by Ready Date / date
+added. Start batch fills Pre-Roll Production's `prNum` and Batch ID with the
+ref, so a hand-added item is tracked the same way as a request, and it drops
+off once that batch is submitted. Remove from queue only stamps `removed_at`.
+Brand for a request comes from its BSKU code (SRF, HWR, MDO).
+
 **Harvest Intakes** (`harvest_intakes.html`, hub card `harvest_intakes` under
 Processing) lists every Wet Intake, drafts and submitted, newest first, with
 a "Metrc not adjusted" filter. Clicking one shows the whole record. Access is

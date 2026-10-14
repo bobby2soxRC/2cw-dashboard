@@ -1748,7 +1748,7 @@
     const since = addDays(localDay(), -60);
     for (let page = 0; page < 6; page++) {
       const { data, error } = await client.from('operations_forms').select('strain,fields,work_date')
-        .gte('work_date', since).not('station_key', 'in', '(buck_submission,buck_box,buck_batch_close,labor_entry,work_project,work_schedule,cost_settings,buck_queue)')
+        .gte('work_date', since).not('station_key', 'in', '(buck_submission,buck_box,buck_batch_close,labor_entry,work_project,work_schedule,cost_settings,buck_queue,preroll_queue)')
         .order('work_date', { ascending: false }).range(page * 1000, page * 1000 + 999);
       if (error || !data) break;
       data.forEach((r) => {

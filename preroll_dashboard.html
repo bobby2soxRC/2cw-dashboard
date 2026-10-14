@@ -77,6 +77,36 @@
   .btn-purple{background:var(--purple);color:#0c0d0f;border-color:var(--purple)}
   .btn:disabled{opacity:.5;cursor:default}
 
+  .sec{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.03em;margin:4px 0 2px}
+  .sec-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+  .sec-hint{color:var(--subtext);font-size:.82rem;max-width:640px}
+  .q-wrap{margin-bottom:28px}
+  .q-list{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:4px 14px}
+  .q-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+  .q-row:last-child{border-bottom:none}
+  .q-n{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--purple);min-width:34px;text-align:center}
+  .q-main{flex:1;min-width:0}
+  .q-strain{font-weight:700;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+  .q-strain .none{color:var(--gold);font-weight:500}
+  .q-sub{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--subtext);overflow-wrap:anywhere;margin-top:2px}
+  .q-sub .none{color:var(--gold)}
+  .q-ref{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--purple);font-weight:500}
+  .q-qty{font-family:'DM Mono',monospace;font-size:1rem;white-space:nowrap;text-align:right;flex:0 0 auto}
+  .q-qty .k{display:block;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .q-qty .made{display:block;font-size:.68rem;color:var(--blue)}
+  .q-move{display:flex;gap:6px;flex:0 0 auto}
+  .q-move button{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;min-width:44px;min-height:44px;font-size:1rem;cursor:pointer;font-family:'DM Mono',monospace}
+  .q-move button:hover:not(:disabled){border-color:var(--purple);color:var(--purple)}
+  .q-move button:disabled{opacity:.3;cursor:default}
+  .q-acts{display:flex;gap:6px;flex:0 0 auto}
+  @media (max-width:700px){
+    .q-row{flex-wrap:wrap;row-gap:10px}
+    .q-main{flex:1 1 calc(100% - 50px)}
+    .q-qty{margin-left:46px;text-align:left}
+    .q-move{margin-left:auto}
+    .q-acts{flex:1 0 100%;justify-content:flex-end}
+  }
+
   .empty,.err{color:var(--subtext);font-size:.9rem;padding:24px;text-align:center;background:var(--surface);border:1px dashed var(--border);border-radius:12px}
   .err{color:var(--red)}
 
@@ -111,6 +141,18 @@
 
   <div class="tiles" id="tiles"></div>
 
+  <div class="q-wrap">
+    <div class="sec-row">
+      <div>
+        <h2 class="sec" id="q-title"></h2>
+        <div class="sec-hint" id="q-hint"></div>
+      </div>
+      <button class="btn btn-purple" id="q-add" onclick="openItemEditor(null)"></button>
+    </div>
+    <div id="queue"></div>
+  </div>
+
+  <h2 class="sec" id="r-title"></h2>
   <div class="bar" id="bar">
     <button class="chip on" data-f="open"></button>
     <button class="chip" data-f="needs"></button>
@@ -137,8 +179,19 @@
 // inventory.html read. The team's plan for each one is the preroll_plans
 // table (see supabase/schema.sql); progress comes from Pre-Roll Production
 // forms (operations_forms, station preroll_production) carrying its prNum.
+//
+// The queue on top is the order to make things in: every open pre-roll
+// request (not on hold) plus batches added by hand (preroll_queue_items,
+// "PQ-<queue_no>"), ranked with ▲ ▼ / Top. The order is one shared
+// operations_forms row, like the bucking queue (BUCK_QUEUE_ID in ops_data.js):
+// `fields.order` = refs (PR# or PQ-#). Anything not in it goes last, by
+// Ready Date / when it was added. An item drops off once a Pre-Roll
+// Production form carrying its ref is submitted.
 const PRODUCTION_REQUESTS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQkx0gxPTulAOv3WMXayY8HOqcoYByZ_kOXrLvd84-9ReSwGa-6Or-KTx4SdPfT0rC5_qOCE3LHz_mT/pub?gid=1857304423&single=true&output=csv';
 const REFRESH_MS = 60 * 1000;
+const PREROLL_QUEUE_ID = '70726571-7565-4000-8000-000000000001';
+// Brand from the BSKU's 3-letter code, or the product name.
+const BRAND_CODES = { SRF: 'Soma Rosa', HWR: 'Howie Roll', MDO: 'Mendo' };
 
 // Every on-screen string, English and Spanish side by side (t() and the
 // EN/ES toggle come from ops_common.js — same language setting as the forms).
@@ -202,7 +255,34 @@ const L = {
   err_save: { en: 'Could not save:', es: 'No se pudo guardar:' },
   err_nosupa: { en: 'Supabase is not configured, so plans can’t be saved.', es: 'Supabase no está configurado, así que no se pueden guardar planes.' },
   err_sheet: { en: 'Could not read the Production Requests Sheet', es: 'No se pudo leer la hoja de solicitudes de producción' },
-  err_plans: { en: 'Could not load plans — has supabase/schema.sql been re-run?', es: 'No se pudieron cargar los planes — ¿se volvió a ejecutar supabase/schema.sql?' }
+  err_plans: { en: 'Could not load plans — has supabase/schema.sql been re-run?', es: 'No se pudieron cargar los planes — ¿se volvió a ejecutar supabase/schema.sql?' },
+  // Queue
+  q_title: { en: 'Pre-Roll Queue', es: 'Fila de prerolls' },
+  q_hint: { en: 'What to make, in order: open pre-roll requests plus anything added here. Use ▲ ▼ or Top to change the order. Requests on hold stay out; an item drops off once its batch is submitted.',
+            es: 'Qué hacer, en orden: solicitudes de prerolls abiertas y lo que se agregue aquí. Use ▲ ▼ o Arriba para cambiar el orden. Las solicitudes en espera quedan fuera; un renglón sale cuando se envía su lote.' },
+  q_add: { en: '+ Add to queue', es: '+ Agregar a la fila' },
+  q_none: { en: 'Nothing in the queue. Add a batch, or wait for a pre-roll request in the Sheet.', es: 'No hay nada en la fila. Agregue un lote o espere una solicitud de prerolls en la hoja.' },
+  q_top: { en: 'Top', es: 'Arriba' },
+  q_up: { en: 'Move up', es: 'Subir' },
+  q_down: { en: 'Move down', es: 'Bajar' },
+  q_busy: { en: 'in progress', es: 'en curso' },
+  q_no_uid: { en: 'no source UID', es: 'sin UID de origen' },
+  q_no_strain: { en: 'strain not assigned', es: 'variedad sin asignar' },
+  q_added: { en: 'Added', es: 'Agregado' },
+  q_edit: { en: 'Edit', es: 'Editar' },
+  q_save_fail: { en: 'Could not save the order. Reloading the queue.', es: 'No se pudo guardar el orden. Recargando la fila.' },
+  q_load_fail: { en: 'Could not load the queue — has supabase/schema.sql been re-run?', es: 'No se pudo cargar la fila — ¿se volvió a ejecutar supabase/schema.sql?' },
+  r_title: { en: 'Production Requests', es: 'Solicitudes de producción' },
+  i_new: { en: 'Add to the pre-roll queue', es: 'Agregar a la fila de prerolls' },
+  i_new_sub: { en: 'A batch that isn’t on the Production Requests Sheet. It goes to the bottom of the queue.', es: 'Un lote que no está en la hoja de solicitudes de producción. Va al final de la fila.' },
+  i_brand: { en: 'Brand', es: 'Marca' },
+  i_brand_ph: { en: 'Pick or type a brand', es: 'Elija o escriba una marca' },
+  i_qty: { en: 'Quantity (pre-rolls)', es: 'Cantidad (prerolls)' },
+  i_save: { en: 'Save', es: 'Guardar' },
+  i_add: { en: 'Add to queue', es: 'Agregar a la fila' },
+  i_remove: { en: 'Remove from queue', es: 'Quitar de la fila' },
+  i_remove_q: { en: 'Remove {ref} from the queue?', es: '¿Quitar {ref} de la fila?' },
+  i_err_qty: { en: 'Enter how many pre-rolls.', es: 'Escriba cuántos prerolls.' }
 };
 const STAGE_LABELS = {
   needs_strain: { en: 'Needs strain', es: 'Falta variedad' },
@@ -224,10 +304,16 @@ if (typeof SUPABASE_URL !== 'undefined' && SUPABASE_URL) client = supabase.creat
 let requests = [];      // from the Sheet, pre-roll crew only
 let plans = {};         // pr_num -> preroll_plans row
 let batches = {};       // pr_num -> [operations_forms rows]
+let manual = [];        // preroll_queue_items rows still in the queue
+let queueOrder = [];    // refs (PR# / PQ-#) in the saved order
+let queueErr = '';
+let savingOrder = false;
 let strains = [];
+let brands = [];
 let people = [];
 let filter = 'open';
 let editingPr = null;
+let editingItem = null; // preroll_queue_items row, or {} for a new one
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const todayStr = () => new Date().toISOString().slice(0, 10);
@@ -309,21 +395,50 @@ async function loadBatches() {
   return out;
 }
 
-async function loadStrains() {
+async function loadReferenceLists() {
   try {
     const ref = await (await fetch('/data/operations/reference.json')).json();
-    return (ref.strains || []).filter((s) => s.active !== false).map((s) => s.label || s.name || s.id).filter(Boolean);
-  } catch { return []; }
+    const active = (list) => (list || []).filter((s) => s.active !== false).map((s) => s.label || s.name || s.id).filter(Boolean);
+    return { strains: active(ref.strains), brands: [...new Set(active(ref.brands).concat(Object.values(BRAND_CODES)))] };
+  } catch { return { strains: [], brands: Object.values(BRAND_CODES) }; }
+}
+
+// Hand-added queue items still in the queue, and the saved order. A failure
+// here shows in the queue box only — the request list below still works.
+async function loadQueue() {
+  if (!client) return { manual: [], order: [], err: '' };
+  const [items, ord] = await Promise.all([
+    client.from('preroll_queue_items').select('*').is('removed_at', null),
+    client.from('operations_forms').select('fields').eq('id', PREROLL_QUEUE_ID).maybeSingle()
+  ]);
+  if (items.error) { console.error('loadQueue', items.error); return { manual: [], order: [], err: `${t(L.q_load_fail)} (${items.error.message})` }; }
+  const f = (ord.data && ord.data.fields) || {};
+  return { manual: items.data || [], order: Array.isArray(f.order) ? f.order : [], err: '' };
+}
+
+async function saveQueueOrder(order) {
+  const who = currentUser || null;
+  const { error } = await client.from('operations_forms').upsert({
+    id: PREROLL_QUEUE_ID, station_key: 'preroll_queue', status: 'submitted', owner_user: who, updated_by: who,
+    submitted_at: new Date().toISOString(),
+    fields: { order, updatedBy: who || '', updatedAt: new Date().toISOString() }
+  });
+  return error ? { ok: false, reason: error.message } : { ok: true };
 }
 
 async function refresh() {
+  // The queue's hand-added items don't need the Sheet, so they load (and
+  // show) even when the Sheet or the plans can't be read.
+  const [b, q] = await Promise.all([loadBatches(), loadQueue()]);
+  batches = b; manual = q.manual; queueOrder = q.order; queueErr = q.err;
   try {
-    const [r, p, b] = await Promise.all([loadRequests(), loadPlans(), loadBatches()]);
-    requests = r; plans = p; batches = b;
+    const [r, p] = await Promise.all([loadRequests(), loadPlans()]);
+    requests = r; plans = p;
     document.getElementById('sync').textContent = `${t(L.updated)} ${new Date().toLocaleTimeString(locale(), { hour: 'numeric', minute: '2-digit' })}`;
     render();
   } catch (e) {
     console.error(e);
+    renderQueue();
     document.getElementById('list').innerHTML = `<div class="err">${esc(e.message)}</div>`;
   }
 }
@@ -361,8 +476,108 @@ function passes(v, q) {
   return [v.pr, v.product, v.bsku, v.type, v.strain, v.plan.assigned_to].join(' ').toLowerCase().includes(q);
 }
 
+function brandOf(bsku, product) {
+  const code = String(bsku || '').trim().toUpperCase().slice(0, 3);
+  if (BRAND_CODES[code]) return BRAND_CODES[code];
+  const p = String(product || '');
+  return Object.values(BRAND_CODES).find((b) => p.toLowerCase().includes(b.toLowerCase())) || '';
+}
+
+// ── Queue ────────────────────────────────────────────────────────────────
+// Everything still to make, as one list: open requests (not on hold) and
+// hand-added items whose batch isn't submitted yet, in the saved order, then
+// anything not ordered yet by Ready Date / date added.
+function queueItems() {
+  const fromRequests = requests.map(view).filter((v) => v.open && v.stage !== 'on_hold').map((v) => ({
+    ref: v.pr, kind: 'pr', brand: brandOf(v.bsku, v.product), product: v.product || v.bsku,
+    strain: v.strain, sourceUid: v.plan.source_uid || '', qty: v.batchSize, made: v.made,
+    draft: v.draft, late: v.late, readyDate: v.readyDate, sortDate: v.readyDate || '9999'
+  }));
+  const fromManual = manual.map((m) => {
+    const ref = 'PQ-' + m.queue_no;
+    const runs = batches[ref] || [];
+    return {
+      ref, kind: 'manual', row: m, brand: m.brand || '', product: '', strain: m.strain || '',
+      sourceUid: m.source_uid || '', qty: num(m.quantity),
+      made: runs.reduce((a, b) => a + num(b.fields && b.fields.totalPrerolls), 0),
+      draft: runs.find((b) => b.status === 'draft'), done: runs.some((b) => b.status === 'submitted'),
+      notes: m.notes || '', sortDate: String(m.created_at || '').slice(0, 10) || '9999'
+    };
+  }).filter((x) => !x.done);
+  const pos = (x) => { const i = queueOrder.indexOf(x.ref); return i < 0 ? Infinity : i; };
+  return fromRequests.concat(fromManual).sort((a, b) =>
+    (pos(a) - pos(b)) || a.sortDate.localeCompare(b.sortDate) || a.ref.localeCompare(b.ref));
+}
+
+let shownQueue = [];
+function renderQueue() {
+  const box = document.getElementById('queue');
+  shownQueue = queueItems();
+  if (queueErr && !shownQueue.length) { box.innerHTML = `<div class="err">${esc(queueErr)}</div>`; return; }
+  if (!shownQueue.length) { box.innerHTML = `<div class="empty">${t(L.q_none)}</div>`; return; }
+  const n = shownQueue.length;
+  box.innerHTML = (queueErr ? `<div class="err" style="margin-bottom:8px">${esc(queueErr)}</div>` : '') +
+    `<div class="q-list">` + shownQueue.map((x, i) => {
+      const off = savingOrder || !client;
+      const startHref = '/ops_form.html?' + new URLSearchParams({
+        station: 'preroll_production', set_prNum: x.ref, set_batchId: x.ref,
+        ...(x.strain ? { set_strain: x.strain } : {}), ...(x.sourceUid ? { set_sourceUid: x.sourceUid } : {})
+      }).toString();
+      const go = x.draft
+        ? `<a class="btn btn-purple" href="/ops_form.html?station=preroll_production&draft=${esc(x.draft.id)}">${t(L.open_batch)}</a>`
+        : `<a class="btn btn-purple" href="${esc(startHref)}">${t(L.start_batch)}</a>`;
+      const edit = x.kind === 'pr'
+        ? `<button class="btn" onclick="openEditor('${esc(x.ref)}')">${t(L.edit_plan)}</button>`
+        : `<button class="btn" onclick="openItemEditor('${esc(x.row.id)}')">${t(L.q_edit)}</button>`;
+      return `<div class="q-row">
+        <div class="q-n">${i + 1}</div>
+        <div class="q-main">
+          <div class="q-strain">${x.brand ? esc(x.brand) + ' · ' : ''}${x.strain ? esc(x.strain) : `<span class="none">${t(L.q_no_strain)}</span>`}
+            ${x.draft ? `<span class="pill stage-in_production">${t(L.q_busy)}</span>` : ''}
+            ${x.late ? `<span class="pill late">${t(L.late)}</span>` : ''}</div>
+          <div class="q-sub"><span class="q-ref">${esc(x.ref)}</span>${x.product ? ' · ' + esc(x.product) : ''} ·
+            ${x.sourceUid ? esc(x.sourceUid) : `<span class="none">${t(L.q_no_uid)}</span>`}
+            ${x.readyDate ? ` · ${t(L.ready_by_lc)} ${esc(fmtDate(x.readyDate))}` : ''}${x.notes ? ' · ' + esc(x.notes) : ''}</div>
+        </div>
+        <div class="q-qty"><span class="k">${t(L.qty)}</span>${x.qty.toLocaleString(locale())}
+          ${x.made ? `<span class="made">${t(L.made)} ${x.made.toLocaleString(locale())}</span>` : ''}</div>
+        <div class="q-move">
+          <button type="button" data-move="top" data-i="${i}" ${i === 0 || off ? 'disabled' : ''}>${t(L.q_top)}</button>
+          <button type="button" data-move="up" data-i="${i}" aria-label="${esc(t(L.q_up))}" ${i === 0 || off ? 'disabled' : ''}>▲</button>
+          <button type="button" data-move="down" data-i="${i}" aria-label="${esc(t(L.q_down))}" ${i === n - 1 || off ? 'disabled' : ''}>▼</button>
+        </div>
+        <div class="q-acts">${edit}${go}</div>
+      </div>`;
+    }).join('') + `</div>`;
+}
+
+document.getElementById('queue').addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-move]');
+  if (!b || savingOrder || !client) return;
+  const i = Number(b.dataset.i);
+  const to = b.dataset.move === 'top' ? 0 : b.dataset.move === 'up' ? i - 1 : i + 1;
+  if (to < 0 || to >= shownQueue.length || to === i) return;
+  const refs = shownQueue.map((x) => x.ref);
+  const [moved] = refs.splice(i, 1);
+  refs.splice(to, 0, moved);
+  // Keep refs that aren't showing right now (a request on hold) after the
+  // visible ones, so they keep their place when they come back; drop ones
+  // that are gone for good (no longer in the Sheet, or removed).
+  const known = new Set(requests.map((r) => r.pr).concat(manual.map((m) => 'PQ-' + m.queue_no)));
+  const order = refs.concat(queueOrder.filter((r) => !refs.includes(r) && (!requests.length || known.has(r))));
+  const before = queueOrder;
+  queueOrder = order;
+  savingOrder = true;
+  renderQueue();
+  const res = await saveQueueOrder(order);
+  savingOrder = false;
+  if (!res.ok) { queueOrder = before; alert(t(L.q_save_fail)); await refresh(); return; }
+  renderQueue();
+});
+
 // ── Render ───────────────────────────────────────────────────────────────
 function render() {
+  renderQueue();
   const all = requests.map(view);
   const open = all.filter((v) => v.open);
   const tiles = [
@@ -490,9 +705,88 @@ function openEditor(pr) {
 function closeEditor() {
   document.getElementById('backdrop').style.display = 'none';
   editingPr = null;
+  editingItem = null;
 }
 document.getElementById('backdrop').addEventListener('click', (e) => { if (e.target.id === 'backdrop') closeEditor(); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && editingPr) closeEditor(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && (editingPr || editingItem)) closeEditor(); });
+
+// ── Queue item editor (hand-added batches) ───────────────────────────────
+function openItemEditor(id) {
+  if (!client) { alert(t(L.err_nosupa)); return; }
+  const m = id ? manual.find((x) => x.id === id) : null;
+  if (id && !m) return;
+  editingItem = m || {};
+  document.getElementById('modal').innerHTML = `
+    <h2>${m ? esc('PQ-' + m.queue_no) : t(L.i_new)}</h2>
+    <div class="m-sub">${m ? `${t(L.q_added)} ${esc(fmtDate(String(m.created_at || '').slice(0, 10)))}${m.created_by ? ' · ' + esc(m.created_by) : ''}` : t(L.i_new_sub)}</div>
+    <div class="row2">
+      <div class="fld"><label class="lbl" for="i-brand">${t(L.i_brand)}</label>
+        <input id="i-brand" list="brand-list" value="${esc(m ? m.brand || '' : '')}" placeholder="${esc(t(L.i_brand_ph))}"/>
+        <datalist id="brand-list">${brands.map((b) => `<option value="${esc(b)}">`).join('')}</datalist></div>
+      <div class="fld"><label class="lbl" for="i-qty">${t(L.i_qty)}</label>
+        <input id="i-qty" type="number" min="1" step="1" inputmode="numeric" value="${esc(m ? m.quantity : '')}"/></div>
+    </div>
+    <div class="fld"><label class="lbl" for="i-strain">${t(L.strain)}</label>
+      <input id="i-strain" list="strain-list" value="${esc(m ? m.strain || '' : '')}" placeholder="${esc(t(L.e_strain_ph))}"/>
+      <datalist id="strain-list">${strains.map((s) => `<option value="${esc(s)}">`).join('')}</datalist></div>
+    <div class="fld"><label class="lbl" for="i-uid">${t(L.e_uid)}</label>
+      <input id="i-uid" value="${esc(m ? m.source_uid || '' : '')}" autocapitalize="characters" placeholder="${esc(t(L.e_uid_ph))}"/></div>
+    <div class="fld"><label class="lbl" for="i-notes">${t(L.e_notes)}</label><textarea id="i-notes" rows="2">${esc(m ? m.notes || '' : '')}</textarea></div>
+    <div class="m-err" id="i-err"></div>
+    <div class="m-actions">
+      ${m ? `<button class="btn" style="margin-right:auto;color:var(--red)" onclick="removeItem()">${t(L.i_remove)}</button>` : ''}
+      <button class="btn" onclick="closeEditor()">${t(L.cancel)}</button>
+      <button class="btn btn-purple" id="i-save" onclick="saveItem()">${t(m ? L.i_save : L.i_add)}</button>
+    </div>`;
+  document.getElementById('backdrop').style.display = 'block';
+  setTimeout(() => document.getElementById(m ? 'i-qty' : 'i-brand').focus(), 30);
+}
+
+async function saveItem() {
+  const val = (id) => document.getElementById(id).value.trim();
+  const err = document.getElementById('i-err');
+  const qty = parseInt(val('i-qty'), 10);
+  if (!(qty > 0)) { err.textContent = t(L.i_err_qty); err.style.display = 'block'; return; }
+  const row = {
+    brand: val('i-brand') || null,
+    strain: val('i-strain') || null,
+    source_uid: val('i-uid').toUpperCase() || null,
+    quantity: qty,
+    notes: val('i-notes') || null,
+    updated_by: currentUser || null
+  };
+  const btn = document.getElementById('i-save');
+  const label = btn.textContent;
+  btn.disabled = true; btn.textContent = t(L.saving);
+  const q = editingItem.id
+    ? client.from('preroll_queue_items').update(row).eq('id', editingItem.id)
+    : client.from('preroll_queue_items').insert({ ...row, created_by: currentUser || null });
+  const { data, error } = await q.select().single();
+  if (error) {
+    err.textContent = `${t(L.err_save)} ${error.message}`; err.style.display = 'block';
+    btn.disabled = false; btn.textContent = label;
+    return;
+  }
+  manual = manual.filter((x) => x.id !== data.id).concat(data);
+  closeEditor();
+  renderQueue();
+}
+
+async function removeItem() {
+  const m = editingItem;
+  if (!m || !m.id || !confirm(t(L.i_remove_q).replace('{ref}', 'PQ-' + m.queue_no))) return;
+  const { error } = await client.from('preroll_queue_items')
+    .update({ removed_at: new Date().toISOString(), removed_by: currentUser || null, updated_by: currentUser || null })
+    .eq('id', m.id);
+  if (error) {
+    const err = document.getElementById('i-err');
+    err.textContent = `${t(L.err_save)} ${error.message}`; err.style.display = 'block';
+    return;
+  }
+  manual = manual.filter((x) => x.id !== m.id);
+  closeEditor();
+  renderQueue();
+}
 
 async function saveEditor() {
   const val = (id) => document.getElementById(id).value.trim();
@@ -533,6 +827,11 @@ function paintStatic() {
   document.getElementById('h1').textContent = t(L.h1);
   document.getElementById('intro').textContent = t(L.intro);
   document.getElementById('search').placeholder = t(L.search);
+  document.getElementById('q-title').textContent = t(L.q_title);
+  document.getElementById('q-hint').textContent = t(L.q_hint);
+  document.getElementById('q-add').textContent = t(L.q_add);
+  document.getElementById('r-title').textContent = t(L.r_title);
+  document.getElementById('queue').innerHTML = `<div class="empty">${t(L.loading)}</div>`;
   document.querySelectorAll('#bar .chip').forEach((c) => { c.textContent = t(L['f_' + c.dataset.f]); });
   document.getElementById('list').innerHTML = `<div class="empty">${t(L.loading)}</div>`;
 }
@@ -540,15 +839,16 @@ paintStatic();
 
 (async () => {
   const [s, dir] = await Promise.all([
-    loadStrains(),
+    loadReferenceLists(),
     typeof loadUserDirectory === 'function' ? loadUserDirectory().catch(() => []) : []
   ]);
-  strains = s;
+  strains = s.strains;
+  brands = s.brands;
   people = [...new Set((dir || []).map((u) => (u.user || '').trim()).filter(Boolean))];
   await refresh();
   // Keep up with new requests landing in the Sheet and batches being
   // logged — but never re-render underneath an open editor.
-  setInterval(() => { if (!editingPr) refresh(); }, REFRESH_MS);
+  setInterval(() => { if (!editingPr && !editingItem && !savingOrder) refresh(); }, REFRESH_MS);
 })();
 </script>
 <script src="/sw_register.js"></script>
