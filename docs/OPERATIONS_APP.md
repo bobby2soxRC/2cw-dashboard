@@ -121,6 +121,20 @@ once QC and the secondary verification are done. The log is the station's
 Two people editing the same open batch at the same moment can overwrite each
 other's rows (last save wins), so one tablet per batch is safest.
 
+**Hand Trim / Hand Touch** (`hand_trim`) starts from bucked flower. Its
+Lot Number is a dropdown of every lot with a submitted Bucking record
+(`picker: { list: 'bucked' }` — `buckedLots` in `ops_common.js`, newest
+first, one per UID); picking one fills the package UID, strain, starting
+bucked weight (Bucking's `buckedFlowerLb`) and the customer ID, traced back
+through Take Down to Wet Intake. "Other — not on the list" is for bucked
+flower brought in from elsewhere: a popup (`otherPopup`) asks for the strain
+and package UID, and the CID is entered by hand. Outputs: the weighing
+worksheet's finished flower, smalls, Normal Trim (`normTrimLb`, category
+`trim`), A+ Trim (`aPlusTrimLb`, `trim_a_plus`) and waste. Work order #,
+farm license, trim style and starting bins were dropped in October 2026;
+`sugarTrimLb` is off the form but stays in the totals and flow for older
+records.
+
 **Smalls Hand Trim** (`smalls_trim`) is the paper "Work Order Form (Smalls |
 By the Hourly)": one page per flavor per day — package UID, strain, starting
 lbs, then the weighing worksheet (employee #, grams, one row per bag), with
@@ -173,6 +187,20 @@ added. Start batch fills Pre-Roll Production's `prNum` and Batch ID with the
 ref, so a hand-added item is tracked the same way as a request, and it drops
 off once that batch is submitted. Remove from queue only stamps `removed_at`.
 Brand for a request comes from its BSKU code (SRF, HWR, MDO).
+
+**Pre-roll products and pack quantities.** Quantities on requests and queue
+items are in units — packs, or singles — not pre-rolls. `preroll_products`
+(keyed by BSKU; managed from the dashboard's **Products** button) says how
+many pre-rolls are in one unit (`pack_size`) and how big each one is
+(`preroll_size_g`), e.g. Soma Rosa 28-pack = 28 × 0.5 g, Soma Rosa 1g = 1 ×
+1 g, Mendo 10-pack = 10 × 0.5 g. A request uses the product matching its
+Sheet BSKU unless Edit plan picks another (`preroll_plans.product_bsku`);
+hand-added items pick one with Brand → Product
+(`preroll_queue_items.product_bsku`). The dashboard shows units × pack size =
+pre-rolls (and the grams of flower that takes), measures Made against that,
+and Start batch fills the form's Pre-Roll Size (`set_unitSizeG`). No product →
+the quantity is taken as pre-rolls. Products are never deleted, only made
+inactive.
 
 **Harvest Intakes** (`harvest_intakes.html`, hub card `harvest_intakes` under
 Processing) lists every Wet Intake, drafts and submitted, newest first, with

@@ -707,10 +707,17 @@ const OPERATIONS_STATIONS = [
     color: 'purple',
     headline: 'finishedFlowerLb',
     fields: [
-      { k: 'workOrderNo', t: 'text', l: { en: 'Work Order #', es: 'N.º de orden de trabajo' } },
       F.date(),
-      F.sourceUid({ en: 'Package UID', es: 'UID del paquete' }),
-      { k: 'strain', t: 'select', ref: 'strains', allowOther: true, req: true,
+      // Picked from every lot that's been bucked (`picker`: buckedLots in
+      // ops_common.js, "Strain || abbreviation || last 4"). "Other" is for
+      // bucked flower from somewhere else: a popup asks for the strain and
+      // the package UID.
+      { k: 'sourceUid', t: 'uid', req: true, prefill: 'lookup', picker: { list: 'bucked', otherPopup: true },
+        l: { en: 'Lot Number', es: 'Número de lote' },
+        pickedLabel: { en: 'Package UID', es: 'UID del paquete' },
+        hint: { en: 'Bucked flower lots. Picking one fills in the strain, customer ID and bucked weight. Brought-in bucked flower: pick Other.',
+                es: 'Lotes de flor desvarada. Al elegir uno se llenan la variedad, el ID de cliente y el peso desvarado. Flor desvarada traída de fuera: elija Otro.' } },
+      { k: 'strain', t: 'select', ref: 'strains', allowOther: true, req: true, prefill: 'lookup',
         l: { en: 'Strain', es: 'Variedad (cepa)' } },
       { k: 'strainGrade', t: 'select',
         l: { en: 'Strain Grade', es: 'Grado de la variedad' },
@@ -720,17 +727,8 @@ const OPERATIONS_STATIONS = [
           { v: 'whole_plant', l: { en: 'Whole Plant', es: 'Planta entera' } },
           { v: 'mixed', l: { en: 'Mixed', es: 'Mixto' } }
         ] },
-      { k: 'trimStyle', t: 'select', req: true,
-        l: { en: 'Trim Style', es: 'Estilo de corte' },
-        opts: [
-          { v: 'hand_finish', l: { en: 'Machine trim + hand finish', es: 'Corte a máquina + acabado a mano' } },
-          { v: 'full_hand', l: { en: '100% hand trim', es: '100% a mano' } }
-        ] },
-      { k: 'pid', t: 'select', ref: 'properties', allowOther: true,
-        l: { en: 'Farm License', es: 'Licencia del rancho' } },
-      { k: 'cid', t: 'select', ref: 'customers', allowOther: true, l: { en: 'Customer ID (CID)', es: 'ID de cliente (CID)' } },
-      { k: 'startingBins', t: 'number', min: 0, step: 1, dp: 0,
-        l: { en: 'Starting # of Bins / Bags', es: 'N.º inicial de bins / bolsas' } },
+      { k: 'cid', t: 'select', ref: 'customers', allowOther: true, prefill: 'lookup',
+        l: { en: 'Customer ID (CID)', es: 'ID de cliente (CID)' } },
       { k: 'startingBuckedLb', t: 'number', req: true, min: 0, step: 0.01, prefill: 'lookup',
         l: { en: 'Total Starting Bucked Weight (lbs)', es: 'Peso desvarado inicial total (lbs)' } },
 
@@ -766,19 +764,25 @@ const OPERATIONS_STATIONS = [
 
       { k: 'smallsLb', t: 'number', min: 0, step: 0.01,
         l: { en: 'Smalls Pulled (lbs)', es: 'Smalls separados (lbs)' } },
-      { k: 'sugarTrimLb', t: 'number', min: 0, step: 0.01,
-        l: { en: 'Sugar Trim / Scissor Leaf (lbs)', es: 'Hoja azucarada / de tijera (lbs)' } },
+      { k: 'normTrimLb', t: 'number', min: 0, step: 0.01,
+        l: { en: 'Normal Trim (lbs)', es: 'Recorte normal (lbs)' } },
+      { k: 'aPlusTrimLb', t: 'number', min: 0, step: 0.01,
+        l: { en: 'A+ Trim (lbs)', es: 'Recorte A+ (lbs)' } },
       F.waste(),
       { k: 'bagCount', t: 'number', min: 0, step: 1, dp: 0,
         l: { en: 'Finished Bag Count', es: 'Conteo de bolsas terminadas' } },
-      ...totalsBlock('startingBuckedLb', ['finishedFlowerLb', 'smallsLb', 'sugarTrimLb', 'wasteLb']),
+      ...totalsBlock('startingBuckedLb', ['finishedFlowerLb', 'smallsLb', 'normTrimLb', 'aPlusTrimLb', 'sugarTrimLb', 'wasteLb']),
       F.teamLead(), F.laborHours(), F.notes(), F.photo()
     ],
+    // sugarTrimLb isn't on the form any more (Normal / A+ Trim replaced it),
+    // but older records have it, so it stays in the totals and the flow.
     flow: { lossKind: 'conserving',
             input: { field: 'startingBuckedLb', category: 'bucked_flower' },
             outputs: [
               { field: 'finishedFlowerLb', category: 'flower_a' },
               { field: 'smallsLb', category: 'smalls_b' },
+              { field: 'normTrimLb', category: 'trim' },
+              { field: 'aPlusTrimLb', category: 'trim_a_plus' },
               { field: 'sugarTrimLb', category: 'sugar_trim' },
               { field: 'wasteLb', category: 'waste' }
             ] }
@@ -1116,7 +1120,9 @@ const PREFILL_MAP = {
                        es: 'Este paquete está en espera en la bajada. Un gerente tiene que liberarlo (página Flor en tallo) antes de desvararlo.' }
                    : null) },
   machine_trim:{ from: 'buck',         map: { strain: 'strain', inputBuckedLb: 'buckedFlowerLb' } },
-  hand_trim:   { from: 'machine_trim', map: { strain: 'strain', startingBuckedLb: 'flowerALb' } }
+  // Hand Trim starts from bucked flower; `cid` only comes with a lot picked
+  // from the list (buckedLots traces it back to the intake).
+  hand_trim:   { from: 'buck',         map: { strain: 'strain', cid: 'cid', startingBuckedLb: 'buckedFlowerLb' } }
 };
 
 // Order of the pipeline, for the dashboard's stage funnel.

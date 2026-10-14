@@ -237,6 +237,34 @@ function buckablePackages(downs, bucked) {
   return out;
 }
 
+// Every lot that's been through Bucking (Hand Trim's Lot Number list),
+// newest first, one per UID (its latest submitted Bucking record), with the
+// customer ID traced back through Take Down to Wet Intake when Take Down
+// didn't carry it.
+function buckedLots(bucks, downs, intakes) {
+  const groups = takeDownGroups(downs);
+  const takeDownFor = (uid) => {
+    for (const [u, members] of groups) {
+      if (uidTailMatch(u, uid)) return members[0];
+      const part = members.find((r) => (r.releases || []).some((x) => uidTailMatch(x.uid, uid)));
+      if (part) return part;
+    }
+    return null;
+  };
+  const cidFor = (uid) => {
+    const d = takeDownFor(uid);
+    if (!d) return '';
+    if (d.cid) return d.cid;
+    const i = (intakes || []).find((x) => uidTailMatch(x.sourceUid, d.incomingUid));
+    return (i && i.cid) || '';
+  };
+  const seen = new Set();
+  return [...(bucks || [])]
+    .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || String(b.submittedAt || '').localeCompare(String(a.submittedAt || '')))
+    .filter((r) => { const u = normUid(r.sourceUid); if (!u || seen.has(u)) return false; seen.add(u); return true; })
+    .map((r) => ({ ...r, sourceUid: normUid(r.sourceUid), cid: r.cid || cidFor(r.sourceUid) }));
+}
+
 // The bucking queue in order: packages in the manager's saved order first,
 // then any not in it yet, oldest Take Down first.
 function orderBuckQueue(pkgs, queue) {

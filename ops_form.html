@@ -188,6 +188,16 @@
     .banner.error{display:block;background:rgba(239,83,80,.12);color:var(--red);border:1px solid var(--red)}
     .match{font-size:.78rem;color:var(--green);margin-top:.45rem;font-family:'DM Mono',monospace;display:none}
     .field.invalid input,.field.invalid select,.field.invalid textarea{border-color:var(--red)}
+
+    /* "Other" popup (Hand Trim's lot): strain + package UID. */
+    .pop-back{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}
+    .pop{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 18px;width:100%;max-width:440px}
+    .pop h3{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:.04em;font-weight:400;margin-bottom:14px}
+    .pop-msg{font-size:.8rem;color:var(--red);margin-top:10px;min-height:1em}
+    .pop-btns{display:flex;gap:10px;margin-top:14px}
+    .pop-btns button{flex:1;min-height:52px;border-radius:10px;font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer}
+    .pop-cancel{background:transparent;border:1px solid var(--border);color:var(--subtext)}
+    .pop-ok{background:var(--accent);border:none;color:#000}
   </style>
 </head>
 <body>
@@ -294,8 +304,13 @@
     choose:    { en: 'Choose the package…', es: 'Elija el paquete…' },
     none:      { en: 'Nothing drying in this room', es: 'Nada secando en este cuarto' },
     noneBuck:  { en: 'Nothing ready to buck — check On hold', es: 'Nada listo para desvarar — revise En espera' },
-    typed:     { en: 'Not listed — type the UID', es: 'No aparece — escriba el UID' }
+    typed:     { en: 'Not listed — type the UID', es: 'No aparece — escriba el UID' },
+    loadingBucked: { en: 'Loading bucked flower…', es: 'Cargando flor desvarada…' },
+    noneBucked: { en: 'No bucked flower yet — pick Other', es: 'Aún no hay flor desvarada — elija Otro' },
+    chooseLot: { en: 'Choose the lot…', es: 'Elija el lote…' },
+    otherLot:  { en: 'Other — not on the list', es: 'Otro — no aparece' }
   };
+  const pkLoading = (f) => t(f.picker.list === 'buckable' ? PK.loadingBuck : f.picker.list === 'bucked' ? PK.loadingBucked : PK.loading);
   const reference = await loadReference();
   const form = document.getElementById('form');
   const values = {};          // live form state, keyed by field key
@@ -356,7 +371,7 @@
     } else if (f.t === 'uid' && f.picker) {
       // Picked from a list (fillPicker below); the text box only shows for
       // "Not listed — type the UID".
-      control = `<select id="pk_${f.k}"><option value="">${escapeHtml(t(f.picker.list === 'buckable' ? PK.loadingBuck : PK.loading))}</option></select>` +
+      control = `<select id="pk_${f.k}"><option value="">${escapeHtml(pkLoading(f))}</option></select>` +
                 (f.pickedLabel ? `<div id="pv_${f.k}" style="display:none;margin-top:10px"><label class="lbl">${escapeHtml(t(f.pickedLabel))}</label>` +
                   `<input type="text" class="uid" readonly tabindex="-1" style="opacity:.85"></div>` : '') +
                 `<input type="text" id="f_${f.k}" class="uid" inputmode="latin" autocapitalize="characters" placeholder="1A40603…  ${t(UI.other) === 'Otro…' ? 'o' : 'or'} 1008" style="display:none;margin-top:10px">` +
@@ -891,13 +906,23 @@
   //   Bucking's package (`list: 'buckable'`) — what's ready to buck
   //     (buckablePackages in ops_common.js), "Strain || abbreviation || last
   //     4", less any package another bucking page already has open.
+  //   Hand Trim's lot (`list: 'bucked'`) — every lot that's been bucked
+  //     (buckedLots in ops_common.js), newest first, same labels as Bucking.
   // Picking one fills the UID and its upstream details (strain, …).
+  // `otherPopup`: "Other" opens a popup for the strain and package UID
+  // instead of just showing the UID box.
   const pickerFields = station.fields.filter((f) => f.t === 'uid' && f.picker);
   const pickLists = {};   // field key -> the records its options point at
   const typing = {};      // field key -> true while "Not listed" is chosen
   const buckPick = pickerFields.some((f) => f.picker.list === 'buckable');
+  const buckedPick = pickerFields.some((f) => f.picker.list === 'bucked');
   let pickPool = [], pickReady = false, queueItems = null;
   const pickLoaded = pickerFields.length ? (async () => {
+    if (buckedPick) {
+      const [bucks, downs, intakes] = await Promise.all([loadSubmitted('buck'), loadSubmitted('dry_check'), loadSubmitted('intake_wet')]);
+      pickPool = buckedLots(bucks || [], downs || [], intakes || []);
+      return;
+    }
     if (buckPick) {
       // In the bucking queue's order (On-Stem Flower page).
       const { items } = await loadBuckingQueue();
@@ -913,7 +938,8 @@
     const sel = document.getElementById(`pk_${f.k}`);
     const inp = document.getElementById(`f_${f.k}`);
     if (!sel) return;
-    const buck = f.picker.list === 'buckable';
+    const lots = f.picker.list === 'bucked';
+    const buck = f.picker.list === 'buckable' || lots;
     const room = f.picker.room ? values[f.picker.room] : null;
     const list = buck ? pickPool.slice()
       : (room ? pickPool.filter((i) => inDryRoom(i.dryRoom, room)) : [])
@@ -925,13 +951,13 @@
       : (i) => `${i.strain || '—'} - ${last4(i)}`;
     const dup = (i) => list.filter((x) => base(x) === base(i)).length > 1;
     const shortDate = (d) => d ? new Date(`${d}T12:00:00`).toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric' }) : '';
-    const weight = (i) => buck ? i.unbuckedLb : i.totalWetLb;
+    const weight = (i) => lots ? i.buckedFlowerLb : buck ? i.unbuckedLb : i.totalWetLb;
     const label = (i) => base(i) + (dup(i) ? ` (${[shortDate(i.date), weight(i) ? fmtNum(weight(i), 0) + ' lb' : ''].filter(Boolean).join(', ')})` : '');
-    const first = !pickReady ? t(buck ? PK.loadingBuck : PK.loading) : (f.picker.room && !room) ? t(PK.roomFirst)
-      : list.length ? t(PK.choose) : t(buck ? PK.noneBuck : PK.none);
+    const first = !pickReady ? pkLoading(f) : (f.picker.room && !room) ? t(PK.roomFirst)
+      : list.length ? t(lots ? PK.chooseLot : PK.choose) : t(lots ? PK.noneBucked : buck ? PK.noneBuck : PK.none);
     sel.innerHTML = `<option value="">${escapeHtml(first)}</option>` +
       list.map((i, ix) => `<option value="${ix}">${escapeHtml(label(i))}</option>`).join('') +
-      `<option value="__type__">${escapeHtml(t(PK.typed))}</option>`;
+      `<option value="__type__">${escapeHtml(t(f.picker.otherPopup ? PK.otherLot : PK.typed))}</option>`;
     const cur = values[f.k];
     const ix = cur ? list.findIndex((i) => normUid(i.sourceUid) === normUid(cur)) : -1;
     if (ix >= 0 && !typing[f.k]) sel.value = String(ix);
@@ -966,7 +992,27 @@
     const sel = document.getElementById(`pk_${f.k}`);
     const inp = document.getElementById(`f_${f.k}`);
     const setUid = (uid) => { inp.value = uid; values[f.k] = uid; };
+    let prevSel = sel.value;
+    sel.addEventListener('focus', () => { prevSel = sel.value; });
     sel.addEventListener('change', () => {
+      if (sel.value === '__type__' && f.picker.otherPopup) {
+        const back = prevSel;
+        openOtherPopup(f, ({ strain, uid }) => {
+          clearPrefill(f.k);
+          typing[f.k] = true;
+          inp.style.display = 'block';
+          setUid(uid);
+          touched.add(f.k);
+          const sf = station.fields.find((x) => x.k === 'strain');
+          if (sf) { setFieldValue(sf, strain); touched.add('strain'); }
+          showPicked(f);
+          prevSel = '__type__';
+          recompute();
+          markDirty();
+        }, () => { sel.value = back; });
+        return;
+      }
+      prevSel = sel.value;
       if (sel.value === '__type__') {
         typing[f.k] = true;
         inp.style.display = 'block';
@@ -1001,6 +1047,48 @@
     const other = document.getElementById(`o_${f.picker.room}`);
     if (other) other.addEventListener('change', onRoom);
   });
+
+  // The "Other" popup (`otherPopup`): the strain and the package UID for
+  // material that isn't on the list. onSave gets { strain, uid }.
+  function openOtherPopup(f, onSave, onCancel) {
+    const OP = {
+      title:  { en: 'Other bucked flower', es: 'Otra flor desvarada' },
+      strain: { en: 'Strain', es: 'Variedad (cepa)' },
+      uid:    { en: 'Package UID', es: 'UID del paquete' },
+      need:   { en: 'Enter the strain and the package UID.', es: 'Escriba la variedad y el UID del paquete.' },
+      cancel: { en: 'Cancel', es: 'Cancelar' },
+      ok:     { en: 'Use this', es: 'Usar' }
+    };
+    const strains = refOptions(reference, 'strains');
+    const back = document.createElement('div');
+    back.className = 'pop-back';
+    back.innerHTML = `<div class="pop" role="dialog" aria-modal="true">` +
+      `<h3>${escapeHtml(t(OP.title))}</h3>` +
+      `<label class="lbl" for="pop_strain">${escapeHtml(t(OP.strain))}<span class="req">*</span></label>` +
+      `<input type="text" id="pop_strain" list="pop_strains" autocomplete="off">` +
+      `<datalist id="pop_strains">${strains.map((o) => `<option value="${escapeAttr(o.label)}">`).join('')}</datalist>` +
+      `<label class="lbl" for="pop_uid" style="margin-top:16px">${escapeHtml(t(OP.uid))}<span class="req">*</span></label>` +
+      `<input type="text" id="pop_uid" class="uid" inputmode="latin" autocapitalize="characters" placeholder="1A40603…">` +
+      `<div class="pop-msg"></div>` +
+      `<div class="pop-btns"><button type="button" class="pop-cancel">${escapeHtml(t(OP.cancel))}</button>` +
+      `<button type="button" class="pop-ok">${escapeHtml(t(OP.ok))}</button></div></div>`;
+    document.body.appendChild(back);
+    const sIn = back.querySelector('#pop_strain'), uIn = back.querySelector('#pop_uid');
+    if (values.strain && typing[f.k]) sIn.value = values.strain;
+    if (values[f.k] && typing[f.k]) uIn.value = values[f.k];
+    sIn.focus();
+    const close = () => back.remove();
+    back.querySelector('.pop-cancel').addEventListener('click', () => { close(); onCancel(); });
+    back.querySelector('.pop-ok').addEventListener('click', () => {
+      const typed = sIn.value.trim();
+      const uid = uIn.value.trim().toUpperCase();
+      if (!typed || !uid) { back.querySelector('.pop-msg').textContent = t(OP.need); return; }
+      // A strain typed the way the library spells it is stored as that entry.
+      const hit = strains.find((o) => o.label.toLowerCase() === typed.toLowerCase() || String(o.v).toLowerCase() === typed.toLowerCase());
+      close();
+      onSave({ strain: hit ? hit.v : typed, uid });
+    });
+  }
 
   // ── Hydrate from a saved draft (resume, possibly on a different device) ────
   function setFieldValue(f, val) {

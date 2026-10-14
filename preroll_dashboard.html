@@ -94,6 +94,16 @@
   .q-qty{font-family:'DM Mono',monospace;font-size:1rem;white-space:nowrap;text-align:right;flex:0 0 auto}
   .q-qty .k{display:block;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
   .q-qty .made{display:block;font-size:.68rem;color:var(--blue)}
+  .q-qty .pr{display:block;font-size:.68rem;color:var(--subtext)}
+  .calc{font-family:'DM Mono',monospace;font-size:.8rem;color:var(--purple);margin:-4px 0 12px}
+  .calc .none{color:var(--gold)}
+  .p-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+  .p-row:last-of-type{border-bottom:none}
+  .p-main{flex:1;min-width:0}
+  .p-name{font-weight:600}
+  .p-sub{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--subtext)}
+  .p-sub .none{color:var(--gold)}
+  .p-row.off{opacity:.5}
   .q-move{display:flex;gap:6px;flex:0 0 auto}
   .q-move button{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;min-width:44px;min-height:44px;font-size:1rem;cursor:pointer;font-family:'DM Mono',monospace}
   .q-move button:hover:not(:disabled){border-color:var(--purple);color:var(--purple)}
@@ -147,7 +157,10 @@
         <h2 class="sec" id="q-title"></h2>
         <div class="sec-hint" id="q-hint"></div>
       </div>
-      <button class="btn btn-purple" id="q-add" onclick="openItemEditor(null)"></button>
+      <div style="display:flex;gap:8px">
+        <button class="btn" id="p-open" onclick="openProducts()"></button>
+        <button class="btn btn-purple" id="q-add" onclick="openItemEditor(null)"></button>
+      </div>
     </div>
     <div id="queue"></div>
   </div>
@@ -277,7 +290,35 @@ const L = {
   i_new_sub: { en: 'A batch that isn’t on the Production Requests Sheet. It goes to the bottom of the queue.', es: 'Un lote que no está en la hoja de solicitudes de producción. Va al final de la fila.' },
   i_brand: { en: 'Brand', es: 'Marca' },
   i_brand_ph: { en: 'Pick or type a brand', es: 'Elija o escriba una marca' },
-  i_qty: { en: 'Quantity (pre-rolls)', es: 'Cantidad (prerolls)' },
+  i_qty: { en: 'Quantity (packs / units)', es: 'Cantidad (paquetes / unidades)' },
+  i_product: { en: 'Product', es: 'Producto' },
+  i_any_brand: { en: 'Any brand', es: 'Cualquier marca' },
+  p_none: { en: 'No product — quantity is pre-rolls', es: 'Sin producto — la cantidad es en prerolls' },
+  units: { en: 'units', es: 'unidades' },
+  each: { en: 'each', es: 'c/u' },
+  calc_total: { en: '{qty} × {pack} = {n} pre-rolls', es: '{qty} × {pack} = {n} prerolls' },
+  calc_flower: { en: '{g} of flower', es: '{g} de flor' },
+  no_size: { en: 'pre-roll size not set', es: 'tamaño de preroll sin fijar' },
+  single: { en: 'single', es: 'individual' },
+  pack_n: { en: '{n}-pack', es: 'paquete de {n}' },
+  p_btn: { en: 'Products', es: 'Productos' },
+  p_title: { en: 'Pre-roll products', es: 'Productos de prerolls' },
+  p_sub: { en: 'What a request can be for. Quantities are entered in packs (or singles); the dashboard multiplies by the pre-rolls per pack.',
+           es: 'Para qué puede ser una solicitud. Las cantidades se escriben en paquetes (o individuales); el tablero multiplica por los prerolls por paquete.' },
+  p_new: { en: '+ New product', es: '+ Nuevo producto' },
+  p_edit_title: { en: 'Edit product', es: 'Editar producto' },
+  p_new_title: { en: 'New pre-roll product', es: 'Nuevo producto de prerolls' },
+  p_bsku: { en: 'BSKU / code', es: 'BSKU / código' },
+  p_bsku_hint: { en: 'Like the Sheet’s BSKU, e.g. SRF021004', es: 'Como el BSKU de la hoja, p. ej. SRF021004' },
+  p_name: { en: 'Name', es: 'Nombre' },
+  p_pack: { en: 'Pre-rolls per pack', es: 'Prerolls por paquete' },
+  p_size: { en: 'Pre-roll size (grams)', es: 'Tamaño del preroll (gramos)' },
+  p_active: { en: 'Active (shows in the pickers)', es: 'Activo (aparece en las listas)' },
+  p_inactive: { en: 'inactive', es: 'inactivo' },
+  p_back: { en: '← Products', es: '← Productos' },
+  p_close: { en: 'Close', es: 'Cerrar' },
+  p_err: { en: 'Fill in the code, brand, name and pre-rolls per pack.', es: 'Llene el código, la marca, el nombre y los prerolls por paquete.' },
+  p_none_yet: { en: 'No products yet — has supabase/schema.sql been re-run?', es: 'Aún no hay productos — ¿se volvió a ejecutar supabase/schema.sql?' },
   i_save: { en: 'Save', es: 'Guardar' },
   i_add: { en: 'Add to queue', es: 'Agregar a la fila' },
   i_remove: { en: 'Remove from queue', es: 'Quitar de la fila' },
@@ -308,6 +349,22 @@ function typePill(type) {
   return type ? `<span class="pill ${esc(k)}">${esc(t(TYPE_LABELS[k]) || type)}</span>` : '';
 }
 const locale = () => (getLang() === 'es' ? 'es-US' : 'en-US');
+const fmtN = (n) => Number(n || 0).toLocaleString(locale());
+
+// ── Products ─────────────────────────────────────────────────────────────
+// Quantities are in units (packs, or singles); a product turns them into
+// pre-rolls: units × pack_size. No product → the quantity is pre-rolls.
+const productFor = (bsku) => products[String(bsku || '').trim().toUpperCase()] || null;
+const activeProducts = () => Object.values(products).filter((p) => p.active)
+  .sort((a, b) => a.brand.localeCompare(b.brand) || a.pack_size - b.pack_size || a.name.localeCompare(b.name));
+const gTxt = (g) => `${Number(g).toLocaleString(locale(), { maximumFractionDigits: 2 })} g`;
+const packTxt = (p) => (p.pack_size === 1 ? t(L.single) : t(L.pack_n).replace('{n}', p.pack_size));
+const prerollsFor = (units, prod) => (prod ? units * prod.pack_size : units);
+// "28-pack · 0.5 g each": what one unit of a product is.
+function prodSpec(p) {
+  return `${packTxt(p)} · ${p.preroll_size_g ? `${gTxt(p.preroll_size_g)} ${t(L.each)}` : `<span class="none">${t(L.no_size)}</span>`}`;
+}
+const productRow = (p) => ({ ...p, pack_size: num(p.pack_size), preroll_size_g: p.preroll_size_g == null ? null : num(p.preroll_size_g) });
 
 const currentUser = (sessionStorage.getItem('2cw_user_name') || '').trim();
 if (!sessionStorage.getItem('2cw_pin')) location.replace('/index.html');
@@ -318,6 +375,7 @@ if (typeof SUPABASE_URL !== 'undefined' && SUPABASE_URL) client = supabase.creat
 let requests = [];      // from the Sheet, pre-roll crew only
 let plans = {};         // pr_num -> preroll_plans row
 let batches = {};       // pr_num -> [operations_forms rows]
+let products = {};      // bsku -> preroll_products row
 let manual = [];        // preroll_queue_items rows still in the queue
 let queueOrder = [];    // refs (PR# / PQ-#) in the saved order
 let queueErr = '';
@@ -328,6 +386,7 @@ let people = [];
 let filter = 'open';
 let editingPr = null;
 let editingItem = null; // preroll_queue_items row, or {} for a new one
+let editingProducts = false;
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const todayStr = () => new Date().toISOString().slice(0, 10);
@@ -417,6 +476,13 @@ async function loadReferenceLists() {
   } catch { return { strains: [], brands: Object.values(BRAND_CODES) }; }
 }
 
+async function loadProducts() {
+  if (!client) return {};
+  const { data, error } = await client.from('preroll_products').select('*');
+  if (error) { console.error('loadProducts', error); return products; }
+  return Object.fromEntries((data || []).map((p) => [p.bsku.toUpperCase(), productRow(p)]));
+}
+
 // Hand-added queue items still in the queue, and the saved order. A failure
 // here shows in the queue box only — the request list below still works.
 async function loadQueue() {
@@ -443,8 +509,8 @@ async function saveQueueOrder(order) {
 async function refresh() {
   // The queue's hand-added items don't need the Sheet, so they load (and
   // show) even when the Sheet or the plans can't be read.
-  const [b, q] = await Promise.all([loadBatches(), loadQueue()]);
-  batches = b; manual = q.manual; queueOrder = q.order; queueErr = q.err;
+  const [b, q, pr] = await Promise.all([loadBatches(), loadQueue(), loadProducts()]);
+  batches = b; products = pr; manual = q.manual; queueOrder = q.order; queueErr = q.err;
   try {
     const [r, p] = await Promise.all([loadRequests(), loadPlans()]);
     requests = r; plans = p;
@@ -477,10 +543,13 @@ function view(r) {
   // has already passed and it isn't done.
   const late = open && !!r.readyDate &&
     ((plan.est_completion && plan.est_completion > r.readyDate) || r.readyDate < todayStr());
-  // Edit plan can override the Sheet's Batch Size and Strain Type.
+  // Edit plan can override the Sheet's product, Batch Size (units) and
+  // Strain Type. target = the pre-rolls to make.
   const batchSize = num(plan.quantity) > 0 ? num(plan.quantity) : r.batchSize;
   const type = plan.strain_type || r.type;
-  return { ...r, batchSize, type, plan, strain, stage, open, late, made, draft, submitted };
+  const prod = productFor(plan.product_bsku || r.bsku);
+  const target = prerollsFor(batchSize, prod);
+  return { ...r, batchSize, type, prod, target, plan, strain, stage, open, late, made, draft, submitted };
 }
 
 function passes(v, q) {
@@ -507,15 +576,17 @@ function brandOf(bsku, product) {
 function queueItems() {
   const fromRequests = requests.map(view).filter((v) => v.open && v.stage !== 'on_hold').map((v) => ({
     ref: v.pr, kind: 'pr', brand: brandOf(v.bsku, v.product), product: v.product || v.bsku,
-    type: v.type, strain: v.strain, sourceUid: v.plan.source_uid || '', qty: v.batchSize, made: v.made,
+    type: v.type, strain: v.strain, sourceUid: v.plan.source_uid || '', qty: v.batchSize, prod: v.prod, target: v.target, made: v.made,
     draft: v.draft, late: v.late, readyDate: v.readyDate, sortDate: v.readyDate || '9999'
   }));
   const fromManual = manual.map((m) => {
     const ref = 'PQ-' + m.queue_no;
     const runs = batches[ref] || [];
+    const prod = productFor(m.product_bsku);
     return {
-      ref, kind: 'manual', row: m, brand: m.brand || '', product: '', type: m.strain_type || '', strain: m.strain || '',
-      sourceUid: m.source_uid || '', qty: num(m.quantity),
+      ref, kind: 'manual', row: m, brand: m.brand || (prod && prod.brand) || '', product: prod ? prod.name : '',
+      type: m.strain_type || '', strain: m.strain || '',
+      sourceUid: m.source_uid || '', qty: num(m.quantity), prod, target: prerollsFor(num(m.quantity), prod),
       made: runs.reduce((a, b) => a + num(b.fields && b.fields.totalPrerolls), 0),
       draft: runs.find((b) => b.status === 'draft'), done: runs.some((b) => b.status === 'submitted'),
       notes: m.notes || '', sortDate: String(m.created_at || '').slice(0, 10) || '9999'
@@ -538,7 +609,8 @@ function renderQueue() {
       const off = savingOrder || !client;
       const startHref = '/ops_form.html?' + new URLSearchParams({
         station: 'preroll_production', set_prNum: x.ref, set_batchId: x.ref,
-        ...(x.strain ? { set_strain: x.strain } : {}), ...(x.sourceUid ? { set_sourceUid: x.sourceUid } : {})
+        ...(x.strain ? { set_strain: x.strain } : {}), ...(x.sourceUid ? { set_sourceUid: x.sourceUid } : {}),
+        ...(x.prod && x.prod.preroll_size_g ? { set_unitSizeG: x.prod.preroll_size_g } : {})
       }).toString();
       const go = x.draft
         ? `<a class="btn btn-purple" href="/ops_form.html?station=preroll_production&draft=${esc(x.draft.id)}">${t(L.open_batch)}</a>`
@@ -557,8 +629,9 @@ function renderQueue() {
             ${x.sourceUid ? esc(x.sourceUid) : `<span class="none">${t(L.q_no_uid)}</span>`}
             ${x.readyDate ? ` · ${t(L.ready_by_lc)} ${esc(fmtDate(x.readyDate))}` : ''}${x.notes ? ' · ' + esc(x.notes) : ''}</div>
         </div>
-        <div class="q-qty"><span class="k">${t(L.qty)}</span>${x.qty.toLocaleString(locale())}
-          ${x.made ? `<span class="made">${t(L.made)} ${x.made.toLocaleString(locale())}</span>` : ''}</div>
+        <div class="q-qty"><span class="k">${t(L.qty)}</span>${fmtN(x.qty)}${x.prod && x.prod.pack_size > 1 ? ` × ${x.prod.pack_size}` : ''}
+          <span class="pr">${x.prod ? `${fmtN(x.target)} ${t(L.prerolls)}${x.prod.preroll_size_g ? ' · ' + gTxt(x.prod.preroll_size_g) : ''}` : t(L.prerolls)}</span>
+          ${x.made ? `<span class="made">${t(L.made)} ${fmtN(x.made)}</span>` : ''}</div>
         <div class="q-move">
           <button type="button" data-move="top" data-i="${i}" ${i === 0 || off ? 'disabled' : ''}>${t(L.q_top)}</button>
           <button type="button" data-move="up" data-i="${i}" aria-label="${esc(t(L.q_up))}" ${i === 0 || off ? 'disabled' : ''}>▲</button>
@@ -600,7 +673,7 @@ function render() {
   const open = all.filter((v) => v.open);
   const tiles = [
     { k: t(L.t_open), v: open.length, f: 'open' },
-    { k: t(L.t_qty), v: open.reduce((a, v) => a + v.batchSize, 0).toLocaleString(locale()), f: 'open' },
+    { k: t(L.t_qty), v: fmtN(open.reduce((a, v) => a + v.target, 0)), f: 'open' },
     { k: t(L.t_needs), v: open.filter((v) => ['needs_strain', 'needs_schedule'].includes(v.stage)).length, f: 'needs', cls: 'warn' },
     { k: t(L.t_prod), v: open.filter((v) => v.stage === 'in_production').length, f: 'in_production', cls: 'go' },
     { k: t(L.t_late), v: open.filter((v) => v.late).length, f: 'late', cls: 'bad' }
@@ -640,10 +713,11 @@ function render() {
 
 function cardHtml(v) {
   const p = v.plan;
-  const pctMade = v.batchSize > 0 ? Math.min(100, Math.round(v.made / v.batchSize * 100)) : 0;
+  const pctMade = v.target > 0 ? Math.min(100, Math.round(v.made / v.target * 100)) : 0;
   const startHref = '/ops_form.html?' + new URLSearchParams({
     station: 'preroll_production', set_prNum: v.pr, set_batchId: v.pr,
-    ...(v.strain ? { set_strain: v.strain } : {}), ...(p.source_uid ? { set_sourceUid: p.source_uid } : {})
+    ...(v.strain ? { set_strain: v.strain } : {}), ...(p.source_uid ? { set_sourceUid: p.source_uid } : {}),
+    ...(v.prod && v.prod.preroll_size_g ? { set_unitSizeG: v.prod.preroll_size_g } : {})
   }).toString();
   const sched = p.est_start || p.est_completion
     ? `${p.est_start ? fmtDate(p.est_start) : '?'} → ${p.est_completion ? fmtDate(p.est_completion) : '?'}`
@@ -652,7 +726,7 @@ function cardHtml(v) {
   <div class="card ${v.late ? 'late' : ''} ${v.stage === 'on_hold' ? 'hold' : ''}">
     <div class="c-top">
       <span class="pr">${esc(v.pr)}</span>
-      <span class="prod">${esc(v.product || v.bsku)}</span>
+      <span class="prod">${esc(p.product_bsku && v.prod ? v.prod.name : v.product || v.bsku)}</span>
       ${typePill(v.type)}
       <span class="pill stage-${v.stage}">${t(STAGE_LABELS[v.stage])}</span>
       ${v.late ? `<span class="pill late">${t(L.late)}</span>` : ''}
@@ -663,14 +737,15 @@ function cardHtml(v) {
         : v.stage !== 'done' ? `<a class="btn btn-purple" href="${esc(startHref)}">${t(L.start_batch)}</a>` : ''}
     </div>
     <div class="c-meta">
-      <span>${t(L.qty)} <b>${v.batchSize.toLocaleString(locale())}</b></span>
+      <span>${t(L.qty)} <b>${fmtN(v.batchSize)}</b>${v.prod ? ` × ${v.prod.pack_size} = <b>${fmtN(v.target)}</b> ${t(L.prerolls)}` : ` ${t(L.prerolls)}`}</span>
+      ${v.prod ? `<span>${prodSpec(v.prod)}</span>` : ''}
       <span>${t(L.strain)} ${v.strain ? `<b>${esc(v.strain)}</b>` : `<span class="none">${t(L.not_assigned)}</span>`}</span>
       <span>${t(L.plan_lbl)} ${sched}</span>
       <span>${t(L.ready_by)} <b>${esc(fmtDate(v.readyDate) || '—')}</b></span>
       ${v.shipDate ? `<span>${t(L.ship)} <b>${esc(fmtDate(v.shipDate))}</b></span>` : ''}
       ${p.assigned_to ? `<span>${t(L.lead)} <b>${esc(p.assigned_to)}</b></span>` : ''}
-      ${v.made ? `<span>${t(L.made)} <b>${v.made.toLocaleString(locale())}</b> / ${v.batchSize.toLocaleString(locale())}</span>` : ''}
-      <span>${esc(v.bsku)}</span>
+      ${v.made ? `<span>${t(L.made)} <b>${fmtN(v.made)}</b> / ${fmtN(v.target)}</span>` : ''}
+      <span>${esc(p.product_bsku || v.bsku)}</span>
     </div>
     ${v.made || v.stage === 'in_production' ? `<div class="progress ${v.stage === 'done' ? 'done' : ''}"><i style="width:${pctMade}%"></i></div>` : ''}
     ${p.notes ? `<div class="c-notes">${esc(p.notes)}</div>` : ''}
@@ -685,6 +760,132 @@ function setFilter(f) {
 document.querySelectorAll('#bar .chip').forEach((c) => c.addEventListener('click', () => setFilter(c.dataset.f)));
 document.getElementById('search').addEventListener('input', render);
 
+// ── Brand → product picker (Edit plan, Add to queue) ─────────────────────
+// Brand narrows the product list; the product says how many pre-rolls are
+// in one unit and how big each is. updateCalc shows the math live.
+function productOptions(brand, sel) {
+  const cur = productFor(sel);
+  const list = activeProducts().filter((p) => !brand || p.brand === brand);
+  if (cur && !list.includes(cur)) list.unshift(cur);
+  return `<option value="">${t(L.p_none)}</option>` + list.map((p) =>
+    `<option value="${esc(p.bsku)}" ${cur && p.bsku === cur.bsku ? 'selected' : ''}>${esc(p.name)} — ${p.pack_size} × ${p.preroll_size_g ? gTxt(p.preroll_size_g) : '?'}</option>`).join('');
+}
+function productPicker(prefix, bsku, brand) {
+  const cur = productFor(bsku);
+  const b = cur ? cur.brand : (brand || '');
+  const brandList = [...new Set(activeProducts().map((p) => p.brand).concat(b ? [b] : []))].sort((x, y) => x.localeCompare(y));
+  return `<div class="row2">
+      <div class="fld"><label class="lbl" for="${prefix}-brand">${t(L.i_brand)}</label>
+        <select id="${prefix}-brand" onchange="pickBrand('${prefix}')"><option value="">${t(L.i_any_brand)}</option>
+          ${brandList.map((x) => `<option value="${esc(x)}" ${x === b ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></div>
+      <div class="fld"><label class="lbl" for="${prefix}-prod">${t(L.i_product)}</label>
+        <select id="${prefix}-prod" onchange="updateCalc('${prefix}')">${productOptions(b, cur ? cur.bsku : '')}</select></div>
+    </div>`;
+}
+function pickBrand(prefix) {
+  const brand = document.getElementById(prefix + '-brand').value;
+  const sel = document.getElementById(prefix + '-prod');
+  const cur = productFor(sel.value);
+  // Keep the product if it's this brand's; otherwise the brand's first one.
+  const first = activeProducts().find((p) => p.brand === brand);
+  sel.innerHTML = productOptions(brand, cur && (!brand || cur.brand === brand) ? cur.bsku : first ? first.bsku : '');
+  updateCalc(prefix);
+}
+function updateCalc(prefix) {
+  const out = document.getElementById(prefix + '-calc');
+  if (!out) return;
+  const units = parseInt(document.getElementById(prefix + '-qty').value, 10) || 0;
+  const prod = productFor(document.getElementById(prefix + '-prod').value);
+  if (!prod) { out.innerHTML = units ? `= ${fmtN(units)} ${t(L.prerolls)}` : ''; return; }
+  const n = units * prod.pack_size;
+  out.innerHTML = t(L.calc_total).replace('{qty}', fmtN(units)).replace('{pack}', prod.pack_size).replace('{n}', `<b>${fmtN(n)}</b>`) +
+    ` · ${prod.preroll_size_g ? `${gTxt(prod.preroll_size_g)} ${t(L.each)} · ${t(L.calc_flower).replace('{g}', gTxt(n * prod.preroll_size_g))}` : `<span class="none">${t(L.no_size)}</span>`}`;
+}
+
+// ── Products manager ─────────────────────────────────────────────────────
+// preroll_products: add a product, or change its pack / pre-roll size.
+// A product is never deleted, only made inactive (old requests still use it).
+function openProducts() {
+  if (!client) { alert(t(L.err_nosupa)); return; }
+  editingProducts = true;
+  const all = Object.values(products).sort((a, b) => (b.active - a.active) || a.brand.localeCompare(b.brand) || a.pack_size - b.pack_size);
+  document.getElementById('modal').innerHTML = `
+    <h2>${t(L.p_title)}</h2>
+    <div class="m-sub">${t(L.p_sub)}</div>
+    ${all.length ? all.map((p) => `<div class="p-row ${p.active ? '' : 'off'}">
+        <div class="p-main"><div class="p-name">${esc(p.name)}</div>
+          <div class="p-sub">${esc(p.brand)} · ${esc(p.bsku)} · ${prodSpec(p)}${p.active ? '' : ' · ' + t(L.p_inactive)}</div></div>
+        <button class="btn" onclick="editProduct('${esc(p.bsku)}')">${t(L.q_edit)}</button>
+      </div>`).join('') : `<div class="empty">${t(L.p_none_yet)}</div>`}
+    <div class="m-actions">
+      <button class="btn" style="margin-right:auto" onclick="editProduct(null)">${t(L.p_new)}</button>
+      <button class="btn btn-purple" onclick="closeEditor()">${t(L.p_close)}</button>
+    </div>`;
+  document.getElementById('backdrop').style.display = 'block';
+}
+
+function editProduct(bsku) {
+  const p = bsku ? products[bsku] : null;
+  const brandList = [...new Set(brands.concat(Object.values(products).map((x) => x.brand)))].sort((a, b) => a.localeCompare(b));
+  document.getElementById('modal').innerHTML = `
+    <h2>${t(p ? L.p_edit_title : L.p_new_title)}</h2>
+    <div class="m-sub"><a href="#" onclick="openProducts();return false">${t(L.p_back)}</a></div>
+    <div class="row2">
+      <div class="fld"><label class="lbl" for="pp-bsku">${t(L.p_bsku)}</label>
+        <input id="pp-bsku" value="${esc(p ? p.bsku : '')}" ${p ? 'disabled' : ''} autocapitalize="characters" placeholder="${esc(t(L.p_bsku_hint))}"/></div>
+      <div class="fld"><label class="lbl" for="pp-brand">${t(L.i_brand)}</label>
+        <input id="pp-brand" list="pp-brand-list" value="${esc(p ? p.brand : '')}" placeholder="${esc(t(L.i_brand_ph))}"/>
+        <datalist id="pp-brand-list">${brandList.map((b) => `<option value="${esc(b)}">`).join('')}</datalist></div>
+    </div>
+    <div class="fld"><label class="lbl" for="pp-name">${t(L.p_name)}</label><input id="pp-name" value="${esc(p ? p.name : '')}"/></div>
+    <div class="row2">
+      <div class="fld"><label class="lbl" for="pp-pack">${t(L.p_pack)}</label>
+        <input id="pp-pack" type="number" min="1" step="1" inputmode="numeric" value="${esc(p ? p.pack_size : '')}"/></div>
+      <div class="fld"><label class="lbl" for="pp-size">${t(L.p_size)}</label>
+        <input id="pp-size" type="number" min="0" step="0.05" inputmode="decimal" list="pp-size-list" value="${esc(p && p.preroll_size_g != null ? p.preroll_size_g : '')}"/>
+        <datalist id="pp-size-list"><option value="0.5"><option value="1"></datalist></div>
+    </div>
+    <label class="check"><input type="checkbox" id="pp-active" ${!p || p.active ? 'checked' : ''}/> ${t(L.p_active)}</label>
+    <div class="m-err" id="pp-err"></div>
+    <div class="m-actions">
+      <button class="btn" onclick="openProducts()">${t(L.cancel)}</button>
+      <button class="btn btn-purple" id="pp-save" onclick="saveProduct(${p ? `'${esc(p.bsku)}'` : 'null'})">${t(L.i_save)}</button>
+    </div>`;
+  setTimeout(() => document.getElementById(p ? 'pp-name' : 'pp-bsku').focus(), 30);
+}
+
+async function saveProduct(bsku) {
+  const val = (id) => document.getElementById(id).value.trim();
+  const err = document.getElementById('pp-err');
+  const size = val('pp-size');
+  const row = {
+    bsku: bsku || val('pp-bsku').toUpperCase(),
+    brand: val('pp-brand'),
+    name: val('pp-name'),
+    pack_size: parseInt(val('pp-pack'), 10),
+    preroll_size_g: size === '' ? null : num(size),
+    active: document.getElementById('pp-active').checked,
+    updated_by: currentUser || null
+  };
+  if (!row.bsku || !row.brand || !row.name || !(row.pack_size > 0) || (row.preroll_size_g != null && !(row.preroll_size_g > 0))) {
+    err.textContent = t(L.p_err); err.style.display = 'block'; return;
+  }
+  const btn = document.getElementById('pp-save');
+  btn.disabled = true; btn.textContent = t(L.saving);
+  const q = bsku
+    ? client.from('preroll_products').update(row).eq('bsku', bsku)
+    : client.from('preroll_products').insert(row);
+  const { data, error } = await q.select().single();
+  if (error) {
+    err.textContent = `${t(L.err_save)} ${error.message}`; err.style.display = 'block';
+    btn.disabled = false; btn.textContent = t(L.i_save);
+    return;
+  }
+  products[data.bsku.toUpperCase()] = productRow(data);
+  render();
+  openProducts();
+}
+
 // ── Plan editor ──────────────────────────────────────────────────────────
 function openEditor(pr) {
   if (!client) { alert(t(L.err_nosupa)); return; }
@@ -696,13 +897,15 @@ function openEditor(pr) {
   const names = [...new Set(people.concat(p.assigned_to ? [p.assigned_to] : []))].sort((a, b) => a.localeCompare(b));
   document.getElementById('modal').innerHTML = `
     <h2>${esc(pr)} — ${esc(r.product || r.bsku)}</h2>
-    <div class="m-sub">${t(L.e_sheet)} ${esc(t(TYPE_LABELS[(r.type || '').toLowerCase()]) || r.type || t(L.any_type))} · ${r.batchSize.toLocaleString(locale())} ${t(L.prerolls)} · ${t(L.ready_by_lc)} ${esc(fmtDate(r.readyDate) || '—')}</div>
+    <div class="m-sub">${t(L.e_sheet)} ${esc(t(TYPE_LABELS[(r.type || '').toLowerCase()]) || r.type || t(L.any_type))} · ${fmtN(r.batchSize)} ${t(L.units)} · ${esc(r.bsku || '')} · ${t(L.ready_by_lc)} ${esc(fmtDate(r.readyDate) || '—')}</div>
+    ${productPicker('e', p.product_bsku || r.bsku, brandOf(r.bsku, r.product))}
     <div class="row2">
       <div class="fld"><label class="lbl" for="e-qty">${t(L.i_qty)}</label>
-        <input id="e-qty" type="number" min="1" step="1" inputmode="numeric" value="${esc(num(p.quantity) > 0 ? p.quantity : r.batchSize || '')}"
+        <input id="e-qty" type="number" min="1" step="1" inputmode="numeric" oninput="updateCalc('e')" value="${esc(num(p.quantity) > 0 ? p.quantity : r.batchSize || '')}"
           placeholder="${esc(t(L.e_qty_hint).replace('{n}', r.batchSize.toLocaleString(locale())))}"/></div>
       <div class="fld"><label class="lbl" for="e-type">${t(L.e_type)}</label>${typeSelect('e-type', p.strain_type || r.type)}</div>
     </div>
+    <div class="calc" id="e-calc"></div>
     <div class="fld"><label class="lbl" for="e-strain">${t(L.strain)}</label>
       <input id="e-strain" list="strain-list" value="${esc(strain)}" placeholder="${esc(t(L.e_strain_ph))}"/>
       <datalist id="strain-list">${strains.map((s) => `<option value="${esc(s)}">`).join('')}</datalist></div>
@@ -722,6 +925,7 @@ function openEditor(pr) {
       <button class="btn btn-purple" id="e-save" onclick="saveEditor()">${t(L.save)}</button>
     </div>`;
   document.getElementById('backdrop').style.display = 'block';
+  updateCalc('e');
   setTimeout(() => document.getElementById('e-strain').focus(), 30);
 }
 
@@ -729,9 +933,10 @@ function closeEditor() {
   document.getElementById('backdrop').style.display = 'none';
   editingPr = null;
   editingItem = null;
+  editingProducts = false;
 }
 document.getElementById('backdrop').addEventListener('click', (e) => { if (e.target.id === 'backdrop') closeEditor(); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && (editingPr || editingItem)) closeEditor(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && (editingPr || editingItem || editingProducts)) closeEditor(); });
 
 // ── Queue item editor (hand-added batches) ───────────────────────────────
 function openItemEditor(id) {
@@ -742,19 +947,16 @@ function openItemEditor(id) {
   document.getElementById('modal').innerHTML = `
     <h2>${m ? esc('PQ-' + m.queue_no) : t(L.i_new)}</h2>
     <div class="m-sub">${m ? `${t(L.q_added)} ${esc(fmtDate(String(m.created_at || '').slice(0, 10)))}${m.created_by ? ' · ' + esc(m.created_by) : ''}` : t(L.i_new_sub)}</div>
+    ${productPicker('i', m ? m.product_bsku : '', m ? m.brand : '')}
     <div class="row2">
-      <div class="fld"><label class="lbl" for="i-brand">${t(L.i_brand)}</label>
-        <input id="i-brand" list="brand-list" value="${esc(m ? m.brand || '' : '')}" placeholder="${esc(t(L.i_brand_ph))}"/>
-        <datalist id="brand-list">${brands.map((b) => `<option value="${esc(b)}">`).join('')}</datalist></div>
       <div class="fld"><label class="lbl" for="i-qty">${t(L.i_qty)}</label>
-        <input id="i-qty" type="number" min="1" step="1" inputmode="numeric" value="${esc(m ? m.quantity : '')}"/></div>
-    </div>
-    <div class="row2">
+        <input id="i-qty" type="number" min="1" step="1" inputmode="numeric" oninput="updateCalc('i')" value="${esc(m ? m.quantity : '')}"/></div>
       <div class="fld"><label class="lbl" for="i-type">${t(L.e_type)}</label>${typeSelect('i-type', m ? m.strain_type : '')}</div>
-      <div class="fld"><label class="lbl" for="i-strain">${t(L.strain)}</label>
-        <input id="i-strain" list="strain-list" value="${esc(m ? m.strain || '' : '')}" placeholder="${esc(t(L.e_strain_ph))}"/>
-        <datalist id="strain-list">${strains.map((s) => `<option value="${esc(s)}">`).join('')}</datalist></div>
     </div>
+    <div class="calc" id="i-calc"></div>
+    <div class="fld"><label class="lbl" for="i-strain">${t(L.strain)}</label>
+      <input id="i-strain" list="strain-list" value="${esc(m ? m.strain || '' : '')}" placeholder="${esc(t(L.e_strain_ph))}"/>
+      <datalist id="strain-list">${strains.map((s) => `<option value="${esc(s)}">`).join('')}</datalist></div>
     <div class="fld"><label class="lbl" for="i-uid">${t(L.e_uid)}</label>
       <input id="i-uid" value="${esc(m ? m.source_uid || '' : '')}" autocapitalize="characters" placeholder="${esc(t(L.e_uid_ph))}"/></div>
     <div class="fld"><label class="lbl" for="i-notes">${t(L.e_notes)}</label><textarea id="i-notes" rows="2">${esc(m ? m.notes || '' : '')}</textarea></div>
@@ -765,6 +967,7 @@ function openItemEditor(id) {
       <button class="btn btn-purple" id="i-save" onclick="saveItem()">${t(m ? L.i_save : L.i_add)}</button>
     </div>`;
   document.getElementById('backdrop').style.display = 'block';
+  updateCalc('i');
   setTimeout(() => document.getElementById(m ? 'i-qty' : 'i-brand').focus(), 30);
 }
 
@@ -773,8 +976,10 @@ async function saveItem() {
   const err = document.getElementById('i-err');
   const qty = parseInt(val('i-qty'), 10);
   if (!(qty > 0)) { err.textContent = t(L.i_err_qty); err.style.display = 'block'; return; }
+  const prod = productFor(val('i-prod'));
   const row = {
-    brand: val('i-brand') || null,
+    product_bsku: prod ? prod.bsku : null,
+    brand: (prod && prod.brand) || val('i-brand') || null,
     strain_type: val('i-type') || null,
     strain: val('i-strain') || null,
     source_uid: val('i-uid').toUpperCase() || null,
@@ -825,8 +1030,10 @@ async function saveEditor() {
   const qty = qtyTxt === '' ? null : parseInt(qtyTxt, 10);
   if (qtyTxt !== '' && !(qty > 0)) { err.textContent = t(L.i_err_qty); err.style.display = 'block'; return; }
   const type = val('e-type');
+  const prodBsku = val('e-prod');
   const row = {
     pr_num: editingPr,
+    product_bsku: prodBsku && prodBsku.toUpperCase() !== String(r.bsku || '').toUpperCase() ? prodBsku : null,
     quantity: qty && qty !== r.batchSize ? qty : null,
     strain_type: type && type.toLowerCase() !== String(r.type || '').toLowerCase() ? type : null,
     strain: val('e-strain') || null,
@@ -866,6 +1073,7 @@ function paintStatic() {
   document.getElementById('q-title').textContent = t(L.q_title);
   document.getElementById('q-hint').textContent = t(L.q_hint);
   document.getElementById('q-add').textContent = t(L.q_add);
+  document.getElementById('p-open').textContent = t(L.p_btn);
   document.getElementById('r-title').textContent = t(L.r_title);
   document.getElementById('queue').innerHTML = `<div class="empty">${t(L.loading)}</div>`;
   document.querySelectorAll('#bar .chip').forEach((c) => { c.textContent = t(L['f_' + c.dataset.f]); });
@@ -884,7 +1092,7 @@ paintStatic();
   await refresh();
   // Keep up with new requests landing in the Sheet and batches being
   // logged — but never re-render underneath an open editor.
-  setInterval(() => { if (!editingPr && !editingItem && !savingOrder) refresh(); }, REFRESH_MS);
+  setInterval(() => { if (!editingPr && !editingItem && !editingProducts && !savingOrder) refresh(); }, REFRESH_MS);
 })();
 </script>
 <script src="/sw_register.js"></script>

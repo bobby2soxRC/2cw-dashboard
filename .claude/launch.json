@@ -6,6 +6,18 @@
       "runtimeExecutable": "powershell.exe",
       "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts/dev_server.ps1", "-Port", "8944"],
       "port": 8944
+    },
+    {
+      "name": "static-site-2",
+      "runtimeExecutable": "powershell.exe",
+      "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts/dev_server.ps1", "-Port", "8945"],
+      "port": 8945
+    },
+    {
+      "name": "clone-site",
+      "runtimeExecutable": "powershell.exe",
+      "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "C:/Users/rober/2cw-dashboard/scripts/dev_server.ps1", "-Port", "8946"],
+      "port": 8946
     }
   ]
 }

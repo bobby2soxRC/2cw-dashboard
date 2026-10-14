@@ -2172,13 +2172,17 @@ function buildRecommendedProduction() {
 }
 
 function computeBskuDos(rows) {
-  let totalP30 = 0, weightedDos = 0;
+  // Sum inventory and past-30 velocity across ALL rows (including flavors with
+  // zero sales in the last 30 days), so this matches the Units/Past-30 totals
+  // shown alongside it. A weighted average of each flavor's individual DOS
+  // would silently drop dead-stock inventory from the calculation while it's
+  // still counted in the visible Units total.
+  let totalInv = 0, totalP30 = 0;
   rows.forEach(r => {
-    if (r.dos != null && r.past30 > 0) { weightedDos += r.dos * r.past30; totalP30 += r.past30; }
+    totalInv += r.inv_total || 0;
+    totalP30 += r.past30 || 0;
   });
-  if (totalP30 > 0) return weightedDos / totalP30;
-  const first = rows.find(r => r.dos != null);
-  return first ? first.dos : null;
+  return totalP30 > 0 ? totalInv / (totalP30 / 30) : null;
 }
 
 function computeDosPlusProd(currentInv, prodUnits, past30) {

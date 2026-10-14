@@ -892,6 +892,53 @@ create policy "anon delete" on preroll_plans for delete using (true);
 
 grant select, insert, update, delete on public.preroll_plans to anon;
 
+-- ── Pre-roll products (preroll_dashboard.html) ──────────────────────────
+-- What a pre-roll request or queue item is for: brand, pack size and the
+-- size of each pre-roll. Quantities on requests are in units (packs, or
+-- singles), and the dashboard works out pre-rolls = units × pack_size.
+-- Keyed by BSKU (see scripts/kss_transform.py) so a Sheet request finds its
+-- product; new products are added from the dashboard's Products dialog.
+
+create table if not exists preroll_products (
+  bsku            text primary key,
+  brand           text not null,
+  name            text not null,
+  pack_size       integer not null check (pack_size > 0),
+  preroll_size_g  numeric check (preroll_size_g > 0),
+  active          boolean not null default true,
+  updated_by      text,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
+);
+
+insert into preroll_products (bsku, brand, name, pack_size, preroll_size_g) values
+  ('SRF020701', 'Soma Rosa',  'Soma Rosa Preroll 1g',      1,  1.0),
+  ('SRF021004', 'Soma Rosa',  'Soma Rosa Preroll 28-Pack', 28, 0.5),
+  ('HWR020802', 'Howie Roll', 'Howie Roll Preroll 6-Pack', 6,  null),
+  ('HWR021004', 'Howie Roll', 'Howie Roll Preroll 28-Pack', 28, 0.5),
+  ('MDO021107', 'Mendo',      'Mendo Preroll 10-Pack',     10, 0.5)
+on conflict (bsku) do nothing;
+
+drop trigger if exists trg_touch_preroll_products on preroll_products;
+create trigger trg_touch_preroll_products
+  before update on preroll_products
+  for each row execute function touch_operations_forms();
+
+alter table preroll_products enable row level security;
+
+drop policy if exists "anon read" on preroll_products;
+create policy "anon read" on preroll_products for select using (true);
+drop policy if exists "anon write" on preroll_products;
+create policy "anon write" on preroll_products for insert with check (true);
+drop policy if exists "anon update" on preroll_products;
+create policy "anon update" on preroll_products for update using (true) with check (true);
+
+grant select, insert, update on public.preroll_products to anon;
+
+-- Which product a plan / queue item is for (preroll_products.bsku). On a
+-- plan it overrides the Sheet's BSKU; null means use the Sheet's.
+alter table preroll_plans add column if not exists product_bsku text;
+
 -- ── Pre-roll queue items (preroll_dashboard.html) ───────────────────────
 -- Pre-roll batches added to the queue by hand, without a production
 -- request: brand, strain, source UID and how many. Each gets a queue number
@@ -919,6 +966,8 @@ create table if not exists preroll_queue_items (
 
 -- Indica / Sativa / Hybrid, for an item whose strain isn't picked yet.
 alter table preroll_queue_items add column if not exists strain_type text;
+-- The product (preroll_products.bsku); quantity is then in its units (packs).
+alter table preroll_queue_items add column if not exists product_bsku text;
 
 drop trigger if exists trg_touch_preroll_queue_items on preroll_queue_items;
 create trigger trg_touch_preroll_queue_items
