@@ -110302,540 +110302,6 @@
     "_facility_license_number": "C11-0001652-LIC"
   },
   {
-    "id": 33887382,
-    "tag": "1A4060300047D39000015342",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "Available To Sell",
-    "item": {
-      "id": 3436749,
-      "name": "Mendogrown inc. * Flower * Lemon Ice *",
-      "sku": null,
-      "is_active": false,
-      "facility_id": 4929,
-      "type": {
-        "id": 119331,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 725861,
-        "name": "Lemon Ice"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": "CCL21-0002893",
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 9.9625,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 9.9625,
-      "updated_at": "2026-10-01T18:58:01.679Z"
-    },
-    "facility_id": 4929,
-    "weight": 9.9625,
-    "original_weight": 10.0,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-09-18T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": true,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 33628556,
-        "tag": "1A4060300049C1A000001769",
-        "weight": 10.0,
-        "weight_unit": "Pounds",
-        "pulled_weight": 10.0,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3436749,
-          "name": "Mendogrown inc. * Flower * Lemon Ice *",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [
-      {
-        "id": 34290197,
-        "tag": "1A4060300047D39000015445",
-        "weight": 17.0,
-        "weight_unit": "Grams",
-        "item": {
-          "id": 3436749,
-          "name": "Mendogrown inc. * Flower * Lemon Ice *",
-          "sku": null
-        }
-      }
-    ],
-    "source_harvests": "2026-07-30-DRY AREA-H",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-10-06T01:04:04.354Z",
-    "test_results": {
-      "thc": [
-        {
-          "value": null,
-          "measure": "mg"
-        },
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "cbd": [
-        {
-          "value": null,
-          "measure": "mg"
-        },
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 0.0,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "thca": [
-        {
-          "value": 229.901,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 22.9901,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "cbda": [
-        {
-          "value": 0.999,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 0.0999,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "cbn": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "cbg": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "cbc": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        }
-      ],
-      "cbca": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        }
-      ],
-      "cbga": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "delta_8_thc": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "delta_8_thca": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "delta_9_thc": [
-        {
-          "value": 9.522,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 0.9522,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "delta_9_thca": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "delta_10_thc": [
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "thcv": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "thcva": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "total_cbd": [
-        {
-          "value": 0.876,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 0.0876,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "total_cbg": [
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        }
-      ],
-      "total_delta_9_thc": [
-        {
-          "value": 211.145,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 21.1145,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "total_thc": [
-        {
-          "value": 211.145177,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 21.1145177,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "total_cannabinoid": [
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 24.0422,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "cbdv": [
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "cbdva": [
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "test_status": "TestPassed",
-      "tested_package_tag": "1A4060300047D39000015445",
-      "test_date": "2026-10-06",
-      "terpenes": {
-        "measure": "percent",
-        "top_three": {},
-        "values": {}
-      }
-    },
-    "lab_test_url": null,
-    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/a0e6ba3a/Package5445_COAfromMetrc_a0e6ba3a.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261006%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261006T064409Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=2cf0289b568b7ea4a0c6c04dbe451402ab4bbfb7a74608627a622a4ace54b72a",
-    "lab_test_info": {
-      "testing_facility_name": "SC LABORATORIES CALIFORNIA, LLC",
-      "testing_facility_license": "C8-0000013-LIC"
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Airway: C11-0001652-LIC",
-    "_facility_license_number": "C11-0001652-LIC"
-  },
-  {
     "id": 33888158,
     "tag": "1A4060300047D39000015343",
     "is_active": true,
@@ -130551,540 +130017,6 @@
     "_facility_license_number": "C11-0001652-LIC"
   },
   {
-    "id": 34288045,
-    "tag": "1A4060300047D39000015341",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "Available To Sell",
-    "item": {
-      "id": 3436752,
-      "name": "Mendogrown inc. * Flower * Donkey Kong *",
-      "sku": null,
-      "is_active": false,
-      "facility_id": 4929,
-      "type": {
-        "id": 119331,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 725864,
-        "name": "Donkey Kong"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": "CCL21-0002893",
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 9.9625,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 9.9625,
-      "updated_at": "2026-10-01T18:54:50.898Z"
-    },
-    "facility_id": 4929,
-    "weight": 9.9625,
-    "original_weight": 10.0,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-10-01T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": true,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 33628564,
-        "tag": "1A4060300049C1A000001772",
-        "weight": 10.0,
-        "weight_unit": "Pounds",
-        "pulled_weight": 10.0,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3436752,
-          "name": "Mendogrown inc. * Flower * Donkey Kong *",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [
-      {
-        "id": 34290010,
-        "tag": "1A4060300047D39000015448",
-        "weight": 17.0,
-        "weight_unit": "Grams",
-        "item": {
-          "id": 3436752,
-          "name": "Mendogrown inc. * Flower * Donkey Kong *",
-          "sku": null
-        }
-      }
-    ],
-    "source_harvests": "MG 8/5",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-10-06T02:03:44.022Z",
-    "test_results": {
-      "thc": [
-        {
-          "value": null,
-          "measure": "mg"
-        },
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "cbd": [
-        {
-          "value": null,
-          "measure": "mg"
-        },
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 0.0,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "thca": [
-        {
-          "value": 216.308,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 21.6308,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "cbda": [
-        {
-          "value": 1.002,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 0.1002,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "cbn": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "cbg": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "cbc": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        }
-      ],
-      "cbca": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        }
-      ],
-      "cbga": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "delta_8_thc": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "delta_8_thca": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "delta_9_thc": [
-        {
-          "value": 9.439,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 0.9439,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "delta_9_thca": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "delta_10_thc": [
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "thcv": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "thcva": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "total_cbd": [
-        {
-          "value": 0.879,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 0.0879,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "total_cbg": [
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        }
-      ],
-      "total_delta_9_thc": [
-        {
-          "value": 199.141,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 19.9141,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "total_thc": [
-        {
-          "value": 199.141116,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 19.9141116,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "total_cannabinoid": [
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 22.6749,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "cbdv": [
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "cbdva": [
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "test_status": "TestPassed",
-      "tested_package_tag": "1A4060300047D39000015448",
-      "test_date": "2026-10-06",
-      "terpenes": {
-        "measure": "percent",
-        "top_three": {},
-        "values": {}
-      }
-    },
-    "lab_test_url": null,
-    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/18a20828/Package5448_COAfromMetrc_18a20828.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261006%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261006T064409Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=7a41c93bb848e5736da1d5671bbaec56be9199a834392c9ec10709c8a18717be",
-    "lab_test_info": {
-      "testing_facility_name": "SC LABORATORIES CALIFORNIA, LLC",
-      "testing_facility_license": "C8-0000013-LIC"
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Airway: C11-0001652-LIC",
-    "_facility_license_number": "C11-0001652-LIC"
-  },
-  {
     "id": 34292076,
     "tag": "1A4060300049C1A000001640",
     "is_active": true,
@@ -131557,867 +130489,6 @@
     },
     "harvests": [],
     "updated_at": "2026-10-01T21:39:53.305Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 34295513,
-    "tag": "1A406030005E0B2000003456",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3470749,
-      "name": "MEN Flower - Cake Mera",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119074,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 733398,
-        "name": "Cake Mera"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 1.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 1.0,
-      "updated_at": "2026-10-05T19:01:31.957Z"
-    },
-    "facility_id": 4923,
-    "weight": 13.91,
-    "original_weight": 14.91,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-10-01T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 34292948,
-        "tag": "1A4060300049C1A000001588",
-        "weight": 14.91,
-        "weight_unit": "Pounds",
-        "pulled_weight": 14.91,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3470565,
-          "name": "Cured - Whole Plant - Mendogrown Inc. Flower",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [
-      {
-        "id": 34392879,
-        "tag": "1A406030005E0B2000003476",
-        "weight": 1.0,
-        "weight_unit": "Pounds",
-        "item": {
-          "id": 3470749,
-          "name": "MEN Flower - Cake Mera",
-          "sku": null
-        }
-      }
-    ],
-    "source_harvests": "MG 8/5",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-10-07T17:45:38.588Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 34295515,
-    "tag": "1A406030005E0B2000003457",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3470750,
-      "name": "MEN Flower - Caked Up Candy",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119074,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 649524,
-        "name": "Cake Up Candy"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 1.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 1.0,
-      "updated_at": "2026-10-05T19:01:32.273Z"
-    },
-    "facility_id": 4923,
-    "weight": 17.94,
-    "original_weight": 18.94,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-10-01T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 34292945,
-        "tag": "1A4060300049C1A000001586",
-        "weight": 18.94,
-        "weight_unit": "Pounds",
-        "pulled_weight": 18.94,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3470565,
-          "name": "Cured - Whole Plant - Mendogrown Inc. Flower",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [
-      {
-        "id": 34392883,
-        "tag": "1A406030005E0B2000003477",
-        "weight": 1.0,
-        "weight_unit": "Pounds",
-        "item": {
-          "id": 3470750,
-          "name": "MEN Flower - Caked Up Candy",
-          "sku": null
-        }
-      }
-    ],
-    "source_harvests": "MG 8/5",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-10-07T17:45:39.109Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 34295516,
-    "tag": "1A406030005E0B2000003458",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3470751,
-      "name": "MEN Flower - Donkey Kong",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119074,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 733399,
-        "name": "Donkey Kong"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 1.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 1.0,
-      "updated_at": "2026-10-05T19:01:32.613Z"
-    },
-    "facility_id": 4923,
-    "weight": 37.88,
-    "original_weight": 38.88,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-10-01T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 34292947,
-        "tag": "1A4060300049C1A000001587",
-        "weight": 38.88,
-        "weight_unit": "Pounds",
-        "pulled_weight": 38.88,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3470565,
-          "name": "Cured - Whole Plant - Mendogrown Inc. Flower",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [
-      {
-        "id": 34392884,
-        "tag": "1A406030005E0B2000003478",
-        "weight": 1.0,
-        "weight_unit": "Pounds",
-        "item": {
-          "id": 3470751,
-          "name": "MEN Flower - Donkey Kong",
-          "sku": null
-        }
-      }
-    ],
-    "source_harvests": "MG 8/5",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-10-07T17:45:39.498Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 34295517,
-    "tag": "1A406030005E0B2000003459",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3470752,
-      "name": "MEN Flower - FB",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119074,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 733400,
-        "name": "FB"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 1.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 1.0,
-      "updated_at": "2026-10-05T19:01:32.955Z"
-    },
-    "facility_id": 4923,
-    "weight": 7.26,
-    "original_weight": 8.26,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-10-01T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 34292075,
-        "tag": "1A4060300049C1A000001639",
-        "weight": 8.26,
-        "weight_unit": "Pounds",
-        "pulled_weight": 8.26,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3470565,
-          "name": "Cured - Whole Plant - Mendogrown Inc. Flower",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [
-      {
-        "id": 34392888,
-        "tag": "1A406030005E0B2000003479",
-        "weight": 1.0,
-        "weight_unit": "Pounds",
-        "item": {
-          "id": 3470752,
-          "name": "MEN Flower - FB",
-          "sku": null
-        }
-      }
-    ],
-    "source_harvests": "MG",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-10-07T17:45:39.882Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 34295518,
-    "tag": "1A406030005E0B2000003460",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3470753,
-      "name": "MEN Flower - JR",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119074,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 733401,
-        "name": "JR"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 1.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 1.0,
-      "updated_at": "2026-10-05T19:01:33.056Z"
-    },
-    "facility_id": 4923,
-    "weight": 53.37,
-    "original_weight": 54.37,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-10-01T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 34292075,
-        "tag": "1A4060300049C1A000001639",
-        "weight": 54.37,
-        "weight_unit": "Pounds",
-        "pulled_weight": 54.37,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3470565,
-          "name": "Cured - Whole Plant - Mendogrown Inc. Flower",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [
-      {
-        "id": 34392894,
-        "tag": "1A406030005E0B2000003480",
-        "weight": 1.0,
-        "weight_unit": "Pounds",
-        "item": {
-          "id": 3470753,
-          "name": "MEN Flower - JR",
-          "sku": null
-        }
-      }
-    ],
-    "source_harvests": "MG",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-10-07T17:45:40.247Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 34295519,
-    "tag": "1A406030005E0B2000003461",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3470754,
-      "name": "MEN Flower - OC",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119074,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 649107,
-        "name": "OC"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 1.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 1.0,
-      "updated_at": "2026-10-05T19:01:33.142Z"
-    },
-    "facility_id": 4923,
-    "weight": 13.68,
-    "original_weight": 14.68,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-10-01T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 34292947,
-        "tag": "1A4060300049C1A000001587",
-        "weight": 14.68,
-        "weight_unit": "Pounds",
-        "pulled_weight": 14.68,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3470565,
-          "name": "Cured - Whole Plant - Mendogrown Inc. Flower",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [
-      {
-        "id": 34392899,
-        "tag": "1A406030005E0B2000003481",
-        "weight": 1.0,
-        "weight_unit": "Pounds",
-        "item": {
-          "id": 3470754,
-          "name": "MEN Flower - OC",
-          "sku": null
-        }
-      }
-    ],
-    "source_harvests": "MG 8/5",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-10-07T17:45:40.692Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 34295520,
-    "tag": "1A406030005E0B2000003462",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3470755,
-      "name": "MEN Flower - PC",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119074,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 733402,
-        "name": "PC"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 1.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 1.0,
-      "updated_at": "2026-10-05T19:01:33.208Z"
-    },
-    "facility_id": 4923,
-    "weight": 36.49,
-    "original_weight": 37.49,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-10-01T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 34292944,
-        "tag": "1A4060300049C1A000001641",
-        "weight": 37.49,
-        "weight_unit": "Pounds",
-        "pulled_weight": 37.49,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3470565,
-          "name": "Cured - Whole Plant - Mendogrown Inc. Flower",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [
-      {
-        "id": 34392902,
-        "tag": "1A406030005E0B2000003482",
-        "weight": 1.0,
-        "weight_unit": "Pounds",
-        "item": {
-          "id": 3470755,
-          "name": "MEN Flower - PC",
-          "sku": null
-        }
-      }
-    ],
-    "source_harvests": "2026-07-30-DRY AREA-H",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-10-07T17:45:41.093Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -137194,10 +135265,10 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-10-03T21:37:10.682Z"
+      "updated_at": "2026-10-14T17:12:51.298Z"
     },
     "facility_id": 4923,
-    "weight": 1736.5,
+    "weight": 22.1,
     "original_weight": 1736.5,
     "weight_unit": "Pounds",
     "implied_weight": "",
@@ -137231,7 +135302,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-10-03T19:40:04.648Z",
+    "updated_at": "2026-10-14T17:12:50.987Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -137679,10 +135750,10 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-10-03T21:37:07.847Z"
+      "updated_at": "2026-10-14T16:58:24.673Z"
     },
     "facility_id": 4923,
-    "weight": 885.0,
+    "weight": 11.26,
     "original_weight": 885.0,
     "weight_unit": "Pounds",
     "implied_weight": "",
@@ -137697,7 +135768,19 @@
     "cannabis_cogs": null,
     "non_cannabis_inventory_cogs": null,
     "source_packages": [],
-    "destination_packages": [],
+    "destination_packages": [
+      {
+        "id": 34722644,
+        "tag": "1A406030005E0B2000010002",
+        "weight": 253.0,
+        "weight_unit": "Pounds",
+        "item": {
+          "id": 3486655,
+          "name": "Unbucked Flower - #13 Grape Lobster",
+          "sku": null
+        }
+      }
+    ],
     "source_harvests": "#13 Grape Lobster (HVN) 10-03-26",
     "source_facility": "CCL25-0000167",
     "source_facility_name": "All Good Properties, Inc.",
@@ -137716,7 +135799,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-10-03T21:37:08.212Z",
+    "updated_at": "2026-10-14T16:58:24.660Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -137776,10 +135859,10 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-10-03T21:37:09.208Z"
+      "updated_at": "2026-10-14T17:04:17.971Z"
     },
     "facility_id": 4923,
-    "weight": 1091.5,
+    "weight": 13.89,
     "original_weight": 1091.5,
     "weight_unit": "Pounds",
     "implied_weight": "",
@@ -137794,7 +135877,19 @@
     "cannabis_cogs": null,
     "non_cannabis_inventory_cogs": null,
     "source_packages": [],
-    "destination_packages": [],
+    "destination_packages": [
+      {
+        "id": 34722864,
+        "tag": "1A406030005E0B2000010003",
+        "weight": 332.0,
+        "weight_unit": "Pounds",
+        "item": {
+          "id": 3486656,
+          "name": "Unbucked Flower - Apple Tartz #6",
+          "sku": null
+        }
+      }
+    ],
     "source_harvests": "Apple Tartz #6 (HVN) 10-03-26",
     "source_facility": "CCL25-0000167",
     "source_facility_name": "All Good Properties, Inc.",
@@ -137813,7 +135908,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-10-03T21:37:09.568Z",
+    "updated_at": "2026-10-14T17:04:17.950Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -137970,10 +136065,10 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-10-03T21:37:10.682Z"
+      "updated_at": "2026-10-14T17:12:51.298Z"
     },
     "facility_id": 4923,
-    "weight": 31.0,
+    "weight": 0.39,
     "original_weight": 31.0,
     "weight_unit": "Pounds",
     "implied_weight": "",
@@ -138007,7 +136102,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-10-03T21:37:10.880Z",
+    "updated_at": "2026-10-14T17:12:51.266Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -145710,7 +143805,7 @@
       }
     },
     "lab_test_url": null,
-    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/25c778cf/Package5498_COAfromMetrc_25c778cf.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261014%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261014T121525Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=e15167807850aa8807616759d311cac9854d9fdd7ee6440912e7cb480737a93a",
+    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/25c778cf/Package5498_COAfromMetrc_25c778cf.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261014%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261014T172941Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=5576fcfb6dbaae462745a12a4c911d567131cfe3da34b80bf7f1eb2d77d195ec",
     "lab_test_info": {
       "testing_facility_name": "SC LABORATORIES CALIFORNIA, LLC",
       "testing_facility_license": "C8-0000013-LIC"
@@ -146279,7 +144374,7 @@
       }
     },
     "lab_test_url": null,
-    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/ef3b0d03/Package5499_COAfromMetrc_ef3b0d03.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261014%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261014T121525Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=f9bccebd46b6bbad18d06719275cf0261fc4069cacaa56a0ded62e6f8451bfe5",
+    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/ef3b0d03/Package5499_COAfromMetrc_ef3b0d03.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261014%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261014T172941Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=f89f0c9bad3b78e4497e8057a423a6f54df6e8c432404410435b5fb928a4c679",
     "lab_test_info": {
       "testing_facility_name": "SC LABORATORIES CALIFORNIA, LLC",
       "testing_facility_license": "C8-0000013-LIC"
@@ -146825,7 +144920,7 @@
       }
     },
     "lab_test_url": null,
-    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/ef3b0d03/Package5499_COAfromMetrc_ef3b0d03.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261014%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261014T121525Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=f9bccebd46b6bbad18d06719275cf0261fc4069cacaa56a0ded62e6f8451bfe5",
+    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/ef3b0d03/Package5499_COAfromMetrc_ef3b0d03.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261014%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261014T172941Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=f89f0c9bad3b78e4497e8057a423a6f54df6e8c432404410435b5fb928a4c679",
     "lab_test_info": {
       "testing_facility_name": "SC LABORATORIES CALIFORNIA, LLC",
       "testing_facility_license": "C8-0000013-LIC"
@@ -162880,5 +160975,1314 @@
     "_license_key_label": "All Facilities",
     "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
     "_facility_license_number": "CCL26-0000027"
+  },
+  {
+    "id": 34723135,
+    "tag": "1A406030005E0B2000010004",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3486657,
+      "name": "Unbucked Flower - Blue Dream",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4923,
+      "type": {
+        "id": 119074,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 649020,
+        "name": "Blue Dream"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-14T17:12:50.592Z"
+    },
+    "facility_id": 4923,
+    "weight": 562.5,
+    "original_weight": 562.5,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-14T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": null,
+        "tag": "1A406030007975D000000427",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030007975D000000435",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "Blue Dream (HVN) 10-03-26",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-10-14T17:12:50.690Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 34722864,
+    "tag": "1A406030005E0B2000010003",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3486656,
+      "name": "Unbucked Flower - Apple Tartz #6",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4923,
+      "type": {
+        "id": 119074,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 649511,
+        "name": "Apple Tarts"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-14T17:04:17.465Z"
+    },
+    "facility_id": 4923,
+    "weight": 332.0,
+    "original_weight": 332.0,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-14T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": 34319983,
+        "tag": "1A406030007975D000000433",
+        "weight": 332.0,
+        "weight_unit": "Pounds",
+        "pulled_weight": 332.0,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3472957,
+          "name": "Wet Flower - Apple Tartz #6 (HVN)",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "Apple Tartz #6 (HVN) 10-03-26",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-10-14T17:04:17.413Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 34722644,
+    "tag": "1A406030005E0B2000010002",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3486655,
+      "name": "Unbucked Flower - #13 Grape Lobster",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4923,
+      "type": {
+        "id": 119074,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 736176,
+        "name": "#13 Grape Lobster"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-14T16:58:24.450Z"
+    },
+    "facility_id": 4923,
+    "weight": 253.0,
+    "original_weight": 253.0,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-14T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": 34319982,
+        "tag": "1A406030007975D000000432",
+        "weight": 253.0,
+        "weight_unit": "Pounds",
+        "pulled_weight": 253.0,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3472956,
+          "name": "Wet Flower - #13 Grape Lobster (HVN)",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "#13 Grape Lobster (HVN) 10-03-26",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-10-14T16:58:24.290Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 34719838,
+    "tag": "1A4060300047D39000015508",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3436749,
+      "name": "Mendogrown inc. * Flower * Lemon Ice *",
+      "sku": null,
+      "is_active": false,
+      "facility_id": 4929,
+      "type": {
+        "id": 119331,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 725861,
+        "name": "Lemon Ice"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": "CCL21-0002893",
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-14T15:58:11.374Z"
+    },
+    "facility_id": 4929,
+    "weight": 9.9625,
+    "original_weight": 9.9625,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-14T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": "23-1260-R2",
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": 33887382,
+        "tag": "1A4060300047D39000015342",
+        "weight": 9.9625,
+        "weight_unit": "Pounds",
+        "pulled_weight": 9.9625,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3436749,
+          "name": "Mendogrown inc. * Flower * Lemon Ice *",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "2026-07-30-DRY AREA-H",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-10-14T15:58:10.408Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
+  },
+  {
+    "id": 34718221,
+    "tag": "1A4060300047D39000015507",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3436752,
+      "name": "Mendogrown inc. * Flower * Donkey Kong *",
+      "sku": null,
+      "is_active": false,
+      "facility_id": 4929,
+      "type": {
+        "id": 119331,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 725864,
+        "name": "Donkey Kong"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": "CCL21-0002893",
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-14T15:34:04.253Z"
+    },
+    "facility_id": 4929,
+    "weight": 9.9625,
+    "original_weight": 9.9625,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-14T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": "23-1259-R2",
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": 34288045,
+        "tag": "1A4060300047D39000015341",
+        "weight": 9.9625,
+        "weight_unit": "Pounds",
+        "pulled_weight": 9.9625,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3436752,
+          "name": "Mendogrown inc. * Flower * Donkey Kong *",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "MG 8/5",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-10-14T15:34:02.636Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
+  },
+  {
+    "id": 34573785,
+    "tag": "1A406030005E0B2000003462",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3482292,
+      "name": "MEN Flower - PC",
+      "sku": null,
+      "is_active": false,
+      "facility_id": 4929,
+      "type": {
+        "id": 119331,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 736606,
+        "name": "PC"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": "CCL22-0001284",
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-14T17:25:05.324Z"
+    },
+    "facility_id": 4929,
+    "weight": 36.49,
+    "original_weight": 36.49,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-01T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": "2026-10-14T17:23:01.000Z",
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": null,
+        "tag": "1A4060300049C1A000001641",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "2026-07-30-DRY AREA-H",
+    "source_facility": "CCL22-0001284",
+    "source_facility_name": "2 Cw Productions, Inc.",
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-10-14T17:25:05.517Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
+  },
+  {
+    "id": 34573783,
+    "tag": "1A406030005E0B2000003461",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3482291,
+      "name": "MEN Flower - OC",
+      "sku": null,
+      "is_active": false,
+      "facility_id": 4929,
+      "type": {
+        "id": 119331,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 660858,
+        "name": "OC"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": "CCL22-0001284",
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-14T17:25:04.781Z"
+    },
+    "facility_id": 4929,
+    "weight": 13.68,
+    "original_weight": 13.68,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-01T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": "2026-10-14T17:23:01.000Z",
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": null,
+        "tag": "1A4060300049C1A000001587",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "MG 8/5",
+    "source_facility": "CCL22-0001284",
+    "source_facility_name": "2 Cw Productions, Inc.",
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-10-14T17:25:04.986Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
+  },
+  {
+    "id": 34573782,
+    "tag": "1A406030005E0B2000003460",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3482290,
+      "name": "MEN Flower - JR",
+      "sku": null,
+      "is_active": false,
+      "facility_id": 4929,
+      "type": {
+        "id": 119331,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 736605,
+        "name": "JR"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": "CCL22-0001284",
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-14T17:25:04.236Z"
+    },
+    "facility_id": 4929,
+    "weight": 53.37,
+    "original_weight": 53.37,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-01T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": "2026-10-14T17:23:01.000Z",
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": null,
+        "tag": "1A4060300049C1A000001639",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "MG",
+    "source_facility": "CCL22-0001284",
+    "source_facility_name": "2 Cw Productions, Inc.",
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-10-14T17:25:04.451Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
+  },
+  {
+    "id": 34573779,
+    "tag": "1A406030005E0B2000003459",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3482289,
+      "name": "MEN Flower - FB",
+      "sku": null,
+      "is_active": false,
+      "facility_id": 4929,
+      "type": {
+        "id": 119331,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 736604,
+        "name": "FB"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": "CCL22-0001284",
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-14T17:25:03.636Z"
+    },
+    "facility_id": 4929,
+    "weight": 7.26,
+    "original_weight": 7.26,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-01T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": "2026-10-14T17:23:01.000Z",
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": null,
+        "tag": "1A4060300049C1A000001639",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "MG",
+    "source_facility": "CCL22-0001284",
+    "source_facility_name": "2 Cw Productions, Inc.",
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-10-14T17:25:03.904Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
+  },
+  {
+    "id": 34573777,
+    "tag": "1A406030005E0B2000003458",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3482288,
+      "name": "MEN Flower - Donkey Kong",
+      "sku": null,
+      "is_active": false,
+      "facility_id": 4929,
+      "type": {
+        "id": 119331,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 736603,
+        "name": "Donkey Kong"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": "CCL22-0001284",
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-14T17:25:02.728Z"
+    },
+    "facility_id": 4929,
+    "weight": 37.88,
+    "original_weight": 37.88,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-01T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": "2026-10-14T17:23:01.000Z",
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": null,
+        "tag": "1A4060300049C1A000001587",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "MG 8/5",
+    "source_facility": "CCL22-0001284",
+    "source_facility_name": "2 Cw Productions, Inc.",
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-10-14T17:25:03.167Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
+  },
+  {
+    "id": 34573774,
+    "tag": "1A406030005E0B2000003457",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3482287,
+      "name": "MEN Flower - Caked Up Candy",
+      "sku": null,
+      "is_active": false,
+      "facility_id": 4929,
+      "type": {
+        "id": 119331,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 736602,
+        "name": "Cake Up Candy"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": "CCL22-0001284",
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-14T17:25:02.112Z"
+    },
+    "facility_id": 4929,
+    "weight": 17.94,
+    "original_weight": 17.94,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-01T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": "2026-10-14T17:23:01.000Z",
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": null,
+        "tag": "1A4060300049C1A000001586",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "MG 8/5",
+    "source_facility": "CCL22-0001284",
+    "source_facility_name": "2 Cw Productions, Inc.",
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-10-14T17:25:02.317Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
+  },
+  {
+    "id": 34573770,
+    "tag": "1A406030005E0B2000003456",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3482286,
+      "name": "MEN Flower - Cake Mera",
+      "sku": null,
+      "is_active": false,
+      "facility_id": 4929,
+      "type": {
+        "id": 119331,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 736601,
+        "name": "Cake Mera"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": "CCL22-0001284",
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-14T17:25:01.553Z"
+    },
+    "facility_id": 4929,
+    "weight": 13.91,
+    "original_weight": 13.91,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-01T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": "2026-10-14T17:23:01.000Z",
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": null,
+        "tag": "1A4060300049C1A000001588",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "MG 8/5",
+    "source_facility": "CCL22-0001284",
+    "source_facility_name": "2 Cw Productions, Inc.",
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-10-14T17:25:01.796Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
   }
 ]
