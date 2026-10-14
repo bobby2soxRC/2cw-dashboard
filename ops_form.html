@@ -67,7 +67,16 @@
     .q-empty{color:var(--muted);font-size:.9rem}
     .q-note{font-size:.8rem;color:var(--muted);margin-bottom:8px}
     @media (max-width:520px){ .q-row{flex-wrap:wrap} .q-lbs{flex:1 0 100%;justify-content:flex-end} .q-go{flex:1 0 100%;text-align:center} }
-    body.on-queue #form, body.on-queue #summary, body.on-queue #banner, body.on-queue .actions{display:none !important}
+    body.on-queue #form, body.on-queue #summary, body.on-queue #banner, body.on-queue .actions,
+    body.on-queue #days, body.on-queue #days-lbl{display:none !important}
+    /* Day tabs (Hand Trim): one lot over several days. */
+    .days .chip{font-family:inherit;cursor:pointer;text-align:left;min-width:96px}
+    .days .chip.new{min-height:52px}
+    .days .day-add{flex-direction:row;align-items:center;gap:8px;padding:6px 8px}
+    .days .day-add input{min-height:40px;padding:.4rem .5rem;width:auto}
+    .day-add-go{background:var(--accent);color:#000;border:none;border-radius:8px;padding:10px 14px;font-weight:700;font-family:inherit;cursor:pointer}
+    /* A section heading inside the form (t: 'heading'). */
+    .sec-head{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.04em;font-weight:400;border-top:1px solid var(--border);padding-top:18px}
     .del-page{width:100%;margin-top:24px;background:transparent;border:1px solid var(--red);color:var(--red);border-radius:12px;min-height:52px;font-family:inherit;font-size:.95rem;font-weight:700;cursor:pointer}
     .del-page:disabled{opacity:.5;cursor:not-allowed}
     body.on-queue .del-page{display:none}
@@ -223,6 +232,8 @@
   <div class="page-links" id="page-links" style="display:none"></div>
   <div class="switcher-lbl" id="switcher-lbl" style="display:none"></div>
   <div class="switcher" id="switcher" style="display:none"></div>
+  <div class="switcher-lbl" id="days-lbl" style="display:none"></div>
+  <div class="switcher days" id="days" style="display:none"></div>
   <div class="ftabs" id="ftabs" style="display:none"></div>
   <section class="panel" id="queue-panel" style="display:none"></section>
   <form class="panel" id="form" autocomplete="off"></form>
@@ -348,6 +359,10 @@
 
     if (f.t === 'lineitems') return f.entry ? buildEntryLog(f, wrap) : buildLineItems(f, wrap);
     if (f.t === 'fill') return buildFill(f, wrap);
+    if (f.t === 'heading') {
+      wrap.innerHTML = `<h3 class="sec-head">${t(f.l)}</h3>` + (f.hint ? `<div class="hint">${t(f.hint)}</div>` : '');
+      return wrap;
+    }
 
     if (f.t === 'check') {
       wrap.innerHTML = `<label class="check" for="f_${f.k}"><input type="checkbox" id="f_${f.k}">${t(f.l)}</label>` +
@@ -595,6 +610,73 @@
     fill:    { en: 'Fill in:', es: 'Complete:' }
   };
   const entryRenderers = {};
+  // Day tabs (station.dayTabs — Hand Trim): one lot is often worked over
+  // several days, so its page has a tab per day under the lot tabs. The
+  // running log named by `dayTabs.lines` shows only the picked day's rows,
+  // and Add stamps new rows with that day. Days with nothing logged yet that
+  // someone added are kept in `runDays`. Today is always a tab.
+  const DT = station.dayTabs || null;
+  let curDay = todayStr();
+  const rowDay = (r) => r.day || values.date || todayStr();
+  // Editing a submitted record shows every day's rows, no tabs.
+  const byDay = (f) => !!DT && !editMode && DT.lines === f.k;
+  const stampDay = (f) => (byDay(f) ? curDay : todayStr());
+  const DY = {
+    label: { en: 'Days', es: 'Días' },
+    today: { en: 'Today', es: 'Hoy' },
+    add:   { en: '+ Add day', es: '+ Agregar día' },
+    addGo: { en: 'Add', es: 'Agregar' }
+  };
+  function dayLabel(d) {
+    const [, m, dd] = String(d).split('-').map(Number);
+    return `${m}/${dd}`;
+  }
+  function dayList() {
+    const rows = values[DT.lines] || [];
+    return [...new Set([...rows.map(rowDay), ...(values.runDays || []), todayStr(), curDay])].filter(Boolean).sort();
+  }
+  function renderDays() {
+    if (!DT || editMode) return;
+    const el = document.getElementById('days');
+    const lbl = document.getElementById('days-lbl');
+    const f = station.fields.find((x) => x.k === DT.lines);
+    const total = (d) => (values[DT.lines] || []).filter((r) => rowDay(r) === d).reduce((a, r) => a + (Number(r[f.totalCol]) || 0), 0);
+    const amt = (d) => (DT.fromGrams ? `${fmtNum(total(d) / G_PER_LB, 2)} lb` : fmtNum(total(d), 2));
+    const wk = (d) => new Date(`${d}T12:00:00`).toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US', { weekday: 'short' });
+    lbl.textContent = t(DY.label);
+    lbl.style.display = 'block';
+    el.style.display = 'flex';
+    const adding = el.dataset.adding === '1';
+    el.innerHTML = dayList().map((d) =>
+      `<button type="button" class="chip${d === curDay ? ' on' : ''}" data-day="${d}">` +
+        `<span class="cs">${escapeHtml(d === todayStr() ? t(DY.today) : wk(d))}</span>` +
+        `<span class="cv">${escapeHtml(dayLabel(d))} · ${escapeHtml(amt(d))}</span></button>`).join('') +
+      (adding
+        ? `<span class="chip day-add"><input type="date" id="day-add-in" value="${escapeAttr(shiftDate(dayList().slice(-1)[0], 1))}">` +
+          `<button type="button" class="day-add-go" id="day-add-go">${t(DY.addGo)}</button></span>`
+        : `<button type="button" class="chip new" id="day-add">${t(DY.add)}</button>`);
+  }
+  function pickDay(d) {
+    curDay = d;
+    entryRenderers[DT.lines]();
+    recompute();
+    if (station.dailySummary && draftsOn) loadSummary(d);
+  }
+  if (DT) document.getElementById('days').addEventListener('click', (e) => {
+    const el = document.getElementById('days');
+    const day = e.target.closest('[data-day]');
+    if (day) { pickDay(day.dataset.day); return; }
+    if (e.target.closest('#day-add')) { el.dataset.adding = '1'; renderDays(); document.getElementById('day-add-in').focus(); return; }
+    if (e.target.closest('#day-add-go')) {
+      const d = document.getElementById('day-add-in').value;
+      el.dataset.adding = '';
+      if (d) {
+        values.runDays = [...new Set([...(values.runDays || []), d])].sort();
+        markDirty();
+        pickDay(d);
+      } else renderDays();
+    }
+  });
   function buildEntryLog(f, wrap) {
     values[f.k] = [];
     // A `rownum` column (box #) isn't typed: rows are numbered 1, 2, 3… in
@@ -640,11 +722,14 @@
       nums.forEach((c) => { wrap.querySelector(`#en_${f.k}_${c.k}`).textContent = String(rows.length + 1); });
       const tbody = wrap.querySelector(`#li_${f.k}`);
       tbody.innerHTML = '';
-      rows.slice().reverse().forEach((r) => {
+      // With day tabs, only the picked day's rows (the lot's total is in the
+      // calcs below the log).
+      const shown = byDay(f) ? rows.filter((r) => rowDay(r) === curDay) : rows;
+      shown.slice().reverse().forEach((r) => {
         const tr = document.createElement('tr');
         if (r._id && fresh.has(r._id)) tr.className = 'fresh';
         const at = r.at ? new Date(r.at) : null;
-        const when = at ? ((r.day && r.day !== todayStr() ? new Date(`${r.day}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' : '') +
+        const when = at ? ((r.day && r.day !== todayStr() && !byDay(f) ? new Date(`${r.day}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' : '') +
           at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) : '';
         tr.innerHTML = cols.map((c) => `<td>${escapeHtml(c.t === 'number' ? fmtNum(r[c.k], c.dp === undefined ? 2 : c.dp) : (r[c.k] ?? ''))}</td>`).join('') +
           `<td class="at">${escapeHtml(when)}</td><td></td>`;
@@ -661,8 +746,15 @@
         tr.lastChild.appendChild(del);
         tbody.appendChild(tr);
       });
-      wrap.querySelector(`#ee_${f.k}`).style.display = rows.length ? 'none' : 'block';
-      wrap.querySelector(`#lic_${f.k}`).textContent = `${rows.length} ${t(rows.length === 1 ? EL.entry : EL.entries)}`;
+      wrap.querySelector(`#ee_${f.k}`).style.display = shown.length ? 'none' : 'block';
+      wrap.querySelector(`#lic_${f.k}`).textContent = (byDay(f) ? `${dayLabel(curDay)} · ` : '') +
+        `${shown.length} ${t(shown.length === 1 ? EL.entry : EL.entries)}`;
+      if (byDay(f)) {
+        const tot = shown.reduce((a, r) => a + (Number(r[f.totalCol]) || 0), 0);
+        const tc = f.cols.find((c) => c.k === f.totalCol);
+        wrap.querySelector(`#lit_${f.k}`).textContent = fmtNum(tot, tc && tc.dp !== undefined ? tc.dp : 0);
+      }
+      if (byDay(f)) renderDays();
     };
     entryRenderers[f.k] = render;
 
@@ -690,7 +782,7 @@
       msg.style.display = 'none';
       const at = new Date().toISOString();
       const grams = [...Array(qty > 0 && each > 0 ? qty : 0).fill(each), ...(part > 0 ? [part] : [])];
-      grams.forEach((g) => values[f.k].push({ ...base, [M.col]: g, _id: crypto.randomUUID(), day: todayStr(), at, by: owner }));
+      grams.forEach((g) => values[f.k].push({ ...base, [M.col]: g, _id: crypto.randomUUID(), day: stampDay(f), at, by: owner }));
       fresh = new Set(values[f.k].slice(-grams.length).map((r) => r._id));
       ins.filter((c) => c.k !== M.col).forEach((c) => { inp(c).value = ''; });
       qtyIn.value = '1';
@@ -715,7 +807,7 @@
         return;
       }
       msg.style.display = 'none';
-      Object.assign(row, { _id: crypto.randomUUID(), day: todayStr(), at: new Date().toISOString(), by: owner });
+      Object.assign(row, { _id: crypto.randomUUID(), day: stampDay(f), at: new Date().toISOString(), by: owner });
       values[f.k].push(row);
       fresh = new Set([row._id]);
       ins.forEach((c) => { inp(c).value = ''; });
@@ -754,6 +846,12 @@
     const gone = new Set([...(values._deleted || []), ...(saved._deleted || [])]);
     values._deleted = [...gone];
     let changed = false;
+    // Days added on another tablet (day tabs) show up here too.
+    if (Array.isArray(saved.runDays) && saved.runDays.some((d) => !(values.runDays || []).includes(d))) {
+      values.runDays = [...new Set([...(values.runDays || []), ...saved.runDays])].sort();
+      changed = true;
+      if (DT) renderDays();
+    }
     entryFields.forEach((f) => {
       const mine = (values[f.k] || []).filter((r) => !r._id || !gone.has(r._id));
       const have = new Set(mine.map((r) => r._id));
@@ -1189,6 +1287,7 @@
 
   function hydrate(fields) {
     if (Array.isArray(fields._deleted)) values._deleted = fields._deleted;
+    if (Array.isArray(fields.runDays)) values.runDays = fields.runDays;
     station.fields.forEach((f) => {
       if (f.t === 'calc' || f.t === 'photo') return;
       if (f.t === 'lineitems') {
@@ -1224,7 +1323,7 @@
   function recompute() {
     station.fields.forEach((f) => {
       if (f.t === 'lineitems') {
-        const total = (values[f.k] || []).reduce((a, r) => a + (Number(r[f.totalCol]) || 0), 0);
+        const total = (values[f.k] || []).filter((r) => !byDay(f) || rowDay(r) === curDay).reduce((a, r) => a + (Number(r[f.totalCol]) || 0), 0);
         const el = document.getElementById(`lit_${f.k}`);
         const totalCol = f.cols.find((c) => c.k === f.totalCol);
         if (el) el.textContent = fmtNum(total, totalCol && totalCol.dp !== undefined ? totalCol.dp : 0);
@@ -1473,9 +1572,9 @@
     if (!cfg || !draftsOn || !SUM.date) return;
     box.style.display = 'block';
     // Keep this page's chip label in step with the strain being typed.
-    const onChip = document.querySelector('.chip.on .cv');
+    const onChip = document.querySelector('#switcher .chip.on .cv');
     if (onChip && values.strain) onChip.textContent = values.strain;
-    const onUid = document.querySelector('.chip.on .cs');
+    const onUid = document.querySelector('#switcher .chip.on .cs');
     if (onUid && values.sourceUid) onUid.textContent = `…${String(values.sourceUid).slice(-4)}`;
 
     // Pages for the day: saved rows, with this page swapped for its live values.
@@ -1945,7 +2044,7 @@
       }
     }
     renderSwitcher();
-    if (station.dailySummary) loadSummary(values.date || todayStr());
+    if (station.dailySummary) loadSummary(DT ? curDay : (values.date || todayStr()));
   } else {
     applyLinkPrefill();
   }

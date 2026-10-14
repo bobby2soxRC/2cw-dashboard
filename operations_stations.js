@@ -12,6 +12,7 @@
 // Field spec:
 //   k      key stored in the record
 //   t      text | number | date | time | select | textarea | uid | photo | calc | lineitems | check
+//          | heading (a section title + hint inside the form; no value)
 //   l      label {en, es}
 //   req    required
 //   ref    name of a list in data/operations/reference.json to populate a select
@@ -733,6 +734,9 @@ const OPERATIONS_STATIONS = [
     // Orders page), with the strain, UID and bucked weight.
     queueTab: true,
     links: [{ href: '/work_orders.html?tab=trim', l: { en: 'Work Orders →', es: 'Órdenes de trabajo →' } }],
+    // A lot is often trimmed over several days: a tab per day under the lot
+    // tabs; the weighing log shows the picked day and stamps new bags with it.
+    dayTabs: { lines: 'weights', fromGrams: true },
     // The table under the form: pounds of finished flower per person, per
     // lot, for one day (each bag carries the day it was weighed).
     dailySummary: { lines: 'weights', empCol: 'employeeNo', valueCol: 'grams', dateCol: 'day', unit: 'lb', fromGrams: true,
@@ -803,6 +807,11 @@ const OPERATIONS_STATIONS = [
         },
         l: { en: 'Avg Grams / Trimmer', es: 'Gramos promedio por persona' } },
 
+      // Weighed once, when the whole run is done.
+      { k: 'endOfRun', t: 'heading',
+        l: { en: 'End of Run', es: 'Fin de la corrida' },
+        hint: { en: 'Fill these in on the last day of the run, then submit.',
+                es: 'Llene esto el último día de la corrida y luego envíe.' } },
       { k: 'smallsLb', t: 'number', min: 0, step: 0.01,
         l: { en: 'Smalls Pulled (lbs)', es: 'Smalls separados (lbs)' } },
       { k: 'normTrimLb', t: 'number', min: 0, step: 0.01,

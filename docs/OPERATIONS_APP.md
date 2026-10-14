@@ -126,7 +126,16 @@ lot (`sharedDay` — every open page, anyone's, is in the "Lots open"
 switcher; a lot open on another page drops out of the dropdown), autosaved
 until submitted, with Delete this page (`canDelete`). The weighing worksheet
 is a running log (`entry: true`) so two tablets on one lot merge their bags;
-blank rows saved back when it was a grid are skipped on load. It starts from bucked flower. Its
+blank rows saved back when it was a grid are skipped on load. The entry bar
+takes Bags × Grams each (454 stays filled in) plus a Partial (`multi` on the
+field) and logs a row per bag. A lot is often trimmed over several days, so
+the page has **day tabs** under the lot tabs (`dayTabs`): one per day with
+bags logged, today, and any added with "+ Add day" (kept in `runDays`,
+merged across tablets). The log shows the picked day's bags and stamps new
+ones with that day (`day`); the totals below are the whole lot, and the
+Daily Summary — Pounds by Person table follows the picked day. Smalls, trim,
+waste and the rest sit under an "End of Run" heading (`t: 'heading'`) and
+are filled in on the last day before submitting. It starts from bucked flower. Its
 Lot Number is a dropdown of every bucked lot (`picker: { list: 'bucked' }` —
 `buckedLots` in `ops_common.js`, one per UID): submitted Bucking records,
 plus lots still on an open Bucking page with some flower logged ("— bucking
