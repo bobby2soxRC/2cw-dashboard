@@ -315,7 +315,18 @@ the details: drying the estimated wet lbs and harvest dates, farm support
 its dates and crew. The request form
 doesn't ask for a mailing address or the signer's title, so those are typed
 in the dialog; anything left blank prints as a line to fill in by hand.
-Nothing is saved — upload the signed copy under Signed MSA as before. When
+Nothing is saved — upload the signed copy under Signed MSA as before.
+
+The same dialog also makes the **invoice request to Finance** for the
+deposit (the Drying Schedule editor has its own **Invoice request to
+Finance** button, which opens the dialog with that PDF as the main
+action). It's one page: who's asking (the logged-in name) and the date;
+the customer's legal name, entity, farm name, license #, mailing address,
+contact and signer; the estimated wet lbs × drying rate, and the deposit
+at 20% of that (section 3.B.a, `DEPOSIT_PCT`); expected harvests; and the
+other services they asked for, to bill as performed. Lbs and rate are read
+from the Drying line under Exhibit B, so a special rate typed there flows
+into both PDFs; the dialog shows the deposit figure live as you edit. When
 the agreement's wording changes, edit `blocks()` in `msa_agreement.js` (and
 bump `CACHE_VERSION`); new services need an `EXB` entry there as well as in
 `drying_services.js`.

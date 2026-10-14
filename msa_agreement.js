@@ -103,6 +103,12 @@
       email: r.signer_email || r.contact_email || '',
       signer_name: [r.signer_first_name, r.signer_last_name].filter(Boolean).join(' ') || r.contact_name || '',
       signer_title: '',
+      farm_name: (r.farm_name || '').trim(),
+      license_number: (r.license_number || '').trim(),
+      contact_name: (r.contact_name || '').trim(),
+      contact_phone: fmtPhone(r.contact_phone),
+      contact_email: r.contact_email || '',
+      requested: requested.filter((k) => EXB[k]),
       lines: services.map((k) => {
         const line = { label: serviceLabel(k), unit: EXB[k].unit, qty: '', rate: EXB[k].rate, notes: EXB[k].notes || '' };
         if (!requested.includes(k)) return line;
@@ -290,6 +296,62 @@
     ];
   }
 
+  // ── Invoice request to Finance ───────────────────────────────────────
+  // One page for Finance to raise the deposit invoice: who the customer is,
+  // the estimated wet lbs and drying rate (from the Exhibit B drying line,
+  // so a special rate typed in the dialog carries through), and the 20%
+  // deposit of section 3.B.a.
+  const DEPOSIT_PCT = 20;
+  const money = (n) => '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const parseNum = (s) => { const m = String(s || '').replace(/,/g, '').match(/\d+(\.\d+)?/); return m ? Number(m[0]) : null; };
+  function deposit(d) {
+    const line = (d.lines || []).find((l) => /^drying$/i.test(String(l.label || '').trim())) || null;
+    const lbs = line && parseNum(line.qty), rate = line && parseNum(line.rate);
+    const total = lbs && rate ? Math.round(lbs * rate * 100) / 100 : null;
+    return { line, lbs, rate, total, deposit: total == null ? null : Math.round(total * DEPOSIT_PCT) / 100 };
+  }
+
+  function invoiceBlocks(d) {
+    const v = (s) => String(s || '').replace(/\*/g, '').trim();
+    const dash = (s) => v(s) || '—';
+    const dep = deposit(d);
+    const stateName = STATES[d.state] || d.state;
+    let by = '';
+    try { by = (sessionStorage.getItem('2cw_user_name') || '').trim(); } catch (e) { /* no storage */ }
+    const lineOf = (k) => (d.lines || []).find((l) => l.label === clean(serviceLabel(k)));
+    const others = (d.requested || []).filter((k) => k !== 'drying').map((k) => {
+      const l = lineOf(k) || { label: serviceLabel(k), ...EXB[k] };
+      return `${l.label} — ${l.rate} ${String(l.unit || '').toLowerCase()}${l.notes && k === 'farm_labor' ? ` (${l.notes})` : ''}`;
+    });
+    const harv = dep.line && /^Est\. harvests: /.test(dep.line.notes || '') ? dep.line.notes.replace(/^Est\. harvests: /, '') : '';
+    return [
+      { t: 'title', text: 'INVOICE REQUEST — DRYING DEPOSIT' },
+      { t: 'table', cols: [130, 338], boldFirstCol: true, rows: [
+        ['To:', 'Finance, 2CW Productions, Inc.'],
+        ['Requested by:', by || '____________________'],
+        ['Date:', fmtDate(today())]] },
+      { t: 'sub', text: 'Bill to' },
+      { t: 'table', cols: [130, 338], boldFirstCol: true, rows: [
+        ['Legal business name:', dash(d.legal_name)],
+        ['Entity:', [stateName, d.entity].filter(Boolean).join(' ') || '—'],
+        ['Farm name:', dash(d.farm_name)],
+        ['License #:', dash(d.license_number)],
+        ['Mailing address:', [v(d.address), v(d.city)].filter(Boolean).join(', ') || '—'],
+        ['Contact:', [v(d.contact_name), v(d.contact_phone), v(d.contact_email)].filter(Boolean).join(' · ') || '—'],
+        ['Agreement signer:', [v(d.signer_name), v(d.signer_title), v(d.email)].filter(Boolean).join(' · ') || '—'],
+        ['Agreement date:', fmtDate(d.effective_date) || '—']] },
+      { t: 'sub', text: 'Deposit' },
+      { t: 'table', cols: [218, 90, 80, 80], borders: true, header: ['Description', 'Est. wet lbs', 'Rate', 'Amount'], rows: [
+        ['Drying services (estimated)', dep.lbs ? fmtN(dep.lbs) : '', dep.rate ? `${money(dep.rate)} / lb` : '', dep.total != null ? money(dep.total) : ''],
+        [`Deposit — ${DEPOSIT_PCT}% of estimated drying fees`, '', '', dep.deposit != null ? money(dep.deposit) : '']] },
+      { t: 'p', text: `**Please invoice the customer for: ${dep.deposit != null ? money(dep.deposit) : '____________'}**`, size: 13 },
+      { t: 'p', text: `Per the Master Service Agreement (section 3.B.a), the deposit is ${DEPOSIT_PCT}% of the total Drying Services fees and is due within seven (7) calendar days of signing. The drying charge above is an estimate; the final charge is based on the wet weight recorded at intake (net of tare).` },
+      ...(harv ? [{ t: 'sub', text: 'Expected harvests' }, { t: 'p', text: harv }] : []),
+      ...(others.length ? [{ t: 'sub', text: 'Other services requested (bill as performed — not part of the deposit)' },
+        ...others.map((o) => ({ t: 'li', lv: 1, label: '•', text: o }))] : [])
+    ];
+  }
+
   // ── PDF layout ─────────────────────────────────────────────────────────
   // Letter, 1" margins, Times 11 pt. jsPDF's built-in Times covers the
   // curly quotes and dashes the agreement uses.
@@ -302,7 +364,7 @@
   const clean = (s) => String(s == null ? '' : s).replace(/[\u2032\u2035]/g, '’').replace(/[\u2033\u2036]/g, '”')
     .replace(/[\u00a0\u2000-\u200b\u202f]/g, ' ').replace(/[^\x00-\xff\u0152\u0153\u0160\u0161\u0178\u017d\u017e\u0192\u02c6\u02dc\u2013\u2014\u2018-\u201e\u2020-\u2022\u2026\u2030\u2039\u203a\u20ac\u2122]/g, '?');
 
-  function build(jsPDF, d) {
+  function build(jsPDF, d, kind = 'msa') {
     d = { ...d, lines: (d.lines || []).map((l) => Object.fromEntries(Object.entries(l).map(([k, x]) => [k, clean(x)]))) };
     for (const k of Object.keys(d)) if (typeof d[k] === 'string') d[k] = clean(d[k]);
     const doc = new jsPDF({ unit: 'pt', format: 'letter' });
@@ -314,7 +376,7 @@
     // base = 'normal' | 'bold' | 'italic' | 'bolditalic'.
     function rich(text, x, width, base = 'normal', align = 'left') {
       const pieces = [];
-      String(text).split('**').forEach((seg, i) => {
+      clean(text).split('**').forEach((seg, i) => {
         const bold = i % 2 === 1;
         const style = bold ? (base === 'italic' ? 'bolditalic' : 'bold') : base;
         seg.split(/(\s+)/).forEach((p) => { if (p) pieces.push({ p, style, space: /^\s+$/.test(p) }); });
@@ -364,7 +426,7 @@
         const isHead = header && ri === 0;
         const wrapped = cells.map((c, ci) => {
           font(isHead || (boldFirstCol && ci === 0) ? 'bold' : 'normal');
-          return doc.splitTextToSize(String(c || ''), cols[ci] - pad * 2);
+          return doc.splitTextToSize(clean(c), cols[ci] - pad * 2);
         });
         const h = Math.max(1, ...wrapped.map((w) => w.length)) * LH + pad * 2 - (LH - FS) + 2;
         room(h);
@@ -382,8 +444,12 @@
     }
 
     const W = PAGE_W - M * 2;
-    blocks(d).forEach((b) => {
+    (kind === 'invoice' ? invoiceBlocks(d) : blocks(d)).forEach((b) => {
       switch (b.t) {
+        case 'sub':
+          y += GAP; room(LH * 3); rich(`**${b.text}**`, M, W); doc.setDrawColor(150); doc.line(M, y, M + W, y); doc.setDrawColor(0); y += GAP; break;
+        case 'table':
+          table(b.cols, b.rows, b); break;
         case 'title':
           doc.setFontSize(13); font('bold'); rich(`**${b.text}**`, M, W, 'normal', 'center'); doc.setFontSize(FS); y += GAP * 2; break;
         case 'center':
@@ -392,7 +458,8 @@
           y += GAP; room(LH * 3); font('bold'); doc.text(b.n, M, y + FS); rich(`**${b.text}**`, M + 18, W - 18); y += GAP; break;
         case 'p':
           if (b.keep && y + LH > BOTTOM) y = BOTTOM - LH;   // squeeze onto the page rather than strand it
-          rich(b.text, M, W, b.style || 'normal'); y += GAP; break;
+          if (b.size) { y += GAP; doc.setFontSize(b.size); }
+          rich(b.text, M, W, b.style || 'normal'); doc.setFontSize(FS); y += GAP; break;
         case 'li': {
           const [lx, tx] = INDENT[b.lv];
           if (b.label) { room(LH); font('normal'); doc.text(b.label, M + lx, y + FS); }
@@ -424,13 +491,16 @@
     doc.setFontSize(9); font('normal');
     for (let i = 1; i <= n; i++) {
       doc.setPage(i);
-      doc.text(`Master Service Agreement — ${d.legal_name || 'Customer'}`, M, PAGE_H - 40);
+      doc.text(`${kind === 'invoice' ? 'Invoice request' : 'Master Service Agreement'} — ${d.legal_name || 'Customer'}`, M, PAGE_H - 40);
       doc.text(`Page ${i} of ${n}`, PAGE_W - M, PAGE_H - 40, { align: 'right' });
     }
     return doc;
   }
 
-  const fileName = (d) => `2CW MSA - ${String(d.legal_name || 'Customer').replace(/[\\/:*?"<>|]+/g, '').trim()} - ${d.effective_date || today()}.pdf`;
+  const safeName = (d) => String(d.legal_name || 'Customer').replace(/[\\/:*?"<>|]+/g, '').trim();
+  const fileName = (d, kind = 'msa') => kind === 'invoice'
+    ? `2CW Invoice Request - ${safeName(d)} - Drying Deposit - ${today()}.pdf`
+    : `2CW MSA - ${safeName(d)} - ${d.effective_date || today()}.pdf`;
 
   let jsPdfPromise = null;
   function loadJsPdf() {
@@ -445,10 +515,10 @@
     return jsPdfPromise;
   }
 
-  async function download(d) {
+  async function download(d, kind = 'msa') {
     const jsPDF = await loadJsPdf();
-    const doc = build(jsPDF, d);
-    const name = fileName(d);
+    const doc = build(jsPDF, d, kind);
+    const name = fileName(d, kind);
     const file = new File([doc.output('blob')], name, { type: 'application/pdf' });
     // Phones: the share sheet (Save to Files, Mail, AirDrop). Desktop: download.
     if (navigator.canShare && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && navigator.canShare({ files: [file] })) {
@@ -480,6 +550,7 @@
     .msa .msa-go{background:var(--blue,#5a9fd4);color:#0c0d0f;border-color:var(--blue,#5a9fd4)}
     .msa .msa-btn:disabled{opacity:.5;cursor:default}
     .msa .msa-acts{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:18px}
+    .msa .msa-dep{margin-top:14px;padding:10px 12px;border:1px solid var(--border,#1e2129);border-radius:8px;font-size:.9rem}
     .msa .msa-warn{color:var(--gold,#d4a843);font-size:.82rem;margin-top:10px;display:none}
     .msa .msa-err{color:var(--red,#ef5350);font-size:.85rem;margin-top:10px;display:none}
     @media (max-width:600px){ .msa .msa-g{grid-template-columns:1fr} .msa .msa-line{grid-template-columns:1fr 1fr;padding:8px 0;border-top:1px solid var(--border,#1e2129)} .msa .msa-line .msa-x{justify-self:end} .msa .msa-hdrow{display:none} }`;
@@ -501,6 +572,8 @@
     bg.addEventListener('click', (e) => { if (e.target === bg) close(); });
 
     const intakes = opts.intakes || [];
+    // mode 'invoice' leads with the invoice request; both PDFs are offered either way.
+    const inv = opts.mode === 'invoice';
     const fld = (k, label, attrs = '') => `<div><label for="msa-${k}">${label}</label><input id="msa-${k}" data-k="${k}" value="${esc(d[k])}" ${attrs}/></div>`;
     const lineRow = (l, i) => `<div class="msa-line" data-i="${i}">
       <input data-l="label" value="${esc(l.label)}" placeholder="Service"/>
@@ -517,9 +590,11 @@
     };
     const draw = () => {
       const unused = SERVICE_LIST().filter((s) => EXB[s.k] && !d.lines.some((l) => l.label === s.l));
-      bg.innerHTML = `<div class="msa" role="dialog" aria-label="Service Agreement">
-        <h2>Service Agreement</h2>
-        <div class="msa-sub">Check the details, fill in anything missing, then download the filled-in agreement as a PDF. Blanks print as signature-style lines.</div>
+      bg.innerHTML = `<div class="msa" role="dialog" aria-label="${inv ? 'Invoice request' : 'Service Agreement'}">
+        <h2>${inv ? 'Invoice request to Finance' : 'Service Agreement'}</h2>
+        <div class="msa-sub">${inv
+          ? 'The deposit invoice request for Finance: customer details, estimated wet lbs and drying rate (the Drying line under Exhibit B), and the 20% deposit. Check the details, then download the PDF.'
+          : 'Check the details, fill in anything missing, then download the filled-in agreement as a PDF. Blanks print as signature-style lines.'}</div>
         ${intakes.length ? `<div><label for="msa-src">Fill from a drying request</label><select id="msa-src"><option value="">—</option>${intakes.map((r) =>
           `<option value="${esc(r.id)}" ${r.id === opts.pick ? 'selected' : ''}>${esc(r.legal_business_name || r.farm_name)}${r.legal_business_name && r.farm_name && r.legal_business_name !== r.farm_name ? ` (${esc(r.farm_name)})` : ''} · ${esc(new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }))}</option>`).join('')}</select></div>` : ''}
         <div class="msa-sect">Customer</div>
@@ -536,6 +611,14 @@
           ${fld('phone', 'Phone', 'type="tel"')}
           ${fld('email', 'Email', 'type="email"')}
         </div>
+        <div class="msa-sect">Farm &amp; contact</div>
+        <div class="msa-g">
+          ${fld('farm_name', 'Farm name')}
+          ${fld('license_number', 'License #')}
+          ${fld('contact_name', 'Contact')}
+          ${fld('contact_phone', 'Contact phone', 'type="tel"')}
+          ${fld('contact_email', 'Contact email', 'type="email"')}
+        </div>
         <div class="msa-sect">Signer</div>
         <div class="msa-g">
           ${fld('signer_name', 'Name')}
@@ -548,16 +631,28 @@
           ${unused.length ? `<select id="msa-add" style="flex:1 1 220px"><option value="">+ Add a service…</option>${unused.map((s) => `<option value="${s.k}">${esc(s.l)}</option>`).join('')}</select>` : ''}
           <button type="button" class="msa-btn" id="msa-blank">+ Blank line</button>
         </div>
+        <div class="msa-dep" id="msa-dep"></div>
         <div class="msa-warn" id="msa-warn"></div>
         <div class="msa-err" id="msa-err"></div>
         <div class="msa-acts">
           <button type="button" class="msa-btn" id="msa-cancel">Close</button>
-          <button type="button" class="msa-btn msa-go" id="msa-go">Download PDF</button>
+          <button type="button" class="msa-btn${inv ? '' : ' msa-go'}" data-kind="msa">Agreement PDF</button>
+          <button type="button" class="msa-btn${inv ? ' msa-go' : ''}" data-kind="invoice">Invoice request PDF</button>
         </div></div>`;
       const missing = [['legal_name', 'legal name'], ['state', 'state'], ['address', 'mailing address'], ['city', 'city/state/zip'], ['signer_name', 'signer'], ['signer_title', 'signer’s title']]
         .filter(([k]) => !d[k]).map(([, l]) => l);
       const warn = bg.querySelector('#msa-warn');
-      if (missing.length) { warn.textContent = `Still blank: ${missing.join(', ')}. Those print as blank lines to fill in by hand.`; warn.style.display = 'block'; }
+      if (missing.length) { warn.textContent = `Still blank: ${missing.join(', ')}. ${inv ? 'Finance will see those as blank.' : 'Those print as blank lines to fill in by hand.'}`; warn.style.display = 'block'; }
+      // Live deposit figure from the Drying line as it's edited.
+      const showDep = () => {
+        read();
+        const dep = deposit(d), el = bg.querySelector('#msa-dep');
+        el.innerHTML = dep.deposit != null
+          ? `Deposit to invoice: <b>${money(dep.deposit)}</b> <span style="color:var(--subtext,#9aa0b0)">= ${DEPOSIT_PCT}% × ${fmtN(dep.lbs)} lbs × ${money(dep.rate)}</span>`
+          : `<span style="color:var(--gold,#d4a843)">No deposit yet — the Drying line under Exhibit B needs a quantity (wet lbs) and a rate.</span>`;
+      };
+      showDep();
+      bg.querySelectorAll('.msa-line[data-i] input').forEach((el) => { el.addEventListener('input', showDep); });
       bg.querySelector('#msa-cancel').onclick = close;
       bg.querySelectorAll('[data-rm]').forEach((b) => { b.onclick = () => { read(); d.lines.splice(Number(b.dataset.rm), 1); draw(); }; });
       bg.querySelector('#msa-blank').onclick = () => { read(); d.lines.push({ label: '', unit: '', qty: '', rate: '', notes: '' }); draw(); };
@@ -579,19 +674,19 @@
         opts.pick = r.id;
         draw();
       };
-      bg.querySelector('#msa-go').onclick = async (e) => {
-        const btn = e.currentTarget, err = bg.querySelector('#msa-err');
+      bg.querySelectorAll('[data-kind]').forEach((btn) => { btn.onclick = async () => {
+        const err = bg.querySelector('#msa-err'), label = btn.textContent;
         read(); err.style.display = 'none';
         btn.disabled = true; btn.textContent = 'Making PDF…';
-        try { await download(d); }
+        try { await download(d, btn.dataset.kind); }
         catch (ex) { err.textContent = ex.message || String(ex); err.style.display = 'block'; }
-        btn.disabled = false; btn.textContent = 'Download PDF';
-      };
+        btn.disabled = false; btn.textContent = label;
+      }; });
     };
     draw();
   }
 
-  const api = { open, fromIntake, build, blocks, guessEntity, fileName };
+  const api = { open, fromIntake, build, blocks, invoiceBlocks, deposit, guessEntity, fileName };
   if (typeof window !== 'undefined') window.MSA = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();

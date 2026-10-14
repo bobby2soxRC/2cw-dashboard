@@ -618,8 +618,10 @@ function openEditor(id) {
       <div class="fld"><label class="lbl" for="e-slast">Signer last name</label>${inp('e-slast', r.signer_last_name)}</div>
       <div class="fld"><label class="lbl" for="e-semail">Signer email</label>${inp('e-semail', r.signer_email, 'type="email"')}</div>
     </div>
-    <div class="fld"><button type="button" class="btn btn-sm" onclick="openAgreement()">Service Agreement PDF</button>
-      <div class="hint">Fills the Master Service Agreement with what’s on this screen — check it and add the address and signer’s title before downloading.</div></div>
+    <div class="fld"><div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" class="btn btn-sm" onclick="openAgreement()">Service Agreement PDF</button>
+        <button type="button" class="btn btn-sm" onclick="openAgreement('invoice')">Invoice request to Finance</button></div>
+      <div class="hint">Fills the Master Service Agreement, or the deposit invoice request for Finance, with what’s on this screen — check it and add the address and signer’s title before downloading.</div></div>
     ${id ? '<div class="fld" id="e-docs"></div>' : ''}
 
     <div class="sect">Harvest dates</div>
@@ -712,9 +714,10 @@ async function openRequestDoc(docId) {
   } catch (e) { if (win) win.close(); alert(e.message); }
 }
 
-// The MSA filled from the editor as it stands now (unsaved edits included).
+// The MSA / deposit invoice request filled from the editor as it stands now
+// (unsaved edits included).
 // Half-filled date rows just get left out here — Save is where they're flagged.
-function openAgreement() {
+function openAgreement(mode) {
   const val = (id) => document.getElementById(id).value.trim();
   const wins = (boxId, cls, key) => [...document.querySelectorAll(`#${boxId} .win-row`)].map((row) => ({
     start: row.querySelector('.w-start').value, days: row.querySelector('.w-days').value.trim() || 1, [key]: row.querySelector(cls).value.trim()
@@ -725,7 +728,7 @@ function openAgreement() {
     signer_first_name: val('e-sfirst'), signer_last_name: val('e-slast'), signer_email: val('e-semail'),
     est_wet_lb: val('e-lb'), harvests: wins('e-harv', '.w-lb', 'lb'), farm_support: wins('e-sup', '.w-people', 'people'),
     services: [...document.querySelectorAll('#e-svc input:checked')].map((c) => c.value)
-  }));
+  }), { mode });
 }
 
 function closeEditor() {
