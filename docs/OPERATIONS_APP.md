@@ -150,7 +150,9 @@ pre-roll products: the BSKU's 2-digit category code is `02` (no BSKU → the
 product name says pre-roll). The Sheet's Crew column is ignored, because flower
 packouts can be crewed by the pre-roll team. For each request the team saves a
 plan in the `preroll_plans` Supabase table (keyed by PR#): strain, optional
-source UID, estimated start/completion, lead, on-hold, notes. "Start batch"
+source UID, estimated start/completion, lead, on-hold, notes, and overrides
+for the Sheet's Batch Size (`quantity`) and Strain Type (`strain_type`,
+Indica / Sativa / Hybrid) — each stored only when it differs from the Sheet. "Start batch"
 opens Pre-Roll Production with `?set_prNum=…&set_strain=…` (any form accepts
 `set_<fieldKey>` starting values on a brand-new form), and the dashboard
 reads those forms back by `prNum`: an open draft means in production, a
@@ -161,7 +163,7 @@ Ready Date has passed. English/Spanish via the shared `2cw_lang` toggle.
 **Pre-Roll Queue** (top of the Pre-Roll Dashboard) is the order to make
 things in, like the bucking queue. It lists every open pre-roll request that
 isn't on hold, plus batches added by hand with **+ Add to queue** (brand,
-strain, source UID, quantity, notes — `preroll_queue_items`, shown as
+type, strain, source UID, quantity, notes — `preroll_queue_items`, shown as
 `PQ-<queue_no>`). Each row shows brand · strain, the ref (PR# or PQ-#), the
 source UID, the quantity and how many are made, with ▲ ▼ / Top, Edit plan /
 Edit, and Start batch / Open batch. The order is one shared `operations_forms`

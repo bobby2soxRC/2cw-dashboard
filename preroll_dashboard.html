@@ -282,7 +282,10 @@ const L = {
   i_add: { en: 'Add to queue', es: 'Agregar a la fila' },
   i_remove: { en: 'Remove from queue', es: 'Quitar de la fila' },
   i_remove_q: { en: 'Remove {ref} from the queue?', es: '¿Quitar {ref} de la fila?' },
-  i_err_qty: { en: 'Enter how many pre-rolls.', es: 'Escriba cuántos prerolls.' }
+  i_err_qty: { en: 'Enter how many pre-rolls.', es: 'Escriba cuántos prerolls.' },
+  e_type: { en: 'Type', es: 'Tipo' },
+  e_sheet: { en: 'Sheet:', es: 'Hoja:' },
+  e_qty_hint: { en: 'Sheet says {n}', es: 'La hoja dice {n}' }
 };
 const STAGE_LABELS = {
   needs_strain: { en: 'Needs strain', es: 'Falta variedad' },
@@ -293,6 +296,17 @@ const STAGE_LABELS = {
   on_hold: { en: 'On hold', es: 'En espera' }
 };
 const TYPE_LABELS = { indica: 'Indica', sativa: 'Sativa', hybrid: { en: 'Hybrid', es: 'Híbrida' } };
+// Indica / Sativa / Hybrid dropdown, stored the way the Sheet writes them.
+const TYPES = ['Indica', 'Sativa', 'Hybrid'];
+function typeSelect(id, cur) {
+  const c = String(cur || '').toLowerCase();
+  return `<select id="${id}"><option value="">${t(L.any_type)}</option>` +
+    TYPES.map((v) => `<option value="${v}" ${v.toLowerCase() === c ? 'selected' : ''}>${esc(t(TYPE_LABELS[v.toLowerCase()]))}</option>`).join('') + `</select>`;
+}
+function typePill(type) {
+  const k = String(type || '').toLowerCase();
+  return type ? `<span class="pill ${esc(k)}">${esc(t(TYPE_LABELS[k]) || type)}</span>` : '';
+}
 const locale = () => (getLang() === 'es' ? 'es-US' : 'en-US');
 
 const currentUser = (sessionStorage.getItem('2cw_user_name') || '').trim();
@@ -463,7 +477,10 @@ function view(r) {
   // has already passed and it isn't done.
   const late = open && !!r.readyDate &&
     ((plan.est_completion && plan.est_completion > r.readyDate) || r.readyDate < todayStr());
-  return { ...r, plan, strain, stage, open, late, made, draft, submitted };
+  // Edit plan can override the Sheet's Batch Size and Strain Type.
+  const batchSize = num(plan.quantity) > 0 ? num(plan.quantity) : r.batchSize;
+  const type = plan.strain_type || r.type;
+  return { ...r, batchSize, type, plan, strain, stage, open, late, made, draft, submitted };
 }
 
 function passes(v, q) {
@@ -490,14 +507,14 @@ function brandOf(bsku, product) {
 function queueItems() {
   const fromRequests = requests.map(view).filter((v) => v.open && v.stage !== 'on_hold').map((v) => ({
     ref: v.pr, kind: 'pr', brand: brandOf(v.bsku, v.product), product: v.product || v.bsku,
-    strain: v.strain, sourceUid: v.plan.source_uid || '', qty: v.batchSize, made: v.made,
+    type: v.type, strain: v.strain, sourceUid: v.plan.source_uid || '', qty: v.batchSize, made: v.made,
     draft: v.draft, late: v.late, readyDate: v.readyDate, sortDate: v.readyDate || '9999'
   }));
   const fromManual = manual.map((m) => {
     const ref = 'PQ-' + m.queue_no;
     const runs = batches[ref] || [];
     return {
-      ref, kind: 'manual', row: m, brand: m.brand || '', product: '', strain: m.strain || '',
+      ref, kind: 'manual', row: m, brand: m.brand || '', product: '', type: m.strain_type || '', strain: m.strain || '',
       sourceUid: m.source_uid || '', qty: num(m.quantity),
       made: runs.reduce((a, b) => a + num(b.fields && b.fields.totalPrerolls), 0),
       draft: runs.find((b) => b.status === 'draft'), done: runs.some((b) => b.status === 'submitted'),
@@ -533,6 +550,7 @@ function renderQueue() {
         <div class="q-n">${i + 1}</div>
         <div class="q-main">
           <div class="q-strain">${x.brand ? esc(x.brand) + ' · ' : ''}${x.strain ? esc(x.strain) : `<span class="none">${t(L.q_no_strain)}</span>`}
+            ${typePill(x.type)}
             ${x.draft ? `<span class="pill stage-in_production">${t(L.q_busy)}</span>` : ''}
             ${x.late ? `<span class="pill late">${t(L.late)}</span>` : ''}</div>
           <div class="q-sub"><span class="q-ref">${esc(x.ref)}</span>${x.product ? ' · ' + esc(x.product) : ''} ·
@@ -622,7 +640,6 @@ function render() {
 
 function cardHtml(v) {
   const p = v.plan;
-  const typeCls = (v.type || '').toLowerCase();
   const pctMade = v.batchSize > 0 ? Math.min(100, Math.round(v.made / v.batchSize * 100)) : 0;
   const startHref = '/ops_form.html?' + new URLSearchParams({
     station: 'preroll_production', set_prNum: v.pr, set_batchId: v.pr,
@@ -636,7 +653,7 @@ function cardHtml(v) {
     <div class="c-top">
       <span class="pr">${esc(v.pr)}</span>
       <span class="prod">${esc(v.product || v.bsku)}</span>
-      ${v.type ? `<span class="pill ${esc(typeCls)}">${esc(t(TYPE_LABELS[typeCls]) || v.type)}</span>` : ''}
+      ${typePill(v.type)}
       <span class="pill stage-${v.stage}">${t(STAGE_LABELS[v.stage])}</span>
       ${v.late ? `<span class="pill late">${t(L.late)}</span>` : ''}
     </div>
@@ -679,7 +696,13 @@ function openEditor(pr) {
   const names = [...new Set(people.concat(p.assigned_to ? [p.assigned_to] : []))].sort((a, b) => a.localeCompare(b));
   document.getElementById('modal').innerHTML = `
     <h2>${esc(pr)} — ${esc(r.product || r.bsku)}</h2>
-    <div class="m-sub">${esc(t(TYPE_LABELS[(r.type || '').toLowerCase()]) || r.type || t(L.any_type))} · ${r.batchSize.toLocaleString(locale())} ${t(L.prerolls)} · ${t(L.ready_by_lc)} ${esc(fmtDate(r.readyDate) || '—')}</div>
+    <div class="m-sub">${t(L.e_sheet)} ${esc(t(TYPE_LABELS[(r.type || '').toLowerCase()]) || r.type || t(L.any_type))} · ${r.batchSize.toLocaleString(locale())} ${t(L.prerolls)} · ${t(L.ready_by_lc)} ${esc(fmtDate(r.readyDate) || '—')}</div>
+    <div class="row2">
+      <div class="fld"><label class="lbl" for="e-qty">${t(L.i_qty)}</label>
+        <input id="e-qty" type="number" min="1" step="1" inputmode="numeric" value="${esc(num(p.quantity) > 0 ? p.quantity : r.batchSize || '')}"
+          placeholder="${esc(t(L.e_qty_hint).replace('{n}', r.batchSize.toLocaleString(locale())))}"/></div>
+      <div class="fld"><label class="lbl" for="e-type">${t(L.e_type)}</label>${typeSelect('e-type', p.strain_type || r.type)}</div>
+    </div>
     <div class="fld"><label class="lbl" for="e-strain">${t(L.strain)}</label>
       <input id="e-strain" list="strain-list" value="${esc(strain)}" placeholder="${esc(t(L.e_strain_ph))}"/>
       <datalist id="strain-list">${strains.map((s) => `<option value="${esc(s)}">`).join('')}</datalist></div>
@@ -726,9 +749,12 @@ function openItemEditor(id) {
       <div class="fld"><label class="lbl" for="i-qty">${t(L.i_qty)}</label>
         <input id="i-qty" type="number" min="1" step="1" inputmode="numeric" value="${esc(m ? m.quantity : '')}"/></div>
     </div>
-    <div class="fld"><label class="lbl" for="i-strain">${t(L.strain)}</label>
-      <input id="i-strain" list="strain-list" value="${esc(m ? m.strain || '' : '')}" placeholder="${esc(t(L.e_strain_ph))}"/>
-      <datalist id="strain-list">${strains.map((s) => `<option value="${esc(s)}">`).join('')}</datalist></div>
+    <div class="row2">
+      <div class="fld"><label class="lbl" for="i-type">${t(L.e_type)}</label>${typeSelect('i-type', m ? m.strain_type : '')}</div>
+      <div class="fld"><label class="lbl" for="i-strain">${t(L.strain)}</label>
+        <input id="i-strain" list="strain-list" value="${esc(m ? m.strain || '' : '')}" placeholder="${esc(t(L.e_strain_ph))}"/>
+        <datalist id="strain-list">${strains.map((s) => `<option value="${esc(s)}">`).join('')}</datalist></div>
+    </div>
     <div class="fld"><label class="lbl" for="i-uid">${t(L.e_uid)}</label>
       <input id="i-uid" value="${esc(m ? m.source_uid || '' : '')}" autocapitalize="characters" placeholder="${esc(t(L.e_uid_ph))}"/></div>
     <div class="fld"><label class="lbl" for="i-notes">${t(L.e_notes)}</label><textarea id="i-notes" rows="2">${esc(m ? m.notes || '' : '')}</textarea></div>
@@ -749,6 +775,7 @@ async function saveItem() {
   if (!(qty > 0)) { err.textContent = t(L.i_err_qty); err.style.display = 'block'; return; }
   const row = {
     brand: val('i-brand') || null,
+    strain_type: val('i-type') || null,
     strain: val('i-strain') || null,
     source_uid: val('i-uid').toUpperCase() || null,
     quantity: qty,
@@ -791,8 +818,17 @@ async function removeItem() {
 async function saveEditor() {
   const val = (id) => document.getElementById(id).value.trim();
   const err = document.getElementById('e-err');
+  const r = requests.find((x) => x.pr === editingPr) || {};
+  // Only store what differs from the Sheet, so later Sheet changes still
+  // come through where the team didn't override them.
+  const qtyTxt = val('e-qty');
+  const qty = qtyTxt === '' ? null : parseInt(qtyTxt, 10);
+  if (qtyTxt !== '' && !(qty > 0)) { err.textContent = t(L.i_err_qty); err.style.display = 'block'; return; }
+  const type = val('e-type');
   const row = {
     pr_num: editingPr,
+    quantity: qty && qty !== r.batchSize ? qty : null,
+    strain_type: type && type.toLowerCase() !== String(r.type || '').toLowerCase() ? type : null,
     strain: val('e-strain') || null,
     source_uid: val('e-uid').toUpperCase() || null,
     est_start: val('e-start') || null,

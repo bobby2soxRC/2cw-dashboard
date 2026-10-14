@@ -869,6 +869,11 @@ create table if not exists preroll_plans (
   updated_at     timestamptz not null default now()
 );
 
+-- The team can override the Sheet's Batch Size and Strain Type (Indica /
+-- Sativa / Hybrid) from Edit plan; null means "use the Sheet's".
+alter table preroll_plans add column if not exists quantity    integer check (quantity > 0);
+alter table preroll_plans add column if not exists strain_type text;
+
 drop trigger if exists trg_touch_preroll_plans on preroll_plans;
 create trigger trg_touch_preroll_plans
   before update on preroll_plans
@@ -911,6 +916,9 @@ create table if not exists preroll_queue_items (
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
+
+-- Indica / Sativa / Hybrid, for an item whose strain isn't picked yet.
+alter table preroll_queue_items add column if not exists strain_type text;
 
 drop trigger if exists trg_touch_preroll_queue_items on preroll_queue_items;
 create trigger trg_touch_preroll_queue_items
