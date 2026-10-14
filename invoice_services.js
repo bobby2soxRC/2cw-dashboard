@@ -398,7 +398,7 @@
 
     const lineFromItem = (it) => {
       const c = contractFor(it.service, it.qty);
-      return { key: it.key, ids: it.ids, date: it.date, service: it.service, desc: it.desc, detail: it.detail, qty: it.qty, unit: it.unit,
+      return { key: it.key, ids: it.ids, proc: st.proc, date: it.date, service: it.service, desc: it.desc, detail: it.detail, qty: it.qty, unit: it.unit,
         contract: c, rate: c == null ? '' : c, vehicle: VEHICLES.includes(it.service) };
     };
     // A line's contract rate follows its service and quantity (the box
@@ -471,7 +471,9 @@
         <div class="msa-sub">2CW Operations asking 2CW Finance to invoice a customer for work done. Pick the customer, then a process, and tick the work to bill; rates start at the customer’s contract rates. Saving marks the work as invoiced and downloads the PDF to send to Finance.</div>
         <div class="msa-g">
           <div><label for="inv-cid">Customer</label><select id="inv-cid"><option value="">Pick a customer…</option>${codes.map((x) => `<option value="${esc(x.code)}" ${x.code === st.cid ? 'selected' : ''}>${esc(x.name || x.code)} — CID ${esc(x.code)}${x.active ? '' : ' (inactive)'}</option>`).join('')}</select></div>
-          ${st.cid ? `<div><label for="inv-proc">Process</label><select id="inv-proc"><option value="">Pick a process…</option>${PROCESSES.map((p) => `<option value="${p.k}" ${p.k === st.proc ? 'selected' : ''}>${esc(p.l)}</option>`).join('')}</select></div>` : ''}
+          ${st.cid ? `<div><label for="inv-proc">${st.lines.length ? 'Add work from another process' : 'Process'}</label><select id="inv-proc"><option value="">Pick a process…</option>${PROCESSES.map((p) => {
+            const n = st.lines.filter((l) => (l.proc || 'other') === p.k).length;
+            return `<option value="${p.k}" ${p.k === st.proc ? 'selected' : ''}>${esc(p.l)}${n ? ` — ${n} on this request` : ''}</option>`; }).join('')}</select></div>` : ''}
         </div>
         ${!st.cid ? '' : `
         ${st.proc === 'other' ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
@@ -481,7 +483,11 @@
 
         <div class="msa-sect">Request lines</div>
         ${st.lines.length ? `<div class="inv-line inv-hdrow" style="border-top:none;padding-bottom:0"><span class="msa-hd">Description</span><span class="msa-hd">Qty</span><span class="msa-hd">Unit</span><span class="msa-hd">Contract</span><span class="msa-hd">Rate</span><span class="msa-hd">Amount</span><span></span></div>
-          ${st.lines.map(lineHtml).join('')}` : '<div class="msa-sub" style="margin:0">Nothing on the request yet — pick a process above and tick the work to bill.</div>'}
+          ${PROCESSES.map((p) => {
+            const idx = st.lines.map((l, i) => i).filter((i) => (st.lines[i].proc || 'other') === p.k);
+            return idx.length ? `<div class="msa-hd" style="margin:10px 0 2px;color:var(--blue,#5a9fd4)">${esc(p.l)}</div>${idx.map((i) => lineHtml(st.lines[i], i)).join('')}` : '';
+          }).join('')}
+          <div class="msa-sub" style="margin:8px 0 0">One request can cover several processes: pick another process above and tick more work — the lines already here stay.</div>` : '<div class="msa-sub" style="margin:0">Nothing on the request yet — pick a process above and tick the work to bill. You can add from as many processes as you like before saving.</div>'}
         <div class="msa-g" style="margin-top:12px">
           <div><label for="inv-dtype">Discount on the whole request</label><div style="display:flex;gap:6px">
             <select id="inv-dtype" style="flex:0 0 70px"><option value="%" ${st.discountType === '%' ? 'selected' : ''}>%</option><option value="$" ${st.discountType === '$' ? 'selected' : ''}>$</option></select>
@@ -538,12 +544,12 @@
       if (add) add.onchange = () => {
         const k = add.value; if (!k) return;
         const c = contractFor(k, 0);
-        st.lines.push({ key: 'custom:' + Math.random().toString(36).slice(2), ids: [], service: k, desc: M.serviceLabel(k), detail: M.EXB[k].notes || '',
+        st.lines.push({ key: 'custom:' + Math.random().toString(36).slice(2), ids: [], proc: 'other', service: k, desc: M.serviceLabel(k), detail: M.EXB[k].notes || '',
           qty: '', unit: M.EXB[k].unit.replace(/^Per /i, '').toLowerCase(), contract: c, rate: c == null ? '' : c, vehicle: false });
         draw();
       };
       const blank = $('#inv-blank');
-      if (blank) blank.onclick = () => { st.lines.push({ key: 'custom:' + Math.random().toString(36).slice(2), ids: [], service: '', desc: '', detail: '', qty: 1, unit: '', contract: null, rate: '', vehicle: false }); draw(); };
+      if (blank) blank.onclick = () => { st.lines.push({ key: 'custom:' + Math.random().toString(36).slice(2), ids: [], proc: 'other', service: '', desc: '', detail: '', qty: 1, unit: '', contract: null, rate: '', vehicle: false }); draw(); };
       bg.querySelectorAll('[data-rm]').forEach((b) => { b.onclick = () => { st.lines.splice(Number(b.dataset.rm), 1); draw(); }; });
       bg.querySelectorAll('.inv-line[data-i]').forEach((row) => {
         const l = st.lines[Number(row.dataset.i)];
@@ -609,7 +615,10 @@
 
     async function save(btn) {
       errBox('');
-      const lines = st.lines.map((l) => ({ ...l, desc: String(l.desc || '').trim(), qty: num(l.qty), rate: num(l.rate) }));
+      // Grouped by process on the PDF, in the order they're listed here.
+      const order = (l) => PROCESSES.findIndex((p) => p.k === (l.proc || 'other'));
+      const lines = st.lines.map((l) => ({ ...l, desc: String(l.desc || '').trim(), qty: num(l.qty), rate: num(l.rate) }))
+        .sort((a, b) => order(a) - order(b));
       if (lines.some((l) => !l.desc)) return errBox('Every line needs a description.');
       if (lines.some((l) => !l.qty)) return errBox('Every line needs a quantity.');
       const tt = totals({ ...st, lines });
