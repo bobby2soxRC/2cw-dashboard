@@ -85,6 +85,12 @@
         <div class="fld"><label class="lbl" for="legal_business_name">Legal business name <b>*</b></label><input id="legal_business_name" autocomplete="organization" placeholder="As it appears on your W-9" required/></div>
         <div class="fld"><label class="lbl" for="state_incorporated">State incorporated <b>*</b></label><select id="state_incorporated" required></select></div>
       </div>
+      <div class="fld"><label class="lbl" for="business_street">Business street address <b>*</b></label><input id="business_street" autocomplete="street-address" required/></div>
+      <div class="row3">
+        <div class="fld"><label class="lbl" for="business_city">City <b>*</b></label><input id="business_city" autocomplete="address-level2" required/></div>
+        <div class="fld"><label class="lbl" for="business_state">State <b>*</b></label><select id="business_state" autocomplete="address-level1" required></select></div>
+        <div class="fld"><label class="lbl" for="business_zip">Zip code <b>*</b></label><input id="business_zip" autocomplete="postal-code" inputmode="numeric" maxlength="10" required/></div>
+      </div>
       <div class="row3">
         <div class="fld"><label class="lbl" for="contact_name">Contact name <b>*</b></label><input id="contact_name" autocomplete="name" required/></div>
         <div class="fld"><label class="lbl" for="contact_phone">Phone</label><input id="contact_phone" type="tel" autocomplete="tel"/></div>
@@ -189,6 +195,7 @@ const STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL', 'GA'
   'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
   'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'];
 document.getElementById('state_incorporated').innerHTML = '<option value="">Pick a state…</option>' + STATES.map((s) => `<option>${s}</option>`).join('');
+document.getElementById('business_state').innerHTML = '<option value="">State…</option>' + STATES.map((s) => `<option ${s === 'CA' ? 'selected' : ''}>${s}</option>`).join('');
 
 // Windows often gives HEIC/PDF files an empty type — go by extension.
 const MIME_BY_EXT = { pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', heic: 'image/heic', heif: 'image/heif', webp: 'image/webp' };
@@ -260,6 +267,8 @@ document.getElementById('form').addEventListener('submit', async (e) => {
   if (!v('license_number')) return showErr('Please enter your license number.');
   if (!v('legal_business_name')) return showErr('Please enter your legal business name.');
   if (!v('state_incorporated')) return showErr('Please pick the state your business is incorporated in.');
+  if (!v('business_street') || !v('business_city') || !v('business_state')) return showErr('Please enter your business street address, city and state.');
+  if (!/^\d{5}(-\d{4})?$/.test(v('business_zip'))) return showErr('Please enter a 5-digit zip code.');
   if (!v('contact_name')) return showErr('Please enter a contact name.');
   if (!v('contact_phone') && !v('contact_email')) return showErr('Please enter a phone number or email so we can reach you.');
   if (!v('signer_first_name') || !v('signer_last_name')) return showErr('Please enter the first and last name of the person signing the Service Agreement.');
@@ -304,6 +313,7 @@ document.getElementById('form').addEventListener('submit', async (e) => {
       body: JSON.stringify({
         farm_name: v('farm_name'), license_number: v('license_number'),
         legal_business_name: v('legal_business_name'), state_incorporated: v('state_incorporated'),
+        business_street: v('business_street'), business_city: v('business_city'), business_state: v('business_state'), business_zip: v('business_zip'),
         contact_name: v('contact_name'), contact_phone: v('contact_phone'), contact_email: v('contact_email'),
         signer_first_name: v('signer_first_name'), signer_last_name: v('signer_last_name'), signer_email: v('signer_email'), docs,
         farm_size: v('farm_size'), farm_size_unit: v('farm_size_unit'), strains: v('strains'),
