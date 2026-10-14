@@ -18,7 +18,11 @@
   html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif}
   body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:48px 48px;opacity:.3;pointer-events:none;z-index:0}
   main{position:relative;z-index:1;max-width:720px;margin:0 auto;padding:36px 16px 80px}
-  .brand{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin-bottom:6px}
+  .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px}
+  .brand{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}
+  .lang{display:flex;flex-shrink:0;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .lang button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:.68rem;font-weight:600;letter-spacing:.06em;padding:.45rem .7rem;cursor:pointer}
+  .lang button.on{background:var(--blue);color:#0c0d0f}
   h1{font-family:'Bebas Neue',sans-serif;font-size:38px;letter-spacing:.03em;line-height:1.05}
   .lead{color:var(--subtext);font-size:.95rem;margin:8px 0 24px;line-height:1.5}
   .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:14px}
@@ -69,106 +73,115 @@
 </head>
 <body>
 <main>
-  <div class="brand">2CW Productions · Post-Harvest Services</div>
-  <h1>Drying &amp; Processing Request</h1>
-  <p class="lead">Tell us about your farm and harvest and we'll get you on our schedule. Estimates are fine — we'll follow up to confirm dates and details before anything is booked.</p>
+  <div class="top">
+    <div class="brand" data-i18n="brand">2CW Productions · Post-Harvest Services</div>
+    <div class="lang" id="lang" role="group" aria-label="Language / Idioma"><button type="button" data-lang="en">English</button><button type="button" data-lang="es">Español</button></div>
+  </div>
+  <h1 data-i18n="h1">Drying &amp; Processing Request</h1>
+  <p class="lead" data-i18n="lead">Tell us about your farm and harvest and we'll get you on our schedule. Estimates are fine — we'll follow up to confirm dates and details before anything is booked.</p>
 
   <form id="form" novalidate>
     <div class="card">
-      <h2>Your farm</h2>
-      <div class="sub">Who you are and how to reach you.</div>
+      <h2 data-i18n="h_farm">Your farm</h2>
+      <div class="sub" data-i18n="sub_farm">Who you are and how to reach you.</div>
       <div class="row2">
-        <div class="fld"><label class="lbl" for="farm_name">Farm name <b>*</b></label><input id="farm_name" autocomplete="organization" required/></div>
-        <div class="fld"><label class="lbl" for="license_number">License # <b>*</b></label><input id="license_number" autocapitalize="characters" placeholder="e.g. CCL21-0001234" required/></div>
+        <div class="fld"><label class="lbl" for="farm_name"><span data-i18n="lbl_farm_name">Farm name</span> <b>*</b></label><input id="farm_name" autocomplete="organization" required/></div>
+        <div class="fld"><label class="lbl" for="license_number"><span data-i18n="lbl_license_number">License #</span> <b>*</b></label><input id="license_number" data-i18n-ph="ph_license_number" autocapitalize="characters" placeholder="e.g. CCL21-0001234" required/></div>
       </div>
       <div class="row2">
-        <div class="fld"><label class="lbl" for="legal_business_name">Legal business name <b>*</b></label><input id="legal_business_name" autocomplete="organization" placeholder="As it appears on your W-9" required/></div>
-        <div class="fld"><label class="lbl" for="state_incorporated">State incorporated <b>*</b></label><select id="state_incorporated" required></select></div>
+        <div class="fld"><label class="lbl" for="legal_business_name"><span data-i18n="lbl_legal_business_name">Legal business name</span> <b>*</b></label><input id="legal_business_name" data-i18n-ph="ph_legal_business_name" autocomplete="organization" placeholder="As it appears on your W-9" required/></div>
+        <div class="fld"><label class="lbl" for="state_incorporated"><span data-i18n="lbl_state_incorporated">State incorporated</span> <b>*</b></label><select id="state_incorporated" required></select></div>
+      </div>
+      <div class="fld"><label class="lbl" for="business_street"><span data-i18n="lbl_business_street">Business street address</span> <b>*</b></label><input id="business_street" autocomplete="street-address" required/></div>
+      <div class="row3">
+        <div class="fld"><label class="lbl" for="business_city"><span data-i18n="lbl_business_city">City</span> <b>*</b></label><input id="business_city" autocomplete="address-level2" required/></div>
+        <div class="fld"><label class="lbl" for="business_state"><span data-i18n="lbl_business_state">State</span> <b>*</b></label><select id="business_state" autocomplete="address-level1" required></select></div>
+        <div class="fld"><label class="lbl" for="business_zip"><span data-i18n="lbl_business_zip">Zip code</span> <b>*</b></label><input id="business_zip" autocomplete="postal-code" inputmode="numeric" maxlength="10" required/></div>
       </div>
       <div class="row3">
-        <div class="fld"><label class="lbl" for="contact_name">Contact name <b>*</b></label><input id="contact_name" autocomplete="name" required/></div>
-        <div class="fld"><label class="lbl" for="contact_phone">Phone</label><input id="contact_phone" type="tel" autocomplete="tel"/></div>
-        <div class="fld"><label class="lbl" for="contact_email">Email</label><input id="contact_email" type="email" autocomplete="email"/></div>
+        <div class="fld"><label class="lbl" for="contact_name"><span data-i18n="lbl_contact_name">Contact name</span> <b>*</b></label><input id="contact_name" autocomplete="name" required/></div>
+        <div class="fld"><label class="lbl" for="contact_phone"><span data-i18n="lbl_contact_phone">Phone</span></label><input id="contact_phone" type="tel" autocomplete="tel"/></div>
+        <div class="fld"><label class="lbl" for="contact_email"><span data-i18n="lbl_contact_email">Email</span></label><input id="contact_email" type="email" autocomplete="email"/></div>
       </div>
-      <div class="hint" style="margin:-4px 0 12px">A phone number or email is required.</div>
+      <div class="hint" style="margin:-4px 0 12px" data-i18n="hint_reach">A phone number or email is required.</div>
       <div class="row2">
-        <div class="fld"><label class="lbl" for="farm_size">Farm size</label>
+        <div class="fld"><label class="lbl" for="farm_size"><span data-i18n="lbl_farm_size">Farm size</span></label>
           <div style="display:flex;gap:8px"><input id="farm_size" type="number" min="0" step="any" inputmode="decimal" style="flex:1"/>
-            <select id="farm_size_unit" style="width:110px"><option>sq ft</option><option>acres</option><option>plants</option></select></div></div>
-        <div class="fld"><label class="lbl" for="strains">Strains</label><input id="strains" placeholder="What you'll be bringing, if known"/></div>
+            <select id="farm_size_unit" style="width:110px"><option value="sq ft" data-i18n="u_sqft">sq ft</option><option value="acres" data-i18n="u_acres">acres</option><option value="plants" data-i18n="u_plants">plants</option></select></div></div>
+        <div class="fld"><label class="lbl" for="strains"><span data-i18n="lbl_strains">Strains</span></label><input id="strains" data-i18n-ph="ph_strains" placeholder="What you'll be bringing, if known"/></div>
       </div>
     </div>
 
     <div class="card">
-      <h2>Service Agreement</h2>
-      <div class="sub">The person who will sign the Service Agreement for your business.</div>
+      <h2 data-i18n="h_sa">Service Agreement</h2>
+      <div class="sub" data-i18n="sub_sa">The person who will sign the Service Agreement for your business.</div>
       <div class="row3">
-        <div class="fld"><label class="lbl" for="signer_first_name">First name <b>*</b></label><input id="signer_first_name" autocomplete="off" required/></div>
-        <div class="fld"><label class="lbl" for="signer_last_name">Last name <b>*</b></label><input id="signer_last_name" autocomplete="off" required/></div>
-        <div class="fld"><label class="lbl" for="signer_email">Email <b>*</b></label><input id="signer_email" type="email" autocomplete="off" required/></div>
+        <div class="fld"><label class="lbl" for="signer_first_name"><span data-i18n="lbl_signer_first_name">First name</span> <b>*</b></label><input id="signer_first_name" autocomplete="off" required/></div>
+        <div class="fld"><label class="lbl" for="signer_last_name"><span data-i18n="lbl_signer_last_name">Last name</span> <b>*</b></label><input id="signer_last_name" autocomplete="off" required/></div>
+        <div class="fld"><label class="lbl" for="signer_email"><span data-i18n="lbl_signer_email">Email</span> <b>*</b></label><input id="signer_email" type="email" autocomplete="off" required/></div>
       </div>
     </div>
 
     <div class="card">
-      <h2>Documents</h2>
-      <div class="sub">PDF or a clear photo, up to 25 MB each. These are kept private and only shared with our office.</div>
+      <h2 data-i18n="h_docs">Documents</h2>
+      <div class="sub" data-i18n="sub_docs">PDF or a clear photo, up to 25 MB each. These are kept private and only shared with our office.</div>
       <div class="row2">
-        <div class="fld"><label class="lbl" for="doc_license">Cultivation license <b>*</b></label><input id="doc_license" type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.webp,application/pdf,image/*" required/></div>
-        <div class="fld"><label class="lbl" for="doc_w9">W-9 <b>*</b></label><input id="doc_w9" type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.webp,application/pdf,image/*" required/></div>
+        <div class="fld"><label class="lbl" for="doc_license"><span data-i18n="lbl_doc_license">Cultivation license</span> <b>*</b></label><input id="doc_license" type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.webp,application/pdf,image/*" required/></div>
+        <div class="fld"><label class="lbl" for="doc_w9"><span data-i18n="lbl_doc_w9">W-9</span> <b>*</b></label><input id="doc_w9" type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.webp,application/pdf,image/*" required/></div>
       </div>
     </div>
 
     <div class="card">
-      <h2>Harvest dates</h2>
-      <div class="sub">When you expect to harvest and bring material to us. Add a row for each harvest — for example Oct 7 for 3 days, then Oct 17 for 3 days.</div>
-      <div class="win-hd"><span>Start date</span><span>Days</span><span>Wet lbs (optional)</span><span class="win-end"></span><span></span></div>
+      <h2 data-i18n="h_harv">Harvest dates</h2>
+      <div class="sub" data-i18n="sub_harv">When you expect to harvest and bring material to us. Add a row for each harvest — for example Oct 7 for 3 days, then Oct 17 for 3 days.</div>
+      <div class="win-hd"><span data-i18n="c_start">Start date</span><span data-i18n="c_days">Days</span><span data-i18n="c_lbs">Wet lbs (optional)</span><span class="win-end"></span><span></span></div>
       <div id="harv"></div>
-      <button type="button" class="btn btn-sm" onclick="addWin('h')">+ Add another harvest</button>
-      <div class="fld" style="margin-top:16px"><label class="lbl" for="est_wet_lb">Estimated total wet weight (lbs)</label>
+      <button type="button" class="btn btn-sm" onclick="addWin('h')" data-i18n="add_harv">+ Add another harvest</button>
+      <div class="fld" style="margin-top:16px"><label class="lbl" for="est_wet_lb"><span data-i18n="lbl_est_wet_lb">Estimated total wet weight (lbs)</span></label>
         <input id="est_wet_lb" type="number" min="0" step="any" inputmode="decimal"/>
-        <div class="hint">Your best guess for the whole season. If you've put weights on each harvest above, you can leave this blank.</div></div>
+        <div class="hint" data-i18n="hint_wet">Your best guess for the whole season. If you've put weights on each harvest above, you can leave this blank.</div></div>
     </div>
 
     <div class="card">
-      <h2>Services you need</h2>
-      <div class="sub">Check everything you're interested in — 2026 rates shown. Drying includes facility space and standard labor for METRC compliance; the typical drying cycle is 7–10 days.</div>
+      <h2 data-i18n="h_svc">Services you need</h2>
+      <div class="sub" data-i18n="sub_svc">Check everything you're interested in — 2026 rates shown. Drying includes facility space and standard labor for METRC compliance; the typical drying cycle is 7–10 days.</div>
       <div class="svc-cols" id="svc"></div>
       <div class="support" id="support">
-        <h3>Farm support</h3>
-        <div class="sub" style="margin-bottom:10px">Which days you'd like our crew on your farm, and how many people.</div>
-        <div class="win-hd"><span>Start date</span><span>Days</span><span>People</span><span class="win-end"></span><span></span></div>
+        <h3 data-i18n="h_support">Farm support</h3>
+        <div class="sub" style="margin-bottom:10px" data-i18n="sub_support">Which days you'd like our crew on your farm, and how many people.</div>
+        <div class="win-hd"><span data-i18n="c_start">Start date</span><span data-i18n="c_days">Days</span><span data-i18n="c_people">People</span><span class="win-end"></span><span></span></div>
         <div id="sup"></div>
-        <button type="button" class="btn btn-sm" onclick="addWin('s')">+ Add more dates</button>
+        <button type="button" class="btn btn-sm" onclick="addWin('s')" data-i18n="add_sup">+ Add more dates</button>
       </div>
     </div>
 
     <div class="card">
-      <h2>Anything else?</h2>
-      <div class="fld" style="margin:8px 0 0"><textarea id="notes" rows="4" placeholder="Access, timing flexibility, questions…"></textarea></div>
+      <h2 data-i18n="h_else">Anything else?</h2>
+      <div class="fld" style="margin:8px 0 0"><textarea id="notes" data-i18n-ph="ph_notes" rows="4" placeholder="Access, timing flexibility, questions…"></textarea></div>
       <div class="hp" aria-hidden="true"><label for="website">Website</label><input id="website" tabindex="-1" autocomplete="off"/></div>
     </div>
 
     <div class="card">
-      <h2>Good to know</h2>
+      <h2 data-i18n="h_good">Good to know</h2>
       <ul class="policies" style="margin-top:8px">
-        <li>Please give at least two weeks' notice for trim/processing requests.</li>
-        <li>Full payment is due before any product leaves the facility.</li>
-        <li>Trim byproduct is returned to you unless we agree otherwise.</li>
-        <li>Product and packaging materials are provided by you unless otherwise specified.</li>
+        <li data-i18n="pol1">Please give at least two weeks' notice for trim/processing requests.</li>
+        <li data-i18n="pol2">Full payment is due before any product leaves the facility.</li>
+        <li data-i18n="pol3">Trim byproduct is returned to you unless we agree otherwise.</li>
+        <li data-i18n="pol4">Product and packaging materials are provided by you unless otherwise specified.</li>
       </ul>
     </div>
 
     <div class="err" id="err"></div>
     <div class="submit-row">
-      <button type="submit" class="btn btn-blue" id="submit">Send request</button>
-      <span class="hint" style="margin:0">This is a request, not a booking — we'll be in touch to confirm.</span>
+      <button type="submit" class="btn btn-blue" id="submit" data-i18n="send">Send request</button>
+      <span class="hint" style="margin:0" data-i18n="send_hint">This is a request, not a booking — we'll be in touch to confirm.</span>
     </div>
   </form>
 
   <div class="card done" id="done" style="display:none">
-    <h2>Thanks — request received</h2>
-    <p>We've got your details and will reach out to confirm dates and services. If anything changes in the meantime, just let us know.</p>
-    <button class="btn" onclick="location.reload()">Send another request</button>
+    <h2 data-i18n="done_h">Thanks — request received</h2>
+    <p data-i18n="done_p">We've got your details and will reach out to confirm dates and services. If anything changes in the meantime, just let us know.</p>
+    <button class="btn" onclick="location.reload()" data-i18n="again">Send another request</button>
   </div>
 
   <footer>2CW Productions, Inc. · (707) 234-5027 · services@2cwproductions.com</footer>
@@ -185,41 +198,235 @@
 // the function hands out (private bucket); it never reads or writes tables.
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const DAY = 864e5;
+
+// ── Language (English / Español) ────────────────────────────────────────────
+// Static text is tagged data-i18n / data-i18n-ph / data-i18n-title; the
+// English is whatever's in the HTML, ES_TEXT has the Spanish. Switching is in
+// place (no reload) so nothing the client typed is lost. Starts from ?lang=es,
+// then the '2cw_lang' setting the rest of the app uses, then the browser.
+// Submissions are the same either way — only service keys are stored.
+const ES_TEXT = {
+  doc_title: 'Solicitud de Servicios Postcosecha — 2CW Productions',
+  brand: '2CW Productions · Servicios Postcosecha',
+  h1: 'Solicitud de Secado y Procesamiento',
+  lead: 'Cuéntenos sobre su granja y su cosecha y lo agregaremos a nuestro calendario. Los estimados están bien — nos comunicaremos con usted para confirmar fechas y detalles antes de reservar cualquier cosa.',
+  h_farm: 'Su granja',
+  sub_farm: 'Quién es usted y cómo podemos contactarlo.',
+  lbl_farm_name: 'Nombre de la granja',
+  lbl_license_number: 'Núm. de licencia',
+  ph_license_number: 'p. ej. CCL21-0001234',
+  lbl_legal_business_name: 'Razón social',
+  ph_legal_business_name: 'Tal como aparece en su W-9',
+  lbl_state_incorporated: 'Estado de constitución',
+  lbl_business_street: 'Dirección comercial (calle y número)',
+  lbl_business_city: 'Ciudad',
+  lbl_business_state: 'Estado',
+  lbl_business_zip: 'Código postal',
+  lbl_contact_name: 'Nombre de contacto',
+  lbl_contact_phone: 'Teléfono',
+  lbl_contact_email: 'Correo electrónico',
+  hint_reach: 'Se requiere un teléfono o un correo electrónico.',
+  lbl_farm_size: 'Tamaño de la granja',
+  u_sqft: 'pies²',
+  u_acres: 'acres',
+  u_plants: 'plantas',
+  lbl_strains: 'Variedades',
+  ph_strains: 'Lo que traerá, si ya lo sabe',
+  h_sa: 'Contrato de Servicios',
+  sub_sa: 'La persona que firmará el Contrato de Servicios en nombre de su empresa.',
+  lbl_signer_first_name: 'Nombre',
+  lbl_signer_last_name: 'Apellido',
+  lbl_signer_email: 'Correo electrónico',
+  h_docs: 'Documentos',
+  sub_docs: 'PDF o una foto clara, de hasta 25 MB cada uno. Se mantienen privados y solo se comparten con nuestra oficina.',
+  lbl_doc_license: 'Licencia de cultivo',
+  lbl_doc_w9: 'W-9',
+  h_harv: 'Fechas de cosecha',
+  sub_harv: 'Cuándo espera cosechar y traernos el material. Agregue una fila por cada cosecha — por ejemplo, 7 de oct. por 3 días y luego 17 de oct. por 3 días.',
+  c_start: 'Fecha de inicio',
+  c_days: 'Días',
+  c_lbs: 'Lbs húmedas (opcional)',
+  c_people: 'Personas',
+  add_harv: '+ Agregar otra cosecha',
+  lbl_est_wet_lb: 'Peso húmedo total estimado (lbs)',
+  hint_wet: 'Su mejor estimado para toda la temporada. Si ya puso el peso de cada cosecha arriba, puede dejar esto en blanco.',
+  h_svc: 'Servicios que necesita',
+  sub_svc: 'Marque todo lo que le interese — se muestran las tarifas de 2026. El secado incluye espacio en nuestras instalaciones y la mano de obra estándar para cumplir con METRC; el ciclo de secado típico es de 7 a 10 días.',
+  h_support: 'Apoyo en la granja',
+  sub_support: 'Qué días le gustaría tener a nuestro equipo en su granja y cuántas personas.',
+  add_sup: '+ Agregar más fechas',
+  h_else: '¿Algo más?',
+  ph_notes: 'Acceso, flexibilidad de fechas, preguntas…',
+  h_good: 'Información importante',
+  pol1: 'Por favor avísenos con al menos dos semanas de anticipación para solicitudes de recorte o procesamiento.',
+  pol2: 'El pago total debe hacerse antes de que cualquier producto salga de nuestras instalaciones.',
+  pol3: 'El subproducto del recorte se le devuelve a usted, a menos que acordemos otra cosa.',
+  pol4: 'Usted proporciona el producto y los materiales de empaque, a menos que se indique lo contrario.',
+  send: 'Enviar solicitud',
+  send_hint: 'Esto es una solicitud, no una reservación — nos comunicaremos con usted para confirmar.',
+  done_h: 'Gracias — solicitud recibida',
+  done_p: 'Recibimos sus datos y nos comunicaremos con usted para confirmar fechas y servicios. Si algo cambia mientras tanto, solo avísenos.',
+  again: 'Enviar otra solicitud',
+  ph_days: 'días',
+  ph_lbs: 'lbs',
+  ph_people: 'personas',
+  t_remove: 'Quitar'
+};
+// Text set from script (messages, buttons mid-submit, generated rows).
+const MSG = {
+  en: {
+    pick_state: 'Pick a state…', state: 'State…', uploading: 'Uploading…', sending: 'Sending…',
+    doc_license: 'your cultivation license', doc_w9: 'your W-9',
+    farm_name: 'Please enter your farm name.',
+    license_number: 'Please enter your license number.',
+    legal_business_name: 'Please enter your legal business name.',
+    state_incorporated: 'Please pick the state your business is incorporated in.',
+    address: 'Please enter your business street address, city and state.',
+    zip: 'Please enter a 5-digit zip code.',
+    contact_name: 'Please enter a contact name.',
+    reach: 'Please enter a phone number or email so we can reach you.',
+    signer_name: 'Please enter the first and last name of the person signing the Service Agreement.',
+    signer_email: 'Please enter a valid email for the person signing the Service Agreement.',
+    services: 'Please pick at least one service.',
+    harv_start: 'Each harvest row needs a start date.',
+    sup_start: 'Each farm support row needs a start date.',
+    sup_people: 'Please add how many people you need for each farm support date.',
+    no_uploader: 'Couldn’t load the file uploader — please refresh the page, or call or email us.',
+    upload_failed: 'Couldn’t upload your documents. Please try again, or call or email us.',
+    generic: 'Something went wrong. Please try again, or call or email us.',
+    attach: (d) => `Please attach ${d}.`,
+    attach_type: (d) => `Please attach ${d} as a PDF or a photo (JPG, PNG, HEIC, WebP).`,
+    too_big: (d) => `${d[0].toUpperCase()}${d.slice(1)} is over 25 MB — please attach a smaller file.`,
+    upload_doc_failed: (d, why) => `Couldn’t upload ${d} (${why}). Please try again.`
+  },
+  es: {
+    pick_state: 'Elija un estado…', state: 'Estado…', uploading: 'Subiendo…', sending: 'Enviando…',
+    doc_license: 'su licencia de cultivo', doc_w9: 'su W-9',
+    farm_name: 'Por favor escriba el nombre de su granja.',
+    license_number: 'Por favor escriba su número de licencia.',
+    legal_business_name: 'Por favor escriba la razón social de su empresa.',
+    state_incorporated: 'Por favor elija el estado donde está constituida su empresa.',
+    address: 'Por favor escriba la calle, ciudad y estado de su dirección comercial.',
+    zip: 'Por favor escriba un código postal de 5 dígitos.',
+    contact_name: 'Por favor escriba un nombre de contacto.',
+    reach: 'Por favor escriba un teléfono o correo electrónico para poder contactarlo.',
+    signer_name: 'Por favor escriba el nombre y apellido de la persona que firmará el Contrato de Servicios.',
+    signer_email: 'Por favor escriba un correo electrónico válido para la persona que firmará el Contrato de Servicios.',
+    services: 'Por favor elija al menos un servicio.',
+    harv_start: 'Cada fila de cosecha necesita una fecha de inicio.',
+    sup_start: 'Cada fila de apoyo en la granja necesita una fecha de inicio.',
+    sup_people: 'Por favor indique cuántas personas necesita para cada fecha de apoyo en la granja.',
+    no_uploader: 'No se pudo cargar el sistema para subir archivos — por favor actualice la página, o llámenos o escríbanos.',
+    upload_failed: 'No se pudieron subir sus documentos. Por favor intente de nuevo, o llámenos o escríbanos.',
+    generic: 'Algo salió mal. Por favor intente de nuevo, o llámenos o escríbanos.',
+    attach: (d) => `Por favor adjunte ${d}.`,
+    attach_type: (d) => `Por favor adjunte ${d} como PDF o como foto (JPG, PNG, HEIC, WebP).`,
+    too_big: (d) => `El archivo de ${d} pesa más de 25 MB — por favor adjunte uno más pequeño.`,
+    upload_doc_failed: (d, why) => `No se pudo subir ${d} (${why}). Por favor intente de nuevo.`
+  }
+};
+// The drying-request function answers in English; these are its messages
+// that the checks above don't already cover (those are matched via MSG.en).
+const SERVER_ES = {
+  'Please upload a PDF or a photo (JPG, PNG, HEIC, WebP).': 'Por favor suba un PDF o una foto (JPG, PNG, HEIC, WebP).',
+  'Files must be under 25 MB.': 'Los archivos deben pesar menos de 25 MB.',
+  'We’re getting a lot of requests right now — please try again in an hour, or call or email us.': 'Estamos recibiendo muchas solicitudes en este momento — por favor intente de nuevo en una hora, o llámenos o escríbanos.',
+  'Couldn’t start the upload. Please try again, or call or email us.': 'No se pudo iniciar la carga del archivo. Por favor intente de nuevo, o llámenos o escríbanos.',
+  'The request form is not set up yet. Please call or email us instead.': 'El formulario aún no está listo. Por favor llámenos o escríbanos.',
+  'Something went wrong saving your request. Please try again, or call or email us.': 'Algo salió mal al guardar su solicitud. Por favor intente de nuevo, o llámenos o escríbanos.',
+  'Please check the email address.': 'Por favor revise el correo electrónico.',
+  'Your cultivation license didn’t finish uploading — please attach it again.': 'Su licencia de cultivo no terminó de subirse — por favor adjúntela de nuevo.',
+  'Your W-9 didn’t finish uploading — please attach it again.': 'Su W-9 no terminó de subirse — por favor adjúntelo de nuevo.'
+};
+const EN_TEXT = {};   // filled from the HTML on first applyLang()
+let lang = (() => {
+  const q = new URLSearchParams(location.search).get('lang');
+  if (q === 'en' || q === 'es') return q;
+  try { const saved = localStorage.getItem('2cw_lang'); if (saved === 'en' || saved === 'es') return saved; } catch (e) {}
+  return (navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en';
+})();
+const t = (k, ...a) => { const m = MSG[lang][k]; return typeof m === 'function' ? m(...a) : m; };
+const serverMsg = (s) => {
+  if (lang !== 'es' || !s) return s;
+  if (SERVER_ES[s]) return SERVER_ES[s];
+  const k = Object.keys(MSG.en).find((key) => MSG.en[key] === s);
+  if (k) return MSG.es[k];
+  if (/^Please check /.test(s)) return 'Por favor revise las fechas y los números que escribió.';
+  return s;
+};
+function applyLang(root = document) {
+  const tr = (el, attr, key, set) => {
+    if (!(key in EN_TEXT)) EN_TEXT[key] = attr ? el.getAttribute(attr) : el.textContent;
+    set(lang === 'es' && ES_TEXT[key] ? ES_TEXT[key] : EN_TEXT[key]);
+  };
+  root.querySelectorAll('[data-i18n]').forEach((el) => tr(el, null, el.dataset.i18n, (v) => { el.textContent = v; }));
+  root.querySelectorAll('[data-i18n-ph]').forEach((el) => tr(el, 'placeholder', el.dataset.i18nPh, (v) => el.setAttribute('placeholder', v)));
+  root.querySelectorAll('[data-i18n-title]').forEach((el) => tr(el, 'title', el.dataset.i18nTitle, (v) => el.setAttribute('title', v)));
+}
+function setLang(l) {
+  lang = l;
+  try { localStorage.setItem('2cw_lang', l); } catch (e) {}
+  document.documentElement.lang = l;
+  if (!('doc_title' in EN_TEXT)) EN_TEXT.doc_title = document.title;
+  document.title = l === 'es' ? ES_TEXT.doc_title : EN_TEXT.doc_title;
+  applyLang();
+  document.querySelectorAll('#lang button').forEach((b) => b.classList.toggle('on', b.dataset.lang === l));
+  document.querySelector('#state_incorporated option[value=""]').textContent = t('pick_state');
+  document.querySelector('#business_state option[value=""]').textContent = t('state');
+  renderSvcText();
+  document.querySelectorAll('.win-row').forEach(updateEnd);
+  document.getElementById('err').style.display = 'none';
+}
+document.querySelectorAll('#lang button').forEach((b) => { b.onclick = () => setLang(b.dataset.lang); });
 const STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME',
   'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
   'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'];
 document.getElementById('state_incorporated').innerHTML = '<option value="">Pick a state…</option>' + STATES.map((s) => `<option>${s}</option>`).join('');
+document.getElementById('business_state').innerHTML = '<option value="">State…</option>' + STATES.map((s) => `<option ${s === 'CA' ? 'selected' : ''}>${s}</option>`).join('');
 
 // Windows often gives HEIC/PDF files an empty type — go by extension.
 const MIME_BY_EXT = { pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', heic: 'image/heic', heif: 'image/heif', webp: 'image/webp' };
-const DOCS = [{ k: 'license', id: 'doc_license', name: 'your cultivation license' }, { k: 'w9', id: 'doc_w9', name: 'your W-9' }];
+const DOCS = [{ k: 'license', id: 'doc_license' }, { k: 'w9', id: 'doc_w9' }];
+const docName = (d) => t('doc_' + d.k);
 const storage = (typeof supabase !== 'undefined' && typeof SUPABASE_URL !== 'undefined' && SUPABASE_URL) ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY).storage : null;
 const uploaded = {};   // doc type -> { file, path } so a retry doesn't re-upload the same file
 const fmtEnd = (start, days) => {
   const n = Math.round(Number(days));
   if (!start || !(n > 1)) return '';
   const [y, m, d] = start.split('-').map(Number);
-  return '→ ' + new Date(Date.UTC(y, m - 1, d) + (n - 1) * DAY).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
+  return '→ ' + new Date(Date.UTC(y, m - 1, d) + (n - 1) * DAY).toLocaleDateString(lang === 'es' ? 'es-MX' : 'en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
 };
 
-document.getElementById('svc').innerHTML = DRYING_SERVICES.map((g) => `<div class="svc-grp"><div class="gh">${esc(g.group)}</div>${g.items.map((s) =>
-  `<label class="svc"><input type="checkbox" value="${s.k}" ${s.k === 'drying' ? 'checked' : ''}/><span>${esc(s.l)}<span class="rate">${esc(s.rate)}</span></span></label>`).join('')}</div>`).join('');
+document.getElementById('svc').innerHTML = DRYING_SERVICES.map((g, gi) => `<div class="svc-grp"><div class="gh" data-grp="${gi}"></div>${g.items.map((s) =>
+  `<label class="svc"><input type="checkbox" value="${s.k}" ${s.k === 'drying' ? 'checked' : ''}/><span><span class="svc-l"></span><span class="rate"></span></span></label>`).join('')}</div>`).join('');
+// Names/rates are filled (and re-filled on a language switch) without touching the checkboxes.
+function renderSvcText() {
+  const es = lang === 'es';
+  document.querySelectorAll('#svc .gh').forEach((el) => { const g = DRYING_SERVICES[el.dataset.grp]; el.textContent = (es && g.group_es) || g.group; });
+  document.querySelectorAll('#svc label.svc').forEach((el) => {
+    const k = el.querySelector('input').value;
+    const s = DRYING_SERVICES.flatMap((g) => g.items).find((i) => i.k === k);
+    el.querySelector('.svc-l').textContent = (es && s.es) || s.l;
+    el.querySelector('.rate').textContent = (es && s.rate_es) || s.rate;
+  });
+}
 
 function winRow(kind) {
   const third = kind === 'h'
-    ? '<input class="w-x3" type="number" min="0" step="any" inputmode="decimal" placeholder="lbs"/>'
-    : '<input class="w-x3" type="number" min="1" step="1" inputmode="numeric" placeholder="people"/>';
+    ? '<input class="w-x3" type="number" min="0" step="any" inputmode="decimal" placeholder="lbs" data-i18n-ph="ph_lbs"/>'
+    : '<input class="w-x3" type="number" min="1" step="1" inputmode="numeric" placeholder="people" data-i18n-ph="ph_people"/>';
   return `<div class="win-row">
     <input class="w-start" type="date"/>
-    <input class="w-days" type="number" min="1" step="1" inputmode="numeric" placeholder="days"/>
+    <input class="w-days" type="number" min="1" step="1" inputmode="numeric" placeholder="days" data-i18n-ph="ph_days"/>
     ${third}
     <span class="win-end"></span>
-    <button type="button" class="win-x" title="Remove" onclick="this.parentElement.remove()">×</button>
+    <button type="button" class="win-x" title="Remove" data-i18n-title="t_remove" onclick="this.parentElement.remove()">×</button>
   </div>`;
 }
 function addWin(kind, focus = true) {
   const box = document.getElementById(kind === 'h' ? 'harv' : 'sup');
   box.insertAdjacentHTML('beforeend', winRow(kind));
+  applyLang(box.lastElementChild);
   if (focus) box.lastElementChild.querySelector('.w-start').focus();
 }
 addWin('h', false);
@@ -229,9 +436,10 @@ const supBox = document.getElementById('support');
 const laborBox = document.querySelector('#svc input[value="farm_labor"]');
 laborBox.addEventListener('change', () => { supBox.style.display = laborBox.checked ? 'block' : 'none'; });
 
+const updateEnd = (row) => { row.querySelector('.win-end').textContent = fmtEnd(row.querySelector('.w-start').value, row.querySelector('.w-days').value); };
 document.getElementById('form').addEventListener('input', (e) => {
   const row = e.target.closest('.win-row');
-  if (row) row.querySelector('.win-end').textContent = fmtEnd(row.querySelector('.w-start').value, row.querySelector('.w-days').value);
+  if (row) updateEnd(row);
 });
 
 function readWins(boxId, key) {
@@ -256,30 +464,32 @@ document.getElementById('form').addEventListener('submit', async (e) => {
   const harvests = readWins('harv', 'lb');
   const farm_support = services.includes('farm_labor') ? readWins('sup', 'people') : [];
   // Quick checks here for a friendlier message; the function re-checks everything.
-  if (!v('farm_name')) return showErr('Please enter your farm name.');
-  if (!v('license_number')) return showErr('Please enter your license number.');
-  if (!v('legal_business_name')) return showErr('Please enter your legal business name.');
-  if (!v('state_incorporated')) return showErr('Please pick the state your business is incorporated in.');
-  if (!v('contact_name')) return showErr('Please enter a contact name.');
-  if (!v('contact_phone') && !v('contact_email')) return showErr('Please enter a phone number or email so we can reach you.');
-  if (!v('signer_first_name') || !v('signer_last_name')) return showErr('Please enter the first and last name of the person signing the Service Agreement.');
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v('signer_email'))) return showErr('Please enter a valid email for the person signing the Service Agreement.');
+  if (!v('farm_name')) return showErr(t('farm_name'));
+  if (!v('license_number')) return showErr(t('license_number'));
+  if (!v('legal_business_name')) return showErr(t('legal_business_name'));
+  if (!v('state_incorporated')) return showErr(t('state_incorporated'));
+  if (!v('business_street') || !v('business_city') || !v('business_state')) return showErr(t('address'));
+  if (!/^\d{5}(-\d{4})?$/.test(v('business_zip'))) return showErr(t('zip'));
+  if (!v('contact_name')) return showErr(t('contact_name'));
+  if (!v('contact_phone') && !v('contact_email')) return showErr(t('reach'));
+  if (!v('signer_first_name') || !v('signer_last_name')) return showErr(t('signer_name'));
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v('signer_email'))) return showErr(t('signer_email'));
   for (const d of DOCS) {
     const file = document.getElementById(d.id).files[0];
-    if (!file) return showErr(`Please attach ${d.name}.`);
+    if (!file) return showErr(t('attach', docName(d)));
     const type = MIME_BY_EXT[(file.name.split('.').pop() || '').toLowerCase()] || file.type;
-    if (!Object.values(MIME_BY_EXT).includes(type)) return showErr(`Please attach ${d.name} as a PDF or a photo (JPG, PNG, HEIC, WebP).`);
-    if (file.size > 25 * 1024 * 1024) return showErr(`${d.name[0].toUpperCase()}${d.name.slice(1)} is over 25 MB — please attach a smaller file.`);
+    if (!Object.values(MIME_BY_EXT).includes(type)) return showErr(t('attach_type', docName(d)));
+    if (file.size > 25 * 1024 * 1024) return showErr(t('too_big', docName(d)));
   }
-  if (!services.length) return showErr('Please pick at least one service.');
-  if (harvests.some((h) => !h.start)) return showErr('Each harvest row needs a start date.');
-  if (farm_support.some((s) => !s.start)) return showErr('Each farm support row needs a start date.');
-  if (farm_support.some((s) => !s.people)) return showErr('Please add how many people you need for each farm support date.');
+  if (!services.length) return showErr(t('services'));
+  if (harvests.some((h) => !h.start)) return showErr(t('harv_start'));
+  if (farm_support.some((s) => !s.start)) return showErr(t('sup_start'));
+  if (farm_support.some((s) => !s.people)) return showErr(t('sup_people'));
 
   const btn = document.getElementById('submit');
-  btn.disabled = true; btn.textContent = 'Uploading…';
+  btn.disabled = true; btn.textContent = t('uploading');
   try {
-    if (!storage) throw new Error('Couldn’t load the file uploader — please refresh the page, or call or email us.');
+    if (!storage) throw new Error(t('no_uploader'));
     const docs = {};
     for (const d of DOCS) {
       const file = document.getElementById(d.id).files[0];
@@ -290,20 +500,21 @@ document.getElementById('form').addEventListener('submit', async (e) => {
           body: JSON.stringify({ action: 'upload_url', doc_type: d.k, file_name: file.name, content_type, size_bytes: file.size })
         });
         const u = await ures.json().catch(() => ({}));
-        if (!ures.ok || !u.ok) throw new Error(u.error || 'Couldn’t upload your documents. Please try again, or call or email us.');
+        if (!ures.ok || !u.ok) throw new Error(serverMsg(u.error) || t('upload_failed'));
         const { error } = await storage.from(u.bucket).uploadToSignedUrl(u.path, u.token, file, { contentType: content_type });
-        if (error) throw new Error(`Couldn’t upload ${d.name} (${error.message}). Please try again.`);
+        if (error) throw new Error(t('upload_doc_failed', docName(d), error.message));
         uploaded[d.k] = { file, path: u.path, content_type };
       }
       docs[d.k] = { path: uploaded[d.k].path, file_name: file.name, content_type: uploaded[d.k].content_type, size_bytes: file.size };
     }
-    btn.textContent = 'Sending…';
+    btn.textContent = t('sending');
     const res = await fetch('/.netlify/functions/drying-request', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         farm_name: v('farm_name'), license_number: v('license_number'),
         legal_business_name: v('legal_business_name'), state_incorporated: v('state_incorporated'),
+        business_street: v('business_street'), business_city: v('business_city'), business_state: v('business_state'), business_zip: v('business_zip'),
         contact_name: v('contact_name'), contact_phone: v('contact_phone'), contact_email: v('contact_email'),
         signer_first_name: v('signer_first_name'), signer_last_name: v('signer_last_name'), signer_email: v('signer_email'), docs,
         farm_size: v('farm_size'), farm_size_unit: v('farm_size_unit'), strains: v('strains'),
@@ -312,15 +523,17 @@ document.getElementById('form').addEventListener('submit', async (e) => {
       })
     });
     const j = await res.json().catch(() => ({}));
-    if (!res.ok || !j.ok) throw new Error(j.error || 'Something went wrong. Please try again, or call or email us.');
+    if (!res.ok || !j.ok) throw new Error(serverMsg(j.error) || t('generic'));
     document.getElementById('form').style.display = 'none';
     document.getElementById('done').style.display = 'block';
     window.scrollTo(0, 0);
   } catch (err) {
     showErr(err.message);
-    btn.disabled = false; btn.textContent = 'Send request';
+    btn.disabled = false; btn.textContent = lang === 'es' ? ES_TEXT.send : EN_TEXT.send;
   }
 });
+
+setLang(lang);
 </script>
 </body>
 </html>

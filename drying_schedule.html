@@ -197,6 +197,7 @@
 <script src="/config/supabase_config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/drying_services.js"></script>
+<script src="/msa_agreement.js"></script>
 <script>
 // One row per client per season, in the drying_intakes table (see
 // supabase/schema.sql): farm details, a list of harvest windows, the
@@ -612,11 +613,21 @@ function openEditor(id) {
       <div class="fld"><label class="lbl" for="e-legal">Legal business name</label>${inp('e-legal', r.legal_business_name)}</div>
       <div class="fld"><label class="lbl" for="e-state">State incorporated</label>${inp('e-state', r.state_incorporated, 'maxlength="2" autocapitalize="characters" placeholder="e.g. CA"')}</div>
     </div>
+    <div class="fld"><label class="lbl" for="e-street">Business street address</label>${inp('e-street', r.business_street)}</div>
+    <div class="row3">
+      <div class="fld"><label class="lbl" for="e-city">City</label>${inp('e-city', r.business_city)}</div>
+      <div class="fld"><label class="lbl" for="e-bstate">State</label>${inp('e-bstate', r.business_state, 'maxlength="2" autocapitalize="characters" placeholder="e.g. CA"')}</div>
+      <div class="fld"><label class="lbl" for="e-zip">Zip code</label>${inp('e-zip', r.business_zip, 'inputmode="numeric" maxlength="10"')}</div>
+    </div>
     <div class="row3">
       <div class="fld"><label class="lbl" for="e-sfirst">Signer first name</label>${inp('e-sfirst', r.signer_first_name)}</div>
       <div class="fld"><label class="lbl" for="e-slast">Signer last name</label>${inp('e-slast', r.signer_last_name)}</div>
       <div class="fld"><label class="lbl" for="e-semail">Signer email</label>${inp('e-semail', r.signer_email, 'type="email"')}</div>
     </div>
+    <div class="fld"><div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" class="btn btn-sm" onclick="openAgreement()">Service Agreement PDF</button>
+        <button type="button" class="btn btn-sm" onclick="openAgreement('invoice')">Invoice request to Finance</button></div>
+      <div class="hint">Service Agreement: the MSA filled in to send the customer. Invoice request: asks Finance to invoice the drying deposit. Both use what’s on this screen.</div></div>
     ${id ? '<div class="fld" id="e-docs"></div>' : ''}
 
     <div class="sect">Harvest dates</div>
@@ -662,6 +673,7 @@ function openEditor(id) {
       const fill = (fid, v) => { const el = document.getElementById(fid); if (!el.value && v != null) el.value = v; };
       fill('e-lic', prev.license_number); fill('e-size', prev.farm_size);
       fill('e-cname', prev.contact_name); fill('e-cphone', prev.contact_phone); fill('e-cemail', prev.contact_email);
+      fill('e-street', prev.business_street); fill('e-city', prev.business_city); fill('e-bstate', prev.business_state); fill('e-zip', prev.business_zip);
       if (prev.farm_size_unit) document.getElementById('e-unit').value = prev.farm_size_unit;
       const prevSvc = servicesOf(prev);
       if (prevSvc.length) document.querySelectorAll('#e-svc input').forEach((c) => { c.checked = prevSvc.includes(c.value); });
@@ -707,6 +719,25 @@ async function openRequestDoc(docId) {
     const j = await callDocs({ action: 'request_doc_url', id: docId });
     if (win) win.location = j.url; else location.href = j.url;
   } catch (e) { if (win) win.close(); alert(e.message); }
+}
+
+// The MSA (for the customer) or the deposit invoice request (for Finance),
+// filled from the editor as it stands now (unsaved edits included).
+// Half-filled date rows just get left out here — Save is where they're flagged.
+function openAgreement(mode) {
+  const val = (id) => document.getElementById(id).value.trim();
+  const wins = (boxId, cls, key) => [...document.querySelectorAll(`#${boxId} .win-row`)].map((row) => ({
+    start: row.querySelector('.w-start').value, days: row.querySelector('.w-days').value.trim() || 1, [key]: row.querySelector(cls).value.trim()
+  })).filter((w) => w.start);
+  const data = MSA.fromIntake({
+    farm_name: val('e-farm'), legal_business_name: val('e-legal'), state_incorporated: val('e-state'),
+    business_street: val('e-street'), business_city: val('e-city'), business_state: val('e-bstate'), business_zip: val('e-zip'),
+    contact_name: val('e-cname'), contact_phone: val('e-cphone'), contact_email: val('e-cemail'),
+    signer_first_name: val('e-sfirst'), signer_last_name: val('e-slast'), signer_email: val('e-semail'),
+    est_wet_lb: val('e-lb'), harvests: wins('e-harv', '.w-lb', 'lb'), farm_support: wins('e-sup', '.w-people', 'people'),
+    services: [...document.querySelectorAll('#e-svc input:checked')].map((c) => c.value)
+  });
+  if (mode === 'invoice') MSA.openInvoice(data); else MSA.open(data);
 }
 
 function closeEditor() {
@@ -761,6 +792,10 @@ async function saveEditor() {
     contact_email: val('e-cemail') || null,
     legal_business_name: val('e-legal') || null,
     state_incorporated: val('e-state').toUpperCase() || null,
+    business_street: val('e-street') || null,
+    business_city: val('e-city') || null,
+    business_state: val('e-bstate').toUpperCase() || null,
+    business_zip: val('e-zip') || null,
     signer_first_name: val('e-sfirst') || null,
     signer_last_name: val('e-slast') || null,
     signer_email: val('e-semail').toLowerCase() || null,

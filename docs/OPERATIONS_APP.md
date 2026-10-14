@@ -300,7 +300,17 @@ totals or the weekly load; a banner on the schedule shows how many are
 waiting, and setting one to Tentative or Confirmed puts it on the schedule.
 If you add a service, add its key to `ALLOWED_SERVICES` in the function too.
 
+The form has an English / Español toggle (top right). It switches in place
+without losing anything typed, remembers the choice in the same `2cw_lang`
+setting the station forms use, and `?lang=es` on the link opens it in Spanish.
+Page text is tagged `data-i18n` in the HTML with the Spanish in `ES_TEXT`;
+service names and rates come from `es` / `rate_es` in `drying_services.js`
+(add both when you add a service). The function still answers in English and
+the page translates its known messages. Submissions are identical either way.
+
 The form also requires the legal business name, state incorporated, the
+business street address (street, city, state, zip — `business_*` columns),
+the
 Service Agreement signer (first/last name, email) — columns on
 `drying_intakes`, editable in the schedule editor — and two attachments: the
 cultivation license and a W-9. Those go to the private `customer-docs` bucket
@@ -310,6 +320,39 @@ and are recorded in `drying_request_docs`, which has no anon policy. The
 schedule editor lists them for users with `customer documents` access, via
 `customer-docs.js` (`request_docs` / `request_doc_url`). Uploads are capped at
 100 an hour; files from a form that's never submitted stay in `requests/`.
+
+**Service Agreement PDF** — `msa_agreement.js` fills the Master Service
+Agreement (the 10-1-2026 wording, typed into the file) with a customer's
+details and builds the PDF in the browser with jsPDF (loaded from jsDelivr on
+first use; Times, letter, page numbers). Two ways in: the **Service Agreement
+PDF** button in the Drying Schedule editor, which uses what's on the screen
+(unsaved edits included), and the same button under Signed MSA on a
+customer's Documents sheet (Customer IDs tab), which offers every drying
+request in a "Fill from a drying request" list and preselects one whose farm
+or legal name matches the CID. Either way a dialog shows each fill-in for
+checking: legal name, entity type (guessed from the name — "LLC" → Limited
+Liability Company), state of formation, effective date, the Notices address
+block, signer name and title, and the Exhibit B lines. Exhibit B lists
+every service we offer with its unit and rate — so a customer who adds a
+service later doesn't need an amendment — and the ones they asked for get
+the details: drying the estimated wet lbs and harvest dates, farm support
+its dates and crew. The mailing address comes from the request's business
+address; the signer's title isn't on the form, so it's typed in the dialog; anything left blank prints as a line to fill in by hand.
+Nothing is saved — upload the signed copy under Signed MSA as before.
+
+**Invoice request to Finance** — a separate button in the Drying Schedule
+editor, unrelated to the agreement: 2CW Operations asking 2CW Finance to
+invoice the customer for the drying deposit. Its own dialog
+(`MSA.openInvoice`, same file) takes who to bill (legal name, entity,
+farm, license #, mailing address, contact), the estimated wet lbs and the
+drying rate, and shows the deposit live: 20% of lbs × rate (MSA section
+3.B.a, `DEPOSIT_PCT`). The one-page PDF reads From 2CW Operations / To 2CW
+Finance, with the logged-in name as requester, and also lists the expected
+harvests and the other services requested (to bill as performed).
+
+When the agreement's wording changes, edit `blocks()` in `msa_agreement.js` (and
+bump `CACHE_VERSION`); new services need an `EXB` entry there as well as in
+`drying_services.js`.
 
 Each stage pulls its input weight forward from the stage before it: type the
 last 4 of the Metrc tag and bucking fills in the dry weight the post-dry check

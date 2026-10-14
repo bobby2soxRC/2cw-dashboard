@@ -3,6 +3,7 @@
 // Drying Schedule.
 //
 //   POST {farm_name, license_number, legal_business_name, state_incorporated,
+//         business_street, business_city, business_state, business_zip,
 //         contact_name, contact_phone, contact_email,
 //         signer_first_name, signer_last_name, signer_email,
 //         farm_size, farm_size_unit, strains, est_wet_lb,
@@ -117,6 +118,10 @@ function clean(p) {
     license_number: (str(p.license_number, 60) || '').toUpperCase() || null,
     legal_business_name: str(p.legal_business_name, 200),
     state_incorporated: STATES.has(p.state_incorporated) ? p.state_incorporated : null,
+    business_street: str(p.business_street, 200),
+    business_city: str(p.business_city, 100),
+    business_state: STATES.has(p.business_state) ? p.business_state : null,
+    business_zip: str(p.business_zip, 10),
     contact_name: str(p.contact_name, 120),
     contact_phone: str(p.contact_phone, 40),
     contact_email: (str(p.contact_email, 200) || '').toLowerCase() || null,
@@ -133,6 +138,8 @@ function clean(p) {
   if (!row.license_number) throw new Bad('Please enter your license number.');
   if (!row.legal_business_name) throw new Bad('Please enter your legal business name.');
   if (!row.state_incorporated) throw new Bad('Please pick the state your business is incorporated in.');
+  if (!row.business_street || !row.business_city || !row.business_state) throw new Bad('Please enter your business street address, city and state.');
+  if (!/^\d{5}(-\d{4})?$/.test(row.business_zip || '')) throw new Bad('Please enter a 5-digit zip code.');
   if (!row.contact_name) throw new Bad('Please enter a contact name.');
   if (!row.contact_phone && !row.contact_email) throw new Bad('Please enter a phone number or email so we can reach you.');
   if (row.contact_email && !EMAIL_RE.test(row.contact_email)) throw new Bad('Please check the email address.');

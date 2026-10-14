@@ -130,6 +130,8 @@
 <script src="/ops_common.js"></script>
 <script src="/ops_data.js"></script>
 <script src="/hub_config.js"></script>
+<script src="/drying_services.js"></script>
+<script src="/msa_agreement.js"></script>
 <script>
 // Information Hub — the reference lists the rest of the app runs on, one tab
 // per INFO_HUB_SECTIONS entry (hub_config.js). Which tabs show, and whether
@@ -554,6 +556,9 @@
       msa:     { en: 'Signed MSA', es: 'MSA firmado' },
       license: { en: 'Licenses', es: 'Licencias' },
       w9:      { en: 'W-9', es: 'W-9' },
+      makeMsa: { en: 'Service Agreement PDF', es: 'PDF del contrato de servicio' },
+      makeMsaHint: { en: 'Fills the Master Service Agreement for this customer, from their drying request if they sent one.',
+                     es: 'Llena el contrato de servicio para este cliente, con su solicitud de secado si la envió.' },
       none:    { en: 'None on file', es: 'Nada en archivo' },
       missing: { en: 'missing', es: 'falta' },
       expired: { en: 'expired', es: 'vencida' },
@@ -652,6 +657,8 @@
               return `<div style="margin-bottom:18px">
                 <div class="lbl" style="font-size:.75rem;color:var(--text)">${t(D[type])}</div>
                 ${list.length ? list.map(docLine).join('') : `<div class="hint" style="color:${type === 'license' ? 'var(--muted)' : 'var(--gold)'}">${t(D.none)}</div>`}
+                ${type === 'msa' ? `<div style="margin:8px 0 4px"><button type="button" class="btn" data-act="msa">${t(D.makeMsa)}</button>
+                  <div class="hint" style="margin-top:4px">${t(D.makeMsaHint)}</div></div>` : ''}
                 ${uploadForm(type)}
               </div>`;
             }).join('')}
@@ -660,10 +667,21 @@
           ed.querySelectorAll('[data-get]').forEach((a) => { a.onclick = (e) => { e.preventDefault(); getDoc(a.dataset.get); }; });
           ed.querySelectorAll('[data-rm]').forEach((b) => { b.onclick = () => removeDoc(b); });
           ed.querySelectorAll('[data-act=up]').forEach((b) => { b.onclick = () => upload(b); });
+          ed.querySelector('[data-act=msa]').onclick = makeAgreement;
         };
         const close = () => { bg.classList.remove('on'); document.body.style.overflow = ''; render(); };
         bg.onclick = (e) => { if (e.target === bg) close(); };
 
+        // CIDs aren't linked to drying requests, so offer them all and
+        // preselect the newest whose farm or legal name matches this customer.
+        async function makeAgreement() {
+          const { data } = await client.from('drying_intakes').select('*').order('created_at', { ascending: false }).limit(300);
+          const intakes = data || [];
+          const norm = (x) => String(x || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const me = norm(r.name);
+          const match = me && intakes.find((x) => [x.farm_name, x.legal_business_name].some((n) => norm(n) && (norm(n) === me || norm(n).startsWith(me) || me.startsWith(norm(n)))));
+          MSA.open(match ? MSA.fromIntake(match) : { legal_name: r.name || '', entity: MSA.guessEntity(r.name) }, { intakes, pick: match && match.id });
+        }
         async function getDoc(id) {
           // Open the tab now, while it still counts as the click — a popup
           // opened after the await would be blocked.
