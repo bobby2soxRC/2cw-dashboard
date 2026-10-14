@@ -308,9 +308,11 @@ request in a "Fill from a drying request" list and preselects one whose farm
 or legal name matches the CID. Either way a dialog shows each fill-in for
 checking: legal name, entity type (guessed from the name — "LLC" → Limited
 Liability Company), state of formation, effective date, the Notices address
-block, signer name and title, and the Exhibit B lines (one per service
-checked, with the agreement's unit and rate; drying gets the estimated wet
-lbs and harvest dates, farm support its dates and crew). The request form
+block, signer name and title, and the Exhibit B lines. Exhibit B lists
+every service we offer with its unit and rate — so a customer who adds a
+service later doesn't need an amendment — and the ones they asked for get
+the details: drying the estimated wet lbs and harvest dates, farm support
+its dates and crew. The request form
 doesn't ask for a mailing address or the signer's title, so those are typed
 in the dialog; anything left blank prints as a line to fill in by hand.
 Nothing is saved — upload the signed copy under Signed MSA as before. When

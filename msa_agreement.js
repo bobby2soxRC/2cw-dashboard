@@ -85,7 +85,12 @@
     const support = (Array.isArray(r.farm_support) ? r.farm_support : []).filter((s) => s && s.start);
     const lbSum = harvests.reduce((a, h) => a + (Number(h.lb) || 0), 0);
     const lbs = Number(r.est_wet_lb) || lbSum || null;
-    const services = (Array.isArray(r.services) && r.services.length ? r.services : ['drying']).filter((k) => EXB[k]);
+    // Exhibit B lists every service we offer at its rate, so a customer who
+    // adds one later doesn't need an amendment; what they asked for gets
+    // the quantities and dates.
+    const keys = SERVICE_LIST().map((s) => s.k).filter((k) => EXB[k]);
+    const services = keys.length ? keys : Object.keys(EXB);
+    const requested = Array.isArray(r.services) && r.services.length ? r.services : ['drying'];
     const legal = (r.legal_business_name || r.farm_name || '').trim();
     return {
       effective_date: today(),
@@ -100,6 +105,7 @@
       signer_title: '',
       lines: services.map((k) => {
         const line = { label: serviceLabel(k), unit: EXB[k].unit, qty: '', rate: EXB[k].rate, notes: EXB[k].notes || '' };
+        if (!requested.includes(k)) return line;
         if (k === 'drying') {
           if (lbs) line.qty = `${fmtN(lbs)} (est.)`;
           if (harvests.length) line.notes = 'Est. harvests: ' + harvests.map((h) => windowText(h) + (Number(h.lb) ? ` (${fmtN(h.lb)} lbs)` : '')).join('; ');
