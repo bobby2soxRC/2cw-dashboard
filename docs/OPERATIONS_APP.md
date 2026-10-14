@@ -317,17 +317,17 @@ doesn't ask for a mailing address or the signer's title, so those are typed
 in the dialog; anything left blank prints as a line to fill in by hand.
 Nothing is saved — upload the signed copy under Signed MSA as before.
 
-The same dialog also makes the **invoice request to Finance** for the
-deposit (the Drying Schedule editor has its own **Invoice request to
-Finance** button, which opens the dialog with that PDF as the main
-action). It's one page: who's asking (the logged-in name) and the date;
-the customer's legal name, entity, farm name, license #, mailing address,
-contact and signer; the estimated wet lbs × drying rate, and the deposit
-at 20% of that (section 3.B.a, `DEPOSIT_PCT`); expected harvests; and the
-other services they asked for, to bill as performed. Lbs and rate are read
-from the Drying line under Exhibit B, so a special rate typed there flows
-into both PDFs; the dialog shows the deposit figure live as you edit. When
-the agreement's wording changes, edit `blocks()` in `msa_agreement.js` (and
+**Invoice request to Finance** — a separate button in the Drying Schedule
+editor, unrelated to the agreement: 2CW Operations asking 2CW Finance to
+invoice the customer for the drying deposit. Its own dialog
+(`MSA.openInvoice`, same file) takes who to bill (legal name, entity,
+farm, license #, mailing address, contact), the estimated wet lbs and the
+drying rate, and shows the deposit live: 20% of lbs × rate (MSA section
+3.B.a, `DEPOSIT_PCT`). The one-page PDF reads From 2CW Operations / To 2CW
+Finance, with the logged-in name as requester, and also lists the expected
+harvests and the other services requested (to bill as performed).
+
+When the agreement's wording changes, edit `blocks()` in `msa_agreement.js` (and
 bump `CACHE_VERSION`); new services need an `EXB` entry there as well as in
 `drying_services.js`.
 

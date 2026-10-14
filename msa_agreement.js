@@ -1,4 +1,5 @@
-// Master Service Agreement generator — fills the 2CW post-harvest MSA with a
+// Master Service Agreement generator (and, separately, the drying-deposit
+// invoice request Operations sends Finance — see openInvoice) — fills the 2CW post-harvest MSA with a
 // customer's details and saves it as a PDF, built in the browser with jsPDF.
 //
 // Used from the Drying Schedule editor (drying_schedule.html, filled from the
@@ -109,6 +110,11 @@
       contact_phone: fmtPhone(r.contact_phone),
       contact_email: r.contact_email || '',
       requested: requested.filter((k) => EXB[k]),
+      // For the invoice request (not used by the agreement):
+      est_lbs: lbs ? String(lbs) : '',
+      drying_rate: EXB.drying.rate,
+      harvests_text: harvests.map((h) => windowText(h) + (Number(h.lb) ? ` (${fmtN(h.lb)} lbs)` : '')).join('; '),
+      support_text: support.map((s) => windowText(s) + (s.people ? `, ${s.people} ${Number(s.people) === 1 ? 'person' : 'people'}` : '')).join('; '),
       lines: services.map((k) => {
         const line = { label: serviceLabel(k), unit: EXB[k].unit, qty: '', rate: EXB[k].rate, notes: EXB[k].notes || '' };
         if (!requested.includes(k)) return line;
@@ -297,18 +303,17 @@
   }
 
   // ── Invoice request to Finance ───────────────────────────────────────
-  // One page for Finance to raise the deposit invoice: who the customer is,
-  // the estimated wet lbs and drying rate (from the Exhibit B drying line,
-  // so a special rate typed in the dialog carries through), and the 20%
-  // deposit of section 3.B.a.
+  // Separate from the agreement: 2CW Operations asking 2CW Finance to raise
+  // the drying deposit invoice — who to bill, the estimated wet lbs and
+  // drying rate, and the 20% deposit of MSA section 3.B.a. Opened with
+  // MSA.openInvoice from the Drying Schedule editor.
   const DEPOSIT_PCT = 20;
   const money = (n) => '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const parseNum = (s) => { const m = String(s || '').replace(/,/g, '').match(/\d+(\.\d+)?/); return m ? Number(m[0]) : null; };
   function deposit(d) {
-    const line = (d.lines || []).find((l) => /^drying$/i.test(String(l.label || '').trim())) || null;
-    const lbs = line && parseNum(line.qty), rate = line && parseNum(line.rate);
+    const lbs = parseNum(d.est_lbs), rate = parseNum(d.drying_rate);
     const total = lbs && rate ? Math.round(lbs * rate * 100) / 100 : null;
-    return { line, lbs, rate, total, deposit: total == null ? null : Math.round(total * DEPOSIT_PCT) / 100 };
+    return { lbs, rate, total, deposit: total == null ? null : Math.round(total * DEPOSIT_PCT) / 100 };
   }
 
   function invoiceBlocks(d) {
@@ -318,16 +323,13 @@
     const stateName = STATES[d.state] || d.state;
     let by = '';
     try { by = (sessionStorage.getItem('2cw_user_name') || '').trim(); } catch (e) { /* no storage */ }
-    const lineOf = (k) => (d.lines || []).find((l) => l.label === clean(serviceLabel(k)));
-    const others = (d.requested || []).filter((k) => k !== 'drying').map((k) => {
-      const l = lineOf(k) || { label: serviceLabel(k), ...EXB[k] };
-      return `${l.label} — ${l.rate} ${String(l.unit || '').toLowerCase()}${l.notes && k === 'farm_labor' ? ` (${l.notes})` : ''}`;
-    });
-    const harv = dep.line && /^Est\. harvests: /.test(dep.line.notes || '') ? dep.line.notes.replace(/^Est\. harvests: /, '') : '';
+    const others = (d.requested || []).filter((k) => k !== 'drying').map((k) =>
+      `${serviceLabel(k)} — ${EXB[k].rate} ${EXB[k].unit.toLowerCase()}${k === 'farm_labor' && d.support_text ? ` (${d.support_text})` : ''}`);
     return [
       { t: 'title', text: 'INVOICE REQUEST — DRYING DEPOSIT' },
       { t: 'table', cols: [130, 338], boldFirstCol: true, rows: [
-        ['To:', 'Finance, 2CW Productions, Inc.'],
+        ['From:', '2CW Operations'],
+        ['To:', '2CW Finance'],
         ['Requested by:', by || '____________________'],
         ['Date:', fmtDate(today())]] },
       { t: 'sub', text: 'Bill to' },
@@ -337,16 +339,16 @@
         ['Farm name:', dash(d.farm_name)],
         ['License #:', dash(d.license_number)],
         ['Mailing address:', [v(d.address), v(d.city)].filter(Boolean).join(', ') || '—'],
-        ['Contact:', [v(d.contact_name), v(d.contact_phone), v(d.contact_email)].filter(Boolean).join(' · ') || '—'],
-        ['Agreement signer:', [v(d.signer_name), v(d.signer_title), v(d.email)].filter(Boolean).join(' · ') || '—'],
-        ['Agreement date:', fmtDate(d.effective_date) || '—']] },
+        ['Contact:', dash(d.contact_name)],
+        ['Phone:', dash(d.contact_phone)],
+        ['Email:', dash(d.contact_email)]] },
       { t: 'sub', text: 'Deposit' },
       { t: 'table', cols: [218, 90, 80, 80], borders: true, header: ['Description', 'Est. wet lbs', 'Rate', 'Amount'], rows: [
         ['Drying services (estimated)', dep.lbs ? fmtN(dep.lbs) : '', dep.rate ? `${money(dep.rate)} / lb` : '', dep.total != null ? money(dep.total) : ''],
         [`Deposit — ${DEPOSIT_PCT}% of estimated drying fees`, '', '', dep.deposit != null ? money(dep.deposit) : '']] },
       { t: 'p', text: `**Please invoice the customer for: ${dep.deposit != null ? money(dep.deposit) : '____________'}**`, size: 13 },
       { t: 'p', text: `Per the Master Service Agreement (section 3.B.a), the deposit is ${DEPOSIT_PCT}% of the total Drying Services fees and is due within seven (7) calendar days of signing. The drying charge above is an estimate; the final charge is based on the wet weight recorded at intake (net of tare).` },
-      ...(harv ? [{ t: 'sub', text: 'Expected harvests' }, { t: 'p', text: harv }] : []),
+      ...(v(d.harvests_text) ? [{ t: 'sub', text: 'Expected harvests' }, { t: 'p', text: v(d.harvests_text) }] : []),
       ...(others.length ? [{ t: 'sub', text: 'Other services requested (bill as performed — not part of the deposit)' },
         ...others.map((o) => ({ t: 'li', lv: 1, label: '•', text: o }))] : [])
     ];
@@ -572,8 +574,6 @@
     bg.addEventListener('click', (e) => { if (e.target === bg) close(); });
 
     const intakes = opts.intakes || [];
-    // mode 'invoice' leads with the invoice request; both PDFs are offered either way.
-    const inv = opts.mode === 'invoice';
     const fld = (k, label, attrs = '') => `<div><label for="msa-${k}">${label}</label><input id="msa-${k}" data-k="${k}" value="${esc(d[k])}" ${attrs}/></div>`;
     const lineRow = (l, i) => `<div class="msa-line" data-i="${i}">
       <input data-l="label" value="${esc(l.label)}" placeholder="Service"/>
@@ -590,11 +590,9 @@
     };
     const draw = () => {
       const unused = SERVICE_LIST().filter((s) => EXB[s.k] && !d.lines.some((l) => l.label === s.l));
-      bg.innerHTML = `<div class="msa" role="dialog" aria-label="${inv ? 'Invoice request' : 'Service Agreement'}">
-        <h2>${inv ? 'Invoice request to Finance' : 'Service Agreement'}</h2>
-        <div class="msa-sub">${inv
-          ? 'The deposit invoice request for Finance: customer details, estimated wet lbs and drying rate (the Drying line under Exhibit B), and the 20% deposit. Check the details, then download the PDF.'
-          : 'Check the details, fill in anything missing, then download the filled-in agreement as a PDF. Blanks print as signature-style lines.'}</div>
+      bg.innerHTML = `<div class="msa" role="dialog" aria-label="Service Agreement">
+        <h2>Service Agreement</h2>
+        <div class="msa-sub">Check the details, fill in anything missing, then download the filled-in agreement as a PDF. Blanks print as signature-style lines.</div>
         ${intakes.length ? `<div><label for="msa-src">Fill from a drying request</label><select id="msa-src"><option value="">—</option>${intakes.map((r) =>
           `<option value="${esc(r.id)}" ${r.id === opts.pick ? 'selected' : ''}>${esc(r.legal_business_name || r.farm_name)}${r.legal_business_name && r.farm_name && r.legal_business_name !== r.farm_name ? ` (${esc(r.farm_name)})` : ''} · ${esc(new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }))}</option>`).join('')}</select></div>` : ''}
         <div class="msa-sect">Customer</div>
@@ -611,14 +609,6 @@
           ${fld('phone', 'Phone', 'type="tel"')}
           ${fld('email', 'Email', 'type="email"')}
         </div>
-        <div class="msa-sect">Farm &amp; contact</div>
-        <div class="msa-g">
-          ${fld('farm_name', 'Farm name')}
-          ${fld('license_number', 'License #')}
-          ${fld('contact_name', 'Contact')}
-          ${fld('contact_phone', 'Contact phone', 'type="tel"')}
-          ${fld('contact_email', 'Contact email', 'type="email"')}
-        </div>
         <div class="msa-sect">Signer</div>
         <div class="msa-g">
           ${fld('signer_name', 'Name')}
@@ -631,28 +621,16 @@
           ${unused.length ? `<select id="msa-add" style="flex:1 1 220px"><option value="">+ Add a service…</option>${unused.map((s) => `<option value="${s.k}">${esc(s.l)}</option>`).join('')}</select>` : ''}
           <button type="button" class="msa-btn" id="msa-blank">+ Blank line</button>
         </div>
-        <div class="msa-dep" id="msa-dep"></div>
         <div class="msa-warn" id="msa-warn"></div>
         <div class="msa-err" id="msa-err"></div>
         <div class="msa-acts">
           <button type="button" class="msa-btn" id="msa-cancel">Close</button>
-          <button type="button" class="msa-btn${inv ? '' : ' msa-go'}" data-kind="msa">Agreement PDF</button>
-          <button type="button" class="msa-btn${inv ? ' msa-go' : ''}" data-kind="invoice">Invoice request PDF</button>
+          <button type="button" class="msa-btn msa-go" data-kind="msa">Download PDF</button>
         </div></div>`;
       const missing = [['legal_name', 'legal name'], ['state', 'state'], ['address', 'mailing address'], ['city', 'city/state/zip'], ['signer_name', 'signer'], ['signer_title', 'signer’s title']]
         .filter(([k]) => !d[k]).map(([, l]) => l);
       const warn = bg.querySelector('#msa-warn');
-      if (missing.length) { warn.textContent = `Still blank: ${missing.join(', ')}. ${inv ? 'Finance will see those as blank.' : 'Those print as blank lines to fill in by hand.'}`; warn.style.display = 'block'; }
-      // Live deposit figure from the Drying line as it's edited.
-      const showDep = () => {
-        read();
-        const dep = deposit(d), el = bg.querySelector('#msa-dep');
-        el.innerHTML = dep.deposit != null
-          ? `Deposit to invoice: <b>${money(dep.deposit)}</b> <span style="color:var(--subtext,#9aa0b0)">= ${DEPOSIT_PCT}% × ${fmtN(dep.lbs)} lbs × ${money(dep.rate)}</span>`
-          : `<span style="color:var(--gold,#d4a843)">No deposit yet — the Drying line under Exhibit B needs a quantity (wet lbs) and a rate.</span>`;
-      };
-      showDep();
-      bg.querySelectorAll('.msa-line[data-i] input').forEach((el) => { el.addEventListener('input', showDep); });
+      if (missing.length) { warn.textContent = `Still blank: ${missing.join(', ')}. Those print as blank lines to fill in by hand.`; warn.style.display = 'block'; }
       bg.querySelector('#msa-cancel').onclick = close;
       bg.querySelectorAll('[data-rm]').forEach((b) => { b.onclick = () => { read(); d.lines.splice(Number(b.dataset.rm), 1); draw(); }; });
       bg.querySelector('#msa-blank').onclick = () => { read(); d.lines.push({ label: '', unit: '', qty: '', rate: '', notes: '' }); draw(); };
@@ -686,7 +664,72 @@
     draw();
   }
 
-  const api = { open, fromIntake, build, blocks, invoiceBlocks, deposit, guessEntity, fileName };
+  // The invoice request's own dialog: who to bill, est. wet lbs and drying
+  // rate, with the deposit worked out live.
+  function openInvoice(data) {
+    if (!document.getElementById('msa-css')) {
+      const st = document.createElement('style'); st.id = 'msa-css'; st.textContent = CSS; document.head.appendChild(st);
+    }
+    const d = { ...fromIntake({}), ...data };
+    const bg = document.createElement('div');
+    bg.className = 'msa-bg';
+    document.body.appendChild(bg);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const close = () => { bg.remove(); document.body.style.overflow = prevOverflow; document.removeEventListener('keydown', onKey, true); };
+    const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
+    document.addEventListener('keydown', onKey, true);
+    bg.addEventListener('click', (e) => { if (e.target === bg) close(); });
+    const fld = (k, label, attrs = '') => `<div><label for="inv-${k}">${label}</label><input id="inv-${k}" data-k="${k}" value="${esc(d[k])}" ${attrs}/></div>`;
+    bg.innerHTML = `<div class="msa" role="dialog" aria-label="Invoice request">
+      <h2>Invoice request to Finance</h2>
+      <div class="msa-sub">2CW Operations asking 2CW Finance to invoice this customer for the drying deposit (${DEPOSIT_PCT}% of estimated drying fees). Check the details, then download the PDF and send it to Finance.</div>
+      <div class="msa-sect">Bill to</div>
+      <div class="msa-g">
+        ${fld('legal_name', 'Legal business name')}
+        ${fld('farm_name', 'Farm name')}
+        <div><label for="inv-entity">Entity type</label><select id="inv-entity" data-k="entity">${ENTITIES.map((e) => `<option ${e === d.entity ? 'selected' : ''}>${e}</option>`).join('')}</select></div>
+        <div><label for="inv-state">State of formation</label><select id="inv-state" data-k="state"><option value="">—</option>${Object.entries(STATES).map(([c, n]) => `<option value="${c}" ${c === d.state ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+        ${fld('license_number', 'License #')}
+        ${fld('address', 'Mailing address', 'placeholder="Street"')}
+        ${fld('city', 'City, state, zip')}
+        ${fld('contact_name', 'Contact')}
+        ${fld('contact_phone', 'Phone', 'type="tel"')}
+        ${fld('contact_email', 'Email', 'type="email"')}
+      </div>
+      <div class="msa-sect">Deposit</div>
+      <div class="msa-g">
+        ${fld('est_lbs', 'Estimated wet lbs', 'inputmode="decimal"')}
+        ${fld('drying_rate', 'Drying rate per wet lb', 'inputmode="decimal"')}
+      </div>
+      <div class="msa-dep" id="inv-dep"></div>
+      <div class="msa-err" id="inv-err"></div>
+      <div class="msa-acts">
+        <button type="button" class="msa-btn" id="inv-cancel">Close</button>
+        <button type="button" class="msa-btn msa-go" id="inv-go">Download PDF</button>
+      </div></div>`;
+    const read = () => bg.querySelectorAll('[data-k]').forEach((el) => { d[el.dataset.k] = el.value.trim(); });
+    const showDep = () => {
+      read();
+      const dep = deposit(d);
+      bg.querySelector('#inv-dep').innerHTML = dep.deposit != null
+        ? `Deposit to invoice: <b>${money(dep.deposit)}</b> <span style="color:var(--subtext,#9aa0b0)">= ${DEPOSIT_PCT}% × ${fmtN(dep.lbs)} lbs × ${money(dep.rate)}</span>`
+        : '<span style="color:var(--gold,#d4a843)">Enter the estimated wet lbs and the drying rate to work out the deposit.</span>';
+    };
+    bg.querySelector('.msa').addEventListener('input', showDep);
+    showDep();
+    bg.querySelector('#inv-cancel').onclick = close;
+    bg.querySelector('#inv-go').onclick = async (e) => {
+      const btn = e.currentTarget, err = bg.querySelector('#inv-err');
+      read(); err.style.display = 'none';
+      btn.disabled = true; btn.textContent = 'Making PDF…';
+      try { await download(d, 'invoice'); }
+      catch (ex) { err.textContent = ex.message || String(ex); err.style.display = 'block'; }
+      btn.disabled = false; btn.textContent = 'Download PDF';
+    };
+  }
+
+  const api = { open, openInvoice, fromIntake, build, blocks, invoiceBlocks, deposit, guessEntity, fileName };
   if (typeof window !== 'undefined') window.MSA = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();
