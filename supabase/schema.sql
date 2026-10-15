@@ -1301,3 +1301,24 @@ create table if not exists labor_rates (
 alter table labor_rates enable row level security;   -- no policies: service role only
 revoke all on public.labor_rates from anon;
 grant select, insert, update, delete on public.labor_rates to service_role;
+
+-- ── Employee badge numbers → Connecteam user ─────────────────────────────
+-- Station forms log people by badge number (the Workforce Log's "Employee
+-- ID", crew[].employeeNo — e.g. "6", "76"), while labor_rates is keyed by
+-- Connecteam user id. This maps one to the other so badge hours pick up the
+-- person's own rate (netlify/functions/preroll-costs.js). Set in the admin
+-- panel (admin.html → Labor Rates → Badge #, through admin.js). A badge
+-- belongs to one person at a time; a person can have more than one. Service
+-- role only, like labor_rates.
+create table if not exists employee_badges (
+  badge_no       text primary key check (badge_no <> ''),
+  employee_id    text not null,
+  employee_name  text,
+  updated_by     text,
+  updated_at     timestamptz not null default now()
+);
+create index if not exists employee_badges_employee_idx on employee_badges (employee_id);
+
+alter table employee_badges enable row level security;   -- no policies: service role only
+revoke all on public.employee_badges from anon;
+grant select, insert, update, delete on public.employee_badges to service_role;

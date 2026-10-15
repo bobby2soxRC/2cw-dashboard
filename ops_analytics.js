@@ -508,6 +508,14 @@ function rateFor(rates, employeeId, date) {
   return own != null ? own : pick('*');
 }
 
+// A badge number (station forms' Employee ID, crew[].employeeNo) as it's
+// stored in employee_badges: trimmed, and an all-digit badge without leading
+// zeros, so "06" and "6" are the same person.
+function badgeKey(v) {
+  const s = String(v == null ? '' : v).trim();
+  return /^\d+$/.test(s) ? s.replace(/^0+(?=.)/, '') : s;
+}
+
 // The farm licenses a farm-wide entry covers, sorted: `farms` (one farm can
 // hold several licenses), or the single `farm` older entries saved.
 function entryFarms(r) {
@@ -808,6 +816,6 @@ function exceptions(stages, asOf) {
   return out.sort((a, b) => String(b.date).localeCompare(String(a.date)));
 }
 
-return { buildLots, stageYields, strainYields, dailyOutput, biomassLedger, trimmerStats, crewThroughput, crewLaborLog, crewLaborByEmployee, laborAllocations, laborCostByLot, lotLbForProcess, rateFor, carryCost, entryFarms, DEFAULT_TRIM_SPLIT,
+return { buildLots, stageYields, strainYields, dailyOutput, biomassLedger, trimmerStats, crewThroughput, crewLaborLog, crewLaborByEmployee, laborAllocations, laborCostByLot, lotLbForProcess, rateFor, badgeKey, carryCost, entryFarms, DEFAULT_TRIM_SPLIT,
          requestSummary, exceptions, buildAliasMap, rootUid, daysBetween };
 }));

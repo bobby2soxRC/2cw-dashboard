@@ -7,9 +7,11 @@
 //
 // A run's labor is its Workforce Log (fields.crew): each row's hours at the
 // rate in effect on its work date (OpsAnalytics.rateFor, the Labor Log's
-// lookup). Rates are keyed by Connecteam user id, and the form logs badge
-// numbers, so most rows fall to the '*' default rate — `defaultHours` says
-// how many did.
+// lookup). Rates are keyed by Connecteam user id and the form logs badge
+// numbers, so each badge goes through employee_badges (admin panel → Labor
+// Rates → Badge #) to its person first. Badges nobody has mapped, and people
+// without their own rate, fall to the '*' default — `defaultHours` says how
+// many hours did.
 //
 // POST {pin} -> {ok, runs: [{id, cost, hours, defaultHours, unratedHours}]}
 //
@@ -46,7 +48,7 @@ async function userForPin(supaUrl, serviceKey, pin) {
 const num = (x) => { const n = parseFloat(x); return Number.isFinite(n) ? n : 0; };
 const round2 = (x) => Math.round(x * 100) / 100;
 
-function runCost(run, rates) {
+function runCost(run, rates, badgeTo) {
   const f = run.fields || {};
   let cost = 0, hours = 0, defaultHours = 0, unratedHours = 0;
   (Array.isArray(f.crew) ? f.crew : []).forEach((c) => {
@@ -55,7 +57,8 @@ function runCost(run, rates) {
     hours += hrs;
     const emp = String(c.employeeNo || '').trim();
     const date = c.workDate || c.day || f.date || run.work_date;
-    const own = emp ? OpsAnalytics.rateFor(rates.filter((r) => r.employeeId !== '*'), emp, date) : null;
+    const person = emp ? badgeTo.get(OpsAnalytics.badgeKey(emp)) : null;
+    const own = person ? OpsAnalytics.rateFor(rates.filter((r) => r.employeeId !== '*'), person, date) : null;
     const rate = own != null ? own : OpsAnalytics.rateFor(rates, '', date);
     if (rate == null) { unratedHours += hrs; return; }
     if (own == null) defaultHours += hrs;
@@ -82,14 +85,18 @@ exports.handler = async (event) => {
     if (String((user.columns || {})[COST_COL] || '').toUpperCase() !== 'TRUE') {
       return json(403, { ok: false, error: 'You don’t have permission to see pre-roll costs.' });
     }
-    const [ratesRes, runsRes] = await Promise.all([
+    const [ratesRes, runsRes, badgesRes] = await Promise.all([
       supaFetch(supaUrl, serviceKey, 'labor_rates?select=employee_id,rate,effective_from&order=effective_from.asc'),
-      supaFetch(supaUrl, serviceKey, 'operations_forms?station_key=eq.preroll_production&select=id,work_date,fields')
+      supaFetch(supaUrl, serviceKey, 'operations_forms?station_key=eq.preroll_production&select=id,work_date,fields'),
+      supaFetch(supaUrl, serviceKey, 'employee_badges?select=badge_no,employee_id')
     ]);
     if (!ratesRes.ok) throw new Error(`rates read failed: ${ratesRes.status} ${await ratesRes.text()}`);
     if (!runsRes.ok) throw new Error(`runs read failed: ${runsRes.status} ${await runsRes.text()}`);
     const rates = (await ratesRes.json()).map((r) => ({ employeeId: String(r.employee_id), rate: Number(r.rate), from: r.effective_from }));
-    const runs = (await runsRes.json()).map((r) => runCost(r, rates));
+    // Until employee_badges exists every badge is unmapped (default rate).
+    const badgeTo = new Map((badgesRes.ok ? await badgesRes.json() : [])
+      .map((b) => [OpsAnalytics.badgeKey(b.badge_no), String(b.employee_id)]));
+    const runs = (await runsRes.json()).map((r) => runCost(r, rates, badgeTo));
     return json(200, { ok: true, runs });
   } catch (err) {
     return json(502, { ok: false, error: String(err.message || err) });

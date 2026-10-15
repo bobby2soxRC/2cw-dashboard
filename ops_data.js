@@ -184,6 +184,22 @@ async function checkDraft(id) {
 
 // ── Live "Today" board ───────────────────────────────────────────────────────
 
+// Badge number -> employee name (netlify/functions/badge-names.js, from the
+// admin panel's Labor Rates → Badge #), for the daily summaries' Name
+// column. Keys are badges as badgeKey() spells them: trimmed, an all-digit
+// badge without leading zeros. Loaded once per page; {} if it can't be.
+let badgeNamesP = null;
+const badgeKey = (v) => { const s = String(v == null ? '' : v).trim(); return /^\d+$/.test(s) ? s.replace(/^0+(?=.)/, '') : s; };
+function loadBadgeNames() {
+  if (!badgeNamesP) {
+    badgeNamesP = fetch('/.netlify/functions/badge-names')
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((j) => (j && j.names) || {})
+      .catch((err) => { console.error('loadBadgeNames', err); return {}; });
+  }
+  return badgeNamesP;
+}
+
 // Every form touched today, draft and submitted, across every station —
 // what a lead with view access sees. Filtered client-side to the stations
 // they're allowed to view (station access stays app-enforced; see the RLS

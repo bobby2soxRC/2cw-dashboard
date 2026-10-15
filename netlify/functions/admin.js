@@ -21,6 +21,7 @@
 //   SUPABASE_SERVICE_ROLE_KEY service_role key (Project Settings -> API)
 
 const crypto = require('crypto');
+const { badgeKey } = require('../../ops_analytics.js');
 
 const TOKEN_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -221,10 +222,46 @@ exports.handler = async (event) => {
 
     // Labor rates (labor_rates table — pay, so service role only; see
     // supabase/schema.sql). Each row is one person's $/hr from a date on.
+    // Badge numbers (employee_badges) come along; badges is null until that
+    // table has been created, so the tab still loads without it.
     if (action === 'labor_rates_list') {
-      const res = await supaFetch(supaUrl, serviceKey, 'labor_rates?select=*&order=employee_id.asc,effective_from.desc');
+      const [res, bRes] = await Promise.all([
+        supaFetch(supaUrl, serviceKey, 'labor_rates?select=*&order=employee_id.asc,effective_from.desc'),
+        supaFetch(supaUrl, serviceKey, 'employee_badges?select=badge_no,employee_id&order=badge_no.asc')
+      ]);
       if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
-      return json(200, { ok: true, rates: await res.json() });
+      return json(200, { ok: true, rates: await res.json(), badges: bRes.ok ? await bRes.json() : null });
+    }
+
+    // A person's badge numbers (station forms' Employee ID), replacing
+    // whatever they had: badges "6, 76" -> two rows. A badge already on
+    // someone else is refused rather than moved.
+    if (action === 'labor_badges_set') {
+      const employeeId = String(payload.employeeId || '').trim();
+      if (!employeeId || employeeId === '*' || employeeId.length > 64) return json(400, { ok: false, error: 'Missing employee' });
+      const badges = [...new Set(String(payload.badges || '').split(/[\s,;]+/).map(badgeKey).filter(Boolean))];
+      if (badges.some((b) => b.length > 20 || /[(),"\\]/.test(b))) return json(400, { ok: false, error: 'Badge numbers are up to 20 characters, separated by commas' });
+      const empQ = encodeURIComponent(employeeId);
+      if (badges.length) {
+        const inList = encodeURIComponent(badges.map((b) => `"${b}"`).join(','));
+        const res = await supaFetch(supaUrl, serviceKey, `employee_badges?badge_no=in.(${inList})&employee_id=neq.${empQ}&select=badge_no,employee_name,employee_id`);
+        if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+        const taken = await res.json();
+        if (taken.length) {
+          return json(409, { ok: false, error: taken.map((t) => `Badge ${t.badge_no} is already ${t.employee_name || t.employee_id}'s`).join('; ') + ' — clear it there first.' });
+        }
+      }
+      const del = await supaFetch(supaUrl, serviceKey, `employee_badges?employee_id=eq.${empQ}`, { method: 'DELETE' });
+      if (!del.ok) throw new Error(`${del.status} ${await del.text()}`);
+      if (badges.length) {
+        const name = String(payload.employeeName || '').trim().slice(0, 200) || null;
+        const res = await supaFetch(supaUrl, serviceKey, 'employee_badges', {
+          method: 'POST',
+          body: JSON.stringify(badges.map((b) => ({ badge_no: b, employee_id: employeeId, employee_name: name, updated_by: 'admin panel' })))
+        });
+        if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+      }
+      return json(200, { ok: true, badges });
     }
 
     if (action === 'labor_rates_set') {

@@ -119,6 +119,7 @@
   .rate-in{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
   .rate-in input{background:#0c0d0f;border:1px solid var(--border);color:var(--text);padding:.4rem .55rem;border-radius:6px;font-size:.85rem;font-family:'DM Mono',monospace;outline:none}
   .rate-in input[type=number]{width:90px}
+  .rate-in input.badge-in{width:80px}
   .rate-hist{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--subtext)}
   .rate-hist button{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;padding:0 4px}
   .rate-hist button:hover{color:var(--red)}
@@ -231,7 +232,7 @@
         <h1>Labor Rates</h1>
       </div>
       <div class="status-line" id="rates-status">Loading…</div>
-      <div class="status-line" style="color:var(--muted)">Loaded cost per hour (wage + taxes + benefits) for the Labor Log's cost reports. A new rate applies from its effective date on, so a raise doesn't change the cost of work already done; leave the date blank for "from the start". The default covers anyone without their own rate, including people typed into the Labor Log by name. Only users with "Labor Log — see costs" (user editor) can see these, in the Labor Log.</div>
+      <div class="status-line" style="color:var(--muted)">Loaded cost per hour (wage + taxes + benefits) for the Labor Log's cost reports. A new rate applies from its effective date on, so a raise doesn't change the cost of work already done; leave the date blank for "from the start". The default covers anyone without their own rate, including people typed into the Labor Log by name. Badge # is the Employee ID people type on the station forms (several: separate with commas); it gives their Workforce Log hours their own rate and puts their name on the forms' daily summaries. Only users with "Labor Log — see costs" (user editor) can see these, in the Labor Log.</div>
       <div class="filters"><div class="search-wrap"><input type="text" id="rates-search" placeholder="Search people…" oninput="ratesRender()"/></div></div>
       <div class="table-scroll" id="rates-wrap"></div>
     </div>
@@ -472,6 +473,7 @@ const RATE_ALWAYS = '2000-01-01';
 let ratesLoaded = false;
 let rateRows = [];      // labor_rates rows
 let ratePeople = [];    // [{id, name, inRoster}]
+let rateBadges = null;  // Connecteam id -> [badge numbers] (employee_badges); null = table not created yet
 async function ratesLoadAll(){
   const status = document.getElementById('rates-status');
   status.textContent = 'Loading…';
@@ -480,6 +482,11 @@ async function ratesLoadAll(){
     const [roster, hours, list] = await Promise.all([getJson('connecteam_roster.json'), getJson('connecteam_hours.json'),
       callAdmin({ action: 'labor_rates_list', token: getToken() })]);
     rateRows = list.rates || [];
+    rateBadges = null;
+    if(Array.isArray(list.badges)){
+      rateBadges = {};
+      list.badges.forEach(b => (rateBadges[b.employee_id] = rateBadges[b.employee_id] || []).push(b.badge_no));
+    }
     const byId = new Map();
     if(roster && Array.isArray(roster.people)) roster.people.forEach(p => byId.set(String(p.userId), { id: String(p.userId), name: p.name, inRoster: true }));
     // Until the roster file exists, this week's Connecteam hours stand in.
@@ -489,7 +496,8 @@ async function ratesLoadAll(){
     });
     ratePeople = [...byId.values()].sort((a,b) => a.name.localeCompare(b.name));
     const withRate = new Set(rateRows.map(r => r.employee_id));
-    status.textContent = `${ratePeople.length} people · ${ratePeople.filter(p => withRate.has(p.id)).length} with their own rate · default ${withRate.has('*') ? 'set' : 'not set'}`;
+    status.textContent = `${ratePeople.length} people · ${ratePeople.filter(p => withRate.has(p.id)).length} with their own rate · default ${withRate.has('*') ? 'set' : 'not set'} · ` +
+      (rateBadges ? `${ratePeople.filter(p => (rateBadges[p.id] || []).length).length} with a badge #` : 'badge # needs the employee_badges table (supabase/schema.sql)');
     ratesRender();
   } catch(err) {
     status.textContent = 'Could not load labor rates: ' + err.message + ' (has the labor_rates table been created? See supabase/schema.sql.)';
@@ -507,6 +515,7 @@ function ratesRender(){
     const hist = rs.map(r => `<div>$${Number(r.rate).toFixed(2)} ${esc(since(r.effective_from))}<button title="Remove this rate" onclick="rateDelete(${r.id})">×</button></div>`).join('');
     return `<tr>
       <td>${esc(p.name)}${p.inRoster ? '' : ' <span class="pill">not in roster</span>'}</td>
+      <td>${p.id === '*' || !rateBadges ? '<span class="muted">—</span>' : `<div class="rate-in"><input type="text" class="badge-in" inputmode="numeric" placeholder="—" title="Employee ID(s) on the station forms, comma-separated" id="badge-${esc(p.id)}" value="${esc((rateBadges[p.id] || []).join(', '))}" onchange="badgeSave('${esc(p.id)}')"/></div>`}</td>
       <td class="rate-now">${cur ? '$' + Number(cur.rate).toFixed(2) : '<span class="muted">' + (p.id === '*' ? 'not set' : 'default') + '</span>'}${future.length ? `<div class="muted" style="font-size:.75rem">→ $${Number(future[future.length-1].rate).toFixed(2)} from ${esc(future[future.length-1].effective_from)}</div>` : ''}</td>
       <td class="rate-hist">${hist || '<span class="muted">—</span>'}</td>
       <td><div class="rate-in">
@@ -516,9 +525,9 @@ function ratesRender(){
       </div></td>
     </tr>`;
   };
-  const people = ratePeople.filter(p => !q || p.name.toLowerCase().includes(q));
+  const people = ratePeople.filter(p => !q || p.name.toLowerCase().includes(q) || (rateBadges && (rateBadges[p.id] || []).some(b => b === q)));
   document.getElementById('rates-wrap').innerHTML = `<table>
-    <thead><tr><th>Person</th><th>Current</th><th>History</th><th>New rate · effective from</th></tr></thead>
+    <thead><tr><th>Person</th><th>Badge #</th><th>Current</th><th>History</th><th>New rate · effective from</th></tr></thead>
     <tbody>
       ${!q || 'default'.includes(q) ? line({ id: '*', name: 'Default (anyone without their own rate)', inRoster: true }) : ''}
       ${people.map(line).join('')}
@@ -536,6 +545,23 @@ async function rateSave(id){
       employeeName: id === '*' ? 'Default' : (person ? person.name : ''), rate, effectiveFrom: fromEl.value || RATE_ALWAYS });
     await ratesLoadAll();
   } catch(err) { alert('Could not save: ' + err.message); }
+}
+// Badge numbers: the Employee ID people type on the station forms, so their
+// Workforce Log hours (Pre-Roll Dashboard costs) get this person's rate, and
+// the forms' daily summaries show their name. Saved when the box changes.
+async function badgeSave(id){
+  const el = document.getElementById('badge-' + id);
+  const person = ratePeople.find(p => p.id === id);
+  el.disabled = true;
+  try {
+    const j = await callAdmin({ action: 'labor_badges_set', token: getToken(), employeeId: id,
+      employeeName: person ? person.name : '', badges: el.value });
+    rateBadges[id] = j.badges || [];
+    el.value = rateBadges[id].join(', ');
+  } catch(err) {
+    alert('Could not save badge #: ' + err.message);
+    el.value = (rateBadges[id] || []).join(', ');
+  } finally { el.disabled = false; }
 }
 async function rateDelete(rowId){
   if(!confirm('Remove this rate? Work in its date range will be costed at the earlier rate (or the default).')) return;

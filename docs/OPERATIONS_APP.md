@@ -256,8 +256,10 @@ detail a Labor Cost section (whole-run $ and $ per pre-roll). The cost is the
 Workforce Log's hours at the rate in effect on each row's date (`rateFor`),
 worked out server-side by `netlify/functions/preroll-costs.js`. Rates are
 keyed by Connecteam user id but the form logs employee IDs (badge numbers),
-which nothing maps yet, so those hours fall to the default rate. The detail
-says how many hours did. Hours with no rate at all aren't costed.
+so each badge is looked up in `employee_badges` (admin panel → Labor Rates
+→ Badge #, see `docs/USER_ADMIN.md`) first. Hours on a badge nobody has
+mapped, or on a person without their own rate, fall to the default rate.
+The detail says how many hours did. Hours with no rate at all aren't costed.
 
 **Pre-roll products and pack quantities.** Quantities on requests and queue
 items are in units — packs, or singles — not pre-rolls. `preroll_products`
@@ -629,6 +631,10 @@ instead of turning the record back into a draft.
 The daily summary under the form (`dailySummary` with `dateCol: 'day'`,
 `unit: 'lb'`) is person × flavor for one day, in lbs, counting only rows
 weighed that day — so a three-day batch shows up on each of its days.
+Every daily summary (Bucking, Hand Trim, Smalls) has a Name column beside
+the employee #, from the admin panel's Labor Rates → Badge #
+(`netlify/functions/badge-names.js`). It's blank for a badge nobody has
+mapped, and for Bucking rows logged by name.
 Bucking's by-person rows also feed `crewLaborLog` (a touch, no hours; hours
 come from the Labor Log).
 

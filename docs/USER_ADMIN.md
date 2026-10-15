@@ -397,6 +397,27 @@ including people typed into the Labor Log by name.
   Runs. `netlify/functions/preroll-costs.js` checks it from the PIN and
   returns only each run's totals, never a rate, but a one-person run's
   cost ÷ hours is that rate, so the same caution applies.
+- **Badge #** is the Employee ID people type on the station forms (the
+  Workforce Log's `crew[].employeeNo`, the weighing worksheets' Employee
+  #), e.g. "6" or "76". Type it beside the person and it saves when the box
+  changes. Several badges go comma-separated. "06" and "6" are the same
+  badge, and a badge belongs to one person at a time: giving it to a second
+  person is refused until it's cleared from the first. Search finds a person
+  by badge too. With a badge set, that person's Workforce Log hours on the
+  Pre-Roll Dashboard get their own rate (`preroll-costs.js` maps badge →
+  Connecteam id before `rateFor`), and the station forms' daily summaries
+  show their name. Unmapped badges stay at the default rate.
+- Badges are stored in `employee_badges` (`supabase/schema.sql`; badge →
+  Connecteam id + name), service role only, through `admin.js`
+  (`labor_badges_set`, and `labor_rates_list` returns them). The forms
+  get badge → name, nothing else, from `netlify/functions/badge-names.js`.
+  Connecteam isn't the source because the sync has no badge field to read.
+  If badges are kept on Connecteam profiles later, `scripts/connecteam_sync.py`
+  could fill this table instead.
+- The first 30 badges came from the 10/13–14/26 Bucking / Deshoje hour
+  sheets: `supabase/seed_employee_badges.sql`, run after the schema block.
+  It never overwrites a badge already set. Its header lists the badges it
+  leaves out and the name matches worth a second look.
 
 ## On-Stem Flower (bucking queue and releasing held Take Downs)
 

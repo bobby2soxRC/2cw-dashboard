@@ -106,6 +106,7 @@
     .sum-table th:first-child,.sum-table td:first-child{text-align:left;position:sticky;left:0;background:var(--surface)}
     .sum-table th.cur{color:var(--accent)}
     .sum-table td.zero{color:var(--muted)}
+    .sum-table th.name,.sum-table td.name{text-align:left;font-family:inherit;color:var(--subtext)}
     .sum-table td.tot,.sum-table th.tot{color:var(--accent)}
     .sum-table tfoot td{border-bottom:none;border-top:1px solid var(--subtext);color:var(--subtext)}
     .sum-empty{color:var(--muted);font-size:.85rem}
@@ -1657,11 +1658,12 @@
   // autosave so the numbers move as the scale readings are typed in.
   // `var`, not `let`: recompute() calls scheduleSummary() during the first
   // render, before this block has run.
-  var SUM = { rows: [], date: null, timer: null };
+  var SUM = { rows: [], date: null, timer: null, names: {} };
   const SM = {
     title:  { en: 'Daily Summary — by Employee', es: 'Resumen del día — por empleado' },
     hint:   { en: 'Every smalls page for the day, in grams. Open pages included.', es: 'Todas las hojas de smalls del día, en gramos. Incluye hojas abiertas.' },
     emp:    { en: 'Employee #', es: 'N.º empl.' },
+    name:   { en: 'Name', es: 'Nombre' },
     total:  { en: 'Total g', es: 'Total g' },
     totalLb:{ en: 'Total lbs', es: 'Total lbs' },
     lbs:    { en: 'lbs', es: 'lbs' },
@@ -1677,9 +1679,10 @@
     // started days earlier, so look back over the pages from the last few
     // weeks rather than only the ones dated that day.
     const cfg = station.dailySummary;
-    const rows = cfg.dateCol
-      ? await listStationRange(station.key, shiftDate(date, -45), date)
-      : await listToday(date);
+    const [rows, names] = await Promise.all([cfg.dateCol
+      ? listStationRange(station.key, shiftDate(date, -45), date)
+      : listToday(date), loadBadgeNames()]);
+    SUM.names = names;
     if (SUM.req !== req) return;   // a newer load was started meanwhile
     SUM.rows = rows.filter((r) => r.station_key === station.key);
     renderSummary();
@@ -1724,6 +1727,9 @@
       grid[emp][p.id] = (grid[emp][p.id] || 0) + g;
     }));
     const emps = Object.keys(grid).sort((a, b) => (Number(a) - Number(b)) || a.localeCompare(b));
+    // Name beside each employee # (Labor Rates → Badge #); blank for a badge
+    // nobody has mapped, or a row logged by name (Bucking's who).
+    const nameOf = (e) => SUM.names[badgeKey(e)] || '';
 
     const head = `<div class="sum-head"><div><h2>${t(cfg.title || SM.title)}</h2><div class="hint">${t(cfg.hint || SM.hint)}</div></div>` +
       `<input type="date" id="sum-date" value="${escapeAttr(SUM.date)}"></div>`;
@@ -1735,13 +1741,13 @@
       const empTot = (e) => Object.values(grid[e]).reduce((a, g) => a + g, 0);
       const all = emps.reduce((a, e) => a + empTot(e), 0);
       const lbCol = (g) => inLb ? '' : `<td class="tot">${fmtNum(g / G_PER_LB, 2)}</td>`;
-      box.innerHTML = head + `<div class="li-scroll"><table class="sum-table"><thead><tr><th>${t(cfg.empLabel || SM.emp)}</th>` +
+      box.innerHTML = head + `<div class="li-scroll"><table class="sum-table"><thead><tr><th>${t(cfg.empLabel || SM.emp)}</th><th class="name">${t(SM.name)}</th>` +
         used.map((p) => `<th class="${p.cur ? 'cur' : ''}">${escapeHtml(p.strain || t(SW.untitled))}<br>${escapeHtml(uid4(p))}${p.status === 'draft' ? ` · ${t(SM.open)}` : ''}</th>`).join('') +
         `<th class="tot">${t(inLb ? SM.totalLb : SM.total)}</th>${inLb ? '' : `<th class="tot">${t(SM.lbs)}</th>`}</tr></thead><tbody>` +
-        emps.map((e) => `<tr><td>${escapeHtml(e)}</td>` +
+        emps.map((e) => `<tr><td>${escapeHtml(e)}</td><td class="name">${escapeHtml(nameOf(e))}</td>` +
           used.map((p) => grid[e][p.id] ? `<td>${fmtNum(grid[e][p.id], dp)}</td>` : '<td class="zero">·</td>').join('') +
           `<td class="tot">${fmtNum(empTot(e), dp)}</td>${lbCol(empTot(e))}</tr>`).join('') +
-        `</tbody><tfoot><tr><td>${t(SM.allEmp)}</td>` + used.map((p) => `<td>${fmtNum(colTot(p), dp)}</td>`).join('') +
+        `</tbody><tfoot><tr><td>${t(SM.allEmp)}</td><td></td>` + used.map((p) => `<td>${fmtNum(colTot(p), dp)}</td>`).join('') +
         `<td class="tot">${fmtNum(all, dp)}</td>${lbCol(all)}</tr></tfoot></table></div>`;
     }
     document.getElementById('sum-date').addEventListener('change', (ev) => { if (ev.target.value) loadSummary(ev.target.value); });
