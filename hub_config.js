@@ -188,9 +188,8 @@ const CARD_DEFS = [
   {
     key: 'work_orders',
     color: 'purple',
-    label: 'Processing',
+    label: 'Operations',
     dept: 'operations',
-    subdept: 'processing',
     // Not a sheet column: shown to anyone who works or manages Bucking,
     // Hand Trim or Pre-Roll (see buildHub in index.html). Ambient, so a
     // trimmer with just Hand Trim still lands straight on their form.

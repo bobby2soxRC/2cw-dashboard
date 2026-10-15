@@ -154,8 +154,8 @@ farm license, trim style and starting bins were dropped in October 2026;
 `sugarTrimLb` is off the form but stays in the totals and flow for older
 records.
 
-**Work Orders** (`work_orders.html`, hub card `work_orders` under
-Processing) puts the work queues on one page, a tab each (`?tab=buck|trim|preroll`):
+**Work Orders** (`work_orders.html`, hub card `work_orders` directly
+under Operations) puts the work queues on one page, a tab each (`?tab=buck|trim|preroll`):
 - **Bucking** — `loadBuckingQueue`, the same list and order as the On-Stem
   Flower page (which still has it, with the holds).
 - **Hand Trim** — `loadTrimQueue` (`ops_data.js`): every bucked lot,
