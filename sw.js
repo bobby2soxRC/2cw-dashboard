@@ -42,6 +42,7 @@ const APP_SHELL = [
   '/ops_common.js',
   '/ops_analytics.js',
   '/ops_data.js',
+  '/preroll_queue.js',
   '/drying_services.js',
   '/msa_agreement.js',
   '/invoice_services.js',

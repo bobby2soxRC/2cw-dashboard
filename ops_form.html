@@ -254,6 +254,7 @@
 <script src="/operations_stations.js"></script>
 <script src="/ops_common.js"></script>
 <script src="/ops_data.js"></script>
+<script src="/preroll_queue.js"></script>
 <script>
 (async function () {
   const params = new URLSearchParams(location.search);
@@ -332,6 +333,19 @@
     otherLot:  { en: 'Other — not on the list', es: 'Otro — no aparece' },
     bucking:   { en: 'bucking in progress', es: 'desvarándose' }
   };
+  // The pre-roll queue dropdown (prPicker — Pre-Roll Production's request).
+  const PR = {
+    loading: { en: 'Loading the pre-roll queue…', es: 'Cargando la fila de prerolls…' },
+    choose:  { en: 'Choose the production request…', es: 'Elija la solicitud de producción…' },
+    none:    { en: 'Nothing in the pre-roll queue — pick Other', es: 'No hay nada en la fila de prerolls — elija Otro' },
+    other:   { en: 'Other — type the PR #', es: 'Otro — escriba el N.º de solicitud' },
+    noStrain:{ en: 'no strain yet', es: 'sin variedad aún' },
+    open:    { en: 'batch open', es: 'lote abierto' },
+    make:    { en: 'Make {n} pre-rolls', es: 'Hacer {n} prerolls' },
+    packs:   { en: '{units} × {pack}-pack', es: '{units} × paquete de {pack}' },
+    each:    { en: '{g} g each', es: '{g} g c/u' },
+    ready:   { en: 'ready by {d}', es: 'lista para {d}' }
+  };
   const pkLoading = (f) => t(f.picker.list === 'buckable' ? PK.loadingBuck : f.picker.list === 'bucked' ? PK.loadingBucked : PK.loading);
   const reference = await loadReference();
   const form = document.getElementById('form');
@@ -394,6 +408,12 @@
       control = `<input type="date" id="f_${f.k}">`;
     } else if (f.t === 'time') {
       control = `<input type="time" id="f_${f.k}">`;
+    } else if (f.prPicker) {
+      // Picked from the pre-roll queue (wirePrPickers below); the text box
+      // only shows for "Other — type the PR #".
+      control = `<select id="pr_${f.k}"><option value="">${escapeHtml(t(PR.loading))}</option></select>` +
+                `<input type="text" id="f_${f.k}" autocapitalize="characters" placeholder="PR-1003" style="display:none;margin-top:10px">` +
+                `<div class="match" id="m_${f.k}"></div>`;
     } else if (f.t === 'uid' && f.picker) {
       // Picked from a list (fillPicker below); the text box only shows for
       // "Not listed — type the UID".
@@ -1003,6 +1023,86 @@
     // Only the uid marked prefill: 'lookup' names the upstream package — Take
     // Down also has the on-stem UID, a brand-new tag nothing upstream knows.
     if (f.t === 'uid' && f.prefill === 'lookup') inp.addEventListener('change', () => tryPrefill(inp.value.trim(), f.k));
+  });
+
+  // ── Pre-roll queue dropdown (prPicker) ───────────────────────────────────
+  // The open pre-roll queue in the dashboard's order (loadPrerollQueue in
+  // preroll_queue.js). Picking one stores its ref (PR# / PQ-#) and fills the
+  // `fills` fields; a value a pick put in is replaced by the next pick, and
+  // anything typed over it is left alone. "Other" is for a PR# not listed.
+  const prFields = station.fields.filter((f) => f.prPicker);
+  const prLoaded = prFields.length && draftsOn
+    ? loadPrerollQueue(getClient()).catch((err) => { console.error('pre-roll queue', err); return []; }) : null;
+  let prItems = prFields.length && !draftsOn ? [] : null;
+  const prFilled = {};
+  const prBlank = (x) => x === undefined || x === null || String(x).trim() === '';
+  const prFind = (ref) => (prItems || []).find((x) => x.ref.toUpperCase() === String(ref || '').trim().toUpperCase());
+  function prLabel(x, i) {
+    const qty = fmtNum(x.units, 0) + (x.packSize > 1 ? ` × ${x.packSize}` : '');
+    return `${i + 1}. ${x.ref} — ${x.productName || x.brand || '?'} · ${x.strain || x.type || t(PR.noStrain)} · ${qty}` +
+      (x.draftId ? ` · ${t(PR.open)}` : '');
+  }
+  function showPrInfo(f) {
+    const box = document.getElementById(`m_${f.k}`);
+    const x = prFind(values[f.k]);
+    if (!x) { box.style.display = 'none'; return; }
+    box.textContent = [
+      t(PR.make).replace('{n}', fmtNum(x.target, 0)) +
+        (x.packSize > 1 ? ` (${t(PR.packs).replace('{units}', fmtNum(x.units, 0)).replace('{pack}', x.packSize)})` : ''),
+      x.unitSizeG ? t(PR.each).replace('{g}', x.unitSizeG) : '',
+      x.readyDate ? t(PR.ready).replace('{d}', new Date(x.readyDate + 'T12:00:00').toLocaleDateString(getLang() === 'es' ? 'es-US' : 'en-US', { month: 'short', day: 'numeric' })) : ''
+    ].filter(Boolean).join(' · ');
+    box.style.display = 'block';
+  }
+  function fillPrPicker(f) {
+    const sel = document.getElementById(`pr_${f.k}`);
+    const inp = document.getElementById(`f_${f.k}`);
+    const cur = values[f.k];
+    const hit = prFind(cur);
+    const items = prItems || [];
+    sel.innerHTML = `<option value="">${escapeHtml(t(!prItems ? PR.loading : items.length ? PR.choose : PR.none))}</option>` +
+      items.map((x, i) => `<option value="${escapeAttr(x.ref)}">${escapeHtml(prLabel(x, i))}</option>`).join('') +
+      (prItems ? `<option value="__type__">${escapeHtml(t(PR.other))}</option>` : '');
+    sel.value = hit ? hit.ref : (!prBlank(cur) && prItems) ? '__type__' : '';
+    inp.style.display = sel.value === '__type__' ? 'block' : 'none';
+    showPrInfo(f);
+  }
+  function setOrClear(ff, val) {
+    if (!prBlank(val)) { setFieldValue(ff, val); return; }
+    values[ff.k] = ff.t === 'number' ? null : '';
+    const el = document.getElementById(`f_${ff.k}`);
+    if (el) el.value = '';
+  }
+  prFields.forEach((f) => {
+    fillPrPicker(f);
+    const sel = document.getElementById(`pr_${f.k}`);
+    const inp = document.getElementById(`f_${f.k}`);
+    sel.addEventListener('change', () => {
+      if (sel.value === '__type__') {
+        inp.style.display = 'block';
+        if (prFind(inp.value)) { inp.value = ''; values[f.k] = ''; }
+        inp.focus();
+      } else {
+        inp.style.display = 'none';
+        const x = prFind(sel.value);
+        inp.value = x ? x.ref : '';
+        values[f.k] = inp.value;
+        Object.entries(f.prPicker.fills || {}).forEach(([key, prop]) => {
+          const ff = station.fields.find((s) => s.k === key);
+          if (!ff) return;
+          const cur = values[key];
+          if (!prBlank(cur) && !(key in prFilled && String(cur) === String(prFilled[key]))) return;
+          const val = x ? x[prop] : null;
+          setOrClear(ff, val);
+          if (prBlank(val)) delete prFilled[key]; else prFilled[key] = val;
+        });
+      }
+      touched.add(f.k);
+      showPrInfo(f);
+      recompute();
+      updateVisibility();
+      markDirty();
+    });
   });
 
   // ── Prefill from the upstream stage ───────────────────────────────────────
@@ -2072,6 +2172,20 @@
       if (rec && spec) Object.entries(spec.map).forEach(([here, there]) => {
         if (!isBlank(values[here]) && String(values[here]) === String(rec[there])) lastPrefill[here] = values[here];
       });
+    });
+  }
+
+  // The pre-roll queue, once loaded: select the request this page already
+  // has (a resumed draft, or the dashboard's Start batch), treating the
+  // values that match it as filled by the pick.
+  if (prLoaded) {
+    prItems = await prLoaded;
+    prFields.forEach((f) => {
+      const x = prFind(values[f.k]);
+      if (x) Object.entries(f.prPicker.fills || {}).forEach(([key, prop]) => {
+        if (!isBlank(values[key]) && String(values[key]) === String(x[prop])) prFilled[key] = values[key];
+      });
+      fillPrPicker(f);
     });
   }
 

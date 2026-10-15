@@ -242,6 +242,19 @@ and Start batch fills the form's Pre-Roll Size (`set_unitSizeG`). No product →
 the quantity is taken as pre-rolls. Products are never deleted, only made
 inactive.
 
+**Production Request dropdown on the form.** Pre-Roll Production's
+Production Request (`prNum`, `prPicker` in `operations_stations.js`) is a
+dropdown of the open Pre-Roll Queue in the dashboard's order
+(`loadPrerollQueue` in `preroll_queue.js`, which the dashboard also uses for
+the Sheet URL, CSV parsing and the pre-roll filter). Each option shows rank,
+ref, product, strain (or type) and quantity; under it, the pre-rolls to make,
+the pre-roll size and the Ready Date. Picking one fills Batch ID, strain,
+source UID and Pre-Roll Size (`prPicker.fills`) with whatever the request
+has; the operator fills in the rest. A value a pick put in is replaced by the
+next pick; anything typed over it is kept. "Other — type the PR #" shows a
+text box for a request not in the queue. A draft opened again, or a form
+started from the dashboard's Start batch, comes up with its request selected.
+
 **Harvest Intakes** (`harvest_intakes.html`, hub card `harvest_intakes` under
 Processing) lists every Wet Intake, drafts and submitted, newest first, with
 a "Metrc not adjusted" filter. Clicking one shows the whole record. Access is

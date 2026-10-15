@@ -914,7 +914,6 @@ create table if not exists preroll_products (
 insert into preroll_products (bsku, brand, name, pack_size, preroll_size_g) values
   ('SRF020701', 'Soma Rosa',  'Soma Rosa Preroll 1g',      1,  1.0),
   ('SRF021004', 'Soma Rosa',  'Soma Rosa Preroll 28-Pack', 28, 0.5),
-  ('HWR020802', 'Howie Roll', 'Howie Roll Preroll 6-Pack', 6,  null),
   ('HWR021004', 'Howie Roll', 'Howie Roll Preroll 28-Pack', 28, 0.5),
   ('MDO021107', 'Mendo',      'Mendo Preroll 10-Pack',     10, 0.5)
 on conflict (bsku) do nothing;

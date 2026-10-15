@@ -192,6 +192,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/hub_config.js"></script>
 <script src="/ops_common.js"></script>
+<script src="/preroll_queue.js"></script>
 <script>
 // Requests come live from the same published Sheet tab production.html and
 // inventory.html read. The team's plan for each one is the preroll_plans
@@ -213,11 +214,9 @@ if (new URLSearchParams(location.search).get('embed') === 'queue') {
   base.target = '_top';
   document.head.appendChild(base);
 }
-const PRODUCTION_REQUESTS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQkx0gxPTulAOv3WMXayY8HOqcoYByZ_kOXrLvd84-9ReSwGa-6Or-KTx4SdPfT0rC5_qOCE3LHz_mT/pub?gid=1857304423&single=true&output=csv';
+// PRODUCTION_REQUESTS_CSV_URL, PREROLL_QUEUE_ID, BRAND_CODES, parseCsv,
+// isPrerollRequest and brandOf come from preroll_queue.js.
 const REFRESH_MS = 60 * 1000;
-const PREROLL_QUEUE_ID = '70726571-7565-4000-8000-000000000001';
-// Brand from the BSKU's 3-letter code, or the product name.
-const BRAND_CODES = { SRF: 'Soma Rosa', HWR: 'Howie Roll', MDO: 'Mendo' };
 
 // Every on-screen string, English and Spanish side by side (t() and the
 // EN/ES toggle come from ops_common.js — same language setting as the forms).
@@ -406,44 +405,11 @@ const todayStr = () => new Date().toISOString().slice(0, 10);
 const fmtDate = (d) => d ? new Date(d + 'T12:00:00').toLocaleDateString(locale(), { month: 'short', day: 'numeric' }) : '';
 const num = (x) => { const n = parseFloat(x); return Number.isFinite(n) ? n : 0; };
 
-// Quote-aware CSV — the Notes column can hold commas.
-function parseCsv(text) {
-  const rows = []; let row = []; let cell = ''; let q = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (q) {
-      if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; }
-      else if (c === '"') q = false;
-      else cell += c;
-    } else if (c === '"') q = true;
-    else if (c === ',') { row.push(cell); cell = ''; }
-    else if (c === '\n' || c === '\r') {
-      if (c === '\r' && text[i + 1] === '\n') i++;
-      row.push(cell); rows.push(row); row = []; cell = '';
-    } else cell += c;
-  }
-  if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
-  const [hdr, ...body] = rows;
-  if (!hdr) return [];
-  const keys = hdr.map((h) => h.trim());
-  return body.filter((r) => r.some((v) => v.trim())).map((r) => Object.fromEntries(keys.map((k, i) => [k, (r[i] || '').trim()])));
-}
-
 // Monday of the week a date falls in, as YYYY-MM-DD.
 function weekOf(d) {
   const dt = new Date(d + 'T12:00:00');
   dt.setDate(dt.getDate() - ((dt.getDay() + 6) % 7));
   return dt.toISOString().slice(0, 10);
-}
-
-// Pre-roll products only — decided by what's being made, not the Sheet's
-// Crew column (a flower packout can be crewed by the pre-roll team). A BSKU
-// is brand code + 2-digit category, and 02 is Preroll (SRF021004 28pk,
-// SRF020701 single, MDO021107 10pk; 01 is flower). No BSKU → go by the name.
-function isPrerollRequest(r) {
-  const bsku = (r['BSKU'] || '').trim().toUpperCase();
-  if (/^[A-Z]{3}\d{2}/.test(bsku)) return bsku.slice(3, 5) === '02';
-  return /pre-?roll/i.test(r['Product'] || '');
 }
 
 // ── Load ─────────────────────────────────────────────────────────────────
@@ -573,13 +539,6 @@ function passes(v, q) {
   if (filter === 'done' && v.stage !== 'done') return false;
   if (!q) return true;
   return [v.pr, v.product, v.bsku, v.type, v.strain, v.plan.assigned_to].join(' ').toLowerCase().includes(q);
-}
-
-function brandOf(bsku, product) {
-  const code = String(bsku || '').trim().toUpperCase().slice(0, 3);
-  if (BRAND_CODES[code]) return BRAND_CODES[code];
-  const p = String(product || '');
-  return Object.values(BRAND_CODES).find((b) => p.toLowerCase().includes(b.toLowerCase())) || '';
 }
 
 // ── Queue ────────────────────────────────────────────────────────────────
