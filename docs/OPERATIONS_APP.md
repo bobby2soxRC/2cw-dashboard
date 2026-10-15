@@ -15,7 +15,7 @@ the existing Operations Hub — same login, same Netlify deploy.
 | `buck_hold.html` | On-Stem Flower: the bucking queue (managers set the order) and Take Downs on hold, with the Release to bucking buttons (all, or part under a new tag) |
 | `labor_log.html` | Labor Log — people's hours (Connecteam roster) against UIDs, split across several UIDs when needed — see below |
 | `master_schedule.html` | Master Schedule — projects, their responsibilities and people, UIDs, and the day/week work schedule (replaced `schedule.html`) — see below |
-| `operations_today.html` | Live board — every form in progress or finished today, for anyone with view access |
+| `operations_today.html` | Live board — every form in progress or finished today, for anyone with view access; the date picker (or `?date=YYYY-MM-DD`) shows any earlier day the same way |
 | `operations_dashboard.html` | Pipeline, yields, biomass, labor, requests, exceptions (finished forms only) |
 | `operations_stations.js` | **The schema.** Station and field definitions, EN + ES |
 | `ops_common.js` | Language, reference-data loading, the legacy offline queue |
