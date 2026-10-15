@@ -241,6 +241,15 @@ ref, so a hand-added item is tracked the same way as a request, and it drops
 off once that batch is submitted. Remove from queue only stamps `removed_at`.
 Brand for a request comes from its BSKU code (SRF, HWR, MDO).
 
+**Submitted Runs** (bottom of the Pre-Roll Dashboard) lists every submitted
+Pre-Roll Production form, newest first (10, then Show all), whether or not it
+carries a request: strain, dates, PR# / Batch ID, labor hours, % of starting
+weight accounted for, who submitted it, and pre-rolls made. A "Check" pill
+means a calc field's `flag` tripped. Tapping one opens the whole record,
+drawn off the station definition (so the page loads `operations_stations.js`,
+whose `num()` it shares), with an Edit button for people `canFixSubmitted`
+allows. The open run's id goes in the URL (`?run=<id>`), so it can be linked.
+
 **Pre-roll products and pack quantities.** Quantities on requests and queue
 items are in units — packs, or singles — not pre-rolls. `preroll_products`
 (keyed by BSKU; managed from the dashboard's **Products** button) says how

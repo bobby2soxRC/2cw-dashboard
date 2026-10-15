@@ -135,9 +135,40 @@
   .m-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
   @media (max-width:560px){ .card{grid-template-columns:1fr} .c-actions{justify-content:flex-start} .row2{grid-template-columns:1fr} }
 
+  /* Submitted runs + the run detail modal */
+  .s-wrap{margin-top:30px}
+  .run{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;color:inherit;font-family:inherit;cursor:pointer}
+  .run:hover{border-color:var(--border2)}
+  .run-main{flex:1;min-width:0}
+  .run-title{font-weight:600;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+  .run-sub{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--subtext);margin-top:3px;overflow-wrap:anywhere}
+  .run-sub .none{color:var(--gold)}
+  .run-n{font-family:'DM Mono',monospace;font-size:1rem;text-align:right;white-space:nowrap}
+  .run-n .k{display:block;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .pill.warn{color:var(--gold);border-color:rgba(212,168,67,.4)}
+  .s-more{margin-top:4px}
+  .modal.wide{max-width:760px}
+  .d-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:4px}
+  .d-acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .d-head{font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--purple);margin:18px 0 6px;padding-top:12px;border-top:1px solid var(--border)}
+  .d-row{display:grid;grid-template-columns:minmax(140px,40%) 1fr;gap:4px 12px;padding:7px 0;border-bottom:1px solid var(--border);font-size:.88rem}
+  .d-row .k{color:var(--subtext)}
+  .d-row .v{overflow-wrap:anywhere;white-space:pre-wrap}
+  .d-row.hl .v{font-family:'DM Mono',monospace;color:var(--purple)}
+  .d-row.flag .v{color:var(--gold)}
+  .d-row.block{grid-template-columns:1fr}
+  .d-tbl-wrap{overflow-x:auto}
+  .d-tbl{width:100%;border-collapse:collapse;font-size:.82rem}
+  .d-tbl th{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);white-space:nowrap}
+  .d-tbl td{padding:6px 8px;border-bottom:1px solid var(--border);vertical-align:top}
+  .d-tbl td.n{font-family:'DM Mono',monospace;text-align:right;white-space:nowrap}
+  .d-tbl tfoot td{font-family:'DM Mono',monospace;color:var(--purple);border-bottom:none}
+  .d-photo{max-width:220px;border-radius:8px;display:block}
+  @media (max-width:560px){ .d-row{grid-template-columns:1fr} .run{flex-wrap:wrap} .run-n{text-align:left} }
+
   /* ?embed=queue — just the queue, inside the Work Orders page. */
   body.embed::before, body.embed .hdr, body.embed #h1, body.embed #intro, body.embed #tiles,
-  body.embed #q-title, body.embed #r-title, body.embed #bar, body.embed #list{display:none}
+  body.embed #q-title, body.embed #r-title, body.embed #bar, body.embed #list, body.embed .s-wrap{display:none}
   body.embed main{padding:4px 0 24px;max-width:none}
 </style>
 </head>
@@ -182,6 +213,12 @@
   </div>
 
   <div id="list"></div>
+
+  <div class="s-wrap">
+    <h2 class="sec" id="s-title"></h2>
+    <div class="sec-hint" id="s-hint" style="margin-bottom:10px"></div>
+    <div id="runs"></div>
+  </div>
 </main>
 
 <div class="backdrop" id="backdrop">
@@ -191,6 +228,7 @@
 <script src="/config/supabase_config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/hub_config.js"></script>
+<script src="/operations_stations.js"></script>
 <script src="/ops_common.js"></script>
 <script src="/preroll_queue.js"></script>
 <script>
@@ -338,7 +376,24 @@ const L = {
   i_err_qty: { en: 'Enter how many pre-rolls.', es: 'Escriba cuántos prerolls.' },
   e_type: { en: 'Type', es: 'Tipo' },
   e_sheet: { en: 'Sheet:', es: 'Hoja:' },
-  e_qty_hint: { en: 'Sheet says {n}', es: 'La hoja dice {n}' }
+  e_qty_hint: { en: 'Sheet says {n}', es: 'La hoja dice {n}' },
+  // Submitted runs
+  s_title: { en: 'Submitted Runs', es: 'Corridas enviadas' },
+  s_hint: { en: 'Every submitted Pre-Roll Production form, newest first. Tap one to see the whole record.',
+            es: 'Cada formulario de producción de prerolls enviado, el más reciente primero. Toque uno para ver el registro completo.' },
+  s_none: { en: 'No submitted pre-roll runs yet.', es: 'Aún no hay corridas de prerolls enviadas.' },
+  s_more: { en: 'Show all {n}', es: 'Mostrar las {n}' },
+  s_less: { en: 'Show fewer', es: 'Mostrar menos' },
+  s_no_pr: { en: 'no production request', es: 'sin solicitud de producción' },
+  s_check: { en: 'Check', es: 'Revisar' },
+  s_by: { en: 'by', es: 'por' },
+  s_submitted: { en: 'Submitted', es: 'Enviada' },
+  s_edited: { en: 'Edited by', es: 'Editada por' },
+  s_edit: { en: 'Edit', es: 'Editar' },
+  s_close: { en: 'Close', es: 'Cerrar' },
+  s_total: { en: 'Total', es: 'Total' },
+  s_hours: { en: 'labor hrs', es: 'hrs de trabajo' },
+  s_accounted: { en: 'accounted for', es: 'contabilizado' }
 };
 const STAGE_LABELS = {
   needs_strain: { en: 'Needs strain', es: 'Falta variedad' },
@@ -387,6 +442,9 @@ if (typeof SUPABASE_URL !== 'undefined' && SUPABASE_URL) client = supabase.creat
 let requests = [];      // from the Sheet, pre-roll crew only
 let plans = {};         // pr_num -> preroll_plans row
 let batches = {};       // pr_num -> [operations_forms rows]
+let runs = [];          // every Pre-Roll Production form, linked to a request or not
+let showAllRuns = false;
+let viewingRun = null;  // id of the run open in the detail modal
 let products = {};      // bsku -> preroll_products row
 let manual = [];        // preroll_queue_items rows still in the queue
 let queueOrder = [];    // refs (PR# / PQ-#) in the saved order
@@ -403,7 +461,7 @@ let editingProducts = false;
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const todayStr = () => new Date().toISOString().slice(0, 10);
 const fmtDate = (d) => d ? new Date(d + 'T12:00:00').toLocaleDateString(locale(), { month: 'short', day: 'numeric' }) : '';
-const num = (x) => { const n = parseFloat(x); return Number.isFinite(n) ? n : 0; };
+// num() comes from operations_stations.js.
 
 // Monday of the week a date falls in, as YYYY-MM-DD.
 function weekOf(d) {
@@ -437,8 +495,9 @@ async function loadPlans() {
 async function loadBatches() {
   if (!client) return {};
   const { data, error } = await client.from('operations_forms')
-    .select('id,status,work_date,submitted_at,fields').eq('station_key', 'preroll_production');
+    .select('id,status,owner_user,updated_by,strain,work_date,submitted_at,fields').eq('station_key', 'preroll_production');
   if (error) { console.error('loadBatches', error); return {}; }
+  runs = data || [];
   const out = {};
   (data || []).forEach((r) => {
     const pr = String((r.fields && r.fields.prNum) || '').trim().toUpperCase();
@@ -490,6 +549,7 @@ async function refresh() {
   // show) even when the Sheet or the plans can't be read.
   const [b, q, pr] = await Promise.all([loadBatches(), loadQueue(), loadProducts()]);
   batches = b; products = pr; manual = q.manual; queueOrder = q.order; queueErr = q.err;
+  renderRuns();
   try {
     const [r, p] = await Promise.all([loadRequests(), loadPlans()]);
     requests = r; plans = p;
@@ -732,6 +792,119 @@ function setFilter(f) {
 document.querySelectorAll('#bar .chip').forEach((c) => c.addEventListener('click', () => setFilter(c.dataset.f)));
 document.getElementById('search').addEventListener('input', render);
 
+// ── Submitted runs ───────────────────────────────────────────────────────
+// Every submitted Pre-Roll Production form, newest first, including ones not
+// linked to a request. Tapping one opens the whole record, drawn straight
+// off the station definition in operations_stations.js, like Harvest Intakes.
+const RUNS_SHOWN = 10;
+const RUN_STATION = STATION_BY_KEY.preroll_production;
+const runWhen = (r) => r.submitted_at || r.work_date || '';
+const isFlagged = (fd, v) => !!fd.flag && v !== null && v !== undefined && v !== '' &&
+  Number.isFinite(Number(v)) && fd.flag(Number(v));
+// Calc fields with a `flag` (Starting Weight Accounted For) that's tripped.
+const runFlags = (r) => RUN_STATION.fields.filter((fd) => isFlagged(fd, (r.fields || {})[fd.k]));
+
+function renderRuns() {
+  const box = document.getElementById('runs');
+  const done = runs.filter((r) => r.status === 'submitted').sort((a, b) => runWhen(b).localeCompare(runWhen(a)));
+  if (!done.length) { box.innerHTML = `<div class="empty">${t(L.s_none)}</div>`; return; }
+  const shown = showAllRuns ? done : done.slice(0, RUNS_SHOWN);
+  box.innerHTML = shown.map((r) => {
+    const f = r.fields || {};
+    const start = f.date || r.work_date;
+    const dates = f.finishDate && f.finishDate !== start ? `${fmtDate(start)} → ${fmtDate(f.finishDate)}` : fmtDate(start);
+    return `<button type="button" class="run" onclick="openRun('${esc(r.id)}')">
+      <div class="run-main">
+        <div class="run-title">${esc(r.strain || f.strain || '—')}
+          ${runFlags(r).length ? `<span class="pill warn">${t(L.s_check)}</span>` : ''}</div>
+        <div class="run-sub">${esc(dates)} · ${f.prNum ? `<span class="q-ref">${esc(f.prNum)}</span>` : `<span class="none">${t(L.s_no_pr)}</span>`}${
+          f.batchId && f.batchId !== f.prNum ? ` · ${esc(f.batchId)}` : ''}
+          · ${fmtNum(f.laborHours, 1)} ${t(L.s_hours)}${f.accountedPct != null ? ` · ${fmtPct(f.accountedPct)} ${t(L.s_accounted)}` : ''}
+          · ${esc(r.owner_user || '—')}</div>
+      </div>
+      <div class="run-n"><span class="k">${t(L.prerolls)}</span>${fmtN(f.totalPrerolls)}</div>
+    </button>`;
+  }).join('') + (done.length > RUNS_SHOWN
+    ? `<button type="button" class="btn s-more" onclick="showAllRuns = !showAllRuns; renderRuns()">${
+      showAllRuns ? t(L.s_less) : t(L.s_more).replace('{n}', done.length)}</button>` : '');
+}
+
+// A stored value as people read it: select codes become their label, numbers
+// get formatted, percentages (fmt: 'pct') get a %, blanks become —.
+function runValue(fd, v) {
+  if (v === undefined || v === null || v === '') return '—';
+  if (fd.t === 'select') {
+    const opts = fd.refConst === 'BIOMASS' ? Object.entries(BIOMASS).map(([k, l]) => ({ v: k, l })) : (fd.opts || []);
+    const hit = opts.find((o) => String(o.v) === String(v));
+    return hit ? t(hit.l) : String(v);
+  }
+  if (fd.t === 'check') return v === true || v === 'true' ? t({ en: 'Yes', es: 'Sí' }) : 'No';
+  if (fd.fmt === 'pct') return fmtPct(v);
+  if (fd.t === 'number' || fd.t === 'calc') return Number.isFinite(Number(v)) ? fmtNum(v, fd.dp === undefined ? 2 : fd.dp) : String(v);
+  if (fd.t === 'date') return fmtDate(v) || String(v);
+  return String(v);
+}
+
+function runFieldHtml(fd, r) {
+  const f = r.fields || {};
+  const v = f[fd.k];
+  if (fd.showIf && !fd.showIf(f)) return '';
+  if (fd.t === 'heading') return `<div class="d-head">${esc(t(fd.l))}</div>`;
+  if (fd.t === 'lineitems') {
+    const items = Array.isArray(v) ? v : [];
+    if (!items.length) return `<div class="d-row"><div class="k">${esc(t(fd.l))}</div><div class="v">—</div></div>`;
+    const isNum = (c) => ['number', 'calc'].includes(c.t);
+    const totalDef = fd.totalCol && fd.cols.find((c) => c.k === fd.totalCol);
+    const total = totalDef ? items.reduce((a, it) => a + num(it[fd.totalCol]), 0) : null;
+    return `<div class="d-row block"><div class="k">${esc(t(fd.l))}</div>
+      <div class="d-tbl-wrap"><table class="d-tbl">
+        <thead><tr><th>#</th>${fd.cols.map((c) => `<th>${esc(t(c.l))}</th>`).join('')}</tr></thead>
+        <tbody>${items.map((it, i) => `<tr><td class="n">${i + 1}</td>${fd.cols.map((c) =>
+          `<td class="${isNum(c) ? 'n' : ''}">${esc(runValue(c, it[c.k]))}</td>`).join('')}</tr>`).join('')}</tbody>
+        ${totalDef ? `<tfoot><tr><td>${t(L.s_total)}</td>${fd.cols.map((c) =>
+          `<td class="${isNum(c) ? 'n' : ''}">${c.k === fd.totalCol ? esc(runValue(totalDef, total)) : ''}</td>`).join('')}</tr></tfoot>` : ''}
+      </table></div></div>`;
+  }
+  if (fd.t === 'photo') {
+    const ok = typeof v === 'string' && /^https?:\/\//.test(v);
+    return `<div class="d-row"><div class="k">${esc(t(fd.l))}</div><div class="v">${ok
+      ? `<a href="${esc(v)}" target="_blank" rel="noopener"><img class="d-photo" src="${esc(v)}" alt=""></a>` : '—'}</div></div>`;
+  }
+  const flagged = isFlagged(fd, v);
+  return `<div class="d-row ${fd.t === 'calc' ? 'hl' : ''} ${flagged ? 'flag' : ''}"><div class="k">${esc(t(fd.l))}</div>
+    <div class="v">${esc(runValue(fd, v))}${flagged ? ` <span class="pill warn">${t(L.s_check)}</span>` : ''}</div></div>`;
+}
+
+function openRun(id) {
+  const r = runs.find((x) => x.id === id);
+  if (!r) return;
+  viewingRun = id;
+  const url = new URL(location.href); url.searchParams.set('run', id); history.replaceState(null, '', url);
+  const f = r.fields || {};
+  // Edit is the same correction mode as the Today board's (ops_form.html?edit=).
+  const canEdit = r.status === 'submitted' && canFixSubmitted('preroll_production');
+  const sub = [
+    r.status === 'submitted'
+      ? `${t(L.s_submitted)} ${r.submitted_at ? new Date(r.submitted_at).toLocaleString(locale()) : ''}${r.owner_user ? ` ${t(L.s_by)} ${r.owner_user}` : ''}`
+      : t(L.q_busy),
+    f.lastEditedBy ? `${t(L.s_edited)} ${f.lastEditedBy}${f.lastEditedAt ? ' · ' + new Date(f.lastEditedAt).toLocaleString(locale()) : ''}` : ''
+  ].filter(Boolean);
+  const modal = document.getElementById('modal');
+  modal.classList.add('wide');
+  modal.innerHTML = `
+    <div class="d-top">
+      <div><h2>${esc(r.strain || f.strain || '—')}</h2>
+        <div class="m-sub" style="margin-bottom:0">${esc(t(RUN_STATION.title))}${f.prNum ? ' · ' + esc(f.prNum) : ''}</div></div>
+      <div class="d-acts">
+        ${canEdit ? `<a class="btn btn-purple" href="/ops_form.html?station=preroll_production&edit=${encodeURIComponent(r.id)}">${t(L.s_edit)}</a>` : ''}
+        <button type="button" class="btn" onclick="closeEditor()">${t(L.s_close)}</button>
+      </div>
+    </div>
+    <div class="m-sub">${sub.map(esc).join('<br>')}</div>
+    ${RUN_STATION.fields.map((fd) => runFieldHtml(fd, r)).join('')}`;
+  document.getElementById('backdrop').style.display = 'block';
+}
+
 // ── Brand → product picker (Edit plan, Add to queue) ─────────────────────
 // Brand narrows the product list; the product says how many pre-rolls are
 // in one unit and how big each is. updateCalc shows the math live.
@@ -906,9 +1079,14 @@ function closeEditor() {
   editingPr = null;
   editingItem = null;
   editingProducts = false;
+  document.getElementById('modal').classList.remove('wide');
+  if (viewingRun) {
+    viewingRun = null;
+    const url = new URL(location.href); url.searchParams.delete('run'); history.replaceState(null, '', url);
+  }
 }
 document.getElementById('backdrop').addEventListener('click', (e) => { if (e.target.id === 'backdrop') closeEditor(); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && (editingPr || editingItem || editingProducts)) closeEditor(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && (editingPr || editingItem || editingProducts || viewingRun)) closeEditor(); });
 
 // ── Queue item editor (hand-added batches) ───────────────────────────────
 function openItemEditor(id) {
@@ -1047,6 +1225,9 @@ function paintStatic() {
   document.getElementById('q-add').textContent = t(L.q_add);
   document.getElementById('p-open').textContent = t(L.p_btn);
   document.getElementById('r-title').textContent = t(L.r_title);
+  document.getElementById('s-title').textContent = t(L.s_title);
+  document.getElementById('s-hint').textContent = t(L.s_hint);
+  document.getElementById('runs').innerHTML = `<div class="empty">${t(L.loading)}</div>`;
   document.getElementById('queue').innerHTML = `<div class="empty">${t(L.loading)}</div>`;
   document.querySelectorAll('#bar .chip').forEach((c) => { c.textContent = t(L['f_' + c.dataset.f]); });
   document.getElementById('list').innerHTML = `<div class="empty">${t(L.loading)}</div>`;
@@ -1062,9 +1243,12 @@ paintStatic();
   brands = s.brands;
   people = [...new Set((dir || []).map((u) => (u.user || '').trim()).filter(Boolean))];
   await refresh();
+  // ?run=<id> opens that run's details (the link an open run leaves in the address bar).
+  const runId = new URLSearchParams(location.search).get('run');
+  if (runId) openRun(runId);
   // Keep up with new requests landing in the Sheet and batches being
   // logged — but never re-render underneath an open editor.
-  setInterval(() => { if (!editingPr && !editingItem && !editingProducts && !savingOrder) refresh(); }, REFRESH_MS);
+  setInterval(() => { if (!editingPr && !editingItem && !editingProducts && !viewingRun && !savingOrder) refresh(); }, REFRESH_MS);
 })();
 </script>
 <script src="/sw_register.js"></script>
