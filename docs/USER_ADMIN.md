@@ -261,13 +261,15 @@ Emailed reports can read recipients straight from `app_users.email`.
 ### PIN reset by email — built, not turned on
 
 `reset_pin.html` and `netlify/functions/pin-reset.js` are in place but
-nothing links to them yet (it's on hold until there's a sending address).
+nothing links to them yet. The sending address is sorted now (it sends as
+services@somarosafarms.com, see `docs/EMAIL_REPORTS.md`); what's left is
+making sure users have emails, then adding the link.
 To turn it on, add this under the login button in `index.html`:
 `<a class="forgot-link" href="/reset_pin.html">Forgot your PIN?</a>` (the
 `.forgot-link` style is already there), and do the setup below.
 
 The person enters their email; if it matches an active user,
-`pin-reset.js` emails them a link (via [Resend](https://resend.com)) that
+`pin-reset.js` emails them a link (from services@somarosafarms.com) that
 expires in 30 minutes. The link opens the same page, where they choose a new
 4-digit PIN. The link is signed over the user's *current* PIN, so it stops
 working once used, or if an admin changes the PIN first. The form always
@@ -275,11 +277,9 @@ answers "if that email is on an account…", so it can't be used to check who
 has one, and it sends at most one email a minute per person.
 
 **Setup:**
-1. Create a Resend account, verify a domain you own (Resend → Domains, add
-   the DNS records it shows), and create an API key.
-2. Add two Netlify env vars: `RESEND_API_KEY`, and `RESEND_FROM` — e.g.
-   `2CW Productions <noreply@yourdomain.com>`, on the verified domain. The
-   function also needs `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and
+1. Set up the shared sender: `GMAIL_USER` / `GMAIL_APP_PASSWORD` in Netlify
+   (steps in `docs/EMAIL_REPORTS.md`).
+2. The function also needs `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and
    `ADMIN_SIGNING_SECRET`, which are already set for `admin.js`.
 3. Make sure each person has an email in `admin.html`.
 

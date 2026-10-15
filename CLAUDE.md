@@ -2,7 +2,12 @@
 
 Static site on Netlify (`netlify/functions/` for server code), Supabase for
 live data. Docs live in `docs/` — `OPERATIONS_APP.md` (station forms,
-`operations_stations.js`) and `USER_ADMIN.md` (users, admin panel).
+`operations_stations.js`), `USER_ADMIN.md` (users, admin panel) and
+`EMAIL_REPORTS.md` (outgoing email, scheduled reports).
+
+- All email goes out as services@somarosafarms.com via `netlify/lib/mailer.js`
+  (Gmail SMTP + app password). Shared function code lives in `netlify/lib/`;
+  `package.json` holds function deps (nodemailer).
 
 - `sw.js` serves the app shell cache-first: bump `CACHE_VERSION` whenever a
   shell file changes (HTML pages, `operations_stations.js`, `ops_*.js`, …)
@@ -22,6 +27,14 @@ the user's PIN session (`app_users.auth_user_id`). Still to do: self-serve
 linking, server functions accepting the Google login instead of `2cw_pin`,
 then cutover. Plan and setup: "Google sign-in" in `docs/USER_ADMIN.md`.
 
+### Emailed reports (started 2026-10-15)
+
+Operations & Staff Hours report: daily, weekly (Mondays) and on demand
+(✉ button on `staff_hours.html`), built in `netlify/lib/ops_report.js`.
+Code is done; it sends nothing until the services@ app password and the
+`OPS_REPORT_*_TO` recipient env vars are set in Netlify. Setup and how to
+add more reports: `docs/EMAIL_REPORTS.md`.
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)
@@ -29,17 +42,14 @@ then cutover. Plan and setup: "Google sign-in" in `docs/USER_ADMIN.md`.
 Built and deployed, but not linked from anywhere:
 - `reset_pin.html` — request-a-link page, and the choose-a-new-PIN page the
   emailed link opens.
-- `netlify/functions/pin-reset.js` — sends the link via Resend, verifies it,
-  sets the new PIN.
+- `netlify/functions/pin-reset.js` — sends the link (shared mailer, as
+  services@), verifies it, sets the new PIN.
 - `app_users.email` and `app_users.pin_reset_sent_at` columns already exist.
 
-On hold because there's no sending address yet. Resend needs a domain we
-own with DNS access; a plain Gmail account won't work with Resend. If there's
-no domain, the alternative is switching `pin-reset.js` to send via Gmail
-(nodemailer + an app password; env vars `GMAIL_USER`, `GMAIL_APP_PASSWORD`).
+The sender was the blocker; as of 2026-10-15 it uses the shared Gmail mailer,
+so it works once `GMAIL_USER` / `GMAIL_APP_PASSWORD` are set in Netlify.
 
-To finish: get a sender working (Resend: `RESEND_API_KEY` and `RESEND_FROM`
-env vars in Netlify), make sure users have emails in `admin.html`, then add
+To finish: make sure users have emails in `admin.html`, then add
 `<a class="forgot-link" href="/reset_pin.html">Forgot your PIN?</a>` under the
 login button in `index.html` (the style already exists) and bump
 `CACHE_VERSION` in `sw.js`. Full details: "PIN reset by email" in

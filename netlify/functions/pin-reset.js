@@ -19,12 +19,12 @@
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY   same as admin.js
 //   ADMIN_SIGNING_SECRET                      reused to sign reset tokens
 //                                             (domain-separated from admin tokens)
-//   RESEND_API_KEY                            from resend.com -> API Keys
-//   RESEND_FROM                               e.g. "2CW Productions <noreply@yourdomain.com>"
-//                                             — must be on a domain verified in Resend
+//   GMAIL_USER, GMAIL_APP_PASSWORD            sent as services@somarosafarms.com —
+//                                             see netlify/lib/mailer.js
 // URL (the site's own address) is set by Netlify automatically.
 
 const crypto = require('crypto');
+const { mailConfigured, sendMail, escapeHtml } = require('../lib/mailer');
 
 const LINK_TTL_MS = 30 * 60 * 1000;   // 30 minutes
 const RESEND_COOLDOWN_MS = 60 * 1000; // one email a minute per person
@@ -90,25 +90,17 @@ async function userFromToken(env, token) {
   return user;
 }
 
-const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-
 async function sendResetEmail(env, to, user, link) {
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${env.resendKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from: env.resendFrom,
-      to: [to],
-      subject: 'Reset your 2CW Productions PIN',
-      text: `Hi ${user.name},\n\nUse this link to choose a new PIN for the 2CW Productions dashboard. It works once and expires in 30 minutes:\n\n${link}\n\nIf you didn't ask for this, you can ignore this email — your PIN hasn't changed.`,
-      html: `<p>Hi ${escapeHtml(user.name)},</p>
+  await sendMail({
+    to,
+    subject: 'Reset your 2CW Productions PIN',
+    text: `Hi ${user.name},\n\nUse this link to choose a new PIN for the 2CW Productions dashboard. It works once and expires in 30 minutes:\n\n${link}\n\nIf you didn't ask for this, you can ignore this email — your PIN hasn't changed.`,
+    html: `<p>Hi ${escapeHtml(user.name)},</p>
 <p>Use the button below to choose a new PIN for the 2CW Productions dashboard. The link works once and expires in 30 minutes.</p>
 <p><a href="${escapeHtml(link)}" style="display:inline-block;background:#3db87a;color:#0c0d0f;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">Choose a new PIN</a></p>
 <p style="color:#666;font-size:13px">Or paste this into your browser: ${escapeHtml(link)}</p>
 <p style="color:#666;font-size:13px">If you didn't ask for this, you can ignore this email — your PIN hasn't changed.</p>`
-    })
   });
-  if (!res.ok) throw new Error(`Resend ${res.status} ${await res.text()}`);
 }
 
 exports.handler = async (event) => {
@@ -118,8 +110,6 @@ exports.handler = async (event) => {
     supaUrl: process.env.SUPABASE_URL,
     serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
     secret: process.env.ADMIN_SIGNING_SECRET,
-    resendKey: process.env.RESEND_API_KEY,
-    resendFrom: process.env.RESEND_FROM,
     siteUrl: (process.env.URL || '').replace(/\/$/, '')
   };
   if (!env.supaUrl || !env.serviceKey || !env.secret) {
@@ -132,7 +122,7 @@ exports.handler = async (event) => {
 
   try {
     if (action === 'request') {
-      if (!env.resendKey || !env.resendFrom) {
+      if (!mailConfigured()) {
         return json(500, { ok: false, error: 'PIN reset emails are not set up yet — ask an admin to reset your PIN.' });
       }
       const email = String(payload.email || '').trim().toLowerCase();

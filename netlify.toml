@@ -1,2 +1,10 @@
 [functions]
   directory = "netlify/functions"
+
+# Emailed reports (netlify/lib/ops_report.js). Cron is UTC: 14:00 UTC is
+# 7am PDT / 6am PST.
+[functions."ops-report-daily"]
+  schedule = "0 14 * * *"
+
+[functions."ops-report-weekly"]
+  schedule = "0 14 * * 1"
