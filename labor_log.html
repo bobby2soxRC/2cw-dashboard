@@ -291,6 +291,7 @@
       <button type="button" class="tl-nav" id="tl-next" aria-label="Next day">›</button>
       <input type="search" id="tl-q">
       <label class="tl-check"><input type="checkbox" id="tl-only"> <span id="tl-only-l"></span></label>
+      <button type="button" class="btn btn-blue" id="tl-auto" disabled></button>
     </div>
     <div class="tl-hero" id="tl-hero"></div>
     <div class="tl-legend" id="tl-legend"></div>
@@ -494,6 +495,13 @@
     menuForm:  { en: 'Something else… (open Log time)', es: 'Otra cosa… (abrir Registrar horas)' },
     menuSaved: { en: 'Logged {h} h to {p}', es: 'Se registraron {h} h a {p}' },
     tlRightClick:{ en: 'Right-click (or long-press) a gold stretch to log it straight to a project scheduled at that time. Click a blue entry to stretch it over the gold time next to it.', es: 'Clic derecho (o mantenga presionado) en un tramo dorado para registrarlo directo a un proyecto programado a esa hora. Clic en una entrada azul para extenderla sobre el tiempo dorado de al lado.' },
+    autoBtn:   { en: 'Auto-assign scheduled ({n})', es: 'Asignar lo programado ({n})' },
+    autoHint:  { en: 'Logs each person’s not-logged time to the project they’re scheduled on (Master Schedule), when they clocked in at that project’s location. Run it again later in the day to stretch those entries over the time since. Anything unclear stays gold for you to log by hand.',
+                 es: 'Registra el tiempo sin registrar de cada persona al proyecto en que está programada (Plan Maestro), cuando marcó entrada en el lugar de ese proyecto. Úselo otra vez más tarde para extender esos registros sobre el tiempo transcurrido. Lo que no esté claro queda dorado para registrarlo a mano.' },
+    autoQ:     { en: 'Log {h} h ({n} stretches, {p} people) to the projects they were scheduled on?\n\n{list}\n\nAnything else stays not-logged for you to do by hand.',
+                 es: '¿Registrar {h} h ({n} tramos, {p} personas) a los proyectos en que estaban programados?\n\n{list}\n\nLo demás queda sin registrar para hacerlo a mano.' },
+    autoSaved: { en: 'Logged {h} h to scheduled projects ({n} stretches)', es: 'Se registraron {h} h a proyectos programados ({n} tramos)' },
+    autoExt:   { en: 'extends the entry from {a}', es: 'extiende el registro desde {a}' },
     extHd:     { en: 'Extend this entry over the not-logged time next to it', es: 'Extender esta entrada sobre el tiempo sin registrar de al lado' },
     extEnd:    { en: 'Extend end to {t}', es: 'Extender el final a {t}' },
     extStart:  { en: 'Extend start back to {t}', es: 'Adelantar el inicio a {t}' },
@@ -1541,7 +1549,7 @@
     const client = getClient();
     const [shifts, res] = await Promise.all([loadShifts(), client
       ? client.from('operations_forms').select('*').eq('station_key', ENTRY_KEY).eq('status', 'submitted').eq('work_date', date).range(0, 4999)
-      : Promise.resolve({ data: [] })]);
+      : Promise.resolve({ data: [] }), projectsReady]);
     if (seq !== tlSeq) return;
     tlEntries = ((res && res.data) || []).filter((r) => !(r.fields || {}).voided);
     renderTimeline(shifts);
@@ -1561,7 +1569,7 @@
     const nowMin = (Date.now() - day0) / 60000;
     const isToday = date === localDay();
     if (!shiftData || !Array.isArray(shiftData.shifts)) $('tl-note').textContent = t(L.tlNoData);
-    else $('tl-note').textContent = fill(t(L.tlNote), { t: new Date(shiftData.last_sync).toLocaleString() }) + ' ' + t(L.tlRightClick);
+    else $('tl-note').textContent = fill(t(L.tlNote), { t: new Date(shiftData.last_sync).toLocaleString() }) + ' ' + t(L.tlRightClick) + ' ' + t(L.autoHint);
 
     // People: everyone clocked in that day, plus anyone with an entry.
     const rows = new Map();
@@ -1604,6 +1612,10 @@
     const stat = (k, v, cls) => `<div class="tl-stat ${cls || ''}"><div class="k">${esc(t(k))}</div><div class="v">${v}</div></div>`;
     $('tl-hero').innerHTML = stat(L.tlPeople, list.length) + stat(L.tlClocked, fmtNum(tot.c, 1) + ' h') + stat(L.tlLogged, fmtNum(tot.l, 1) + ' h') +
       stat(L.tlUnalloc, fmtNum(tot.u, 1) + ' h', tot.u > 0.25 ? 'warn' : list.length ? 'ok' : '') + stat(L.tlPct, pct == null ? '—' : fmtPct(pct, 0));
+    // Auto-assign works on everyone that day, whatever the search shows.
+    tlAuto = autoPlan(list, date);
+    $('tl-auto').textContent = fill(t(L.autoBtn), { n: tlAuto.length });
+    $('tl-auto').disabled = !tlAuto.length;
 
     const q = fold($('tl-q').value.trim());
     if (q) list = list.filter((r) => fold(r.name).includes(q) || [...r.places].some((p) => fold(p).includes(q)));
@@ -1712,6 +1724,16 @@
   const menuEl = $('tl-menu');
   let menuCtx = null;
   const closeMenu = () => { menuEl.hidden = true; menuCtx = null; };
+  // A project's roles on one day, with Master Schedule's Change this day
+  // applied (fields.overrides[date]: people out, people added).
+  const personKey = (p) => p.userId ? 'id:' + p.userId : 'name:' + fold(p.name);
+  function dayRoles(f, date) {
+    const ov = (f.overrides || {})[date] || {};
+    const out = new Set(ov.out || []);
+    return projectRoles(f, t(L.projLead)).map((r) => ({ ...r, people: [
+      ...r.people.filter((x) => !out.has(personKey(x))),
+      ...(ov.extra || []).filter((x) => x.roleId === r.id).map((x) => ({ userId: x.userId || '', name: x.name }))] }));
+  }
   function scheduledAround(date, a, b, userId, name) {
     const out = [];
     const isMe = (p) => userId ? String(p.userId) === String(userId) : fold(p.name) === fold(name);
@@ -1722,15 +1744,15 @@
     projects.forEach((p) => {
       const f = p.fields;
       [[date, 0], [prev, 1440]].forEach(([d, off]) => {
-        if (!projectRunsOn(f, d) || out.some((o) => o.p === p)) return;
+        if (!projectRunsOn(f, d) || (f.overrides || {})[d]?.skip || out.some((o) => o.p === p)) return;
         const overlaps = (role) => {
           const [s, e] = projectHours(f, role);
           if (s == null) return !off;
           return s - off < b && e - off > a;
         };
-        const mineRoles = projectRoles(f, t(L.projLead)).filter((r) => (r.people || []).some(isMe) && overlaps(r));
-        mineRoles.forEach((role) => out.push({ p, role, mine: true }));
-        if (!mineRoles.length && overlaps(null)) out.push({ p, role: null, mine: false });
+        const mineRoles = dayRoles(f, d).filter((r) => r.people.some(isMe) && overlaps(r));
+        mineRoles.forEach((role) => out.push({ p, role, mine: true, off }));
+        if (!mineRoles.length && overlaps(null)) out.push({ p, role: null, mine: false, off });
       });
     });
     return out.sort((x, y) => y.mine - x.mine || String(x.p.fields.name).localeCompare(String(y.p.fields.name)));
@@ -1830,8 +1852,19 @@
     const client = getClient();
     if (!client) { toast(t(L.noDb)); return; }
     btn.disabled = true;
+    const row = projectEntry(r, a, b, date, o);
+    const { error } = await client.from('operations_forms').insert(row);
+    closeMenu();
+    if (error) { toast(`${t(L.failed)} ${error.message}`); return; }
+    toast(fill(t(L.menuSaved), { h: fmtH(row.fields.hours), p: o.p.fields.name }));
+    allEntriesP = null;
+    loadTimeline();
+  });
+  // A not-logged stretch [a, b) as an entry on a project (o from
+  // scheduledAround): the role's process, else the project's, else Other.
+  function projectEntry(r, a, b, date, o) {
     const hours = Math.round((b - a) / 60 * 100) / 100;
-    const row = {
+    return {
       station_key: ENTRY_KEY, status: 'submitted', owner_user: me || null, updated_by: me || null,
       strain: null, work_date: date, submitted_at: new Date().toISOString(),
       fields: {
@@ -1842,10 +1875,68 @@
         start: hhmm(a), end: hhmm(b), hours, notes: '', enteredBy: me
       }
     };
-    const { error } = await client.from('operations_forms').insert(row);
-    closeMenu();
-    if (error) { toast(`${t(L.failed)} ${error.message}`); return; }
-    toast(fill(t(L.menuSaved), { h: fmtH(hours), p: o.p.fields.name }));
+  }
+
+  // Auto-assign: each not-logged stretch goes to the project the person is
+  // scheduled on (their own role, that day's changes applied) when they
+  // clocked in at that project's location — Connecteam's job "Airway
+  // Distribution" matches the location Airway — and at least half the
+  // stretch is inside the scheduled hours (so an overnight shift's early
+  // hours don't land on a project starting at 7). A stretch with no such
+  // project, or more than one, stays gold to log by hand.
+  let tlAuto = [];
+  const locLabel = (f) => f.location === 'other' ? (f.locationName || '') : ((WORK_LOCATIONS.find((l) => l[0] === f.location) || [])[1] || '');
+  const samePlace = (place, f) => {
+    const x = fold(place).trim(), y = fold(locLabel(f)).trim();
+    return !!x && !!y && (x.includes(y) || y.includes(x));
+  };
+  function autoPlan(list, date) {
+    const plan = [];
+    list.forEach((r) => r.gaps.forEach(([a, b]) => {
+      const sh = gapShift(r, a, b);
+      if (!sh || !sh.place) return;
+      const inHours = (o) => {
+        const [s, e] = projectHours(o.p.fields, o.role);
+        return s == null || Math.min(b, e - o.off) - Math.max(a, s - o.off) >= (b - a) / 2;
+      };
+      const opts = scheduledAround(date, a, b, r.userId, r.name).filter((o) => o.mine && samePlace(sh.place, o.p.fields) && inHours(o));
+      if (opts.length !== 1) return;
+      const o = opts[0];
+      // Right after an entry on the same project and role (an earlier
+      // auto-assign, while they were still on the clock)? Stretch that one
+      // instead of adding another, so running it again later in the day
+      // picks up the time since.
+      const ext = r.timed.find((e) => Math.abs(e.b - a) < 1 && e.f.project === o.p.id && (e.f.role || '') === ((o.role && o.role.id) || ''));
+      plan.push({ r, a: Math.round(a), b: Math.round(b), o, ext });
+    }));
+    return plan;
+  }
+  $('tl-auto').addEventListener('click', async () => {
+    const plan = tlAuto.slice();
+    if (!plan.length) return;
+    const client = getClient();
+    if (!client) { toast(t(L.noDb)); return; }
+    const date = $('tl-date').value || localDay();
+    const adds = plan.filter((x) => !x.ext), exts = plan.filter((x) => x.ext);
+    const rows = adds.map(({ r, a, b, o }) => projectEntry(r, a, b, date, o));
+    const hours = plan.reduce((x, { a, b }) => x + (b - a) / 60, 0);
+    const list = plan.slice(0, 15).map(({ r, a, b, o, ext }) =>
+      `• ${r.name} ${hhmm(a)}–${hhmm(b)} → ${o.p.fields.name}${ext ? ` (${fill(t(L.autoExt), { a: ext.f.start })})` : ''}`).join('\n') +
+      (plan.length > 15 ? `\n… +${plan.length - 15}` : '');
+    if (!confirm(fill(t(L.autoQ), { h: fmtH(Math.round(hours * 100) / 100), n: plan.length, p: new Set(plan.map((x) => x.r.key)).size, list }))) return;
+    $('tl-auto').disabled = true;
+    const results = await Promise.all([
+      rows.length ? client.from('operations_forms').insert(rows) : { error: null },
+      ...exts.map(({ b, ext }) => {
+        const a = Math.round(ext.a);
+        const fields = { ...ext.rec.fields, end: hhmm(b), hours: Math.round((b - a) / 60 * 100) / 100, extendedBy: me, extendedAt: new Date().toISOString() };
+        return client.from('operations_forms').update({ fields, updated_by: me || null }).eq('id', ext.rec.id).eq('status', 'submitted');
+      })
+    ]);
+    const error = (results.find((x) => x.error) || {}).error;
+    allEntriesP = null;
+    if (error) { toast(`${t(L.failed)} ${error.message}`); loadTimeline(); return; }
+    toast(fill(t(L.autoSaved), { h: fmtH(Math.round(hours * 100) / 100), n: plan.length }));
     allEntriesP = null;
     loadTimeline();
   });
