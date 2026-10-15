@@ -74,8 +74,13 @@ async function staffHours(win, period, rates) {
     const p = (people[s.userId] = people[s.userId] || { name: s.name, hours: 0, cost: 0, days: {} });
     p.hours += hrs; p.cost += c;
     p.days[day] = (p.days[day] || 0) + hrs;
-    add(jobs, s.job || '—', hrs, c);
-    add(activities, s.activity || '—', hrs, c);
+    // "Hanging / Colgar · Esensia" counts as Hanging: the part after the dot
+    // is a sub-location, not a different kind of work.
+    const act = String(s.activity || '').split(' · ')[0].trim() || '(no activity)';
+    const job = s.job || '—';
+    add(jobs, job, hrs, c);
+    add((jobs[job].acts = jobs[job].acts || {}), act, hrs, c);
+    add(activities, act, hrs, c);
   });
 
   const byPerson = Object.values(people).map((p) => {
@@ -90,7 +95,8 @@ async function staffHours(win, period, rates) {
   return {
     lastSync: data.last_sync, total, shifts, people: byPerson.length,
     withCost: Boolean(rates), cost, unratedHours,
-    byPerson, byJob: sortHours(jobs), byActivity: sortHours(activities), missingClockOut
+    byPerson, byActivity: sortHours(activities), missingClockOut,
+    byJob: sortHours(jobs).map((j) => ({ ...j, acts: sortHours(j.acts) }))
   };
 }
 
@@ -189,6 +195,19 @@ function table(cols, rows) {
   const body = rows.map((r) => `<tr>${cols.map((c) => `<td style="${TD};${c.num ? NUM : ''}">${c.html ? c.v(r) : escapeHtml(c.v(r))}</td>`).join('')}</tr>`).join('');
   return `<table cellspacing="0" cellpadding="0" style="border-collapse:collapse;width:100%;margin:0 0 20px">${`<tr>${head}</tr>`}${body}</table>`;
 }
+// Each site with its activities under it: hours, share of the site's hours,
+// and labor $ when costed.
+function siteActivityTable(byJob, withCost) {
+  if (!byJob.length) return '<p style="color:#777;font-size:14px">Nothing logged.</p>';
+  const cols = ['Site / activity', 'Hours', '% of site', ...(withCost ? ['Labor $'] : [])];
+  const head = cols.map((t, i) => `<th style="${TH};${i ? NUM : ''}">${escapeHtml(t)}</th>`).join('');
+  const row = (cells, site) => `<tr${site ? ' style="background:#f3f5f8"' : ''}>${cells.map((c, i) =>
+    `<td style="${TD};${i ? NUM : ''}${site ? ';font-weight:700' : ''}${!site && !i ? ';padding-left:26px' : ''}">${escapeHtml(c)}</td>`).join('')}</tr>`;
+  const body = byJob.map((j) => row([j.name, fmt1(j.hours), '', ...(withCost ? [fmtUsd(j.cost)] : [])], true) +
+    j.acts.map((a) => row([a.name, fmt1(a.hours), `${Math.round((a.hours / j.hours) * 100)}%`, ...(withCost ? [fmtUsd(a.cost)] : [])], false)).join('')).join('');
+  return `<table cellspacing="0" cellpadding="0" style="border-collapse:collapse;width:100%;margin:0 0 20px"><tr>${head}</tr>${body}</table>`;
+}
+
 const h2 = (t) => `<h2 style="font-size:17px;margin:28px 0 8px;color:#111">${escapeHtml(t)}</h2>`;
 const stat = (label, value) => `<td style="padding:10px 16px 10px 0"><div style="font-size:22px;font-weight:700;color:#111">${escapeHtml(value)}</div><div style="font-size:12px;color:#666">${escapeHtml(label)}</div></td>`;
 
@@ -216,8 +235,8 @@ ${table([
   ], ops.rows)}
 <p style="color:#888;font-size:12px;margin:-12px 0 0">Bucking and hand trim: pounds weighed in this period on every page, finished or still open (the forms' Daily Summary). Other stations: pounds out on submitted forms.</p>
 
-${h2('Hours by site')}
-${table([{ t: 'Site', v: (r) => r.name }, { t: 'Hours', num: true, v: (r) => fmt1(r.hours) }, ...$col], hours.byJob)}
+${h2('Labor by site and activity')}
+${siteActivityTable(hours.byJob, hours.withCost)}
 
 ${h2('Hours by activity')}
 ${table([{ t: 'Activity', v: (r) => r.name }, { t: 'Hours', num: true, v: (r) => fmt1(r.hours) }, ...$col], hours.byActivity)}
@@ -245,7 +264,9 @@ ${siteUrl ? `<a href="${escapeHtml(siteUrl)}/operations_dashboard.html" style="c
     `Lbs worked: ${fmt1(ops.lb)} · Forms submitted: ${ops.forms}`, '',
     'Operations by station:',
     ...ops.rows.map((r) => `  ${r.title}: ${r.lbShown ? `${fmt1(r.lbShown)} lb, ` : ''}${r.forms} submitted${r.open ? `, ${r.open} open` : ''}`), '',
-    'Hours by site:', ...hours.byJob.map((r) => `  ${r.name}: ${fmt1(r.hours)}${hours.withCost ? ` (${fmtUsd(r.cost)})` : ''}`), '',
+    'Labor by site and activity:', ...hours.byJob.flatMap((j) => [
+      `  ${j.name}: ${fmt1(j.hours)} hrs${hours.withCost ? ` (${fmtUsd(j.cost)})` : ''}`,
+      ...j.acts.map((a) => `      ${a.name}: ${fmt1(a.hours)} hrs${hours.withCost ? ` (${fmtUsd(a.cost)})` : ''}`)]), '',
     ...(flagged.length ? ['Overtime:', ...flagged.map((r) => `  ${r.name}: ${fmt1(r.hours)} (${r.flag})`), ''] : []),
     ...(hours.missingClockOut.length ? ['Missing clock-outs:', ...hours.missingClockOut.map((r) => `  ${r.name} (${r.day})`), ''] : []),
     'Hours by person:', ...hours.byPerson.map((r) => `  ${r.name}: ${fmt1(r.hours)}${hours.withCost ? ` (${fmtUsd(r.cost)})` : ''}`)
