@@ -255,6 +255,17 @@ record who changed it. This is how a second person records the Metrc
 adjustment (`metrcAdjusted` + `metrcAdjustedLb`) after someone else did
 the intake.
 
+**Fixing submitted forms from the Today board.** The admin user editor's
+"Fix submitted forms" checkbox (`ops fix submitted` column, under Processing —
+edit access) puts an Edit button on every submitted form on
+`operations_today.html` for the stations that person has edit access to. It
+opens the same `ops_form.html?edit=<id>` correction mode (with `&from=today`,
+so Back and Save return to that day on the board). Access is
+`canFixSubmitted()` in `ops_common.js`: Wet Intakes with Harvest Intakes edit,
+or `2cw_ops_fix` (set at hub login) plus station edit access. Correcting a
+Take Down keeps its own package in the "Package Drying" list. The edit
+history trigger logs these edits like any other; the card shows "edited by".
+
 Two more checkboxes there, each implying View: **Delete** (`harvest intakes
 delete`) and **See edit history** (`harvest intakes history`), turned into
 `2cw_intake_delete` / `2cw_intake_history` at login. Both only show the

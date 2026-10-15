@@ -13,6 +13,19 @@ const OPS_ENDPOINT = '/.netlify/functions/submit-operations';
 const QUEUE_KEY = '2cw_ops_queue';
 const LANG_KEY = '2cw_lang';
 
+// ── Fixing submitted forms ─────────────────────────────────────────────────
+// Who may reopen an already-submitted form (ops_form.html?edit=<id>) to
+// correct it: Wet Intakes with Harvest Intakes edit access, any station with
+// the admin panel's "Fix submitted forms" plus edit access to that station.
+// Both are set at hub login (index.html).
+function canFixSubmitted(stationKey) {
+  if (stationKey === 'intake_wet' && sessionStorage.getItem('2cw_intake_access') === 'edit') return true;
+  if (sessionStorage.getItem('2cw_ops_fix') !== 'true') return false;
+  let edit = null;
+  try { edit = JSON.parse(sessionStorage.getItem('2cw_ops_edit_access') || 'null'); } catch { edit = null; }
+  return edit === 'all' || (Array.isArray(edit) && edit.includes(stationKey));
+}
+
 // ── Language ────────────────────────────────────────────────────────────────
 function getLang() {
   const saved = localStorage.getItem(LANG_KEY);

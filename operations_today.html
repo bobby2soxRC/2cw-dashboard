@@ -62,7 +62,9 @@
     .pill.submitted{border-color:var(--green);color:var(--green)}
     .row-meta{display:flex;justify-content:space-between;align-items:baseline;font-size:.8rem;color:var(--subtext);margin-top:10px}
     .row-headline{font-family:'DM Mono',monospace;font-size:1.1rem;color:var(--text)}
-    .row-who{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);margin-top:8px}
+    .row-who{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .row-edit{flex:0 0 auto;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);
+      border:1px solid var(--blue);border-radius:8px;padding:0 12px;min-height:36px;display:inline-flex;align-items:center;text-decoration:none}
 
     .empty{color:var(--muted);text-align:center;padding:60px 0;font-size:.9rem}
     .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
@@ -110,6 +112,8 @@
     draftPill: { en: 'In progress', es: 'En curso' },
     submittedPill: { en: 'Submitted', es: 'Enviado' },
     updated: { en: 'updated', es: 'actualizado' },
+    edit: { en: 'Edit', es: 'Editar' },
+    edited: { en: 'edited by', es: 'editado por' },
     noAccess: { en: 'You don’t have view access to the operations board yet. Ask your manager to turn it on.',
                 es: 'Aún no tiene acceso de visualización al panel de producción. Pida a su gerente que lo active.' },
     empty: { en: 'Nothing logged yet today.', es: 'Nada registrado hoy todavía.' },
@@ -241,7 +245,9 @@
           <span>${headlineLabel ? t(headlineLabel.l) : ''}</span>
           <span class="row-headline">${Number.isFinite(Number(headline)) ? fmtNum(headline, headlineLabel && headlineLabel.dp !== undefined ? headlineLabel.dp : 2) : '—'}</span>
         </div>
-        <div class="row-who">${esc(r.owner_user || '—')} · ${t(L.updated)} ${timeAgo(r.updated_at)}</div>
+        <div class="row-who"><span>${esc(r.owner_user || '—')} · ${t(L.updated)} ${timeAgo(r.updated_at)}${r.fields.lastEditedBy ? ` · ${t(L.edited)} ${esc(r.fields.lastEditedBy)}` : ''}</span>${
+          r.status === 'submitted' && canFixSubmitted(r.station_key)
+            ? `<a class="row-edit" href="/ops_form.html?station=${encodeURIComponent(r.station_key)}&edit=${encodeURIComponent(r.id)}&from=today">${t(L.edit)}</a>` : ''}</div>
       </div>`;
     }).join('');
   }

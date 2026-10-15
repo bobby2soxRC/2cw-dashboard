@@ -260,18 +260,22 @@
   const station = STATION_BY_KEY[params.get('station')];
   if (!station) { location.replace('/index.html'); return; }
 
-  // ?edit=<id> reopens an already-submitted record to correct it — only for
-  // stations listed here, and only with that page's edit access (set at hub
-  // login from the admin panel). Saves go through updateSubmitted, never the
-  // draft autosave, so the record stays submitted the whole time.
-  const EDITABLE_SUBMITTED = { intake_wet: { access: '2cw_intake_access', back: '/harvest_intakes.html' } };
+  // ?edit=<id> reopens an already-submitted record to correct it — only with
+  // the access canFixSubmitted() checks (set at hub login from the admin
+  // panel). Saves go through updateSubmitted, never the draft autosave, so
+  // the record stays submitted the whole time. `&from=today` (the Today
+  // board's Edit button) returns there; otherwise Wet Intakes go back to
+  // Harvest Intakes.
   const editId = params.get('edit');
-  const editCfg = editId ? EDITABLE_SUBMITTED[station.key] : null;
-  if (editId && (!editCfg || sessionStorage.getItem(editCfg.access) !== 'edit')) {
-    location.replace(editCfg ? editCfg.back : '/index.html');
+  const fromToday = params.get('from') === 'today';
+  const editBack = (id) => fromToday || station.key !== 'intake_wet'
+    ? '/operations_today.html' + (editRec && editRec.work_date && editRec.work_date !== todayStr() ? `?date=${editRec.work_date}` : '')
+    : `/harvest_intakes.html?id=${id}`;
+  if (editId && !canFixSubmitted(station.key)) {
+    location.replace(fromToday ? '/operations_today.html' : station.key === 'intake_wet' ? '/harvest_intakes.html' : '/index.html');
     return;
   }
-  const editMode = !!editCfg;
+  const editMode = !!editId;
   let editRec = null;   // the submitted row being corrected, once loaded
 
   // Per-station edit access, set at hub login from the directory sheet.
@@ -1102,7 +1106,8 @@
       return;
     }
     const [intakes, downs] = await Promise.all([loadSubmitted(pickerFields[0].picker.from), loadSubmitted(station.key)]);
-    pickPool = currentlyDrying(intakes || [], downs || []);
+    // Correcting a submitted Take Down: its own package still counts as drying.
+    pickPool = currentlyDrying(intakes || [], (downs || []).filter((d) => !editMode || d.id !== editId));
   })().catch((err) => { console.error('picker list', err); }) : null;
 
   function fillPicker(f) {
@@ -1628,6 +1633,7 @@
     save:     { en: 'Save changes', es: 'Guardar cambios' },
     saved:    { en: '✓ Changes saved', es: '✓ Cambios guardados' },
     back:     { en: '← Intakes', es: '← Recepciones' },
+    backToday: { en: '← Today', es: '← Hoy' },
     editing:  { en: 'Editing a submitted form from', es: 'Editando un formulario enviado del' },
     notFound: { en: 'This record could not be found, or it hasn’t been submitted yet.', es: 'No se encontró este registro, o aún no se ha enviado.' }
   };
@@ -1722,7 +1728,8 @@
         banner.className = 'banner success';
         banner.textContent = t(ED.saved);
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        setTimeout(() => { location.href = `${editCfg.back}?id=${editId}`; }, 1000);
+        if (editRec && values.date) editRec.work_date = values.date;   // back to the day it's on now
+        setTimeout(() => { location.href = editBack(editId); }, 1000);
       } else {
         banner.className = 'banner error';
         banner.textContent = ures.reason || t(UI.failed);
@@ -1990,11 +1997,11 @@
   await new Promise((r) => setTimeout(r, 0));
 
   if (editMode) {
-    document.getElementById('back').href = `${editCfg.back}?id=${editId}`;
-    document.getElementById('back').textContent = t(ED.back);
+    document.getElementById('back').textContent = t(fromToday || station.key !== 'intake_wet' ? ED.backToday : ED.back);
     btn.textContent = t(ED.save);
     const rec = await getDraft(editId);
     editRec = rec;
+    document.getElementById('back').href = editBack(editId);
     if (!rec || rec.status !== 'submitted') {
       banner.className = 'banner error';
       banner.textContent = t(ED.notFound);
