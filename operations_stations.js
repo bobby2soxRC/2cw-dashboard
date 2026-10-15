@@ -23,6 +23,10 @@
 //   hint   {en, es} helper text under the field
 //   showIf (v) => bool
 //   prefill 'lookup' — pull from the upstream stage record matching sourceUid
+//   prPicker (text) a dropdown of the open pre-roll queue (preroll_queue.js)
+//          plus "Other — type it"; picking one stores its ref (PR# / PQ-#)
+//          and fills { fieldKey: item property } from `fills` (see
+//          wirePrPickers in ops_form.html)
 //   fill   a button, not a value: { keys: [three field keys], fill: (v, key) =>
 //          number } — with all but one of `keys` filled in, works out the
 //          missing one (Bucking's Calculate for stems / mold / floor waste).
@@ -1015,9 +1019,12 @@ const OPERATIONS_STATIONS = [
     multiDay: true,
     fields: [
       { ...F.date(), l: { en: 'Start Date', es: 'Fecha de inicio' } },
-      { k: 'prNum', t: 'text', l: { en: 'Production Request #', es: 'N.º de solicitud de producción' },
-        hint: { en: 'e.g. PR-1003, or a queue number like PQ-12 — links this batch to the Pre-Roll Dashboard queue.',
-                es: 'p. ej. PR-1003, o un número de la fila como PQ-12 — vincula este lote con la fila del tablero de prerolls.' } },
+      // Picked from the pre-roll queue, in the dashboard's order: fills in
+      // what the request knows; the rest is typed as usual.
+      { k: 'prNum', t: 'text', l: { en: 'Production Request', es: 'Solicitud de producción' },
+        prPicker: { fills: { batchId: 'ref', strain: 'strain', sourceUid: 'sourceUid', unitSizeG: 'unitSizeG' } },
+        hint: { en: 'Pick from the Pre-Roll Queue — it fills in what it can. Links this batch to the request on the Pre-Roll Dashboard.',
+                es: 'Elija de la fila de prerolls — llena lo que pueda. Vincula este lote con la solicitud en el tablero de prerolls.' } },
       { k: 'batchId', t: 'text', req: true, l: { en: 'Batch ID', es: 'ID de lote' } },
       F.strain(),
       { k: 'sourceUid', t: 'uid', req: true, l: { en: 'Source UID', es: 'UID de origen' },
