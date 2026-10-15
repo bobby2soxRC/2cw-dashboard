@@ -126,7 +126,13 @@ out when the row is added, and `workDate` (`fromDay`) is set to the row's
 day, so `crewLaborLog` reports each shift on the day it was worked. A row
 in the output log needs a pre-roll count or a waste weight. New UIDs, finish
 date, QC and verification sit under "End of Run". Because both logs are
-running logs, two tablets on one run merge their rows.
+running logs, two tablets on one run merge their rows. There's **one run per
+request**: a Queue tab (`queueTab`) lists the pre-roll queue in the
+dashboard's order (`loadPrerollQueue`, with each request's pre-rolls to make
+and made so far — `made`, from its runs' `totalPrerolls`), with Start (a new
+run, the same `set_…` link as the dashboard's Start batch) or Open (the run
+already going); and the Production Request dropdown leaves out requests
+already open on another run.
 
 **Hand Trim / Hand Touch** (`hand_trim`) runs like Bucking: one page per
 lot (`sharedDay` — every open page, anyone's, is in the "Lots open"

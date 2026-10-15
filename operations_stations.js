@@ -1030,6 +1030,9 @@ const OPERATIONS_STATIONS = [
                 one: { en: 'run', es: 'corrida' }, many: { en: 'runs', es: 'corridas' },
                 page: { en: 'pre-roll run', es: 'corrida de prerolls' } },
     canDelete: true,
+    // A Queue tab next to the form: the pre-roll queue in the dashboard's
+    // order, with Start (a new run for the request) or Open (its run).
+    queueTab: true,
     links: [{ href: '/work_orders.html?tab=preroll', l: { en: 'Work Orders →', es: 'Órdenes de trabajo →' } }],
     // A tab per day under the run tabs: the output and workforce logs show
     // the picked day's rows and stamp new ones with it.
