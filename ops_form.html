@@ -639,11 +639,14 @@
   // running log named by `dayTabs.lines` shows only the picked day's rows,
   // and Add stamps new rows with that day. Days with nothing logged yet that
   // someone added are kept in `runDays`. Today is always a tab.
+  // `dayTabs.lines` is one log (Hand Trim's bags) or several (Pre-Roll's
+  // output and workforce logs); the day chips total the first.
   const DT = station.dayTabs || null;
+  const DTL = DT ? [].concat(DT.lines) : [];
   let curDay = todayStr();
   const rowDay = (r) => r.day || values.date || todayStr();
   // Editing a submitted record shows every day's rows, no tabs.
-  const byDay = (f) => !!DT && !editMode && DT.lines === f.k;
+  const byDay = (f) => !!DT && !editMode && DTL.includes(f.k);
   const stampDay = (f) => (byDay(f) ? curDay : todayStr());
   const DY = {
     label: { en: 'Days', es: 'Días' },
@@ -656,16 +659,17 @@
     return `${m}/${dd}`;
   }
   function dayList() {
-    const rows = values[DT.lines] || [];
+    const rows = DTL.flatMap((k) => values[k] || []);
     return [...new Set([...rows.map(rowDay), ...(values.runDays || []), todayStr(), curDay])].filter(Boolean).sort();
   }
   function renderDays() {
     if (!DT || editMode) return;
     const el = document.getElementById('days');
     const lbl = document.getElementById('days-lbl');
-    const f = station.fields.find((x) => x.k === DT.lines);
-    const total = (d) => (values[DT.lines] || []).filter((r) => rowDay(r) === d).reduce((a, r) => a + (Number(r[f.totalCol]) || 0), 0);
-    const amt = (d) => (DT.fromGrams ? `${fmtNum(total(d) / G_PER_LB, 2)} lb` : fmtNum(total(d), 2));
+    const f = station.fields.find((x) => x.k === DTL[0]);
+    const total = (d) => (values[DTL[0]] || []).filter((r) => rowDay(r) === d).reduce((a, r) => a + (Number(r[f.totalCol]) || 0), 0);
+    const tc = f.cols.find((c) => c.k === f.totalCol);
+    const amt = (d) => (DT.fromGrams ? `${fmtNum(total(d) / G_PER_LB, 2)} lb` : fmtNum(total(d), tc && tc.dp !== undefined ? tc.dp : 2));
     const wk = (d) => new Date(`${d}T12:00:00`).toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US', { weekday: 'short' });
     lbl.textContent = t(DY.label);
     lbl.style.display = 'block';
@@ -682,7 +686,7 @@
   }
   function pickDay(d) {
     curDay = d;
-    entryRenderers[DT.lines]();
+    DTL.forEach((k) => entryRenderers[k] && entryRenderers[k]());
     recompute();
     if (station.dailySummary && draftsOn) loadSummary(d);
   }
@@ -706,8 +710,12 @@
     // A `rownum` column (box #) isn't typed: rows are numbered 1, 2, 3… in
     // the order they were logged, renumbered when one is removed, and the
     // entry bar shows the number the next one gets.
-    const cols = f.cols.filter((c) => c.t !== 'calc');
-    const ins = cols.filter((c) => c.t !== 'rownum');
+    // `calc` columns (Pre-Roll's hours) are worked out when a row is added
+    // and shown in the log; `fromDay` ones (its workDate) take the row's day.
+    const cols = f.cols.filter((c) => !c.fromDay);
+    const calcs = f.cols.filter((c) => c.t === 'calc');
+    const fromDay = f.cols.filter((c) => c.fromDay);
+    const ins = cols.filter((c) => c.t !== 'rownum' && c.t !== 'calc');
     const nums = cols.filter((c) => c.t === 'rownum');
     // `multi` (Hand Trim's bags): the value column is entered as Bags × each
     // plus a Partial, each bag becoming its own row.
@@ -724,10 +732,11 @@
     wrap.innerHTML = labelHtml(f) +
       (f.hint ? `<div class="hint" style="margin-top:0;margin-bottom:10px">${t(f.hint)}</div>` : '') +
       `<div class="entry-bar">` +
-      cols.map((c) => (M && c.k === M.col) ? multiBar : `<label class="entry-in${c.t === 'rownum' ? ' entry-num' : ''}"><span class="k">${t(c.l)}${c.req ? '<span class="req">*</span>' : ''}</span>` +
+      cols.filter((c) => c.t !== 'calc').map((c) => (M && c.k === M.col) ? multiBar : `<label class="entry-in${c.t === 'rownum' ? ' entry-num' : ''}"><span class="k">${t(c.l)}${c.req ? '<span class="req">*</span>' : ''}</span>` +
         (c.t === 'rownum' ? `<div class="entry-next" id="en_${f.k}_${c.k}">1</div>`
         : c.t === 'number'
           ? `<input type="number" id="e_${f.k}_${c.k}" inputmode="decimal" step="${c.step || 'any'}"${c.min !== undefined ? ` min="${c.min}"` : ''}>`
+          : c.t === 'time' ? `<input type="time" id="e_${f.k}_${c.k}">`
           : `<input type="text" id="e_${f.k}_${c.k}"${c.inputmode ? ` inputmode="${c.inputmode}"` : ''}>`) +
         `</label>`).join('') +
       `<button type="button" class="entry-add" id="add_${f.k}">${t(EL.add)}</button></div>` +
@@ -755,7 +764,7 @@
         const at = r.at ? new Date(r.at) : null;
         const when = at ? ((r.day && r.day !== todayStr() && !byDay(f) ? new Date(`${r.day}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' : '') +
           at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) : '';
-        tr.innerHTML = cols.map((c) => `<td>${escapeHtml(c.t === 'number' ? fmtNum(r[c.k], c.dp === undefined ? 2 : c.dp) : (r[c.k] ?? ''))}</td>`).join('') +
+        tr.innerHTML = cols.map((c) => `<td>${escapeHtml(c.t === 'number' || c.t === 'calc' ? fmtNum(r[c.k], c.dp === undefined ? 2 : c.dp) : (r[c.k] ?? ''))}</td>`).join('') +
           `<td class="at">${escapeHtml(when)}</td><td></td>`;
         const del = document.createElement('button');
         del.type = 'button'; del.className = 'li-del'; del.textContent = '×';
@@ -824,6 +833,8 @@
         row[c.k] = c.t === 'number' ? (raw === '' ? null : Number(raw)) : raw;
         if (c.req && (raw === '' || (c.t === 'number' && !(Number(raw) > 0)))) short.push(c);
       });
+      // A log with no required column (Pre-Roll's output) still needs a number.
+      if (!ins.some((c) => c.req) && ins.every((c) => c.t !== 'number' || row[c.k] === null)) short.push(...ins.filter((c) => c.t === 'number'));
       if (short.length) {
         msg.textContent = `${t(EL.fill)} ${short.map((c) => t(c.l)).join(', ')}`;
         msg.style.display = 'block';
@@ -832,6 +843,8 @@
       }
       msg.style.display = 'none';
       Object.assign(row, { _id: crypto.randomUUID(), day: stampDay(f), at: new Date().toISOString(), by: owner });
+      fromDay.forEach((c) => { row[c.k] = row.day; });
+      calcs.forEach((c) => { try { row[c.k] = c.calc(row); } catch { row[c.k] = null; } });
       values[f.k].push(row);
       fresh = new Set([row._id]);
       ins.forEach((c) => { inp(c).value = ''; });
@@ -1584,6 +1597,10 @@
       : await listMyDrafts(station.key, owner, todayStr());
     const el = document.getElementById('switcher');
     const lblEl = document.getElementById('switcher-lbl');
+    // Hand Trim's lots, Pre-Roll's runs (`station.switcher`), else Smalls' flavors.
+    const SWL = station.switcher || (station.key === 'hand_trim'
+      ? { open: SW.lots, add: SW.newLot, one: { en: 'lot', es: 'lote' }, many: { en: 'lots', es: 'lotes' } }
+      : { open: SW.flavors, add: SW.newFlavor, one: { en: 'flavor', es: 'sabor' }, many: { en: 'flavors', es: 'sabores' } });
     if (station.sharedDay) {
       // Always shown, so "+ New flavor" is there even before the first page.
       const isNew = !drafts.some((d) => d.id === draftId);
@@ -1593,14 +1610,14 @@
       if (isNew && drafts.length && !banner.className.includes('success')) {
         banner.className = 'banner warn';
         banner.dataset.openPages = '1';
-        const lot = station.key === 'hand_trim';
-        banner.textContent = t({ en: `${drafts.length} ${lot ? 'lot' : 'flavor'} page${drafts.length > 1 ? 's are' : ' is'} already open — tap ${drafts.length > 1 ? 'one' : 'it'} above to keep working on it. This blank page is only for a new ${lot ? 'lot' : 'flavor'}.`,
-                                 es: `Ya hay ${drafts.length} hoja${drafts.length > 1 ? 's' : ''} de ${lot ? 'lote' : 'sabor'} abierta${drafts.length > 1 ? 's' : ''} — tóquela arriba para seguir trabajando. Esta hoja en blanco es solo para un ${lot ? 'lote' : 'sabor'} nuevo.` });
+        const n = drafts.length;
+        banner.textContent = t({ en: `${n} ${SWL.one.en} page${n > 1 ? 's are' : ' is'} already open — tap ${n > 1 ? 'one' : 'it'} above to keep working on it. This blank page is only for a new ${SWL.one.en}.`,
+                                 es: `Ya hay ${n} hoja${n > 1 ? 's' : ''} de ${SWL.one.es} abierta${n > 1 ? 's' : ''} — tóquela arriba para seguir trabajando. Esta hoja en blanco es solo para ${SWL.one.es.endsWith('a') ? 'una' : 'un'} ${SWL.one.es} ${SWL.one.es.endsWith('a') ? 'nueva' : 'nuevo'}.` });
         banner.style.marginTop = '12px';
         document.getElementById('switcher').after(banner);
       }
       if (isNew) drafts.unshift({ id: draftId, strain: values.strain, fields: values, work_date: values.date || todayStr() });
-      lblEl.textContent = t(station.key === 'hand_trim' ? SW.lots : SW.flavors);
+      lblEl.textContent = t(SWL.open);
       lblEl.style.display = 'block';
     } else if (!drafts.length) { el.style.display = 'none'; return; }
     el.style.display = 'flex';
@@ -1618,7 +1635,7 @@
           <span class="cs">${escapeHtml(chipTop(d))}</span>
           <span class="cv">${escapeHtml(chipLabel(d))}</span>
         </a>`).join('') +
-        `<a class="chip new" href="/ops_form.html?station=${station.key}">${t(station.key === 'hand_trim' ? SW.newLot : SW.newFlavor)}</a>`;
+        `<a class="chip new" href="/ops_form.html?station=${station.key}">${t(SWL.add)}</a>`;
       return;
     }
     el.innerHTML = drafts.map((d) => `
@@ -1936,7 +1953,7 @@
     });
   }
 
-  // ── Delete this page (station.canDelete — Bucking, Hand Trim) ────────────
+  // ── Delete this page (station.canDelete — Bucking, Hand Trim, Pre-Roll) ────────────
   // For a page started by mistake: asks first, then deletes the open page
   // through operations-records.js (deleteOpenPage — a draft only, never a
   // submitted record; logged with who did it) and starts a blank one. Other
@@ -1944,7 +1961,10 @@
   const DP = {
     btn:      { en: 'Delete this page', es: 'Borrar esta hoja' },
     deleting: { en: 'Deleting…', es: 'Borrando…' },
-    ask:      station.key === 'hand_trim'
+    ask:      station.switcher && station.switcher.page
+      ? { en: `Delete this ${station.switcher.page.en} page{what}?{logged}\n\nThis can’t be undone.`,
+          es: `¿Borrar esta hoja de ${station.switcher.page.es}{what}?{logged}\n\nNo se puede deshacer.` }
+      : station.key === 'hand_trim'
       ? { en: 'Delete this hand trim page{what}?{logged}\n\nThis can’t be undone.',
           es: '¿Borrar esta hoja de corte a mano{what}?{logged}\n\nNo se puede deshacer.' }
       : { en: 'Delete this bucking page{what}?{logged}\n\nThis can’t be undone.',

@@ -1011,20 +1011,29 @@ const OPERATIONS_STATIONS = [
   },
 
   // ── MANUFACTURING: PRE-ROLL PRODUCTION ────────────────────────────────────
-  // Matches the paper pre-roll production sheet. A batch can run several
-  // days, so the form stays open as a draft (multiDay: the switcher lists
-  // every open batch, not just today's) until QC signs it off and someone
-  // submits it. The workforce log is `crew` so ops_analytics' labor log
-  // picks each employee's hours up by the day they worked.
+  // Matches the paper pre-roll production sheet. Built like Hand Trim: one
+  // page per run, every open run (anyone's) in the switcher at the top with
+  // "+ New run", so several runs can be open at once, and a run stays open
+  // across days until QC signs it off and someone submits it. The workforce
+  // log is `crew` so ops_analytics' labor log picks each employee's hours up
+  // by the day they worked.
   {
     key: 'preroll_production',
     dept: { en: 'Manufacturing', es: 'Manufactura' },
     title: { en: 'Pre-Roll Production', es: 'Producción de prerolls' },
-    desc: { en: 'One batch of pre-rolls from start to finish — output, waste, and who worked on it each day. Stays open across days until submitted.',
-            es: 'Un lote de prerolls de principio a fin — producción, desecho y quién trabajó cada día. Queda abierto varios días hasta enviarlo.' },
+    desc: { en: 'One run of pre-rolls from start to finish — output, waste, and who worked on it, a tab per day. Stays open across days until submitted.',
+            es: 'Una corrida de prerolls de principio a fin — producción, desecho y quién trabajó, una pestaña por día. Queda abierta varios días hasta enviarla.' },
     color: 'purple',
     headline: 'totalPrerolls',
-    multiDay: true,
+    sharedDay: true,
+    switcher: { open: { en: 'Runs open', es: 'Corridas abiertas' }, add: { en: '+ New run', es: '+ Nueva corrida' },
+                one: { en: 'run', es: 'corrida' }, many: { en: 'runs', es: 'corridas' },
+                page: { en: 'pre-roll run', es: 'corrida de prerolls' } },
+    canDelete: true,
+    links: [{ href: '/work_orders.html?tab=preroll', l: { en: 'Work Orders →', es: 'Órdenes de trabajo →' } }],
+    // A tab per day under the run tabs: the output and workforce logs show
+    // the picked day's rows and stamp new ones with it.
+    dayTabs: { lines: ['output', 'crew'] },
     fields: [
       { ...F.date(), l: { en: 'Start Date', es: 'Fecha de inicio' } },
       // Picked from the pre-roll queue, in the dashboard's order: fills in
@@ -1050,18 +1059,21 @@ const OPERATIONS_STATIONS = [
         l: { en: 'Pre-Roll Size (grams each)', es: 'Tamaño del preroll (gramos c/u)' },
         hint: { en: 'e.g. 1 or 0.5 — used for the yield check below.', es: 'p. ej. 1 o 0.5 — se usa para el rendimiento abajo.' } },
 
-      { k: 'output', t: 'lineitems', req: true,
+      // Running logs (`entry: true`, like Hand Trim's bags): an entry bar and
+      // Add, so two tablets on one run merge their rows. Each row carries the
+      // day it was logged (the day tab picked).
+      { k: 'output', t: 'lineitems', entry: true, req: true,
         l: { en: 'Pre-Roll Output', es: 'Producción de prerolls' },
         hint: { en: 'Add a row each time a count is taken — pre-rolls made and waste weighed out.',
                 es: 'Agregue una fila cada vez que se cuente — prerolls hechos y desecho pesado.' },
         cols: [
-          { k: 'count', t: 'number', l: { en: 'Pre-Rolls (each)', es: 'Prerolls (c/u)' }, min: 0, step: 1, inputmode: 'numeric' },
-          { k: 'wasteG', t: 'number', l: { en: 'Waste (grams)', es: 'Desecho (gramos)' }, min: 0, step: 0.1 },
+          { k: 'count', t: 'number', l: { en: 'Pre-Rolls (each)', es: 'Prerolls (c/u)' }, min: 0, step: 1, dp: 0, inputmode: 'numeric' },
+          { k: 'wasteG', t: 'number', l: { en: 'Waste (grams)', es: 'Desecho (gramos)' }, min: 0, step: 0.1, dp: 1 },
           { k: 'notes', t: 'text', l: { en: 'Notes', es: 'Notas' } }
         ],
         totalCol: 'count' },
       { k: 'totalPrerolls', t: 'calc', dp: 0, calc: (v) => (v.output || []).reduce((a, r) => a + num(r.count), 0),
-        l: { en: 'Total Pre-Rolls', es: 'Total de prerolls' } },
+        l: { en: 'Total Pre-Rolls (whole run)', es: 'Total de prerolls (toda la corrida)' } },
       { k: 'totalWasteG', t: 'calc', dp: 1, calc: (v) => (v.output || []).reduce((a, r) => a + num(r.wasteG), 0),
         l: { en: 'Total Waste (grams)', es: 'Desecho total (gramos)' } },
       { k: 'accountedPct', t: 'calc', fmt: 'pct',
@@ -1072,29 +1084,28 @@ const OPERATIONS_STATIONS = [
           return pct(made + waste, v.startingWtG);
         },
         l: { en: 'Starting Weight Accounted For', es: 'Peso inicial contabilizado' },
-        hint: { en: '(pre-rolls × size + waste) ÷ starting weight. Should land near 100%.',
-                es: '(prerolls × tamaño + desecho) ÷ peso inicial. Debe acercarse al 100%.' },
+        hint: { en: '(pre-rolls × size + waste) ÷ starting weight. Should land near 100% by the end of the run.',
+                es: '(prerolls × tamaño + desecho) ÷ peso inicial. Debe acercarse al 100% al final de la corrida.' },
         flag: (x) => x < 0.95 || x > 1.05 },
-      { k: 'newPrerollUid', t: 'uid', l: { en: 'New UID — Pre-Rolls', es: 'UID nuevo — prerolls' } },
-      { k: 'newWasteUid', t: 'uid', l: { en: 'New UID — Waste', es: 'UID nuevo — desecho' } },
 
-      { k: 'crew', t: 'lineitems',
+      // workDate (`fromDay`) is the picked day tab, not typed.
+      { k: 'crew', t: 'lineitems', entry: true,
         l: { en: 'Workforce Log', es: 'Registro de personal' },
-        hint: { en: 'One row per person per shift on this batch — add rows on each day it’s worked.',
-                es: 'Una fila por persona por turno en este lote — agregue filas cada día que se trabaje.' },
+        hint: { en: 'One row per person per shift on this run, on the day they worked it.',
+                es: 'Una fila por persona por turno en esta corrida, el día que trabajó.' },
         cols: [
-          { k: 'employeeNo', t: 'text', l: { en: 'Employee ID', es: 'ID de empleado' }, inputmode: 'numeric' },
-          { k: 'workDate', t: 'date', today: true, l: { en: 'Date', es: 'Fecha' } },
-          { k: 'startTime', t: 'time', l: { en: 'Start', es: 'Inicio' } },
-          { k: 'endTime', t: 'time', l: { en: 'End', es: 'Fin' } },
+          { k: 'employeeNo', t: 'text', req: true, l: { en: 'Employee ID', es: 'ID de empleado' }, inputmode: 'numeric' },
+          { k: 'workDate', t: 'date', fromDay: true, l: { en: 'Date', es: 'Fecha' } },
+          { k: 'startTime', t: 'time', req: true, l: { en: 'Start', es: 'Inicio' } },
+          { k: 'endTime', t: 'time', req: true, l: { en: 'End', es: 'Fin' } },
           { k: 'hours', t: 'calc', dp: 2, l: { en: 'Hours', es: 'Horas' }, calc: (r) => hoursBetween(r.startTime, r.endTime) }
         ],
         totalCol: 'hours' },
       { k: 'laborHours', t: 'calc', calc: (v) => (v.crew || []).reduce((a, r) => a + num(r.hours), 0),
-        l: { en: 'Total Labor Hours', es: 'Horas de trabajo totales' } },
+        l: { en: 'Total Labor Hours (whole run)', es: 'Horas de trabajo totales (toda la corrida)' } },
       { k: 'crewSize', t: 'calc', dp: 0,
         calc: (v) => new Set((v.crew || []).map((r) => String(r.employeeNo || '').trim()).filter(Boolean)).size,
-        l: { en: 'People on this Batch', es: 'Personas en este lote' } },
+        l: { en: 'People on this Run', es: 'Personas en esta corrida' } },
       { k: 'prerollsPerHour', t: 'calc', dp: 0,
         calc: (v) => {
           const hrs = (v.crew || []).reduce((a, r) => a + num(r.hours), 0);
@@ -1102,6 +1113,12 @@ const OPERATIONS_STATIONS = [
         },
         l: { en: 'Pre-Rolls per Labor Hour', es: 'Prerolls por hora de trabajo' } },
 
+      { k: 'endOfRun', t: 'heading',
+        l: { en: 'End of Run', es: 'Fin de la corrida' },
+        hint: { en: 'Fill these in on the last day of the run, then submit.',
+                es: 'Llene esto el último día de la corrida y luego envíe.' } },
+      { k: 'newPrerollUid', t: 'uid', l: { en: 'New UID — Pre-Rolls', es: 'UID nuevo — prerolls' } },
+      { k: 'newWasteUid', t: 'uid', l: { en: 'New UID — Waste', es: 'UID nuevo — desecho' } },
       { k: 'finishDate', t: 'date', today: false, l: { en: 'Finish Date', es: 'Fecha de terminación' } },
       { k: 'qcComplete', t: 'select', req: true,
         l: { en: 'Q.C. Complete', es: 'Control de calidad completo' },

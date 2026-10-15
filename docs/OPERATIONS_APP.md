@@ -111,15 +111,22 @@ autosaved, so a resumed draft needs the driver ID photo retaken before it
 can be submitted.
 
 Pre-Roll Production (`preroll_production`) follows the paper pre-roll sheet
-and is the one form that stays open across days: its station entry sets
-`multiDay: true`, so the form's switcher lists every open draft on that
-station (anyone's, any start date) instead of just your own from today.
-People add rows to its Workforce Log (employee ID, date, start, end; hours
-are worked out per row) each day they work the batch, and it's submitted
-once QC and the secondary verification are done. The log is the station's
-`crew` field, so `crewLaborLog` reports each shift on the day it was worked.
-Two people editing the same open batch at the same moment can overwrite each
-other's rows (last save wins), so one tablet per batch is safest.
+and, since October 2026, runs like Hand Trim: one page per **run**
+(`sharedDay`, with `switcher` labels "Runs open" / "+ New run"), so several
+runs can be open at once and a new one started before the last is closed;
+each stays open across days until QC and the secondary verification are done
+and it's submitted. Delete this page (`canDelete`) is there for a run started
+by mistake. Under the run tabs are **day tabs** (`dayTabs: { lines:
+['output', 'crew'] }` — several logs share the tabs; the chips total the
+first): the Pre-Roll Output and Workforce Log are running logs (`entry:
+true`) that show the picked day's rows and stamp new ones with it, and the
+totals below cover the whole run. In the Workforce Log the entry bar takes
+employee ID, start and end (time inputs); hours (a `calc` column) are worked
+out when the row is added, and `workDate` (`fromDay`) is set to the row's
+day, so `crewLaborLog` reports each shift on the day it was worked. A row
+in the output log needs a pre-roll count or a waste weight. New UIDs, finish
+date, QC and verification sit under "End of Run". Because both logs are
+running logs, two tablets on one run merge their rows.
 
 **Hand Trim / Hand Touch** (`hand_trim`) runs like Bucking: one page per
 lot (`sharedDay` — every open page, anyone's, is in the "Lots open"

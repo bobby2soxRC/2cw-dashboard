@@ -52,7 +52,7 @@ async function listMyDrafts(stationKey, owner, date) {
 }
 
 // Every open draft on a station, from anyone, any day — for stations whose
-// batches run across several days (multiDay in operations_stations.js), so
+// pages run across several days (sharedDay / multiDay in operations_stations.js), so
 // whoever picks the batch up tomorrow can find it.
 async function listOpenDrafts(stationKey) {
   const client = getClient();
