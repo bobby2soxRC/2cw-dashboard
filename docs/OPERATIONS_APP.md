@@ -250,6 +250,15 @@ drawn off the station definition (so the page loads `operations_stations.js`,
 whose `num()` it shares), with an Edit button for people `canFixSubmitted`
 allows. The open run's id goes in the URL (`?run=<id>`), so it can be linked.
 
+With **Pre-Roll Dashboard — see labor cost per pre-roll** (`preroll costs`,
+see `docs/USER_ADMIN.md`), each run also shows labor $ per pre-roll, and its
+detail a Labor Cost section (whole-run $ and $ per pre-roll). The cost is the
+Workforce Log's hours at the rate in effect on each row's date (`rateFor`),
+worked out server-side by `netlify/functions/preroll-costs.js`. Rates are
+keyed by Connecteam user id but the form logs employee IDs (badge numbers),
+which nothing maps yet, so those hours fall to the default rate. The detail
+says how many hours did. Hours with no rate at all aren't costed.
+
 **Pre-roll products and pack quantities.** Quantities on requests and queue
 items are in units — packs, or singles — not pre-rolls. `preroll_products`
 (keyed by BSKU; managed from the dashboard's **Products** button) says how

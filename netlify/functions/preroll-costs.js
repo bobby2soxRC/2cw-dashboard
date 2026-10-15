@@ -1,0 +1,97 @@
+// Labor cost per Pre-Roll Production run, for the Pre-Roll Dashboard
+// (preroll_dashboard.html). Rates are pay, so the labor_rates table has no
+// anon access; this works the costs out here and hands back only each run's
+// totals — never a rate — and only to someone whose app_users row has
+// 'preroll costs' ticked (admin panel → user editor → Special access),
+// looked up from the PIN they logged in with, like labor-rates.js.
+//
+// A run's labor is its Workforce Log (fields.crew): each row's hours at the
+// rate in effect on its work date (OpsAnalytics.rateFor, the Labor Log's
+// lookup). Rates are keyed by Connecteam user id, and the form logs badge
+// numbers, so most rows fall to the '*' default rate — `defaultHours` says
+// how many did.
+//
+// POST {pin} -> {ok, runs: [{id, cost, hours, defaultHours, unratedHours}]}
+//
+// Required env vars (Netlify site config), same as admin.js:
+//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+
+const OpsAnalytics = require('../../ops_analytics.js');
+
+const COST_COL = 'preroll costs';
+
+function json(statusCode, body) {
+  return { statusCode, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+}
+
+async function supaFetch(supaUrl, serviceKey, path) {
+  return fetch(`${supaUrl}/rest/v1/${path}`, {
+    headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, 'Content-Type': 'application/json' }
+  });
+}
+
+// Hub login compares PINs zero-padded to 4 digits (index.html), so "0123"
+// typed matches "123" stored — look up the same spellings here.
+async function userForPin(supaUrl, serviceKey, pin) {
+  const pad = (p) => p.padStart(4, '0');
+  const target = pad(pin);
+  const variants = [...new Set([pin, target, target.replace(/^0+(?=.)/, '')])]
+    .map((p) => `"${p.replace(/["\\]/g, '')}"`).join(',');
+  const res = await supaFetch(supaUrl, serviceKey,
+    `app_users?pin=in.(${encodeURIComponent(variants)})&active=is.true&select=name,pin,columns`);
+  if (!res.ok) throw new Error(`user lookup failed: ${res.status} ${await res.text()}`);
+  return (await res.json()).find((u) => pad(String(u.pin)) === target) || null;
+}
+
+const num = (x) => { const n = parseFloat(x); return Number.isFinite(n) ? n : 0; };
+const round2 = (x) => Math.round(x * 100) / 100;
+
+function runCost(run, rates) {
+  const f = run.fields || {};
+  let cost = 0, hours = 0, defaultHours = 0, unratedHours = 0;
+  (Array.isArray(f.crew) ? f.crew : []).forEach((c) => {
+    const hrs = num(c.hours);
+    if (!(hrs > 0)) return;
+    hours += hrs;
+    const emp = String(c.employeeNo || '').trim();
+    const date = c.workDate || c.day || f.date || run.work_date;
+    const own = emp ? OpsAnalytics.rateFor(rates.filter((r) => r.employeeId !== '*'), emp, date) : null;
+    const rate = own != null ? own : OpsAnalytics.rateFor(rates, '', date);
+    if (rate == null) { unratedHours += hrs; return; }
+    if (own == null) defaultHours += hrs;
+    cost += hrs * rate;
+  });
+  return { id: run.id, cost: round2(cost), hours: round2(hours), defaultHours: round2(defaultHours), unratedHours: round2(unratedHours) };
+}
+
+exports.handler = async (event) => {
+  if (event.httpMethod !== 'POST') return json(405, { ok: false, error: 'Method not allowed' });
+
+  const supaUrl = process.env.SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supaUrl || !serviceKey) return json(500, { ok: false, error: 'Server missing Supabase configuration' });
+
+  let body;
+  try { body = JSON.parse(event.body || '{}'); } catch { return json(400, { ok: false, error: 'Invalid JSON body' }); }
+  const pin = typeof body.pin === 'string' ? body.pin.trim() : '';
+  if (!pin) return json(401, { ok: false, error: 'Not logged in' });
+
+  try {
+    const user = await userForPin(supaUrl, serviceKey, pin);
+    if (!user) return json(401, { ok: false, error: 'PIN not recognized — log in again.' });
+    if (String((user.columns || {})[COST_COL] || '').toUpperCase() !== 'TRUE') {
+      return json(403, { ok: false, error: 'You don’t have permission to see pre-roll costs.' });
+    }
+    const [ratesRes, runsRes] = await Promise.all([
+      supaFetch(supaUrl, serviceKey, 'labor_rates?select=employee_id,rate,effective_from&order=effective_from.asc'),
+      supaFetch(supaUrl, serviceKey, 'operations_forms?station_key=eq.preroll_production&select=id,work_date,fields')
+    ]);
+    if (!ratesRes.ok) throw new Error(`rates read failed: ${ratesRes.status} ${await ratesRes.text()}`);
+    if (!runsRes.ok) throw new Error(`runs read failed: ${runsRes.status} ${await runsRes.text()}`);
+    const rates = (await ratesRes.json()).map((r) => ({ employeeId: String(r.employee_id), rate: Number(r.rate), from: r.effective_from }));
+    const runs = (await runsRes.json()).map((r) => runCost(r, rates));
+    return json(200, { ok: true, runs });
+  } catch (err) {
+    return json(502, { ok: false, error: String(err.message || err) });
+  }
+};

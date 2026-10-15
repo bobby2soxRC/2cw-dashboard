@@ -145,6 +145,8 @@
   .run-sub .none{color:var(--gold)}
   .run-n{font-family:'DM Mono',monospace;font-size:1rem;text-align:right;white-space:nowrap}
   .run-n .k{display:block;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .run-n .cost{display:block;font-size:.7rem;color:var(--green)}
+  .d-note{font-size:.78rem;color:var(--subtext);margin-top:8px}
   .pill.warn{color:var(--gold);border-color:rgba(212,168,67,.4)}
   .s-more{margin-top:4px}
   .modal.wide{max-width:760px}
@@ -393,7 +395,17 @@ const L = {
   s_close: { en: 'Close', es: 'Cerrar' },
   s_total: { en: 'Total', es: 'Total' },
   s_hours: { en: 'labor hrs', es: 'hrs de trabajo' },
-  s_accounted: { en: 'accounted for', es: 'contabilizado' }
+  s_accounted: { en: 'accounted for', es: 'contabilizado' },
+  // Labor cost (only with 'preroll costs')
+  c_head: { en: 'Labor Cost', es: 'Costo de mano de obra' },
+  c_total: { en: 'Labor cost (whole run)', es: 'Costo de mano de obra (toda la corrida)' },
+  c_each: { en: 'Labor cost per pre-roll', es: 'Costo de mano de obra por preroll' },
+  c_each_short: { en: 'each', es: 'c/u' },
+  c_default: { en: '{h} of {t} labor hrs are at the default rate (Labor Rates), since the Workforce Log’s employee IDs aren’t matched to people’s own rates.',
+               es: '{h} de {t} hrs de trabajo van a la tarifa general (Tarifas de trabajo), porque los ID de empleado del registro no están vinculados a la tarifa de cada persona.' },
+  c_unrated: { en: '{h} labor hrs have no rate and aren’t counted.', es: '{h} hrs de trabajo no tienen tarifa y no se cuentan.' },
+  c_none: { en: 'No Workforce Log hours on this run, so no labor cost.', es: 'Esta corrida no tiene horas en el registro de personal, así que no hay costo.' },
+  c_err: { en: 'Could not load labor costs:', es: 'No se pudieron cargar los costos:' }
 };
 const STAGE_LABELS = {
   needs_strain: { en: 'Needs strain', es: 'Falta variedad' },
@@ -445,6 +457,12 @@ let batches = {};       // pr_num -> [operations_forms rows]
 let runs = [];          // every Pre-Roll Production form, linked to a request or not
 let showAllRuns = false;
 let viewingRun = null;  // id of the run open in the detail modal
+// Labor $ per run, only for 'preroll costs' (2cw_preroll_costs, set at hub
+// login). netlify/functions/preroll-costs.js works them out from the pay
+// rates server-side and re-checks the permission; no rate reaches the page.
+const canCost = sessionStorage.getItem('2cw_preroll_costs') === 'true';
+let costs = {};         // run id -> {cost, hours, defaultHours, unratedHours}
+let costErr = '';
 let products = {};      // bsku -> preroll_products row
 let manual = [];        // preroll_queue_items rows still in the queue
 let queueOrder = [];    // refs (PR# / PQ-#) in the saved order
@@ -544,10 +562,24 @@ async function saveQueueOrder(order) {
   return error ? { ok: false, reason: error.message } : { ok: true };
 }
 
+async function loadCosts() {
+  if (!canCost) return;
+  try {
+    const res = await fetch('/.netlify/functions/preroll-costs', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: sessionStorage.getItem('2cw_pin') || '' })
+    });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok || !j.ok) throw new Error(j.error || `HTTP ${res.status}`);
+    costs = Object.fromEntries((j.runs || []).map((c) => [c.id, c]));
+    costErr = '';
+  } catch (e) { costErr = String(e.message || e); }
+}
+
 async function refresh() {
   // The queue's hand-added items don't need the Sheet, so they load (and
   // show) even when the Sheet or the plans can't be read.
-  const [b, q, pr] = await Promise.all([loadBatches(), loadQueue(), loadProducts()]);
+  const [b, q, pr] = await Promise.all([loadBatches(), loadQueue(), loadProducts(), loadCosts()]);
   batches = b; products = pr; manual = q.manual; queueOrder = q.order; queueErr = q.err;
   renderRuns();
   try {
@@ -804,13 +836,26 @@ const isFlagged = (fd, v) => !!fd.flag && v !== null && v !== undefined && v !==
 // Calc fields with a `flag` (Starting Weight Accounted For) that's tripped.
 const runFlags = (r) => RUN_STATION.fields.filter((fd) => isFlagged(fd, (r.fields || {})[fd.k]));
 
+const fmtMoney = (x) => '$' + Number(x).toLocaleString(locale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// A pre-roll costs cents, so under $1 shows four places ($0.0263).
+const fmtEach = (x) => '$' + Number(x).toLocaleString(locale(), x < 1
+  ? { minimumFractionDigits: 4, maximumFractionDigits: 4 } : { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// Labor $ per pre-roll for a run, or null (no access, no cost, none made).
+function perPreroll(r) {
+  const c = costs[r.id];
+  const made = num((r.fields || {}).totalPrerolls);
+  return c && c.cost > 0 && made > 0 ? c.cost / made : null;
+}
+
 function renderRuns() {
   const box = document.getElementById('runs');
   const done = runs.filter((r) => r.status === 'submitted').sort((a, b) => runWhen(b).localeCompare(runWhen(a)));
-  if (!done.length) { box.innerHTML = `<div class="empty">${t(L.s_none)}</div>`; return; }
+  const err = canCost && costErr ? `<div class="err" style="margin-bottom:8px">${t(L.c_err)} ${esc(costErr)}</div>` : '';
+  if (!done.length) { box.innerHTML = err + `<div class="empty">${t(L.s_none)}</div>`; return; }
   const shown = showAllRuns ? done : done.slice(0, RUNS_SHOWN);
-  box.innerHTML = shown.map((r) => {
+  box.innerHTML = err + shown.map((r) => {
     const f = r.fields || {};
+    const each = perPreroll(r);
     const start = f.date || r.work_date;
     const dates = f.finishDate && f.finishDate !== start ? `${fmtDate(start)} → ${fmtDate(f.finishDate)}` : fmtDate(start);
     return `<button type="button" class="run" onclick="openRun('${esc(r.id)}')">
@@ -822,7 +867,8 @@ function renderRuns() {
           · ${fmtNum(f.laborHours, 1)} ${t(L.s_hours)}${f.accountedPct != null ? ` · ${fmtPct(f.accountedPct)} ${t(L.s_accounted)}` : ''}
           · ${esc(r.owner_user || '—')}</div>
       </div>
-      <div class="run-n"><span class="k">${t(L.prerolls)}</span>${fmtN(f.totalPrerolls)}</div>
+      <div class="run-n"><span class="k">${t(L.prerolls)}</span>${fmtN(f.totalPrerolls)}${
+        each != null ? `<span class="cost">${fmtEach(each)} ${t(L.c_each_short)}</span>` : ''}</div>
     </button>`;
   }).join('') + (done.length > RUNS_SHOWN
     ? `<button type="button" class="btn s-more" onclick="showAllRuns = !showAllRuns; renderRuns()">${
@@ -875,6 +921,23 @@ function runFieldHtml(fd, r) {
     <div class="v">${esc(runValue(fd, v))}${flagged ? ` <span class="pill warn">${t(L.s_check)}</span>` : ''}</div></div>`;
 }
 
+function costHtml(r) {
+  if (!canCost) return '';
+  const head = `<div class="d-head">${t(L.c_head)}</div>`;
+  if (costErr) return head + `<div class="err">${t(L.c_err)} ${esc(costErr)}</div>`;
+  const c = costs[r.id];
+  if (!c || !(c.hours > 0)) return head + `<div class="d-note">${t(L.c_none)}</div>`;
+  const each = perPreroll(r);
+  const notes = [
+    c.defaultHours > 0 ? t(L.c_default).replace('{h}', fmtNum(c.defaultHours, 2)).replace('{t}', fmtNum(c.hours, 2)) : '',
+    c.unratedHours > 0 ? t(L.c_unrated).replace('{h}', fmtNum(c.unratedHours, 2)) : ''
+  ].filter(Boolean);
+  return head +
+    `<div class="d-row hl"><div class="k">${t(L.c_total)}</div><div class="v">${fmtMoney(c.cost)}</div></div>` +
+    `<div class="d-row hl"><div class="k">${t(L.c_each)}</div><div class="v">${each != null ? fmtEach(each) : '—'}</div></div>` +
+    notes.map((n) => `<div class="d-note">${esc(n)}</div>`).join('');
+}
+
 function openRun(id) {
   const r = runs.find((x) => x.id === id);
   if (!r) return;
@@ -901,7 +964,8 @@ function openRun(id) {
       </div>
     </div>
     <div class="m-sub">${sub.map(esc).join('<br>')}</div>
-    ${RUN_STATION.fields.map((fd) => runFieldHtml(fd, r)).join('')}`;
+    ${RUN_STATION.fields.map((fd) => runFieldHtml(fd, r)).join('')}
+    ${costHtml(r)}`;
   document.getElementById('backdrop').style.display = 'block';
 }
 

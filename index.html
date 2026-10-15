@@ -606,6 +606,12 @@ async function buildHub(user){
   // 'buck release' (who can also reorder those two), Pre-Roll by station
   // edit access or the Pre-Roll Dashboard card.
   const canEdit = (k) => editList === 'all' || (Array.isArray(editList) && editList.includes(k));
+  // 'preroll costs' shows labor $ per run on the Pre-Roll Dashboard (and
+  // implies the card). Only shows/hides them — the numbers come from
+  // netlify/functions/preroll-costs.js, which re-checks the column from the PIN.
+  const prerollCosts = (user['preroll costs'] || '').toUpperCase() === 'TRUE';
+  if (prerollCosts) user.preroll_dashboard = 'TRUE';
+  sessionStorage.setItem('2cw_preroll_costs', prerollCosts ? 'true' : 'false');
   const prerollDash = (user.preroll_dashboard || '').toUpperCase() === 'TRUE';
   sessionStorage.setItem('2cw_preroll_dash', prerollDash ? 'true' : 'false');
   const buckRelease = (user['buck release'] || '').toUpperCase() === 'TRUE';
@@ -1112,6 +1118,7 @@ function doLogout(){
   sessionStorage.removeItem('2cw_pr_access');
   sessionStorage.removeItem('2cw_buck_release');
   sessionStorage.removeItem('2cw_preroll_dash');
+  sessionStorage.removeItem('2cw_preroll_costs');
   sessionStorage.removeItem('2cw_labor_costs');
   sessionStorage.removeItem('2cw_ops_edit_access');
   sessionStorage.removeItem('2cw_ops_view_access');

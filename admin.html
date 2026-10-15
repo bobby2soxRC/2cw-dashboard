@@ -422,6 +422,7 @@ function cardSummary(u){
   if(comm.length) pills.push(comm.length===1 ? 'Commission: '+COMMISSION_REP_MAP[comm[0]] : 'Commission: all reps');
   if((cols['pr access']||'').toUpperCase()==='TRUE') pills.push('Add PR');
   if((cols['labor log costs']||'').toUpperCase()==='TRUE') pills.push('Labor costs');
+  if((cols['preroll costs']||'').toUpperCase()==='TRUE') pills.push('Pre-roll costs');
   const hiExtra = [['harvest intakes delete', 'delete'], ['harvest intakes history', 'history']]
     .filter(([col]) => (cols[col]||'').toUpperCase()==='TRUE').map(([, l]) => l);
   if((cols['harvest intakes edit']||'').toUpperCase()==='TRUE') pills.push(['Harvest Intakes: edit', ...hiExtra].join(', '));
@@ -1155,6 +1156,7 @@ function openEditor(id){
     <div class="check-grid">
       <label class="check-item"><input type="checkbox" data-card="pr access" ${(cols['pr access']||'').toUpperCase()==='TRUE'?'checked':''}/> Add PR button (Inventory)</label>
       <label class="check-item"><input type="checkbox" data-card="labor log costs" ${(cols['labor log costs']||'').toUpperCase()==='TRUE'?'checked':''}/> Labor Log — see costs (uses everyone's pay rates; implies Labor Log)</label>
+      <label class="check-item"><input type="checkbox" data-card="preroll costs" ${(cols['preroll costs']||'').toUpperCase()==='TRUE'?'checked':''}/> Pre-Roll Dashboard — see labor cost per pre-roll (from pay rates; implies Pre-Roll Dashboard)</label>
     </div>
 
     <div class="section-hd">Harvest Intakes</div>

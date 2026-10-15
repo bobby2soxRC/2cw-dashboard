@@ -391,6 +391,12 @@ including people typed into the Labor Log by name.
   `labor-rates.js` checks it from the PIN before returning any rates.
   Anyone with it can work out each person's rate from the costs shown, so
   give it only to people who could see pay anyway.
+- **Pre-Roll Dashboard — see labor cost per pre-roll** (`preroll costs`,
+  under Special access; implies the Pre-Roll Dashboard card, sets
+  `2cw_preroll_costs` at login) adds labor $ to the dashboard's Submitted
+  Runs. `netlify/functions/preroll-costs.js` checks it from the PIN and
+  returns only each run's totals, never a rate, but a one-person run's
+  cost ÷ hours is that rate, so the same caution applies.
 
 ## On-Stem Flower (bucking queue and releasing held Take Downs)
 
