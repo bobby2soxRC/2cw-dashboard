@@ -116,7 +116,7 @@
       harvests_text: harvests.map((h) => windowText(h) + (Number(h.lb) ? ` (${fmtN(h.lb)} lbs)` : '')).join('; '),
       support_text: support.map((s) => windowText(s) + (s.people ? `, ${s.people} ${Number(s.people) === 1 ? 'person' : 'people'}` : '')).join('; '),
       lines: services.map((k) => {
-        const line = { label: serviceLabel(k), unit: EXB[k].unit, qty: '', rate: EXB[k].rate, notes: EXB[k].notes || '' };
+        const line = { k, label: serviceLabel(k), unit: EXB[k].unit, qty: '', rate: EXB[k].rate, notes: EXB[k].notes || '' };
         if (!requested.includes(k)) return line;
         if (k === 'drying') {
           if (lbs) line.qty = `${fmtN(lbs)} (est.)`;
@@ -366,7 +366,10 @@
   const clean = (s) => String(s == null ? '' : s).replace(/[\u2032\u2035]/g, '’').replace(/[\u2033\u2036]/g, '”')
     .replace(/[\u00a0\u2000-\u200b\u202f]/g, ' ').replace(/[^\x00-\xff\u0152\u0153\u0160\u0161\u0178\u017d\u017e\u0192\u02c6\u02dc\u2013\u2014\u2018-\u201e\u2020-\u2022\u2026\u2030\u2039\u203a\u20ac\u2122]/g, '?');
 
-  function build(jsPDF, d, kind = 'msa') {
+  // kind 'msa' | 'invoice' (the deposit request), or any other kind with
+  // its own blocks and footer passed in `custom` ({ blocks, footer }) — the
+  // services invoice request (invoice_services.js) builds its PDF that way.
+  function build(jsPDF, d, kind = 'msa', custom) {
     d = { ...d, lines: (d.lines || []).map((l) => Object.fromEntries(Object.entries(l).map(([k, x]) => [k, clean(x)]))) };
     for (const k of Object.keys(d)) if (typeof d[k] === 'string') d[k] = clean(d[k]);
     const doc = new jsPDF({ unit: 'pt', format: 'letter' });
@@ -446,7 +449,7 @@
     }
 
     const W = PAGE_W - M * 2;
-    (kind === 'invoice' ? invoiceBlocks(d) : blocks(d)).forEach((b) => {
+    (custom ? custom.blocks : kind === 'invoice' ? invoiceBlocks(d) : blocks(d)).forEach((b) => {
       switch (b.t) {
         case 'sub':
           y += GAP; room(LH * 3); rich(`**${b.text}**`, M, W); doc.setDrawColor(150); doc.line(M, y, M + W, y); doc.setDrawColor(0); y += GAP; break;
@@ -493,7 +496,7 @@
     doc.setFontSize(9); font('normal');
     for (let i = 1; i <= n; i++) {
       doc.setPage(i);
-      doc.text(`${kind === 'invoice' ? 'Invoice request' : 'Master Service Agreement'} — ${d.legal_name || 'Customer'}`, M, PAGE_H - 40);
+      doc.text(custom ? clean(custom.footer) : `${kind === 'invoice' ? 'Invoice request' : 'Master Service Agreement'} — ${d.legal_name || 'Customer'}`, M, PAGE_H - 40);
       doc.text(`Page ${i} of ${n}`, PAGE_W - M, PAGE_H - 40, { align: 'right' });
     }
     return doc;
@@ -517,10 +520,10 @@
     return jsPdfPromise;
   }
 
-  async function download(d, kind = 'msa') {
+  async function download(d, kind = 'msa', custom) {
     const jsPDF = await loadJsPdf();
-    const doc = build(jsPDF, d, kind);
-    const name = fileName(d, kind);
+    const doc = build(jsPDF, d, kind, custom);
+    const name = custom ? custom.fileName : fileName(d, kind);
     const file = new File([doc.output('blob')], name, { type: 'application/pdf' });
     // Phones: the share sheet (Save to Files, Mail, AirDrop). Desktop: download.
     if (navigator.canShare && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && navigator.canShare({ files: [file] })) {
@@ -533,7 +536,8 @@
   // ── The dialog ─────────────────────────────────────────────────────────
   // Self-contained (own overlay and styles) so any page can use it.
   // opts.intakes: drying requests to offer under "Fill from a drying
-  // request" (the Customer IDs tab passes these); opts.pick: id to preselect.
+  // request" (the Customer IDs tab passes these); opts.pick: id to preselect;
+  // opts.onDownload(d): called after the PDF is made.
   const CSS = `
     .msa-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:2000;overflow-y:auto;padding:calc(12px + env(safe-area-inset-top)) 12px 40px}
     .msa{background:var(--surface,#13151a);color:var(--text,#e8eaf0);border:1px solid var(--border,#1e2129);border-radius:14px;max-width:720px;margin:3vh auto;padding:20px;font-family:inherit}
@@ -585,8 +589,10 @@
     const read = () => {
       bg.querySelectorAll('[data-k]').forEach((el) => { d[el.dataset.k] = el.value.trim(); });
       d.lines = [...bg.querySelectorAll('.msa-line[data-i]')].map((row) => {
-        const l = {}; row.querySelectorAll('[data-l]').forEach((el) => { l[el.dataset.l] = el.value.trim(); }); return l;
-      }).filter((l) => Object.values(l).some(Boolean));
+        const l = {}; row.querySelectorAll('[data-l]').forEach((el) => { l[el.dataset.l] = el.value.trim(); });
+        const k = (d.lines[Number(row.dataset.i)] || {}).k;
+        return k ? { k, ...l } : l;
+      }).filter((l) => Object.entries(l).some(([key, x]) => key !== 'k' && x));
     };
     const draw = () => {
       const unused = SERVICE_LIST().filter((s) => EXB[s.k] && !d.lines.some((l) => l.label === s.l));
@@ -638,7 +644,7 @@
       if (add) add.onchange = () => {
         read();
         const k = add.value; if (!k) return;
-        d.lines.push({ label: serviceLabel(k), unit: EXB[k].unit, qty: '', rate: EXB[k].rate, notes: EXB[k].notes || '' });
+        d.lines.push({ k, label: serviceLabel(k), unit: EXB[k].unit, qty: '', rate: EXB[k].rate, notes: EXB[k].notes || '' });
         draw();
       };
       const src = bg.querySelector('#msa-src');
@@ -656,7 +662,12 @@
         const err = bg.querySelector('#msa-err'), label = btn.textContent;
         read(); err.style.display = 'none';
         btn.disabled = true; btn.textContent = 'Making PDF…';
-        try { await download(d, btn.dataset.kind); }
+        try {
+          await download(d, btn.dataset.kind);
+          // The Customer IDs tab keeps this customer's Exhibit B rates as
+          // their contract rates (the services invoice request reads them).
+          if (opts.onDownload) await opts.onDownload(d);
+        }
         catch (ex) { err.textContent = ex.message || String(ex); err.style.display = 'block'; }
         btn.disabled = false; btn.textContent = label;
       }; });
@@ -729,7 +740,8 @@
     };
   }
 
-  const api = { open, openInvoice, fromIntake, build, blocks, invoiceBlocks, deposit, guessEntity, fileName };
+  const api = { open, openInvoice, fromIntake, build, blocks, invoiceBlocks, deposit, guessEntity, fileName, download,
+    EXB, STATES, ENTITIES, COMPANY, serviceLabel, parseNum, money, fmtDate, fmtN, fmtPhone, today, CSS, esc };
   if (typeof window !== 'undefined') window.MSA = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();

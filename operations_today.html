@@ -36,6 +36,15 @@
     .title{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,6vw,46px);letter-spacing:.04em;line-height:1}
     .sub{margin-top:6px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
 
+    .datebar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:18px}
+    .datebar button,.datebar input{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;
+      font-family:'DM Mono',monospace;font-size:.85rem;min-height:44px;padding:0 14px;cursor:pointer}
+    .datebar input{color-scheme:dark;outline:none}
+    .datebar input:focus{border-color:var(--green)}
+    .datebar button:disabled{opacity:.35;cursor:default}
+    .datebar .today-btn{text-transform:uppercase;letter-spacing:.06em;font-size:.78rem}
+    .datebar .today-btn.on{background:var(--green);border-color:var(--green);color:#000;font-weight:700}
+
     .filters{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0}
     .filters button{background:var(--surface);border:1px solid var(--border);color:var(--subtext);border-radius:10px;padding:.6rem 1rem;
       font-family:'DM Mono',monospace;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;min-height:44px}
@@ -72,6 +81,12 @@
 <main>
   <div class="title" id="title">Today</div>
   <div class="sub" id="sub">—</div>
+  <div class="datebar">
+    <button id="prev-day" aria-label="Previous day">◀</button>
+    <input type="date" id="day"/>
+    <button id="next-day" aria-label="Next day">▶</button>
+    <button id="today-btn" class="today-btn">Today</button>
+  </div>
   <div class="filters" id="filters"></div>
   <div id="board"></div>
   <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution</footer>
@@ -98,6 +113,9 @@
     noAccess: { en: 'You don’t have view access to the operations board yet. Ask your manager to turn it on.',
                 es: 'Aún no tiene acceso de visualización al panel de producción. Pida a su gerente que lo active.' },
     empty: { en: 'Nothing logged yet today.', es: 'Nada registrado hoy todavía.' },
+    emptyDay: { en: 'Nothing logged on this day.', es: 'Nada registrado este día.' },
+    today: { en: 'Today', es: 'Hoy' },
+    loading: { en: 'Loading…', es: 'Cargando…' },
     setupTitle: { en: 'Live view isn’t connected yet', es: 'La vista en vivo aún no está conectada' },
     setupBody: { en: 'This page needs a Supabase project (config/supabase_config.js is still blank). Until then there is nothing to show here — finished forms still show up on the Operations Dashboard.',
                  es: 'Esta página necesita un proyecto de Supabase (config/supabase_config.js sigue vacío). Mientras tanto no hay nada que mostrar aquí — los formularios terminados siguen apareciendo en el Panel de Producción.' }
@@ -147,17 +165,64 @@
     const s = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
     if (s < 60) return `${s}s`;
     if (s < 3600) return `${Math.round(s / 60)}m`;
-    return `${Math.round(s / 3600)}h`;
+    if (s < 86400 * 2) return `${Math.round(s / 3600)}h`;
+    return `${Math.round(s / 86400)}d`;
   };
 
-  let rows = (await listToday()).filter((r) => visibleStations.some((s) => s.key === r.station_key));
+  // The day being looked at — today unless ?date=YYYY-MM-DD picks another.
+  // Same UTC date the forms save their work_date with (todayStr in ops_data.js).
+  const isDay = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
+  const shiftDay = (iso, n) => {
+    const d = new Date(iso + 'T00:00:00Z');
+    d.setUTCDate(d.getUTCDate() + n);
+    return d.toISOString().slice(0, 10);
+  };
+  const dayLabel = (iso) => new Date(iso + 'T00:00:00Z')
+    .toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+  const urlDay = new URLSearchParams(location.search).get('date');
+  let day = isDay(urlDay) && urlDay <= todayStr() ? urlDay : todayStr();
+  let rows = [];
+
+  const dayInput = document.getElementById('day');
+  const todayBtn = document.getElementById('today-btn');
+  todayBtn.textContent = t(L.today);
+  dayInput.max = todayStr();
+  dayInput.onchange = () => { if (isDay(dayInput.value)) goTo(dayInput.value); };
+  document.getElementById('prev-day').onclick = () => goTo(shiftDay(day, -1));
+  document.getElementById('next-day').onclick = () => goTo(shiftDay(day, 1));
+  todayBtn.onclick = () => goTo(todayStr());
+
+  async function goTo(iso) {
+    if (iso > todayStr()) iso = todayStr();
+    day = iso;
+    const url = new URL(location.href);
+    if (day === todayStr()) url.searchParams.delete('date'); else url.searchParams.set('date', day);
+    history.replaceState(null, '', url);
+    syncDateBar();
+    document.getElementById('board').innerHTML = `<div class="empty">${t(L.loading)}</div>`;
+    const fetched = (await listToday(day)).filter((r) => visibleStations.some((s) => s.key === r.station_key));
+    if (iso !== day) return;   // a newer pick landed while this one loaded
+    rows = fetched;
+    render();
+  }
+
+  function syncDateBar() {
+    const isToday = day === todayStr();
+    dayInput.max = todayStr();
+    dayInput.value = day;
+    document.getElementById('next-day').disabled = isToday;
+    todayBtn.classList.toggle('on', isToday);
+    const title = isToday ? t(L.title) : dayLabel(day);
+    document.getElementById('title').textContent = title;
+    document.title = `${title} — 2CW`;
+  }
 
   function render() {
     const filtered = stationFilter ? rows.filter((r) => r.station_key === stationFilter) : rows;
     document.getElementById('sub').textContent =
-      `${filtered.length} ${filtered.length === 1 ? 'form' : 'forms'} · ${new Date().toLocaleDateString()}`;
+      `${filtered.length} ${filtered.length === 1 ? 'form' : 'forms'}${day === todayStr() ? ' · ' + dayLabel(day) : ''}`;
     const board = document.getElementById('board');
-    if (!filtered.length) { board.innerHTML = `<div class="empty">${t(L.empty)}</div>`; return; }
+    if (!filtered.length) { board.className = ''; board.innerHTML = `<div class="empty">${t(day === todayStr() ? L.empty : L.emptyDay)}</div>`; return; }
 
     board.className = 'board';
     board.innerHTML = filtered.map((r) => {
@@ -180,13 +245,14 @@
       </div>`;
     }).join('');
   }
-  render();
+  await goTo(day);
 
   // Realtime: a row landing here means someone's autosave just committed on
-  // another tablet. Patch it into the local list rather than refetching.
+  // another tablet. Patch it into the local list rather than refetching —
+  // whichever day is showing, so an edit to an older form shows up too.
   subscribeToday((row) => {
     if (!row || !visibleStations.some((s) => s.key === row.station_key)) return;
-    if (row.work_date !== new Date().toISOString().slice(0, 10)) return;
+    if (row.work_date !== day) return;
     const i = rows.findIndex((r) => r.id === row.id);
     if (i > -1) rows[i] = row; else rows.unshift(row);
     render();
