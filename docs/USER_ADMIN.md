@@ -262,14 +262,14 @@ Emailed reports can read recipients straight from `app_users.email`.
 
 `reset_pin.html` and `netlify/functions/pin-reset.js` are in place but
 nothing links to them yet. The sending address is sorted now (it sends as
-services@somarosafarms.com, see `docs/EMAIL_REPORTS.md`); what's left is
+2cw.reports@gmail.com, see `docs/EMAIL_REPORTS.md`); what's left is
 making sure users have emails, then adding the link.
 To turn it on, add this under the login button in `index.html`:
 `<a class="forgot-link" href="/reset_pin.html">Forgot your PIN?</a>` (the
 `.forgot-link` style is already there), and do the setup below.
 
 The person enters their email; if it matches an active user,
-`pin-reset.js` emails them a link (from services@somarosafarms.com) that
+`pin-reset.js` emails them a link (from 2cw.reports@gmail.com) that
 expires in 30 minutes. The link opens the same page, where they choose a new
 4-digit PIN. The link is signed over the user's *current* PIN, so it stops
 working once used, or if an admin changes the PIN first. The form always

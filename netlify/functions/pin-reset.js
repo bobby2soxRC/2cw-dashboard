@@ -19,7 +19,7 @@
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY   same as admin.js
 //   ADMIN_SIGNING_SECRET                      reused to sign reset tokens
 //                                             (domain-separated from admin tokens)
-//   GMAIL_USER, GMAIL_APP_PASSWORD            sent as services@somarosafarms.com —
+//   GMAIL_USER, GMAIL_APP_PASSWORD            sent as 2cw.reports@gmail.com —
 //                                             see netlify/lib/mailer.js
 // URL (the site's own address) is set by Netlify automatically.
 

@@ -1,17 +1,17 @@
-// Outgoing email for every Netlify function, sent as services@somarosafarms.com
-// through Google Workspace's SMTP server. Lives outside netlify/functions so
+// Outgoing email for every Netlify function, sent as 2cw.reports@gmail.com
+// through Gmail's SMTP server. Lives outside netlify/functions so
 // Netlify doesn't deploy it as a function of its own; functions require() it
 // and the bundler pulls it in.
 //
 // Required env vars (Netlify site config):
-//   GMAIL_USER           services@somarosafarms.com
+//   GMAIL_USER           2cw.reports@gmail.com
 //   GMAIL_APP_PASSWORD   16-character app password for that account
 //                        (Google Account -> Security -> 2-Step Verification
 //                        -> App passwords). Not the account's real password.
 // Optional:
 //   MAIL_FROM_NAME       display name, default "2CW Productions"
 //
-// Gmail caps a Workspace account at about 2,000 messages a day, far more than
+// Gmail caps a personal account at about 500 messages a day, far more than
 // reports and PIN resets need. Sent mail shows up in that mailbox's Sent folder.
 
 const nodemailer = require('nodemailer');

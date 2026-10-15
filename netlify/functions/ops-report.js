@@ -5,6 +5,7 @@
 // POST {pin, period:'daily'|'weekly', end?:'YYYY-MM-DD'} -> {ok, to, subject}
 //   Emails the report to the person asking (app_users.email). Needs the
 //   'staff hours' column TRUE for that user, checked here from the PIN.
+//   Labor dollars are included only with 'labor log costs' TRUE as well.
 //   `end` defaults to today for on-demand (today so far), unlike the
 //   scheduled runs, which cover through yesterday.
 //
@@ -52,7 +53,9 @@ exports.handler = async (event) => {
     if (!user.email) return json(400, { ok: false, error: 'There’s no email address on your account — ask an admin to add one.' });
 
     const end = body.end || reportWindow(period).today;
-    const report = await buildReport(period, end);
+    // Labor dollars are pay, so only for people who can see Labor Log costs.
+    const withCost = String((user.columns || {})['labor log costs'] || '').toUpperCase() === 'TRUE';
+    const report = await buildReport(period, end, { withCost });
     await sendMail({ to: user.email, subject: report.subject, html: report.html, text: report.text });
     return json(200, { ok: true, to: user.email, subject: report.subject });
   } catch (e) {

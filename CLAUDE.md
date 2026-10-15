@@ -5,7 +5,7 @@ live data. Docs live in `docs/` — `OPERATIONS_APP.md` (station forms,
 `operations_stations.js`), `USER_ADMIN.md` (users, admin panel) and
 `EMAIL_REPORTS.md` (outgoing email, scheduled reports).
 
-- All email goes out as services@somarosafarms.com via `netlify/lib/mailer.js`
+- All email goes out as 2cw.reports@gmail.com via `netlify/lib/mailer.js`
   (Gmail SMTP + app password). Shared function code lives in `netlify/lib/`;
   `package.json` holds function deps (nodemailer).
 
@@ -31,7 +31,7 @@ then cutover. Plan and setup: "Google sign-in" in `docs/USER_ADMIN.md`.
 
 Operations & Staff Hours report: daily, weekly (Mondays) and on demand
 (✉ button on `staff_hours.html`), built in `netlify/lib/ops_report.js`.
-Code is done; it sends nothing until the services@ app password and the
+Code is done; it sends nothing until the Gmail app password and the
 `OPS_REPORT_*_TO` recipient env vars are set in Netlify. Setup and how to
 add more reports: `docs/EMAIL_REPORTS.md`.
 
@@ -43,7 +43,7 @@ Built and deployed, but not linked from anywhere:
 - `reset_pin.html` — request-a-link page, and the choose-a-new-PIN page the
   emailed link opens.
 - `netlify/functions/pin-reset.js` — sends the link (shared mailer, as
-  services@), verifies it, sets the new PIN.
+  2cw.reports@gmail.com), verifies it, sets the new PIN.
 - `app_users.email` and `app_users.pin_reset_sent_at` columns already exist.
 
 The sender was the blocker; as of 2026-10-15 it uses the shared Gmail mailer,

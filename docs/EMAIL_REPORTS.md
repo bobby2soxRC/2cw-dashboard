@@ -1,37 +1,37 @@
 # Email & reports
 
 All outgoing email (reports, PIN reset links) is sent as
-**services@somarosafarms.com** through Google Workspace's SMTP server
-(`smtp.gmail.com`), by `netlify/lib/mailer.js`. Sent mail shows up in that
-mailbox's Sent folder. Gmail allows a Workspace account about 2,000 messages
-a day.
+**2cw.reports@gmail.com** through Gmail's SMTP server (`smtp.gmail.com`),
+by `netlify/lib/mailer.js`. Recipients see "2CW Productions
+<2cw.reports@gmail.com>". Sent mail shows up in that account's Sent folder.
+A personal Gmail account can send about 500 messages a day.
+
+Why not services@somarosafarms.com: Gmail rejected its app password (535
+BadCredentials) on 2026-10-15, and fixing that needs the company's Workspace
+admin. Switching to it later only means changing `GMAIL_USER` and
+`GMAIL_APP_PASSWORD` in Netlify.
 
 ## One-time setup
 
-1. **Allow app passwords** (Workspace admin, admin.google.com): Security →
-   Authentication → 2-Step Verification → let users turn it on. App
-   passwords only exist for accounts with 2-Step Verification on.
-2. **Signed in as services@somarosafarms.com**: Google Account → Security →
-   turn on 2-Step Verification, then Security → App passwords → create one
-   named "2CW dashboard". Copy the 16-character password.
+1. **Signed in as 2cw.reports@gmail.com**: Google Account → Security → turn
+   on 2-Step Verification, then go to myaccount.google.com/apppasswords and
+   create one named "2CW dashboard". Copy the 16-character password.
+2. **Check it** before touching Netlify:
+   `node scripts/test_gmail_login.js 2cw.reports@gmail.com` (paste the
+   password; it signs in to Gmail without sending anything).
 3. **Netlify** → Site configuration → Environment variables:
    | Variable | Value |
    |---|---|
-   | `GMAIL_USER` | `services@somarosafarms.com` |
-   | `GMAIL_APP_PASSWORD` | the app password (spaces are fine) |
+   | `GMAIL_USER` | `2cw.reports@gmail.com` |
+   | `GMAIL_APP_PASSWORD` | the app password (spaces are fine), marked secret |
    | `MAIL_FROM_NAME` | optional display name, default `2CW Productions` |
    | `OPS_REPORT_DAILY_TO` | comma-separated recipients for the daily report |
    | `OPS_REPORT_WEEKLY_TO` | comma-separated recipients for the weekly report |
-4. Redeploy (functions only pick up env var changes on a new deploy).
+4. Redeploy (Deploys → Trigger deploy → Deploy site). Functions only pick up
+   env var changes on a new deploy.
 
-If services@ ever changes its password or turns 2-Step Verification off, the
+If the account's password changes or 2-Step Verification is turned off, the
 app password stops working; make a new one and update `GMAIL_APP_PASSWORD`.
-
-Optional, for deliverability: somarosafarms.com has no SPF record. Adding a
-TXT record `v=spf1 include:_spf.google.com ~all` (DNS is at
-name-services.com) and turning on DKIM in the Workspace admin
-(Apps → Google Workspace → Gmail → Authenticate email) keeps reports out of
-spam folders.
 
 ## Operations & Staff Hours report
 
@@ -39,9 +39,18 @@ Built in `netlify/lib/ops_report.js`:
 - **Staff hours** from Connecteam shifts (`data/connecteam_shifts.json`):
   totals, by site, by activity, by person, overtime flags (daily: over 8 / 12
   hrs; weekly: over 40 hrs or any day over 8), and missing clock-outs.
-- **Operations** from submitted `operations_forms` in Supabase: forms and lbs
-  out per station (same `dailyOutput` numbers as the operations dashboard),
-  plus pages open right now.
+- **Labor $**: each shift's hours × the person's rate on that day from
+  `labor_rates` (admin → Labor Rates; Connecteam user id, `*` default), the
+  same lookup as the Labor Log (`rateFor`). Straight time only, no overtime
+  premium; hours with no rate are listed as uncosted. Scheduled reports
+  always include it; the on-demand button only for users with
+  `labor log costs`.
+- **Operations** from `operations_forms` in Supabase, per station: for
+  Bucking, Hand Trim and Smalls (stations with a `dailySummary`), the pounds
+  weighed in the period on every page, open ones included, counted by each
+  row's own `day` (the forms' Daily Summary numbers) plus people. Other
+  stations: lbs out on submitted forms (`dailyOutput`, as the operations
+  dashboard). Also forms submitted and pages open right now.
 
 | When | Function | Covers | Goes to |
 |---|---|---|---|
