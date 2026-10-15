@@ -154,6 +154,16 @@
     .chip button{background:transparent;border:none;color:var(--subtext);cursor:pointer;font-size:1rem;padding:0 4px}
     .uid-add{display:grid;grid-template-columns:1fr auto;gap:8px}
     .matches button{display:block;width:100%;text-align:left;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 10px;margin-top:6px;cursor:pointer;font:inherit;font-size:.88rem}
+    .worked{border:1px solid var(--border);border-radius:10px;margin-top:10px;overflow:hidden}
+    .worked-hd{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 10px;background:var(--surface2);font-size:.88rem;font-weight:700}
+    .worked .grp{font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:8px 10px 2px}
+    .worked label{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-top:1px solid var(--border);cursor:pointer;font-size:.88rem}
+    .worked label input{width:22px;height:22px;min-height:0;flex:0 0 auto;margin-top:1px}
+    .worked label .s{color:var(--muted);font-size:.78rem}
+    .worked .empty-w{padding:10px;color:var(--muted);font-size:.85rem}
+    .worked .allp{display:flex;gap:8px;align-items:center;font-size:.8rem;font-weight:400;color:var(--subtext);cursor:pointer}
+    .worked .allp input{width:18px;height:18px;min-height:0}
+    .wait{display:inline-block;margin-top:4px;border:1px solid var(--red);color:var(--red);border-radius:99px;padding:1px 9px;font-size:.74rem}
     .ed-ft{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px}
     .err{color:var(--red);font-size:.88rem;margin-top:8px}
     .hint{font-size:.78rem;color:var(--muted);margin-top:5px;line-height:1.45}
@@ -470,6 +480,20 @@
     uidAdd:   { en: 'Add', es: 'Agregar' },
     uidPick:  { en: 'Several UIDs end in {q} — pick one:', es: 'Varios UIDs terminan en {q} — elija uno:' },
     uidNone:  { en: 'No UID ends in {q}. Type the full tag to add it as typed.', es: 'Ningún UID termina en {q}. Escriba la etiqueta completa para agregarla.' },
+    worked:   { en: 'Worked that day', es: 'Trabajado ese día' },
+    workedHint:{ en: 'Packages on station forms ({d}) for {p} — finished and in-progress forms. Tick the ones this project worked on. A package that gets a new tag later (bucked, finished flower, pre-rolls) keeps its labor through that tag.',
+                 es: 'Paquetes en formularios de estación ({d}) para {p} — terminados y en curso. Marque los que trabajó este proyecto. Un paquete que luego recibe etiqueta nueva (desvarado, flor terminada, prerolls) conserva sus horas con esa etiqueta.' },
+    workedAny:{ en: 'every process', es: 'todos los procesos' },
+    workedAll:{ en: 'Show every process that day', es: 'Mostrar todos los procesos ese día' },
+    workedLoading:{ en: 'Looking up station forms…', es: 'Buscando formularios de estación…' },
+    workedNone:{ en: 'No station forms with a UID for these dates and processes.', es: 'No hay formularios de estación con UID para estas fechas y procesos.' },
+    workedNoDate:{ en: 'Set the start date to see what was worked.', es: 'Ponga la fecha de inicio para ver lo trabajado.' },
+    addAll:   { en: 'Add all {n}', es: 'Agregar los {n}' },
+    inProg:   { en: 'in progress', es: 'en curso' },
+    newTag:   { en: 'new tag', es: 'etiqueta nueva' },
+    alsoOn:   { en: 'also on {p}', es: 'también en {p}' },
+    copyFrom: { en: 'Copy {n} UIDs from {p}', es: 'Copiar {n} UIDs de {p}' },
+    waitUids: { en: 'Hours waiting on UIDs', es: 'Horas esperando UIDs' },
     labor:    { en: 'Labor logged', es: 'Horas registradas' },
     laborLine:{ en: '{h} h by {p}', es: '{h} h de {p}' },
     noLabor:  { en: 'No time logged yet', es: 'Sin horas registradas' },
@@ -1438,6 +1462,7 @@
       <div class="card-body">
         <div class="meta"><b>${esc(range)}</b>${daysLabel(f) ? ' · ' + esc(daysLabel(f)) : ''} · ${esc(hoursLabel(f))}${f.process ? `<br>${esc(procTitle(f.process))}` : ''}
           <br>${esc(fill(t(L.uidCount), { n: nU }))}${nU ? ': ' + (f.uids || []).slice(0, 8).map((u) => `<span class="m" title="${esc(u.uid)}">${esc(tail(u.uid))}</span>`).join(' ') + (nU > 8 ? ' …' : '') : ''}
+          ${lab && lab.hours > 0 && !nU ? `<br><span class="wait">${esc(t(L.waitUids))}</span>` : ''}
           <br>${esc(t(L.labor))}: ${lab ? esc(fill(t(L.laborLine), { h: fmtNum(lab.hours, 1), p: lab.people.size === 1 ? t(L.person1) : fill(t(L.personN), { n: lab.people.size }) })) : esc(t(L.noLabor))}</div>
         ${f.notes ? `<div class="note">${esc(f.notes)}</div>` : ''}
         ${f.lead && f.lead.name ? `<div class="meta" style="margin-bottom:6px">${esc(t(L.projLead))}: <b>${esc(f.lead.name)}</b> <span class="lead-tag">${esc(t(L.lead))}</span></div>` : ''}
@@ -1574,6 +1599,8 @@
       <div class="uid-add"><input id="ed-uidq" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="${esc(t(L.uidPh))}"><button type="button" class="btn" id="ed-uidadd">${esc(t(L.uidAdd))}</button></div>
       <div class="matches" id="ed-uidm"></div>
       <div class="hint">${esc(t(L.uidsHint))}</div>
+      <div id="ed-copy">${copyHtml()}</div>
+      <div class="worked" id="ed-worked">${workedHtml()}</div>
 
       <div class="err" id="ed-err"></div>
       <div class="ed-ft">${editing.id ? `<button type="button" class="btn btn-danger" id="ed-rm">${esc(t(L.remove))}</button><span class="spacer"></span>
@@ -1699,6 +1726,40 @@
       } catch (err) { $('ed-err').textContent = `${t(L.failed)} ${err.message || err}`; }
     };
     if ($('ed-dup')) $('ed-dup').onclick = () => duplicateProject(editing.id);
+    // Worked that day: tick / untick a package, add them all, or show every
+    // process. Dates and processes are re-read when they change, without a
+    // re-render (that would close an open date picker).
+    $('ed-worked').onclick = (e) => {
+      const all = e.target.closest('[data-wadd]');
+      if (all) { readEditor(); workedFor(f).filter((w) => !f.uids.some((u) => u.uid === w.uid)).forEach((w) => addUid(w.uid, w.strain)); render(); }
+    };
+    $('ed-worked').onchange = (e) => {
+      const cb = e.target.closest('[data-wuid]');
+      if (cb) {
+        readEditor();
+        if (cb.checked) addUid(cb.dataset.wuid, cb.dataset.wstrain);
+        else f.uids = f.uids.filter((u) => u.uid !== cb.dataset.wuid);
+        render(); return;
+      }
+      if (e.target.id === 'ed-wall') { workedAllProcs = e.target.checked; $('ed-worked').innerHTML = workedHtml(); }
+    };
+    $('ed-copy').onclick = (e) => {
+      if (!e.target.closest('[data-copy]')) return;
+      readEditor();
+      const src = prevProject(f);
+      if (src) (src.fields.uids || []).forEach((u) => { if (!f.uids.some((x) => x.uid === u.uid)) f.uids.push({ ...u, addedAt: localDay(), addedBy: me }); });
+      render();
+    };
+    const refreshUidHelpers = (e) => {
+      const el = e.target;
+      if (!['ed-start', 'ed-end', 'ed-proc', 'ed-name', 'ed-loc'].includes(el.id) && !el.matches('[data-rproc]')) return;
+      readEditor();
+      $('ed-copy').innerHTML = copyHtml();
+      $('ed-worked').innerHTML = workedHtml();
+      loadWorked(f);
+    };
+    document.querySelector('.card.editing').addEventListener('change', refreshUidHelpers);
+    loadWorked(f);
     $('ed-save').onclick = saveEditor;
   }
   async function saveEditor() {
@@ -1768,7 +1829,7 @@
       data.forEach((r) => {
         const f = r.fields || {};
         const note = (raw, strain) => { const u = normUid(raw); if (u.length >= 4 && !uidIndex.has(u)) uidIndex.set(u, { uid: u, strain: strain || '' }); };
-        ['sourceUid', 'batchTag', 'newBuckedUid', 'newBigLeafUid', 'incomingUid'].forEach((k) => f[k] && note(f[k], r.strain || f.strain));
+        ['sourceUid', 'batchTag', 'newBuckedUid', 'newBigLeafUid', 'incomingUid', 'newFinishedUid', 'newPrerollUid', 'newWasteUid'].forEach((k) => f[k] && note(f[k], r.strain || f.strain));
         (f.lines || []).forEach((ln) => ln && ln.sourceUid && note(ln.sourceUid, ln.strain || r.strain));
       });
       if (data.length < 1000) break;
@@ -1787,6 +1848,133 @@
     const out = [...uidIndex.values()].filter((u) => u.uid.endsWith(q));
     if (canix) canix.forEach((p) => { if (p.uid.endsWith(q) && !out.some((x) => x.uid === p.uid)) out.push(p); });
     return out;
+  }
+
+  // ── Worked that day ─────────────────────────────────────────────────────
+  // The packages on station forms (finished or still open) on the days the
+  // project ran, for its processes — the project's own and its
+  // responsibilities'. Each form offers its input package: it exists from
+  // the moment work starts, and any new tag the work makes later (bucked,
+  // finished flower, pre-rolls) traces back to it (buildAliasMap in
+  // ops_analytics.js), so labor split onto it follows the lot.
+  const STATION_KEYS = OPERATIONS_STATIONS.map((s) => s.key);
+  const NEW_TAG = { dry_check: 'sourceUid', buck: 'newBuckedUid', hand_trim: 'newFinishedUid', smalls_trim: 'newFinishedUid', preroll_production: 'newPrerollUid' };
+  const MAX_WORKED_DAYS = 31;
+  const worked = {};          // 'from|to' -> rows | 'loading'
+  let workedAllProcs = false;
+  function workedRange(f) {
+    if (!f.start) return null;
+    const to = f.end || (f.start > localDay() ? f.start : localDay());
+    const from = f.start < addDays(to, -MAX_WORKED_DAYS) ? addDays(to, -MAX_WORKED_DAYS) : f.start;
+    return { from, to, key: from + '|' + to };
+  }
+  function formPackages(r) {
+    const f = r.fields || {}, strain = r.strain || f.strain || '';
+    const st = STATION_BY_KEY[r.station_key];
+    if (r.station_key === 'intake_wet') {
+      const seen = new Map();
+      (f.lines || []).forEach((ln) => { const u = ln && normUid(ln.sourceUid); if (u && !seen.has(u)) seen.set(u, { uid: u, strain: ln.strain || strain }); });
+      return [...seen.values()];
+    }
+    const uid = normUid(r.station_key === 'dry_check' ? (f.incomingUid || f.sourceUid) : (f.sourceUid || f.batchTag));
+    if (!uid) return [];
+    // A placeholder typed in for a tag not issued yet ("PENDIENTE") isn't one.
+    const nt = /\d/.test(f[NEW_TAG[r.station_key]] || '') ? normUid(f[NEW_TAG[r.station_key]]) : '';
+    const inField = st && st.flow && st.flow.input && st.flow.input.field;
+    return [{ uid, strain, newTag: nt && nt !== uid ? nt : '', lb: inField && Number(f[inField]) > 0 ? Number(f[inField]) : null }];
+  }
+  async function loadWorked(f) {
+    const rg = workedRange(f);
+    if (!rg || worked[rg.key] || !client) return;
+    worked[rg.key] = 'loading';
+    const rows = [];
+    for (let page = 0; page < 5; page++) {
+      const { data, error } = await client.from('operations_forms').select('id,station_key,status,work_date,strain,fields,updated_at')
+        .in('station_key', STATION_KEYS).in('status', ['draft', 'submitted']).lte('work_date', rg.to)
+        // An open page that's been worked on across days (Hand Trim, Bucking)
+        // keeps its first day's date, so drafts touched in the range count too.
+        .or(`work_date.gte.${rg.from},and(status.eq.draft,updated_at.gte.${rg.from})`)
+        .order('work_date', { ascending: false }).range(page * 1000, page * 1000 + 999);
+      if (error) { console.error('worked that day', error); break; }
+      rows.push(...(data || []));
+      if (!data || data.length < 1000) break;
+    }
+    worked[rg.key] = rows;
+    if (editing && $('ed-worked')) $('ed-worked').innerHTML = workedHtml();
+  }
+  function projectProcs(f) {
+    return [...new Set([f.process, ...(f.roles || []).map((r) => r.process)].filter((k) => k && STATION_BY_KEY[k]))];
+  }
+  // One entry per package: the stations and days it was on, its strain and
+  // the heaviest input weight a form gave it.
+  function workedFor(f) {
+    const rg = workedRange(f);
+    const rows = rg && Array.isArray(worked[rg.key]) ? worked[rg.key] : [];
+    const procs = projectProcs(f);
+    const pick = workedAllProcs || !procs.length ? null : new Set(procs);
+    const by = new Map();
+    rows.forEach((r) => {
+      if (pick && !pick.has(r.station_key)) return;
+      if (r.status === 'submitted' && !projectRunsOn(f, r.work_date)) return;
+      formPackages(r).forEach((p) => {
+        const x = by.get(p.uid) || { uid: p.uid, strain: '', stations: new Set(), newTags: new Set(), lb: null, open: false, date: '' };
+        x.strain = x.strain || p.strain;
+        x.stations.add(r.station_key);
+        if (p.newTag) x.newTags.add(p.newTag);
+        if (p.lb != null) x.lb = Math.max(x.lb || 0, p.lb);
+        if (r.status === 'draft') x.open = true;
+        if (r.work_date > x.date) x.date = r.work_date;
+        by.set(p.uid, x);
+      });
+    });
+    return [...by.values()].sort((a, b) => (a.strain || '').localeCompare(b.strain || '') || a.uid.localeCompare(b.uid));
+  }
+  function workedHtml() {
+    if (!editing) return '';
+    const f = editing.f, rg = workedRange(f);
+    const procs = projectProcs(f);
+    const hd = `<div class="worked-hd"><span>${esc(t(L.worked))}</span>${procs.length ? `<label class="allp"><input type="checkbox" id="ed-wall" ${workedAllProcs ? 'checked' : ''}> ${esc(t(L.workedAll))}</label>` : ''}</div>`;
+    if (!rg) return hd + `<div class="empty-w">${esc(t(L.workedNoDate))}</div>`;
+    if (!Array.isArray(worked[rg.key])) return hd + `<div class="empty-w">${esc(t(L.workedLoading))}</div>`;
+    const list = workedFor(f);
+    const span = rg.from === rg.to ? fmtDate(rg.from) : `${fmtDate(rg.from)} – ${fmtDate(rg.to)}`;
+    const hint = `<div class="hint" style="padding:0 10px 8px">${esc(fill(t(L.workedHint), { d: span, p: procs.length && !workedAllProcs ? procs.map(procTitle).join(', ') : t(L.workedAny) }))}</div>`;
+    if (!list.length) return hd + hint + `<div class="empty-w">${esc(t(L.workedNone))}</div>`;
+    const have = new Set(f.uids.map((u) => u.uid));
+    const missing = list.filter((w) => !have.has(w.uid)).length;
+    // Grouped by station, in pipeline order.
+    const groups = new Map();
+    list.forEach((w) => { const k = STATION_KEYS.find((s) => w.stations.has(s)); (groups.get(k) || groups.set(k, []).get(k)).push(w); });
+    return hd + hint + [...groups.entries()].sort((a, b) => STATION_KEYS.indexOf(a[0]) - STATION_KEYS.indexOf(b[0])).map(([k, ws]) =>
+      `<div class="grp">${esc(procTitle(k))}</div>` + ws.map((w) => {
+        const others = projects.filter((p) => p.id !== editing.id && (p.fields.uids || []).some((u) => u.uid === w.uid)).map((p) => p.fields.name);
+        const bits = [w.strain, w.lb != null ? fmtNum(w.lb, 1) + ' lb' : '', w.open ? t(L.inProg) : '',
+                      w.newTags.size ? `${t(L.newTag)} ${[...w.newTags].map(tail).join(', ')}` : '',
+                      others.length ? fill(t(L.alsoOn), { p: others.slice(0, 2).join(', ') + (others.length > 2 ? ' …' : '') }) : ''].filter(Boolean);
+        return `<label><input type="checkbox" data-wuid="${esc(w.uid)}" data-wstrain="${esc(w.strain || '')}" ${have.has(w.uid) ? 'checked' : ''}>
+          <span><span class="m" title="${esc(w.uid)}">${esc(tail(w.uid))}</span><br><span class="s">${esc(bits.join(' · '))}</span></span></label>`;
+      }).join('')).join('') +
+      (missing > 1 ? `<div style="padding:8px 10px;border-top:1px solid var(--border)"><button type="button" class="btn btn-sm" data-wadd>${esc(fill(t(L.addAll), { n: missing }))}</button></div>` : '');
+  }
+
+  // ── Copy UIDs from the last run of this project ─────────────────────────
+  // Daily projects ("Trimming 10/14", "Trimming 10/15") often keep working
+  // the same lots: the latest earlier project at the same location with the
+  // same name (dates aside), else the same process, that has UIDs.
+  const baseName = (s) => fold(String(s || '').replace(/\(copy\)|\(copia\)/gi, '').replace(/\b\d{1,2}\/\d{1,2}(\/\d{2,4})?\b/g, '')).replace(/\s+/g, ' ').trim();
+  function prevProject(f) {
+    if (!f.start) return null;
+    const nm = baseName(f.name);
+    const cands = projects.filter((p) => p.id !== editing.id && (p.fields.uids || []).length && (p.fields.start || '') < f.start &&
+      (p.fields.location || '') === (f.location || '') && ((nm && baseName(p.fields.name) === nm) || (f.process && p.fields.process === f.process)));
+    cands.sort((a, b) => (baseName(b.fields.name) === nm) - (baseName(a.fields.name) === nm) || (b.fields.start || '').localeCompare(a.fields.start || ''));
+    return cands[0] || null;
+  }
+  function copyHtml() {
+    if (!editing) return '';
+    const f = editing.f, src = prevProject(f);
+    const n = src ? (src.fields.uids || []).filter((u) => !f.uids.some((x) => x.uid === u.uid)).length : 0;
+    return n ? `<button type="button" class="btn btn-sm btn-ghost" style="margin-top:10px" data-copy>${esc(fill(t(L.copyFrom), { n, p: src.fields.name }))}</button>` : '';
   }
 
   // ── Image (PNG) of the current day/week ─────────────────────────────────

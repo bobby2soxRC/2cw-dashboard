@@ -61,6 +61,20 @@ function buildAliasMap(stages) {
       if (n && n !== src) alias[n] = src;
     });
   });
+  // Trimming and Pre-Roll retag what they make (finished flower / smalls,
+  // pre-rolls and their waste): the new tag is still the source package's
+  // lot, so labor put on it traces back the same way.
+  [['hand_trim', ['newFinishedUid']], ['smalls_trim', ['newFinishedUid']],
+   ['preroll_production', ['newPrerollUid', 'newWasteUid']]].forEach(([key, cols]) => {
+    (stages[key] || []).forEach((r) => {
+      const src = normUid(r.sourceUid);
+      if (!src) return;
+      cols.forEach((k) => {
+        const n = normUid(r[k]);
+        if (n && n !== src && !alias[n]) alias[n] = src;
+      });
+    });
+  });
   return alias;
 }
 

@@ -723,7 +723,25 @@ from them.
   of station records and then active Canix packages. Several can be pasted
   at once. Each card shows the hours logged to the project (Labor Log
   entries with `project`) with links to **Log time** (opens
-  `labor_log.html?project=<id>`) and **Labor entries**.
+  `labor_log.html?project=<id>`) and **Labor entries**. A card with hours
+  logged but no UIDs shows **Hours waiting on UIDs**: those hours sit in
+  the project's pool until UIDs are added, then split over them.
+  - **Worked that day** (under the UID box) lists the packages on station
+    forms on the days the project ran, for its processes (the project's
+    and its responsibilities'; "Show every process" drops that filter).
+    Finished and in-progress forms both count, including open pages
+    touched in the range. Each package can be ticked on or off, or **Add all**.
+    It offers each form's *input* package (Take Down: the farm UID), which
+    exists as soon as work starts. New tags made later trace back to it:
+    bucked (`newBuckedUid`), finished flower and smalls (`newFinishedUid`
+    on Hand Trim and Smalls), pre-rolls and their waste (`newPrerollUid`,
+    `newWasteUid`), all in `buildAliasMap` (`ops_analytics.js`). So labor
+    on the input follows the lot. A typed placeholder with no digits
+    ("PENDIENTE") isn't shown as a new tag. Open-ended projects look back
+    at most 31 days.
+  - **Copy N UIDs from …** copies the UIDs of the latest earlier project
+    at the same location with the same name, dates aside ("Trimming 10/14"
+    → "Trimming 10/15"), else the same process.
 - **Farm labor contractors** sit under Responsibilities: crews counted
   by headcount, not named people. Each contractor (name, with the names
   already used on other projects offered) has one or more times — a

@@ -825,6 +825,11 @@ const OPERATIONS_STATIONS = [
       F.waste(),
       { k: 'bagCount', t: 'number', min: 0, step: 1, dp: 0,
         l: { en: 'Finished Bag Count', es: 'Conteo de bolsas terminadas' } },
+      // Traced back to the lot (buildAliasMap in ops_analytics.js), so labor
+      // put on the new tag still lands on this lot.
+      { k: 'newFinishedUid', t: 'uid', l: { en: 'New UID — Finished Flower', es: 'UID nuevo — flor terminada' },
+        hint: { en: 'The new Metrc tag on the finished flower, once it has one.',
+                es: 'La nueva etiqueta Metrc de la flor terminada, cuando la tenga.' } },
       ...totalsBlock('startingBuckedLb', ['finishedFlowerLb', 'smallsLb', 'normTrimLb', 'aPlusTrimLb', 'sugarTrimLb', 'wasteLb']),
       F.teamLead(), F.laborHours(), F.notes(), F.photo()
     ],
@@ -896,6 +901,9 @@ const OPERATIONS_STATIONS = [
         l: { en: 'Shake (lbs)', es: 'Shake (lbs)' } },
       F.waste(),
       ...totalsBlock('startingLb', ['finishedSmallsLb', 'shakeLb', 'wasteLb']),
+      { k: 'newFinishedUid', t: 'uid', l: { en: 'New UID — Finished Smalls', es: 'UID nuevo — smalls terminados' },
+        hint: { en: 'The new Metrc tag on the finished smalls, once it has one.',
+                es: 'La nueva etiqueta Metrc de los smalls terminados, cuando la tenga.' } },
 
       // Back of the paper form: who did the follow-up paperwork.
       { k: 'wasteAdjustedBy', t: 'text', l: { en: 'Waste Adjusted (starting package UID) — initials', es: 'Desecho ajustado (UID inicial) — iniciales' } },

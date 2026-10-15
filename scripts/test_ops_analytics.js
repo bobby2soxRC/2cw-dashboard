@@ -291,5 +291,17 @@ check('total exceptions', exc.length, 1);
   check('bucking lands on the same lot', g[0].stages.buck.inputLb, 635);
 }
 
+// Trimming and Pre-Roll retag their output; the new tags still roll up to
+// the farm package, so labor logged against them lands on the right lot.
+{
+  const st = { dry_check: [{ incomingUid: 'FARM0002', sourceUid: 'STEM0002', dryWeightLb: 100 }],
+               buck: [{ sourceUid: 'STEM0002', newBuckedUid: 'BUCK0002' }],
+               hand_trim: [{ sourceUid: 'BUCK0002', newFinishedUid: 'FLWR0002' }],
+               preroll_production: [{ sourceUid: 'FLWR0002', newPrerollUid: 'PRRL0002', newWasteUid: 'WAST0002' }] };
+  const al = A.buildAliasMap(st);
+  check('finished flower tag rolls up to the farm package', A.rootUid(al, 'FLWR0002'), 'FARM0002');
+  check('pre-roll tags do too', [A.rootUid(al, 'PRRL0002'), A.rootUid(al, 'WAST0002')], ['FARM0002', 'FARM0002']);
+}
+
 console.log(failures ? `\n${failures} test(s) failed\n` : '\nAll tests passed\n');
 process.exit(failures ? 1 : 0);
