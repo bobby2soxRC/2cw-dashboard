@@ -402,10 +402,12 @@ Take Down, Bucking, Hand Trim and Pre-Roll (`METRC_STATIONS` in the page
 and in `netlify/functions/metrc-queue.js`; change both together), however old —
 only ones submitted through the app: records loaded from the paper sheets
 (`owner_user` `paper_import`) are left out.
-Each form is To do until someone changes it, then In progress, Done or Not
-needed, with a free-text note (adjustment #, new tags…). Open work is listed
-oldest first, with days waiting; the counts at the top double as filters.
-Opening one shows the whole form — tapping a value copies it (stored codes
+It's a table — status, form, date, strain, UID, new UID, amount, who
+submitted it, days waiting, note, last change. Each form is To do until
+someone changes it, then In progress, Done or Not needed: with Edit, pick it
+in the row's dropdown and hit that row's Save. Open work is listed oldest
+first; the counts at the top double as filters. Clicking a row opens the
+form, where the note (adjustment #, new tags…) is set too. Opening one shows the whole form — tapping a value copies it (stored codes
 and plain numbers, ready to paste into Metrc) — plus the status history.
 Fix form (for people who can fix submitted forms) opens `ops_form.html?edit=`.
 
