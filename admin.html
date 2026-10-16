@@ -416,6 +416,7 @@ function cardSummary(u){
   const view = (cols['production view stations']||'').trim();
   if(edit) pills.push('Prod edit: ' + (edit.toLowerCase()==='all' ? 'all' : edit.split(',').length+' stations'));
   if((cols['ops fix submitted']||'').toUpperCase()==='TRUE') pills.push('Fix submitted forms');
+  if((cols['ops delete submitted']||'').toUpperCase()==='TRUE') pills.push('Delete submitted forms');
   if(view) pills.push('Prod view: ' + (view.toLowerCase()==='all' ? 'all' : view.split(',').length+' stations'));
   const anyForm = Object.values(FORM_ACCESS_COLS).some(col => (cols[col]||'').toUpperCase()==='TRUE');
   if(anyForm) pills.push('Field forms');
@@ -1209,6 +1210,7 @@ function openEditor(id){
     <div class="section-hd">Processing — edit access</div>
     <label class="check-item" style="margin-bottom:10px"><input type="checkbox" id="ed-all" ${editAll?'checked':''}/> All stations</label>
     <label class="check-item" style="margin-bottom:10px"><input type="checkbox" data-card="ops fix submitted" ${(cols['ops fix submitted']||'').toUpperCase()==='TRUE'?'checked':''}/> Fix submitted forms (Edit button on the Today board, for the stations checked below)</label>
+    <label class="check-item" style="margin-bottom:10px"><input type="checkbox" data-card="ops delete submitted" ${(cols['ops delete submitted']||'').toUpperCase()==='TRUE'?'checked':''}/> Delete submitted forms (Delete button when editing one, for the stations checked below; implies Fix submitted forms)</label>
     <div id="ed-station-list"></div>
 
     <div class="section-hd">Processing — view only (Today board)</div>

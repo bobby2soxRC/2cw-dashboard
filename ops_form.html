@@ -233,6 +233,11 @@
     .pop-btns button{flex:1;min-height:52px;border-radius:10px;font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer}
     .pop-cancel{background:transparent;border:1px solid var(--border);color:var(--subtext)}
     .pop-ok{background:var(--accent);border:none;color:#000}
+    .pop-ok.danger{background:var(--red);color:#fff}
+    .pop-ok:disabled{opacity:.5;cursor:not-allowed}
+    .pop p{font-size:.9rem;color:var(--subtext);line-height:1.45;margin-bottom:12px}
+    .pop .pop-what{color:var(--text);font-weight:700}
+    .pop textarea{width:100%;min-height:76px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:1rem;padding:10px 12px;resize:vertical}
   </style>
 </head>
 <body>
@@ -2503,6 +2508,75 @@
       location.href = `/ops_form.html?station=${station.key}&deleted=1`;
     });
   }
+
+  // ── Delete this record (editing a submitted form) ─────────────────────────
+  // Shown with canDeleteSubmitted (admin panel → Delete submitted forms plus
+  // edit access to the station; Harvest Intakes delete for Wet Intakes). A
+  // popup names the record and asks why, then operations-records.js deletes
+  // it (deleteSubmitted — it re-checks the permission, and the edit history
+  // keeps a copy with who and why). Its packages come off its Master
+  // Schedule project(s) too.
+  const DR = {
+    btn:      { en: 'Delete this record', es: 'Borrar este registro' },
+    title:    { en: 'Delete this record?', es: '¿Borrar este registro?' },
+    body:     { en: 'It comes off the Today board, the dashboards and the reports. A copy is kept in the edit history, with your name and the reason.',
+                es: 'Se quita del tablero de hoy, los tableros y los reportes. Se guarda una copia en el historial de cambios, con su nombre y el motivo.' },
+    reason:   { en: 'Why is it being deleted?', es: '¿Por qué se borra?' },
+    reasonPh: { en: 'e.g. Entered the wrong way — re-submitting it', es: 'p. ej. Se llenó mal — se vuelve a enviar' },
+    need:     { en: 'Enter a reason first.', es: 'Escriba un motivo primero.' },
+    cancel:   { en: 'Cancel', es: 'Cancelar' },
+    ok:       { en: 'Delete', es: 'Borrar' },
+    deleting: { en: 'Deleting…', es: 'Borrando…' },
+    done:     { en: '✓ Deleted', es: '✓ Borrado' },
+    failed:   { en: 'Could not delete it — check the connection and try again.', es: 'No se pudo borrar — revise la conexión e intente de nuevo.' }
+  };
+  function wireDeleteRecord(rec) {
+    if (!canDeleteSubmitted(station.key)) return;
+    delBtn.textContent = t(DR.btn);
+    delBtn.style.display = 'block';
+    delBtn.addEventListener('click', () => openDeleteRecordPopup(rec));
+  }
+  function openDeleteRecordPopup(rec) {
+    const what = [t(station.title), rec.work_date ? dayLabel(rec.work_date) : '', values.batchId || values.prNum,
+                  values.strain, values.sourceUid ? `…${String(values.sourceUid).slice(-4)}` : '', rec.owner_user]
+      .filter(Boolean).join(' · ');
+    const back = document.createElement('div');
+    back.className = 'pop-back';
+    back.innerHTML = `<div class="pop" role="dialog" aria-modal="true">` +
+      `<h3>${escapeHtml(t(DR.title))}</h3>` +
+      `<p class="pop-what">${escapeHtml(what)}</p>` +
+      `<p>${escapeHtml(t(DR.body))}</p>` +
+      `<label class="lbl" for="pop_reason">${escapeHtml(t(DR.reason))}<span class="req">*</span></label>` +
+      `<textarea id="pop_reason" maxlength="500" placeholder="${escapeAttr(t(DR.reasonPh))}"></textarea>` +
+      `<div class="pop-msg"></div>` +
+      `<div class="pop-btns"><button type="button" class="pop-cancel">${escapeHtml(t(DR.cancel))}</button>` +
+      `<button type="button" class="pop-ok danger">${escapeHtml(t(DR.ok))}</button></div></div>`;
+    document.body.appendChild(back);
+    const reasonIn = back.querySelector('#pop_reason'), msg = back.querySelector('.pop-msg');
+    const okBtn = back.querySelector('.pop-ok'), cancelBtn = back.querySelector('.pop-cancel');
+    reasonIn.focus();
+    cancelBtn.addEventListener('click', () => back.remove());
+    okBtn.addEventListener('click', async () => {
+      const reason = reasonIn.value.trim();
+      if (!reason) { msg.textContent = t(DR.need); reasonIn.focus(); return; }
+      okBtn.disabled = cancelBtn.disabled = true;
+      okBtn.textContent = t(DR.deleting);
+      msg.textContent = '';
+      const res = await deleteSubmitted(station.key, editId, reason);
+      if (!res.ok) {
+        okBtn.disabled = cancelBtn.disabled = false;
+        okBtn.textContent = t(DR.ok);
+        msg.textContent = res.error || t(DR.failed);
+        return;
+      }
+      await unlinkProject();
+      okBtn.textContent = t(DR.done);
+      setTimeout(() => {
+        location.href = station.key === 'intake_wet' && !fromToday ? '/harvest_intakes.html' : editBack(editId);
+      }, 700);
+    });
+  }
+
   if (params.get('deleted')) {
     banner.className = 'banner success';
     banner.textContent = t(DP.done);
@@ -2667,6 +2741,7 @@
     const subtitle = document.getElementById('subtitle');
     subtitle.textContent = `${t(ED.editing)} ${rec.work_date || ''}${rec.owner_user ? ' — ' + rec.owner_user : ''}`;
     subtitle.style.color = 'var(--gold)';
+    wireDeleteRecord(rec);
   } else if (draftsOn) {
     // Prefer whatever is on the server; if this exact draft never made it
     // there (tablet died before the first autosave landed), fall back to

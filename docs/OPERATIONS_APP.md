@@ -346,6 +346,21 @@ or `2cw_ops_fix` (set at hub login) plus station edit access. Correcting a
 Take Down keeps its own package in the "Package Drying" list. The edit
 history trigger logs these edits like any other; the card shows "edited by".
 
+**Deleting submitted forms.** The admin user editor's "Delete submitted
+forms" checkbox (`ops delete submitted` column, next to Fix submitted forms;
+implies it, set as `2cw_ops_delete` at hub login) puts **Delete this record**
+at the bottom of that correction page (`?edit=<id>` — reached from Edit on
+the Today board or the Pre-Roll Dashboard's Submitted Runs), on the stations
+the person has edit access to (`canDeleteSubmitted()` in `ops_common.js`;
+Wet Intakes also with Harvest Intakes Delete). It opens a popup naming the
+record that asks for a reason, then deletes it through
+`operations-records.js` (`action: 'delete'`, `deleteSubmitted` in
+`ops_data.js`), which re-checks the column and the station edit access from
+the PIN and only covers station forms (not Master Schedule projects or Labor
+Log entries). The edit history keeps a copy with who and why, and the
+record's packages come off its Master Schedule project(s). On a station
+that saves one record per UID (`splitBy`), only the opened record goes.
+
 Two more checkboxes there, each implying View: **Delete** (`harvest intakes
 delete`) and **See edit history** (`harvest intakes history`), turned into
 `2cw_intake_delete` / `2cw_intake_history` at login. Both only show the

@@ -171,6 +171,25 @@ async function deleteOpenPage(stationKey, id) {
   }
 }
 
+// Deletes a submitted record (Delete this record, when editing one). Goes
+// through operations-records.js like deleteOpenPage; it re-checks the
+// permission (Delete submitted forms + edit access to the station, or
+// Harvest Intakes delete for Wet Intakes) and the edit history keeps a copy
+// with who deleted it and the reason.
+async function deleteSubmitted(stationKey, id, reason) {
+  try {
+    const res = await fetch('/.netlify/functions/operations-records', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', pin: sessionStorage.getItem('2cw_pin') || '', stationKey, id, reason })
+    });
+    const data = await res.json().catch(() => ({}));
+    return { ok: !!(res.ok && data.ok), error: data.error };
+  } catch (e) {
+    return { ok: false, error: null };
+  }
+}
+
 // Like getDraft, but tells "it isn't there" ({ ok: true, row: null }) apart
 // from "couldn't check" ({ ok: false }) — so a page can notice it was
 // deleted on another tablet without mistaking a dropped connection for it.

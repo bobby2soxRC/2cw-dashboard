@@ -594,7 +594,11 @@ async function buildHub(user){
   sessionStorage.setItem('2cw_ops_view_access', JSON.stringify(viewList));
   // Fix submitted forms (Today board → Edit) on the stations they can edit —
   // read by canFixSubmitted() in ops_common.js.
-  sessionStorage.setItem('2cw_ops_fix', (user['ops fix submitted'] || '').toUpperCase() === 'TRUE' ? 'true' : 'false');
+  // Delete submitted forms implies Fix (the Delete button is on the Edit
+  // page); netlify/functions/operations-records.js re-checks it from the PIN.
+  const opsDelete = (user['ops delete submitted'] || '').toUpperCase() === 'TRUE';
+  sessionStorage.setItem('2cw_ops_fix', opsDelete || (user['ops fix submitted'] || '').toUpperCase() === 'TRUE' ? 'true' : 'false');
+  sessionStorage.setItem('2cw_ops_delete', opsDelete ? 'true' : 'false');
   const hasEdit = editList === 'all' || editList.length > 0;
   const hasView = viewList === 'all' || viewList.length > 0;
   user.production_dashboard = (hasEdit || hasView) ? 'TRUE' : 'FALSE';  // historical yields/biomass
@@ -1123,6 +1127,7 @@ function doLogout(){
   sessionStorage.removeItem('2cw_ops_edit_access');
   sessionStorage.removeItem('2cw_ops_view_access');
   sessionStorage.removeItem('2cw_ops_fix');
+  sessionStorage.removeItem('2cw_ops_delete');
   sessionStorage.removeItem('2cw_intake_access');
   sessionStorage.removeItem('2cw_intake_delete');
   sessionStorage.removeItem('2cw_intake_history');

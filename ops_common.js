@@ -21,6 +21,16 @@ const LANG_KEY = '2cw_lang';
 function canFixSubmitted(stationKey) {
   if (stationKey === 'intake_wet' && sessionStorage.getItem('2cw_intake_access') === 'edit') return true;
   if (sessionStorage.getItem('2cw_ops_fix') !== 'true') return false;
+  return canEditStationHere(stationKey);
+}
+// Who gets Delete this record on that page: Wet Intakes with Harvest Intakes
+// delete, any station with the admin panel's "Delete submitted forms" plus
+// edit access to it. Only shows the button — operations-records.js re-checks.
+function canDeleteSubmitted(stationKey) {
+  if (stationKey === 'intake_wet' && sessionStorage.getItem('2cw_intake_delete') === 'true') return true;
+  return sessionStorage.getItem('2cw_ops_delete') === 'true' && canEditStationHere(stationKey);
+}
+function canEditStationHere(stationKey) {
   let edit = null;
   try { edit = JSON.parse(sessionStorage.getItem('2cw_ops_edit_access') || 'null'); } catch { edit = null; }
   return edit === 'all' || (Array.isArray(edit) && edit.includes(stationKey));

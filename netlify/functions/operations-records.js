@@ -7,6 +7,9 @@
 //
 // POST {action:'history', pin, stationKey}            -> {ok, history, deleted}
 // POST {action:'delete',  pin, stationKey, id, reason} -> {ok}
+//   A submitted record. Wet Intakes with 'harvest intakes delete'; any
+//   station with 'ops delete submitted' (admin panel → Delete submitted
+//   forms) plus edit access to that station.
 // POST {action:'delete_open', pin, stationKey, id}     -> {ok} | {ok:false, code}
 //   An open (not yet submitted) page the station's own crew can delete —
 //   a Bucking, Hand Trim or Pre-Roll page started by mistake. Needs edit access to that station
@@ -21,6 +24,11 @@
 const STATIONS = {
   intake_wet: { delete: 'harvest intakes delete', history: 'harvest intakes history' }
 };
+
+// 'Delete submitted forms': delete on any station form the person can edit
+// (station forms only — not Master Schedule projects or Labor Log entries).
+const OPS_DELETE_COL = 'ops delete submitted';
+const STATION_KEYS = new Set(require('../../operations_stations.js').OPERATIONS_STATIONS.map((st) => st.key));
 
 // Stations whose open pages their crew can delete (delete_open).
 const OPEN_PAGE_DELETE = new Set(['buck', 'hand_trim', 'preroll_production']);
@@ -100,14 +108,18 @@ exports.handler = async (event) => {
   const { action, pin, stationKey } = body;
   const cols = STATIONS[stationKey];
   const openDelete = action === 'delete_open';
-  if (!openDelete && (!cols || !cols[action])) return json(400, { ok: false, error: 'Unknown action or station' });
+  if (!openDelete && !(cols && cols[action]) && !(action === 'delete' && STATION_KEYS.has(stationKey))) {
+    return json(400, { ok: false, error: 'Unknown action or station' });
+  }
   if (typeof pin !== 'string' || !pin.trim()) return json(401, { ok: false, error: 'Not logged in' });
 
   try {
     const user = await userForPin(supaUrl, serviceKey, pin.trim());
     if (!user) return json(401, { ok: false, error: 'PIN not recognized — log in again.' });
     if (openDelete) return await deleteOpenPage(supaUrl, serviceKey, user, stationKey, body.id);
-    if (!allowed(user, cols[action])) return json(403, { ok: false, error: 'You don’t have permission to do that.' });
+    const may = (cols && cols[action] && allowed(user, cols[action])) ||
+      (action === 'delete' && allowed(user, OPS_DELETE_COL) && canEditStation(user, stationKey));
+    if (!may) return json(403, { ok: false, error: 'You don’t have permission to do that.' });
     const actor = user.name;  // same name the app logs everywhere else (2cw_user_name)
 
     if (action === 'history') {
