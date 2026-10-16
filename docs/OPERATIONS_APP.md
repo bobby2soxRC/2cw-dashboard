@@ -117,16 +117,32 @@ runs can be open at once and a new one started before the last is closed;
 each stays open across days until QC and the secondary verification are done
 and it's submitted. Delete this page (`canDelete`) is there for a run started
 by mistake. Under the run tabs are **day tabs** (`dayTabs: { lines:
-['output', 'crew'] }` — several logs share the tabs; the chips total the
-first): the Pre-Roll Output and Workforce Log are running logs (`entry:
-true`) that show the picked day's rows and stamp new ones with it, and the
-totals below cover the whole run. In the Workforce Log the entry bar takes
-employee ID, start and end (time inputs); hours (a `calc` column) are worked
-out when the row is added, and `workDate` (`fromDay`) is set to the row's
-day, so `crewLaborLog` reports each shift on the day it was worked. A row
-in the output log needs a pre-roll count or a waste weight. New UIDs, finish
-date, QC and verification sit under "End of Run". Because both logs are
-running logs, two tablets on one run merge their rows. There's **one run per
+['output', 'attendance'] }` — several logs share the tabs; the chips total
+the first): the Pre-Roll Output log and the Crew show the picked day and
+stamp new rows with it, and the totals below cover the whole run. A row in
+the output log needs a pre-roll count or a waste weight. New UIDs, finish
+date, QC and verification sit under "End of Run". Because both are running
+logs (`entry: true`), two tablets on one run merge their rows.
+
+**Crew** (`attendance`, field type `crewcheck`, `buildCrewCheck` in
+`ops_form.html`) replaced the Workforce Log of hours in October 2026. It
+lists who the Master Schedule has on the run that day: the run's
+**Project** — its lead and its pre-roll responsibilities (a blank process
+is the project's; a project with none of those shows everyone on it) — or,
+with no Project picked, every project running that day for pre-rolls, with
+that day's Change this day applied (people off left out, extras in). Each
+person is marked **Here** or **Not here** ("Everyone else scheduled is
+here" marks the rest), and anyone else working can be added from the
+Connecteam roster or typed in (× takes them off again). Every tap is a row
+`{key, userId, name, status: here | out | added | removed, day, at, by}`;
+the latest per person per day counts (`crewLatest` in
+`operations_stations.js`), so tablets merge. People on this Run
+(`crewSize`) counts everyone here on any day. Nothing is written back to
+the Master Schedule. The hours, and so the cost, come from the Labor Log
+through the run's Project (below). Runs from before keep their Workforce
+Log (`crew`): the dashboard detail shows it, `crewLaborLog` still reads
+it, and a run already open when it went carries it along (resumed pages
+keep saved keys the form no longer shows). There's **one run per
 request**: a Queue tab (`queueTab`) lists the pre-roll queue in the
 dashboard's order (`loadPrerollQueue`, with each request's pre-rolls to make
 and made so far — `made`, from its runs' `totalPrerolls`), with Start (a new
@@ -252,15 +268,16 @@ allows. The open run's id goes in the URL (`?run=<id>`), so it can be linked.
 
 With **Pre-Roll Dashboard — see labor cost per pre-roll** (`preroll costs`,
 see `docs/USER_ADMIN.md`), each run also shows labor $ per pre-roll, and its
-detail a Labor Cost section (whole-run $ and $ per pre-roll). The cost is the
-Workforce Log's hours at the rate in effect on each row's date (`rateFor`),
+detail a Labor Cost section (whole-run $ and $ per pre-roll). For a run with
+a **Project** (every run now — the form no longer takes hours) it comes from
+the Labor Log, as below. Older runs are costed from their Workforce Log's hours at the rate in effect on each row's date (`rateFor`),
 worked out server-side by `netlify/functions/preroll-costs.js`. Rates are
 keyed by Connecteam user id but the form logs employee IDs (badge numbers),
 so each badge is looked up in `employee_badges` (admin panel → Labor Rates
 → Badge #, see `docs/USER_ADMIN.md`) first. Hours on a badge nobody has
 mapped, or on a person without their own rate, fall to the default rate.
 The detail says how many hours did. Hours with no rate at all aren't costed.
-A run with a **Project** picked is costed from the Labor Log instead: its
+A run with a **Project** picked is costed from the Labor Log: its
 share of the hours logged to that project (`laborAllocations`, split over
 the project's UIDs by pounds), counting the allocations on the run's source
 UID — at each person's own rate, by Connecteam id. Its Workforce Log isn't

@@ -404,7 +404,8 @@ function crewLaborLog(stages, filter) {
     const hasCrew = station.fields.some((f) => f.k === 'crew' && f.t === 'lineitems');
     (stages[station.key] || []).forEach((r) => {
       if (!matches(r, filter)) return;
-      if (hasCrew) {
+      // Pre-Roll's Workforce Log is off the form now, but older runs keep theirs.
+      if (hasCrew || Array.isArray(r.crew)) {
         (r.crew || []).forEach((c) => {
           const emp = String(c.employeeNo || '').trim();
           if (!emp || !num(c.hours)) return;

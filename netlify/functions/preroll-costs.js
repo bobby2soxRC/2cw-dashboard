@@ -5,7 +5,9 @@
 // 'preroll costs' ticked (admin panel → user editor → Special access),
 // looked up from the PIN they logged in with, like labor-rates.js.
 //
-// A run's labor is its Workforce Log (fields.crew): each row's hours at the
+// Pre-Roll runs from before October 2026 have a Workforce Log of hours
+// (fields.crew; the form now only confirms who's there) and are costed from
+// it: each row's hours at the
 // rate in effect on its work date (OpsAnalytics.rateFor, the Labor Log's
 // lookup). Rates are keyed by Connecteam user id and the form logs badge
 // numbers, so each badge goes through employee_badges (admin panel → Labor

@@ -185,6 +185,23 @@
     .entry-table .li-del{min-height:40px}
     .entry-empty{color:var(--muted);font-size:.85rem;margin-top:12px}
 
+    /* Crew check (Pre-Roll's attendance): the day's scheduled people, here / not here, plus added. */
+    .cc-src{font-family:'DM Mono',monospace;font-size:.78rem;color:var(--muted);margin-bottom:10px}
+    .cc-day{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin:14px 0 6px}
+    .cc-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)}
+    .cc-name{flex:1;min-width:0}
+    .cc-name .r{display:block;font-size:.75rem;color:var(--muted)}
+    .cc-row.out .cc-name b{text-decoration:line-through;color:var(--muted)}
+    .cc-btn{min-height:44px;min-width:84px;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:.9rem;cursor:pointer}
+    .cc-btn.on.here{background:var(--green);border-color:var(--green);color:#000;font-weight:700}
+    .cc-btn.on.out{background:var(--red);border-color:var(--red);color:#000;font-weight:700}
+    .cc-del{flex:0 0 auto;min-width:44px;min-height:44px;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--muted);font-size:1.1rem;cursor:pointer}
+    .cc-tag{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:2px 6px}
+    .cc-add{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    .cc-add select,.cc-add input{flex:1 1 200px;min-width:0}
+    .cc-all{margin-top:10px;width:100%;min-height:48px;background:transparent;border:1px solid var(--green);color:var(--green);border-radius:10px;font-family:inherit;font-size:.95rem;font-weight:700;cursor:pointer}
+    .cc-sum{font-family:'DM Mono',monospace;font-size:.85rem;margin-top:10px;color:var(--text)}
+
     .photo-wrap{display:flex;gap:12px;align-items:center}
     .photo-wrap img{width:72px;height:72px;object-fit:cover;border-radius:10px;border:1px solid var(--border);display:none}
 
@@ -390,6 +407,13 @@
     }
 
     if (f.t === 'lineitems') return f.entry ? buildEntryLog(f, wrap) : buildLineItems(f, wrap);
+    if (f.t === 'crewcheck') {
+      // Drawn by buildCrewCheck once the projects and roster load.
+      values[f.k] = [];
+      wrap.innerHTML = labelHtml(f) + (f.hint ? `<div class="hint" style="margin-top:0;margin-bottom:10px">${t(f.hint)}</div>` : '') +
+        `<div class="cc" id="cc_${f.k}"></div>`;
+      return wrap;
+    }
     if (f.t === 'fill') return buildFill(f, wrap);
     if (f.t === 'heading') {
       wrap.innerHTML = `<h3 class="sec-head">${t(f.l)}</h3>` + (f.hint ? `<div class="hint">${t(f.hint)}</div>` : '');
@@ -894,7 +918,7 @@
   // anything changed. Plain fields this tablet hasn't touched since its
   // last save take the saved value too, so stems typed on one tablet don't
   // get blanked by another.
-  const entryFields = station.fields.filter((f) => f.t === 'lineitems' && f.entry);
+  const entryFields = station.fields.filter((f) => (f.t === 'lineitems' || f.t === 'crewcheck') && f.entry);
   const touched = new Set();
   function mergeEntries(saved) {
     if (!saved || !entryFields.length) return false;
@@ -917,7 +941,7 @@
       changed = true;
     });
     station.fields.forEach((f) => {
-      if (['calc', 'lineitems', 'photo'].includes(f.t) || touched.has(f.k)) return;
+      if (['calc', 'lineitems', 'crewcheck', 'photo'].includes(f.t) || touched.has(f.k)) return;
       const v = saved[f.k];
       if (v === undefined || v === null || v === '' || v === values[f.k]) return;
       setFieldValue(f, v);
@@ -1222,12 +1246,176 @@
   }
   if (projField) {
     const sel = document.getElementById(`f_${projField.k}`);
-    sel.addEventListener('change', () => { syncProjectName(); showProjectInfo(); });
+    const redrawCrew = () => station.fields.filter((f) => f.t === 'crewcheck').forEach((f) => entryRenderers[f.k] && entryRenderers[f.k]());
+    sel.addEventListener('change', () => { syncProjectName(); showProjectInfo(); redrawCrew(); });
     const dateEl = document.getElementById('f_date');
-    if (dateEl) dateEl.addEventListener('change', fillProjectPicker);
-    if (draftsOn) listWorkProjects().then((list) => { projects = list; fillProjectPicker(); });
-    else fillProjectPicker();
+    if (dateEl) dateEl.addEventListener('change', () => { fillProjectPicker(); redrawCrew(); });
+    if (draftsOn) listWorkProjects().then((list) => { projects = list; fillProjectPicker(); redrawCrew(); });
+    else { fillProjectPicker(); redrawCrew(); }
   }
+
+  // ── Crew check (crewcheck — Pre-Roll's `attendance`) ────────────────────
+  // The people the Master Schedule has working this run on the picked day:
+  // the run's Project (its lead and responsibilities — only the pre-roll
+  // ones if it has any), with that day's changes (someone off, someone
+  // extra) applied; with no Project picked, every project running that day
+  // for this station. Each is marked Here or Not here, and anyone else
+  // working can be added from the Connecteam roster or typed in. Every tap
+  // is a row (key, userId, name, status, day, at, by) and the latest per
+  // person per day counts (crewLatest in operations_stations.js), so two
+  // tablets merge like the other running logs. Nothing here writes to the
+  // Master Schedule.
+  const CC = {
+    loading:  { en: 'Loading the schedule…', es: 'Cargando el horario…' },
+    from:     { en: 'Master Schedule — {p}', es: 'Plan Maestro — {p}' },
+    notOn:    { en: '{p} isn’t on the schedule this day.', es: '{p} no está en el horario este día.' },
+    none:     { en: 'Nobody is scheduled for pre-rolls this day — pick the run’s Project above, or add people below.',
+                es: 'No hay nadie programado para prerolls este día — elija el Proyecto de la corrida arriba, o agregue personas abajo.' },
+    here:     { en: 'Here', es: 'Presente' },
+    out:      { en: 'Not here', es: 'No vino' },
+    added:    { en: 'Added', es: 'Agregado' },
+    lead:     { en: 'Lead', es: 'Líder' },
+    allHere:  { en: '✓ Everyone else scheduled is here', es: '✓ Todos los demás programados están presentes' },
+    pick:     { en: 'Add someone working here…', es: 'Agregar a alguien que trabaja aquí…' },
+    typeName: { en: 'Not in the list — type a name', es: 'No está en la lista — escriba un nombre' },
+    namePh:   { en: 'Name', es: 'Nombre' },
+    add:      { en: 'Add', es: 'Agregar' },
+    removeQ:  { en: 'Take {n} off this day’s crew?', es: '¿Quitar a {n} del personal de este día?' },
+    sum:      { en: '{n} working · {o} not here · {u} not confirmed yet', es: '{n} trabajando · {o} no vinieron · {u} sin confirmar' }
+  };
+  const ccFields = station.fields.filter((f) => f.t === 'crewcheck');
+  const ccFold = (x) => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  const ccKey = (p) => (p.userId ? 'id:' + p.userId : 'name:' + ccFold(p.name));
+  let ccRoster = null;
+  if (ccFields.length) {
+    fetch('https://raw.githubusercontent.com/bobby2soxRC/2cw-dashboard/main/data/connecteam_roster.json?t=' + Date.now())
+      .then((r) => (r.ok ? r.json() : {})).catch(() => ({}))
+      .then((j) => {
+        ccRoster = ((j && j.people) || []).map((p) => ({ userId: String(p.userId), name: p.name })).sort((a, b) => a.name.localeCompare(b.name));
+        ccFields.forEach((f) => entryRenderers[f.k]());
+      });
+  }
+  // The scheduled people for a day: [{key, userId, name, role}], plus where
+  // they came from (the project names) and, with a Project picked that
+  // isn't running that day, its name.
+  function ccScheduled(day) {
+    if (!projects) return { loading: true, people: [] };
+    const pid = values.project;
+    const mine = (r, f) => (r.process || f.process) === station.key;
+    const src = pid ? [projById(pid)].filter(Boolean)
+      : projects.filter((p) => p.fields.process === station.key || (p.fields.roles || []).some((r) => r.process === station.key));
+    const running = src.filter((p) => projectRunsOn(p.fields, day) && !(((p.fields.overrides || {})[day] || {}).skip));
+    const people = new Map();
+    running.forEach((p) => {
+      const f = p.fields, ov = (f.overrides || {})[day] || {};
+      const out = new Set(ov.out || []);
+      // This station's responsibilities (a blank process is the project's).
+      // A picked project with none of those: everyone on it. The lead
+      // counts when it's the picked project or a pre-roll one.
+      const roles = projectRoles(f, t(CC.lead));
+      const some = roles.some((r) => !r.isLead && mine(r, f));
+      roles.filter((r) => (r.isLead ? (pid || f.process === station.key) : pid && !some ? true : mine(r, f))).forEach((r) => {
+        const ps = [...(r.people || []).filter((x) => !out.has(ccKey(x))),
+                    ...(ov.extra || []).filter((x) => x.roleId === r.id)];
+        ps.forEach((x) => {
+          const key = ccKey(x);
+          if (x.name && !people.has(key)) people.set(key, { key, userId: x.userId || '', name: x.name, role: r.name });
+        });
+      });
+    });
+    return { people: [...people.values()], from: running.map((p) => p.fields.name),
+             notOn: pid && !running.length ? (projById(pid) ? projById(pid).fields.name : values.projectName || '') : '' };
+  }
+  function buildCrewCheck(f) {
+    const box = document.getElementById(`cc_${f.k}`);
+    const days = () => {
+      if (byDay(f)) return [curDay];
+      const ds = [...new Set((values[f.k] || []).map((r) => r.day).filter(Boolean))].sort();
+      return ds.length ? ds : [values.date || todayStr()];
+    };
+    const log = (day, p, status) => {
+      values[f.k] = [...(values[f.k] || []), { _id: crypto.randomUUID(), day, at: new Date().toISOString(), by: owner,
+                                               key: p.key, userId: p.userId || '', name: p.name, status }];
+    };
+    const render = () => {
+      const latest = crewLatest(values[f.k]);
+      box.innerHTML = days().map((day) => {
+        const sch = ccScheduled(day);
+        const head = byDay(f) ? '' : `<div class="cc-day">${escapeHtml(dayLabel(day))}</div>`;
+        if (sch.loading) return head + `<div class="cc-src">${escapeHtml(t(CC.loading))}</div>`;
+        const st = (key) => (latest.get(`${day}|${key}`) || {}).status || '';
+        const src = sch.notOn ? t(CC.notOn).replace('{p}', sch.notOn)
+          : sch.from.length ? t(CC.from).replace('{p}', sch.from.join(', ')) : t(CC.none);
+        const listed = new Set(sch.people.map((p) => p.key));
+        const added = [...latest.values()].filter((r) => r.day === day && r.status === 'added' && !listed.has(r.key));
+        let n = 0, o = 0, u = 0;
+        const rows = sch.people.map((p) => {
+          const s = st(p.key);
+          if (s === 'out') o++; else if (s === 'here' || s === 'added') n++; else u++;
+          return `<div class="cc-row${s === 'out' ? ' out' : ''}"><div class="cc-name"><b>${escapeHtml(p.name)}</b>${p.role ? `<span class="r">${escapeHtml(p.role)}</span>` : ''}</div>` +
+            `<button type="button" class="cc-btn here${s === 'here' || s === 'added' ? ' on' : ''}" data-cc="here" data-day="${day}" data-key="${escapeAttr(p.key)}">${escapeHtml(t(CC.here))}</button>` +
+            `<button type="button" class="cc-btn out${s === 'out' ? ' on' : ''}" data-cc="out" data-day="${day}" data-key="${escapeAttr(p.key)}">${escapeHtml(t(CC.out))}</button></div>`;
+        }).join('') + added.map((r) => { n++;
+          return `<div class="cc-row"><div class="cc-name"><b>${escapeHtml(r.name)}</b></div><span class="cc-tag">${escapeHtml(t(CC.added))}</span>` +
+            `<button type="button" class="cc-del" data-cc="removed" data-day="${day}" data-key="${escapeAttr(r.key)}" aria-label="${escapeAttr(t(UI.remove))}">×</button></div>`; }).join('');
+        const here = new Set([...listed, ...added.map((r) => r.key)]);
+        const choices = (ccRoster || []).filter((p) => !here.has(ccKey(p)));
+        return head + `<div class="cc-src">${escapeHtml(src)}</div>` + rows +
+          (u ? `<button type="button" class="cc-all" data-cc="all" data-day="${day}">${escapeHtml(t(CC.allHere))}</button>` : '') +
+          `<div class="cc-add"><select data-ccpick="${day}"><option value="">${escapeHtml(t(CC.pick))}</option>` +
+            choices.map((p) => `<option value="${escapeAttr(p.userId)}">${escapeHtml(p.name)}</option>`).join('') +
+            `<option value="__type__">${escapeHtml(t(CC.typeName))}</option></select>` +
+            `<input type="text" data-ccname="${day}" placeholder="${escapeAttr(t(CC.namePh))}" style="display:none">` +
+            `<button type="button" class="cc-btn" data-cc="add" data-day="${day}">${escapeHtml(t(CC.add))}</button></div>` +
+          `<div class="cc-sum">${escapeHtml(t(CC.sum).replace('{n}', n).replace('{o}', o).replace('{u}', u))}</div>`;
+      }).join('');
+      if (byDay(f)) renderDays();
+    };
+    entryRenderers[f.k] = render;
+    const changed = () => { render(); recompute(); markDirty(); };
+    box.addEventListener('change', (e) => {
+      const sel = e.target.closest('[data-ccpick]');
+      if (!sel) return;
+      const inp = box.querySelector(`[data-ccname="${sel.dataset.ccpick}"]`);
+      inp.style.display = sel.value === '__type__' ? 'block' : 'none';
+      if (sel.value === '__type__') inp.focus();
+    });
+    box.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && e.target.closest('[data-ccname]')) { e.preventDefault(); box.querySelector(`[data-cc="add"][data-day="${e.target.dataset.ccname}"]`).click(); }
+    });
+    box.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-cc]');
+      if (!b || isClosed) return;
+      const day = b.dataset.day, act = b.dataset.cc;
+      const sch = ccScheduled(day);
+      const latest = crewLatest(values[f.k]);
+      const st = (key) => (latest.get(`${day}|${key}`) || {}).status || '';
+      if (act === 'all') {
+        sch.people.filter((p) => !st(p.key)).forEach((p) => log(day, p, 'here'));
+        return changed();
+      }
+      if (act === 'add') {
+        const sel = box.querySelector(`[data-ccpick="${day}"]`), inp = box.querySelector(`[data-ccname="${day}"]`);
+        const hit = sel.value && sel.value !== '__type__' ? (ccRoster || []).find((p) => p.userId === sel.value) : null;
+        const name = hit ? hit.name : sel.value === '__type__' ? inp.value.trim() : '';
+        if (!name) { (sel.value === '__type__' ? inp : sel).focus(); return; }
+        const p = { userId: hit ? hit.userId : '', name };
+        p.key = ccKey(p);
+        // Someone already on the schedule just gets marked here.
+        log(day, p, sch.people.some((x) => x.key === p.key) ? 'here' : 'added');
+        return changed();
+      }
+      const key = b.dataset.key;
+      const p = sch.people.find((x) => x.key === key) || latest.get(`${day}|${key}`);
+      if (!p) return;
+      if (act === 'removed' && !confirm(t(CC.removeQ).replace('{n}', p.name))) return;
+      if (st(key) === act || (act === 'here' && st(key) === 'added')) return;
+      log(day, { key, userId: p.userId, name: p.name }, act);
+      changed();
+    });
+    render();
+  }
+  ccFields.forEach(buildCrewCheck);
 
   // ── Prefill from the upstream stage ───────────────────────────────────────
   // Bucking should not have to re-weigh what the post-dry check already
@@ -1518,8 +1706,18 @@
     if (Array.isArray(fields._deleted)) values._deleted = fields._deleted;
     if (Array.isArray(fields.runDays)) values.runDays = fields.runDays;
     ['projectName', 'projectLinked'].forEach((k) => { if (fields[k]) values[k] = fields[k]; });
+    // Anything saved that the form no longer shows (a field taken off since,
+    // like Pre-Roll's Workforce Log on runs already open) rides along, so
+    // the next autosave doesn't drop it.
+    const onForm = new Set(station.fields.map((f) => f.k));
+    Object.keys(fields).forEach((k) => { if (!onForm.has(k) && !(k in values)) values[k] = fields[k]; });
     station.fields.forEach((f) => {
       if (f.t === 'calc' || f.t === 'photo') return;
+      if (f.t === 'crewcheck') {
+        values[f.k] = Array.isArray(fields[f.k]) ? fields[f.k] : [];
+        if (entryRenderers[f.k]) entryRenderers[f.k]();
+        return;
+      }
       if (f.t === 'lineitems') {
         let rows = fields[f.k];
         // Saved when this field was one number (Bucking's stemLb): that
@@ -2370,7 +2568,7 @@
   function applyLinkPrefill() {
     const fields = {};
     station.fields.forEach((f) => {
-      if (['calc', 'lineitems', 'photo'].includes(f.t)) return;
+      if (['calc', 'lineitems', 'crewcheck', 'photo'].includes(f.t)) return;
       const v = params.get(`set_${f.k}`);
       if (v !== null && v !== '') fields[f.k] = f.t === 'number' ? Number(v) : v;
     });
