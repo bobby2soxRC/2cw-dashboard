@@ -403,8 +403,13 @@ const L = {
   c_each_short: { en: 'each', es: 'c/u' },
   c_default: { en: '{h} of {t} labor hrs are at the default rate (Labor Rates), since the Workforce Log’s employee IDs aren’t matched to people’s own rates.',
                es: '{h} de {t} hrs de trabajo van a la tarifa general (Tarifas de trabajo), porque los ID de empleado del registro no están vinculados a la tarifa de cada persona.' },
+  c_default_project: { en: '{h} of {t} labor hrs are at the default rate (Labor Rates), since those people have no rate of their own.',
+                       es: '{h} de {t} hrs de trabajo van a la tarifa general (Tarifas de trabajo), porque esas personas no tienen tarifa propia.' },
   c_unrated: { en: '{h} labor hrs have no rate and aren’t counted.', es: '{h} hrs de trabajo no tienen tarifa y no se cuentan.' },
   c_none: { en: 'No Workforce Log hours on this run, so no labor cost.', es: 'Esta corrida no tiene horas en el registro de personal, así que no hay costo.' },
+  c_project: { en: 'From the Labor Log: this run’s share of the hours logged to {p}, split over the project’s packages by pounds.',
+               es: 'Del Registro de mano de obra: la parte de esta corrida de las horas registradas en {p}, repartidas entre los paquetes del proyecto por libras.' },
+  c_none_project: { en: 'No Labor Log hours logged to {p} yet, so no labor cost.', es: 'Aún no hay horas del Registro de mano de obra en {p}, así que no hay costo.' },
   c_err: { en: 'Could not load labor costs:', es: 'No se pudieron cargar los costos:' }
 };
 const STAGE_LABELS = {
@@ -893,7 +898,8 @@ function runValue(fd, v) {
 
 function runFieldHtml(fd, r) {
   const f = r.fields || {};
-  const v = f[fd.k];
+  // A Master Schedule project is stored by id, with its name beside it.
+  const v = fd.projectPicker && f[fd.k] ? f.projectName || f[fd.k] : f[fd.k];
   if (fd.showIf && !fd.showIf(f)) return '';
   if (fd.t === 'heading') return `<div class="d-head">${esc(t(fd.l))}</div>`;
   if (fd.t === 'lineitems') {
@@ -926,10 +932,12 @@ function costHtml(r) {
   const head = `<div class="d-head">${t(L.c_head)}</div>`;
   if (costErr) return head + `<div class="err">${t(L.c_err)} ${esc(costErr)}</div>`;
   const c = costs[r.id];
-  if (!c || !(c.hours > 0)) return head + `<div class="d-note">${t(L.c_none)}</div>`;
+  const proj = (r.fields || {}).projectName || t({ en: 'the project', es: 'el proyecto' });
+  if (!c || !(c.hours > 0)) return head + `<div class="d-note">${esc(c && c.source === 'project' ? t(L.c_none_project).replace('{p}', proj) : t(L.c_none))}</div>`;
   const each = perPreroll(r);
   const notes = [
-    c.defaultHours > 0 ? t(L.c_default).replace('{h}', fmtNum(c.defaultHours, 2)).replace('{t}', fmtNum(c.hours, 2)) : '',
+    c.source === 'project' ? t(L.c_project).replace('{p}', proj) : '',
+    c.defaultHours > 0 ? t(c.source === 'project' ? L.c_default_project : L.c_default).replace('{h}', fmtNum(c.defaultHours, 2)).replace('{t}', fmtNum(c.hours, 2)) : '',
     c.unratedHours > 0 ? t(L.c_unrated).replace('{h}', fmtNum(c.unratedHours, 2)) : ''
   ].filter(Boolean);
   return head +

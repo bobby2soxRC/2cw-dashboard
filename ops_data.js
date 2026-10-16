@@ -377,3 +377,73 @@ async function saveTrimSplit(split, who) {
   });
   return error ? { ok: false, reason: error.message } : { ok: true };
 }
+
+// ── Master Schedule projects on station forms ───────────────────────────────
+// Wet Intake, Take Down, Bucking, Hand Trim and Pre-Roll Production have a
+// Project dropdown (`projectPicker` in operations_stations.js). Picking one
+// adds the form's input package(s) to the project's UIDs, so Labor Log hours
+// logged to the project are split over them (laborAllocations in
+// ops_analytics.js) — that's where the labor cost comes from, not the form.
+// Projects are operations_forms rows, station_key 'work_project'
+// (master_schedule.html).
+async function listWorkProjects() {
+  const client = getClient();
+  if (!client) return [];
+  const { data, error } = await client.from(TABLE).select('id,fields,work_date')
+    .eq('station_key', 'work_project').eq('status', 'submitted').order('work_date', { ascending: false });
+  if (error) { console.error('listWorkProjects', error); return []; }
+  return (data || []).filter((r) => r.fields && !r.fields.voided);
+}
+
+// The package(s) a form works on — its input, the same one Master Schedule's
+// "Worked that day" offers: Wet Intake's row UIDs, Take Down's intake (farm)
+// UID, everyone else's sourceUid. New tags made later trace back to it
+// (buildAliasMap), so labor on it follows the lot.
+function formProjectUids(stationKey, fields) {
+  const f = fields || {};
+  const seen = new Map();
+  const add = (raw, strain) => { const u = normUid(raw); if (u.length >= 4 && !seen.has(u)) seen.set(u, { uid: u, strain: strain || '' }); };
+  if (stationKey === 'intake_wet') (f.lines || []).forEach((ln) => ln && add(ln.sourceUid, ln.strain || f.strain));
+  else add(stationKey === 'dry_check' ? (f.incomingUid || f.sourceUid) : f.sourceUid, f.strain);
+  return [...seen.values()];
+}
+
+// Puts a form's packages on a project. UIDs it adds carry `form` (the form's
+// id), so a later call can take back the ones the form no longer has, and
+// `unlinkFrom` (the project it was on before) loses this form's UIDs. UIDs
+// already on the project some other way are left as they are. Re-reads the
+// project and writes only if nobody saved in between (updated_at), like
+// Master Schedule's own saves.
+async function linkFormToProject(formId, projectId, uids, { stationKey, by, unlinkFrom } = {}) {
+  const client = getClient();
+  if (!client || !formId) return { ok: false, reason: 'not-configured' };
+  const patch = async (id, mutate) => {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const { data: rows, error: e1 } = await client.from(TABLE).select('id,fields,updated_at').eq('id', id).limit(1);
+      if (e1) return { ok: false, reason: e1.message };
+      const row = rows && rows[0];
+      if (!row || !row.fields || row.fields.voided) return { ok: true, gone: true };
+      const before = row.fields.uids || [];
+      const after = mutate(before);
+      if (after === before) return { ok: true };
+      const { data, error } = await client.from(TABLE).update({ fields: { ...row.fields, uids: after }, updated_by: by || null })
+        .eq('id', id).eq('updated_at', row.updated_at).select('id');
+      if (error) return { ok: false, reason: error.message };
+      if (data && data.length) return { ok: true };
+    }
+    return { ok: false, reason: 'busy' };
+  };
+  if (unlinkFrom && unlinkFrom !== projectId) {
+    const r = await patch(unlinkFrom, (list) => list.some((u) => u.form === formId) ? list.filter((u) => u.form !== formId) : list);
+    if (!r.ok) return r;
+  }
+  if (!projectId) return { ok: true };
+  const want = new Map((uids || []).map((u) => [normUid(u.uid), u]));
+  return patch(projectId, (list) => {
+    const kept = list.filter((u) => u.form !== formId || want.has(normUid(u.uid)));
+    const have = new Set(kept.map((u) => normUid(u.uid)));
+    const added = [...want.values()].filter((u) => !have.has(normUid(u.uid)))
+      .map((u) => ({ uid: normUid(u.uid), strain: u.strain || '', addedAt: todayStr(), addedBy: by || '', form: formId, station: stationKey || '' }));
+    return kept.length === list.length && !added.length ? list : [...kept, ...added];
+  });
+}

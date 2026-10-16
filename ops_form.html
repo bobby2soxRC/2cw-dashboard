@@ -347,6 +347,19 @@
     each:    { en: '{g} g each', es: '{g} g c/u' },
     ready:   { en: 'ready by {d}', es: 'lista para {d}' }
   };
+  // The Master Schedule project dropdown (projectPicker).
+  const PJ = {
+    loading: { en: 'Loading projects…', es: 'Cargando proyectos…' },
+    choose:  { en: 'No project', es: 'Sin proyecto' },
+    running: { en: 'Running {d}', es: 'En curso el {d}' },
+    others:  { en: 'Other open projects', es: 'Otros proyectos abiertos' },
+    closed:  { en: 'Done or removed', es: 'Terminado o quitado' },
+    linked:  { en: '✓ Linked: {uids} is on this project.', es: '✓ Vinculado: {uids} está en este proyecto.' },
+    noUid:   { en: 'The package will be linked to this project once its UID is filled in.',
+               es: 'El paquete se vinculará a este proyecto cuando se llene su UID.' },
+    failed:  { en: 'Couldn’t link to the project yet — it will try again on the next save.',
+               es: 'Aún no se pudo vincular al proyecto — se intentará de nuevo al guardar.' }
+  };
   const pkLoading = (f) => t(f.picker.list === 'buckable' ? PK.loadingBuck : f.picker.list === 'bucked' ? PK.loadingBucked : PK.loading);
   const reference = await loadReference();
   const form = document.getElementById('form');
@@ -390,7 +403,11 @@
     }
 
     let control = '';
-    if (f.t === 'select') {
+    if (f.projectPicker) {
+      // Filled once the projects load (wireProjectPicker below).
+      control = `<select id="f_${f.k}"><option value="">${escapeHtml(t(PJ.loading))}</option></select>` +
+                `<div class="match" id="m_${f.k}"></div>`;
+    } else if (f.t === 'select') {
       const opts = optionsFor(f);
       control = `<select id="f_${f.k}">` +
         `<option value=""></option>` +
@@ -906,6 +923,11 @@
       setFieldValue(f, v);
       changed = true;
     });
+    // Another tablet moved this page's packages to a project.
+    if (projField && !touched.has(projField.k) && saved.projectLinked && saved.projectLinked !== values.projectLinked) {
+      values.projectLinked = saved.projectLinked;
+      if (saved.projectName) values.projectName = saved.projectName;
+    }
     if (changed) { updateVisibility(); recompute(); }
     return changed;
   }
@@ -1121,6 +1143,91 @@
       markDirty();
     });
   });
+
+  // ── Master Schedule project (projectPicker) ──────────────────────────────
+  // Picking a project puts this form's package(s) on it (linkFormToProject
+  // in ops_data.js): Labor Log hours logged to the project are then split
+  // over them, which is where their labor cost comes from. The link is made
+  // on each autosave whose project or packages changed, and again on
+  // submit; changing the project (or deleting the page) takes them back off
+  // the old one. `projectLinked` remembers which project has them, so a
+  // resumed page or another tablet knows too.
+  const projField = station.fields.find((f) => f.projectPicker);
+  let projects = projField && draftsOn ? null : [];
+  let linkedSig = null;
+  const projById = (id) => (projects || []).find((p) => p.id === id);
+  const fmtShort = (d) => new Date(d + 'T12:00:00').toLocaleDateString(getLang() === 'es' ? 'es-US' : 'en-US', { month: 'short', day: 'numeric' });
+  function projLabel(p) {
+    const f = p.fields;
+    const loc = f.location === 'other' ? f.locationName : ((WORK_LOCATIONS.find(([k]) => k === f.location) || [])[1] || '');
+    const dates = f.end && f.end !== f.start ? `${fmtShort(f.start)} – ${fmtShort(f.end)}` : f.end ? fmtShort(f.start) : `${fmtShort(f.start)} →`;
+    return [f.name, loc, dates].filter(Boolean).join(' · ');
+  }
+  function syncProjectName() {
+    if (!projField) return;
+    const p = projById(values[projField.k]);
+    if (!values[projField.k]) delete values.projectName;
+    else if (p) values.projectName = p.fields.name;
+  }
+  function fillProjectPicker() {
+    if (!projField) return;
+    const sel = document.getElementById(`f_${projField.k}`);
+    const cur = values[projField.k] || '';
+    if (!projects) return;
+    // Open projects (not Done), the ones running on the form's date first;
+    // within each group the ones for this station's process lead.
+    const date = values.date || todayStr();
+    const forHere = (f) => f.process === station.key || (f.roles || []).some((r) => r.process === station.key);
+    const open = projects.filter((p) => (p.fields.status || 'active') !== 'done')
+      .sort((a, b) => (forHere(b.fields) - forHere(a.fields)) || String(a.fields.name).localeCompare(String(b.fields.name)));
+    const covers = (f) => f.start && f.start <= date && (!f.end || f.end >= date);
+    const now = open.filter((p) => covers(p.fields)), later = open.filter((p) => !covers(p.fields));
+    const opt = (p) => `<option value="${escapeAttr(p.id)}">${escapeHtml(projLabel(p))}</option>`;
+    const shut = cur && !open.some((p) => p.id === cur)
+      ? `<optgroup label="${escapeAttr(t(PJ.closed))}"><option value="${escapeAttr(cur)}">${escapeHtml(projById(cur) ? projLabel(projById(cur)) : values.projectName || cur)}</option></optgroup>` : '';
+    sel.innerHTML = `<option value="">${escapeHtml(t(PJ.choose))}</option>` +
+      (now.length ? `<optgroup label="${escapeAttr(t(PJ.running).replace('{d}', fmtShort(date)))}">${now.map(opt).join('')}</optgroup>` : '') +
+      (later.length ? `<optgroup label="${escapeAttr(t(PJ.others))}">${later.map(opt).join('')}</optgroup>` : '') + shut;
+    sel.value = cur;
+    showProjectInfo();
+  }
+  function showProjectInfo(msg) {
+    if (!projField) return;
+    const box = document.getElementById(`m_${projField.k}`);
+    const uids = formProjectUids(station.key, values);
+    box.textContent = msg || (!values[projField.k] ? ''
+      : !uids.length ? t(PJ.noUid)
+      : values.projectLinked === values[projField.k] ? t(PJ.linked).replace('{uids}', uids.map((u) => '…' + u.uid.slice(-4)).join(', ')) : '');
+    box.style.display = box.textContent ? 'block' : 'none';
+  }
+  async function syncProjectLink(force) {
+    if (!projField || !draftsOn) return;
+    const pid = values[projField.k] || '';
+    const uids = formProjectUids(station.key, values);
+    const sig = pid + '|' + uids.map((u) => u.uid).join(',');
+    if (!force && sig === linkedSig) return;
+    if (!pid && !values.projectLinked) { linkedSig = sig; return; }
+    const res = await linkFormToProject(draftId, pid, uids, { stationKey: station.key, by: owner, unlinkFrom: values.projectLinked });
+    if (!res.ok) { showProjectInfo(t(PJ.failed)); return; }
+    linkedSig = sig;
+    const was = values.projectLinked || '';
+    if (pid) values.projectLinked = pid; else delete values.projectLinked;
+    showProjectInfo();
+    // Saved with the page, so a resumed page knows where its packages are.
+    if ((values.projectLinked || '') !== was && !force && !isClosed) markDirty();
+  }
+  async function unlinkProject() {
+    if (!projField || !values.projectLinked) return;
+    await linkFormToProject(draftId, null, [], { by: owner, unlinkFrom: values.projectLinked }).catch(() => {});
+  }
+  if (projField) {
+    const sel = document.getElementById(`f_${projField.k}`);
+    sel.addEventListener('change', () => { syncProjectName(); showProjectInfo(); });
+    const dateEl = document.getElementById('f_date');
+    if (dateEl) dateEl.addEventListener('change', fillProjectPicker);
+    if (draftsOn) listWorkProjects().then((list) => { projects = list; fillProjectPicker(); });
+    else fillProjectPicker();
+  }
 
   // ── Prefill from the upstream stage ───────────────────────────────────────
   // Bucking should not have to re-weigh what the post-dry check already
@@ -1410,6 +1517,7 @@
   function hydrate(fields) {
     if (Array.isArray(fields._deleted)) values._deleted = fields._deleted;
     if (Array.isArray(fields.runDays)) values.runDays = fields.runDays;
+    ['projectName', 'projectLinked'].forEach((k) => { if (fields[k]) values[k] = fields[k]; });
     station.fields.forEach((f) => {
       if (f.t === 'calc' || f.t === 'photo') return;
       if (f.t === 'lineitems') {
@@ -1499,6 +1607,7 @@
   const mirrorKey = () => `2cw_draft_mirror_${draftId}`;
 
   function draftPayload() {
+    syncProjectName();
     const fields = { ...values };
     station.fields.filter((f) => f.t === 'photo').forEach((f) => { delete fields[f.k]; });
     const strain = values.strain || (station.splitBy
@@ -1538,6 +1647,7 @@
     if (res.ok) {
       onServer = true;
       sentTouched.forEach((k) => touched.delete(k));
+      syncProjectLink();
       autosaveEl.className = 'autosave saved';
       autosaveTxt.textContent = `${t(AS.saved)} ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
       localStorage.removeItem(mirrorKey());
@@ -1816,7 +1926,12 @@
     clearTimeout(autosaveTimer);
     submittedHere = true;
 
+    // The project gets this form's packages first, so the record saves
+    // knowing which project has them (an offline submit retries the link
+    // when it goes through).
+    await syncProjectLink(true);
     // Drop empty worksheet rows before sending.
+    syncProjectName();
     const payload = { ...values };
     delete payload._deleted;
     // Row numbers count only the rows that are kept: 1, 2, 3… with no gaps.
@@ -1931,6 +2046,7 @@
     if (!pendingSubmits.length || !draftsOn) return;
     const sres = await flushPending();
     if (!sres.ok) return;
+    await syncProjectLink(true);
     localStorage.removeItem(mirrorKey());
     banner.className = 'banner success';
     banner.textContent = t(UI.submitted);
@@ -2002,6 +2118,7 @@
       // Never saved (nothing typed yet) → nothing on the server to delete.
       const res = onServer ? await deleteOpenPage(station.key, draftId) : { ok: true };
       if (!res.ok && res.code === 'submitted') { closedElsewhere(); alert(t(DP.tooLate)); return; }
+      if (res.ok || res.code === 'gone') await unlinkProject();
       if (!res.ok && res.code !== 'gone') {
         isClosed = false;
         delBtn.disabled = false;

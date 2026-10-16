@@ -13,12 +13,20 @@
 // without their own rate, fall to the '*' default — `defaultHours` says how
 // many hours did.
 //
-// POST {pin} -> {ok, runs: [{id, cost, hours, defaultHours, unratedHours}]}
+// A run on a Master Schedule project (fields.project, picked on the form) is
+// costed from the Labor Log instead: the hours logged to that project, split
+// over the project's UIDs by pounds (OpsAnalytics.laborAllocations, the same
+// split the Labor Log's By lot shows), counting the share that lands on the
+// run's source UID. Its Workforce Log isn't counted then, so nothing is
+// costed twice. Those runs come back with `source: 'project'`.
+//
+// POST {pin} -> {ok, runs: [{id, cost, hours, defaultHours, unratedHours, source}]}
 //
 // Required env vars (Netlify site config), same as admin.js:
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
 const OpsAnalytics = require('../../ops_analytics.js');
+const { OPERATIONS_STATIONS } = require('../../operations_stations.js');
 
 const COST_COL = 'preroll costs';
 
@@ -43,6 +51,57 @@ async function userForPin(supaUrl, serviceKey, pin) {
     `app_users?pin=in.(${encodeURIComponent(variants)})&active=is.true&select=name,pin,columns`);
   if (!res.ok) throw new Error(`user lookup failed: ${res.status} ${await res.text()}`);
   return (await res.json()).find((u) => pad(String(u.pin)) === target) || null;
+}
+
+// Every row a query matches, a page at a time (PostgREST caps each response).
+async function fetchAll(supaUrl, serviceKey, path) {
+  const out = [];
+  for (let offset = 0; ; offset += 1000) {
+    const res = await supaFetch(supaUrl, serviceKey, `${path}&order=id.asc&limit=1000&offset=${offset}`);
+    if (!res.ok) throw new Error(`read failed: ${res.status} ${await res.text()}`);
+    const rows = await res.json();
+    out.push(...rows);
+    if (rows.length < 1000) return out;
+  }
+}
+// operations_forms rows as ops_analytics expects them (flattenRecord in ops_data.js).
+const flat = (row) => ({ ...(row.fields || {}), id: row.id, strain: row.strain || (row.fields || {}).strain,
+                         date: row.work_date, submittedAt: row.submitted_at, stationKey: row.station_key });
+const normUid = (u) => String(u || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+// Labor Log allocations for the projects pre-roll runs are on: the projects,
+// the labor entries logged to them, and the station records whose pounds
+// the hours are split by.
+async function projectAllocations(supaUrl, serviceKey, projectIds, rates) {
+  if (!projectIds.length) return [];
+  const ids = projectIds.map((id) => `"${String(id).replace(/["\\]/g, '')}"`).join(',');
+  const keys = OPERATIONS_STATIONS.map((st) => st.key).join(',');
+  const [projects, entries, records] = await Promise.all([
+    fetchAll(supaUrl, serviceKey, `operations_forms?station_key=eq.work_project&id=in.(${encodeURIComponent(ids)})&select=id,work_date,submitted_at,station_key,strain,fields`),
+    fetchAll(supaUrl, serviceKey, `operations_forms?station_key=eq.labor_entry&status=eq.submitted&fields->>project=in.(${encodeURIComponent(ids)})&select=id,work_date,submitted_at,station_key,strain,fields`),
+    fetchAll(supaUrl, serviceKey, `operations_forms?station_key=in.(${keys})&status=eq.submitted&select=id,work_date,submitted_at,station_key,strain,fields`)
+  ]);
+  const stages = { work_project: projects.map(flat), labor_entry: entries.map(flat) };
+  OPERATIONS_STATIONS.forEach((st) => { stages[st.key] = []; });
+  records.forEach((r) => { (stages[r.station_key] = stages[r.station_key] || []).push(flat(r)); });
+  return OpsAnalytics.laborAllocations(stages, rates);
+}
+
+// A run's share of its project's Labor Log hours: the allocations on its
+// source UID.
+function projectRunCost(run, allocs, rates) {
+  const f = run.fields || {};
+  const uid = normUid(f.sourceUid);
+  const own = rates.filter((r) => r.employeeId !== '*');
+  let cost = 0, hours = 0, defaultHours = 0, unratedHours = 0;
+  allocs.forEach((a) => {
+    if (a.project !== f.project || !uid || normUid(a.uid) !== uid || !(a.hours > 0)) return;
+    hours += a.hours;
+    if (a.cost == null) { unratedHours += a.hours; return; }
+    if (OpsAnalytics.rateFor(own, a.employeeNo, a.date) == null) defaultHours += a.hours;
+    cost += a.cost;
+  });
+  return { id: run.id, cost: round2(cost), hours: round2(hours), defaultHours: round2(defaultHours), unratedHours: round2(unratedHours), source: 'project' };
 }
 
 const num = (x) => { const n = parseFloat(x); return Number.isFinite(n) ? n : 0; };
@@ -96,7 +155,10 @@ exports.handler = async (event) => {
     // Until employee_badges exists every badge is unmapped (default rate).
     const badgeTo = new Map((badgesRes.ok ? await badgesRes.json() : [])
       .map((b) => [OpsAnalytics.badgeKey(b.badge_no), String(b.employee_id)]));
-    const runs = (await runsRes.json()).map((r) => runCost(r, rates, badgeTo));
+    const rows = await runsRes.json();
+    const projectIds = [...new Set(rows.map((r) => (r.fields || {}).project).filter(Boolean))];
+    const allocs = await projectAllocations(supaUrl, serviceKey, projectIds, rates);
+    const runs = rows.map((r) => ((r.fields || {}).project ? projectRunCost(r, allocs, rates) : runCost(r, rates, badgeTo)));
     return json(200, { ok: true, runs });
   } catch (err) {
     return json(502, { ok: false, error: String(err.message || err) });

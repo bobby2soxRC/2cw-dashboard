@@ -260,6 +260,12 @@ so each badge is looked up in `employee_badges` (admin panel → Labor Rates
 → Badge #, see `docs/USER_ADMIN.md`) first. Hours on a badge nobody has
 mapped, or on a person without their own rate, fall to the default rate.
 The detail says how many hours did. Hours with no rate at all aren't costed.
+A run with a **Project** picked is costed from the Labor Log instead: its
+share of the hours logged to that project (`laborAllocations`, split over
+the project's UIDs by pounds), counting the allocations on the run's source
+UID — at each person's own rate, by Connecteam id. Its Workforce Log isn't
+counted then, so nothing is costed twice; the detail says where the cost
+came from (`source: 'project'`).
 
 **Pre-roll products and pack quantities.** Quantities on requests and queue
 items are in units — packs, or singles — not pre-rolls. `preroll_products`
@@ -964,6 +970,31 @@ or just hours, one or more people, and zero or more UIDs, then Save.
     lot).
   - Pages that allocate labor (Labor Log, Harvest Intakes, the
     dashboard) load the `work_project` rows into `stages.work_project`.
+  - **Project on the station forms.** Wet Intake, Take Down, Bucking,
+    Hand Trim and Pre-Roll Production have a **Project (Master
+    Schedule)** dropdown under the date (`F.project()`, `projectPicker`;
+    `wireProjectPicker` in `ops_form.html`). It lists open projects
+    (not Done), the ones running on the form's date first and, within
+    that, the ones for this station's process. Picking one puts the
+    form's package(s) on the project's UIDs (`linkFormToProject` in
+    `ops_data.js`), so Labor Log hours logged to the project split onto
+    them as above — the labor cost comes from the Labor Log, not the
+    form. The package is the form's input, as in "Worked that day"
+    (`formProjectUids`): Wet Intake's row UIDs, Take Down's intake UID,
+    everyone else's `sourceUid`.
+    - The link is made on each autosave whose project or packages
+      changed, and again on submit (or a correction's save). UIDs it adds
+      carry `form` (the form's id) and `station`; changing the project,
+      or the UID, takes them back off, and so does Delete this page. A
+      UID already on the project some other way is left alone.
+    - The form stores `project` (the id), `projectName`, and
+      `projectLinked` (the project that has its packages now, so a
+      resumed page or another tablet can move them).
+    - Master Schedule's editor keeps UIDs a form added while it was open
+      (it merges them in on save); hovering a UID chip says which station
+      linked it. Removing one there only lasts until that form saves its
+      link again (its next change, or submit) — to take a package off,
+      change the form's Project.
 - **Costs** use each person's own loaded $/hr (wage + taxes + benefits),
   set in the admin panel's **Labor Rates** tab (see `docs/USER_ADMIN.md`).
   Rates live in the `labor_rates` table, one row per person per effective

@@ -501,7 +501,8 @@
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !closeCopyMenu()) closeDetail(); });
 
   function fieldHtml(f, r) {
-    const v = val(r, f.k);
+    // A Master Schedule project is stored by id, with its name beside it.
+    const v = f.projectPicker && val(r, f.k) ? val(r, 'projectName') || val(r, f.k) : val(r, f.k);
     if (f.showIf && !f.showIf(r.fields || {})) return '';
     if (f.t === 'lineitems') {
       const items = Array.isArray(v) ? v : [];

@@ -27,6 +27,8 @@
 //          plus "Other — type it"; picking one stores its ref (PR# / PQ-#)
 //          and fills { fieldKey: item property } from `fills` (see
 //          wirePrPickers in ops_form.html)
+//   projectPicker (select) a dropdown of the open Master Schedule projects
+//          (F.project — see wireProjectPicker in ops_form.html)
 //   fill   a button, not a value: { keys: [three field keys], fill: (v, key) =>
 //          number } — with all but one of `keys` filled in, works out the
 //          missing one (Bucking's Calculate for stems / mold / floor waste).
@@ -103,6 +105,15 @@ const F = {
   laborHours: () => ({ k: 'laborHours', t: 'number', min: 0, step: 0.25,
                        l: { en: 'Labor Hours', es: 'Horas de trabajo' } }),
   notes: () => ({ k: 'notes', t: 'textarea', l: { en: 'Notes', es: 'Notas' } }),
+  // The Master Schedule project this work is for (`projectPicker`: a
+  // dropdown of the open projects — wireProjectPicker in ops_form.html).
+  // The form's package(s) are added to the project's UIDs, so Labor Log
+  // hours logged to the project are split over them (linkFormToProject in
+  // ops_data.js). Stores the project id; `projectName` goes with it.
+  project: () => ({ k: 'project', t: 'select', projectPicker: true,
+                    l: { en: 'Project (Master Schedule)', es: 'Proyecto (Plan Maestro)' },
+                    hint: { en: 'Pick the project this work is for. Its packages are linked to the project, so the Labor Log hours logged to the project count toward their labor cost.',
+                            es: 'Elija el proyecto de este trabajo. Sus paquetes se vinculan al proyecto, así que las horas del Registro de mano de obra del proyecto cuentan en su costo laboral.' } }),
   // Per-employee hours on this batch/UID — the crewSize/laborHours fields above
   // give a station-level total; this is what actually links a numeric employee
   // ID to a specific batch, which is what a future payroll join needs (match
@@ -335,6 +346,7 @@ const OPERATIONS_STATIONS = [
     splitBy: 'lines',
     fields: [
       F.date(),
+      F.project(),
       { k: 'pid', t: 'select', ref: 'properties', allowOther: true, req: true,
         l: { en: 'Farm License', es: 'Licencia del rancho' } },
       { k: 'cid', t: 'select', ref: 'customers', allowOther: true, l: { en: 'Customer ID (CID)', es: 'ID de cliente (CID)' } },
@@ -415,6 +427,7 @@ const OPERATIONS_STATIONS = [
     headline: 'dryWeightLb',
     fields: [
       F.date(),
+      F.project(),
       // Pick the room first, then the package from what's still drying
       // there (`picker`: Wet Intakes with no Take Down yet, as "Strain -
       // last 4"). "Not listed" falls back to typing the UID.
@@ -547,6 +560,7 @@ const OPERATIONS_STATIONS = [
                     empLabel: { en: 'Employee # / Name', es: 'N.º / nombre' } },
     fields: [
       F.date(),
+      F.project(),
       // Picked from what's ready to buck (`picker`: released Take Downs and
       // released parts with no Bucking record yet, as "Strain || abbreviation
       // || last 4"). "Not listed" falls back to typing the UID.
@@ -749,6 +763,7 @@ const OPERATIONS_STATIONS = [
                             es: 'Flor terminada pesada ese día en todas las hojas de corte a mano, en libras. Incluye hojas abiertas.' } },
     fields: [
       F.date(),
+      F.project(),
       // Picked from every lot that's been bucked (`picker`: buckedLots in
       // ops_common.js, "Strain || abbreviation || last 4"). "Other" is for
       // bucked flower from somewhere else: a popup asks for the strain and
@@ -1039,6 +1054,7 @@ const OPERATIONS_STATIONS = [
     dayTabs: { lines: ['output', 'crew'] },
     fields: [
       { ...F.date(), l: { en: 'Start Date', es: 'Fecha de inicio' } },
+      F.project(),
       // Picked from the pre-roll queue, in the dashboard's order: fills in
       // what the request knows; the rest is typed as usual.
       { k: 'prNum', t: 'text', l: { en: 'Production Request', es: 'Solicitud de producción' },
