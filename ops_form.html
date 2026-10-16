@@ -707,6 +707,7 @@
     add:   { en: '+ Add day', es: '+ Agregar día' },
     addGo: { en: 'Add', es: 'Agregar' },
     move:  { en: '✎ Change date', es: '✎ Cambiar fecha' },
+    remove:{ en: '✕ Remove day', es: '✕ Quitar día' },
     moveGo:{ en: 'Move', es: 'Mover' }
   };
   function dayLabel(d) {
@@ -715,8 +716,20 @@
   }
   function dayList() {
     const rows = DTL.flatMap((k) => values[k] || []);
-    return [...new Set([...rows.map(rowDay), ...(values.runDays || []), values.date, todayStr(), curDay])].filter(Boolean).sort();
+    // Removed tabs (`hiddenDays`) stay off unless something is logged on them.
+    const hidden = new Set(values.hiddenDays || []);
+    const extra = [...(values.runDays || []), values.date, todayStr(), curDay].filter((d) => d && !hidden.has(d));
+    return [...new Set([...rows.map(rowDay), ...extra])].filter(Boolean).sort();
   }
+  const dayHasRows = (d) => DTL.some((k) => (values[k] || []).some((r) => rowDay(r) === d));
+  // Remove day: an empty tab that isn't the Start Date (e.g. Today on a
+  // backdated run) comes off, kept in `hiddenDays` so it doesn't come back.
+  const canRemoveDay = (d) => d !== values.date && !dayHasRows(d) && dayList().length > 1;
+  function hideDay(d) {
+    values.hiddenDays = [...new Set([...(values.hiddenDays || []), d])].sort();
+    values.runDays = (values.runDays || []).filter((x) => x !== d);
+  }
+  const unhideDay = (d) => { if ((values.hiddenDays || []).includes(d)) values.hiddenDays = values.hiddenDays.filter((x) => x !== d); };
   // A run with nothing logged yet goes to its Start Date's tab — a backdated
   // run's crew, project and output belong to that day, not today. Run on
   // load and when the Start Date is changed.
@@ -751,7 +764,8 @@
       (moving
         ? `<span class="chip day-add"><input type="date" id="day-move-in" value="${escapeAttr(curDay)}">` +
           `<button type="button" class="day-add-go" id="day-move-go">${t(DY.moveGo)}</button></span>`
-        : `<button type="button" class="chip new" id="day-move">${t(DY.move)}</button>`);
+        : `<button type="button" class="chip new" id="day-move">${t(DY.move)}</button>`) +
+      (canRemoveDay(curDay) && !moving && !adding ? `<button type="button" class="chip new" id="day-remove">${t(DY.remove)}</button>` : '');
   }
   // Change date: the picked day tab, with everything logged on it, moves to
   // another day — for a tab that was made for the wrong date (a new run
@@ -774,6 +788,9 @@
     });
     values._deleted = [...gone];
     values.runDays = [...new Set([...(values.runDays || []).filter((d) => d !== from), to])].sort();
+    // The old tab doesn't stay behind empty (Today, on a backdated run).
+    unhideDay(to);
+    if (!dayHasRows(from)) hideDay(from);
     if (values.projectDays && from in values.projectDays) {
       const pd = { ...values.projectDays };
       if (!(to in pd)) pd[to] = pd[from];
@@ -800,6 +817,15 @@
     if (day) { pickDay(day.dataset.day); return; }
     if (e.target.closest('#day-add')) { el.dataset.adding = '1'; el.dataset.moving = ''; renderDays(); document.getElementById('day-add-in').focus(); return; }
     if (e.target.closest('#day-move')) { el.dataset.moving = '1'; el.dataset.adding = ''; renderDays(); document.getElementById('day-move-in').focus(); return; }
+    if (e.target.closest('#day-remove')) {
+      if (!canRemoveDay(curDay)) return;
+      hideDay(curDay);
+      markDirty();
+      const rest = dayList().filter((d) => d !== curDay);
+      pickDay(rest.includes(values.date) ? values.date : rest[rest.length - 1]);
+      renderDays();
+      return;
+    }
     if (e.target.closest('#day-move-go')) {
       const d = document.getElementById('day-move-in').value;
       el.dataset.moving = '';
@@ -810,6 +836,7 @@
       const d = document.getElementById('day-add-in').value;
       el.dataset.adding = '';
       if (d) {
+        unhideDay(d);
         values.runDays = [...new Set([...(values.runDays || []), d])].sort();
         markDirty();
         pickDay(d);
@@ -997,6 +1024,12 @@
     // Days added on another tablet (day tabs) show up here too.
     if (Array.isArray(saved.runDays) && saved.runDays.some((d) => !(values.runDays || []).includes(d))) {
       values.runDays = [...new Set([...(values.runDays || []), ...saved.runDays])].sort();
+      changed = true;
+      if (DT) renderDays();
+    }
+    // …and so do days removed there.
+    if (Array.isArray(saved.hiddenDays) && saved.hiddenDays.some((d) => !(values.hiddenDays || []).includes(d))) {
+      values.hiddenDays = [...new Set([...(values.hiddenDays || []), ...saved.hiddenDays])].sort();
       changed = true;
       if (DT) renderDays();
     }
@@ -1937,6 +1970,7 @@
   function hydrate(fields) {
     if (Array.isArray(fields._deleted)) values._deleted = fields._deleted;
     if (Array.isArray(fields.runDays)) values.runDays = fields.runDays;
+    if (Array.isArray(fields.hiddenDays)) values.hiddenDays = fields.hiddenDays;
     ['projectName', 'projectLinked', 'projectsLinked', 'projectDays'].forEach((k) => { if (fields[k]) values[k] = fields[k]; });
     // Anything saved that the form no longer shows (a field taken off since,
     // like Pre-Roll's Workforce Log on runs already open) rides along, so
@@ -1973,6 +2007,8 @@
       setFieldValue(f, fields[f.k]);
     });
     goToStartDay();
+    // A removed Today isn't where the page should open.
+    if (DT && !editMode && !dayList().includes(curDay)) { const ds = dayList(); pickDay(ds[ds.length - 1]); renderDays(); }
     // The dropdown shows the picked day's project (day tabs).
     if (perDayProj) fillProjectPicker();
     updateVisibility();

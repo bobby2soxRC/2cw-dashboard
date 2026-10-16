@@ -126,7 +126,12 @@ run's crew, project and output land on the day it was done. **✎ Change
 date** (next to + Add day) moves the picked tab and everything logged on
 it to another date (`moveDay`): its rows are re-added under new ids with
 the old ones in `_deleted` so other tablets follow, and that day's project,
-its `runDays` entry and the Start Date (when it was that day) move too. A row in
+its `runDays` entry and the Start Date (when it was that day) move too.
+The tab it leaves behind goes away when nothing is left on it. **✕ Remove
+day** takes off the picked tab when nothing is logged on it and it isn't the
+Start Date — e.g. Today on a backdated run. Removed days are kept in
+`hiddenDays` (merged across tablets like `runDays`) and stay off unless
+something gets logged on them or the day is added again. A row in
 the output log needs a pre-roll count or a waste weight. New UIDs, finish
 date, QC and verification sit under "End of Run". Because both are running
 logs (`entry: true`), two tablets on one run merge their rows.
