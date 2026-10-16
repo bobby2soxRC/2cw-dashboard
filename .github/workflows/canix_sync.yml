@@ -71,6 +71,8 @@ jobs:
             data/canix_transfers.json
           key: canix-history-${{ github.run_id }}
 
+      # Includes canix_transfers_recent.json (last 30 days of transfers,
+      # slimmed) — the committed stand-in for the cached full history above.
       - name: Commit and push data files
         run: |
           git config user.name "github-actions[bot]"
