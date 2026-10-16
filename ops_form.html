@@ -113,6 +113,8 @@
 
     .panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 18px;margin-top:24px}
     .field{margin-bottom:20px}
+    .field.half{display:inline-block;width:calc(50% - 6px);vertical-align:top}
+    .field.half + .field.half{margin-left:12px}
     .field:last-child{margin-bottom:0}
     label.lbl{display:block;font-size:.72rem;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem}
     label.lbl .req{color:var(--red);margin-left:3px}
@@ -423,6 +425,8 @@
     }
 
     if (f.t === 'check') {
+      // A pick-one group sits side by side, two to a row.
+      if (f.group) wrap.classList.add('half');
       wrap.innerHTML = `<label class="check" for="f_${f.k}"><input type="checkbox" id="f_${f.k}">${t(f.l)}</label>` +
                        (f.hint ? `<div class="hint">${t(f.hint)}</div>` : '');
       return wrap;
@@ -1086,6 +1090,13 @@
       if (other) other.style.display = inp.value === '__other__' ? 'block' : 'none';
       values[f.k] = read();
       touched.add(f.k);
+      // Checkboxes sharing a `group` are pick-one: checking one clears the rest.
+      if (f.t === 'check' && f.group && inp.checked) {
+        station.fields.filter((g) => g.group === f.group && g.k !== f.k).forEach((g) => {
+          const o = document.getElementById(`f_${g.k}`);
+          if (o && o.checked) { o.checked = false; values[g.k] = false; touched.add(g.k); }
+        });
+      }
       recompute();
       updateVisibility();
       markDirty();

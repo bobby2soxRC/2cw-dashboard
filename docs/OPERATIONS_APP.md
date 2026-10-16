@@ -1291,7 +1291,8 @@ Intake's bin weigh-in and Take Down's box table use — a `lineitems` column can
 `number`/`text`/`uid` or `select` with inline `opts` or a `ref` list (plus
 `allowOther`) and a `def` default; `carry: true` copies a column down from the
 row above on "+ Add row", and `req: true` makes it required on any filled-in
-row). `headline`
+row). `check` fields that share a `group` (Hand Trim's Machine / Hand) sit
+side by side and are pick-one: checking one clears the others. `headline`
 names the one field worth showing on a card or the live board without
 opening the form — the running total in the form's sticky footer follows it
 too.

@@ -790,11 +790,12 @@ const OPERATIONS_STATIONS = [
         l: { en: 'Customer ID (CID)', es: 'ID de cliente (CID)' } },
       { k: 'startingBuckedLb', t: 'number', req: true, min: 0, step: 0.01, prefill: 'lookup',
         l: { en: 'Total Starting Bucked Weight (lbs)', es: 'Peso desvarado inicial total (lbs)' } },
-      // Whether the lot went through the machine trimmer before hand trim.
-      { k: 'machineTrimmed', t: 'check',
-        l: { en: 'Machine', es: 'Máquina' },
-        hint: { en: 'Check if this flower went through the machine trimmer first.',
-                es: 'Marque si esta flor pasó primero por la máquina recortadora.' } },
+      // Machine (went through the machine trimmer first) or Hand only — a
+      // pick-one `group`, side by side.
+      { k: 'machineTrimmed', t: 'check', group: 'trimType',
+        l: { en: 'Machine', es: 'Máquina' } },
+      { k: 'handTrimmed', t: 'check', group: 'trimType',
+        l: { en: 'Hand', es: 'Mano' } },
       // What the trimmers are paid on this lot, per finished pound.
       { k: 'trimRatePerLb', t: 'number', min: 0, step: 0.01,
         l: { en: 'Trimmer Rate ($ per lb)', es: 'Tarifa de corte ($ por lb)' },
