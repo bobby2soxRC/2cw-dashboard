@@ -208,12 +208,15 @@
   const reference = await loadReference();
   let forms = [], queue = new Map();
 
-  // Every submitted form on the queue's stations, plus every status row. A
-  // form with no status row is To do.
+  // Every form submitted through the app on the queue's stations, plus every
+  // status row. A form with no status row is To do. Records loaded from the
+  // old paper sheets (owner_user 'paper_import', see
+  // scripts/push_intake_to_supabase.js) aren't app submissions and are left out.
   async function load() {
     if (!client) return t(L.noData);
     const [f, q] = await Promise.all([
       client.from('operations_forms').select('*').eq('status', 'submitted').in('station_key', METRC_STATIONS)
+        .neq('owner_user', 'paper_import')
         .order('submitted_at', { ascending: true }).limit(5000),
       client.from('metrc_queue').select('*').limit(10000)
     ]);

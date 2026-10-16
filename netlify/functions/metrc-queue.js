@@ -69,11 +69,11 @@ exports.handler = async (event) => {
       return json(403, { ok: false, error: 'You don’t have edit access to the Metrc queue.' });
     }
 
-    const formRes = await supaFetch(supaUrl, serviceKey, `operations_forms?id=eq.${id}&select=station_key,status`);
+    const formRes = await supaFetch(supaUrl, serviceKey, `operations_forms?id=eq.${id}&select=station_key,status,owner_user`);
     if (!formRes.ok) throw new Error(`record lookup failed: ${formRes.status} ${await formRes.text()}`);
     const form = (await formRes.json())[0];
     if (!form) return json(404, { ok: false, error: 'That form is gone — it may have been deleted.' });
-    if (form.status !== 'submitted' || !METRC_STATIONS.has(form.station_key)) {
+    if (form.status !== 'submitted' || !METRC_STATIONS.has(form.station_key) || form.owner_user === 'paper_import') {
       return json(400, { ok: false, error: 'That form isn’t in the Metrc queue.' });
     }
 

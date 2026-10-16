@@ -399,7 +399,9 @@ note in `supabase/schema.sql`); for deletes it's verified from the PIN.
 **Metrc Queue** (`metrc.html`, hub card `metrc_queue` under Operations)
 lists every submitted form that usually means work in Metrc — Wet Intake,
 Take Down, Bucking, Hand Trim and Pre-Roll (`METRC_STATIONS` in the page
-and in `netlify/functions/metrc-queue.js`; change both together), however old.
+and in `netlify/functions/metrc-queue.js`; change both together), however old —
+only ones submitted through the app: records loaded from the paper sheets
+(`owner_user` `paper_import`) are left out.
 Each form is To do until someone changes it, then In progress, Done or Not
 needed, with a free-text note (adjustment #, new tags…). Open work is listed
 oldest first, with days waiting; the counts at the top double as filters.
