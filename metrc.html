@@ -68,6 +68,11 @@
     .tbl .age.old{color:var(--red)}
     .tbl .uid{max-width:240px;overflow:hidden;text-overflow:ellipsis}
     .st-cell{display:flex;gap:6px;align-items:center}
+    .mf-cell{display:flex;gap:8px;align-items:center}
+    .copy-mini{min-height:30px;padding:4px 10px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--subtext);
+      font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;cursor:pointer}
+    .copy-mini:hover{border-color:var(--blue);color:var(--blue)}
+    .copy-mini.ok{border-color:var(--green);background:var(--green);color:#000}
     .st-sel{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 8px;min-height:36px;font:inherit;font-size:.82rem;cursor:pointer}
     .st-sel.todo{border-color:var(--red);color:var(--red)}
     .st-sel.in_progress{border-color:var(--gold);color:var(--gold)}
@@ -207,6 +212,9 @@
     colDate:   { en: 'Date', es: 'Fecha' },
     colStrain: { en: 'Strain', es: 'Variedad' },
     colNewUid: { en: 'New UID', es: 'UID nuevo' },
+    colManifest:{ en: 'Manifest #', es: 'N.º de manifiesto' },
+    copyBtn:   { en: 'Copy', es: 'Copiar' },
+    copyDone:  { en: 'Copied', es: 'Copiado' },
     colAmount: { en: 'Amount', es: 'Cantidad' },
     colBy:     { en: 'Submitted by', es: 'Enviado por' },
     colWait:   { en: 'Waiting', es: 'Esperando' },
@@ -332,7 +340,7 @@
     if (!query) return true;
     const q = queue.get(r.id) || {};
     const hay = [r.strain, val(r, 'strain'), uids(r), val(r, 'newFinishedUid'), val(r, 'newPrerollUid'), val(r, 'newWasteUid'),
-      val(r, 'incomingUid'), val(r, 'completedBy'), r.owner_user, q.note, q.updated_by, t(stationOf(r).title)].join(' ').toLowerCase();
+      val(r, 'incomingUid'), val(r, 'manifestNo'), val(r, 'completedBy'), r.owner_user, q.note, q.updated_by, t(stationOf(r).title)].join(' ').toLowerCase();
     return hay.includes(query);
   }
 
@@ -351,14 +359,20 @@
     board.innerHTML = `<div class="tbl-wrap"><table class="tbl">
       <thead><tr>
         <th>${t(L.colStatus)}</th><th>${t(L.colForm)}</th><th>${t(L.colDate)}</th><th>${t(L.colStrain)}</th>
-        <th>UID</th><th>${t(L.colNewUid)}</th><th class="num">${t(L.colAmount)}</th><th>${t(L.colBy)}</th>
+        <th>UID</th><th>${t(L.colManifest)}</th><th>${t(L.colNewUid)}</th><th class="num">${t(L.colAmount)}</th><th>${t(L.colBy)}</th>
         <th>${t(L.colWait)}</th><th>${t(L.colNote)}</th><th>${t(L.colUpd)}</th>
       </tr></thead>
       <tbody>${list.map(rowHtml).join('')}</tbody></table></div>`;
     board.querySelectorAll('tbody tr').forEach((tr) => {
       const id = tr.dataset.id;
       // The status dropdown and Save don't open the form; the rest of the row does.
-      tr.onclick = (e) => { if (!e.target.closest('.st-cell, .row-err')) openDetail(id); };
+      tr.onclick = (e) => { if (!e.target.closest('.st-cell, .row-err, .copy-mini')) openDetail(id); };
+      const cp = tr.querySelector('.copy-mini');
+      if (cp) cp.onclick = async () => {
+        if (!(await writeClipboard(cp.dataset.copy))) return;
+        cp.classList.add('ok'); cp.textContent = t(L.copyDone);
+        setTimeout(() => { cp.classList.remove('ok'); cp.textContent = t(L.copyBtn); }, 1200);
+      };
       const sel = tr.querySelector('.st-sel'), btn = tr.querySelector('.row-save');
       if (!sel) return;
       sel.onchange = () => {
@@ -393,6 +407,7 @@
     const s = statusOf(r), q = queue.get(r.id) || {}, days = daysWaiting(r), open = s === 'todo' || s === 'in_progress';
     const picked = pending.get(r.id) || s;
     const newUid = [val(r, 'newFinishedUid'), val(r, 'newPrerollUid')].filter(Boolean).join(', ');
+    const manifest = String(val(r, 'manifestNo') || '').trim();  // Wet Intake only
     const statusCell = canEdit
       ? `<div class="st-cell"><select class="st-sel ${picked}" aria-label="${esc(t(L.colStatus))}">${STATUSES.map((k) =>
           `<option value="${k}" ${k === picked ? 'selected' : ''}>${t(L[k])}</option>`).join('')}</select>
@@ -404,6 +419,7 @@
       <td class="mono">${esc(fmtDate(r.work_date))}</td>
       <td class="strain">${esc(r.strain || val(r, 'strain') || '—')}</td>
       <td class="mono uid" title="${esc(uids(r))}">${esc(uids(r) || '—')}</td>
+      <td class="mono">${manifest ? `<div class="mf-cell"><span>${esc(manifest)}</span><button type="button" class="copy-mini" data-copy="${esc(manifest)}">${t(L.copyBtn)}</button></div>` : '—'}</td>
       <td class="mono uid" title="${esc(newUid)}">${esc(newUid || '—')}</td>
       <td class="num">${esc(headline(r) || '—')}</td>
       <td>${esc(val(r, 'completedBy') || r.owner_user || '—')}</td>
