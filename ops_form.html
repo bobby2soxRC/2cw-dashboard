@@ -705,7 +705,9 @@
     label: { en: 'Days', es: 'Días' },
     today: { en: 'Today', es: 'Hoy' },
     add:   { en: '+ Add day', es: '+ Agregar día' },
-    addGo: { en: 'Add', es: 'Agregar' }
+    addGo: { en: 'Add', es: 'Agregar' },
+    move:  { en: '✎ Change date', es: '✎ Cambiar fecha' },
+    moveGo:{ en: 'Move', es: 'Mover' }
   };
   function dayLabel(d) {
     const [, m, dd] = String(d).split('-').map(Number);
@@ -737,6 +739,7 @@
     lbl.style.display = 'block';
     el.style.display = 'flex';
     const adding = el.dataset.adding === '1';
+    const moving = el.dataset.moving === '1';
     el.innerHTML = dayList().map((d) =>
       `<button type="button" class="chip${d === curDay ? ' on' : ''}" data-day="${d}">` +
         `<span class="cs">${escapeHtml(d === todayStr() ? t(DY.today) : wk(d))}</span>` +
@@ -744,7 +747,44 @@
       (adding
         ? `<span class="chip day-add"><input type="date" id="day-add-in" value="${escapeAttr(shiftDate(dayList().slice(-1)[0], 1))}">` +
           `<button type="button" class="day-add-go" id="day-add-go">${t(DY.addGo)}</button></span>`
-        : `<button type="button" class="chip new" id="day-add">${t(DY.add)}</button>`);
+        : `<button type="button" class="chip new" id="day-add">${t(DY.add)}</button>`) +
+      (moving
+        ? `<span class="chip day-add"><input type="date" id="day-move-in" value="${escapeAttr(curDay)}">` +
+          `<button type="button" class="day-add-go" id="day-move-go">${t(DY.moveGo)}</button></span>`
+        : `<button type="button" class="chip new" id="day-move">${t(DY.move)}</button>`);
+  }
+  // Change date: the picked day tab, with everything logged on it, moves to
+  // another day — for a tab that was made for the wrong date (a new run
+  // opens on Today). Rows are re-added under new ids and the old ids go in
+  // `_deleted`, so other tablets on the run drop the old ones too. That
+  // day's project (projectDays) and added day (runDays) move with it, and
+  // the Start Date does when it was that day.
+  function moveDay(from, to) {
+    if (!to || to === from || isClosed) return;
+    const gone = new Set(values._deleted || []);
+    DTL.forEach((k) => {
+      const f = station.fields.find((x) => x.k === k);
+      values[k] = (values[k] || []).map((r) => {
+        if (rowDay(r) !== from) return r;
+        const moved = { ...r, day: to };
+        (f.cols || []).filter((c) => c.fromDay).forEach((c) => { moved[c.k] = to; });
+        if (r._id) { gone.add(r._id); moved._id = crypto.randomUUID(); }
+        return moved;
+      });
+    });
+    values._deleted = [...gone];
+    values.runDays = [...new Set([...(values.runDays || []).filter((d) => d !== from), to])].sort();
+    if (values.projectDays && from in values.projectDays) {
+      const pd = { ...values.projectDays };
+      if (!(to in pd)) pd[to] = pd[from];
+      delete pd[from];
+      values.projectDays = pd;
+    }
+    if (values.date === from) setFieldValue(station.fields.find((x) => x.k === 'date'), to);
+    touched.add('date');
+    markDirty();
+    pickDay(to);
+    renderDays();
   }
   function pickDay(d) {
     curDay = d;
@@ -758,7 +798,14 @@
     const el = document.getElementById('days');
     const day = e.target.closest('[data-day]');
     if (day) { pickDay(day.dataset.day); return; }
-    if (e.target.closest('#day-add')) { el.dataset.adding = '1'; renderDays(); document.getElementById('day-add-in').focus(); return; }
+    if (e.target.closest('#day-add')) { el.dataset.adding = '1'; el.dataset.moving = ''; renderDays(); document.getElementById('day-add-in').focus(); return; }
+    if (e.target.closest('#day-move')) { el.dataset.moving = '1'; el.dataset.adding = ''; renderDays(); document.getElementById('day-move-in').focus(); return; }
+    if (e.target.closest('#day-move-go')) {
+      const d = document.getElementById('day-move-in').value;
+      el.dataset.moving = '';
+      if (d && d !== curDay) moveDay(curDay, d); else renderDays();
+      return;
+    }
     if (e.target.closest('#day-add-go')) {
       const d = document.getElementById('day-add-in').value;
       el.dataset.adding = '';
