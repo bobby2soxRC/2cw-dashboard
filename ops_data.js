@@ -408,6 +408,28 @@ function formProjectUids(stationKey, fields) {
   return [...seen.values()];
 }
 
+// Changes a project row's fields: re-reads it and writes only if nobody
+// saved in between (updated_at), like Master Schedule's own saves, retrying
+// on top of the newer version. `mutate(fields)` returns the new fields, or
+// the same object for no change. Returns {ok, fields} (fields as saved).
+async function patchWorkProject(id, mutate, by) {
+  const client = getClient();
+  if (!client || !id) return { ok: false, reason: 'not-configured' };
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { data: rows, error: e1 } = await client.from(TABLE).select('id,fields,updated_at').eq('id', id).limit(1);
+    if (e1) return { ok: false, reason: e1.message };
+    const row = rows && rows[0];
+    if (!row || !row.fields || row.fields.voided) return { ok: true, gone: true };
+    const after = mutate(row.fields);
+    if (after === row.fields) return { ok: true, fields: row.fields };
+    const { data, error } = await client.from(TABLE).update({ fields: after, updated_by: by || null })
+      .eq('id', id).eq('updated_at', row.updated_at).select('id');
+    if (error) return { ok: false, reason: error.message };
+    if (data && data.length) return { ok: true, fields: after };
+  }
+  return { ok: false, reason: 'busy' };
+}
+
 // Puts a form's packages on a project. UIDs it adds carry `form` (the form's
 // id), so a later call can take back the ones the form no longer has, and
 // `unlinkFrom` (the project it was on before) loses this form's UIDs. UIDs
@@ -417,22 +439,11 @@ function formProjectUids(stationKey, fields) {
 async function linkFormToProject(formId, projectId, uids, { stationKey, by, unlinkFrom } = {}) {
   const client = getClient();
   if (!client || !formId) return { ok: false, reason: 'not-configured' };
-  const patch = async (id, mutate) => {
-    for (let attempt = 0; attempt < 3; attempt++) {
-      const { data: rows, error: e1 } = await client.from(TABLE).select('id,fields,updated_at').eq('id', id).limit(1);
-      if (e1) return { ok: false, reason: e1.message };
-      const row = rows && rows[0];
-      if (!row || !row.fields || row.fields.voided) return { ok: true, gone: true };
-      const before = row.fields.uids || [];
-      const after = mutate(before);
-      if (after === before) return { ok: true };
-      const { data, error } = await client.from(TABLE).update({ fields: { ...row.fields, uids: after }, updated_by: by || null })
-        .eq('id', id).eq('updated_at', row.updated_at).select('id');
-      if (error) return { ok: false, reason: error.message };
-      if (data && data.length) return { ok: true };
-    }
-    return { ok: false, reason: 'busy' };
-  };
+  const patch = (id, mutate) => patchWorkProject(id, (fields) => {
+    const before = fields.uids || [];
+    const after = mutate(before);
+    return after === before ? fields : { ...fields, uids: after };
+  }, by);
   if (unlinkFrom && unlinkFrom !== projectId) {
     const r = await patch(unlinkFrom, (list) => list.some((u) => u.form === formId) ? list.filter((u) => u.form !== formId) : list);
     if (!r.ok) return r;

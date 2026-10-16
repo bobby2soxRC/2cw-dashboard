@@ -137,8 +137,19 @@ Connecteam roster or typed in (× takes them off again). Every tap is a row
 `{key, userId, name, status: here | out | added | removed, day, at, by}`;
 the latest per person per day counts (`crewLatest` in
 `operations_stations.js`), so tablets merge. People on this Run
-(`crewSize`) counts everyone here on any day. Nothing is written back to
-the Master Schedule. The hours, and so the cost, come from the Labor Log
+(`crewSize`) counts everyone here on any day.
+
+The marks are also written to the Master Schedule, as that day's changes
+on the project (`overrides[day]`, the same as Change this day there —
+`syncCrewToSchedule`, after each autosave and on submit, through
+`patchWorkProject` in `ops_data.js`): someone on the project marked Not
+here goes in `out` (Here takes them back off it); someone added goes in
+`extra` under the project's pre-roll responsibility (else its first), and
+comes off when they're taken off or marked Not here. Only people the page
+marked are touched, only on days the project runs, and with no Project
+picked only when exactly one pre-roll project runs that day. A mark made
+on the page wins over the schedule's day changes on the page itself, so
+someone marked Not here stays listed that way. The hours, and so the cost, come from the Labor Log
 through the run's Project (below). Runs from before keep their Workforce
 Log (`crew`): the dashboard detail shows it, `crewLaborLog` still reads
 it, and a run already open when it went carries it along (resumed pages

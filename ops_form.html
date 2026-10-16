@@ -411,7 +411,7 @@
       // Drawn by buildCrewCheck once the projects and roster load.
       values[f.k] = [];
       wrap.innerHTML = labelHtml(f) + (f.hint ? `<div class="hint" style="margin-top:0;margin-bottom:10px">${t(f.hint)}</div>` : '') +
-        `<div class="cc" id="cc_${f.k}"></div>`;
+        `<div class="cc" id="cc_${f.k}"></div><div class="entry-msg" id="ccm_${f.k}"></div>`;
       return wrap;
     }
     if (f.t === 'fill') return buildFill(f, wrap);
@@ -1263,8 +1263,8 @@
   // working can be added from the Connecteam roster or typed in. Every tap
   // is a row (key, userId, name, status, day, at, by) and the latest per
   // person per day counts (crewLatest in operations_stations.js), so two
-  // tablets merge like the other running logs. Nothing here writes to the
-  // Master Schedule.
+  // tablets merge like the other running logs. The marks are also written
+  // to the project's day on the Master Schedule (syncCrewToSchedule).
   const CC = {
     loading:  { en: 'Loading the schedule…', es: 'Cargando el horario…' },
     from:     { en: 'Master Schedule — {p}', es: 'Plan Maestro — {p}' },
@@ -1298,17 +1298,32 @@
   // The scheduled people for a day: [{key, userId, name, role}], plus where
   // they came from (the project names) and, with a Project picked that
   // isn't running that day, its name.
+  const ccMine = (r, f) => (r.process || f.process) === station.key;
+  // The projects whose people work this station on a day: the picked
+  // Project, or every pre-roll project running that day.
+  function ccRunning(day) {
+    const pid = values.project;
+    const src = pid ? [projById(pid)].filter(Boolean)
+      : (projects || []).filter((p) => p.fields.process === station.key || (p.fields.roles || []).some((r) => r.process === station.key));
+    return src.filter((p) => projectRunsOn(p.fields, day) && !(((p.fields.overrides || {})[day] || {}).skip));
+  }
   function ccScheduled(day) {
     if (!projects) return { loading: true, people: [] };
     const pid = values.project;
-    const mine = (r, f) => (r.process || f.process) === station.key;
-    const src = pid ? [projById(pid)].filter(Boolean)
-      : projects.filter((p) => p.fields.process === station.key || (p.fields.roles || []).some((r) => r.process === station.key));
-    const running = src.filter((p) => projectRunsOn(p.fields, day) && !(((p.fields.overrides || {})[day] || {}).skip));
+    const mine = ccMine;
+    const running = ccRunning(day);
+    // What this page marked that day — written back to the schedule, so
+    // someone it marked Not here stays listed (as Not here) and someone it
+    // added stays in the Added list.
+    const latest = new Map([...crewLatest(values[(ccFields[0] || {}).k]).values()].filter((r) => r.day === day).map((r) => [r.key, r]));
+    const pageSt = (key) => (latest.get(key) || {}).status || '';
     const people = new Map();
     running.forEach((p) => {
       const f = p.fields, ov = (f.overrides || {})[day] || {};
-      const out = new Set(ov.out || []);
+      // A mark made here wins over the schedule's day changes (which this
+      // page writes too, and may not have saved yet).
+      const out = new Set((ov.out || []).filter((k) => !pageSt(k)));
+      const standing = new Set(projectRoles(f).flatMap((r) => (r.people || []).map(ccKey)));
       // This station's responsibilities (a blank process is the project's).
       // A picked project with none of those: everyone on it. The lead
       // counts when it's the picked project or a pre-roll one.
@@ -1316,15 +1331,78 @@
       const some = roles.some((r) => !r.isLead && mine(r, f));
       roles.filter((r) => (r.isLead ? (pid || f.process === station.key) : pid && !some ? true : mine(r, f))).forEach((r) => {
         const ps = [...(r.people || []).filter((x) => !out.has(ccKey(x))),
-                    ...(ov.extra || []).filter((x) => x.roleId === r.id)];
+                    ...(ov.extra || []).filter((x) => x.roleId === r.id && !(['added', 'removed'].includes(pageSt(ccKey(x))) && !standing.has(ccKey(x))))];
         ps.forEach((x) => {
           const key = ccKey(x);
           if (x.name && !people.has(key)) people.set(key, { key, userId: x.userId || '', name: x.name, role: r.name });
         });
       });
     });
+    // Marked Not here here but off the list now (an extra taken back off).
+    latest.forEach((r) => { if (r.status === 'out' && !people.has(r.key)) people.set(r.key, { key: r.key, userId: r.userId || '', name: r.name, role: '' }); });
     return { people: [...people.values()], from: running.map((p) => p.fields.name),
              notOn: pid && !running.length ? (projById(pid) ? projById(pid).fields.name : values.projectName || '') : '' };
+  }
+  // Writes this page's marks to the Master Schedule, as that day's changes
+  // on the project (overrides[day], the same as Change this day there):
+  // someone on the project marked Not here goes in `out` (Here takes them
+  // back out of it); someone added goes in `extra`, under the project's
+  // pre-roll responsibility (else its first), and comes off it when they're
+  // taken off here or marked Not here. Only people this page marked are
+  // touched, and only on days the project runs. With no Project picked, a
+  // day goes to the one pre-roll project running then (none written when
+  // there are several). Run after each autosave and on submit; the
+  // re-read-then-write in patchWorkProject keeps a lead's edits there.
+  let crewSig = null;
+  const CS = { failed: { en: 'Couldn’t update the Master Schedule yet — it will try again on the next save.',
+                         es: 'Aún no se pudo actualizar el Plan Maestro — se intentará de nuevo al guardar.' } };
+  async function syncCrewToSchedule(force) {
+    if (!ccFields.length || !projects || !draftsOn) return;
+    const byProject = new Map();   // project id -> [{day, key, userId, name, status}]
+    ccFields.forEach((f) => crewLatest(values[f.k]).forEach((r) => {
+      const run = ccRunning(r.day);
+      const p = values.project ? run[0] : run.length === 1 ? run[0] : null;
+      if (!p) return;
+      (byProject.get(p.id) || byProject.set(p.id, []).get(p.id)).push(r);
+    }));
+    const sig = JSON.stringify([...byProject.entries()].map(([id, rs]) => [id, rs.map((r) => [r.day, r.key, r.status])]));
+    if (!force && sig === crewSig) return;
+    let ok = true;
+    for (const [id, marks] of byProject) {
+      const res = await patchWorkProject(id, (fields) => {
+        const roles = fields.roles || [];
+        const role = roles.find((r) => ccMine(r, fields)) || roles[0];
+        const standing = new Set(projectRoles(fields).flatMap((r) => (r.people || []).map(ccKey)));
+        const ovs = { ...(fields.overrides || {}) };
+        let changed = false;
+        marks.forEach((m) => {
+          if (!projectRunsOn(fields, m.day)) return;
+          const ov = { ...(ovs[m.day] || {}) };
+          const out0 = ov.out || [], extra0 = ov.extra || [];
+          let out = out0, extra = extra0;
+          const isExtra = extra.some((x) => ccKey(x) === m.key);
+          if (standing.has(m.key)) {
+            if (m.status === 'out' && !out.includes(m.key)) out = [...out, m.key];
+            if ((m.status === 'here' || m.status === 'added') && out.includes(m.key)) out = out.filter((k) => k !== m.key);
+          } else if ((m.status === 'added' || m.status === 'here') && !isExtra && role) {
+            extra = [...extra, { roleId: role.id, userId: m.userId || '', name: m.name }];
+          } else if ((m.status === 'removed' || m.status === 'out') && isExtra) {
+            extra = extra.filter((x) => ccKey(x) !== m.key);
+          }
+          if (out === out0 && extra === extra0) return;
+          ovs[m.day] = { ...ov, out, extra };
+          changed = true;
+        });
+        return changed ? { ...fields, overrides: ovs, updatedBy: owner || '' } : fields;
+      }, owner);
+      if (!res.ok) { ok = false; continue; }
+      const p = projById(id);
+      if (p && res.fields) p.fields = res.fields;
+    }
+    if (ok) crewSig = sig;
+    ccFields.forEach((f) => entryRenderers[f.k] && entryRenderers[f.k]());
+    const msg = document.getElementById(`ccm_${ccFields[0].k}`);
+    if (msg) { msg.textContent = ok ? '' : t(CS.failed); msg.style.display = ok ? 'none' : 'block'; }
   }
   function buildCrewCheck(f) {
     const box = document.getElementById(`cc_${f.k}`);
@@ -1846,6 +1924,7 @@
       onServer = true;
       sentTouched.forEach((k) => touched.delete(k));
       syncProjectLink();
+      syncCrewToSchedule();
       autosaveEl.className = 'autosave saved';
       autosaveTxt.textContent = `${t(AS.saved)} ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
       localStorage.removeItem(mirrorKey());
@@ -2128,6 +2207,7 @@
     // knowing which project has them (an offline submit retries the link
     // when it goes through).
     await syncProjectLink(true);
+    await syncCrewToSchedule(true);
     // Drop empty worksheet rows before sending.
     syncProjectName();
     const payload = { ...values };
