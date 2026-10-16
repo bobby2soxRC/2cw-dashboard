@@ -22,6 +22,7 @@
 //   dp     decimal places for number/calc display (default 2)
 //   hint   {en, es} helper text under the field
 //   showIf (v) => bool
+//   oToZero (text) a letter O typed is turned into 0 as it's typed (Manifest #)
 //   prefill 'lookup' — pull from the upstream stage record matching sourceUid
 //   prPicker (text) a dropdown of the open pre-roll queue (preroll_queue.js)
 //          plus "Other — type it"; picking one stores its ref (PR# / PQ-#)
@@ -353,7 +354,8 @@ const OPERATIONS_STATIONS = [
       { k: 'pid', t: 'select', ref: 'properties', allowOther: true, req: true,
         l: { en: 'Farm License', es: 'Licencia del rancho' } },
       { k: 'cid', t: 'select', ref: 'customers', allowOther: true, l: { en: 'Customer ID (CID)', es: 'ID de cliente (CID)' } },
-      { k: 'manifestNo', t: 'text', req: true, l: { en: 'Manifest #', es: 'N.º de manifiesto' } },
+      // All digits in Metrc; oToZero turns a typed letter O into 0 as it's typed.
+      { k: 'manifestNo', t: 'text', req: true, inputmode: 'numeric', oToZero: true, l: { en: 'Manifest #', es: 'N.º de manifiesto' } },
       { k: 'truckNo', t: 'text', l: { en: 'Truck #', es: 'N.º de camión' } },
       { k: 'driver', t: 'text', l: { en: 'Driver', es: 'Conductor' } },
       { k: 'completedBy', t: 'text', req: true,

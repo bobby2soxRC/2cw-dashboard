@@ -1183,6 +1183,13 @@
     };
     const onChange = () => {
       if (other) other.style.display = inp.value === '__other__' ? 'block' : 'none';
+      // A letter O typed for a zero (Manifest #) — fixed in the box as it's
+      // typed, cursor left where it was (same length, so same place).
+      if (f.oToZero && /[oO]/.test(inp.value)) {
+        const at = inp.selectionStart;
+        inp.value = inp.value.replace(/[oO]/g, '0');
+        try { inp.setSelectionRange(at, at); } catch (_) { /* not a text input */ }
+      }
       values[f.k] = read();
       touched.add(f.k);
       // Checkboxes sharing a `group` are pick-one: checking one clears the rest.
