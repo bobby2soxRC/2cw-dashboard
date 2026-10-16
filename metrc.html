@@ -153,9 +153,6 @@
   // The station forms that feed the queue — keep in step with
   // METRC_STATIONS in netlify/functions/metrc-queue.js.
   const METRC_STATIONS = ['intake_wet', 'dry_check', 'buck', 'hand_trim', 'preroll_production'];
-  // Forms submitted before the queue went live aren't listed — that backlog
-  // was handled in Metrc the old way.
-  const QUEUE_START = '2026-10-16';
   const access = sessionStorage.getItem('2cw_metrc_access') || '';
   const canEdit = access === 'edit';
 
@@ -211,13 +208,13 @@
   const reference = await loadReference();
   let forms = [], queue = new Map();
 
-  // Submitted forms on the queue's stations since QUEUE_START, plus every
-  // status row. A form with no status row is To do.
+  // Every submitted form on the queue's stations, plus every status row. A
+  // form with no status row is To do.
   async function load() {
     if (!client) return t(L.noData);
     const [f, q] = await Promise.all([
       client.from('operations_forms').select('*').eq('status', 'submitted').in('station_key', METRC_STATIONS)
-        .gte('submitted_at', QUEUE_START).order('submitted_at', { ascending: true }).limit(5000),
+        .order('submitted_at', { ascending: true }).limit(5000),
       client.from('metrc_queue').select('*').limit(10000)
     ]);
     if (f.error) { console.error('metrc forms', f.error); return t(L.noData); }
