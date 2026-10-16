@@ -15,6 +15,7 @@ the existing Operations Hub — same login, same Netlify deploy.
 | `buck_hold.html` | On-Stem Flower: the bucking queue (managers set the order) and Take Downs on hold, with the Release to bucking buttons (all, or part under a new tag) |
 | `labor_log.html` | Labor Log — people's hours (Connecteam roster) against UIDs, split across several UIDs when needed — see below |
 | `master_schedule.html` | Master Schedule — projects, their responsibilities and people, UIDs, and the day/week work schedule (replaced `schedule.html`) — see below |
+| `metrc.html` | Metrc Queue — every submitted Wet Intake, Take Down, Bucking, Hand Trim and Pre-Roll form, with its Metrc status — see below |
 | `operations_today.html` | Live board — every form in progress or finished today, for anyone with view access; the date picker (or `?date=YYYY-MM-DD`) shows any earlier day the same way |
 | `operations_dashboard.html` | Pipeline, yields, biomass, labor, requests, exceptions (finished forms only) |
 | `operations_stations.js` | **The schema.** Station and field definitions, EN + ES |
@@ -394,6 +395,28 @@ an "Edited" tag, and a "Deleted" filter lists deleted intakes. Who made an
 edit is the app's logged-in name (`updated_by`), which the browser supplies —
 the same trust level as everything else on `operations_forms` (see the RLS
 note in `supabase/schema.sql`); for deletes it's verified from the PIN.
+
+**Metrc Queue** (`metrc.html`, hub card `metrc_queue` under Operations)
+lists every submitted form that usually means work in Metrc — Wet Intake,
+Take Down, Bucking, Hand Trim and Pre-Roll (`METRC_STATIONS` in the page
+and in `netlify/functions/metrc-queue.js`; change both together). Forms
+submitted before 2026-10-16 (`QUEUE_START` in the page) aren't listed.
+Each form is To do until someone changes it, then In progress, Done or Not
+needed, with a free-text note (adjustment #, new tags…). Open work is listed
+oldest first, with days waiting; the counts at the top double as filters.
+Opening one shows the whole form — tapping a value copies it (stored codes
+and plain numbers, ready to paste into Metrc) — plus the status history.
+Fix form (for people who can fix submitted forms) opens `ops_form.html?edit=`.
+
+Statuses live in the `metrc_queue` table, one row per form, created the
+first time its status is set (no row = To do; deleting the form deletes the
+row); `log` keeps every change with who and when. The page reads it with the
+anon key and updates live. Access is two admin-panel checkboxes, View
+(`metrc_queue`) and Edit (`metrc queue edit`, implies view), turned into
+`2cw_metrc_access` at hub login. Edit only shows the controls: saves go
+through `netlify/functions/metrc-queue.js`, which re-checks the column from
+the PIN — anon has no write access to the table. Separate from Wet Intake's
+own Metrc adjusted / adjusted lb fields, which stay as they are.
 
 **Information Hub** (`information_hub.html`, hub card `information_hub`
 under Operations) holds the reference lists the rest of the app runs on, one

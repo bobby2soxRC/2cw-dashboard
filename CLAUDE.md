@@ -35,6 +35,14 @@ Code is done; it sends nothing until the Gmail app password and the
 `OPS_REPORT_*_TO` recipient env vars are set in Netlify. Setup and how to
 add more reports: `docs/EMAIL_REPORTS.md`.
 
+### Metrc Queue (started 2026-10-16)
+
+`metrc.html` (hub card under Operations): submitted Wet Intake, Take Down,
+Bucking, Hand Trim and Pre-Roll forms with a Metrc status per form, saved
+through `netlify/functions/metrc-queue.js`. Needs the `metrc_queue` table
+from `supabase/schema.sql` run first. Details: "Metrc Queue" in
+`docs/OPERATIONS_APP.md`.
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)

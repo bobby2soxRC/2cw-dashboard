@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Metrc Queue — 2CW Operations</title>
+  <script>
+    (function(){ if (!sessionStorage.getItem('2cw_pin')) window.location.replace('/index.html'); })();
+  </script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0c0d0f">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0c0d0f;--surface:#13151a;--surface2:#181b21;--border:#1e2129;
+      --green:#3db87a;--gold:#d4a843;--blue:#5a9fd4;--purple:#9b7fd4;--red:#ef5350;
+      --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;
+    }
+    html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-text-size-adjust:100%}
+
+    .hdr{min-height:calc(54px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:12px;position:sticky;top:0;z-index:20}
+    .hdr-back{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
+    .hdr-div{width:1px;height:18px;background:var(--border)}
+    .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--green);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .lang{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;flex:0 0 auto}
+    .lang button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:12px;font-weight:600;padding:8px 12px;cursor:pointer;min-height:36px}
+    .lang button.on{background:var(--blue);color:#000}
+
+    main{padding:28px 16px 60px;max-width:1100px;margin:0 auto}
+    .title{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,6vw,46px);letter-spacing:.04em;line-height:1}
+    .sub{margin-top:6px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+
+    .counts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:22px}
+    .count{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;cursor:pointer;text-align:left;color:inherit;font:inherit}
+    .count:hover,.count.on{border-color:var(--green)}
+    .count .n{font-family:'Bebas Neue',sans-serif;font-size:30px;line-height:1}
+    .count .l{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);margin-top:4px}
+    .count.todo .n{color:var(--red)} .count.in_progress .n{color:var(--gold)} .count.done .n{color:var(--green)} .count.not_needed .n{color:var(--muted)}
+
+    .filters{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0 22px}
+    .filters button{background:var(--surface);border:1px solid var(--border);color:var(--subtext);border-radius:10px;padding:.6rem 1rem;
+      font-family:'DM Mono',monospace;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;min-height:44px}
+    .filters button.on{background:var(--blue);border-color:var(--blue);color:#000;font-weight:700}
+    .filters input{flex:1 1 220px;min-width:0;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .9rem;font-size:.95rem;min-height:44px;outline:none}
+    .filters input:focus{border-color:var(--blue)}
+
+    .board{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+    .row{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:14px;padding:16px 18px;cursor:pointer;transition:border-color .2s;text-align:left;color:inherit;font:inherit;width:100%}
+    .row:hover{border-color:var(--blue)}
+    .row.in_progress{border-left-color:var(--gold)}
+    .row.done{border-left-color:var(--green)}
+    .row.not_needed{border-left-color:var(--muted);opacity:.8}
+    .row-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+    .row-station{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--blue)}
+    .row-strain{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.03em;line-height:1.1;margin-top:2px}
+    .pill{flex:0 0 auto;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border-radius:99px;border:1px solid var(--border);white-space:nowrap}
+    .pill.todo{border-color:var(--red);color:var(--red)}
+    .pill.in_progress{border-color:var(--gold);color:var(--gold)}
+    .pill.done{border-color:var(--green);color:var(--green)}
+    .pill.not_needed{color:var(--muted)}
+    .row-facts{margin-top:10px;display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:.8rem}
+    .row-facts dt{color:var(--muted);font-family:'DM Mono',monospace;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;padding-top:1px}
+    .row-facts dd{color:var(--subtext);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .row-note{margin-top:8px;font-size:.8rem;color:var(--subtext);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .row-meta{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:.8rem;color:var(--subtext);margin-top:10px;border-top:1px solid var(--border);padding-top:10px}
+    .row-meta .who{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .row-meta .age.old{color:var(--red)}
+    .row-headline{font-family:'DM Mono',monospace;font-size:1.05rem;color:var(--text)}
+
+    .empty{color:var(--muted);text-align:center;padding:60px 0;font-size:.9rem;line-height:1.6}
+    .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
+
+    /* Detail sheet */
+    #detail-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:calc(20px + env(safe-area-inset-top)) 12px 40px}
+    #detail-bg.on{display:flex}
+    #detail{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:720px;padding:22px 20px}
+    .d-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:6px}
+    .d-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.03em;line-height:1.05}
+    .d-sub{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);margin-bottom:14px;line-height:1.6}
+    .d-actions{display:flex;gap:8px;flex:0 1 auto;flex-wrap:wrap;justify-content:flex-end}
+    .btn{padding:.65rem 1rem;border:1px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer;background:transparent;color:var(--text);text-decoration:none;display:inline-block;min-height:40px}
+    .btn-blue{background:var(--blue);border-color:var(--blue);color:#000}
+    .btn:disabled{opacity:.5;cursor:default}
+
+    .st-box{border:1px solid var(--border);border-radius:12px;padding:14px;margin:6px 0 18px;background:var(--surface2)}
+    .st-hd{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--subtext);margin-bottom:10px}
+    .st-btns{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+    .st-btns button{min-height:48px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--subtext);font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;cursor:pointer}
+    .st-btns button.on.todo{background:var(--red);border-color:var(--red);color:#000}
+    .st-btns button.on.in_progress{background:var(--gold);border-color:var(--gold);color:#000}
+    .st-btns button.on.done{background:var(--green);border-color:var(--green);color:#000}
+    .st-btns button.on.not_needed{background:var(--muted);border-color:var(--muted);color:#000}
+    .st-box textarea{width:100%;min-height:64px;margin-top:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px;font:inherit;font-size:.95rem;resize:vertical}
+    .st-save{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+    .st-msg{font-size:.85rem;color:var(--subtext)}
+    .st-msg.err{color:var(--red)}
+    .st-view{font-size:.9rem;line-height:1.5}
+
+    .d-row{display:grid;grid-template-columns:minmax(120px,38%) 1fr;gap:10px;padding:9px 0;border-top:1px solid var(--border);font-size:.9rem}
+    .d-row .k{color:var(--muted);font-size:.78rem}
+    .d-row .v{color:var(--text);word-break:break-word}
+    .d-row .v.copyable{cursor:copy;border-radius:4px}
+    .d-row .v.copyable:hover{background:var(--surface2);outline:1px dashed var(--border)}
+    .d-row .v.copied{color:var(--green)}
+    .d-row.hl .v{font-family:'DM Mono',monospace;color:var(--green)}
+    .d-table{width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:.8rem;margin-top:4px}
+    .d-table th{color:var(--muted);font-weight:500;text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);font-size:.7rem}
+    .d-table td{padding:4px 6px;border-bottom:1px solid var(--border)}
+    .d-photo{max-width:100%;max-height:320px;border-radius:10px;border:1px solid var(--border);display:block}
+    .d-section{margin-top:22px;padding-top:14px;border-top:1px solid var(--border)}
+    .d-section-hd{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--subtext);margin-bottom:10px}
+    .hist{list-style:none;display:flex;flex-direction:column;gap:8px;font-size:.85rem;color:var(--subtext)}
+    .hist b{color:var(--text);font-weight:500}
+    .muted-note{font-size:.82rem;color:var(--muted)}
+  </style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="/index.html" id="back">← Hub</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand" id="brand">Metrc Queue</div>
+  <div class="lang" id="lang"></div>
+</header>
+
+<main>
+  <div class="title" id="title">Metrc Queue</div>
+  <div class="sub" id="sub">—</div>
+  <div class="counts" id="counts"></div>
+  <div class="filters" id="filters"></div>
+  <div id="board"></div>
+  <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution</footer>
+</main>
+
+<div id="detail-bg"><div id="detail"></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/config/supabase_config.js"></script>
+<script src="/operations_stations.js"></script>
+<script src="/ops_common.js"></script>
+<script src="/ops_data.js"></script>
+<script>
+// Metrc Queue — every submitted Wet Intake, Take Down, Bucking, Hand Trim and
+// Pre-Roll form, each needing something done in Metrc, with where it stands
+// (To do / In progress / Done / Not needed) and a note. Statuses live in the
+// metrc_queue table (supabase/schema.sql), read here with the anon key and
+// changed only through netlify/functions/metrc-queue.js, which re-checks
+// edit access from the PIN. Access: admin panel → Metrc Queue → View / Edit,
+// turned into 2cw_metrc_access ('view' | 'edit') at hub login.
+(async function () {
+  mountLangToggle('lang');
+  // The station forms that feed the queue — keep in step with
+  // METRC_STATIONS in netlify/functions/metrc-queue.js.
+  const METRC_STATIONS = ['intake_wet', 'dry_check', 'buck', 'hand_trim', 'preroll_production'];
+  // Forms submitted before the queue went live aren't listed — that backlog
+  // was handled in Metrc the old way.
+  const QUEUE_START = '2026-10-16';
+  const access = sessionStorage.getItem('2cw_metrc_access') || '';
+  const canEdit = access === 'edit';
+
+  const L = {
+    title:     { en: 'Metrc Queue', es: 'Cola de Metrc' },
+    back:      { en: '← Hub', es: '← Inicio' },
+    open:      { en: 'Open', es: 'Abiertos' },
+    todo:      { en: 'To do', es: 'Por hacer' },
+    in_progress:{ en: 'In progress', es: 'En curso' },
+    done:      { en: 'Done', es: 'Hecho' },
+    not_needed:{ en: 'Not needed', es: 'No necesario' },
+    all:       { en: 'All', es: 'Todos' },
+    allForms:  { en: 'All forms', es: 'Todos los formularios' },
+    search:    { en: 'Search strain, UID, who, note…', es: 'Buscar variedad, UID, quién, nota…' },
+    forms:     { en: 'forms', es: 'formularios' },
+    form:      { en: 'form', es: 'formulario' },
+    empty:     { en: 'Nothing here.', es: 'Nada aquí.' },
+    emptyOpen: { en: 'Nothing waiting on Metrc. 🎉', es: 'Nada pendiente en Metrc. 🎉' },
+    status:    { en: 'Metrc status', es: 'Estado en Metrc' },
+    note:      { en: 'Note (adjustment #, new tags, anything the next person should know)', es: 'Nota (n.º de ajuste, etiquetas nuevas, lo que deba saber la siguiente persona)' },
+    save:      { en: 'Save', es: 'Guardar' },
+    saving:    { en: 'Saving…', es: 'Guardando…' },
+    saved:     { en: 'Saved ✓', es: 'Guardado ✓' },
+    saveFail:  { en: 'Could not save:', es: 'No se pudo guardar:' },
+    noNote:    { en: 'No note.', es: 'Sin nota.' },
+    log:       { en: 'Status history', es: 'Historial de estado' },
+    logNone:   { en: 'Not touched yet — waiting in the queue since it was submitted.', es: 'Sin cambios — en la cola desde que se envió.' },
+    submitted: { en: 'Submitted', es: 'Enviado' },
+    by:        { en: 'by', es: 'por' },
+    waiting:   { en: 'waiting', es: 'esperando' },
+    close:     { en: 'Close', es: 'Cerrar' },
+    editForm:  { en: 'Fix form', es: 'Corregir formulario' },
+    copyHint:  { en: 'Tap a value to copy it.', es: 'Toque un valor para copiarlo.' },
+    copied:    { en: 'Copied ✓', es: 'Copiado ✓' },
+    viewOnly:  { en: 'You can see this queue but not change it.', es: 'Puede ver esta cola pero no cambiarla.' },
+    noAccess:  { en: 'You don’t have access to the Metrc Queue yet. Ask your manager to turn it on in the admin panel.',
+                 es: 'Aún no tiene acceso a la Cola de Metrc. Pida a su gerente que lo active en el panel de administración.' },
+    noData:    { en: 'Could not load the queue. Check your connection and reload.', es: 'No se pudo cargar la cola. Revise su conexión y recargue.' },
+    noTable:   { en: 'The Metrc queue table isn’t set up yet — run supabase/schema.sql in the Supabase SQL editor.',
+                 es: 'La tabla de la cola de Metrc no existe todavía — ejecute supabase/schema.sql en Supabase.' }
+  };
+  const STATUSES = ['todo', 'in_progress', 'done', 'not_needed'];
+  document.getElementById('title').textContent = t(L.title);
+  document.getElementById('brand').textContent = t(L.title);
+  document.getElementById('back').textContent = t(L.back);
+  document.title = `${t(L.title)} — 2CW`;
+
+  const board = document.getElementById('board');
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+  if (!access) { board.innerHTML = `<div class="empty">${esc(t(L.noAccess))}</div>`; return; }
+
+  const client = getClient();
+  const reference = await loadReference();
+  let forms = [], queue = new Map();
+
+  // Submitted forms on the queue's stations since QUEUE_START, plus every
+  // status row. A form with no status row is To do.
+  async function load() {
+    if (!client) return t(L.noData);
+    const [f, q] = await Promise.all([
+      client.from('operations_forms').select('*').eq('status', 'submitted').in('station_key', METRC_STATIONS)
+        .gte('submitted_at', QUEUE_START).order('submitted_at', { ascending: true }).limit(5000),
+      client.from('metrc_queue').select('*').limit(10000)
+    ]);
+    if (f.error) { console.error('metrc forms', f.error); return t(L.noData); }
+    if (q.error) { console.error('metrc_queue', q.error); return /does not exist|schema cache/i.test(q.error.message || '') ? t(L.noTable) : t(L.noData); }
+    forms = f.data || [];
+    queue = new Map((q.data || []).map((r) => [r.form_id, r]));
+    return null;
+  }
+  const loadErr = await load();
+  if (loadErr) { board.innerHTML = `<div class="empty">${esc(loadErr)}</div>`; return; }
+
+  const stationOf = (r) => STATION_BY_KEY[r.station_key];
+  const statusOf = (r) => (queue.get(r.id) || {}).status || 'todo';
+  const val = (r, k) => (r.fields || {})[k];
+  const uids = (r) => val(r, 'sourceUid') || [...new Set((val(r, 'lines') || []).map((x) => x.sourceUid).filter(Boolean))].join(', ');
+  const fmtDate = (d) => d ? new Date(`${d}T12:00:00`).toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+  const fmtWhen = (ts) => ts ? new Date(ts).toLocaleString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+
+  // A stored value as people read it: select codes become their label,
+  // numbers get formatted, blanks become —.
+  function display(f, v) {
+    if (v === undefined || v === null || v === '') return '—';
+    if (f.t === 'select') {
+      if (f.refConst === 'BIOMASS') return BIOMASS[v] ? t(BIOMASS[v]) : String(v);
+      const opts = f.ref ? refOptions(reference, f.ref) : (f.opts || []).map((o) => ({ v: o.v, label: t(o.l) }));
+      const hit = opts.find((o) => String(o.v) === String(v));
+      return hit ? hit.label : String(v);
+    }
+    // Pre-Roll's crew check: the people on the run, by name.
+    if (f.t === 'crewcheck') {
+      const on = [...crewLatest(Array.isArray(v) ? v : []).values()].filter((x) => x.status === 'here' || x.status === 'added');
+      return [...new Set(on.map((x) => x.name))].join(', ') || '—';
+    }
+    if (f.t === 'check') return v === true || v === 'true' ? (getLang() === 'es' ? 'Sí' : 'Yes') : 'No';
+    if (f.t === 'number' || f.t === 'calc') return Number.isFinite(Number(v)) ? fmtNum(v, f.dp === undefined ? 2 : f.dp) : String(v);
+    if (typeof v === 'object') return JSON.stringify(v);
+    return String(v);
+  }
+  // What a click copies: the stored code (license number, not its label)
+  // and plain numbers, so it pastes straight into Metrc.
+  function copyText(f, v) {
+    if (v === undefined || v === null || v === '') return '';
+    if (f.t === 'check' || typeof v === 'object') return display(f, v);
+    if ((f.t === 'number' || f.t === 'calc') && Number.isFinite(Number(v))) return String(Number(Number(v).toFixed(f.dp === undefined ? 2 : f.dp)));
+    return String(v);
+  }
+  function headline(r) {
+    const s = stationOf(r);
+    const k = s && s.headline;
+    if (!k) return '';
+    const f = s.fields.find((x) => x.k === k);
+    const v = val(r, k);
+    if (v === undefined || v === null || v === '') return '';
+    return (f ? display(f, v) : String(v)) + (/Lb$/.test(k) ? ' lb' : '');
+  }
+  const daysWaiting = (r) => r.submitted_at ? Math.floor((Date.now() - new Date(r.submitted_at).getTime()) / 86400000) : null;
+
+  // ── Counts + filters ───────────────────────────────────────────────────────
+  let mode = 'open', stationFilter = '', query = '';
+  const countsEl = document.getElementById('counts');
+  function renderCounts() {
+    const n = (s) => forms.filter((r) => (!stationFilter || r.station_key === stationFilter) && statusOf(r) === s).length;
+    countsEl.innerHTML = STATUSES.map((s) =>
+      `<button type="button" class="count ${s} ${mode === s ? 'on' : ''}" data-k="${s}"><div class="n">${n(s)}</div><div class="l">${t(L[s])}</div></button>`).join('');
+    countsEl.querySelectorAll('.count').forEach((b) => { b.onclick = () => setMode(b.dataset.k); });
+  }
+  const filtersEl = document.getElementById('filters');
+  const MODES = [['open', L.open], ['todo', L.todo], ['in_progress', L.in_progress], ['done', L.done], ['not_needed', L.not_needed], ['all', L.all]];
+  filtersEl.innerHTML = MODES.map(([k, l]) => `<button type="button" data-k="${k}">${t(l)}</button>`).join('') +
+    `<select id="st" style="background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .9rem;min-height:44px;font:inherit">
+       <option value="">${esc(t(L.allForms))}</option>
+       ${METRC_STATIONS.map((k) => `<option value="${k}">${esc(t(STATION_BY_KEY[k].title))}</option>`).join('')}
+     </select>` +
+    `<input type="search" id="q" placeholder="${esc(t(L.search))}">`;
+  filtersEl.querySelectorAll('button').forEach((b) => { b.onclick = () => setMode(b.dataset.k); });
+  document.getElementById('st').onchange = (e) => { stationFilter = e.target.value; render(); };
+  document.getElementById('q').addEventListener('input', (e) => { query = e.target.value.trim().toLowerCase(); render(); });
+  function setMode(k) { mode = k; render(); }
+
+  function matches(r) {
+    const s = statusOf(r);
+    if (mode === 'open' && !(s === 'todo' || s === 'in_progress')) return false;
+    if (STATUSES.includes(mode) && s !== mode) return false;
+    if (stationFilter && r.station_key !== stationFilter) return false;
+    if (!query) return true;
+    const q = queue.get(r.id) || {};
+    const hay = [r.strain, val(r, 'strain'), uids(r), val(r, 'newFinishedUid'), val(r, 'newPrerollUid'), val(r, 'newWasteUid'),
+      val(r, 'incomingUid'), val(r, 'completedBy'), r.owner_user, q.note, q.updated_by, t(stationOf(r).title)].join(' ').toLowerCase();
+    return hay.includes(query);
+  }
+
+  function render() {
+    filtersEl.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x.dataset.k === mode));
+    renderCounts();
+    let list = forms.filter(matches);
+    // Open work is a queue: oldest first. Finished work: newest first.
+    if (!(mode === 'open' || mode === 'todo' || mode === 'in_progress')) list = list.slice().reverse();
+    document.getElementById('sub').textContent = `${list.length} ${list.length === 1 ? t(L.form) : t(L.forms)}${canEdit ? '' : ' · ' + t(L.viewOnly)}`;
+    if (!list.length) { board.className = ''; board.innerHTML = `<div class="empty">${esc(t(mode === 'open' ? L.emptyOpen : L.empty))}</div>`; return; }
+    board.className = 'board';
+    board.innerHTML = list.map((r) => {
+      const s = statusOf(r), q = queue.get(r.id) || {}, days = daysWaiting(r), open = s === 'todo' || s === 'in_progress';
+      const newUid = val(r, 'newFinishedUid') || val(r, 'newPrerollUid');
+      return `
+      <div role="button" tabindex="0" class="row ${s}" data-id="${r.id}">
+        <div class="row-top">
+          <div>
+            <div class="row-station">${esc(t(stationOf(r).title))} · ${esc(fmtDate(r.work_date))}</div>
+            <div class="row-strain">${esc(r.strain || val(r, 'strain') || '—')}</div>
+          </div>
+          <span class="pill ${s}">${t(L[s])}</span>
+        </div>
+        <dl class="row-facts">
+          <dt>UID</dt><dd>${esc(uids(r) || '—')}</dd>
+          ${newUid ? `<dt>${getLang() === 'es' ? 'Nuevo' : 'New'}</dt><dd>${esc(newUid)}</dd>` : ''}
+        </dl>
+        ${q.note ? `<div class="row-note">📝 ${esc(q.note)}</div>` : ''}
+        <div class="row-meta">
+          <span class="who">${esc(open ? (val(r, 'completedBy') || r.owner_user || '—') : (q.updated_by || '—'))}</span>
+          ${open && days !== null ? `<span class="age ${days >= 2 ? 'old' : ''}">${days}d ${t(L.waiting)}</span>` : ''}
+          <span class="row-headline">${esc(headline(r))}</span>
+        </div>
+      </div>`;
+    }).join('');
+    board.querySelectorAll('.row').forEach((b) => {
+      b.onclick = () => openDetail(b.dataset.id);
+      b.onkeydown = (e) => { if (e.target === b && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openDetail(b.dataset.id); } };
+    });
+  }
+
+  // ── Detail sheet ───────────────────────────────────────────────────────────
+  const bg = document.getElementById('detail-bg');
+  const detail = document.getElementById('detail');
+  bg.addEventListener('click', (e) => { if (e.target === bg) closeDetail(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDetail(); });
+  let openId = null;
+
+  function fieldHtml(f, r) {
+    if (f.showIf && !f.showIf(r.fields || {})) return '';
+    const v = f.projectPicker && val(r, f.k) ? val(r, 'projectName') || val(r, f.k) : val(r, f.k);
+    if (f.t === 'lineitems') {
+      const items = Array.isArray(v) ? v : [];
+      if (!items.length) return `<div class="d-row"><div class="k">${esc(t(f.l))}</div><div class="v">—</div></div>`;
+      return `<div class="d-row" style="grid-template-columns:1fr"><div class="k">${esc(t(f.l))}</div>
+        <div style="overflow-x:auto"><table class="d-table"><thead><tr>${f.cols.map((c) => `<th>${esc(t(c.l))}</th>`).join('')}</tr></thead>
+        <tbody>${items.map((it) => `<tr>${f.cols.map((c) => `<td>${esc(display(c, it[c.k]))}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;
+    }
+    if (f.t === 'photo') {
+      const ok = typeof v === 'string' && /^https?:\/\//.test(v);
+      return `<div class="d-row"><div class="k">${esc(t(f.l))}</div><div class="v">${ok ? `<a href="${esc(v)}" target="_blank" rel="noopener"><img class="d-photo" src="${esc(v)}" alt=""></a>` : '—'}</div></div>`;
+    }
+    const c = copyText(f, v);
+    return `<div class="d-row ${f.t === 'calc' ? 'hl' : ''}"><div class="k">${esc(t(f.l))}</div><div class="v ${c ? 'copyable' : ''}" ${c ? `data-copy="${esc(c)}"` : ''}>${esc(display(f, v))}</div></div>`;
+  }
+
+  async function writeClipboard(text) {
+    try { await navigator.clipboard.writeText(text); return true; } catch (_) { /* fall back below */ }
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (_) { ok = false; }
+    ta.remove();
+    return ok;
+  }
+
+  function statusHtml(r) {
+    const q = queue.get(r.id) || {}, s = statusOf(r);
+    if (!canEdit) {
+      return `<div class="st-box"><div class="st-hd">${t(L.status)}</div>
+        <div class="st-view"><span class="pill ${s}">${t(L[s])}</span>${q.updated_by ? ` · ${esc(q.updated_by)} · ${esc(fmtWhen(q.updated_at))}` : ''}
+        <div style="margin-top:8px">${q.note ? esc(q.note) : `<span class="muted-note">${t(L.noNote)}</span>`}</div></div></div>`;
+    }
+    return `<div class="st-box"><div class="st-hd">${t(L.status)}</div>
+      <div class="st-btns">${STATUSES.map((k) => `<button type="button" class="${k} ${k === s ? 'on' : ''}" data-s="${k}">${t(L[k])}</button>`).join('')}</div>
+      <textarea id="st-note" maxlength="1000" placeholder="${esc(t(L.note))}">${esc(q.note || '')}</textarea>
+      <div class="st-save"><button type="button" class="btn btn-blue" id="st-save">${t(L.save)}</button><span class="st-msg" id="st-msg"></span></div>
+    </div>`;
+  }
+
+  function logHtml(r) {
+    const log = (queue.get(r.id) || {}).log || [];
+    const items = log.slice().reverse().map((h) =>
+      `<li><span class="pill ${esc(h.status)}">${t(L[h.status] || { en: h.status })}</span> <b>${esc(h.by || '—')}</b> · ${esc(fmtWhen(h.at))}${h.note ? `<div style="margin-top:3px">${esc(h.note)}</div>` : ''}</li>`);
+    return `<div class="d-section"><div class="d-section-hd">${t(L.log)}</div>${
+      items.length ? `<ul class="hist">${items.join('')}</ul>` : `<div class="muted-note">${t(L.logNone)}</div>`}</div>`;
+  }
+
+  function wireStatus(r) {
+    const save = document.getElementById('st-save');
+    if (!save) return;
+    let picked = statusOf(r);
+    detail.querySelectorAll('.st-btns button').forEach((b) => {
+      b.onclick = () => { picked = b.dataset.s; detail.querySelectorAll('.st-btns button').forEach((x) => x.classList.toggle('on', x === b)); };
+    });
+    const msg = document.getElementById('st-msg');
+    save.onclick = async () => {
+      save.disabled = true; msg.className = 'st-msg'; msg.textContent = t(L.saving);
+      try {
+        const res = await fetch('/.netlify/functions/metrc-queue', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pin: sessionStorage.getItem('2cw_pin') || '', id: r.id, status: picked, note: document.getElementById('st-note').value })
+        });
+        const out = await res.json().catch(() => ({ ok: false, error: `HTTP ${res.status}` }));
+        if (!out.ok) throw new Error(out.error || `HTTP ${res.status}`);
+        queue.set(r.id, out.row);
+        render();
+        openDetail(r.id);
+        const m = document.getElementById('st-msg');
+        if (m) m.textContent = t(L.saved);
+      } catch (ex) {
+        msg.className = 'st-msg err'; msg.textContent = `${t(L.saveFail)} ${ex.message}`;
+        save.disabled = false;
+      }
+    };
+  }
+
+  function openDetail(id) {
+    const r = forms.find((x) => x.id === id);
+    if (!r) return;
+    openId = id;
+    const url = new URL(location.href); url.searchParams.set('id', id); history.replaceState(null, '', url);
+    const s = stationOf(r), f = r.fields || {};
+    const fix = canFixSubmitted(r.station_key)
+      ? `<a class="btn" href="/ops_form.html?station=${r.station_key}&edit=${r.id}">${t(L.editForm)}</a>` : '';
+    detail.innerHTML = `
+      <div class="d-top">
+        <div><div class="row-station">${esc(t(s.title))} · ${esc(fmtDate(r.work_date))}</div><div class="d-title">${esc(r.strain || f.strain || '—')}</div></div>
+        <div class="d-actions">${fix}<button type="button" class="btn" id="d-close">${t(L.close)}</button></div>
+      </div>
+      <div class="d-sub">${t(L.submitted)} ${r.submitted_at ? esc(new Date(r.submitted_at).toLocaleString()) : ''} ${r.owner_user ? t(L.by) + ' ' + esc(r.owner_user) : ''}</div>
+      ${statusHtml(r)}
+      <div class="muted-note" style="margin-bottom:6px">${t(L.copyHint)}</div>
+      ${s.fields.map((fd) => fieldHtml(fd, r)).join('')}
+      ${logHtml(r)}`;
+    document.getElementById('d-close').onclick = closeDetail;
+    detail.querySelectorAll('.v.copyable').forEach((el) => {
+      el.onclick = async () => {
+        if (!(await writeClipboard(el.dataset.copy))) return;
+        const was = el.textContent;
+        el.textContent = t(L.copied); el.classList.add('copied');
+        setTimeout(() => { el.textContent = was; el.classList.remove('copied'); }, 900);
+      };
+    });
+    wireStatus(r);
+    bg.classList.add('on');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDetail() {
+    if (!bg.classList.contains('on')) return;
+    openId = null;
+    bg.classList.remove('on');
+    document.body.style.overflow = '';
+    const url = new URL(location.href); url.searchParams.delete('id'); history.replaceState(null, '', url);
+  }
+
+  // ── Live updates ───────────────────────────────────────────────────────────
+  // New submissions and other people's status changes show up without a
+  // reload. The open detail sheet isn't redrawn (it may have a note being
+  // typed); its card behind it is.
+  let reloadTimer = null;
+  const reloadSoon = () => {
+    clearTimeout(reloadTimer);
+    reloadTimer = setTimeout(async () => { if (!(await load())) render(); }, 800);
+  };
+  client.channel('metrc_queue_page')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'metrc_queue' }, reloadSoon)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'operations_forms' }, (p) => {
+      const row = p.new || p.old || {};
+      if (!row.station_key || METRC_STATIONS.includes(row.station_key)) reloadSoon();
+    })
+    .subscribe();
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reloadSoon(); });
+
+  render();
+  const startId = new URLSearchParams(location.search).get('id');
+  if (startId) openDetail(startId);
+})();
+</script>
+<script src="/sw_register.js"></script>
+</body>
+</html>

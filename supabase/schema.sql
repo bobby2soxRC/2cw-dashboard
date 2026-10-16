@@ -1322,3 +1322,46 @@ create index if not exists employee_badges_employee_idx on employee_badges (empl
 alter table employee_badges enable row level security;   -- no policies: service role only
 revoke all on public.employee_badges from anon;
 grant select, insert, update, delete on public.employee_badges to service_role;
+
+-- ── Metrc queue ──────────────────────────────────────────────────────────
+-- Most submitted station forms mean something has to be done in Metrc
+-- (a package created, a weight adjusted, a waste logged). metrc.html lists
+-- every submitted station form as a queue; this table holds where each one
+-- stands. One row per form, created the first time someone sets a status —
+-- a submitted form with no row here is "To do". Deleting the form deletes
+-- its row.
+--
+-- status: todo | in_progress | done | not_needed. log is every status/note
+-- change, oldest first: [{status, note, by, at}].
+--
+-- Anyone with Metrc Queue view access reads it with the anon key. Writes go
+-- only through netlify/functions/metrc-queue.js, which checks the person's
+-- 'metrc queue edit' column from their PIN with the service role.
+create table if not exists metrc_queue (
+  form_id     uuid primary key references operations_forms(id) on delete cascade,
+  station_key text not null,
+  status      text not null default 'todo' check (status in ('todo', 'in_progress', 'done', 'not_needed')),
+  note        text,
+  log         jsonb not null default '[]'::jsonb,
+  updated_by  text,
+  updated_at  timestamptz not null default now()
+);
+create index if not exists idx_metrc_queue_status on metrc_queue (status);
+
+alter table metrc_queue enable row level security;
+drop policy if exists "anon read" on metrc_queue;
+create policy "anon read" on metrc_queue for select using (true);
+grant select on public.metrc_queue to anon;
+revoke insert, update, delete on public.metrc_queue from anon;
+grant select, insert, update, delete on public.metrc_queue to service_role;
+
+-- Live updates on metrc.html when someone else changes a status.
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'metrc_queue'
+  ) then
+    alter publication supabase_realtime add table metrc_queue;
+  end if;
+end $$;

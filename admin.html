@@ -290,10 +290,10 @@ const TOKEN_KEY = '2cw_admin_token';
 // ones derived from other settings (production access derives
 // production_dashboard / production_today; FORM_ACCESS_COLS derives
 // field_forms).
-// harvest_intakes has its own View/Edit pair, and information_hub a View/Edit
+// harvest_intakes and metrc_queue have their own View/Edit pair, and information_hub a View/Edit
 // pair per INFO_HUB_SECTIONS entry (hub_config.js), in the
 // editor instead.
-const DERIVED_CARD_KEYS = ['production_dashboard', 'production_today', 'field_forms', 'harvest_intakes', 'information_hub'];
+const DERIVED_CARD_KEYS = ['production_dashboard', 'production_today', 'field_forms', 'harvest_intakes', 'metrc_queue', 'information_hub'];
 const TOGGLE_CARDS = CARD_DEFS.filter(d => !DERIVED_CARD_KEYS.includes(d.key));
 
 // The Responsibilities tab talks to Supabase directly with the anon key,
@@ -430,6 +430,8 @@ function cardSummary(u){
   if((cols['harvest intakes edit']||'').toUpperCase()==='TRUE') pills.push(['Harvest Intakes: edit', ...hiExtra].join(', '));
   else if(hiExtra.length) pills.push('Harvest Intakes: ' + hiExtra.join(', '));
   else if((cols['harvest_intakes']||'').toUpperCase()==='TRUE') pills.push('Harvest Intakes: view');
+  if((cols['metrc queue edit']||'').toUpperCase()==='TRUE') pills.push('Metrc Queue: edit');
+  else if((cols['metrc_queue']||'').toUpperCase()==='TRUE') pills.push('Metrc Queue: view');
   const infoEdit = INFO_HUB_SECTIONS.filter(s => (cols[s.edit]||'').toUpperCase()==='TRUE').length;
   const infoView = INFO_HUB_SECTIONS.filter(s => (cols[s.edit]||'').toUpperCase()!=='TRUE' && (cols[s.view]||'').toUpperCase()==='TRUE').length;
   if(infoEdit || infoView) pills.push('Info Hub: ' + [infoEdit ? infoEdit+' edit' : '', infoView ? infoView+' view' : ''].filter(Boolean).join(', '));
@@ -1194,6 +1196,12 @@ function openEditor(id){
       <label class="check-item"><input type="checkbox" data-card="harvest intakes history" id="hi-history" ${(cols['harvest intakes history']||'').toUpperCase()==='TRUE'?'checked':''}/> See edit history (who changed what, and deleted intakes)</label>
     </div>
 
+    <div class="section-hd">Metrc Queue</div>
+    <div class="check-grid">
+      <label class="check-item"><input type="checkbox" data-card="metrc_queue" id="mq-view" ${(cols['metrc_queue']||'').toUpperCase()==='TRUE' || (cols['metrc queue edit']||'').toUpperCase()==='TRUE' ?'checked':''}/> View</label>
+      <label class="check-item"><input type="checkbox" data-card="metrc queue edit" id="mq-edit" ${(cols['metrc queue edit']||'').toUpperCase()==='TRUE'?'checked':''}/> Edit (set each form's Metrc status and note)</label>
+    </div>
+
     <div class="section-hd">Information Hub</div>
     ${INFO_HUB_SECTIONS.map(s => {
       const ed = (cols[s.edit]||'').toUpperCase()==='TRUE';
@@ -1245,6 +1253,8 @@ function openEditor(id){
   // Edit, Delete and See edit history each imply View.
   ['hi-edit', 'hi-delete', 'hi-history'].forEach(id => document.getElementById(id).addEventListener('change', e => { if(e.target.checked) document.getElementById('hi-view').checked = true; }));
   document.getElementById('hi-view').addEventListener('change', e => { if(!e.target.checked) ['hi-edit', 'hi-delete', 'hi-history'].forEach(id => document.getElementById(id).checked = false); });
+  document.getElementById('mq-edit').addEventListener('change', e => { if(e.target.checked) document.getElementById('mq-view').checked = true; });
+  document.getElementById('mq-view').addEventListener('change', e => { if(!e.target.checked) document.getElementById('mq-edit').checked = false; });
   INFO_HUB_SECTIONS.forEach(s => {
     const v = document.querySelector(`[data-info-view="${s.key}"]`), e = document.querySelector(`[data-info-edit="${s.key}"]`);
     e.addEventListener('change', () => { if(e.checked) v.checked = true; });

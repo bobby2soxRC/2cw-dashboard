@@ -635,6 +635,13 @@ async function buildHub(user){
   sessionStorage.setItem('2cw_intake_delete', intakeDelete ? 'true' : 'false');
   sessionStorage.setItem('2cw_intake_history', intakeHistory ? 'true' : 'false');
 
+  // Metrc Queue (metrc.html): view, or view + set statuses. Edit implies
+  // view; netlify/functions/metrc-queue.js re-checks edit from the PIN.
+  const metrcEdit = (user['metrc queue edit'] || '').toUpperCase() === 'TRUE';
+  const metrcView = metrcEdit || (user['metrc_queue'] || '').toUpperCase() === 'TRUE';
+  user.metrc_queue = metrcView ? 'TRUE' : 'FALSE';
+  sessionStorage.setItem('2cw_metrc_access', metrcEdit ? 'edit' : metrcView ? 'view' : '');
+
   // Information Hub: a View/Edit pair per section (INFO_HUB_SECTIONS in
   // hub_config.js), edit implying view. The card shows if any section is
   // viewable; information_hub.html reads the map to pick its tabs.
