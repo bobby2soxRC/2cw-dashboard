@@ -126,7 +126,7 @@ logs (`entry: true`), two tablets on one run merge their rows.
 
 **Crew** (`attendance`, field type `crewcheck`, `buildCrewCheck` in
 `ops_form.html`) replaced the Workforce Log of hours in October 2026. It
-lists who the Master Schedule has on the run that day: the run's
+lists who the Master Schedule has on the run that day: that day's
 **Project** — its lead and its pre-roll responsibilities (a blank process
 is the project's; a project with none of those shows everyone on it) — or,
 with no Project picked, every project running that day for pre-rolls, with
@@ -1018,6 +1018,19 @@ or just hours, one or more people, and zero or more UIDs, then Save.
     - The form stores `project` (the id), `projectName`, and
       `projectLinked` (the project that has its packages now, so a
       resumed page or another tablet can move them).
+    - **A project per day** on forms with day tabs (Pre-Roll, Hand
+      Trim): the dropdown is the picked day's project, so a run worked
+      10/15 on one project and 10/16 on another keeps both. Picks are in
+      `projectDays` (`{day: id}`, `''` for none); a day with no pick of
+      its own goes by the last earlier day that has one, else by
+      `project` (the latest pick, and all a run from before this had).
+      Picking on one day never changes another day's: the next day tab
+      and the first one get their own entry when they were going by it
+      (`setDayProject`). The packages are linked to every project the
+      run is on (`projectsLinked`), the crew check reads each day's
+      project, and `preroll-costs.js` counts the Labor Log hours of all
+      of them. `projectName` lists their names. Editing a submitted
+      record (no day tabs) sets one project for the whole run.
     - Master Schedule's editor keeps UIDs a form added while it was open
       (it merges them in on save); hovering a UID chip says which station
       linked it. Removing one there only lasts until that form saves its

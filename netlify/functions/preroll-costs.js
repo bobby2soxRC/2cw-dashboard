@@ -15,9 +15,10 @@
 // without their own rate, fall to the '*' default — `defaultHours` says how
 // many hours did.
 //
-// A run on a Master Schedule project (fields.project, picked on the form) is
-// costed from the Labor Log instead: the hours logged to that project, split
-// over the project's UIDs by pounds (OpsAnalytics.laborAllocations, the same
+// A run on a Master Schedule project (fields.project, picked on the form —
+// or fields.projectDays, a project per day of the run) is costed from the
+// Labor Log instead: the hours logged to its project(s), split over each
+// project's UIDs by pounds (OpsAnalytics.laborAllocations, the same
 // split the Labor Log's By lot shows), counting the share that lands on the
 // run's source UID. Its Workforce Log isn't counted then, so nothing is
 // costed twice. Those runs come back with `source: 'project'`.
@@ -70,6 +71,8 @@ async function fetchAll(supaUrl, serviceKey, path) {
 const flat = (row) => ({ ...(row.fields || {}), id: row.id, strain: row.strain || (row.fields || {}).strain,
                          date: row.work_date, submittedAt: row.submitted_at, stationKey: row.station_key });
 const normUid = (u) => String(u || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+// Every project a run is on: its Project, plus each day's (projectDays).
+const runProjects = (f) => [...new Set([f.project, ...Object.values(f.projectDays || {})].filter(Boolean))];
 
 // Labor Log allocations for the projects pre-roll runs are on: the projects,
 // the labor entries logged to them, and the station records whose pounds
@@ -94,10 +97,11 @@ async function projectAllocations(supaUrl, serviceKey, projectIds, rates) {
 function projectRunCost(run, allocs, rates) {
   const f = run.fields || {};
   const uid = normUid(f.sourceUid);
+  const pids = new Set(runProjects(f));
   const own = rates.filter((r) => r.employeeId !== '*');
   let cost = 0, hours = 0, defaultHours = 0, unratedHours = 0;
   allocs.forEach((a) => {
-    if (a.project !== f.project || !uid || normUid(a.uid) !== uid || !(a.hours > 0)) return;
+    if (!pids.has(a.project) || !uid || normUid(a.uid) !== uid || !(a.hours > 0)) return;
     hours += a.hours;
     if (a.cost == null) { unratedHours += a.hours; return; }
     if (OpsAnalytics.rateFor(own, a.employeeNo, a.date) == null) defaultHours += a.hours;
@@ -158,9 +162,9 @@ exports.handler = async (event) => {
     const badgeTo = new Map((badgesRes.ok ? await badgesRes.json() : [])
       .map((b) => [OpsAnalytics.badgeKey(b.badge_no), String(b.employee_id)]));
     const rows = await runsRes.json();
-    const projectIds = [...new Set(rows.map((r) => (r.fields || {}).project).filter(Boolean))];
+    const projectIds = [...new Set(rows.flatMap((r) => runProjects(r.fields || {})))];
     const allocs = await projectAllocations(supaUrl, serviceKey, projectIds, rates);
-    const runs = rows.map((r) => ((r.fields || {}).project ? projectRunCost(r, allocs, rates) : runCost(r, rates, badgeTo)));
+    const runs = rows.map((r) => (runProjects(r.fields || {}).length ? projectRunCost(r, allocs, rates) : runCost(r, rates, badgeTo)));
     return json(200, { ok: true, runs });
   } catch (err) {
     return json(502, { ok: false, error: String(err.message || err) });

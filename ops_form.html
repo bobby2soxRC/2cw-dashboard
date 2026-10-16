@@ -375,7 +375,9 @@
     noUid:   { en: 'The package will be linked to this project once its UID is filled in.',
                es: 'El paquete se vinculará a este proyecto cuando se llene su UID.' },
     failed:  { en: 'Couldn’t link to the project yet — it will try again on the next save.',
-               es: 'Aún no se pudo vincular al proyecto — se intentará de nuevo al guardar.' }
+               es: 'Aún no se pudo vincular al proyecto — se intentará de nuevo al guardar.' },
+    perDay:  { en: 'The project for {d} — each day of the run can be on its own project.',
+               es: 'El proyecto del {d} — cada día de la corrida puede tener su propio proyecto.' }
   };
   const pkLoading = (f) => t(f.picker.list === 'buckable' ? PK.loadingBuck : f.picker.list === 'bucked' ? PK.loadingBucked : PK.loading);
   const reference = await loadReference();
@@ -728,6 +730,7 @@
   }
   function pickDay(d) {
     curDay = d;
+    if (perDayProj) fillProjectPicker();
     DTL.forEach((k) => entryRenderers[k] && entryRenderers[k]());
     recompute();
     if (station.dailySummary && draftsOn) loadSummary(d);
@@ -947,10 +950,21 @@
       setFieldValue(f, v);
       changed = true;
     });
-    // Another tablet moved this page's packages to a project.
-    if (projField && !touched.has(projField.k) && saved.projectLinked && saved.projectLinked !== values.projectLinked) {
-      values.projectLinked = saved.projectLinked;
-      if (saved.projectName) values.projectName = saved.projectName;
+    // Another tablet moved this page's packages to a project, or picked a
+    // day's project.
+    if (projField && !touched.has(projField.k)) {
+      if (saved.projectLinked && saved.projectLinked !== values.projectLinked) {
+        values.projectLinked = saved.projectLinked;
+        if (saved.projectName) values.projectName = saved.projectName;
+      }
+      if (Array.isArray(saved.projectsLinked)) values.projectsLinked = saved.projectsLinked;
+      if (saved.projectDays && JSON.stringify(saved.projectDays) !== JSON.stringify(values.projectDays || null)) {
+        values.projectDays = saved.projectDays;
+        if (saved.projectName) values.projectName = saved.projectName;
+        fillProjectPicker();
+        ccFields.forEach((f) => entryRenderers[f.k] && entryRenderers[f.k]());
+        changed = true;
+      }
     }
     if (changed) { updateVisibility(); recompute(); }
     return changed;
@@ -1176,10 +1190,25 @@
   // submit; changing the project (or deleting the page) takes them back off
   // the old one. `projectLinked` remembers which project has them, so a
   // resumed page or another tablet knows too.
+  //
+  // With day tabs (Pre-Roll, Hand Trim) a run worked over several days can
+  // be on a different project each day: the dropdown is the picked day's
+  // project, kept in `projectDays` (day -> id, '' for none). A day with no
+  // pick of its own goes by the last earlier day that has one, else by
+  // `project` (the latest pick — and all a run from before this had). The
+  // packages are linked to every project the run is on (`projectsLinked`).
   const projField = station.fields.find((f) => f.projectPicker);
   let projects = projField && draftsOn ? null : [];
   let linkedSig = null;
   const projById = (id) => (projects || []).find((p) => p.id === id);
+  const perDayProj = !!(projField && DT && !editMode);
+  function projectFor(day) {
+    const pd = values.projectDays || {};
+    const d = Object.keys(pd).filter((x) => x <= day).sort().pop();
+    return (d ? pd[d] : values.project) || '';
+  }
+  const runProjects = () => [...new Set([values.project, ...Object.values(values.projectDays || {})].filter(Boolean))];
+  const linkedProjects = () => values.projectsLinked || (values.projectLinked ? [values.projectLinked] : []);
   const fmtShort = (d) => new Date(d + 'T12:00:00').toLocaleDateString(getLang() === 'es' ? 'es-US' : 'en-US', { month: 'short', day: 'numeric' });
   function projLabel(p) {
     const f = p.fields;
@@ -1189,18 +1218,22 @@
   }
   function syncProjectName() {
     if (!projField) return;
-    const p = projById(values[projField.k]);
-    if (!values[projField.k]) delete values.projectName;
-    else if (p) values.projectName = p.fields.name;
+    const ids = runProjects();
+    if (!ids.length) { delete values.projectName; return; }
+    const ps = ids.map(projById).filter(Boolean);
+    if (ps.length === ids.length) values.projectName = ps.map((p) => p.fields.name).join(', ');
   }
+  // The project the dropdown shows: the picked day's (day tabs), else the run's.
+  const shownProject = () => (perDayProj ? projectFor(curDay) : values[projField.k] || '');
   function fillProjectPicker() {
     if (!projField) return;
     const sel = document.getElementById(`f_${projField.k}`);
-    const cur = values[projField.k] || '';
+    const cur = shownProject();
     if (!projects) return;
-    // Open projects (not Done), the ones running on the form's date first;
-    // within each group the ones for this station's process lead.
-    const date = values.date || todayStr();
+    // Open projects (not Done), the ones running on the form's date (the
+    // picked day, with day tabs) first; within each group the ones for this
+    // station's process lead.
+    const date = perDayProj ? curDay : values.date || todayStr();
     const forHere = (f) => f.process === station.key || (f.roles || []).some((r) => r.process === station.key);
     const open = projects.filter((p) => (p.fields.status || 'active') !== 'done')
       .sort((a, b) => (forHere(b.fields) - forHere(a.fields)) || String(a.fields.name).localeCompare(String(b.fields.name)));
@@ -1218,36 +1251,84 @@
   function showProjectInfo(msg) {
     if (!projField) return;
     const box = document.getElementById(`m_${projField.k}`);
+    const cur = shownProject();
     const uids = formProjectUids(station.key, values);
-    box.textContent = msg || (!values[projField.k] ? ''
+    const state = msg || (!cur ? ''
       : !uids.length ? t(PJ.noUid)
-      : values.projectLinked === values[projField.k] ? t(PJ.linked).replace('{uids}', uids.map((u) => '…' + u.uid.slice(-4)).join(', ')) : '');
+      : linkedProjects().includes(cur) ? t(PJ.linked).replace('{uids}', uids.map((u) => '…' + u.uid.slice(-4)).join(', ')) : '');
+    box.textContent = [perDayProj ? t(PJ.perDay).replace('{d}', dayLabel(curDay)) : '', state].filter(Boolean).join(' ');
     box.style.display = box.textContent ? 'block' : 'none';
   }
+  // Puts the package(s) on every project the run is on and takes them off
+  // any it's no longer on.
   async function syncProjectLink(force) {
     if (!projField || !draftsOn) return;
-    const pid = values[projField.k] || '';
+    const want = runProjects();
+    const had = linkedProjects();
     const uids = formProjectUids(station.key, values);
-    const sig = pid + '|' + uids.map((u) => u.uid).join(',');
+    const sig = want.join(',') + '|' + uids.map((u) => u.uid).join(',');
     if (!force && sig === linkedSig) return;
-    if (!pid && !values.projectLinked) { linkedSig = sig; return; }
-    const res = await linkFormToProject(draftId, pid, uids, { stationKey: station.key, by: owner, unlinkFrom: values.projectLinked });
-    if (!res.ok) { showProjectInfo(t(PJ.failed)); return; }
+    if (!want.length && !had.length) { linkedSig = sig; return; }
+    let ok = true;
+    for (const id of had.filter((x) => !want.includes(x))) {
+      if (!(await linkFormToProject(draftId, null, [], { by: owner, unlinkFrom: id })).ok) ok = false;
+    }
+    for (const id of want) {
+      if (!(await linkFormToProject(draftId, id, uids, { stationKey: station.key, by: owner })).ok) ok = false;
+    }
+    if (!ok) { showProjectInfo(t(PJ.failed)); return; }
     linkedSig = sig;
-    const was = values.projectLinked || '';
-    if (pid) values.projectLinked = pid; else delete values.projectLinked;
+    const was = had.join(',');
+    if (want.length) {
+      values.projectsLinked = want;
+      values.projectLinked = want.includes(values.project) ? values.project : want[0];
+    } else { delete values.projectsLinked; delete values.projectLinked; }
     showProjectInfo();
     // Saved with the page, so a resumed page knows where its packages are.
-    if ((values.projectLinked || '') !== was && !force && !isClosed) markDirty();
+    if (want.join(',') !== was && !force && !isClosed) markDirty();
   }
   async function unlinkProject() {
-    if (!projField || !values.projectLinked) return;
-    await linkFormToProject(draftId, null, [], { by: owner, unlinkFrom: values.projectLinked }).catch(() => {});
+    if (!projField) return;
+    for (const id of linkedProjects()) await linkFormToProject(draftId, null, [], { by: owner, unlinkFrom: id }).catch(() => {});
+  }
+  // A pick on a day tab sets that day's project only. The next day tab
+  // keeps what it had (it gets its own entry if it was going by this day),
+  // and so do the days before (the first one keeps the run's old project if
+  // nothing earlier is picked). `before` is the run's projects just before
+  // the pick; the dropdown's own handler has already set `project` to it.
+  function setDayProject(pid, before) {
+    const was = (day) => {
+      const d = Object.keys(before.days).filter((x) => x <= day).sort().pop();
+      return (d ? before.days[d] : before.project) || '';
+    };
+    const pd = { ...before.days };
+    const days = dayList();
+    const next = days.find((d) => d > curDay);
+    if (next && !(next in pd)) pd[next] = was(next);
+    const first = days[0];
+    if (first < curDay && !Object.keys(pd).some((x) => x <= first)) pd[first] = was(first);
+    pd[curDay] = pid;
+    values.projectDays = pd;
   }
   if (projField) {
     const sel = document.getElementById(`f_${projField.k}`);
     const redrawCrew = () => station.fields.filter((f) => f.t === 'crewcheck').forEach((f) => entryRenderers[f.k] && entryRenderers[f.k]());
-    sel.addEventListener('change', () => { syncProjectName(); showProjectInfo(); redrawCrew(); });
+    // Caught on the way down, before the dropdown's own handler (on `input`,
+    // which comes first, and `change`) changes `project`.
+    let before = null;
+    const snapBefore = (e) => {
+      if (e.target === sel && !before) before = { project: values[projField.k] || '', days: { ...(values.projectDays || {}) } };
+    };
+    form.addEventListener('input', snapBefore, true);
+    form.addEventListener('change', snapBefore, true);
+    sel.addEventListener('change', () => {
+      const was = before || { project: '', days: {} };
+      before = null;
+      if (perDayProj) { setDayProject(values[projField.k] || '', was); markDirty(); }
+      // Editing a submitted record (no day tabs): one project for the whole run.
+      else if (values.projectDays) delete values.projectDays;
+      syncProjectName(); showProjectInfo(); redrawCrew();
+    });
     const dateEl = document.getElementById('f_date');
     if (dateEl) dateEl.addEventListener('change', () => { fillProjectPicker(); redrawCrew(); });
     if (draftsOn) listWorkProjects().then((list) => { projects = list; fillProjectPicker(); redrawCrew(); });
@@ -1299,17 +1380,17 @@
   // they came from (the project names) and, with a Project picked that
   // isn't running that day, its name.
   const ccMine = (r, f) => (r.process || f.process) === station.key;
-  // The projects whose people work this station on a day: the picked
+  // The projects whose people work this station on a day: that day's
   // Project, or every pre-roll project running that day.
   function ccRunning(day) {
-    const pid = values.project;
+    const pid = projectFor(day);
     const src = pid ? [projById(pid)].filter(Boolean)
       : (projects || []).filter((p) => p.fields.process === station.key || (p.fields.roles || []).some((r) => r.process === station.key));
     return src.filter((p) => projectRunsOn(p.fields, day) && !(((p.fields.overrides || {})[day] || {}).skip));
   }
   function ccScheduled(day) {
     if (!projects) return { loading: true, people: [] };
-    const pid = values.project;
+    const pid = projectFor(day);
     const mine = ccMine;
     const running = ccRunning(day);
     // What this page marked that day — written back to the schedule, so
@@ -1361,7 +1442,7 @@
     const byProject = new Map();   // project id -> [{day, key, userId, name, status}]
     ccFields.forEach((f) => crewLatest(values[f.k]).forEach((r) => {
       const run = ccRunning(r.day);
-      const p = values.project ? run[0] : run.length === 1 ? run[0] : null;
+      const p = projectFor(r.day) ? run[0] : run.length === 1 ? run[0] : null;
       if (!p) return;
       (byProject.get(p.id) || byProject.set(p.id, []).get(p.id)).push(r);
     }));
@@ -1783,7 +1864,7 @@
   function hydrate(fields) {
     if (Array.isArray(fields._deleted)) values._deleted = fields._deleted;
     if (Array.isArray(fields.runDays)) values.runDays = fields.runDays;
-    ['projectName', 'projectLinked'].forEach((k) => { if (fields[k]) values[k] = fields[k]; });
+    ['projectName', 'projectLinked', 'projectsLinked', 'projectDays'].forEach((k) => { if (fields[k]) values[k] = fields[k]; });
     // Anything saved that the form no longer shows (a field taken off since,
     // like Pre-Roll's Workforce Log on runs already open) rides along, so
     // the next autosave doesn't drop it.
@@ -1818,6 +1899,8 @@
       }
       setFieldValue(f, fields[f.k]);
     });
+    // The dropdown shows the picked day's project (day tabs).
+    if (perDayProj) fillProjectPicker();
     updateVisibility();
     recompute();
   }
