@@ -57,6 +57,7 @@ Output:
     data/canix_plant_batches.json       (cumulative history)
     data/canix_harvests.json            (cumulative history)
     data/canix_transfers.json           (cumulative history)
+    data/canix_transfers_recent.json    (last 30 days, slimmed — committed)
     data/canix_sales_orders.json        (small — full refetch every run)
     data/canix_meta.json
 
@@ -118,6 +119,13 @@ CUTOFF_SAFETY_BUFFER = timedelta(hours=1)
 SERVER_ERROR_RETRY_BACKOFF_SECONDS = [10, 30, 60]
 
 FORCE_FULL_BACKFILL = bool(os.environ.get("CANIX_FULL_BACKFILL"))
+
+# canix_transfers.json (the full history) only lives in the Actions cache, so
+# the dashboard can't read it. canix_transfers_recent.json is the committed
+# copy: transfers created or updated in the last RECENT_TRANSFER_DAYS, slimmed
+# by slim_record() so it stays small. It's how we see when a manifest was made
+# and when its truck left/arrived.
+RECENT_TRANSFER_DAYS = 30
 
 # ── HTTP HELPERS ─────────────────────────────────────────────────────────────
 
@@ -203,6 +211,30 @@ def load_history(filename):
     with open(path, encoding="utf-8") as f:
         records = json.load(f)
     return {str(r["id"]): r for r in records}
+
+
+def slim_record(value, depth=0, max_depth=3):
+    """Keep a record's plain values (numbers, text, dates) and its nested
+    objects/lists down to max_depth levels, dropping anything deeper — e.g. a
+    transfer keeps its manifest number and times, each of its packages' tag
+    and weight, but not every package's full item/lab-test detail."""
+    if isinstance(value, dict):
+        if depth >= max_depth:
+            return {k: v for k, v in value.items() if not isinstance(v, (dict, list))}
+        return {k: slim_record(v, depth + 1, max_depth) for k, v in value.items()}
+    if isinstance(value, list):
+        return [slim_record(v, depth, max_depth) for v in value]
+    return value
+
+
+def recent_transfers(transfers, now):
+    since = (now - timedelta(days=RECENT_TRANSFER_DAYS)).strftime("%Y-%m-%dT%H:%M:%S")
+    recent = [
+        t for t in transfers
+        if max(str(t.get("created_at") or ""), str(t.get("updated_at") or "")) >= since
+    ]
+    recent.sort(key=lambda t: str(t.get("created_at") or t.get("updated_at") or ""), reverse=True)
+    return [slim_record(t) for t in recent]
 
 
 # ── SUPABASE FACILITY ROSTER SYNC ───────────────────────────────────────────
@@ -399,6 +431,9 @@ def main():
     current_inventory = [r for r in histories["packages"].values() if r.get("is_active")]
     save("canix_inventory.json", current_inventory)
 
+    transfers_recent = recent_transfers(histories["transfers"].values(), started)
+    save("canix_transfers_recent.json", transfers_recent)
+
     next_cutoff = compute_next_cutoff(newest_overall) or previous_cutoff or started.strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
     meta = {
@@ -413,6 +448,7 @@ def main():
             "plant_batches": len(histories["plant_batches"]),
             "harvests": len(histories["harvests"]),
             "transfers": len(histories["transfers"]),
+            "transfers_recent": len(transfers_recent),
             "sales_orders": len(histories["sales_orders"]),
         },
     }
