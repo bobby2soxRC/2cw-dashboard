@@ -119,7 +119,10 @@ and it's submitted. Delete this page (`canDelete`) is there for a run started
 by mistake. Under the run tabs are **day tabs** (`dayTabs: { lines:
 ['output', 'attendance'] }` — several logs share the tabs; the chips total
 the first): the Pre-Roll Output log and the Crew show the picked day and
-stamp new rows with it, and the totals below cover the whole run. A row in
+stamp new rows with it, and the totals below cover the whole run. The Start
+Date always has a tab, and a run with nothing logged yet opens on it (and
+moves to it when the Start Date is changed — `goToStartDay`), so a backdated
+run's crew, project and output land on the day it was done. A row in
 the output log needs a pre-roll count or a waste weight. New UIDs, finish
 date, QC and verification sit under "End of Run". Because both are running
 logs (`entry: true`), two tablets on one run merge their rows.

@@ -713,7 +713,16 @@
   }
   function dayList() {
     const rows = DTL.flatMap((k) => values[k] || []);
-    return [...new Set([...rows.map(rowDay), ...(values.runDays || []), todayStr(), curDay])].filter(Boolean).sort();
+    return [...new Set([...rows.map(rowDay), ...(values.runDays || []), values.date, todayStr(), curDay])].filter(Boolean).sort();
+  }
+  // A run with nothing logged yet goes to its Start Date's tab — a backdated
+  // run's crew, project and output belong to that day, not today. Run on
+  // load and when the Start Date is changed.
+  function goToStartDay() {
+    if (!DT || editMode || !values.date || values.date === curDay) return;
+    if (DTL.some((k) => (values[k] || []).length)) return;
+    pickDay(values.date);
+    renderDays();
   }
   function renderDays() {
     if (!DT || editMode) return;
@@ -744,6 +753,7 @@
     recompute();
     if (station.dailySummary && draftsOn) loadSummary(d);
   }
+  if (DT) form.addEventListener('change', (e) => { if (e.target.id === 'f_date') goToStartDay(); });
   if (DT) document.getElementById('days').addEventListener('click', (e) => {
     const el = document.getElementById('days');
     const day = e.target.closest('[data-day]');
@@ -1915,6 +1925,7 @@
       }
       setFieldValue(f, fields[f.k]);
     });
+    goToStartDay();
     // The dropdown shows the picked day's project (day tabs).
     if (perDayProj) fillProjectPicker();
     updateVisibility();
