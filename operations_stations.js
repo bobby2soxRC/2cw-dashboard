@@ -27,6 +27,11 @@
 //          plus "Other — type it"; picking one stores its ref (PR# / PQ-#)
 //          and fills { fieldKey: item property } from `fills` (see
 //          wirePrPickers in ops_form.html)
+//   projectPicker (select) a dropdown of the open Master Schedule projects
+//          (F.project — see wireProjectPicker in ops_form.html)
+//   crewcheck  who's working, confirmed against the Master Schedule (Pre-Roll's
+//          `attendance` — buildCrewCheck in ops_form.html); with `entry: true`
+//          it merges across tablets like a running log
 //   fill   a button, not a value: { keys: [three field keys], fill: (v, key) =>
 //          number } — with all but one of `keys` filled in, works out the
 //          missing one (Bucking's Calculate for stems / mold / floor waste).
@@ -103,6 +108,15 @@ const F = {
   laborHours: () => ({ k: 'laborHours', t: 'number', min: 0, step: 0.25,
                        l: { en: 'Labor Hours', es: 'Horas de trabajo' } }),
   notes: () => ({ k: 'notes', t: 'textarea', l: { en: 'Notes', es: 'Notas' } }),
+  // The Master Schedule project this work is for (`projectPicker`: a
+  // dropdown of the open projects — wireProjectPicker in ops_form.html).
+  // The form's package(s) are added to the project's UIDs, so Labor Log
+  // hours logged to the project are split over them (linkFormToProject in
+  // ops_data.js). Stores the project id; `projectName` goes with it.
+  project: () => ({ k: 'project', t: 'select', projectPicker: true,
+                    l: { en: 'Project (Master Schedule)', es: 'Proyecto (Plan Maestro)' },
+                    hint: { en: 'Pick the project this work is for. Its packages are linked to the project, so the Labor Log hours logged to the project count toward their labor cost.',
+                            es: 'Elija el proyecto de este trabajo. Sus paquetes se vinculan al proyecto, así que las horas del Registro de mano de obra del proyecto cuentan en su costo laboral.' } }),
   // Per-employee hours on this batch/UID — the crewSize/laborHours fields above
   // give a station-level total; this is what actually links a numeric employee
   // ID to a specific batch, which is what a future payroll join needs (match
@@ -335,6 +349,7 @@ const OPERATIONS_STATIONS = [
     splitBy: 'lines',
     fields: [
       F.date(),
+      F.project(),
       { k: 'pid', t: 'select', ref: 'properties', allowOther: true, req: true,
         l: { en: 'Farm License', es: 'Licencia del rancho' } },
       { k: 'cid', t: 'select', ref: 'customers', allowOther: true, l: { en: 'Customer ID (CID)', es: 'ID de cliente (CID)' } },
@@ -415,6 +430,7 @@ const OPERATIONS_STATIONS = [
     headline: 'dryWeightLb',
     fields: [
       F.date(),
+      F.project(),
       // Pick the room first, then the package from what's still drying
       // there (`picker`: Wet Intakes with no Take Down yet, as "Strain -
       // last 4"). "Not listed" falls back to typing the UID.
@@ -547,6 +563,7 @@ const OPERATIONS_STATIONS = [
                     empLabel: { en: 'Employee # / Name', es: 'N.º / nombre' } },
     fields: [
       F.date(),
+      F.project(),
       // Picked from what's ready to buck (`picker`: released Take Downs and
       // released parts with no Bucking record yet, as "Strain || abbreviation
       // || last 4"). "Not listed" falls back to typing the UID.
@@ -749,6 +766,7 @@ const OPERATIONS_STATIONS = [
                             es: 'Flor terminada pesada ese día en todas las hojas de corte a mano, en libras. Incluye hojas abiertas.' } },
     fields: [
       F.date(),
+      F.project(),
       // Picked from every lot that's been bucked (`picker`: buckedLots in
       // ops_common.js, "Strain || abbreviation || last 4"). "Other" is for
       // bucked flower from somewhere else: a popup asks for the strain and
@@ -1014,14 +1032,16 @@ const OPERATIONS_STATIONS = [
   // Matches the paper pre-roll production sheet. Built like Hand Trim: one
   // page per run, every open run (anyone's) in the switcher at the top with
   // "+ New run", so several runs can be open at once, and a run stays open
-  // across days until QC signs it off and someone submits it. The workforce
-  // log is `crew` so ops_analytics' labor log picks each employee's hours up
-  // by the day they worked.
+  // across days until QC signs it off and someone submits it. Who worked
+  // each day is confirmed against the Master Schedule (`attendance`); the
+  // hours come from the Labor Log, through the run's Project. Runs from
+  // before October 2026 have a Workforce Log of hours (`crew`) instead —
+  // still read by preroll-costs.js and crewLaborLog.
   {
     key: 'preroll_production',
     dept: { en: 'Manufacturing', es: 'Manufactura' },
     title: { en: 'Pre-Roll Production', es: 'Producción de prerolls' },
-    desc: { en: 'One run of pre-rolls from start to finish — output, waste, and who worked on it, a tab per day. Stays open across days until submitted.',
+    desc: { en: 'One run of pre-rolls from start to finish — output, waste, and who’s working on it, a tab per day. Stays open across days until submitted.',
             es: 'Una corrida de prerolls de principio a fin — producción, desecho y quién trabajó, una pestaña por día. Queda abierta varios días hasta enviarla.' },
     color: 'purple',
     headline: 'totalPrerolls',
@@ -1034,11 +1054,12 @@ const OPERATIONS_STATIONS = [
     // order, with Start (a new run for the request) or Open (its run).
     queueTab: true,
     links: [{ href: '/work_orders.html?tab=preroll', l: { en: 'Work Orders →', es: 'Órdenes de trabajo →' } }],
-    // A tab per day under the run tabs: the output and workforce logs show
-    // the picked day's rows and stamp new ones with it.
-    dayTabs: { lines: ['output', 'crew'] },
+    // A tab per day under the run tabs: the output log and the crew show
+    // the picked day and stamp new rows with it.
+    dayTabs: { lines: ['output', 'attendance'] },
     fields: [
       { ...F.date(), l: { en: 'Start Date', es: 'Fecha de inicio' } },
+      F.project(),
       // Picked from the pre-roll queue, in the dashboard's order: fills in
       // what the request knows; the rest is typed as usual.
       { k: 'prNum', t: 'text', l: { en: 'Production Request', es: 'Solicitud de producción' },
@@ -1091,30 +1112,19 @@ const OPERATIONS_STATIONS = [
                 es: '(prerolls × tamaño + desecho) ÷ peso inicial. Debe acercarse al 100% al final de la corrida.' },
         flag: (x) => x < 0.95 || x > 1.05 },
 
-      // workDate (`fromDay`) is the picked day tab, not typed.
-      { k: 'crew', t: 'lineitems', entry: true,
-        l: { en: 'Workforce Log', es: 'Registro de personal' },
-        hint: { en: 'One row per person per shift on this run, on the day they worked it.',
-                es: 'Una fila por persona por turno en esta corrida, el día que trabajó.' },
-        cols: [
-          { k: 'employeeNo', t: 'text', req: true, l: { en: 'Employee ID', es: 'ID de empleado' }, inputmode: 'numeric' },
-          { k: 'workDate', t: 'date', fromDay: true, l: { en: 'Date', es: 'Fecha' } },
-          { k: 'startTime', t: 'time', req: true, l: { en: 'Start', es: 'Inicio' } },
-          { k: 'endTime', t: 'time', req: true, l: { en: 'End', es: 'Fin' } },
-          { k: 'hours', t: 'calc', dp: 2, l: { en: 'Hours', es: 'Horas' }, calc: (r) => hoursBetween(r.startTime, r.endTime) }
-        ],
-        totalCol: 'hours' },
-      { k: 'laborHours', t: 'calc', calc: (v) => (v.crew || []).reduce((a, r) => a + num(r.hours), 0),
-        l: { en: 'Total Labor Hours (whole run)', es: 'Horas de trabajo totales (toda la corrida)' } },
-      { k: 'crewSize', t: 'calc', dp: 0,
-        calc: (v) => new Set((v.crew || []).map((r) => String(r.employeeNo || '').trim()).filter(Boolean)).size,
+      // Who's working the run each day: the people Master Schedule has on
+      // the run's project that day, each marked here or not, plus anyone
+      // added at the station (buildCrewCheck in ops_form.html). A running
+      // log like the two above — rows {key, userId, name, status: 'here' |
+      // 'out' | 'added' | 'removed', day}, the latest per person per day
+      // counting — so two tablets merge. Hours aren't kept here: they come
+      // from the Labor Log, through the run's Project.
+      { k: 'attendance', t: 'crewcheck', entry: true,
+        l: { en: 'Crew', es: 'Personal' },
+        hint: { en: 'Who is working in the pre-roll room today, from the Master Schedule. Mark anyone who isn’t here, and add anyone who is but isn’t on the schedule.',
+                es: 'Quién trabaja hoy en el cuarto de prerolls, según el Plan Maestro. Marque a quien no vino y agregue a quien está pero no aparece en el horario.' } },
+      { k: 'crewSize', t: 'calc', dp: 0, calc: (v) => crewOnRun(v.attendance).size || null,
         l: { en: 'People on this Run', es: 'Personas en esta corrida' } },
-      { k: 'prerollsPerHour', t: 'calc', dp: 0,
-        calc: (v) => {
-          const hrs = (v.crew || []).reduce((a, r) => a + num(r.hours), 0);
-          return hrs > 0 ? (v.output || []).reduce((a, r) => a + num(r.count), 0) / hrs : null;
-        },
-        l: { en: 'Pre-Rolls per Labor Hour', es: 'Prerolls por hora de trabajo' } },
 
       { k: 'endOfRun', t: 'heading',
         l: { en: 'End of Run', es: 'Fin de la corrida' },
@@ -1269,9 +1279,20 @@ const projectRoles = (f, leadLabel) => [
   ...(f && f.lead && f.lead.name ? [{ id: '_lead', name: leadLabel || 'Lead', isLead: true, people: [{ ...f.lead, lead: true }] }] : []),
   ...((f && f.roles) || []).map((r) => ({ ...r, people: r.people || [] }))
 ];
+// A crew check (Pre-Roll's `attendance`): the latest row per person per
+// day, as a Map 'day|key' -> row.
+const crewLatest = (rows) => {
+  const m = new Map();
+  (rows || []).filter((r) => r && r.key).slice().sort((a, b) => String(a.at || '').localeCompare(String(b.at || '')))
+    .forEach((r) => m.set(`${r.day || ''}|${r.key}`, r));
+  return m;
+};
+// Everyone marked here (or added) on any day of the run, by person key.
+const crewOnRun = (rows) => new Set([...crewLatest(rows).values()].filter((r) => r.status === 'here' || r.status === 'added').map((r) => r.key));
+
 // Display name for any Labor Log process key — station or not.
 const processTitle = (k) => (STATION_BY_KEY[k] && STATION_BY_KEY[k].title) || LABOR_PROCESSES[k] || { en: k || '—', es: k || '—' };
 
 if (typeof module !== 'undefined') {
-  module.exports = { OPERATIONS_STATIONS, STATION_BY_KEY, BIOMASS, SELLABLE, PREFILL_MAP, PIPELINE_ORDER, G_PER_LB, LABOR_PROCESSES, WORK_LOCATIONS, projectRunsOn, projectHours, projectRoles, processTitle };
+  module.exports = { crewLatest, crewOnRun, OPERATIONS_STATIONS, STATION_BY_KEY, BIOMASS, SELLABLE, PREFILL_MAP, PIPELINE_ORDER, G_PER_LB, LABOR_PROCESSES, WORK_LOCATIONS, projectRunsOn, projectHours, projectRoles, processTitle };
 }

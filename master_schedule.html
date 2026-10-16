@@ -417,6 +417,7 @@
     nothingHint:{ en: 'Projects show here on the days and hours they run. Create one in Projects.', es: 'Los proyectos aparecen aquí los días y horas que trabajan. Cree uno en Proyectos.' },
     goProj:   { en: 'Go to Projects', es: 'Ir a Proyectos' },
     noProj:   { en: 'No projects here yet.', es: 'Todavía no hay proyectos aquí.' },
+    fromForm: { en: 'linked from', es: 'vinculado desde' },
     sumLine:  { en: '{p} scheduled on {n} projects', es: '{p} programadas en {n} proyectos' },
     sumConf:  { en: '{n} double-booked', es: '{n} con doble turno' },
     person1:  { en: '1 person', es: '1 persona' },
@@ -1515,7 +1516,7 @@
     f.roles = (f.roles || []).map((r) => ({ ...r, people: r.people || [] }));
     f.contractors = (f.contractors || []).map((c) => ({ ...c, shifts: (c.shifts || []).map((x) => ({ ...x })) }));
     f.uids = f.uids || []; f.days = f.days || [];
-    editing = { id, f };
+    editing = { id, f, origUids: new Set(f.uids.map((u) => u.uid)) };
     loadUidIndex();
     render();
     window.scrollTo({ top: $('plist').getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' });
@@ -1595,7 +1596,7 @@
       <button type="button" class="btn btn-sm" id="ed-addflc">${esc(t(L.addFlc))}</button>
 
       <div class="sec">${esc(t(L.uids))}</div>
-      <div class="chips" id="ed-uids">${f.uids.map((u, i) => `<span class="chip" title="${esc(u.uid)}"><span class="m">${esc(tail(u.uid))}</span>${u.strain ? `<span class="s">${esc(u.strain)}</span>` : ''}<button type="button" data-udel="${i}">×</button></span>`).join('')}</div>
+      <div class="chips" id="ed-uids">${f.uids.map((u, i) => `<span class="chip" title="${esc(u.uid + (u.station ? ` — ${t(L.fromForm)} ${procTitle(u.station)}` : ''))}"><span class="m">${esc(tail(u.uid))}</span>${u.strain ? `<span class="s">${esc(u.strain)}</span>` : ''}<button type="button" data-udel="${i}">×</button></span>`).join('')}</div>
       <div class="uid-add"><input id="ed-uidq" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="${esc(t(L.uidPh))}"><button type="button" class="btn" id="ed-uidadd">${esc(t(L.uidAdd))}</button></div>
       <div class="matches" id="ed-uidm"></div>
       <div class="hint">${esc(t(L.uidsHint))}</div>
@@ -1797,8 +1798,14 @@
     btn.disabled = true; btn.textContent = t(L.saving);
     try {
       if (editing.id) {
-        // Day changes and who created it stay as they are on the saved row.
-        await patchProject(editing.id, (fx) => ({ ...fx, ...out }));
+        // Day changes and who created it stay as they are on the saved row,
+        // and so do UIDs added while the editor was open (a station form's
+        // Project dropdown — linkFormToProject in ops_data.js).
+        const orig = editing.origUids || new Set();
+        await patchProject(editing.id, (fx) => {
+          const extra = (fx.uids || []).filter((u) => u && !orig.has(u.uid) && !out.uids.some((x) => x.uid === u.uid));
+          return { ...fx, ...out, uids: [...out.uids, ...extra] };
+        });
       } else {
         const { data, error } = await client.from('operations_forms').insert({
           station_key: KEY, status: 'submitted', owner_user: me || null, updated_by: me || null, work_date: out.start,

@@ -185,6 +185,23 @@
     .entry-table .li-del{min-height:40px}
     .entry-empty{color:var(--muted);font-size:.85rem;margin-top:12px}
 
+    /* Crew check (Pre-Roll's attendance): the day's scheduled people, here / not here, plus added. */
+    .cc-src{font-family:'DM Mono',monospace;font-size:.78rem;color:var(--muted);margin-bottom:10px}
+    .cc-day{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin:14px 0 6px}
+    .cc-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)}
+    .cc-name{flex:1;min-width:0}
+    .cc-name .r{display:block;font-size:.75rem;color:var(--muted)}
+    .cc-row.out .cc-name b{text-decoration:line-through;color:var(--muted)}
+    .cc-btn{min-height:44px;min-width:84px;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:.9rem;cursor:pointer}
+    .cc-btn.on.here{background:var(--green);border-color:var(--green);color:#000;font-weight:700}
+    .cc-btn.on.out{background:var(--red);border-color:var(--red);color:#000;font-weight:700}
+    .cc-del{flex:0 0 auto;min-width:44px;min-height:44px;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--muted);font-size:1.1rem;cursor:pointer}
+    .cc-tag{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:2px 6px}
+    .cc-add{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    .cc-add select,.cc-add input{flex:1 1 200px;min-width:0}
+    .cc-all{margin-top:10px;width:100%;min-height:48px;background:transparent;border:1px solid var(--green);color:var(--green);border-radius:10px;font-family:inherit;font-size:.95rem;font-weight:700;cursor:pointer}
+    .cc-sum{font-family:'DM Mono',monospace;font-size:.85rem;margin-top:10px;color:var(--text)}
+
     .photo-wrap{display:flex;gap:12px;align-items:center}
     .photo-wrap img{width:72px;height:72px;object-fit:cover;border-radius:10px;border:1px solid var(--border);display:none}
 
@@ -347,6 +364,19 @@
     each:    { en: '{g} g each', es: '{g} g c/u' },
     ready:   { en: 'ready by {d}', es: 'lista para {d}' }
   };
+  // The Master Schedule project dropdown (projectPicker).
+  const PJ = {
+    loading: { en: 'Loading projects…', es: 'Cargando proyectos…' },
+    choose:  { en: 'No project', es: 'Sin proyecto' },
+    running: { en: 'Running {d}', es: 'En curso el {d}' },
+    others:  { en: 'Other open projects', es: 'Otros proyectos abiertos' },
+    closed:  { en: 'Done or removed', es: 'Terminado o quitado' },
+    linked:  { en: '✓ Linked: {uids} is on this project.', es: '✓ Vinculado: {uids} está en este proyecto.' },
+    noUid:   { en: 'The package will be linked to this project once its UID is filled in.',
+               es: 'El paquete se vinculará a este proyecto cuando se llene su UID.' },
+    failed:  { en: 'Couldn’t link to the project yet — it will try again on the next save.',
+               es: 'Aún no se pudo vincular al proyecto — se intentará de nuevo al guardar.' }
+  };
   const pkLoading = (f) => t(f.picker.list === 'buckable' ? PK.loadingBuck : f.picker.list === 'bucked' ? PK.loadingBucked : PK.loading);
   const reference = await loadReference();
   const form = document.getElementById('form');
@@ -377,6 +407,13 @@
     }
 
     if (f.t === 'lineitems') return f.entry ? buildEntryLog(f, wrap) : buildLineItems(f, wrap);
+    if (f.t === 'crewcheck') {
+      // Drawn by buildCrewCheck once the projects and roster load.
+      values[f.k] = [];
+      wrap.innerHTML = labelHtml(f) + (f.hint ? `<div class="hint" style="margin-top:0;margin-bottom:10px">${t(f.hint)}</div>` : '') +
+        `<div class="cc" id="cc_${f.k}"></div><div class="entry-msg" id="ccm_${f.k}"></div>`;
+      return wrap;
+    }
     if (f.t === 'fill') return buildFill(f, wrap);
     if (f.t === 'heading') {
       wrap.innerHTML = `<h3 class="sec-head">${t(f.l)}</h3>` + (f.hint ? `<div class="hint">${t(f.hint)}</div>` : '');
@@ -390,7 +427,11 @@
     }
 
     let control = '';
-    if (f.t === 'select') {
+    if (f.projectPicker) {
+      // Filled once the projects load (wireProjectPicker below).
+      control = `<select id="f_${f.k}"><option value="">${escapeHtml(t(PJ.loading))}</option></select>` +
+                `<div class="match" id="m_${f.k}"></div>`;
+    } else if (f.t === 'select') {
       const opts = optionsFor(f);
       control = `<select id="f_${f.k}">` +
         `<option value=""></option>` +
@@ -877,7 +918,7 @@
   // anything changed. Plain fields this tablet hasn't touched since its
   // last save take the saved value too, so stems typed on one tablet don't
   // get blanked by another.
-  const entryFields = station.fields.filter((f) => f.t === 'lineitems' && f.entry);
+  const entryFields = station.fields.filter((f) => (f.t === 'lineitems' || f.t === 'crewcheck') && f.entry);
   const touched = new Set();
   function mergeEntries(saved) {
     if (!saved || !entryFields.length) return false;
@@ -900,12 +941,17 @@
       changed = true;
     });
     station.fields.forEach((f) => {
-      if (['calc', 'lineitems', 'photo'].includes(f.t) || touched.has(f.k)) return;
+      if (['calc', 'lineitems', 'crewcheck', 'photo'].includes(f.t) || touched.has(f.k)) return;
       const v = saved[f.k];
       if (v === undefined || v === null || v === '' || v === values[f.k]) return;
       setFieldValue(f, v);
       changed = true;
     });
+    // Another tablet moved this page's packages to a project.
+    if (projField && !touched.has(projField.k) && saved.projectLinked && saved.projectLinked !== values.projectLinked) {
+      values.projectLinked = saved.projectLinked;
+      if (saved.projectName) values.projectName = saved.projectName;
+    }
     if (changed) { updateVisibility(); recompute(); }
     return changed;
   }
@@ -1121,6 +1167,333 @@
       markDirty();
     });
   });
+
+  // ── Master Schedule project (projectPicker) ──────────────────────────────
+  // Picking a project puts this form's package(s) on it (linkFormToProject
+  // in ops_data.js): Labor Log hours logged to the project are then split
+  // over them, which is where their labor cost comes from. The link is made
+  // on each autosave whose project or packages changed, and again on
+  // submit; changing the project (or deleting the page) takes them back off
+  // the old one. `projectLinked` remembers which project has them, so a
+  // resumed page or another tablet knows too.
+  const projField = station.fields.find((f) => f.projectPicker);
+  let projects = projField && draftsOn ? null : [];
+  let linkedSig = null;
+  const projById = (id) => (projects || []).find((p) => p.id === id);
+  const fmtShort = (d) => new Date(d + 'T12:00:00').toLocaleDateString(getLang() === 'es' ? 'es-US' : 'en-US', { month: 'short', day: 'numeric' });
+  function projLabel(p) {
+    const f = p.fields;
+    const loc = f.location === 'other' ? f.locationName : ((WORK_LOCATIONS.find(([k]) => k === f.location) || [])[1] || '');
+    const dates = f.end && f.end !== f.start ? `${fmtShort(f.start)} – ${fmtShort(f.end)}` : f.end ? fmtShort(f.start) : `${fmtShort(f.start)} →`;
+    return [f.name, loc, dates].filter(Boolean).join(' · ');
+  }
+  function syncProjectName() {
+    if (!projField) return;
+    const p = projById(values[projField.k]);
+    if (!values[projField.k]) delete values.projectName;
+    else if (p) values.projectName = p.fields.name;
+  }
+  function fillProjectPicker() {
+    if (!projField) return;
+    const sel = document.getElementById(`f_${projField.k}`);
+    const cur = values[projField.k] || '';
+    if (!projects) return;
+    // Open projects (not Done), the ones running on the form's date first;
+    // within each group the ones for this station's process lead.
+    const date = values.date || todayStr();
+    const forHere = (f) => f.process === station.key || (f.roles || []).some((r) => r.process === station.key);
+    const open = projects.filter((p) => (p.fields.status || 'active') !== 'done')
+      .sort((a, b) => (forHere(b.fields) - forHere(a.fields)) || String(a.fields.name).localeCompare(String(b.fields.name)));
+    const covers = (f) => f.start && f.start <= date && (!f.end || f.end >= date);
+    const now = open.filter((p) => covers(p.fields)), later = open.filter((p) => !covers(p.fields));
+    const opt = (p) => `<option value="${escapeAttr(p.id)}">${escapeHtml(projLabel(p))}</option>`;
+    const shut = cur && !open.some((p) => p.id === cur)
+      ? `<optgroup label="${escapeAttr(t(PJ.closed))}"><option value="${escapeAttr(cur)}">${escapeHtml(projById(cur) ? projLabel(projById(cur)) : values.projectName || cur)}</option></optgroup>` : '';
+    sel.innerHTML = `<option value="">${escapeHtml(t(PJ.choose))}</option>` +
+      (now.length ? `<optgroup label="${escapeAttr(t(PJ.running).replace('{d}', fmtShort(date)))}">${now.map(opt).join('')}</optgroup>` : '') +
+      (later.length ? `<optgroup label="${escapeAttr(t(PJ.others))}">${later.map(opt).join('')}</optgroup>` : '') + shut;
+    sel.value = cur;
+    showProjectInfo();
+  }
+  function showProjectInfo(msg) {
+    if (!projField) return;
+    const box = document.getElementById(`m_${projField.k}`);
+    const uids = formProjectUids(station.key, values);
+    box.textContent = msg || (!values[projField.k] ? ''
+      : !uids.length ? t(PJ.noUid)
+      : values.projectLinked === values[projField.k] ? t(PJ.linked).replace('{uids}', uids.map((u) => '…' + u.uid.slice(-4)).join(', ')) : '');
+    box.style.display = box.textContent ? 'block' : 'none';
+  }
+  async function syncProjectLink(force) {
+    if (!projField || !draftsOn) return;
+    const pid = values[projField.k] || '';
+    const uids = formProjectUids(station.key, values);
+    const sig = pid + '|' + uids.map((u) => u.uid).join(',');
+    if (!force && sig === linkedSig) return;
+    if (!pid && !values.projectLinked) { linkedSig = sig; return; }
+    const res = await linkFormToProject(draftId, pid, uids, { stationKey: station.key, by: owner, unlinkFrom: values.projectLinked });
+    if (!res.ok) { showProjectInfo(t(PJ.failed)); return; }
+    linkedSig = sig;
+    const was = values.projectLinked || '';
+    if (pid) values.projectLinked = pid; else delete values.projectLinked;
+    showProjectInfo();
+    // Saved with the page, so a resumed page knows where its packages are.
+    if ((values.projectLinked || '') !== was && !force && !isClosed) markDirty();
+  }
+  async function unlinkProject() {
+    if (!projField || !values.projectLinked) return;
+    await linkFormToProject(draftId, null, [], { by: owner, unlinkFrom: values.projectLinked }).catch(() => {});
+  }
+  if (projField) {
+    const sel = document.getElementById(`f_${projField.k}`);
+    const redrawCrew = () => station.fields.filter((f) => f.t === 'crewcheck').forEach((f) => entryRenderers[f.k] && entryRenderers[f.k]());
+    sel.addEventListener('change', () => { syncProjectName(); showProjectInfo(); redrawCrew(); });
+    const dateEl = document.getElementById('f_date');
+    if (dateEl) dateEl.addEventListener('change', () => { fillProjectPicker(); redrawCrew(); });
+    if (draftsOn) listWorkProjects().then((list) => { projects = list; fillProjectPicker(); redrawCrew(); });
+    else { fillProjectPicker(); redrawCrew(); }
+  }
+
+  // ── Crew check (crewcheck — Pre-Roll's `attendance`) ────────────────────
+  // The people the Master Schedule has working this run on the picked day:
+  // the run's Project (its lead and responsibilities — only the pre-roll
+  // ones if it has any), with that day's changes (someone off, someone
+  // extra) applied; with no Project picked, every project running that day
+  // for this station. Each is marked Here or Not here, and anyone else
+  // working can be added from the Connecteam roster or typed in. Every tap
+  // is a row (key, userId, name, status, day, at, by) and the latest per
+  // person per day counts (crewLatest in operations_stations.js), so two
+  // tablets merge like the other running logs. The marks are also written
+  // to the project's day on the Master Schedule (syncCrewToSchedule).
+  const CC = {
+    loading:  { en: 'Loading the schedule…', es: 'Cargando el horario…' },
+    from:     { en: 'Master Schedule — {p}', es: 'Plan Maestro — {p}' },
+    notOn:    { en: '{p} isn’t on the schedule this day.', es: '{p} no está en el horario este día.' },
+    none:     { en: 'Nobody is scheduled for pre-rolls this day — pick the run’s Project above, or add people below.',
+                es: 'No hay nadie programado para prerolls este día — elija el Proyecto de la corrida arriba, o agregue personas abajo.' },
+    here:     { en: 'Here', es: 'Presente' },
+    out:      { en: 'Not here', es: 'No vino' },
+    added:    { en: 'Added', es: 'Agregado' },
+    lead:     { en: 'Lead', es: 'Líder' },
+    allHere:  { en: '✓ Everyone else scheduled is here', es: '✓ Todos los demás programados están presentes' },
+    pick:     { en: 'Add someone working here…', es: 'Agregar a alguien que trabaja aquí…' },
+    typeName: { en: 'Not in the list — type a name', es: 'No está en la lista — escriba un nombre' },
+    namePh:   { en: 'Name', es: 'Nombre' },
+    add:      { en: 'Add', es: 'Agregar' },
+    removeQ:  { en: 'Take {n} off this day’s crew?', es: '¿Quitar a {n} del personal de este día?' },
+    sum:      { en: '{n} working · {o} not here · {u} not confirmed yet', es: '{n} trabajando · {o} no vinieron · {u} sin confirmar' }
+  };
+  const ccFields = station.fields.filter((f) => f.t === 'crewcheck');
+  const ccFold = (x) => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  const ccKey = (p) => (p.userId ? 'id:' + p.userId : 'name:' + ccFold(p.name));
+  let ccRoster = null;
+  if (ccFields.length) {
+    fetch('https://raw.githubusercontent.com/bobby2soxRC/2cw-dashboard/main/data/connecteam_roster.json?t=' + Date.now())
+      .then((r) => (r.ok ? r.json() : {})).catch(() => ({}))
+      .then((j) => {
+        ccRoster = ((j && j.people) || []).map((p) => ({ userId: String(p.userId), name: p.name })).sort((a, b) => a.name.localeCompare(b.name));
+        ccFields.forEach((f) => entryRenderers[f.k]());
+      });
+  }
+  // The scheduled people for a day: [{key, userId, name, role}], plus where
+  // they came from (the project names) and, with a Project picked that
+  // isn't running that day, its name.
+  const ccMine = (r, f) => (r.process || f.process) === station.key;
+  // The projects whose people work this station on a day: the picked
+  // Project, or every pre-roll project running that day.
+  function ccRunning(day) {
+    const pid = values.project;
+    const src = pid ? [projById(pid)].filter(Boolean)
+      : (projects || []).filter((p) => p.fields.process === station.key || (p.fields.roles || []).some((r) => r.process === station.key));
+    return src.filter((p) => projectRunsOn(p.fields, day) && !(((p.fields.overrides || {})[day] || {}).skip));
+  }
+  function ccScheduled(day) {
+    if (!projects) return { loading: true, people: [] };
+    const pid = values.project;
+    const mine = ccMine;
+    const running = ccRunning(day);
+    // What this page marked that day — written back to the schedule, so
+    // someone it marked Not here stays listed (as Not here) and someone it
+    // added stays in the Added list.
+    const latest = new Map([...crewLatest(values[(ccFields[0] || {}).k]).values()].filter((r) => r.day === day).map((r) => [r.key, r]));
+    const pageSt = (key) => (latest.get(key) || {}).status || '';
+    const people = new Map();
+    running.forEach((p) => {
+      const f = p.fields, ov = (f.overrides || {})[day] || {};
+      // A mark made here wins over the schedule's day changes (which this
+      // page writes too, and may not have saved yet).
+      const out = new Set((ov.out || []).filter((k) => !pageSt(k)));
+      const standing = new Set(projectRoles(f).flatMap((r) => (r.people || []).map(ccKey)));
+      // This station's responsibilities (a blank process is the project's).
+      // A picked project with none of those: everyone on it. The lead
+      // counts when it's the picked project or a pre-roll one.
+      const roles = projectRoles(f, t(CC.lead));
+      const some = roles.some((r) => !r.isLead && mine(r, f));
+      roles.filter((r) => (r.isLead ? (pid || f.process === station.key) : pid && !some ? true : mine(r, f))).forEach((r) => {
+        const ps = [...(r.people || []).filter((x) => !out.has(ccKey(x))),
+                    ...(ov.extra || []).filter((x) => x.roleId === r.id && !(['added', 'removed'].includes(pageSt(ccKey(x))) && !standing.has(ccKey(x))))];
+        ps.forEach((x) => {
+          const key = ccKey(x);
+          if (x.name && !people.has(key)) people.set(key, { key, userId: x.userId || '', name: x.name, role: r.name });
+        });
+      });
+    });
+    // Marked Not here here but off the list now (an extra taken back off).
+    latest.forEach((r) => { if (r.status === 'out' && !people.has(r.key)) people.set(r.key, { key: r.key, userId: r.userId || '', name: r.name, role: '' }); });
+    return { people: [...people.values()], from: running.map((p) => p.fields.name),
+             notOn: pid && !running.length ? (projById(pid) ? projById(pid).fields.name : values.projectName || '') : '' };
+  }
+  // Writes this page's marks to the Master Schedule, as that day's changes
+  // on the project (overrides[day], the same as Change this day there):
+  // someone on the project marked Not here goes in `out` (Here takes them
+  // back out of it); someone added goes in `extra`, under the project's
+  // pre-roll responsibility (else its first), and comes off it when they're
+  // taken off here or marked Not here. Only people this page marked are
+  // touched, and only on days the project runs. With no Project picked, a
+  // day goes to the one pre-roll project running then (none written when
+  // there are several). Run after each autosave and on submit; the
+  // re-read-then-write in patchWorkProject keeps a lead's edits there.
+  let crewSig = null;
+  const CS = { failed: { en: 'Couldn’t update the Master Schedule yet — it will try again on the next save.',
+                         es: 'Aún no se pudo actualizar el Plan Maestro — se intentará de nuevo al guardar.' } };
+  async function syncCrewToSchedule(force) {
+    if (!ccFields.length || !projects || !draftsOn) return;
+    const byProject = new Map();   // project id -> [{day, key, userId, name, status}]
+    ccFields.forEach((f) => crewLatest(values[f.k]).forEach((r) => {
+      const run = ccRunning(r.day);
+      const p = values.project ? run[0] : run.length === 1 ? run[0] : null;
+      if (!p) return;
+      (byProject.get(p.id) || byProject.set(p.id, []).get(p.id)).push(r);
+    }));
+    const sig = JSON.stringify([...byProject.entries()].map(([id, rs]) => [id, rs.map((r) => [r.day, r.key, r.status])]));
+    if (!force && sig === crewSig) return;
+    let ok = true;
+    for (const [id, marks] of byProject) {
+      const res = await patchWorkProject(id, (fields) => {
+        const roles = fields.roles || [];
+        const role = roles.find((r) => ccMine(r, fields)) || roles[0];
+        const standing = new Set(projectRoles(fields).flatMap((r) => (r.people || []).map(ccKey)));
+        const ovs = { ...(fields.overrides || {}) };
+        let changed = false;
+        marks.forEach((m) => {
+          if (!projectRunsOn(fields, m.day)) return;
+          const ov = { ...(ovs[m.day] || {}) };
+          const out0 = ov.out || [], extra0 = ov.extra || [];
+          let out = out0, extra = extra0;
+          const isExtra = extra.some((x) => ccKey(x) === m.key);
+          if (standing.has(m.key)) {
+            if (m.status === 'out' && !out.includes(m.key)) out = [...out, m.key];
+            if ((m.status === 'here' || m.status === 'added') && out.includes(m.key)) out = out.filter((k) => k !== m.key);
+          } else if ((m.status === 'added' || m.status === 'here') && !isExtra && role) {
+            extra = [...extra, { roleId: role.id, userId: m.userId || '', name: m.name }];
+          } else if ((m.status === 'removed' || m.status === 'out') && isExtra) {
+            extra = extra.filter((x) => ccKey(x) !== m.key);
+          }
+          if (out === out0 && extra === extra0) return;
+          ovs[m.day] = { ...ov, out, extra };
+          changed = true;
+        });
+        return changed ? { ...fields, overrides: ovs, updatedBy: owner || '' } : fields;
+      }, owner);
+      if (!res.ok) { ok = false; continue; }
+      const p = projById(id);
+      if (p && res.fields) p.fields = res.fields;
+    }
+    if (ok) crewSig = sig;
+    ccFields.forEach((f) => entryRenderers[f.k] && entryRenderers[f.k]());
+    const msg = document.getElementById(`ccm_${ccFields[0].k}`);
+    if (msg) { msg.textContent = ok ? '' : t(CS.failed); msg.style.display = ok ? 'none' : 'block'; }
+  }
+  function buildCrewCheck(f) {
+    const box = document.getElementById(`cc_${f.k}`);
+    const days = () => {
+      if (byDay(f)) return [curDay];
+      const ds = [...new Set((values[f.k] || []).map((r) => r.day).filter(Boolean))].sort();
+      return ds.length ? ds : [values.date || todayStr()];
+    };
+    const log = (day, p, status) => {
+      values[f.k] = [...(values[f.k] || []), { _id: crypto.randomUUID(), day, at: new Date().toISOString(), by: owner,
+                                               key: p.key, userId: p.userId || '', name: p.name, status }];
+    };
+    const render = () => {
+      const latest = crewLatest(values[f.k]);
+      box.innerHTML = days().map((day) => {
+        const sch = ccScheduled(day);
+        const head = byDay(f) ? '' : `<div class="cc-day">${escapeHtml(dayLabel(day))}</div>`;
+        if (sch.loading) return head + `<div class="cc-src">${escapeHtml(t(CC.loading))}</div>`;
+        const st = (key) => (latest.get(`${day}|${key}`) || {}).status || '';
+        const src = sch.notOn ? t(CC.notOn).replace('{p}', sch.notOn)
+          : sch.from.length ? t(CC.from).replace('{p}', sch.from.join(', ')) : t(CC.none);
+        const listed = new Set(sch.people.map((p) => p.key));
+        const added = [...latest.values()].filter((r) => r.day === day && r.status === 'added' && !listed.has(r.key));
+        let n = 0, o = 0, u = 0;
+        const rows = sch.people.map((p) => {
+          const s = st(p.key);
+          if (s === 'out') o++; else if (s === 'here' || s === 'added') n++; else u++;
+          return `<div class="cc-row${s === 'out' ? ' out' : ''}"><div class="cc-name"><b>${escapeHtml(p.name)}</b>${p.role ? `<span class="r">${escapeHtml(p.role)}</span>` : ''}</div>` +
+            `<button type="button" class="cc-btn here${s === 'here' || s === 'added' ? ' on' : ''}" data-cc="here" data-day="${day}" data-key="${escapeAttr(p.key)}">${escapeHtml(t(CC.here))}</button>` +
+            `<button type="button" class="cc-btn out${s === 'out' ? ' on' : ''}" data-cc="out" data-day="${day}" data-key="${escapeAttr(p.key)}">${escapeHtml(t(CC.out))}</button></div>`;
+        }).join('') + added.map((r) => { n++;
+          return `<div class="cc-row"><div class="cc-name"><b>${escapeHtml(r.name)}</b></div><span class="cc-tag">${escapeHtml(t(CC.added))}</span>` +
+            `<button type="button" class="cc-del" data-cc="removed" data-day="${day}" data-key="${escapeAttr(r.key)}" aria-label="${escapeAttr(t(UI.remove))}">×</button></div>`; }).join('');
+        const here = new Set([...listed, ...added.map((r) => r.key)]);
+        const choices = (ccRoster || []).filter((p) => !here.has(ccKey(p)));
+        return head + `<div class="cc-src">${escapeHtml(src)}</div>` + rows +
+          (u ? `<button type="button" class="cc-all" data-cc="all" data-day="${day}">${escapeHtml(t(CC.allHere))}</button>` : '') +
+          `<div class="cc-add"><select data-ccpick="${day}"><option value="">${escapeHtml(t(CC.pick))}</option>` +
+            choices.map((p) => `<option value="${escapeAttr(p.userId)}">${escapeHtml(p.name)}</option>`).join('') +
+            `<option value="__type__">${escapeHtml(t(CC.typeName))}</option></select>` +
+            `<input type="text" data-ccname="${day}" placeholder="${escapeAttr(t(CC.namePh))}" style="display:none">` +
+            `<button type="button" class="cc-btn" data-cc="add" data-day="${day}">${escapeHtml(t(CC.add))}</button></div>` +
+          `<div class="cc-sum">${escapeHtml(t(CC.sum).replace('{n}', n).replace('{o}', o).replace('{u}', u))}</div>`;
+      }).join('');
+      if (byDay(f)) renderDays();
+    };
+    entryRenderers[f.k] = render;
+    const changed = () => { render(); recompute(); markDirty(); };
+    box.addEventListener('change', (e) => {
+      const sel = e.target.closest('[data-ccpick]');
+      if (!sel) return;
+      const inp = box.querySelector(`[data-ccname="${sel.dataset.ccpick}"]`);
+      inp.style.display = sel.value === '__type__' ? 'block' : 'none';
+      if (sel.value === '__type__') inp.focus();
+    });
+    box.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && e.target.closest('[data-ccname]')) { e.preventDefault(); box.querySelector(`[data-cc="add"][data-day="${e.target.dataset.ccname}"]`).click(); }
+    });
+    box.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-cc]');
+      if (!b || isClosed) return;
+      const day = b.dataset.day, act = b.dataset.cc;
+      const sch = ccScheduled(day);
+      const latest = crewLatest(values[f.k]);
+      const st = (key) => (latest.get(`${day}|${key}`) || {}).status || '';
+      if (act === 'all') {
+        sch.people.filter((p) => !st(p.key)).forEach((p) => log(day, p, 'here'));
+        return changed();
+      }
+      if (act === 'add') {
+        const sel = box.querySelector(`[data-ccpick="${day}"]`), inp = box.querySelector(`[data-ccname="${day}"]`);
+        const hit = sel.value && sel.value !== '__type__' ? (ccRoster || []).find((p) => p.userId === sel.value) : null;
+        const name = hit ? hit.name : sel.value === '__type__' ? inp.value.trim() : '';
+        if (!name) { (sel.value === '__type__' ? inp : sel).focus(); return; }
+        const p = { userId: hit ? hit.userId : '', name };
+        p.key = ccKey(p);
+        // Someone already on the schedule just gets marked here.
+        log(day, p, sch.people.some((x) => x.key === p.key) ? 'here' : 'added');
+        return changed();
+      }
+      const key = b.dataset.key;
+      const p = sch.people.find((x) => x.key === key) || latest.get(`${day}|${key}`);
+      if (!p) return;
+      if (act === 'removed' && !confirm(t(CC.removeQ).replace('{n}', p.name))) return;
+      if (st(key) === act || (act === 'here' && st(key) === 'added')) return;
+      log(day, { key, userId: p.userId, name: p.name }, act);
+      changed();
+    });
+    render();
+  }
+  ccFields.forEach(buildCrewCheck);
 
   // ── Prefill from the upstream stage ───────────────────────────────────────
   // Bucking should not have to re-weigh what the post-dry check already
@@ -1410,8 +1783,19 @@
   function hydrate(fields) {
     if (Array.isArray(fields._deleted)) values._deleted = fields._deleted;
     if (Array.isArray(fields.runDays)) values.runDays = fields.runDays;
+    ['projectName', 'projectLinked'].forEach((k) => { if (fields[k]) values[k] = fields[k]; });
+    // Anything saved that the form no longer shows (a field taken off since,
+    // like Pre-Roll's Workforce Log on runs already open) rides along, so
+    // the next autosave doesn't drop it.
+    const onForm = new Set(station.fields.map((f) => f.k));
+    Object.keys(fields).forEach((k) => { if (!onForm.has(k) && !(k in values)) values[k] = fields[k]; });
     station.fields.forEach((f) => {
       if (f.t === 'calc' || f.t === 'photo') return;
+      if (f.t === 'crewcheck') {
+        values[f.k] = Array.isArray(fields[f.k]) ? fields[f.k] : [];
+        if (entryRenderers[f.k]) entryRenderers[f.k]();
+        return;
+      }
       if (f.t === 'lineitems') {
         let rows = fields[f.k];
         // Saved when this field was one number (Bucking's stemLb): that
@@ -1499,6 +1883,7 @@
   const mirrorKey = () => `2cw_draft_mirror_${draftId}`;
 
   function draftPayload() {
+    syncProjectName();
     const fields = { ...values };
     station.fields.filter((f) => f.t === 'photo').forEach((f) => { delete fields[f.k]; });
     const strain = values.strain || (station.splitBy
@@ -1538,6 +1923,8 @@
     if (res.ok) {
       onServer = true;
       sentTouched.forEach((k) => touched.delete(k));
+      syncProjectLink();
+      syncCrewToSchedule();
       autosaveEl.className = 'autosave saved';
       autosaveTxt.textContent = `${t(AS.saved)} ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
       localStorage.removeItem(mirrorKey());
@@ -1816,7 +2203,13 @@
     clearTimeout(autosaveTimer);
     submittedHere = true;
 
+    // The project gets this form's packages first, so the record saves
+    // knowing which project has them (an offline submit retries the link
+    // when it goes through).
+    await syncProjectLink(true);
+    await syncCrewToSchedule(true);
     // Drop empty worksheet rows before sending.
+    syncProjectName();
     const payload = { ...values };
     delete payload._deleted;
     // Row numbers count only the rows that are kept: 1, 2, 3… with no gaps.
@@ -1931,6 +2324,7 @@
     if (!pendingSubmits.length || !draftsOn) return;
     const sres = await flushPending();
     if (!sres.ok) return;
+    await syncProjectLink(true);
     localStorage.removeItem(mirrorKey());
     banner.className = 'banner success';
     banner.textContent = t(UI.submitted);
@@ -2002,6 +2396,7 @@
       // Never saved (nothing typed yet) → nothing on the server to delete.
       const res = onServer ? await deleteOpenPage(station.key, draftId) : { ok: true };
       if (!res.ok && res.code === 'submitted') { closedElsewhere(); alert(t(DP.tooLate)); return; }
+      if (res.ok || res.code === 'gone') await unlinkProject();
       if (!res.ok && res.code !== 'gone') {
         isClosed = false;
         delBtn.disabled = false;
@@ -2253,7 +2648,7 @@
   function applyLinkPrefill() {
     const fields = {};
     station.fields.forEach((f) => {
-      if (['calc', 'lineitems', 'photo'].includes(f.t)) return;
+      if (['calc', 'lineitems', 'crewcheck', 'photo'].includes(f.t)) return;
       const v = params.get(`set_${f.k}`);
       if (v !== null && v !== '') fields[f.k] = f.t === 'number' ? Number(v) : v;
     });
