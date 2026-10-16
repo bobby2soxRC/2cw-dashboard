@@ -44,6 +44,7 @@
     .datebar button:disabled{opacity:.35;cursor:default}
     .datebar .today-btn{text-transform:uppercase;letter-spacing:.06em;font-size:.78rem}
     .datebar .today-btn.on{background:var(--green);border-color:var(--green);color:#000;font-weight:700}
+    .datebar .pdf-btn{margin-left:auto;color:var(--blue);border-color:var(--blue);text-transform:uppercase;letter-spacing:.06em;font-size:.78rem}
 
     .filters{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0}
     .filters button{background:var(--surface);border:1px solid var(--border);color:var(--subtext);border-radius:10px;padding:.6rem 1rem;
@@ -88,6 +89,7 @@
     <input type="date" id="day"/>
     <button id="next-day" aria-label="Next day">▶</button>
     <button id="today-btn" class="today-btn">Today</button>
+    <button id="pdf-btn" class="pdf-btn" disabled>📄 Share PDF</button>
   </div>
   <div class="filters" id="filters"></div>
   <div id="board"></div>
@@ -119,6 +121,20 @@
     empty: { en: 'Nothing logged yet today.', es: 'Nada registrado hoy todavía.' },
     emptyDay: { en: 'Nothing logged on this day.', es: 'Nada registrado este día.' },
     today: { en: 'Today', es: 'Hoy' },
+    pdfBtn: { en: '📄 Share PDF', es: '📄 Compartir PDF' },
+    pdfBusy: { en: '⏳ Preparing…', es: '⏳ Preparando…' },
+    pdfFailed: { en: 'PDF failed: ', es: 'Falló el PDF: ' },
+    reportTitle: { en: 'Daily Operations Report', es: 'Reporte diario de operaciones' },
+    summary: { en: 'Summary', es: 'Resumen' },
+    station: { en: 'Station', es: 'Estación' },
+    forms: { en: 'Forms', es: 'Formularios' },
+    total: { en: 'Total', es: 'Total' },
+    strain: { en: 'Strain / Batch', es: 'Variedad / lote' },
+    status: { en: 'Status', es: 'Estado' },
+    by: { en: 'By', es: 'Por' },
+    time: { en: 'Updated', es: 'Actualizado' },
+    generated: { en: 'Generated', es: 'Generado' },
+    page: { en: 'Page', es: 'Página' },
     loading: { en: 'Loading…', es: 'Cargando…' },
     setupTitle: { en: 'Live view isn’t connected yet', es: 'La vista en vivo aún no está conectada' },
     setupBody: { en: 'This page needs a Supabase project (config/supabase_config.js is still blank). Until then there is nothing to show here — finished forms still show up on the Operations Dashboard.',
@@ -195,6 +211,9 @@
   document.getElementById('prev-day').onclick = () => goTo(shiftDay(day, -1));
   document.getElementById('next-day').onclick = () => goTo(shiftDay(day, 1));
   todayBtn.onclick = () => goTo(todayStr());
+  const pdfBtn = document.getElementById('pdf-btn');
+  pdfBtn.textContent = t(L.pdfBtn);
+  pdfBtn.onclick = sharePdf;
 
   async function goTo(iso) {
     if (iso > todayStr()) iso = todayStr();
@@ -223,6 +242,7 @@
 
   function render() {
     const filtered = stationFilter ? rows.filter((r) => r.station_key === stationFilter) : rows;
+    if (!pdfBusy) pdfBtn.disabled = !filtered.length;
     document.getElementById('sub').textContent =
       `${filtered.length} ${filtered.length === 1 ? 'form' : 'forms'}${day === todayStr() ? ' · ' + dayLabel(day) : ''}`;
     const board = document.getElementById('board');
@@ -251,6 +271,141 @@
       </div>`;
     }).join('');
   }
+
+  // ── Day report PDF ─────────────────────────────────────────────────────
+  // The day on screen (and the station filter, if one is picked) as a plain
+  // white Letter page — drawn as text with jsPDF so it stays small and sharp
+  // for texting. Phones get the share sheet (Messages, Mail, Files);
+  // desktop downloads it. Same pattern as the PDFs in menu.html / msa_agreement.js.
+  let jsPdfPromise = null, pdfBusy = false;
+  function loadJsPdf() {
+    if (window.jspdf) return Promise.resolve(window.jspdf.jsPDF);
+    jsPdfPromise = jsPdfPromise || new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js';
+      s.onload = () => resolve(window.jspdf.jsPDF);
+      s.onerror = () => { jsPdfPromise = null; reject(new Error('couldn’t load the PDF maker — check the connection.')); };
+      document.head.appendChild(s);
+    });
+    return jsPdfPromise;
+  }
+
+  function buildPdf(jsPDF, list) {
+    const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+    const W = 612, H = 792, M = 40, BOTTOM = H - 50;
+    let y = M;
+    const fit = (txt, w) => {   // one line, cut with an ellipsis to fit width w
+      txt = String(txt == null ? '' : txt);
+      if (doc.getTextWidth(txt) <= w) return txt;
+      while (txt.length > 1 && doc.getTextWidth(txt + '…') > w) txt = txt.slice(0, -1);
+      return txt + '…';
+    };
+    const ensure = (h) => { if (y + h > BOTTOM) { doc.addPage(); y = M; } };
+    const timeOf = (iso) => new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    const filterName = stationFilter && STATION_BY_KEY[stationFilter] ? t(STATION_BY_KEY[stationFilter].title) : t(L.allStations);
+
+    // Header
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.setTextColor(20);
+    doc.text(`2CW — ${t(L.reportTitle)}`, M, y + 14); y += 34;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(12); doc.setTextColor(60);
+    doc.text(`${dayLabel(day)}  ·  ${filterName}`, M, y); y += 16;
+    doc.setFontSize(9); doc.setTextColor(120);
+    doc.text(`${t(L.generated)} ${new Date().toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}`, M, y); y += 10;
+    doc.setDrawColor(61, 184, 122); doc.setLineWidth(2); doc.line(M, y, W - M, y); y += 22;
+
+    // Group by station, in station-list order
+    const groups = OPERATIONS_STATIONS
+      .map((s) => ({ s, rows: list.filter((r) => r.station_key === s.key) }))
+      .filter((g) => g.rows.length);
+    const hl = (s) => s.fields.find((f) => f.k === s.headline);
+    const dp = (s) => { const f = hl(s); return f && f.dp !== undefined ? f.dp : 2; };
+    const num = (s, r) => { const v = Number(r.fields[s.headline]); return s.headline && r.fields[s.headline] !== '' && r.fields[s.headline] != null && Number.isFinite(v) ? v : null; };
+
+    // Summary
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(20);
+    doc.text(t(L.summary), M, y); y += 16;
+    const sumCols = [M, M + 230, M + 340];
+    doc.setFontSize(8); doc.setTextColor(120);
+    doc.text(t(L.station).toUpperCase(), sumCols[0], y);
+    doc.text(t(L.forms).toUpperCase(), sumCols[1], y);
+    doc.text(t(L.total).toUpperCase(), sumCols[2], y);
+    y += 5; doc.setDrawColor(200); doc.setLineWidth(.5); doc.line(M, y, W - M, y); y += 13;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+    groups.forEach(({ s, rows }) => {
+      ensure(16);
+      const drafts = rows.filter((r) => r.status === 'draft').length;
+      const vals = rows.map((r) => num(s, r)).filter((v) => v !== null);
+      const f = hl(s);
+      doc.setTextColor(20);
+      doc.text(fit(t(s.title), 220), sumCols[0], y);
+      doc.text(`${rows.length}${drafts ? ` (${drafts} ${t(L.draftPill).toLowerCase()})` : ''}`, sumCols[1], y);
+      doc.text(fit(vals.length && f ? `${fmtNum(vals.reduce((a, b) => a + b, 0), dp(s))}  ${t(f.l)}` : '—', W - M - sumCols[2]), sumCols[2], y);
+      y += 16;
+    });
+    y += 14;
+
+    // Detail, one table per station
+    const cols = [M, M + 190, M + 275, M + 375, M + 470];
+    groups.forEach(({ s, rows }) => {
+      const f = hl(s);
+      ensure(60);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(20);
+      doc.text(fit(t(s.title), W - 2 * M), M, y); y += 14;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(120);
+      [t(L.strain), t(L.status), f ? t(f.l) : '', t(L.by), t(L.time)]
+        .forEach((h, i) => doc.text(fit(h.toUpperCase(), (cols[i + 1] || W - M) - cols[i] - 8), cols[i], y));
+      y += 5; doc.setDrawColor(200); doc.line(M, y, W - M, y); y += 13;
+      doc.setFontSize(10);
+      rows.forEach((r) => {
+        ensure(16);
+        const v = num(s, r);
+        doc.setTextColor(20);
+        doc.text(fit(r.strain || r.fields.harvestBatchName || '—', 180), cols[0], y);
+        if (r.status === 'draft') doc.setTextColor(176, 130, 30); else doc.setTextColor(40, 140, 90);
+        doc.text(r.status === 'draft' ? t(L.draftPill) : t(L.submittedPill), cols[1], y);
+        doc.setTextColor(20);
+        doc.text(v === null ? '—' : fmtNum(v, dp(s)), cols[2], y);
+        doc.text(fit(r.owner_user || '—', 90), cols[3], y);
+        doc.text(timeOf(r.updated_at), cols[4], y);
+        y += 16;
+      });
+      y += 14;
+    });
+
+    // Footer on every page
+    const pages = doc.getNumberOfPages();
+    for (let i = 1; i <= pages; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8); doc.setTextColor(140);
+      doc.text('2CW Enterprises  ·  Confidential  ·  Not for Distribution', M, H - 28);
+      doc.text(`${t(L.page)} ${i} / ${pages}`, W - M, H - 28, { align: 'right' });
+    }
+    return doc;
+  }
+
+  async function sharePdf() {
+    const list = stationFilter ? rows.filter((r) => r.station_key === stationFilter) : rows;
+    if (!list.length) return;
+    pdfBusy = pdfBtn.disabled = true;
+    pdfBtn.textContent = t(L.pdfBusy);
+    try {
+      const doc = buildPdf(await loadJsPdf(), list);
+      const name = `2CW Ops Report ${day}${stationFilter ? ' ' + t(STATION_BY_KEY[stationFilter].title).replace(/[\\/:*?"<>|]+/g, '') : ''}.pdf`;
+      const file = new File([doc.output('blob')], name, { type: 'application/pdf' });
+      if (navigator.canShare && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && navigator.canShare({ files: [file] })) {
+        try { await navigator.share({ files: [file], title: name }); }
+        catch (e) { if (e.name !== 'AbortError') doc.save(name); }
+      } else {
+        doc.save(name);
+      }
+    } catch (e) {
+      alert(t(L.pdfFailed) + (e && e.message || e));
+    }
+    pdfBusy = false;
+    pdfBtn.textContent = t(L.pdfBtn);
+    render();
+  }
+
   await goTo(day);
 
   // Realtime: a row landing here means someone's autosave just committed on
