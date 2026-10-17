@@ -332,7 +332,9 @@
   }
   // The form's photos (manifest, scale, ID…) that were actually uploaded, as
   // { label, url } — every photo field on the station, so new ones show up too.
-  const isUrl = (v) => typeof v === 'string' && /^https?:\/\//.test(v);
+  // upload-operations-photo.js stores a site path (/data/operations/uploads/…);
+  // older or hand-entered ones may be full links.
+  const isUrl = (v) => typeof v === 'string' && /^(https?:\/\/|\/(?!\/))/.test(v);
   const photosOf = (r) => (stationOf(r) ? stationOf(r).fields : [])
     .filter((f) => f.t === 'photo' && (!f.showIf || f.showIf(r.fields || {})) && isUrl(val(r, f.k)))
     .map((f) => ({ label: t(f.l), url: val(r, f.k) }));
