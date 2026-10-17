@@ -641,6 +641,20 @@ on hold at Take Down shows a warning to release it first. The
 **On-Stem Flower** link at the top (station `links`) opens
 `buck_hold.html`.
 
+**Day tabs.** A batch is often bucked over several days, so like Hand Trim
+and Pre-Roll the page has a tab per day under the flavor tabs (`dayTabs:
+{ lines: ['bucked', 'boxes', 'trim'] }`): one per day with anything
+logged, the Start Date, today, and any added with "+ Add day" (`runDays`).
+The Boxes, Bucked Flower and Trim logs show the picked day's rows and stamp
+new ones with that day, so a box or a person's flower weighed yesterday can
+be logged on yesterday's tab; the day chips total bucked flower. **✎ Change
+date** and **✕ Remove day** work as on Pre-Roll. Box # keeps counting
+across the whole batch, the Stems log (close-out) shows every row, and the
+totals, loss and yield below cover the whole batch. The Daily Summary
+follows the picked day, and each day can have its own Project
+(`projectDays`). Rows logged before the tabs already carry their `day`, so
+open pages split into tabs by themselves.
+
 **Deleting a page.** "Delete this page" under the form (station
 `canDelete`) is for a page started by mistake. It asks first (naming the
 strain / UID and how many boxes, bucked and trim rows go with it), then
@@ -1073,7 +1087,7 @@ or just hours, one or more people, and zero or more UIDs, then Save.
       `projectLinked` (the project that has its packages now, so a
       resumed page or another tablet can move them).
     - **A project per day** on forms with day tabs (Pre-Roll, Hand
-      Trim): the dropdown is the picked day's project, so a run worked
+      Trim, Bucking): the dropdown is the picked day's project, so a run worked
       10/15 on one project and 10/16 on another keeps both. Picks are in
       `projectDays` (`{day: id}`, `''` for none); a day with no pick of
       its own goes by the last earlier day that has one, else by

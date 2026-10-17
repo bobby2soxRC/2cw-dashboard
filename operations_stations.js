@@ -555,6 +555,11 @@ const OPERATIONS_STATIONS = [
     queueTab: true,
     // "Delete this page" under the form, for a page started by mistake.
     canDelete: true,
+    // A batch often runs several days: a tab per day under the flavor tabs,
+    // like Hand Trim and Pre-Roll. Boxes, bucked flower and trim show the
+    // picked day and stamp new rows with it (the chips total bucked
+    // flower); stems are close-out, so they stay whole-batch.
+    dayTabs: { lines: ['bucked', 'boxes', 'trim'] },
     // The daily tally: person × flavor for one day. Each logged row carries
     // the day it was weighed (`day`), so a batch that runs three days shows
     // only that day's pounds.
