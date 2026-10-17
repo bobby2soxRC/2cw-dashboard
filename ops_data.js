@@ -233,6 +233,24 @@ async function listToday(date) {
   return data || [];
 }
 
+// Every form dated from..to (inclusive), every station — the Today board's
+// date range. Paged, since a few weeks can pass Supabase's 1,000-row cap.
+async function listDays(from, to) {
+  const client = getClient();
+  if (!client) return [];
+  const out = [];
+  for (let page = 0; page < 50; page++) {
+    const { data, error } = await client.from(TABLE).select('*')
+      .gte('work_date', from).lte('work_date', to)
+      .order('updated_at', { ascending: false }).order('id')
+      .range(page * 1000, page * 1000 + 999);
+    if (error) { console.error('listDays', error); break; }
+    out.push(...(data || []));
+    if (!data || data.length < 1000) break;
+  }
+  return out;
+}
+
 // Pushes `onChange(row)` for every insert/update on today's forms. Returns an
 // unsubscribe function. This is what makes the Today board "live" rather
 // than "refreshes when you reload" — Supabase pushes the row the moment

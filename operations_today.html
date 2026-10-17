@@ -44,7 +44,17 @@
     .datebar button:disabled{opacity:.35;cursor:default}
     .datebar .today-btn{text-transform:uppercase;letter-spacing:.06em;font-size:.78rem}
     .datebar .today-btn.on{background:var(--green);border-color:var(--green);color:#000;font-weight:700}
-    .datebar .pdf-btn{margin-left:auto;color:var(--blue);border-color:var(--blue);text-transform:uppercase;letter-spacing:.06em;font-size:.78rem}
+    .datebar .range-btn{text-transform:uppercase;letter-spacing:.06em;font-size:.78rem}
+    .datebar .range-btn.on{border-color:var(--green);color:var(--green)}
+    .datebar .range-to{display:none;align-items:center;gap:8px;font-family:'DM Mono',monospace;font-size:.78rem;color:var(--muted)}
+    .datebar .range-to.on{display:inline-flex}
+    .datebar .pdf-tools{margin-left:auto;display:flex;align-items:center;gap:8px}
+    .datebar .cost-chk{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border:1px solid var(--border);border-radius:10px;
+      font-family:'DM Mono',monospace;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--subtext);cursor:pointer;user-select:none}
+    .datebar .cost-chk input{width:18px;height:18px;min-height:0;padding:0;accent-color:var(--gold);cursor:pointer}
+    .datebar .cost-chk[hidden]{display:none}
+    .datebar .cost-chk.on{border-color:var(--gold);color:var(--gold)}
+    .datebar .pdf-btn{color:var(--blue);border-color:var(--blue);text-transform:uppercase;letter-spacing:.06em;font-size:.78rem}
 
     .filters{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0}
     .filters button{background:var(--surface);border:1px solid var(--border);color:var(--subtext);border-radius:10px;padding:.6rem 1rem;
@@ -119,8 +129,13 @@
     <button id="prev-day" aria-label="Previous day">◀</button>
     <input type="date" id="day"/>
     <button id="next-day" aria-label="Next day">▶</button>
+    <span id="range-to" class="range-to"><span id="to-lbl">to</span><input type="date" id="day-to"/></span>
     <button id="today-btn" class="today-btn">Today</button>
-    <button id="pdf-btn" class="pdf-btn" disabled>📄 Share PDF</button>
+    <button id="range-btn" class="range-btn">Range</button>
+    <span class="pdf-tools">
+      <label id="cost-chk" class="cost-chk" hidden><input type="checkbox" id="cost-on"/><span id="cost-lbl">Labor $</span></label>
+      <button id="pdf-btn" class="pdf-btn" disabled>📄 Share PDF</button>
+    </span>
   </div>
   <div class="filters" id="filters"></div>
   <div id="daysum" class="daysum" style="display:none"></div>
@@ -141,6 +156,7 @@
 <script src="/operations_stations.js"></script>
 <script src="/ops_common.js"></script>
 <script src="/ops_data.js"></script>
+<script src="/ops_analytics.js"></script>
 <script>
 (async function () {
   mountLangToggle('lang');
@@ -161,6 +177,11 @@
     empty: { en: 'Nothing logged yet today.', es: 'Nada registrado hoy todavía.' },
     emptyDay: { en: 'Nothing logged on this day.', es: 'Nada registrado este día.' },
     today: { en: 'Today', es: 'Hoy' },
+    range: { en: 'Range', es: 'Rango' },
+    rangeTo: { en: 'to', es: 'a' },
+    emptyRange: { en: 'Nothing logged in these dates.', es: 'Nada registrado en estas fechas.' },
+    costChk: { en: 'Labor $', es: 'Mano de obra $' },
+    costHint: { en: 'Add labor costs to the PDF', es: 'Agregar costos de mano de obra al PDF' },
     pdfBtn: { en: '📄 Share PDF', es: '📄 Compartir PDF' },
     pdfBusy: { en: '⏳ Preparing…', es: '⏳ Preparando…' },
     pdfFailed: { en: 'PDF failed: ', es: 'Falló el PDF: ' },
@@ -175,6 +196,22 @@
     imgHint: { en: 'On a phone, Share sends it to Messages/WhatsApp; or long-press the image to save it.', es: 'En el teléfono, Compartir lo manda a Mensajes/WhatsApp; o mantenga presionada la imagen para guardarla.' },
     sumNone: { en: 'Nothing weighed yet this day.', es: 'Aún no hay nada pesado este día.' },
     reportTitle: { en: 'Daily Operations Report', es: 'Reporte diario de operaciones' },
+    reportTitleRange: { en: 'Operations Report', es: 'Reporte de operaciones' },
+    labor: { en: 'Labor', es: 'Mano de obra' },
+    laborLog: { en: 'Labor Log by station', es: 'Registro de mano de obra por estación' },
+    clocked: { en: 'Clocked in Connecteam', es: 'Horas en Connecteam' },
+    activity: { en: 'Activity', es: 'Actividad' },
+    hours: { en: 'Hours', es: 'Horas' },
+    people: { en: 'People', es: 'Personas' },
+    laborCost: { en: 'Labor $', es: 'Costo $' },
+    laborNone: { en: 'No Labor Log entries in these dates.', es: 'No hay registros de mano de obra en estas fechas.' },
+    clockedNone: { en: 'No Connecteam shifts in these dates.', es: 'No hay turnos de Connecteam en estas fechas.' },
+    clockedErr: { en: 'Couldn’t load Connecteam shifts.', es: 'No se pudieron cargar los turnos de Connecteam.' },
+    unrated: { en: '{h} hrs have no labor rate and aren’t costed.', es: '{h} hrs no tienen tarifa y no se cuentan.' },
+    clockedOld: { en: 'Connecteam shifts only go back 14 days, so earlier days aren’t counted.', es: 'Los turnos de Connecteam solo cubren 14 días; los días anteriores no se cuentan.' },
+    laborNote: { en: 'Labor $ is hours × each person’s rate (admin panel, Labor Rates), straight time only: overtime premiums aren’t included. Labor Log is the hours people logged against each station; Connecteam is everyone’s clocked time.',
+                 es: 'El costo es horas × la tarifa de cada persona (panel de administración, Labor Rates), tiempo normal: no incluye horas extra. El Registro es lo que se anotó por estación; Connecteam es todo el tiempo marcado.' },
+    ratesErr: { en: 'Couldn’t load labor rates: ', es: 'No se pudieron cargar las tarifas: ' },
     summary: { en: 'Summary', es: 'Resumen' },
     station: { en: 'Station', es: 'Estación' },
     forms: { en: 'Forms', es: 'Formularios' },
@@ -239,8 +276,10 @@
     return `${Math.round(s / 86400)}d`;
   };
 
-  // The day being looked at — today unless ?date=YYYY-MM-DD picks another.
-  // Same UTC date the forms save their work_date with (todayStr in ops_data.js).
+  // The dates being looked at: one day (from === to) — today unless
+  // ?date=YYYY-MM-DD picks another — or, with Range, from..to (?date=&to=),
+  // for work that runs past midnight like an overnight green harvest. Same
+  // UTC date the forms save their work_date with (todayStr in ops_data.js).
   const isDay = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
   const shiftDay = (iso, n) => {
     const d = new Date(iso + 'T00:00:00Z');
@@ -249,37 +288,69 @@
   };
   const dayLabel = (iso) => new Date(iso + 'T00:00:00Z')
     .toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
-  const urlDay = new URLSearchParams(location.search).get('date');
-  let day = isDay(urlDay) && urlDay <= todayStr() ? urlDay : todayStr();
+  const shortDay = (iso) => new Date(iso + 'T00:00:00Z')
+    .toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+  const spanDays = () => Math.round((Date.parse(to + 'T00:00:00Z') - Date.parse(from + 'T00:00:00Z')) / 86400000) + 1;
+  const isRange = () => from !== to;
+  const rangeLabel = () => isRange() ? `${shortDay(from)} – ${dayLabel(to)}` : dayLabel(from);
+  const params = new URLSearchParams(location.search);
+  const urlDay = params.get('date'), urlTo = params.get('to');
+  let from = isDay(urlDay) && urlDay <= todayStr() ? urlDay : todayStr();
+  let to = isDay(urlTo) && urlTo > from && urlTo <= todayStr() ? urlTo : from;
+  let rangeMode = isRange();
   let rows = [];
 
   const dayInput = document.getElementById('day');
+  const toInput = document.getElementById('day-to');
   const todayBtn = document.getElementById('today-btn');
+  const rangeBtn = document.getElementById('range-btn');
   todayBtn.textContent = t(L.today);
-  dayInput.max = todayStr();
-  dayInput.onchange = () => { if (isDay(dayInput.value)) goTo(dayInput.value); };
-  document.getElementById('prev-day').onclick = () => goTo(shiftDay(day, -1));
-  document.getElementById('next-day').onclick = () => goTo(shiftDay(day, 1));
-  todayBtn.onclick = () => goTo(todayStr());
+  rangeBtn.textContent = t(L.range);
+  document.getElementById('to-lbl').textContent = t(L.rangeTo);
+  dayInput.max = toInput.max = todayStr();
+  // Picking a start after the end (or an end before the start) moves the
+  // other date along with it.
+  dayInput.onchange = () => { if (isDay(dayInput.value)) goTo(dayInput.value, rangeMode ? (to < dayInput.value ? dayInput.value : to) : dayInput.value); };
+  toInput.onchange = () => { if (isDay(toInput.value)) goTo(from > toInput.value ? toInput.value : from, toInput.value); };
+  // ◀ ▶ step a whole range at a time: two nights back is the same two nights earlier.
+  document.getElementById('prev-day').onclick = () => { const n = spanDays(); goTo(shiftDay(from, -n), shiftDay(to, -n)); };
+  document.getElementById('next-day').onclick = () => { const n = spanDays(); goTo(shiftDay(from, n), shiftDay(to, n)); };
+  todayBtn.onclick = () => (rangeMode ? goTo(shiftDay(todayStr(), 1 - spanDays()), todayStr()) : goTo(todayStr(), todayStr()));
+  // Range starts as last night: the day before through the day showing.
+  rangeBtn.onclick = () => {
+    rangeMode = !rangeMode;
+    if (rangeMode) goTo(shiftDay(to, -1), to); else goTo(to, to);
+  };
   const pdfBtn = document.getElementById('pdf-btn');
   pdfBtn.textContent = t(L.pdfBtn);
   pdfBtn.onclick = sharePdf;
+  // Labor $ on the PDF: only for people with 'labor log costs' (admin panel).
+  // Off every time the page opens, so pay doesn't go out in a PDF by accident.
+  // It only shows the box — labor-rates.js re-checks before handing out rates.
+  const canCost = sessionStorage.getItem('2cw_labor_costs') === 'true';
+  const costChk = document.getElementById('cost-chk');
+  const costOn = document.getElementById('cost-on');
+  costChk.hidden = !canCost;
+  costChk.title = t(L.costHint);
+  document.getElementById('cost-lbl').textContent = t(L.costChk);
+  costOn.onchange = () => costChk.classList.toggle('on', costOn.checked);
 
   // Pages with day tabs (Bucking, Hand Trim, Pre-Roll) are worked over
   // several days: each logged row carries its `day`. Such a page is on the
   // board for every day something was logged on it (not only its start
-  // date), and its total is that day's rows only — the headline calc run on
-  // just that day's rows, the same split as the page's day tabs.
+  // date), and its total is the rows in the dates showing only — the
+  // headline calc run on just those rows, the same split as the page's day tabs.
+  const inDates = (d) => d >= from && d <= to;
   const dayTabLines = (s) => (s && s.dayTabs ? [].concat(s.dayTabs.lines) : []);
   const rowDay = (r, x) => x.day || r.fields.date || r.work_date;
-  const dayRows = (s, r, d) => dayTabLines(s).flatMap((k) => (r.fields[k] || []).filter((x) => rowDay(r, x) === d));
-  const onBoard = (r, d) => r.work_date === d || dayRows(STATION_BY_KEY[r.station_key], r, d).length > 0;
-  function amount(s, r, d) {
+  const dayRows = (s, r) => dayTabLines(s).flatMap((k) => (r.fields[k] || []).filter((x) => inDates(rowDay(r, x))));
+  const onBoard = (r) => inDates(r.work_date) || dayRows(STATION_BY_KEY[r.station_key], r).length > 0;
+  function amount(s, r) {
     const f = s.fields.find((x) => x.k === s.headline);
     if (!f) return null;
     let v = r.fields[s.headline];
     if (s.dayTabs && f.calc) {
-      const only = Object.fromEntries(dayTabLines(s).map((k) => [k, (r.fields[k] || []).filter((x) => rowDay(r, x) === d)]));
+      const only = Object.fromEntries(dayTabLines(s).map((k) => [k, (r.fields[k] || []).filter((x) => inDates(rowDay(r, x)))]));
       v = f.calc({ ...r.fields, ...only });
     }
     if (v == null || v === '') return null;
@@ -289,44 +360,54 @@
   const amountLabel = (s) => {
     const f = s.fields.find((x) => x.k === s.headline);
     if (!f) return '';
-    return s.dayTabs ? t(s.dayTabs.headline || { en: `${f.l.en} — that day`, es: `${f.l.es} — ese día` }) : t(f.l);
+    if (!s.dayTabs) return t(f.l);
+    if (isRange()) return t({ en: `${f.l.en} — those days`, es: `${f.l.es} — esos días` });
+    return t(s.dayTabs.headline || { en: `${f.l.en} — that day`, es: `${f.l.es} — ese día` });
   };
-  // When a day-tab page was last logged on that day (its rows' `at`), else
-  // when it was last saved.
-  const lastAt = (s, r, d) => dayRows(s, r, d).map((x) => x.at).filter(Boolean).sort().pop() || r.updated_at;
+  // When a day-tab page was last logged in the dates showing (its rows'
+  // `at`), else when it was last saved.
+  const lastAt = (s, r) => dayRows(s, r).map((x) => x.at).filter(Boolean).sort().pop() || r.updated_at;
 
-  // Today's pages plus the day-tab pages started in the weeks before with
-  // something logged on the day.
-  async function loadDay(d) {
+  // The dates' pages plus the day-tab pages started in the weeks before
+  // with something logged in them.
+  async function loadDates(a, b) {
     const multi = visibleStations.filter((s) => s.dayTabs);
-    const [dated, ...earlier] = await Promise.all([listToday(d),
-      ...multi.map((s) => listStationRange(s.key, shiftDate(d, -45), shiftDate(d, -1)))]);
-    const more = earlier.flat().filter((r) => onBoard(r, d));
+    const [dated, ...earlier] = await Promise.all([a === b ? listToday(a) : listDays(a, b),
+      ...multi.map((s) => listStationRange(s.key, shiftDate(a, -45), shiftDate(a, -1)))]);
+    const more = earlier.flat().filter((r) => onBoard(r));
     return [...dated, ...more.filter((r) => !dated.some((x) => x.id === r.id))]
-      .sort((a, b) => String(lastAt(STATION_BY_KEY[b.station_key], b, d)).localeCompare(String(lastAt(STATION_BY_KEY[a.station_key], a, d))));
+      .sort((x, y) => String(lastAt(STATION_BY_KEY[y.station_key], y)).localeCompare(String(lastAt(STATION_BY_KEY[x.station_key], x))));
   }
 
-  async function goTo(iso) {
-    if (iso > todayStr()) iso = todayStr();
-    day = iso;
+  async function goTo(a, b) {
+    const today = todayStr();
+    if (b > today) { a = shiftDay(a, -Math.round((Date.parse(b) - Date.parse(today)) / 86400000)); b = today; }
+    if (a > b) a = b;
+    from = a; to = b;
+    if (isRange()) rangeMode = true;
     const url = new URL(location.href);
-    if (day === todayStr()) url.searchParams.delete('date'); else url.searchParams.set('date', day);
+    if (!isRange() && from === today) url.searchParams.delete('date'); else url.searchParams.set('date', from);
+    if (isRange()) url.searchParams.set('to', to); else url.searchParams.delete('to');
     history.replaceState(null, '', url);
     syncDateBar();
     document.getElementById('board').innerHTML = `<div class="empty">${t(L.loading)}</div>`;
-    const fetched = (await loadDay(day)).filter((r) => visibleStations.some((s) => s.key === r.station_key));
-    if (iso !== day) return;   // a newer pick landed while this one loaded
+    const fetched = (await loadDates(a, b)).filter((r) => visibleStations.some((s) => s.key === r.station_key));
+    if (a !== from || b !== to) return;   // a newer pick landed while this one loaded
     rows = fetched;
     render();
   }
 
   function syncDateBar() {
-    const isToday = day === todayStr();
-    dayInput.max = todayStr();
-    dayInput.value = day;
-    document.getElementById('next-day').disabled = isToday;
-    todayBtn.classList.toggle('on', isToday);
-    const title = isToday ? t(L.title) : dayLabel(day);
+    const today = todayStr();
+    const isToday = !isRange() && from === today;
+    dayInput.max = toInput.max = today;
+    dayInput.value = from;
+    toInput.value = to;
+    document.getElementById('range-to').classList.toggle('on', rangeMode);
+    rangeBtn.classList.toggle('on', rangeMode);
+    document.getElementById('next-day').disabled = to >= today;
+    todayBtn.classList.toggle('on', to === today && (isToday || rangeMode));
+    const title = isToday ? t(L.title) : rangeLabel();
     document.getElementById('title').textContent = title;
     document.title = `${title} — 2CW`;
   }
@@ -336,14 +417,14 @@
     renderDaySum();
     if (!pdfBusy) pdfBtn.disabled = !filtered.length;
     document.getElementById('sub').textContent =
-      `${filtered.length} ${filtered.length === 1 ? 'form' : 'forms'}${day === todayStr() ? ' · ' + dayLabel(day) : ''}`;
+      `${filtered.length} ${filtered.length === 1 ? 'form' : 'forms'}${!isRange() && from === todayStr() ? ' · ' + dayLabel(from) : ''}`;
     const board = document.getElementById('board');
-    if (!filtered.length) { board.className = ''; board.innerHTML = `<div class="empty">${t(day === todayStr() ? L.empty : L.emptyDay)}</div>`; return; }
+    if (!filtered.length) { board.className = ''; board.innerHTML = `<div class="empty">${t(isRange() ? L.emptyRange : from === todayStr() ? L.empty : L.emptyDay)}</div>`; return; }
 
     board.className = 'board';
     board.innerHTML = filtered.map((r) => {
       const station = STATION_BY_KEY[r.station_key];
-      const headline = station && station.headline ? amount(station, r, day) : null;
+      const headline = station && station.headline ? amount(station, r) : null;
       const headlineLabel = station && station.fields.find((f) => f.k === station.headline);
       return `<div class="row ${r.status}">
         <div class="row-top">
@@ -357,7 +438,7 @@
           <span>${headlineLabel ? amountLabel(station) : ''}</span>
           <span class="row-headline">${headline !== null ? fmtNum(headline, headlineLabel && headlineLabel.dp !== undefined ? headlineLabel.dp : 2) : '—'}</span>
         </div>
-        <div class="row-who"><span>${esc(r.owner_user || '—')} · ${t(L.updated)} ${timeAgo(lastAt(station, r, day))}${r.fields.lastEditedBy ? ` · ${t(L.edited)} ${esc(r.fields.lastEditedBy)}` : ''}</span>${
+        <div class="row-who"><span>${esc(r.owner_user || '—')} · ${t(L.updated)} ${timeAgo(lastAt(station, r))}${r.fields.lastEditedBy ? ` · ${t(L.edited)} ${esc(r.fields.lastEditedBy)}` : ''}</span>${
           r.status === 'submitted' && canFixSubmitted(r.station_key)
             ? `<a class="row-edit" href="/ops_form.html?station=${encodeURIComponent(r.station_key)}&edit=${encodeURIComponent(r.id)}&from=today">${t(L.edit)}</a>` : ''}</div>
       </div>`;
@@ -365,8 +446,8 @@
   }
 
   // ── Daily summary (station.dailySummary) ───────────────────────────────
-  // With one station picked that keeps a daily summary (Bucking, Hand Trim,
-  // Smalls), the notebook page sits above its forms: employee # and name
+  // With one day showing and one station picked that keeps a daily summary
+  // (Bucking, Hand Trim, Smalls), the notebook page sits above its forms: employee # and name
   // down the side, each flavor across, that day's weights and totals —
   // dailySummaryGrid in ops_common.js, the same table as under the form.
   // "Send as image" draws it as a picture to text (makeDaySumImage).
@@ -377,10 +458,10 @@
 
   function daySumData() {
     const s = stationFilter && STATION_BY_KEY[stationFilter];
-    if (!s || !s.dailySummary) return null;
+    if (!s || !s.dailySummary || isRange()) return null;
     const pages = rows.filter((r) => r.station_key === s.key)
       .map((r) => ({ id: r.id, status: r.status, f: r.fields || {}, strain: r.strain || (r.fields || {}).strain }));
-    return { s, cfg: s.dailySummary, ...dailySummaryGrid(s.dailySummary, pages, day) };
+    return { s, cfg: s.dailySummary, ...dailySummaryGrid(s.dailySummary, pages, from) };
   }
 
   function renderDaySum() {
@@ -441,7 +522,7 @@
     cv.width = W; cv.height = H;
     ctx.fillStyle = C.paper; ctx.fillRect(0, 0, W, H);
     ctx.textBaseline = 'middle';
-    const when = new Date(day + 'T12:00:00Z').toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US',
+    const when = new Date(from + 'T12:00:00Z').toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US',
       { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
     ctx.fillStyle = C.ink; ctx.font = F.title; ctx.fillText(t(s.title).toUpperCase(), PAD, PAD + 26);
     ctx.fillStyle = C.sub; ctx.font = F.date; ctx.fillText(`${when}  ·  ${inLb ? 'lbs' : t({ en: 'grams', es: 'gramos' })}`, PAD, PAD + 78);
@@ -496,7 +577,7 @@
     ctx.fillStyle = C.sub; ctx.font = F.foot;
     ctx.fillText(`2CW · ${t({ en: 'made', es: 'hecho' })} ${new Date().toLocaleString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`, PAD, H - FOOTH / 2);
     const blob = await new Promise((res) => cv.toBlob(res, 'image/png'));
-    showImage(blob, `${s.key}-${day}.png`);
+    showImage(blob, `${s.key}-${from}.png`);
   }
 
   let imgUrl = null, imgFile = null;
@@ -520,9 +601,9 @@
   $('img-close').onclick = () => $('img-bg').classList.remove('on');
   $('img-bg').addEventListener('click', (e) => { if (e.target === $('img-bg')) $('img-bg').classList.remove('on'); });
 
-  // ── Day report PDF ─────────────────────────────────────────────────────
-  // The day on screen (and the station filter, if one is picked) as a plain
-  // white Letter page — drawn as text with jsPDF so it stays small and sharp
+  // ── Report PDF ─────────────────────────────────────────────────────────
+  // The dates on screen (and the station filter, if one is picked) as plain
+  // white Letter pages — drawn as text with jsPDF so it stays small and sharp
   // for texting. Phones get the share sheet (Messages, Mail, Files);
   // desktop downloads it. Same pattern as the PDFs in menu.html / msa_agreement.js.
   let jsPdfPromise = null, pdfBusy = false;
@@ -538,7 +619,77 @@
     return jsPdfPromise;
   }
 
-  function buildPdf(jsPDF, list) {
+  // ── Labor $ (Labor $ box ticked) ───────────────────────────────────────
+  // Two views of the same dates, costed at each person's rate on the day
+  // (rateFor, as the Labor Log and the emailed report do):
+  //   byProcess — Labor Log entries (station_key 'labor_entry'), by the
+  //               station/process they were logged to; with a station picked,
+  //               only that station's.
+  //   clocked   — Connecteam shifts (data/connecteam_shifts.json, last 14
+  //               days, farm-local dates) by activity, all stations only. A
+  //               shift still open today counts up to now; an open one on an
+  //               earlier day is a missed clock-out and isn't counted.
+  const DATA_BASE = 'https://raw.githubusercontent.com/bobby2soxRC/2cw-dashboard/main/data/';
+  const TZ = 'America/Los_Angeles';
+  const localDay = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+  async function loadLabor() {
+    const res = await fetch('/.netlify/functions/labor-rates', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: sessionStorage.getItem('2cw_pin') || '' }) });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok || !j.ok) throw new Error(t(L.ratesErr) + (j.error || res.status));
+    const rates = j.rates || [];
+    const A = window.OpsAnalytics;
+    const add = (o, k, name, hrs, rate, who) => {
+      const x = o[k] || (o[k] = { key: k, name, hours: 0, cost: 0, unrated: 0, people: new Set() });
+      x.hours += hrs;
+      if (rate == null) x.unrated += hrs; else x.cost += hrs * rate;
+      if (who) x.people.add(who);
+    };
+
+    const entries = (await listDays(from, to)).filter((r) => r.station_key === 'labor_entry' && r.status === 'submitted' && !(r.fields || {}).voided);
+    const procs = {};
+    entries.forEach((r) => {
+      const f = r.fields || {};
+      const k = f.process || 'other';
+      if (stationFilter ? k !== stationFilter : (STATION_BY_KEY[k] && !canSee(k))) return;
+      const hrs = Number(f.hours) || 0;
+      if (!hrs) return;
+      add(procs, k, t(processTitle(k)), hrs, A.rateFor(rates, f.employeeId, r.work_date), f.employeeId || f.employeeName);
+    });
+    const order = [...OPERATIONS_STATIONS.map((x) => x.key), ...Object.keys(LABOR_PROCESSES)];
+    const byProcess = Object.values(procs).sort((x, y) => order.indexOf(x.key) - order.indexOf(y.key));
+
+    let clocked = null;
+    if (!stationFilter) {
+      clocked = { error: false, byActivity: [], firstDay: null };
+      try {
+        const r = await fetch(DATA_BASE + 'connecteam_shifts.json?t=' + Date.now());
+        if (!r.ok) throw new Error(r.status);
+        const data = await r.json();
+        const today = localDay(new Date());
+        const acts = {};
+        (data.shifts || []).forEach((sh) => {
+          const start = new Date(sh.start);
+          const d = localDay(start);
+          if (!clocked.firstDay || d < clocked.firstDay) clocked.firstDay = d;
+          if (!inDates(d)) return;
+          let end = sh.end ? new Date(sh.end).getTime() : null;
+          if (!end) { if (d < today) return; end = Date.now(); }
+          const hrs = Math.max(0, (end - start.getTime()) / 3600000);
+          // "Hanging / Colgar · Esensia" counts as Hanging (as ops_report.js).
+          const act = String(sh.activity || '').split(' · ')[0].trim() || '—';
+          add(acts, act, act, hrs, A.rateFor(rates, sh.userId, d), sh.userId);
+        });
+        clocked.byActivity = Object.values(acts).sort((x, y) => y.hours - x.hours);
+      } catch (e) {
+        console.error('connecteam shifts', e);
+        clocked.error = true;
+      }
+    }
+    return { byProcess, clocked };
+  }
+
+  function buildPdf(jsPDF, list, labor) {
     const doc = new jsPDF({ unit: 'pt', format: 'letter' });
     const W = 612, H = 792, M = 40, BOTTOM = H - 50;
     let y = M;
@@ -549,14 +700,17 @@
       return txt + '…';
     };
     const ensure = (h) => { if (y + h > BOTTOM) { doc.addPage(); y = M; } };
-    const timeOf = (iso) => new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    // Over several days the time needs its date too.
+    const timeOf = (iso) => new Date(iso).toLocaleString(undefined, isRange()
+      ? { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' } : { hour: 'numeric', minute: '2-digit' });
     const filterName = stationFilter && STATION_BY_KEY[stationFilter] ? t(STATION_BY_KEY[stationFilter].title) : t(L.allStations);
+    const usd = (x) => '$' + Math.round(x).toLocaleString('en-US');
 
     // Header
     doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.setTextColor(20);
-    doc.text(`2CW — ${t(L.reportTitle)}`, M, y + 14); y += 34;
+    doc.text(`2CW — ${t(isRange() ? L.reportTitleRange : L.reportTitle)}`, M, y + 14); y += 34;
     doc.setFont('helvetica', 'normal'); doc.setFontSize(12); doc.setTextColor(60);
-    doc.text(`${dayLabel(day)}  ·  ${filterName}`, M, y); y += 16;
+    doc.text(`${rangeLabel()}  ·  ${filterName}`, M, y); y += 16;
     doc.setFontSize(9); doc.setTextColor(120);
     doc.text(`${t(L.generated)} ${new Date().toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}`, M, y); y += 10;
     doc.setDrawColor(61, 184, 122); doc.setLineWidth(2); doc.line(M, y, W - M, y); y += 22;
@@ -567,7 +721,7 @@
       .filter((g) => g.rows.length);
     const hl = (s) => s.fields.find((f) => f.k === s.headline);
     const dp = (s) => { const f = hl(s); return f && f.dp !== undefined ? f.dp : 2; };
-    const num = (s, r) => (s.headline ? amount(s, r, day) : null);
+    const num = (s, r) => (s.headline ? amount(s, r) : null);
 
     // Summary
     doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(20);
@@ -592,8 +746,69 @@
     });
     y += 14;
 
-    // Detail, one table per station
-    const cols = [M, M + 190, M + 275, M + 375, M + 470];
+    // Labor: name | hours | people | $ tables, then the unrated / coverage notes.
+    if (labor) {
+      const lc = [M, M + 250, M + 330, M + 410];
+      const table = (title, items, none, extraNote) => {
+        ensure(60);
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(20);
+        doc.text(title, M, y); y += 14;
+        if (!items.length) {
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(120);
+          doc.text(none, M, y); y += 16;
+        } else {
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(120);
+          [items === labor.byProcess ? t(L.station) : t(L.activity), t(L.hours), t(L.people), t(L.laborCost)]
+            .forEach((h, i) => doc.text(h.toUpperCase(), lc[i], y));
+          y += 5; doc.setDrawColor(200); doc.line(M, y, W - M, y); y += 13;
+          doc.setFontSize(10); doc.setTextColor(20);
+          const tot = { hours: 0, cost: 0, unrated: 0, people: new Set() };
+          items.forEach((x) => {
+            ensure(16);
+            doc.text(fit(x.name, lc[1] - lc[0] - 10), lc[0], y);
+            doc.text(fmtNum(x.hours, 1), lc[1], y);
+            doc.text(String(x.people.size || '—'), lc[2], y);
+            doc.text(x.hours > x.unrated ? usd(x.cost) : '—', lc[3], y);
+            tot.hours += x.hours; tot.cost += x.cost; tot.unrated += x.unrated;
+            x.people.forEach((p) => tot.people.add(p));
+            y += 16;
+          });
+          ensure(20);
+          doc.setDrawColor(120); doc.line(M, y - 11, W - M, y - 11); y += 2;
+          doc.setFont('helvetica', 'bold');
+          doc.text(t(L.total), lc[0], y);
+          doc.text(fmtNum(tot.hours, 1), lc[1], y);
+          doc.text(String(tot.people.size || '—'), lc[2], y);
+          doc.text(tot.hours > tot.unrated ? usd(tot.cost) : '—', lc[3], y);
+          doc.setFont('helvetica', 'normal');
+          y += 16;
+          if (tot.unrated > 0.05) {
+            ensure(14); doc.setFontSize(8.5); doc.setTextColor(120);
+            doc.text(t(L.unrated).replace('{h}', fmtNum(tot.unrated, 1)), M, y); y += 12;
+          }
+        }
+        if (extraNote) {
+          ensure(14); doc.setFontSize(8.5); doc.setTextColor(120);
+          doc.text(extraNote, M, y); y += 12;
+        }
+        y += 10;
+      };
+      ensure(40);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(20);
+      doc.text(t(L.labor), M, y); y += 18;
+      table(t(L.laborLog), labor.byProcess, t(L.laborNone));
+      const c = labor.clocked;
+      if (c) {
+        table(t(L.clocked), c.byActivity, t(c.error ? L.clockedErr : L.clockedNone),
+          !c.error && c.firstDay && from < c.firstDay ? t(L.clockedOld) : '');
+      }
+      doc.setFontSize(8.5); doc.setTextColor(120);
+      doc.splitTextToSize(t(L.laborNote), W - 2 * M).forEach((line) => { ensure(12); doc.text(line, M, y); y += 11; });
+      y += 18;
+    }
+
+    // Detail, one table per station (a wider Updated column for a range's dates)
+    const cols = isRange() ? [M, M + 170, M + 245, M + 335, M + 430] : [M, M + 190, M + 275, M + 375, M + 470];
     groups.forEach(({ s, rows }) => {
       const f = hl(s);
       ensure(60);
@@ -608,13 +823,13 @@
         ensure(16);
         const v = num(s, r);
         doc.setTextColor(20);
-        doc.text(fit(r.strain || r.fields.harvestBatchName || '—', 180), cols[0], y);
+        doc.text(fit(r.strain || r.fields.harvestBatchName || '—', cols[1] - cols[0] - 10), cols[0], y);
         if (r.status === 'draft') doc.setTextColor(176, 130, 30); else doc.setTextColor(40, 140, 90);
         doc.text(r.status === 'draft' ? t(L.draftPill) : t(L.submittedPill), cols[1], y);
         doc.setTextColor(20);
         doc.text(v === null ? '—' : fmtNum(v, dp(s)), cols[2], y);
-        doc.text(fit(r.owner_user || '—', 90), cols[3], y);
-        doc.text(timeOf(lastAt(s, r, day)), cols[4], y);
+        doc.text(fit(r.owner_user || '—', cols[4] - cols[3] - 8), cols[3], y);
+        doc.text(timeOf(lastAt(s, r)), cols[4], y);
         y += 16;
       });
       y += 14;
@@ -634,11 +849,14 @@
   async function sharePdf() {
     const list = stationFilter ? rows.filter((r) => r.station_key === stationFilter) : rows;
     if (!list.length) return;
+    const withCost = canCost && costOn.checked;
     pdfBusy = pdfBtn.disabled = true;
     pdfBtn.textContent = t(L.pdfBusy);
     try {
-      const doc = buildPdf(await loadJsPdf(), list);
-      const name = `2CW Ops Report ${day}${stationFilter ? ' ' + t(STATION_BY_KEY[stationFilter].title).replace(/[\\/:*?"<>|]+/g, '') : ''}.pdf`;
+      const [jsPDF, labor] = await Promise.all([loadJsPdf(), withCost ? loadLabor() : null]);
+      const doc = buildPdf(jsPDF, list, labor);
+      const dates = isRange() ? `${from} to ${to}` : from;
+      const name = `2CW Ops Report ${dates}${stationFilter ? ' ' + t(STATION_BY_KEY[stationFilter].title).replace(/[\\/:*?"<>|]+/g, '') : ''}${withCost ? ' (labor $)' : ''}.pdf`;
       const file = new File([doc.output('blob')], name, { type: 'application/pdf' });
       if (navigator.canShare && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && navigator.canShare({ files: [file] })) {
         try { await navigator.share({ files: [file], title: name }); }
@@ -654,16 +872,16 @@
     render();
   }
 
-  await goTo(day);
+  await goTo(from, to);
 
   // Realtime: a row landing here means someone's autosave just committed on
   // another tablet. Patch it into the local list rather than refetching —
-  // whichever day is showing, so an edit to an older form shows up too.
+  // whichever dates are showing, so an edit to an older form shows up too.
   subscribeToday((row) => {
     if (!row || !visibleStations.some((s) => s.key === row.station_key)) return;
     const i = rows.findIndex((r) => r.id === row.id);
-    if (!row.fields || !onBoard(row, day)) {
-      // A day-tab page whose rows on this day were all removed or moved.
+    if (!row.fields || !onBoard(row)) {
+      // A day-tab page whose rows in these dates were all removed or moved.
       if (i > -1 && row.fields) { rows.splice(i, 1); render(); }
       return;
     }
