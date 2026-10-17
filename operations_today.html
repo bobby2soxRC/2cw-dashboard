@@ -215,6 +215,47 @@
   pdfBtn.textContent = t(L.pdfBtn);
   pdfBtn.onclick = sharePdf;
 
+  // Pages with day tabs (Bucking, Hand Trim, Pre-Roll) are worked over
+  // several days: each logged row carries its `day`. Such a page is on the
+  // board for every day something was logged on it (not only its start
+  // date), and its total is that day's rows only — the headline calc run on
+  // just that day's rows, the same split as the page's day tabs.
+  const dayTabLines = (s) => (s && s.dayTabs ? [].concat(s.dayTabs.lines) : []);
+  const rowDay = (r, x) => x.day || r.fields.date || r.work_date;
+  const dayRows = (s, r, d) => dayTabLines(s).flatMap((k) => (r.fields[k] || []).filter((x) => rowDay(r, x) === d));
+  const onBoard = (r, d) => r.work_date === d || dayRows(STATION_BY_KEY[r.station_key], r, d).length > 0;
+  function amount(s, r, d) {
+    const f = s.fields.find((x) => x.k === s.headline);
+    if (!f) return null;
+    let v = r.fields[s.headline];
+    if (s.dayTabs && f.calc) {
+      const only = Object.fromEntries(dayTabLines(s).map((k) => [k, (r.fields[k] || []).filter((x) => rowDay(r, x) === d)]));
+      v = f.calc({ ...r.fields, ...only });
+    }
+    if (v == null || v === '') return null;
+    v = Number(v);
+    return Number.isFinite(v) ? v : null;
+  }
+  const amountLabel = (s) => {
+    const f = s.fields.find((x) => x.k === s.headline);
+    if (!f) return '';
+    return s.dayTabs ? t(s.dayTabs.headline || { en: `${f.l.en} — that day`, es: `${f.l.es} — ese día` }) : t(f.l);
+  };
+  // When a day-tab page was last logged on that day (its rows' `at`), else
+  // when it was last saved.
+  const lastAt = (s, r, d) => dayRows(s, r, d).map((x) => x.at).filter(Boolean).sort().pop() || r.updated_at;
+
+  // Today's pages plus the day-tab pages started in the weeks before with
+  // something logged on the day.
+  async function loadDay(d) {
+    const multi = visibleStations.filter((s) => s.dayTabs);
+    const [dated, ...earlier] = await Promise.all([listToday(d),
+      ...multi.map((s) => listStationRange(s.key, shiftDate(d, -45), shiftDate(d, -1)))]);
+    const more = earlier.flat().filter((r) => onBoard(r, d));
+    return [...dated, ...more.filter((r) => !dated.some((x) => x.id === r.id))]
+      .sort((a, b) => String(lastAt(STATION_BY_KEY[b.station_key], b, d)).localeCompare(String(lastAt(STATION_BY_KEY[a.station_key], a, d))));
+  }
+
   async function goTo(iso) {
     if (iso > todayStr()) iso = todayStr();
     day = iso;
@@ -223,7 +264,7 @@
     history.replaceState(null, '', url);
     syncDateBar();
     document.getElementById('board').innerHTML = `<div class="empty">${t(L.loading)}</div>`;
-    const fetched = (await listToday(day)).filter((r) => visibleStations.some((s) => s.key === r.station_key));
+    const fetched = (await loadDay(day)).filter((r) => visibleStations.some((s) => s.key === r.station_key));
     if (iso !== day) return;   // a newer pick landed while this one loaded
     rows = fetched;
     render();
@@ -251,7 +292,7 @@
     board.className = 'board';
     board.innerHTML = filtered.map((r) => {
       const station = STATION_BY_KEY[r.station_key];
-      const headline = station && station.headline ? r.fields[station.headline] : null;
+      const headline = station && station.headline ? amount(station, r, day) : null;
       const headlineLabel = station && station.fields.find((f) => f.k === station.headline);
       return `<div class="row ${r.status}">
         <div class="row-top">
@@ -262,10 +303,10 @@
           <span class="pill ${r.status}">${r.status === 'draft' ? t(L.draftPill) : t(L.submittedPill)}</span>
         </div>
         <div class="row-meta">
-          <span>${headlineLabel ? t(headlineLabel.l) : ''}</span>
-          <span class="row-headline">${Number.isFinite(Number(headline)) ? fmtNum(headline, headlineLabel && headlineLabel.dp !== undefined ? headlineLabel.dp : 2) : '—'}</span>
+          <span>${headlineLabel ? amountLabel(station) : ''}</span>
+          <span class="row-headline">${headline !== null ? fmtNum(headline, headlineLabel && headlineLabel.dp !== undefined ? headlineLabel.dp : 2) : '—'}</span>
         </div>
-        <div class="row-who"><span>${esc(r.owner_user || '—')} · ${t(L.updated)} ${timeAgo(r.updated_at)}${r.fields.lastEditedBy ? ` · ${t(L.edited)} ${esc(r.fields.lastEditedBy)}` : ''}</span>${
+        <div class="row-who"><span>${esc(r.owner_user || '—')} · ${t(L.updated)} ${timeAgo(lastAt(station, r, day))}${r.fields.lastEditedBy ? ` · ${t(L.edited)} ${esc(r.fields.lastEditedBy)}` : ''}</span>${
           r.status === 'submitted' && canFixSubmitted(r.station_key)
             ? `<a class="row-edit" href="/ops_form.html?station=${encodeURIComponent(r.station_key)}&edit=${encodeURIComponent(r.id)}&from=today">${t(L.edit)}</a>` : ''}</div>
       </div>`;
@@ -319,7 +360,7 @@
       .filter((g) => g.rows.length);
     const hl = (s) => s.fields.find((f) => f.k === s.headline);
     const dp = (s) => { const f = hl(s); return f && f.dp !== undefined ? f.dp : 2; };
-    const num = (s, r) => { const v = Number(r.fields[s.headline]); return s.headline && r.fields[s.headline] !== '' && r.fields[s.headline] != null && Number.isFinite(v) ? v : null; };
+    const num = (s, r) => (s.headline ? amount(s, r, day) : null);
 
     // Summary
     doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(20);
@@ -339,7 +380,7 @@
       doc.setTextColor(20);
       doc.text(fit(t(s.title), 220), sumCols[0], y);
       doc.text(`${rows.length}${drafts ? ` (${drafts} ${t(L.draftPill).toLowerCase()})` : ''}`, sumCols[1], y);
-      doc.text(fit(vals.length && f ? `${fmtNum(vals.reduce((a, b) => a + b, 0), dp(s))}  ${t(f.l)}` : '—', W - M - sumCols[2]), sumCols[2], y);
+      doc.text(fit(vals.length && f ? `${fmtNum(vals.reduce((a, b) => a + b, 0), dp(s))}  ${amountLabel(s)}` : '—', W - M - sumCols[2]), sumCols[2], y);
       y += 16;
     });
     y += 14;
@@ -352,7 +393,7 @@
       doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(20);
       doc.text(fit(t(s.title), W - 2 * M), M, y); y += 14;
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(120);
-      [t(L.strain), t(L.status), f ? t(f.l) : '', t(L.by), t(L.time)]
+      [t(L.strain), t(L.status), f ? amountLabel(s) : '', t(L.by), t(L.time)]
         .forEach((h, i) => doc.text(fit(h.toUpperCase(), (cols[i + 1] || W - M) - cols[i] - 8), cols[i], y));
       y += 5; doc.setDrawColor(200); doc.line(M, y, W - M, y); y += 13;
       doc.setFontSize(10);
@@ -366,7 +407,7 @@
         doc.setTextColor(20);
         doc.text(v === null ? '—' : fmtNum(v, dp(s)), cols[2], y);
         doc.text(fit(r.owner_user || '—', 90), cols[3], y);
-        doc.text(timeOf(r.updated_at), cols[4], y);
+        doc.text(timeOf(lastAt(s, r, day)), cols[4], y);
         y += 16;
       });
       y += 14;
@@ -413,8 +454,12 @@
   // whichever day is showing, so an edit to an older form shows up too.
   subscribeToday((row) => {
     if (!row || !visibleStations.some((s) => s.key === row.station_key)) return;
-    if (row.work_date !== day) return;
     const i = rows.findIndex((r) => r.id === row.id);
+    if (!row.fields || !onBoard(row, day)) {
+      // A day-tab page whose rows on this day were all removed or moved.
+      if (i > -1 && row.fields) { rows.splice(i, 1); render(); }
+      return;
+    }
     if (i > -1) rows[i] = row; else rows.unshift(row);
     render();
   });

@@ -1073,8 +1073,10 @@ const OPERATIONS_STATIONS = [
     queueTab: true,
     links: [{ href: '/work_orders.html?tab=preroll', l: { en: 'Work Orders →', es: 'Órdenes de trabajo →' } }],
     // A tab per day under the run tabs: the output log and the crew show
-    // the picked day and stamp new rows with it.
-    dayTabs: { lines: ['output', 'attendance'] },
+    // the picked day and stamp new rows with it. `headline` labels the
+    // Today board's total, which counts only the day looked at.
+    dayTabs: { lines: ['output', 'attendance'],
+               headline: { en: 'Pre-Rolls Made That Day', es: 'Prerolls hechos ese día' } },
     fields: [
       { ...F.date(), l: { en: 'Start Date', es: 'Fecha de inicio' } },
       F.project(),
