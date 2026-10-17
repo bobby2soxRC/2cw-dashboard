@@ -137,6 +137,16 @@
     .hist{list-style:none;display:flex;flex-direction:column;gap:8px;font-size:.85rem;color:var(--subtext)}
     .hist b{color:var(--text);font-weight:500}
     .muted-note{font-size:.82rem;color:var(--muted)}
+    .d-photo-btn{padding:0;border:0;background:none;cursor:zoom-in;display:block}
+
+    /* Photo viewer — opens over the table and the detail sheet */
+    #ph-bg{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:60;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+      padding:calc(16px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom))}
+    #ph-bg.on{display:flex}
+    #ph-img{max-width:100%;max-height:calc(100vh - 140px);object-fit:contain;border-radius:10px;background:var(--surface2)}
+    .ph-bar{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;width:100%;max-width:900px}
+    .ph-cap{flex:1 1 auto;min-width:0;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:#ddd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    #ph-bg .btn{color:#eee;border-color:#666;background:rgba(0,0,0,.4)}
   </style>
 </head>
 <body>
@@ -157,6 +167,12 @@
 </main>
 
 <div id="detail-bg"><div id="detail"></div></div>
+<div id="ph-bg" role="dialog" aria-modal="true">
+  <div class="ph-bar"><div class="ph-cap" id="ph-cap"></div>
+    <a class="btn" id="ph-tab" target="_blank" rel="noopener"></a><button type="button" class="btn" id="ph-close"></button></div>
+  <img id="ph-img" alt="">
+  <div class="ph-bar" id="ph-nav"><button type="button" class="btn" id="ph-prev">←</button><span class="ph-cap" id="ph-n" style="flex:0 0 auto"></span><button type="button" class="btn" id="ph-next">→</button></div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/config/supabase_config.js"></script>
@@ -218,6 +234,9 @@
     noManifest:{ en: 'Manifest # needed', es: 'Falta n.º de manifiesto' },
     copyBtn:   { en: 'Copy', es: 'Copiar' },
     copyDone:  { en: 'Copied', es: 'Copiado' },
+    colPhoto:  { en: 'Photo', es: 'Foto' },
+    photoBtn:  { en: '📷 View', es: '📷 Ver' },
+    photoTab:  { en: 'Open full size', es: 'Abrir tamaño completo' },
     colAmount: { en: 'Amount', es: 'Cantidad' },
     colBy:     { en: 'Submitted by', es: 'Enviado por' },
     colWait:   { en: 'Waiting', es: 'Esperando' },
@@ -311,6 +330,12 @@
     if (v === undefined || v === null || v === '') return '';
     return (f ? display(f, v) : String(v)) + (/Lb$/.test(k) ? ' lb' : '');
   }
+  // The form's photos (manifest, scale, ID…) that were actually uploaded, as
+  // { label, url } — every photo field on the station, so new ones show up too.
+  const isUrl = (v) => typeof v === 'string' && /^https?:\/\//.test(v);
+  const photosOf = (r) => (stationOf(r) ? stationOf(r).fields : [])
+    .filter((f) => f.t === 'photo' && (!f.showIf || f.showIf(r.fields || {})) && isUrl(val(r, f.k)))
+    .map((f) => ({ label: t(f.l), url: val(r, f.k) }));
   const daysWaiting = (r) => r.submitted_at ? Math.floor((Date.now() - new Date(r.submitted_at).getTime()) / 86400000) : null;
 
   // ── Counts + filters ───────────────────────────────────────────────────────
@@ -362,14 +387,16 @@
     board.innerHTML = `<div class="tbl-wrap"><table class="tbl">
       <thead><tr>
         <th>${t(L.colStatus)}</th><th>${t(L.colForm)}</th><th>${t(L.colDate)}</th><th>${t(L.colStrain)}</th>
-        <th>UID</th><th>${t(L.colManifest)}</th><th>${t(L.colNewUid)}</th><th class="num">${t(L.colAmount)}</th><th>${t(L.colBy)}</th>
+        <th>UID</th><th>${t(L.colManifest)}</th><th>${t(L.colPhoto)}</th><th>${t(L.colNewUid)}</th><th class="num">${t(L.colAmount)}</th><th>${t(L.colBy)}</th>
         <th>${t(L.colWait)}</th><th>${t(L.colNote)}</th><th>${t(L.colUpd)}</th>
       </tr></thead>
       <tbody>${list.map(rowHtml).join('')}</tbody></table></div>`;
     board.querySelectorAll('tbody tr').forEach((tr) => {
       const id = tr.dataset.id;
       // The status dropdown and Save don't open the form; the rest of the row does.
-      tr.onclick = (e) => { if (!e.target.closest('.st-cell, .row-err, .copy-mini')) openDetail(id); };
+      tr.onclick = (e) => { if (!e.target.closest('.st-cell, .row-err, .copy-mini, .photo-mini')) openDetail(id); };
+      const ph = tr.querySelector('.photo-mini');
+      if (ph) ph.onclick = () => openPhotos(photosOf(forms.find((x) => x.id === id)));
       const cp = tr.querySelector('.copy-mini');
       if (cp) cp.onclick = async () => {
         if (!(await writeClipboard(cp.dataset.copy))) return;
@@ -411,6 +438,7 @@
     const picked = pending.get(r.id) || s;
     const newUid = [val(r, 'newFinishedUid'), val(r, 'newPrerollUid')].filter(Boolean).join(', ');
     const manifest = String(val(r, 'manifestNo') || '').trim();  // Wet Intake only
+    const photos = photosOf(r);
     const statusCell = canEdit
       ? `<div class="st-cell"><select class="st-sel ${picked}" aria-label="${esc(t(L.colStatus))}">${STATUSES.map((k) =>
           `<option value="${k}" ${k === picked ? 'selected' : ''}>${t(L[k])}</option>`).join('')}</select>
@@ -425,6 +453,7 @@
       <td class="mono">${manifest ? `<div class="mf-cell"><span>${esc(manifest)}</span><button type="button" class="copy-mini" data-copy="${esc(manifest)}">${t(L.copyBtn)}</button></div>`
         : awaitingCanix(r) ? `<span class="pill sync">${t(L.syncWait)}</span>`
         : canixNoManifest(r) ? `<span class="pill sync">${t(L.noManifest)}</span>` : '—'}</td>
+      <td>${photos.length ? `<button type="button" class="copy-mini photo-mini">${t(L.photoBtn)}${photos.length > 1 ? ` (${photos.length})` : ''}</button>` : '—'}</td>
       <td class="mono uid" title="${esc(newUid)}">${esc(newUid || '—')}</td>
       <td class="num">${esc(headline(r) || '—')}</td>
       <td>${esc(val(r, 'completedBy') || r.owner_user || '—')}</td>
@@ -451,7 +480,15 @@
   const bg = document.getElementById('detail-bg');
   const detail = document.getElementById('detail');
   bg.addEventListener('click', (e) => { if (e.target === bg) closeDetail(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDetail(); });
+  document.addEventListener('keydown', (e) => {
+    if (phBg.classList.contains('on')) {
+      if (e.key === 'Escape') closePhotos();
+      else if (e.key === 'ArrowLeft') stepPhoto(-1);
+      else if (e.key === 'ArrowRight') stepPhoto(1);
+      return;
+    }
+    if (e.key === 'Escape') closeDetail();
+  });
   let openId = null;
 
   function fieldHtml(f, r) {
@@ -465,8 +502,7 @@
         <tbody>${items.map((it) => `<tr>${f.cols.map((c) => `<td>${esc(display(c, it[c.k]))}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;
     }
     if (f.t === 'photo') {
-      const ok = typeof v === 'string' && /^https?:\/\//.test(v);
-      return `<div class="d-row"><div class="k">${esc(t(f.l))}</div><div class="v">${ok ? `<a href="${esc(v)}" target="_blank" rel="noopener"><img class="d-photo" src="${esc(v)}" alt=""></a>` : '—'}</div></div>`;
+      return `<div class="d-row"><div class="k">${esc(t(f.l))}</div><div class="v">${isUrl(v) ? `<button type="button" class="d-photo-btn" data-k="${esc(f.k)}"><img class="d-photo" src="${esc(v)}" alt=""></button>` : '—'}</div></div>`;
     }
     const c = copyText(f, v);
     return `<div class="d-row ${f.t === 'calc' ? 'hl' : ''}"><div class="k">${esc(t(f.l))}</div><div class="v ${c ? 'copyable' : ''}" ${c ? `data-copy="${esc(c)}"` : ''}>${esc(display(f, v))}</div></div>`;
@@ -556,6 +592,9 @@
         setTimeout(() => { el.textContent = was; el.classList.remove('copied'); }, 900);
       };
     });
+    detail.querySelectorAll('.d-photo-btn').forEach((b) => {
+      b.onclick = () => { const list = photosOf(r); openPhotos(list, Math.max(0, list.findIndex((p) => p.url === val(r, b.dataset.k)))); };
+    });
     wireStatus(r);
     bg.classList.add('on');
     document.body.style.overflow = 'hidden';
@@ -567,6 +606,44 @@
     bg.classList.remove('on');
     document.body.style.overflow = '';
     const url = new URL(location.href); url.searchParams.delete('id'); history.replaceState(null, '', url);
+  }
+
+  // ── Photo viewer ───────────────────────────────────────────────────────────
+  // A form's photos, one at a time, over everything else; ← → between them.
+  const phBg = document.getElementById('ph-bg'), phImg = document.getElementById('ph-img');
+  document.getElementById('ph-close').textContent = t(L.close);
+  document.getElementById('ph-tab').textContent = t(L.photoTab);
+  document.getElementById('ph-close').onclick = closePhotos;
+  document.getElementById('ph-prev').onclick = () => stepPhoto(-1);
+  document.getElementById('ph-next').onclick = () => stepPhoto(1);
+  phBg.addEventListener('click', (e) => { if (e.target === phBg) closePhotos(); });
+  let phList = [], phAt = 0;
+
+  function openPhotos(list, at = 0) {
+    if (!list || !list.length) return;
+    phList = list; phAt = at;
+    document.getElementById('ph-nav').style.display = list.length > 1 ? '' : 'none';
+    showPhoto();
+    phBg.classList.add('on');
+    document.body.style.overflow = 'hidden';
+  }
+  function showPhoto() {
+    const p = phList[phAt];
+    phImg.src = p.url;
+    document.getElementById('ph-cap').textContent = p.label;
+    document.getElementById('ph-tab').href = p.url;
+    document.getElementById('ph-n').textContent = `${phAt + 1} / ${phList.length}`;
+  }
+  function stepPhoto(d) {
+    if (phList.length < 2) return;
+    phAt = (phAt + d + phList.length) % phList.length;
+    showPhoto();
+  }
+  function closePhotos() {
+    phBg.classList.remove('on');
+    phImg.removeAttribute('src');
+    // The detail sheet may still be open underneath; keep the page locked if so.
+    if (!bg.classList.contains('on')) document.body.style.overflow = '';
   }
 
   // ── Live updates ───────────────────────────────────────────────────────────
