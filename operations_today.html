@@ -94,6 +94,9 @@
     .sum-table th.name,.sum-table td.name{text-align:left;font-family:'DM Sans',sans-serif;color:var(--subtext)}
     .sum-table td.zero{color:var(--muted)}
     .sum-table .tot,.sum-table tfoot td{color:var(--text);font-weight:500}
+    .sum-table .frz{color:var(--blue)}
+    .row-dest{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--gold);margin-top:4px}
+    .row-dest.frz{color:var(--blue)}
 
     /* Image preview (Send as image), as on the Master Schedule. */
     #img-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:80;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:calc(16px + env(safe-area-inset-top)) 12px 30px}
@@ -139,6 +142,7 @@
   </div>
   <div class="filters" id="filters"></div>
   <div id="daysum" class="daysum" style="display:none"></div>
+  <div id="wetsum" class="daysum" style="display:none"></div>
   <div id="board"></div>
   <div id="img-bg"><div id="img-box">
     <div class="img-ft"><span id="img-name"></span><span class="spacer"></span>
@@ -195,6 +199,15 @@
     imgClose: { en: 'Close', es: 'Cerrar' },
     imgHint: { en: 'On a phone, Share sends it to Messages/WhatsApp; or long-press the image to save it.', es: 'En el teléfono, Compartir lo manda a Mensajes/WhatsApp; o mantenga presionada la imagen para guardarla.' },
     sumNone: { en: 'Nothing weighed yet this day.', es: 'Aún no hay nada pesado este día.' },
+    wetTitle: { en: 'Wet Intake by farm', es: 'Recepción húmeda por rancho' },
+    wetHint: { en: 'Net wet lbs received from each farm — into drying rooms vs freezers (fresh frozen). Open forms included.',
+               es: 'Lbs húmedas netas recibidas de cada rancho — a cuartos de secado vs congeladores (fresco congelado). Incluye formularios abiertos.' },
+    farm: { en: 'Farm', es: 'Rancho' },
+    intakes: { en: 'Intakes', es: 'Recepciones' },
+    intoDry: { en: 'Dry rooms lbs', es: 'Secado lbs' },
+    intoFrozen: { en: 'Freezers lbs', es: 'Congelador lbs' },
+    totalLbs: { en: 'Total lbs', es: 'Total lbs' },
+    freshFrozen: { en: 'Fresh frozen', es: 'Fresco congelado' },
     reportTitle: { en: 'Daily Operations Report', es: 'Reporte diario de operaciones' },
     reportTitleRange: { en: 'Operations Report', es: 'Reporte de operaciones' },
     labor: { en: 'Labor', es: 'Mano de obra' },
@@ -353,6 +366,8 @@
       const only = Object.fromEntries(dayTabLines(s).map((k) => [k, (r.fields[k] || []).filter((x) => inDates(rowDay(r, x)))]));
       v = f.calc({ ...r.fields, ...only });
     }
+    // A calc headline not saved on the row (Wet Intake's net lbs) is worked out from its fields.
+    if ((v == null || v === '') && f.calc) v = f.calc(r.fields);
     if (v == null || v === '') return null;
     v = Number(v);
     return Number.isFinite(v) ? v : null;
@@ -367,6 +382,59 @@
   // When a day-tab page was last logged in the dates showing (its rows'
   // `at`), else when it was last saved.
   const lastAt = (s, r) => dayRows(s, r).map((x) => x.at).filter(Boolean).sort().pop() || r.updated_at;
+
+  // ── Wet Intake by farm ─────────────────────────────────────────────────
+  // Net wet lbs (totalWetLb) per farm, split by where it went: drying rooms,
+  // or freezers — Fresh Frozen ticked, or a Drying / Freezer Location that's
+  // one of the reference list's freezers. Farm is the license's name ("Wildcat:
+  // CCL21-…" → Wildcat), so a farm's several licenses add up together.
+  let ref = null;
+  loadReference().then((r) => { ref = r; render(); }).catch(() => {});
+  const pidFarm = (pid) => {
+    const p = ((ref && ref.properties) || []).find((x) => String(x.pid) === String(pid));
+    return p ? (p.farm || String(p.label || p.pid).split(': ')[0]) : (pid || '—');
+  };
+  const locIds = (f) => [].concat(f.dryRoom || []).map(String).filter(Boolean);
+  const isFreezerLoc = (id) => ((ref && ref.freezers) || []).some((x) => x.id === id) || /freez|frz|congel/i.test(id);
+  const toFreezer = (f) => isFreshFrozen(f) || (locIds(f).length > 0 && locIds(f).every(isFreezerLoc));
+  const locLabel = (id) => {
+    const x = [...((ref && ref.dryRooms) || []), ...((ref && ref.freezers) || [])].find((o) => o.id === id);
+    return x ? x.label : id;
+  };
+  // "Room 1A", "Freezer 2", or "Fresh frozen · Walk-in" when the typed place doesn't say so.
+  const destOf = (f) => {
+    const where = locIds(f).map(locLabel).join(', ');
+    if (!toFreezer(f)) return where;
+    return where && locIds(f).every(isFreezerLoc) ? where : [t(L.freshFrozen), where].filter(Boolean).join(' · ');
+  };
+  function wetByFarm(list) {
+    const by = {};
+    list.filter((r) => r.station_key === 'intake_wet').forEach((r) => {
+      const f = r.fields || {};
+      const farm = pidFarm(f.pid);
+      const x = by[farm] || (by[farm] = { farm, forms: 0, dry: 0, frozen: 0 });
+      const lb = amount(STATION_BY_KEY.intake_wet, r) || 0;
+      x.forms += 1;
+      if (toFreezer(f)) x.frozen += lb; else x.dry += lb;
+    });
+    return Object.values(by).sort((a, b) => (b.dry + b.frozen) - (a.dry + a.frozen) || a.farm.localeCompare(b.farm));
+  }
+  const wetTotals = (farms) => farms.reduce((a, x) => ({ forms: a.forms + x.forms, dry: a.dry + x.dry, frozen: a.frozen + x.frozen }), { forms: 0, dry: 0, frozen: 0 });
+
+  function renderWetSum(list) {
+    const box = document.getElementById('wetsum');
+    const farms = wetByFarm(list);
+    if (!farms.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+    const tot = wetTotals(farms);
+    const cells = (x) => `<td>${fmtNum(x.forms, 0)}</td><td>${x.dry ? fmtNum(x.dry, 2) : '·'}</td>` +
+      `<td class="frz">${x.frozen ? fmtNum(x.frozen, 2) : '·'}</td><td class="tot">${fmtNum(x.dry + x.frozen, 2)}</td>`;
+    box.style.display = 'block';
+    box.innerHTML = `<div class="daysum-head"><div><h2>${t(L.wetTitle)}</h2><div class="hint">${t(L.wetHint)}</div></div></div>` +
+      `<div class="daysum-scroll"><table class="sum-table"><thead><tr><th>${t(L.farm)}</th><th>${t(L.intakes)}</th>` +
+      `<th>${t(L.intoDry)}</th><th class="frz">❄ ${t(L.intoFrozen)}</th><th class="tot">${t(L.totalLbs)}</th></tr></thead><tbody>` +
+      farms.map((x) => `<tr><td>${esc(x.farm)}</td>${cells(x)}</tr>`).join('') +
+      `</tbody><tfoot><tr><td>${t(L.sumTotal)}</td>${cells(tot)}</tr></tfoot></table></div>`;
+  }
 
   // The dates' pages plus the day-tab pages started in the weeks before
   // with something logged in them.
@@ -415,6 +483,7 @@
   function render() {
     const filtered = stationFilter ? rows.filter((r) => r.station_key === stationFilter) : rows;
     renderDaySum();
+    renderWetSum(filtered);
     if (!pdfBusy) pdfBtn.disabled = !filtered.length;
     document.getElementById('sub').textContent =
       `${filtered.length} ${filtered.length === 1 ? 'form' : 'forms'}${!isRange() && from === todayStr() ? ' · ' + dayLabel(from) : ''}`;
@@ -430,7 +499,8 @@
         <div class="row-top">
           <div>
             <div class="row-station">${station ? t(station.title) : r.station_key}</div>
-            <div class="row-strain">${esc(r.strain || r.fields.harvestBatchName || '—')}</div>
+            <div class="row-strain">${esc(r.strain || r.fields.harvestBatchName || '—')}</div>${
+              r.station_key === 'intake_wet' && destOf(r.fields) ? `<div class="row-dest${toFreezer(r.fields) ? ' frz' : ''}">${toFreezer(r.fields) ? '❄ ' : ''}${esc(pidFarm(r.fields.pid))} → ${esc(destOf(r.fields))}</div>` : ''}
           </div>
           <span class="pill ${r.status}">${r.status === 'draft' ? t(L.draftPill) : t(L.submittedPill)}</span>
         </div>
@@ -746,6 +816,38 @@
     });
     y += 14;
 
+    // Wet Intake by farm: dry rooms vs freezers
+    const farms = wetByFarm(list);
+    if (farms.length) {
+      const wc = [M, M + 200, M + 270, M + 370, M + 470];
+      ensure(60);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(20);
+      doc.text(t(L.wetTitle), M, y); y += 16;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(120);
+      [t(L.farm), t(L.intakes), t(L.intoDry), t(L.intoFrozen), t(L.totalLbs)].forEach((h, i) => doc.text(h.toUpperCase(), wc[i], y));
+      y += 5; doc.setDrawColor(200); doc.setLineWidth(.5); doc.line(M, y, W - M, y); y += 13;
+      doc.setFontSize(10);
+      const line = (x, bold) => {
+        ensure(16);
+        doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setTextColor(20);
+        doc.text(fit(x.farm, wc[1] - wc[0] - 10), wc[0], y);
+        doc.text(fmtNum(x.forms, 0), wc[1], y);
+        doc.text(x.dry ? fmtNum(x.dry, 2) : '—', wc[2], y);
+        doc.setTextColor(40, 110, 170);
+        doc.text(x.frozen ? fmtNum(x.frozen, 2) : '—', wc[3], y);
+        doc.setTextColor(20);
+        doc.text(fmtNum(x.dry + x.frozen, 2), wc[4], y);
+        y += 16;
+      };
+      farms.forEach((x) => line(x));
+      if (farms.length > 1) {
+        doc.setDrawColor(120); doc.line(M, y - 11, W - M, y - 11); y += 2;
+        line({ farm: t(L.sumTotal), ...wetTotals(farms) }, true);
+      }
+      doc.setFont('helvetica', 'normal');
+      y += 14;
+    }
+
     // Labor: name | hours | people | $ tables, then the unrated / coverage notes.
     if (labor) {
       const lc = [M, M + 250, M + 330, M + 410];
@@ -823,7 +925,8 @@
         ensure(16);
         const v = num(s, r);
         doc.setTextColor(20);
-        doc.text(fit(r.strain || r.fields.harvestBatchName || '—', cols[1] - cols[0] - 10), cols[0], y);
+        const dest = s.key === 'intake_wet' ? destOf(r.fields) : '';
+        doc.text(fit((r.strain || r.fields.harvestBatchName || '—') + (dest ? ` · ${dest}` : ''), cols[1] - cols[0] - 10), cols[0], y);
         if (r.status === 'draft') doc.setTextColor(176, 130, 30); else doc.setTextColor(40, 140, 90);
         doc.text(r.status === 'draft' ? t(L.draftPill) : t(L.submittedPill), cols[1], y);
         doc.setTextColor(20);
