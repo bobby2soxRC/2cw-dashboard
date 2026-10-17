@@ -448,8 +448,11 @@ and in `netlify/functions/metrc-queue.js`; change both together), however old �
 only ones submitted through the app: records loaded from the paper sheets
 (`owner_user` `paper_import`) are left out.
 It's a table — status, form, date, strain, UID, manifest # (Wet Intake
-only, with a Copy button), new UID, amount, who
-submitted it, days waiting, note, last change. Each form is To do until
+only, with a Copy button), photo, new UID, amount, who
+submitted it, days waiting, note, last change. The photo column's 📷 View
+button (on any form with an uploaded photo — the intake's manifest photo,
+scale photos…) opens it full-screen over the page; ← → step through a form's
+photos, Esc closes. Photos in the opened form open the same viewer. Each form is To do until
 someone changes it, then In progress, Done or Not needed: with Edit, pick it
 in the row's dropdown and hit that row's Save. Open work is listed oldest
 first; the counts at the top double as filters. Clicking a row opens the
