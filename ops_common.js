@@ -175,6 +175,54 @@ function uidTailMatch(a, b) {
 }
 const isFreshFrozen = (i) => i.freshFrozen === true || i.freshFrozen === 'true';
 
+// ── Metrc details from the Canix sync ───────────────────────────────────────
+// Wet Intake leaves the farm license, CID and manifest # off the form (its
+// `fromCanix` fields); scripts/canix_sync.py fills them in on a submitted
+// intake from its package's Metrc transfer and stamps `canixSyncedAt`. Until
+// then the intake is waiting for that sync — unless someone typed the
+// manifest # in (intakes from before the change, or a farm Canix doesn't see).
+function awaitingCanix(rec) {
+  const f = (rec && rec.fields) || {};
+  return !!rec && rec.station_key === 'intake_wet' && rec.status === 'submitted' &&
+    !f.canixSyncedAt && !String(f.manifestNo || '').trim();
+}
+// Synced, but Canix had no manifest # for it: a farm we have no Canix key
+// for, found only from the package received at our facility.
+function canixNoManifest(rec) {
+  const f = (rec && rec.fields) || {};
+  return !!rec && rec.station_key === 'intake_wet' && rec.status === 'submitted' &&
+    !!f.canixSyncedAt && !String(f.manifestNo || '').trim();
+}
+
+// Package tag → Canix strain name, from the synced inventory
+// (data/canix_inventory.json — includes farm packages still In Transit to us).
+// Loaded once, on first use; the Wet Intake form uses it to fill a scanned
+// row's strain. A full tag is looked up as is; a shorter tail only when one
+// package ends with it.
+let _canixStrains = null;
+function canixStrainForUid(uid) {
+  if (!_canixStrains) {
+    _canixStrains = fetch('/data/canix_inventory.json').then((r) => (r.ok ? r.json() : []))
+      .then((list) => {
+        const m = new Map();
+        (list || []).forEach((p) => {
+          const name = p && p.item && p.item.strain && p.item.strain.name;
+          if (p && p.tag && name) m.set(normUid(p.tag), name);
+        });
+        return m;
+      })
+      .catch(() => new Map());
+  }
+  const q = normUid(uid);
+  if (q.length < 4) return Promise.resolve(null);
+  return _canixStrains.then((m) => {
+    if (m.has(q)) return m.get(q);
+    if (q.length >= 24) return null;
+    const hits = [...m.keys()].filter((tag) => tag.endsWith(q));
+    return hits.length === 1 ? m.get(hits[0]) : null;
+  });
+}
+
 // Which intake each take down took down, as Map(intake id → take-down
 // record). Both lists are flat records ({id, sourceUid, date, freshFrozen} /
 // {incomingUid, date}). An exact UID wins; otherwise, of the intakes not

@@ -43,6 +43,15 @@ through `netlify/functions/metrc-queue.js`. Needs the `metrc_queue` table
 from `supabase/schema.sql` run first. Details: "Metrc Queue" in
 `docs/OPERATIONS_APP.md`.
 
+### Wet Intake details from Canix (started 2026-10-17)
+
+The Wet Intake form no longer asks for farm license, CID, manifest # or
+driver: scan the UID and weigh. `scripts/canix_sync.py`
+(`fill_intakes_from_canix`) fills them in on submitted intakes through the
+Supabase function `fill_intake_from_canix`; until then the intake shows
+"Waiting for Metrc sync". Details: "Wet Intake: Metrc details come from the
+Canix sync" in `docs/OPERATIONS_APP.md`.
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)

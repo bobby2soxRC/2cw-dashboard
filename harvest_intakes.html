@@ -52,6 +52,7 @@
     .pill.dry{border-color:var(--blue);color:var(--blue)}
     .pill.ok{border-color:var(--green);color:var(--green)}
     .pill.warn{border-color:var(--red);color:var(--red)}
+    .pill.sync{border-color:var(--gold);color:var(--gold);border-style:dashed}
     .row-facts{margin-top:10px;display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:.8rem}
     .row-facts dt{color:var(--muted);font-family:'DM Mono',monospace;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;padding-top:1px}
     .row-facts dd{color:var(--subtext);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -202,6 +203,17 @@
     dryP:      { en: 'dry', es: 'seco' },
     frozenP:   { en: 'Fresh frozen', es: 'Fresco congelado' },
     metrcTodo: { en: 'Metrc not adjusted', es: 'Metrc sin ajustar' },
+    syncWait:  { en: 'Waiting for Metrc sync', es: 'Esperando sincronización de Metrc' },
+    syncWaitF: { en: 'Waiting for sync', es: 'Esperando sincronización' },
+    syncWaitNote: { en: 'Farm license, CID and manifest # fill in from Metrc on the next Canix sync (every 3 hours). If this farm isn’t in Canix they won’t — use Edit to type them in.',
+                    es: 'La licencia, el CID y el n.º de manifiesto se llenan desde Metrc en la próxima sincronización de Canix (cada 3 horas). Si este rancho no está en Canix no se llenarán — use Editar para escribirlos.' },
+    syncedNote:{ en: 'Metrc details filled in by the Canix sync', es: 'Datos de Metrc llenados por la sincronización de Canix' },
+    canixTag:  { en: 'Metrc package tag', es: 'Etiqueta del paquete en Metrc' },
+    canixLb:   { en: 'Weight in Metrc', es: 'Peso en Metrc' },
+    noManifest:{ en: 'Manifest # needed', es: 'Falta n.º de manifiesto' },
+    noManifestNote: { en: 'Canix found this package (farm license and CID are filled in) but has no manifest # for this farm — use Edit to type it in from the manifest photo.',
+                      es: 'Canix encontró este paquete (la licencia y el CID ya están) pero no tiene el n.º de manifiesto de este rancho — use Editar para escribirlo desde la foto del manifiesto.' },
+    canixHarvest: { en: 'Metrc harvest', es: 'Cosecha en Metrc' },
     drafts:    { en: 'In progress', es: 'En curso' },
     search:    { en: 'Search strain, UID, farm license, CID, manifest…', es: 'Buscar variedad, UID, licencia, CID, manifiesto…' },
     submitted: { en: 'Submitted', es: 'Enviado' },
@@ -299,7 +311,9 @@
     }
   }
   await loadHistory();
-  const editCount = (r) => (historyByForm.get(r.id) || []).filter((h) => h.action === 'edited').length;
+  // The Canix sync filling in the Metrc details is in the history, but isn't
+  // someone editing the intake.
+  const editCount = (r) => (historyByForm.get(r.id) || []).filter((h) => h.action === 'edited' && h.actor !== 'Canix sync').length;
   const editAccess = JSON.parse(sessionStorage.getItem('2cw_ops_edit_access') || 'null');
   const canOpenDrafts = editAccess === 'all' || (Array.isArray(editAccess) && editAccess.includes(STATION_KEY));
 
@@ -330,7 +344,7 @@
   function pills(r) {
     if (r._deleted) return `<span class="pill deleted">${t(L.deletedP)}</span>`;
     const n = editCount(r);
-    return dryPill(r) + metrcPill(r) + (n ? `<span class="pill edited">${t(L.editedP)}${n > 1 ? ' ×' + n : ''}</span>` : '');
+    return dryPill(r) + syncPill(r) + metrcPill(r) + (n ? `<span class="pill edited">${t(L.editedP)}${n > 1 ? ' ×' + n : ''}</span>` : '');
   }
 
   function dryPill(r) {
@@ -345,6 +359,13 @@
     return `<span class="pill dry">${t(L.dryingP)}${days >= 0 && days !== null ? ' · ' + days + ' ' + t(L.daysP) : ''}</span>`;
   }
 
+  // Submitted with the Metrc details still to come from the Canix sync
+  // (awaitingCanix in ops_common.js).
+  function syncPill(r) {
+    if (awaitingCanix(r)) return `<span class="pill sync">${t(L.syncWait)}</span>`;
+    return canixNoManifest(r) ? `<span class="pill sync">${t(L.noManifest)}</span>` : '';
+  }
+
   function metrcPill(r) {
     if (r.status === 'draft') return `<span class="pill draft">${t(L.drafts)}</span>`;
     if (val(r, 'metrcAdjusted') === 'yes') {
@@ -356,7 +377,7 @@
 
   // ── Filters ────────────────────────────────────────────────────────────────
   let mode = 'drying', query = '';
-  const FILTERS = [['drying', L.drying], ['history', L.histTab], ['all', L.all], ['metrc', L.metrcTodo], ['draft', L.drafts]]
+  const FILTERS = [['drying', L.drying], ['history', L.histTab], ['all', L.all], ['sync', L.syncWaitF], ['metrc', L.metrcTodo], ['draft', L.drafts]]
     .concat(canHistory ? [['deleted', L.deletedF]] : []);
   const filtersEl = document.getElementById('filters');
   filtersEl.innerHTML = FILTERS.map(([k, l]) => `<button data-k="${k}" class="${k === mode ? 'on' : ''}">${t(l)}</button>`).join('') +
@@ -369,6 +390,7 @@
   function matches(r) {
     if (mode === 'metrc' && !(r.status === 'submitted' && val(r, 'metrcAdjusted') !== 'yes')) return false;
     if (mode === 'draft' && r.status !== 'draft') return false;
+    if (mode === 'sync' && (r._deleted || !(awaitingCanix(r) || canixNoManifest(r)))) return false;
     if (mode === 'drying' && !isDrying(r)) return false;
     if (mode === 'history' && (r.status !== 'submitted' || isDrying(r))) return false;
     if ((mode === 'deleted') !== !!r._deleted) return false;
@@ -612,6 +634,19 @@
     };
   }
 
+  // What the Canix sync found for this intake's package on its Metrc transfer
+  // (fields.canixSync, written by scripts/canix_sync.py).
+  function canixHtml(f) {
+    const c = f.canixSync;
+    if (!f.canixSyncedAt || !c) return '';
+    const row = (k, v) => v === undefined || v === null || v === '' ? ''
+      : `<div class="d-row"><div class="k">${esc(t(k))}</div><div class="v">${esc(v)}</div></div>`;
+    return `<div class="d-section"><div class="d-section-hd">${t(L.syncedNote)} · ${esc(new Date(f.canixSyncedAt).toLocaleString())}</div>
+      ${row(L.canixTag, c.tag)}
+      ${row(L.canixLb, Number.isFinite(Number(c.metrcLb)) && c.metrcLb !== null ? `${fmtNum(c.metrcLb, 2)} lb` : '')}
+      ${row(L.canixHarvest, c.harvestName)}</div>`;
+  }
+
   function openDetail(id) {
     const r = findRow(id);
     if (!r) return;
@@ -634,7 +669,10 @@
       ${r._deleted ? `<div class="d-deleted"><b>${t(L.delBy)} ${esc(r._deleted.actor || '—')}</b> · ${esc(fmtWhen(r._deleted.at))}${
         r._deleted.reason ? `<br>${t(L.reason)}: ${esc(r._deleted.reason)}` : ''}</div>` : ''}
       <div style="margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap">${pills(r)}</div>
+      ${r._deleted ? '' : awaitingCanix(r) ? `<div class="d-sub">${esc(t(L.syncWaitNote))}</div>`
+        : canixNoManifest(r) ? `<div class="d-sub">${esc(t(L.noManifestNote))}</div>` : ''}
       ${station.fields.map((fd) => fieldHtml(fd, r)).join('')}
+      ${canixHtml(f)}
       ${laborUid(r) ? `<div class="d-section" id="d-labor"><div class="d-section-hd">${t(L.labor)}</div><div class="muted-note">${t(L.laborLoad)}</div></div>` : ''}
       ${historyHtml(r)}
       ${deleteHtml(r)}`;

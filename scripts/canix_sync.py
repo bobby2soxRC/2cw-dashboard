@@ -67,6 +67,7 @@ Requirements:
 
 import json
 import os
+import re
 import time
 import requests
 from datetime import datetime, timedelta, timezone
@@ -297,6 +298,225 @@ def sync_facility_roster_to_supabase(facilities):
             print(f"  [archived] facility {fid} — no longer reported by Canix, historical data retained")
 
 
+# ── WET INTAKE: METRC DETAILS FROM CANIX ────────────────────────────────────
+#
+# The Harvest Intake — Wet form (operations_stations.js, intake_wet) no longer
+# asks for the farm license, CID or manifest # — the receiving crew scans the
+# package UID and weighs. This fills them in afterwards: each submitted intake
+# still waiting (no canixSyncedAt, no manifest # typed in) is matched to its
+# package on a Metrc transfer, and the Supabase function
+# fill_intake_from_canix (supabase/schema.sql) writes the blanks:
+#
+#   manifestNo     the transfer's manifest number
+#   pid            the shipping farm's license, as the form's Farm License
+#                  code (ref_codes kind 'pid': "027" for CCL26-0000027), or
+#                  the full license when no code matches
+#   cid            the CID last used for that license, else the Metrc
+#                  harvest name's prefix ("AGP0027-…" → AGP) when it's a
+#                  known CID (not first: AutoCanna's harvests say AGP too)
+#   canixSync      what was matched — full tag, transfer, shipped weight…
+#   canixSyncedAt  when; the page's "Waiting for Metrc sync" goes away
+#
+# A farm we have no Canix key for is found from the package once it's
+# received at our facility — license and CID, but no manifest #: the page
+# then asks for it to be typed in on Edit.
+#
+# The intake's UID is often just the tag's last 4–5, so a tail match only
+# counts when one package fits: shipped within INTAKE_MATCH_DAYS_BEFORE days
+# before the intake date (or the day after), then — if still more than one —
+# the same strain. Anything ambiguous or not found waits for the next run;
+# a farm Canix can't see never matches and gets typed in on Edit.
+
+INTAKE_LOOKBACK_DAYS = 45
+INTAKE_MATCH_DAYS_BEFORE = 10
+TO_LB = {"pounds": 1.0, "lb": 1.0, "lbs": 1.0, "kilograms": 2.20462, "kg": 2.20462, "grams": 0.00220462, "g": 0.00220462, "ounces": 0.0625, "oz": 0.0625}
+
+
+def norm_tag(value):
+    return re.sub(r"[^A-Z0-9]", "", str(value or "").upper())
+
+
+def to_lb(weight, unit):
+    if weight is None:
+        return None
+    try:
+        return round(float(weight) * TO_LB.get(str(unit or "pounds").lower(), 1.0), 2)
+    except (TypeError, ValueError):
+        return None
+
+
+def transfer_package_index(transfers, packages):
+    """Every package tag that went out on a transfer → [{manifest, license,
+    departure, ...}], with the package's strain and harvest name from the
+    packages history."""
+    pkg_by_tag = {norm_tag(p.get("tag")): p for p in packages if p.get("tag")}
+    index = {}
+    for t in transfers:
+        manifest = str(t.get("manifest_number") or "").strip()
+        if not manifest:
+            continue
+        for d in t.get("destinations") or []:
+            for c in d.get("contents") or []:
+                pkg = (c or {}).get("package") or {}
+                tag = norm_tag(pkg.get("tag"))
+                if not tag:
+                    continue
+                full = pkg_by_tag.get(tag) or {}
+                strain = ((full.get("item") or {}).get("strain") or {}).get("name")
+                harvests = full.get("harvests") or []
+                harvest_name = (harvests[0] or {}).get("name") if harvests else full.get("source_harvests")
+                index.setdefault(tag, []).append({
+                    "tag": tag,
+                    "transferId": t.get("id"),
+                    "manifestNo": manifest,
+                    "shipperLicense": t.get("_facility_license_number"),
+                    "destinationLicense": d.get("destination_facility"),
+                    "departure": d.get("departure_time"),
+                    "metrcLb": to_lb(c.get("shipped_weight"), c.get("shipped_weight_unit")),
+                    "strain": strain,
+                    "harvestName": harvest_name,
+                })
+    # A farm we have no Canix key for: its transfer isn't ours to list, but
+    # the package shows up at our facility once it's received in Metrc, with
+    # the farm's license as source_facility — no manifest number, though.
+    for tag, p in pkg_by_tag.items():
+        if tag in index or not p.get("received_date") or not p.get("source_facility"):
+            continue
+        harvests = p.get("harvests") or []
+        index[tag] = [{
+            "tag": tag,
+            "transferId": None,
+            "manifestNo": None,
+            "shipperLicense": p.get("source_facility"),
+            "destinationLicense": p.get("_facility_license_number"),
+            "departure": p.get("received_date"),
+            "metrcLb": to_lb(p.get("original_weight"), p.get("weight_unit")),
+            "strain": ((p.get("item") or {}).get("strain") or {}).get("name"),
+            "harvestName": (harvests[0] or {}).get("name") if harvests else p.get("source_harvests"),
+        }]
+    return index
+
+
+def match_intake(uid, work_date, strain, index):
+    uid = norm_tag(uid)
+    if len(uid) < 4:
+        return None
+    if uid in index:
+        hits = list(index[uid])
+    elif len(uid) < 24:
+        hits = [h for tag, hs in index.items() if tag.endswith(uid) for h in hs]
+    else:
+        hits = []
+    if not hits:
+        return None
+    try:
+        day = datetime.strptime(str(work_date), "%Y-%m-%d").date()
+        lo, hi = day - timedelta(days=INTAKE_MATCH_DAYS_BEFORE), day + timedelta(days=1)
+        hits = [h for h in hits if not h["departure"] or lo <= datetime.strptime(h["departure"][:10], "%Y-%m-%d").date() <= hi]
+    except ValueError:
+        pass
+    if len({h["tag"] for h in hits}) > 1 and strain:
+        same = [h for h in hits if str(h["strain"] or "").strip().lower() == str(strain).strip().lower()]
+        hits = same or hits
+    if len({h["tag"] for h in hits}) != 1:
+        return None
+    # The same package on more than one transfer (sent back and re-sent):
+    # the latest one.
+    return max(hits, key=lambda h: str(h["departure"] or ""))
+
+
+def license_to_pid(license_number, pid_codes):
+    lic = str(license_number or "").strip()
+    if not lic:
+        return None
+    if lic in pid_codes:
+        return lic
+    tail = lic.rsplit("-", 1)[-1]
+    fits = [c for c in pid_codes if c.isdigit() and tail.isdigit() and int(c) == int(tail)]
+    return max(fits, key=len) if fits else lic
+
+
+def fill_intakes_from_canix(transfers, packages):
+    if not SUPABASE_SERVICE_ROLE_KEY:
+        print("\n  [skip] SUPABASE_SERVICE_ROLE_KEY not set — not filling Wet Intakes from Canix")
+        return
+    headers = {
+        "apikey": SUPABASE_SERVICE_ROLE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+        "Content-Type": "application/json",
+    }
+    rest = f"{SUPABASE_URL}/rest/v1"
+    since = (datetime.now(timezone.utc) - timedelta(days=INTAKE_LOOKBACK_DAYS)).strftime("%Y-%m-%d")
+
+    resp = requests.get(
+        f"{rest}/operations_forms",
+        headers=headers,
+        params={
+            "select": "id,work_date,strain,fields",
+            "station_key": "eq.intake_wet",
+            "status": "eq.submitted",
+            "work_date": f"gte.{since}",
+            "fields->>canixSyncedAt": "is.null",
+            "or": "(fields->>manifestNo.is.null,fields->>manifestNo.eq.)",
+        },
+        timeout=30,
+    )
+    if not resp.ok:
+        print(f"  [warn] Could not load Wet Intakes to fill from Canix: {resp.status_code} {resp.text[:300]}")
+        return
+    waiting = resp.json()
+    print(f"\n  Wet Intakes waiting for Metrc details: {len(waiting)}")
+    if not waiting:
+        return
+
+    codes = requests.get(f"{rest}/ref_codes", headers=headers, params={"select": "kind,code"}, timeout=30)
+    codes = codes.json() if codes.ok else []
+    pid_codes = [r["code"] for r in codes if r.get("kind") == "pid" and r.get("code")]
+    cid_codes = {r["code"].upper(): r["code"] for r in codes if r.get("kind") == "cid" and r.get("code")}
+
+    # The CID each farm license was last received under, for harvest names
+    # whose prefix isn't a CID code.
+    recent = requests.get(
+        f"{rest}/operations_forms",
+        headers=headers,
+        params={"select": "pid:fields->>pid,cid:fields->>cid", "station_key": "eq.intake_wet",
+                "status": "eq.submitted", "fields->>cid": "not.is.null", "order": "work_date.desc", "limit": "2000"},
+        timeout=30,
+    )
+    cid_by_pid = {}
+    for r in (recent.json() if recent.ok else []):
+        if r.get("pid") and r.get("cid"):
+            cid_by_pid.setdefault(r["pid"], r["cid"])
+
+    index = transfer_package_index(transfers, packages)
+    now = datetime.now(timezone.utc).isoformat()
+    filled = 0
+    for rec in waiting:
+        f = rec.get("fields") or {}
+        uid = f.get("sourceUid") or next((ln.get("sourceUid") for ln in f.get("lines") or [] if ln and ln.get("sourceUid")), None)
+        hit = match_intake(uid, rec.get("work_date"), rec.get("strain") or f.get("strain"), index)
+        if not hit:
+            continue
+        pid = license_to_pid(hit["shipperLicense"], pid_codes)
+        prefix = re.match(r"[A-Za-z]+", str(hit["harvestName"] or ""))
+        cid = cid_by_pid.get(pid) or (cid_codes.get(prefix.group(0).upper()) if prefix else None)
+        fill = {"canixSyncedAt": now, "canixSync": hit}
+        if hit["manifestNo"]:
+            fill["manifestNo"] = hit["manifestNo"]
+        if pid:
+            fill["pid"] = pid
+        if cid:
+            fill["cid"] = cid
+        r = requests.post(f"{rest}/rpc/fill_intake_from_canix", headers=headers,
+                          json={"p_id": rec["id"], "p_fill": fill}, timeout=30)
+        if r.ok:
+            filled += 1
+            print(f"    {uid} → manifest {hit['manifestNo'] or '(none in Canix)'} ({hit['shipperLicense']}, tag {hit['tag']})")
+        else:
+            print(f"  [warn] Could not fill intake {rec['id']}: {r.status_code} {r.text[:200]}")
+    print(f"  Filled {filled} of {len(waiting)} from Canix; the rest wait for the next sync")
+
+
 # ── SYNC ─────────────────────────────────────────────────────────────────────
 
 # (output key, Canix endpoint, history filename, supports updated_at filter)
@@ -433,6 +653,12 @@ def main():
 
     transfers_recent = recent_transfers(histories["transfers"].values(), started)
     save("canix_transfers_recent.json", transfers_recent)
+
+    # Never fails the sync — the data files above still get committed.
+    try:
+        fill_intakes_from_canix(histories["transfers"].values(), histories["packages"].values())
+    except Exception as e:  # noqa: BLE001
+        print(f"  [warn] Filling Wet Intakes from Canix failed: {e}")
 
     next_cutoff = compute_next_cutoff(newest_overall) or previous_cutoff or started.strftime("%Y-%m-%dT%H:%M:%S.000Z")
 

@@ -520,6 +520,11 @@
         // Calc columns (e.g. hours from start/end) are read-only, worked out
         // from the rest of the row and stored on it like any other value.
         const calcCells = [];
+        // Cells that can be filled from code (a Canix strain lookup), and the
+        // ones still holding a value carried down from the row above rather
+        // than one picked on this row.
+        const setCell = {};
+        const carried = new Set();
         const recalcRow = () => calcCells.forEach(({ c, el }) => {
           let out = null;
           try { out = c.calc(row); } catch { out = null; }
@@ -575,6 +580,7 @@
           const initial = (prefill && prefill[c.k] !== undefined && prefill[c.k] !== null) ? prefill[c.k]
             : (!prefill && c.carry && above && above[c.k] !== undefined && above[c.k] !== null && above[c.k] !== '') ? above[c.k]
             : (c.t === 'date' && c.today ? new Date().toISOString().slice(0, 10) : c.def);
+          if (!prefill && c.carry && initial !== undefined && initial !== null && initial !== '') carried.add(c.k);
           if (initial !== undefined && initial !== null) {
             inp.value = initial;
             // A saved value that isn't on the list (an "Other…" strain) still
@@ -600,9 +606,32 @@
             updateVisibility();
             markDirty();
           };
-          inp.addEventListener('input', onCellChange);
-          inp.addEventListener('change', onCellChange);
-          if (other) other.addEventListener('input', onCellChange);
+          // `canixStrain` (Wet Intake's package UID): a scanned/typed tag that
+          // Canix knows fills the row's strain column — unless someone picked
+          // one on this row already. Only a strain on the library list is set.
+          const lookupStrain = () => {
+            const uid = row[c.k];
+            canixStrainForUid(uid).then((name) => {
+              if (!name || row[c.k] !== uid) return;
+              if (row[c.canixStrain] && !carried.has(c.canixStrain)) return;
+              const lc = name.trim().toLowerCase();
+              const hit = (reference.strains || []).find((x) => x.active !== false &&
+                [x.name, ...(x.aliases || [])].some((n) => String(n || '').trim().toLowerCase() === lc));
+              if (hit && setCell[c.canixStrain]) setCell[c.canixStrain](hit.name);
+            });
+          };
+          const onUserChange = () => { carried.delete(c.k); onCellChange(); if (c.canixStrain) lookupStrain(); };
+          if (c.t === 'select') {
+            setCell[c.k] = (v) => {
+              inp.value = v;
+              if (inp.value !== v) return;
+              carried.delete(c.k);
+              onCellChange();
+            };
+          }
+          inp.addEventListener('input', onUserChange);
+          inp.addEventListener('change', onUserChange);
+          if (other) other.addEventListener('input', onUserChange);
           td.appendChild(inp);
           if (other) td.appendChild(other);
           tr.appendChild(td);
@@ -1137,6 +1166,10 @@
 
   station.fields.forEach((f) => {
     const wrap = buildField(f);
+    // Filled in later by the Canix sync (Wet Intake's farm license, CID,
+    // manifest #…), so not asked for while the truck is weighed — only when
+    // a submitted record is reopened with Edit, to fix or type them in.
+    if (f.fromCanix && !editMode) wrap.style.display = 'none';
     form.appendChild(wrap);
     els[f.k] = wrap;
   });

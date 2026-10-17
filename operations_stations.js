@@ -342,6 +342,16 @@ const OPERATIONS_STATIONS = [
   // Each weigh-in row is a group of bins on the scale: the row's Weight is the
   // gross scale reading, and # of Bins × Tare Each comes off it, so the Total
   // Wet Weight Received is net of the bins.
+  //
+  // `fromCanix` fields (farm license, CID, manifest #, driver) are what the
+  // Metrc manifest already says, so they're left off the form while the
+  // truck is being weighed — scan the package UID and go. The Canix sync
+  // (scripts/canix_sync.py, fill_intakes_from_canix) finds each submitted
+  // intake's package on its Metrc transfer and fills them in; until then the
+  // intake shows "Waiting for Metrc sync" (awaitingCanix in ops_common.js).
+  // They still show when a submitted intake is reopened with Edit, to type
+  // them in by hand for a farm Canix doesn't see. Canix has no driver name —
+  // that one stays on the manifest photo unless it's typed in on Edit.
   {
     key: 'intake_wet',
     dept: { en: 'Processing', es: 'Procesamiento' },
@@ -354,13 +364,13 @@ const OPERATIONS_STATIONS = [
     fields: [
       F.date(),
       F.project(),
-      { k: 'pid', t: 'select', ref: 'properties', allowOther: true, req: true,
+      { k: 'pid', t: 'select', ref: 'properties', allowOther: true, fromCanix: true,
         l: { en: 'Farm License', es: 'Licencia del rancho' } },
-      { k: 'cid', t: 'select', ref: 'customers', allowOther: true, l: { en: 'Customer ID (CID)', es: 'ID de cliente (CID)' } },
+      { k: 'cid', t: 'select', ref: 'customers', allowOther: true, fromCanix: true, l: { en: 'Customer ID (CID)', es: 'ID de cliente (CID)' } },
       // All digits in Metrc; oToZero turns a typed letter O into 0 as it's typed.
-      { k: 'manifestNo', t: 'text', req: true, inputmode: 'numeric', oToZero: true, l: { en: 'Manifest #', es: 'N.º de manifiesto' } },
+      { k: 'manifestNo', t: 'text', inputmode: 'numeric', oToZero: true, fromCanix: true, l: { en: 'Manifest #', es: 'N.º de manifiesto' } },
       { k: 'truckNo', t: 'text', l: { en: 'Truck #', es: 'N.º de camión' } },
-      { k: 'driver', t: 'text', l: { en: 'Driver', es: 'Conductor' } },
+      { k: 'driver', t: 'text', fromCanix: true, l: { en: 'Driver', es: 'Conductor' } },
       { k: 'completedBy', t: 'text', req: true,
         l: { en: 'Person Completing Form', es: 'Persona que llena el formulario' } },
       { k: 'weighmaster', t: 'text', req: true,
@@ -372,14 +382,14 @@ const OPERATIONS_STATIONS = [
         l: { en: 'Fresh Frozen', es: 'Fresco congelado' } },
       { k: 'lines', t: 'lineitems', req: true,
         l: { en: 'Weigh-In — Bins', es: 'Pesaje — bins' },
-        hint: { en: 'One row per group of bins on the scale, with the farm package UID (the last 5 is fine) and strain. Weight is the scale reading; the bins’ tare is subtracted for you. Each UID is saved as its own intake.',
-                es: 'Una fila por cada grupo de bins en la báscula, con el UID del paquete del rancho (los últimos 5 son suficientes) y la variedad. El peso es la lectura de la báscula; la tara de los bins se resta automáticamente. Cada UID se guarda como su propia recepción.' },
+        hint: { en: 'One row per group of bins on the scale: scan the farm package UID (or type the last 5) and weigh. The strain fills in from Canix when it knows the package. Weight is the scale reading; the bins’ tare is subtracted for you. Each UID is saved as its own intake. Farm license, CID and manifest # fill in from Metrc on the next Canix sync.',
+                es: 'Una fila por cada grupo de bins en la báscula: escanee el UID del paquete del rancho (o escriba los últimos 5) y pese. La variedad se llena desde Canix cuando conoce el paquete. El peso es la lectura de la báscula; la tara de los bins se resta automáticamente. Cada UID se guarda como su propia recepción. La licencia, el CID y el n.º de manifiesto se llenan desde Metrc en la próxima sincronización de Canix.' },
         // `carry` columns copy down into a new row from the one above (most
         // trucks are several bin groups per package) and don't by themselves
         // make a row count as filled in; `req` columns must be filled on any
         // row that does count.
         cols: [
-          { k: 'sourceUid', t: 'uid', req: true, carry: true, l: { en: 'Package UID', es: 'UID del paquete' } },
+          { k: 'sourceUid', t: 'uid', req: true, carry: true, canixStrain: 'strain', l: { en: 'Package UID', es: 'UID del paquete' } },
           { k: 'strain', t: 'select', ref: 'strains', allowOther: true, req: true, carry: true, l: { en: 'Strain', es: 'Variedad' } },
           { k: 'binCount', t: 'number', l: { en: '# of Bins', es: 'N.º de bins' }, min: 0, step: 1, inputmode: 'numeric' },
           { k: 'tareEachLb', t: 'number', carry: true, l: { en: 'Tare Each (lbs)', es: 'Tara c/u (lbs)' }, min: 0, step: 0.01 },

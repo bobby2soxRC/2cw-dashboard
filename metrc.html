@@ -89,6 +89,7 @@
     .pill.in_progress{border-color:var(--gold);color:var(--gold)}
     .pill.done{border-color:var(--green);color:var(--green)}
     .pill.not_needed{color:var(--muted)}
+    .pill.sync{border-color:var(--gold);color:var(--gold);border-style:dashed}
     .row-station{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--blue)}
 
     .empty{color:var(--muted);text-align:center;padding:60px 0;font-size:.9rem;line-height:1.6}
@@ -213,6 +214,8 @@
     colStrain: { en: 'Strain', es: 'Variedad' },
     colNewUid: { en: 'New UID', es: 'UID nuevo' },
     colManifest:{ en: 'Manifest #', es: 'N.º de manifiesto' },
+    syncWait:  { en: 'Waiting for Metrc sync', es: 'Esperando sincronización de Metrc' },
+    noManifest:{ en: 'Manifest # needed', es: 'Falta n.º de manifiesto' },
     copyBtn:   { en: 'Copy', es: 'Copiar' },
     copyDone:  { en: 'Copied', es: 'Copiado' },
     colAmount: { en: 'Amount', es: 'Cantidad' },
@@ -419,7 +422,9 @@
       <td class="mono">${esc(fmtDate(r.work_date))}</td>
       <td class="strain">${esc(r.strain || val(r, 'strain') || '—')}</td>
       <td class="mono uid" title="${esc(uids(r))}">${esc(uids(r) || '—')}</td>
-      <td class="mono">${manifest ? `<div class="mf-cell"><span>${esc(manifest)}</span><button type="button" class="copy-mini" data-copy="${esc(manifest)}">${t(L.copyBtn)}</button></div>` : '—'}</td>
+      <td class="mono">${manifest ? `<div class="mf-cell"><span>${esc(manifest)}</span><button type="button" class="copy-mini" data-copy="${esc(manifest)}">${t(L.copyBtn)}</button></div>`
+        : awaitingCanix(r) ? `<span class="pill sync">${t(L.syncWait)}</span>`
+        : canixNoManifest(r) ? `<span class="pill sync">${t(L.noManifest)}</span>` : '—'}</td>
       <td class="mono uid" title="${esc(newUid)}">${esc(newUid || '—')}</td>
       <td class="num">${esc(headline(r) || '—')}</td>
       <td>${esc(val(r, 'completedBy') || r.owner_user || '—')}</td>

@@ -46,7 +46,42 @@ tare). On submit it's split into one record per UID (`splitBy: 'lines'` on
 the station; `splitRecords` in `ops_form.html`), each holding only its own
 rows and totals, so everything downstream still sees one package per
 record. With more than one UID on the form the Metrc-adjustment fields hide;
-they're filled in per intake afterwards from Harvest Intakes. Take Down (station key `dry_check`)
+they're filled in per intake afterwards from Harvest Intakes.
+
+**Wet Intake: Metrc details come from the Canix sync.** The form doesn't ask
+for the farm license, CID, manifest # or driver (fields marked `fromCanix` in
+`operations_stations.js`, hidden by `ops_form.html` except on Edit) — the
+crew scans the package UID and weighs. Scanning a UID Canix knows also picks
+the row's strain (`canixStrainForUid` in `ops_common.js`, from
+`data/canix_inventory.json`; only when that strain is in the Strain Library,
+by name or alias). Every Canix sync (`scripts/canix_sync.py`,
+`fill_intakes_from_canix`, every 3 hours) takes each submitted intake from the
+last 45 days with no manifest # and no `canixSyncedAt`, finds its package —
+the full tag, or a tail that only one package fits (shipped up to 10 days
+before the intake date or the day after, then the same strain) — and calls
+the Supabase function `fill_intake_from_canix` with the service role key,
+which fills only blank fields:
+
+- `manifestNo` — the transfer's manifest number
+- `pid` — the shipping license as its Farm License code (`027` for
+  CCL26-0000027, from `ref_codes`), or the full license when none matches
+- `cid` — the CID last used for that license, else the Metrc harvest name's
+  prefix when it's a CID code (`AGP0027-…` → AGP)
+- `canixSync` (full tag, transfer id, Metrc weight, harvest name) and
+  `canixSyncedAt`
+
+A farm we have no Canix key for (AutoCanna, Freedom Flora…) has no transfer we
+can list; its package is found once it's received at our facility in Metrc,
+which gives the license and CID but no manifest #. Until a sync fills an
+intake, Harvest Intakes and the Metrc Queue show **Waiting for Metrc sync**
+(`awaitingCanix`); filled without a manifest # they show **Manifest #
+needed** (`canixNoManifest`) — type it in with Edit from the manifest photo.
+Canix has no driver name; it's on the manifest photo. The edit history
+records the fill as "Canix sync", and it doesn't count toward the Edited
+pill. Intakes from before this change already have a manifest # typed in, so
+the sync leaves them alone.
+
+Take Down (station key `dry_check`)
 boxes the dried material under a new package UID (**New Dry UID**, field
 `sourceUid`). The form starts
 with the drying room, then the package from a dropdown of what's still
@@ -337,7 +372,7 @@ started from the dashboard's Start batch, comes up with its request selected.
 
 **Harvest Intakes** (`harvest_intakes.html`, hub card `harvest_intakes` under
 Processing) lists every Wet Intake, drafts and submitted, newest first, with
-a "Metrc not adjusted" filter. Clicking one shows the whole record. Access is
+a "Waiting for sync" filter (see Metrc details above) and a "Metrc not adjusted" filter. Clicking one shows the whole record. Access is
 two checkboxes in the admin user editor: View (`harvest_intakes` column) and
 Edit (`harvest intakes edit`, implies view), turned into `2cw_intake_access`
 at hub login. Edit reopens a submitted intake in `ops_form.html?edit=<id>`:

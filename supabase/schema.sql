@@ -236,6 +236,31 @@ grant select on public.operations_forms to service_role;
 revoke all on function delete_operations_form(uuid, text, text) from public, anon, authenticated;
 grant execute on function delete_operations_form(uuid, text, text) to service_role;
 
+-- Wet Intake's farm license, CID and manifest # aren't asked for on the form
+-- any more; scripts/canix_sync.py (fill_intakes_from_canix) finds each
+-- submitted intake's package on its Metrc transfer and calls this with the
+-- service role key. It only fills keys that are still blank — anything typed
+-- in on Edit stays — merges in the database so a save from a tablet at the
+-- same moment isn't overwritten, and runs once per intake (canixSyncedAt).
+-- The edit-history trigger records it as 'Canix sync'.
+create or replace function fill_intake_from_canix(p_id uuid, p_fill jsonb)
+returns boolean
+language plpgsql security definer set search_path = public as $$
+begin
+  perform set_config('app.actor', 'Canix sync', true);
+  update operations_forms o
+     set fields = o.fields || coalesce((
+           select jsonb_object_agg(e.key, e.value) from jsonb_each(p_fill) e
+            where coalesce(o.fields ->> e.key, '') = ''), '{}'::jsonb)
+   where o.id = p_id and o.station_key = 'intake_wet' and o.status = 'submitted'
+     and coalesce(o.fields ->> 'canixSyncedAt', '') = '';
+  return found;
+end;
+$$;
+
+revoke all on function fill_intake_from_canix(uuid, jsonb) from public, anon, authenticated;
+grant execute on function fill_intake_from_canix(uuid, jsonb) to service_role;
+
 alter table operations_forms_history enable row level security;   -- no policies: service role only
 revoke all on public.operations_forms_history from anon, authenticated;
 grant select on public.operations_forms_history to service_role;
