@@ -482,7 +482,8 @@ function mountQueueBanner(elId) {
 }
 
 // ── Daily summary (station.dailySummary) ────────────────────────────────────
-// The hand-kept notebook page for one day: every employee # down the side,
+// The hand-kept notebook page for one day: every employee # down the side
+// (most pounds first),
 // every flavor page across the top, the weight in each cell. `pages` are
 // {id, status, strain, f: fields}; rows stamped with their own day
 // (`cfg.dateCol`) count on that day, otherwise every row on the page does
@@ -510,11 +511,12 @@ function dailySummaryGrid(cfg, pages, date, keep) {
     grid[emp] = grid[emp] || {};
     grid[emp][p.id] = (grid[emp][p.id] || 0) + g;
   }));
-  const emps = Object.keys(grid).sort((a, b) => (Number(a) - Number(b)) || a.localeCompare(b));
   const extraTotal = used.reduce((a, p) => a + extraOf(p), 0);
   const extra = extraTotal > 0 ? { l: X.l, of: extraOf, total: extraTotal } : null;
   const colTot = (p) => emps.reduce((a, e) => a + (grid[e][p.id] || 0), 0) + extraOf(p);
   const empTot = (e) => Object.values(grid[e]).reduce((a, g) => a + g, 0);
+  // Most pounds first; equal totals by employee #.
+  const emps = Object.keys(grid).sort((a, b) => (empTot(b) - empTot(a)) || (Number(a) - Number(b)) || a.localeCompare(b));
   return { used, emps, grid, extra, colTot, empTot, all: emps.reduce((a, e) => a + empTot(e), 0) + extraTotal, inLb, dp: inLb ? 2 : 0 };
 }
 
