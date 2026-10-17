@@ -387,13 +387,13 @@
     const box = document.getElementById('daysum');
     const d = daySumData();
     if (!d) { box.style.display = 'none'; box.innerHTML = ''; return; }
-    const { s, cfg, used, emps, grid, colTot, empTot, all, inLb, dp } = d;
+    const { s, cfg, used, emps, grid, extra, colTot, empTot, all, inLb, dp } = d;
     box.style.display = 'block';
     // Shown even on a day with nothing weighed, so the button is always
     // where people expect it.
     const head = `<div class="daysum-head"><div><h2>${esc(t(cfg.title || s.title))}</h2><div class="hint">${t(L.sumHint)}</div></div>` +
-      `<button type="button" class="daysum-send" id="daysum-send"${emps.length ? '' : ' disabled'}>${t(L.sumSend)}</button></div>`;
-    if (!emps.length) { box.innerHTML = head + `<div class="hint">${t(L.sumNone)}</div>`; return; }
+      `<button type="button" class="daysum-send" id="daysum-send"${emps.length || extra ? '' : ' disabled'}>${t(L.sumSend)}</button></div>`;
+    if (!emps.length && !extra) { box.innerHTML = head + `<div class="hint">${t(L.sumNone)}</div>`; return; }
     box.innerHTML = head +
       `<div class="daysum-scroll"><table class="sum-table"><thead><tr><th>${esc(t(cfg.empLabel || L.sumEmp))}</th><th class="name">${t(L.sumName)}</th>` +
       used.map((p) => `<th>${esc(p.strain || '—')}<br>${esc(uid4(p))}</th>`).join('') +
@@ -401,6 +401,10 @@
       emps.map((e) => `<tr><td>${esc(e)}</td><td class="name">${esc(nameOf(e))}</td>` +
         used.map((p) => (grid[e][p.id] ? `<td>${fmtNum(grid[e][p.id], dp)}</td>` : '<td class="zero">·</td>')).join('') +
         `<td class="tot">${fmtNum(empTot(e), dp)}</td></tr>`).join('') +
+      // Bucking's recovered from leaf: nobody's, its own row under the people.
+      (extra ? `<tr><td></td><td class="name">${esc(t(extra.l))}</td>` +
+        used.map((p) => (extra.of(p) ? `<td>${fmtNum(extra.of(p), dp)}</td>` : '<td class="zero">·</td>')).join('') +
+        `<td class="tot">${fmtNum(extra.total, dp)}</td></tr>` : '') +
       `</tbody><tfoot><tr><td>${t(L.sumTotal)}</td><td></td>` + used.map((p) => `<td>${fmtNum(colTot(p), dp)}</td>`).join('') +
       `<td class="tot">${fmtNum(all, dp)}</td></tr></tfoot></table></div>`;
     document.getElementById('daysum-send').onclick = makeDaySumImage;
@@ -414,8 +418,8 @@
   // tap, and drawing comes first.)
   async function makeDaySumImage() {
     const d = daySumData();
-    if (!d || !d.emps.length) return;
-    const { s, cfg, used, emps, grid, colTot, empTot, all, inLb, dp } = d;
+    if (!d || (!d.emps.length && !d.extra)) return;
+    const { s, cfg, used, emps, grid, extra, colTot, empTot, all, inLb, dp } = d;
     try { await document.fonts.ready; } catch {}
     const SANS = "'DM Sans', Arial, sans-serif", HEAD = "'Bebas Neue', 'Arial Narrow', Arial, sans-serif", MONO = "'DM Mono', Menlo, monospace";
     const C = { ink: '#16181d', sub: '#5b6170', line: '#e3e5ea', band: '#f6f7f9', head: '#eef7f2', green: '#3db87a', paper: '#ffffff' };
@@ -427,13 +431,13 @@
     const fit = (font, texts, min) => { ctx.font = font; return Math.max(min, ...texts.map((x) => ctx.measureText(x).width)) + 32; };
     const empHead = t({ en: 'Emp #', es: 'N.º' });
     const empW = Math.max(fit(F.emp, emps, 60), fit(F.th, [empHead], 0));
-    const nameW = fit(F.name, emps.map(nameOf), 160);
+    const nameW = fit(F.name, [...emps.map(nameOf), extra ? t(extra.l) : ''], 160);
     const flavW = used.map((p) => Math.min(260, fit(F.th, [p.strain || '—'], 110)));
     const totW = fit(F.tot, [n(all) + ' ' + (inLb ? 'lbs' : 'g')], 120);
     const PAD = 36, ROWH = 46, HEADH = 70, TOP = 150, FOOTH = 60;
     const tableW = empW + nameW + flavW.reduce((a, w) => a + w, 0) + totW;
     const W = Math.max(720, Math.ceil(tableW + PAD * 2));
-    const H = TOP + HEADH + (emps.length + 1) * ROWH + FOOTH + 20;
+    const H = TOP + HEADH + (emps.length + (extra ? 1 : 0) + 1) * ROWH + FOOTH + 20;
     cv.width = W; cv.height = H;
     ctx.fillStyle = C.paper; ctx.fillRect(0, 0, W, H);
     ctx.textBaseline = 'middle';
@@ -473,6 +477,15 @@
       cell(cols.length - 1, n(empTot(e)), mid, F.tot);
       y += ROWH;
     });
+    // Recovered from leaf (Bucking): nobody's, its own row under the people.
+    if (extra) {
+      ctx.fillStyle = C.head; ctx.fillRect(PAD, y, tableW, ROWH);
+      const mid = y + ROWH / 2;
+      cell(1, t(extra.l), mid, F.name, C.ink);
+      used.forEach((p, i) => cell(i + 2, extra.of(p) ? n(extra.of(p)) : '·', mid, F.num, extra.of(p) ? C.ink : C.line));
+      cell(cols.length - 1, n(extra.total), mid, F.tot);
+      y += ROWH;
+    }
     // Totals row
     ctx.fillStyle = C.ink; ctx.fillRect(PAD, y, tableW, 2);
     const mid = y + ROWH / 2 + 2;

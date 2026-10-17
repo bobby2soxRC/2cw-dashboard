@@ -137,6 +137,16 @@ function weighedByStation(pages, win) {
         const strain = p.strain || (p.fields || {}).strain;
         if (strain) strains.add(strain);
       });
+      // Bucking's recovered from leaf: weighed, but nobody's.
+      if (cfg.extra) ((p.fields || {})[cfg.extra.lines] || []).forEach((r) => {
+        const day = cfg.dateCol ? String(r[cfg.dateCol] || p.work_date) : p.work_date;
+        const v = num(r[cfg.extra.valueCol]);
+        if (day < win.from || day > win.to || !v) return;
+        lb += v * toLb;
+        if (p.status === 'draft') open.add(p.id);
+        const strain = p.strain || (p.fields || {}).strain;
+        if (strain) strains.add(strain);
+      });
     });
     if (lb) by[station.key] = { lb, people: people.size, openPages: open.size, strains: [...strains] };
   });

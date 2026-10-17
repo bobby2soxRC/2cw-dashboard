@@ -2296,14 +2296,14 @@
     const pages = SUM.rows.filter((r) => r.id !== draftId)
       .map((r) => ({ id: r.id, status: r.status, f: r.fields || {}, strain: r.strain || (r.fields || {}).strain }));
     if (cfg.dateCol || (values.date || todayStr()) === SUM.date) pages.push({ id: draftId, status: editMode ? 'submitted' : 'draft', f: values, strain: values.strain, cur: true });
-    const { used, emps, grid, colTot, empTot, all, inLb, dp } = dailySummaryGrid(cfg, pages, SUM.date, (p) => p.cur);
+    const { used, emps, grid, extra, colTot, empTot, all, inLb, dp } = dailySummaryGrid(cfg, pages, SUM.date, (p) => p.cur);
     // Name beside each employee # (Labor Rates → Badge #); blank for a badge
     // nobody has mapped, or a row logged by name (Bucking's who).
     const nameOf = (e) => SUM.names[badgeKey(e)] || '';
 
     const head = `<div class="sum-head"><div><h2>${t(cfg.title || SM.title)}</h2><div class="hint">${t(cfg.hint || SM.hint)}</div></div>` +
       `<input type="date" id="sum-date" value="${escapeAttr(SUM.date)}"></div>`;
-    if (!emps.length) {
+    if (!emps.length && !extra) {
       box.innerHTML = head + `<div class="sum-empty">${t(SM.none)}</div>`;
     } else {
       const uid4 = (p) => p.f.sourceUid ? `…${String(p.f.sourceUid).slice(-4)}` : '';
@@ -2314,6 +2314,10 @@
         emps.map((e) => `<tr><td>${escapeHtml(e)}</td><td class="name">${escapeHtml(nameOf(e))}</td>` +
           used.map((p) => grid[e][p.id] ? `<td>${fmtNum(grid[e][p.id], dp)}</td>` : '<td class="zero">·</td>').join('') +
           `<td class="tot">${fmtNum(empTot(e), dp)}</td>${lbCol(empTot(e))}</tr>`).join('') +
+        // Bucking's recovered from leaf: nobody's, its own row under the people.
+        (extra ? `<tr><td></td><td class="name">${t(extra.l)}</td>` +
+          used.map((p) => extra.of(p) ? `<td>${fmtNum(extra.of(p), dp)}</td>` : '<td class="zero">·</td>').join('') +
+          `<td class="tot">${fmtNum(extra.total, dp)}</td>${lbCol(extra.total)}</tr>` : '') +
         `</tbody><tfoot><tr><td>${t(SM.allEmp)}</td><td></td>` + used.map((p) => `<td>${fmtNum(colTot(p), dp)}</td>`).join('') +
         `<td class="tot">${fmtNum(all, dp)}</td>${lbCol(all)}</tr></tfoot></table></div>`;
     }

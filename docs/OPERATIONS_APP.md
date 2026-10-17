@@ -643,7 +643,7 @@ on hold at Take Down shows a warning to release it first. The
 
 **Day tabs.** A batch is often bucked over several days, so like Hand Trim
 and Pre-Roll the page has a tab per day under the flavor tabs (`dayTabs:
-{ lines: ['bucked', 'boxes', 'trim'] }`): one per day with anything
+{ lines: ['bucked', 'recovered', 'boxes', 'trim'] }`): one per day with anything
 logged, the Start Date, today, and any added with "+ Add day" (`runDays`).
 The Boxes, Bucked Flower and Trim logs show the picked day's rows and stamp
 new ones with that day, so a box or a person's flower weighed yesterday can
@@ -703,6 +703,14 @@ they're filled), and the rows logged so far underneath, newest first:
   the Take Down weight minus that.
 - `bucked` — bucked flower by person: `who` is the employee #, or a name for
   someone without one, and lbs. Totals to `buckedFlowerLb`.
+- `recovered` — **Recovered from Leaf**: bucked flower sifted back out of
+  the leaf, lbs, one row per weigh, nobody's. `buckedFlowerLb` is `bucked`
+  plus `recovered` (`buckedLb` in `operations_stations.js`, also used for
+  an open page's bucked-so-far in `buckedLots`), so yield, Hand Trim's
+  starting weight and the dashboards count it; People on this Batch and the
+  by-person labor (`crewLaborLog`) don't. The daily summary shows it as a
+  row of its own under the people (`dailySummary.extra`), on the form, the
+  Today board, its image and the emailed report's bucking pounds.
 - `trim` — trim weighed during the batch, lbs. Totals to `trimLb`.
 - `stems` — stems ("Palo" in Spanish, required) weighed at close-out, lbs,
   one row per bin or bag. Totals to `stemLb`. Pages saved when stems was a

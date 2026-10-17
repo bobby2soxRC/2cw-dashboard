@@ -160,6 +160,9 @@ function totalsBlock(inputKey, outputKeys) {
 // What Bucking's loss is worked out against: everything that comes out of
 // the boxes.
 const BUCK_OUTPUTS = ['buckedFlowerLb', 'trimLb', 'stemLb', 'moldLb', 'floorWasteLb'];
+// A Bucking page's bucked flower: everyone's (`bucked`) plus what was
+// recovered from the leaf (`recovered`).
+const buckedLb = (v) => [...(v.bucked || []), ...(v.recovered || [])].reduce((a, r) => a + num(r.weightLb), 0);
 
 const OPERATIONS_STATIONS = [
   // ── CULTIVATION (PLACEHOLDER) ────────────────────────────────────────────
@@ -559,7 +562,7 @@ const OPERATIONS_STATIONS = [
     // like Hand Trim and Pre-Roll. Boxes, bucked flower and trim show the
     // picked day and stamp new rows with it (the chips total bucked
     // flower); stems are close-out, so they stay whole-batch.
-    dayTabs: { lines: ['bucked', 'boxes', 'trim'] },
+    dayTabs: { lines: ['bucked', 'recovered', 'boxes', 'trim'] },
     // The daily tally: person × flavor for one day. Each logged row carries
     // the day it was weighed (`day`), so a batch that runs three days shows
     // only that day's pounds.
@@ -567,7 +570,11 @@ const OPERATIONS_STATIONS = [
                     title: { en: 'Daily Summary — Bucked by Person', es: 'Resumen del día — desvarado por persona' },
                     hint: { en: 'Every bucking page, pounds weighed that day. Open pages included.',
                             es: 'Todas las hojas de desvarado, libras pesadas ese día. Incluye hojas abiertas.' },
-                    empLabel: { en: 'Employee # / Name', es: 'N.º / nombre' } },
+                    empLabel: { en: 'Employee # / Name', es: 'N.º / nombre' },
+                    // Flower recovered from the leaf isn't anyone's: one row
+                    // of its own under the people.
+                    extra: { lines: 'recovered', valueCol: 'weightLb',
+                             l: { en: 'Recovered from leaf', es: 'Recuperado de la hoja' } } },
     fields: [
       F.date(),
       F.project(),
@@ -611,9 +618,20 @@ const OPERATIONS_STATIONS = [
           { k: 'weightLb', t: 'number', l: { en: 'Weight (lbs)', es: 'Peso (lbs)' }, min: 0, step: 0.01, req: true, dp: 2 }
         ],
         totalCol: 'weightLb' },
+      // Flower sifted back out of the leaf, weighed on its own — nobody's,
+      // so it's not in the by-person log, but it is bucked flower.
+      { k: 'recovered', t: 'lineitems', entry: true,
+        l: { en: 'Recovered from Leaf', es: 'Recuperado de la hoja' },
+        hint: { en: 'Bucked flower sifted back out of the leaf, each time it’s weighed. It counts in the bucked flower total.',
+                es: 'Flor desvarada que se saca de la hoja al colarla, cada vez que se pesa. Cuenta en el total de flor desvarada.' },
+        cols: [
+          { k: 'weightLb', t: 'number', l: { en: 'Weight (lbs)', es: 'Peso (lbs)' }, min: 0, step: 0.01, req: true, dp: 2 }
+        ],
+        totalCol: 'weightLb' },
       { k: 'buckedFlowerLb', t: 'calc',
-        calc: (v) => (v.bucked || []).reduce((a, r) => a + num(r.weightLb), 0),
-        l: { en: 'Total Bucked Flower (lbs)', es: 'Flor desvarada total (lbs)' } },
+        calc: (v) => buckedLb(v),
+        l: { en: 'Total Bucked Flower (lbs)', es: 'Flor desvarada total (lbs)' },
+        hint: { en: 'By person plus recovered from leaf.', es: 'Por persona más lo recuperado de la hoja.' } },
       { k: 'buckerCount', t: 'calc', dp: 0,
         calc: (v) => new Set((v.bucked || []).map((r) => String(r.who || '').trim().toLowerCase()).filter(Boolean)).size,
         l: { en: 'People on this Batch', es: 'Personas en este lote' } },
@@ -1314,5 +1332,5 @@ const crewOnRun = (rows) => new Set([...crewLatest(rows).values()].filter((r) =>
 const processTitle = (k) => (STATION_BY_KEY[k] && STATION_BY_KEY[k].title) || LABOR_PROCESSES[k] || { en: k || '—', es: k || '—' };
 
 if (typeof module !== 'undefined') {
-  module.exports = { crewLatest, crewOnRun, OPERATIONS_STATIONS, STATION_BY_KEY, BIOMASS, SELLABLE, PREFILL_MAP, PIPELINE_ORDER, G_PER_LB, LABOR_PROCESSES, WORK_LOCATIONS, projectRunsOn, projectHours, projectRoles, processTitle };
+  module.exports = { crewLatest, crewOnRun, OPERATIONS_STATIONS, STATION_BY_KEY, BIOMASS, SELLABLE, PREFILL_MAP, PIPELINE_ORDER, G_PER_LB, LABOR_PROCESSES, WORK_LOCATIONS, projectRunsOn, projectHours, projectRoles, processTitle, buckedLb };
 }

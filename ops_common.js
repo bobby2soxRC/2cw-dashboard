@@ -286,7 +286,7 @@ function buckedLots(bucks, downs, intakes, openBucks) {
   const r2 = (x) => Math.round(x * 100) / 100;
   const open = (openBucks || []).filter((d) => d.fields && d.fields.sourceUid).map((d) => ({
     ...d.fields, strain: d.fields.strain || d.strain || '', date: d.fields.date || d.work_date || '',
-    buckedFlowerLb: r2((d.fields.bucked || []).reduce((a, x) => a + (Number(x.weightLb) || 0), 0)),
+    buckedFlowerLb: r2(buckedLb(d.fields)),
     inProgress: true, buckDraftId: d.id }))
     // Nothing bucked yet means nothing to trim yet.
     .filter((l) => l.buckedFlowerLb > 0);
@@ -488,15 +488,20 @@ function mountQueueBanner(elId) {
 // (`cfg.dateCol`) count on that day, otherwise every row on the page does
 // (the caller passes only that day's pages). A page shows when it has a
 // weight on the day, or when `keep(page)` says so (the form's own page).
+// `cfg.extra` (Bucking's recovered from leaf) is weight that's nobody's:
+// one row of its own under the people (`extra.of(page)`, `extra.total`),
+// counted in the flavor and grand totals.
 // Grams (Smalls) or pounds (Bucking; Hand Trim weighs in grams and shows
 // pounds — `fromGrams`). Used by the form's Daily Summary and the Today
 // board's.
 function dailySummaryGrid(cfg, pages, date, keep) {
   const onDay = (r) => !cfg.dateCol || String(r[cfg.dateCol] || '') === date;
-  const used = pages.filter((p) => (p.f[cfg.lines] || []).some((r) => onDay(r) && num(r[cfg.valueCol]) > 0) || (keep && keep(p)));
-  used.sort((a, b) => String(a.strain || '').localeCompare(String(b.strain || '')));
   const inLb = cfg.unit === 'lb';
   const scale = cfg.fromGrams ? 1 / G_PER_LB : 1;
+  const X = cfg.extra || null;
+  const extraOf = (p) => (X ? (p.f[X.lines] || []).filter(onDay).reduce((a, r) => a + num(r[X.valueCol]), 0) * scale : 0);
+  const used = pages.filter((p) => (p.f[cfg.lines] || []).some((r) => onDay(r) && num(r[cfg.valueCol]) > 0) || extraOf(p) > 0 || (keep && keep(p)));
+  used.sort((a, b) => String(a.strain || '').localeCompare(String(b.strain || '')));
   const grid = {};   // emp -> page id -> grams (or lbs)
   used.forEach((p) => (p.f[cfg.lines] || []).filter(onDay).forEach((r) => {
     const emp = String(r[cfg.empCol] || '').trim();
@@ -506,9 +511,11 @@ function dailySummaryGrid(cfg, pages, date, keep) {
     grid[emp][p.id] = (grid[emp][p.id] || 0) + g;
   }));
   const emps = Object.keys(grid).sort((a, b) => (Number(a) - Number(b)) || a.localeCompare(b));
-  const colTot = (p) => emps.reduce((a, e) => a + (grid[e][p.id] || 0), 0);
+  const extraTotal = used.reduce((a, p) => a + extraOf(p), 0);
+  const extra = extraTotal > 0 ? { l: X.l, of: extraOf, total: extraTotal } : null;
+  const colTot = (p) => emps.reduce((a, e) => a + (grid[e][p.id] || 0), 0) + extraOf(p);
   const empTot = (e) => Object.values(grid[e]).reduce((a, g) => a + g, 0);
-  return { used, emps, grid, colTot, empTot, all: emps.reduce((a, e) => a + empTot(e), 0), inLb, dp: inLb ? 2 : 0 };
+  return { used, emps, grid, extra, colTot, empTot, all: emps.reduce((a, e) => a + empTot(e), 0) + extraTotal, inLb, dp: inLb ? 2 : 0 };
 }
 
 // ── Formatting ──────────────────────────────────────────────────────────────
