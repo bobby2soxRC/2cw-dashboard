@@ -481,6 +481,36 @@ function mountQueueBanner(elId) {
   setInterval(render, 5000);
 }
 
+// ── Daily summary (station.dailySummary) ────────────────────────────────────
+// The hand-kept notebook page for one day: every employee # down the side,
+// every flavor page across the top, the weight in each cell. `pages` are
+// {id, status, strain, f: fields}; rows stamped with their own day
+// (`cfg.dateCol`) count on that day, otherwise every row on the page does
+// (the caller passes only that day's pages). A page shows when it has a
+// weight on the day, or when `keep(page)` says so (the form's own page).
+// Grams (Smalls) or pounds (Bucking; Hand Trim weighs in grams and shows
+// pounds — `fromGrams`). Used by the form's Daily Summary and the Today
+// board's.
+function dailySummaryGrid(cfg, pages, date, keep) {
+  const onDay = (r) => !cfg.dateCol || String(r[cfg.dateCol] || '') === date;
+  const used = pages.filter((p) => (p.f[cfg.lines] || []).some((r) => onDay(r) && num(r[cfg.valueCol]) > 0) || (keep && keep(p)));
+  used.sort((a, b) => String(a.strain || '').localeCompare(String(b.strain || '')));
+  const inLb = cfg.unit === 'lb';
+  const scale = cfg.fromGrams ? 1 / G_PER_LB : 1;
+  const grid = {};   // emp -> page id -> grams (or lbs)
+  used.forEach((p) => (p.f[cfg.lines] || []).filter(onDay).forEach((r) => {
+    const emp = String(r[cfg.empCol] || '').trim();
+    const g = num(r[cfg.valueCol]) * scale;
+    if (!emp || !g) return;
+    grid[emp] = grid[emp] || {};
+    grid[emp][p.id] = (grid[emp][p.id] || 0) + g;
+  }));
+  const emps = Object.keys(grid).sort((a, b) => (Number(a) - Number(b)) || a.localeCompare(b));
+  const colTot = (p) => emps.reduce((a, e) => a + (grid[e][p.id] || 0), 0);
+  const empTot = (e) => Object.values(grid[e]).reduce((a, g) => a + g, 0);
+  return { used, emps, grid, colTot, empTot, all: emps.reduce((a, e) => a + empTot(e), 0), inLb, dp: inLb ? 2 : 0 };
+}
+
 // ── Formatting ──────────────────────────────────────────────────────────────
 const fmtNum = (x, dp = 2) =>
   (x === null || x === undefined || !Number.isFinite(Number(x)))

@@ -737,6 +737,13 @@ Every daily summary (Bucking, Hand Trim, Smalls) has a Name column beside
 the employee #, from the admin panel's Labor Rates → Badge #
 (`netlify/functions/badge-names.js`). It's blank for a badge nobody has
 mapped, and for Bucking rows logged by name.
+The same table is on the Today board (`operations_today.html`) when one of
+those stations is picked, above its forms, for the day being looked at
+(`dailySummaryGrid` in `ops_common.js` builds it for both). **💬 Send as
+text** there turns it into a text message — one line per person, each
+flavor lettered when there are several ("83 Rosa Baeza: A 4.20 · B 20.70 =
+24.90"), then the totals — through the phone's share sheet, or copied to
+the clipboard on a computer.
 Bucking's by-person rows also feed `crewLaborLog` (a touch, no hours; hours
 come from the Labor Log).
 

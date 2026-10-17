@@ -67,6 +67,22 @@
     .row-edit{flex:0 0 auto;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);
       border:1px solid var(--blue);border-radius:8px;padding:0 12px;min-height:36px;display:inline-flex;align-items:center;text-decoration:none}
 
+    /* Daily summary (Bucking, Hand Trim, Smalls): the notebook page, people × flavors. */
+    .daysum{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:18px}
+    .daysum-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+    .daysum-head h2{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.04em;font-weight:400}
+    .daysum-head .hint{font-size:.75rem;color:var(--muted);margin-top:2px}
+    .daysum-send{background:transparent;border:1px solid var(--green);color:var(--green);border-radius:10px;min-height:44px;padding:0 14px;
+      font-family:'DM Mono',monospace;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+    .daysum-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .sum-table{border-collapse:collapse;font-family:'DM Mono',monospace;font-size:.85rem;min-width:100%}
+    .sum-table th,.sum-table td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap}
+    .sum-table th{font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;vertical-align:bottom;white-space:normal;min-width:72px}
+    .sum-table th:first-child,.sum-table td:first-child{text-align:left;position:sticky;left:0;background:var(--surface)}
+    .sum-table th.name,.sum-table td.name{text-align:left;font-family:'DM Sans',sans-serif;color:var(--subtext)}
+    .sum-table td.zero{color:var(--muted)}
+    .sum-table .tot,.sum-table tfoot td{color:var(--text);font-weight:500}
+
     .empty{color:var(--muted);text-align:center;padding:60px 0;font-size:.9rem}
     .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
     .setup{background:var(--surface);border:1px dashed var(--border);border-radius:14px;padding:20px;color:var(--subtext);font-size:.85rem;line-height:1.6}
@@ -92,6 +108,7 @@
     <button id="pdf-btn" class="pdf-btn" disabled>📄 Share PDF</button>
   </div>
   <div class="filters" id="filters"></div>
+  <div id="daysum" class="daysum" style="display:none"></div>
   <div id="board"></div>
   <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution</footer>
 </main>
@@ -124,6 +141,12 @@
     pdfBtn: { en: '📄 Share PDF', es: '📄 Compartir PDF' },
     pdfBusy: { en: '⏳ Preparing…', es: '⏳ Preparando…' },
     pdfFailed: { en: 'PDF failed: ', es: 'Falló el PDF: ' },
+    sumHint: { en: 'Everyone’s weights this day, open pages included.', es: 'Los pesos de todos este día, incluye hojas abiertas.' },
+    sumEmp: { en: 'Employee #', es: 'N.º empl.' },
+    sumName: { en: 'Name', es: 'Nombre' },
+    sumTotal: { en: 'Total', es: 'Total' },
+    sumSend: { en: '💬 Send as text', es: '💬 Enviar como texto' },
+    sumCopied: { en: '✓ Copied — paste in a text', es: '✓ Copiado — péguelo en un mensaje' },
     reportTitle: { en: 'Daily Operations Report', es: 'Reporte diario de operaciones' },
     summary: { en: 'Summary', es: 'Resumen' },
     station: { en: 'Station', es: 'Estación' },
@@ -283,6 +306,7 @@
 
   function render() {
     const filtered = stationFilter ? rows.filter((r) => r.station_key === stationFilter) : rows;
+    renderDaySum();
     if (!pdfBusy) pdfBtn.disabled = !filtered.length;
     document.getElementById('sub').textContent =
       `${filtered.length} ${filtered.length === 1 ? 'form' : 'forms'}${day === todayStr() ? ' · ' + dayLabel(day) : ''}`;
@@ -311,6 +335,91 @@
             ? `<a class="row-edit" href="/ops_form.html?station=${encodeURIComponent(r.station_key)}&edit=${encodeURIComponent(r.id)}&from=today">${t(L.edit)}</a>` : ''}</div>
       </div>`;
     }).join('');
+  }
+
+  // ── Daily summary (station.dailySummary) ───────────────────────────────
+  // With one station picked that keeps a daily summary (Bucking, Hand Trim,
+  // Smalls), the notebook page sits above its forms: employee # and name
+  // down the side, each flavor across, that day's weights and totals —
+  // dailySummaryGrid in ops_common.js, the same table as under the form.
+  // "Send as text" turns it into a text message (the phone's share sheet,
+  // or the clipboard where there is none).
+  let badgeNames = {};
+  loadBadgeNames().then((n) => { badgeNames = n || {}; renderDaySum(); });
+  const nameOf = (e) => badgeNames[badgeKey(e)] || '';
+  const uid4 = (p) => (p.f.sourceUid ? `…${String(p.f.sourceUid).slice(-4)}` : '');
+  const flavorOf = (p) => [p.strain || '—', uid4(p)].filter(Boolean).join(' ');
+
+  function daySumData() {
+    const s = stationFilter && STATION_BY_KEY[stationFilter];
+    if (!s || !s.dailySummary) return null;
+    const pages = rows.filter((r) => r.station_key === s.key)
+      .map((r) => ({ id: r.id, status: r.status, f: r.fields || {}, strain: r.strain || (r.fields || {}).strain }));
+    return { s, cfg: s.dailySummary, ...dailySummaryGrid(s.dailySummary, pages, day) };
+  }
+
+  function renderDaySum() {
+    const box = document.getElementById('daysum');
+    const d = daySumData();
+    if (!d || !d.emps.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+    const { s, cfg, used, emps, grid, colTot, empTot, all, inLb, dp } = d;
+    box.style.display = 'block';
+    box.innerHTML = `<div class="daysum-head"><div><h2>${esc(t(cfg.title || s.title))}</h2><div class="hint">${t(L.sumHint)}</div></div>` +
+      `<button type="button" class="daysum-send" id="daysum-send">${t(L.sumSend)}</button></div>` +
+      `<div class="daysum-scroll"><table class="sum-table"><thead><tr><th>${esc(t(cfg.empLabel || L.sumEmp))}</th><th class="name">${t(L.sumName)}</th>` +
+      used.map((p) => `<th>${esc(p.strain || '—')}<br>${esc(uid4(p))}</th>`).join('') +
+      `<th class="tot">${t(L.sumTotal)} ${inLb ? 'lbs' : 'g'}</th></tr></thead><tbody>` +
+      emps.map((e) => `<tr><td>${esc(e)}</td><td class="name">${esc(nameOf(e))}</td>` +
+        used.map((p) => (grid[e][p.id] ? `<td>${fmtNum(grid[e][p.id], dp)}</td>` : '<td class="zero">·</td>')).join('') +
+        `<td class="tot">${fmtNum(empTot(e), dp)}</td></tr>`).join('') +
+      `</tbody><tfoot><tr><td>${t(L.sumTotal)}</td><td></td>` + used.map((p) => `<td>${fmtNum(colTot(p), dp)}</td>`).join('') +
+      `<td class="tot">${fmtNum(all, dp)}</td></tr></tfoot></table></div>`;
+    document.getElementById('daysum-send').onclick = sendDaySum;
+  }
+
+  // Plain text — a text message can't line up columns, so one line per
+  // person. With several flavors each gets a letter, listed at the top:
+  //   Bucking — Fri 10/16/26
+  //   A = Gelato #41 …0005
+  //   B = Canal St Runtz …0453
+  //
+  //   83 Rosa Baeza: A 4.20 · B 20.70 = 24.90
+  //   Total: A 60.40 · B 149.40 = 209.80 lbs
+  function daySumText(d) {
+    const { s, used, emps, grid, colTot, empTot, all, inLb, dp } = d;
+    const unit = inLb ? 'lbs' : 'g';
+    const n = (x) => fmtNum(x, dp);
+    const letter = (i) => String.fromCharCode(65 + i);
+    const many = used.length > 1;
+    const when = new Date(day + 'T12:00:00Z').toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US',
+      { weekday: 'short', month: 'numeric', day: 'numeric', year: '2-digit', timeZone: 'UTC' });
+    const cells = (val) => used.map((p, i) => (val(p) ? `${letter(i)} ${n(val(p))}` : '')).filter(Boolean).join(' · ');
+    const lines = [`${t(s.title)} — ${when}`];
+    lines.push(...(many ? used.map((p, i) => `${letter(i)} = ${flavorOf(p)}`) : [flavorOf(used[0])]), '');
+    emps.forEach((e) => {
+      const who = [e, nameOf(e)].filter(Boolean).join(' ');
+      lines.push(many ? `${who}: ${cells((p) => grid[e][p.id])} = ${n(empTot(e))}` : `${who}: ${n(empTot(e))}`);
+    });
+    lines.push(many ? `${t(L.sumTotal)}: ${cells(colTot)} = ${n(all)} ${unit}` : `${t(L.sumTotal)}: ${n(all)} ${unit}`);
+    return lines.join('\n');
+  }
+
+  async function sendDaySum() {
+    const d = daySumData();
+    if (!d || !d.emps.length) return;
+    const text = daySumText(d);
+    const btn = document.getElementById('daysum-send');
+    if (navigator.share && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      try { await navigator.share({ text }); return; }
+      catch (e) { if (e.name === 'AbortError') return; }
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      btn.textContent = t(L.sumCopied);
+      setTimeout(() => { btn.textContent = t(L.sumSend); }, 2500);
+    } catch {
+      window.prompt('', text);
+    }
   }
 
   // ── Day report PDF ─────────────────────────────────────────────────────

@@ -2296,24 +2296,7 @@
     const pages = SUM.rows.filter((r) => r.id !== draftId)
       .map((r) => ({ id: r.id, status: r.status, f: r.fields || {}, strain: r.strain || (r.fields || {}).strain }));
     if (cfg.dateCol || (values.date || todayStr()) === SUM.date) pages.push({ id: draftId, status: editMode ? 'submitted' : 'draft', f: values, strain: values.strain, cur: true });
-    const onDay = (r) => !cfg.dateCol || String(r[cfg.dateCol] || '') === SUM.date;
-    const used = pages.filter((p) => (p.f[cfg.lines] || []).some((r) => onDay(r) && num(r[cfg.valueCol]) > 0) || p.cur);
-    used.sort((a, b) => String(a.strain || '').localeCompare(String(b.strain || '')));
-
-    // Grams (Smalls) or pounds (Bucking; Hand Trim weighs in grams and
-    // shows pounds — `fromGrams`).
-    const inLb = cfg.unit === 'lb';
-    const dp = inLb ? 2 : 0;
-    const scale = cfg.fromGrams ? 1 / G_PER_LB : 1;
-    const grid = {};   // emp -> page id -> grams (or lbs)
-    used.forEach((p) => (p.f[cfg.lines] || []).filter(onDay).forEach((r) => {
-      const emp = String(r[cfg.empCol] || '').trim();
-      const g = num(r[cfg.valueCol]) * scale;
-      if (!emp || !g) return;
-      grid[emp] = grid[emp] || {};
-      grid[emp][p.id] = (grid[emp][p.id] || 0) + g;
-    }));
-    const emps = Object.keys(grid).sort((a, b) => (Number(a) - Number(b)) || a.localeCompare(b));
+    const { used, emps, grid, colTot, empTot, all, inLb, dp } = dailySummaryGrid(cfg, pages, SUM.date, (p) => p.cur);
     // Name beside each employee # (Labor Rates → Badge #); blank for a badge
     // nobody has mapped, or a row logged by name (Bucking's who).
     const nameOf = (e) => SUM.names[badgeKey(e)] || '';
@@ -2324,9 +2307,6 @@
       box.innerHTML = head + `<div class="sum-empty">${t(SM.none)}</div>`;
     } else {
       const uid4 = (p) => p.f.sourceUid ? `…${String(p.f.sourceUid).slice(-4)}` : '';
-      const colTot = (p) => emps.reduce((a, e) => a + (grid[e][p.id] || 0), 0);
-      const empTot = (e) => Object.values(grid[e]).reduce((a, g) => a + g, 0);
-      const all = emps.reduce((a, e) => a + empTot(e), 0);
       const lbCol = (g) => inLb ? '' : `<td class="tot">${fmtNum(g / G_PER_LB, 2)}</td>`;
       box.innerHTML = head + `<div class="li-scroll"><table class="sum-table"><thead><tr><th>${t(cfg.empLabel || SM.emp)}</th><th class="name">${t(SM.name)}</th>` +
         used.map((p) => `<th class="${p.cur ? 'cur' : ''}">${escapeHtml(p.strain || t(SW.untitled))}<br>${escapeHtml(uid4(p))}${p.status === 'draft' ? ` · ${t(SM.open)}` : ''}</th>`).join('') +
