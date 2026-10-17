@@ -76,7 +76,17 @@ which gives the license and CID but no manifest #. Until a sync fills an
 intake, Harvest Intakes and the Metrc Queue show **Waiting for Metrc sync**
 (`awaitingCanix`); filled without a manifest # they show **Manifest #
 needed** (`canixNoManifest`) — type it in with Edit from the manifest photo.
-Canix has no driver name; it's on the manifest photo. The edit history
+Canix has no driver name; it's on the manifest photo.
+
+**Check strain.** Scanning fills the strain only when the package was already
+in the last sync; otherwise the crew picks it (or types a new one under
+Other). The sync saves Canix's strain for the package (`canixSync.strain`),
+and Harvest Intakes (with a **Check strain** filter) and the Today board show
+**Check strain** when it isn't the intake's strain (`canixStrainMismatch` in
+`ops_common.js`). Canix names often differ from the library's, so they count
+as the same when Canix's name is the intake strain's library name or one of
+its aliases. It's worked out on the page, not stored: fixing the strain with
+Edit, or adding Canix's name as an alias in the Strain Library, clears it. The edit history
 records the fill as "Canix sync", and it doesn't count toward the Edited
 pill. Intakes from before this change already have a manifest # typed in, so
 the sync leaves them alone.

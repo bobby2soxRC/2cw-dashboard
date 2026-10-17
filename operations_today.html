@@ -71,6 +71,8 @@
     .pill{flex:0 0 auto;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border-radius:99px;border:1px solid var(--border)}
     .pill.draft{border-color:var(--gold);color:var(--gold)}
     .pill.submitted{border-color:var(--green);color:var(--green)}
+    .pill.check{border-color:var(--red);color:var(--red)}
+    .pills{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
     .row-meta{display:flex;justify-content:space-between;align-items:baseline;font-size:.8rem;color:var(--subtext);margin-top:10px}
     .row-headline{font-family:'DM Mono',monospace;font-size:1.1rem;color:var(--text)}
     .row-who{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:10px}
@@ -172,6 +174,7 @@
     connecting: { en: 'Connecting…', es: 'Conectando…' },
     allStations: { en: 'All stations', es: 'Todas las estaciones' },
     draftPill: { en: 'In progress', es: 'En curso' },
+    checkStrain: { en: 'Check strain', es: 'Revisar variedad' },
     submittedPill: { en: 'Submitted', es: 'Enviado' },
     updated: { en: 'updated', es: 'actualizado' },
     edit: { en: 'Edit', es: 'Editar' },
@@ -502,7 +505,11 @@
             <div class="row-strain">${esc(r.strain || r.fields.harvestBatchName || '—')}</div>${
               r.station_key === 'intake_wet' && destOf(r.fields) ? `<div class="row-dest${toFreezer(r.fields) ? ' frz' : ''}">${toFreezer(r.fields) ? '❄ ' : ''}${esc(pidFarm(r.fields.pid))} → ${esc(destOf(r.fields))}</div>` : ''}
           </div>
-          <span class="pill ${r.status}">${r.status === 'draft' ? t(L.draftPill) : t(L.submittedPill)}</span>
+          <div class="pills"><span class="pill ${r.status}">${r.status === 'draft' ? t(L.draftPill) : t(L.submittedPill)}</span>${
+            // Canix has a different strain for this Wet Intake's package
+            // (canixStrainMismatch in ops_common.js) — once the Strain
+            // Library has loaded, so an alias isn't flagged in the meantime.
+            ref && canixStrainMismatch(r, ref) ? `<span class="pill check" title="Canix: ${esc(canixStrainMismatch(r, ref))}">${t(L.checkStrain)}</span>` : ''}</div>
         </div>
         <div class="row-meta">
           <span>${headlineLabel ? amountLabel(station) : ''}</span>

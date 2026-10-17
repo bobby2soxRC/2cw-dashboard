@@ -49,7 +49,9 @@ The Wet Intake form no longer asks for farm license, CID, manifest # or
 driver: scan the UID and weigh. `scripts/canix_sync.py`
 (`fill_intakes_from_canix`) fills them in on submitted intakes through the
 Supabase function `fill_intake_from_canix`; until then the intake shows
-"Waiting for Metrc sync". Details: "Wet Intake: Metrc details come from the
+"Waiting for Metrc sync". When Canix's strain for the package isn't the
+intake's (allowing Strain Library aliases), Harvest Intakes and the Today
+board show "Check strain". Details: "Wet Intake: Metrc details come from the
 Canix sync" in `docs/OPERATIONS_APP.md`.
 
 ## Parked work

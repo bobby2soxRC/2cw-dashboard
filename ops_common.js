@@ -194,6 +194,29 @@ function canixNoManifest(rec) {
     !!f.canixSyncedAt && !String(f.manifestNo || '').trim();
 }
 
+// The strain Canix has for an intake's package (fields.canixSync.strain, from
+// the sync) when it isn't the strain on the intake — null when they agree or
+// there's nothing to compare. Canix names often differ from the Strain
+// Library's ("G41" for "Gelato #41"), so they agree when Canix's name is the
+// intake strain's library name or one of its aliases. `reference` is
+// loadReference()'s result; worked out on the page rather than stored, so
+// fixing the strain on Edit or adding the alias clears it straight away.
+function canixStrainMismatch(rec, reference) {
+  const f = (rec && rec.fields) || {};
+  if (!rec || rec.station_key !== 'intake_wet' || rec.status !== 'submitted') return null;
+  const canix = String((f.canixSync && f.canixSync.strain) || '').trim();
+  const mine = String(rec.strain || f.strain || '').trim();
+  if (!canix || !mine) return null;
+  const lc = (s) => String(s || '').trim().toLowerCase();
+  if (lc(canix) === lc(mine)) return null;
+  const names = new Set([lc(mine)]);
+  ((reference && reference.strains) || []).forEach((s) => {
+    const all = [s.name, ...(s.aliases || [])].map(lc);
+    if (all.includes(lc(mine))) all.forEach((n) => names.add(n));
+  });
+  return names.has(lc(canix)) ? null : canix;
+}
+
 // Package tag → Canix strain name, from the synced inventory
 // (data/canix_inventory.json — includes farm packages still In Transit to us).
 // Loaded once, on first use; the Wet Intake form uses it to fill a scanned
