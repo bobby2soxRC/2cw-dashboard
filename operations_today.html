@@ -85,6 +85,19 @@
     .sum-table td.zero{color:var(--muted)}
     .sum-table .tot,.sum-table tfoot td{color:var(--text);font-weight:500}
 
+    /* Image preview (Send as image), as on the Master Schedule. */
+    #img-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:80;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:calc(16px + env(safe-area-inset-top)) 12px 30px}
+    #img-bg.on{display:flex}
+    #img-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;width:100%;max-width:760px}
+    .img-ft{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+    .img-ft .spacer{flex:1}
+    #img-name{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--subtext);word-break:break-all}
+    #img-hint{font-size:.75rem;color:var(--muted)}
+    #img-preview{display:block;width:100%;border-radius:8px;margin-top:10px;background:#fff}
+    .btn{padding:.7rem 1.1rem;border:1px solid var(--border);border-radius:10px;font-family:'DM Mono',monospace;font-size:.76rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer;background:transparent;color:var(--text);min-height:46px;text-decoration:none;display:inline-flex;align-items:center}
+    .btn-blue{background:var(--blue);border-color:var(--blue);color:#000}
+    .btn-ghost{color:var(--subtext)}
+
     .empty{color:var(--muted);text-align:center;padding:60px 0;font-size:.9rem}
     .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
     .setup{background:var(--surface);border:1px dashed var(--border);border-radius:14px;padding:20px;color:var(--subtext);font-size:.85rem;line-height:1.6}
@@ -112,6 +125,14 @@
   <div class="filters" id="filters"></div>
   <div id="daysum" class="daysum" style="display:none"></div>
   <div id="board"></div>
+  <div id="img-bg"><div id="img-box">
+    <div class="img-ft"><span id="img-name"></span><span class="spacer"></span>
+      <button type="button" class="btn btn-blue" id="img-share"></button>
+      <a class="btn btn-ghost" id="img-dl" download></a>
+      <button type="button" class="btn btn-ghost" id="img-close"></button></div>
+    <div id="img-hint"></div>
+    <img id="img-preview" alt="">
+  </div></div>
   <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution</footer>
 </main>
 
@@ -147,9 +168,12 @@
     sumEmp: { en: 'Employee #', es: 'N.º empl.' },
     sumName: { en: 'Name', es: 'Nombre' },
     sumTotal: { en: 'Total', es: 'Total' },
-    sumSend: { en: '💬 Send as text', es: '💬 Enviar como texto' },
+    sumSend: { en: '💬 Send as image', es: '💬 Enviar como imagen' },
+    imgShare: { en: 'Share / text', es: 'Compartir' },
+    imgDownload: { en: 'Download', es: 'Descargar' },
+    imgClose: { en: 'Close', es: 'Cerrar' },
+    imgHint: { en: 'On a phone, Share sends it to Messages/WhatsApp; or long-press the image to save it.', es: 'En el teléfono, Compartir lo manda a Mensajes/WhatsApp; o mantenga presionada la imagen para guardarla.' },
     sumNone: { en: 'Nothing weighed yet this day.', es: 'Aún no hay nada pesado este día.' },
-    sumCopied: { en: '✓ Copied — paste in a text', es: '✓ Copiado — péguelo en un mensaje' },
     reportTitle: { en: 'Daily Operations Report', es: 'Reporte diario de operaciones' },
     summary: { en: 'Summary', es: 'Resumen' },
     station: { en: 'Station', es: 'Estación' },
@@ -345,13 +369,11 @@
   // Smalls), the notebook page sits above its forms: employee # and name
   // down the side, each flavor across, that day's weights and totals —
   // dailySummaryGrid in ops_common.js, the same table as under the form.
-  // "Send as text" turns it into a text message (the phone's share sheet,
-  // or the clipboard where there is none).
+  // "Send as image" draws it as a picture to text (makeDaySumImage).
   let badgeNames = {};
   loadBadgeNames().then((n) => { badgeNames = n || {}; renderDaySum(); });
   const nameOf = (e) => badgeNames[badgeKey(e)] || '';
   const uid4 = (p) => (p.f.sourceUid ? `…${String(p.f.sourceUid).slice(-4)}` : '');
-  const flavorOf = (p) => [p.strain || '—', uid4(p)].filter(Boolean).join(' ');
 
   function daySumData() {
     const s = stationFilter && STATION_BY_KEY[stationFilter];
@@ -381,53 +403,109 @@
         `<td class="tot">${fmtNum(empTot(e), dp)}</td></tr>`).join('') +
       `</tbody><tfoot><tr><td>${t(L.sumTotal)}</td><td></td>` + used.map((p) => `<td>${fmtNum(colTot(p), dp)}</td>`).join('') +
       `<td class="tot">${fmtNum(all, dp)}</td></tr></tfoot></table></div>`;
-    document.getElementById('daysum-send').onclick = sendDaySum;
+    document.getElementById('daysum-send').onclick = makeDaySumImage;
   }
 
-  // Plain text — a text message can't line up columns, so one line per
-  // person. With several flavors each gets a letter, listed at the top:
-  //   Bucking — Fri 10/16/26
-  //   A = Gelato #41 …0005
-  //   B = Canal St Runtz …0453
-  //
-  //   83 Rosa Baeza: A 4.20 · B 20.70 = 24.90
-  //   Total: A 60.40 · B 149.40 = 209.80 lbs
-  function daySumText(d) {
-    const { s, used, emps, grid, colTot, empTot, all, inLb, dp } = d;
-    const unit = inLb ? 'lbs' : 'g';
-    const n = (x) => fmtNum(x, dp);
-    const letter = (i) => String.fromCharCode(65 + i);
-    const many = used.length > 1;
-    const when = new Date(day + 'T12:00:00Z').toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US',
-      { weekday: 'short', month: 'numeric', day: 'numeric', year: '2-digit', timeZone: 'UTC' });
-    const cells = (val) => used.map((p, i) => (val(p) ? `${letter(i)} ${n(val(p))}` : '')).filter(Boolean).join(' · ');
-    const lines = [`${t(s.title)} — ${when}`];
-    lines.push(...(many ? used.map((p, i) => `${letter(i)} = ${flavorOf(p)}`) : [flavorOf(used[0])]), '');
-    emps.forEach((e) => {
-      const who = [e, nameOf(e)].filter(Boolean).join(' ');
-      lines.push(many ? `${who}: ${cells((p) => grid[e][p.id])} = ${n(empTot(e))}` : `${who}: ${n(empTot(e))}`);
-    });
-    lines.push(many ? `${t(L.sumTotal)}: ${cells(colTot)} = ${n(all)} ${unit}` : `${t(L.sumTotal)}: ${n(all)} ${unit}`);
-    return lines.join('\n');
-  }
-
-  async function sendDaySum() {
+  // The table as a picture to text, like the Master Schedule's: drawn
+  // straight onto a white canvas — title and date, employee # and name down
+  // the side, each flavor across (strain over the UID's last 4), each
+  // person's total, the totals row — then shown with Share / Download.
+  // (Sharing waits for a tap on Share: phones only allow it straight from a
+  // tap, and drawing comes first.)
+  async function makeDaySumImage() {
     const d = daySumData();
     if (!d || !d.emps.length) return;
-    const text = daySumText(d);
-    const btn = document.getElementById('daysum-send');
-    if (navigator.share && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-      try { await navigator.share({ text }); return; }
-      catch (e) { if (e.name === 'AbortError') return; }
-    }
-    try {
-      await navigator.clipboard.writeText(text);
-      btn.textContent = t(L.sumCopied);
-      setTimeout(() => { btn.textContent = t(L.sumSend); }, 2500);
-    } catch {
-      window.prompt('', text);
-    }
+    const { s, cfg, used, emps, grid, colTot, empTot, all, inLb, dp } = d;
+    try { await document.fonts.ready; } catch {}
+    const SANS = "'DM Sans', Arial, sans-serif", HEAD = "'Bebas Neue', 'Arial Narrow', Arial, sans-serif", MONO = "'DM Mono', Menlo, monospace";
+    const C = { ink: '#16181d', sub: '#5b6170', line: '#e3e5ea', band: '#f6f7f9', head: '#eef7f2', green: '#3db87a', paper: '#ffffff' };
+    const F = { title: `400 54px ${HEAD}`, date: `500 24px ${SANS}`, th: `700 17px ${SANS}`, thSub: `500 15px ${MONO}`,
+                emp: `500 20px ${MONO}`, name: `500 20px ${SANS}`, num: `500 20px ${MONO}`, tot: `700 20px ${MONO}`, foot: `400 16px ${SANS}` };
+    const cv = document.createElement('canvas'), ctx = cv.getContext('2d');
+    const n = (x) => fmtNum(x, dp);
+    // Column widths from what goes in them.
+    const fit = (font, texts, min) => { ctx.font = font; return Math.max(min, ...texts.map((x) => ctx.measureText(x).width)) + 32; };
+    const empHead = t({ en: 'Emp #', es: 'N.º' });
+    const empW = Math.max(fit(F.emp, emps, 60), fit(F.th, [empHead], 0));
+    const nameW = fit(F.name, emps.map(nameOf), 160);
+    const flavW = used.map((p) => Math.min(260, fit(F.th, [p.strain || '—'], 110)));
+    const totW = fit(F.tot, [n(all) + ' ' + (inLb ? 'lbs' : 'g')], 120);
+    const PAD = 36, ROWH = 46, HEADH = 70, TOP = 150, FOOTH = 60;
+    const tableW = empW + nameW + flavW.reduce((a, w) => a + w, 0) + totW;
+    const W = Math.max(720, Math.ceil(tableW + PAD * 2));
+    const H = TOP + HEADH + (emps.length + 1) * ROWH + FOOTH + 20;
+    cv.width = W; cv.height = H;
+    ctx.fillStyle = C.paper; ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = 'middle';
+    const when = new Date(day + 'T12:00:00Z').toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US',
+      { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+    ctx.fillStyle = C.ink; ctx.font = F.title; ctx.fillText(t(s.title).toUpperCase(), PAD, PAD + 26);
+    ctx.fillStyle = C.sub; ctx.font = F.date; ctx.fillText(`${when}  ·  ${inLb ? 'lbs' : t({ en: 'grams', es: 'gramos' })}`, PAD, PAD + 78);
+    const clip = (text, maxW) => { let x = String(text); while (x.length > 2 && ctx.measureText(x).width > maxW) x = x.slice(0, -2) + '…'; return x; };
+    // x of each column, and how it's aligned
+    const cols = [{ w: empW, al: 'left' }, { w: nameW, al: 'left' }, ...flavW.map((w) => ({ w, al: 'right' })), { w: totW, al: 'right' }];
+    let cx = PAD; cols.forEach((c) => { c.x = cx; cx += c.w; });
+    const cell = (i, text, y, font, color) => {
+      const c = cols[i];
+      ctx.font = font; ctx.fillStyle = color || C.ink;
+      ctx.textAlign = c.al;
+      ctx.fillText(clip(text, c.w - 24), c.al === 'left' ? c.x + 12 : c.x + c.w - 12, y);
+    };
+    // Header: green band, flavor names over their UID's last 4
+    let y = TOP;
+    ctx.fillStyle = C.head; ctx.fillRect(PAD, y, tableW, HEADH);
+    ctx.fillStyle = C.green; ctx.fillRect(PAD, y + HEADH - 3, tableW, 3);
+    cell(0, empHead, y + HEADH / 2, F.th);
+    cell(1, t(L.sumName), y + HEADH / 2, F.th);
+    used.forEach((p, i) => {
+      cell(i + 2, p.strain || '—', y + 24, F.th);
+      if (uid4(p)) cell(i + 2, uid4(p), y + 48, F.thSub, C.sub);
+    });
+    cell(cols.length - 1, t(L.sumTotal), y + HEADH / 2, F.th);
+    y += HEADH;
+    emps.forEach((e, r) => {
+      if (r % 2) { ctx.fillStyle = C.band; ctx.fillRect(PAD, y, tableW, ROWH); }
+      ctx.fillStyle = C.line; ctx.fillRect(PAD, y + ROWH - 1, tableW, 1);
+      const mid = y + ROWH / 2;
+      cell(0, e, mid, F.emp);
+      cell(1, nameOf(e), mid, F.name, C.sub);
+      used.forEach((p, i) => cell(i + 2, grid[e][p.id] ? n(grid[e][p.id]) : '·', mid, F.num, grid[e][p.id] ? C.ink : C.line));
+      cell(cols.length - 1, n(empTot(e)), mid, F.tot);
+      y += ROWH;
+    });
+    // Totals row
+    ctx.fillStyle = C.ink; ctx.fillRect(PAD, y, tableW, 2);
+    const mid = y + ROWH / 2 + 2;
+    cell(0, t(L.sumTotal), mid, F.th);
+    used.forEach((p, i) => cell(i + 2, n(colTot(p)), mid, F.tot));
+    cell(cols.length - 1, `${n(all)} ${inLb ? 'lbs' : 'g'}`, mid, F.tot, C.green);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = C.sub; ctx.font = F.foot;
+    ctx.fillText(`2CW · ${t({ en: 'made', es: 'hecho' })} ${new Date().toLocaleString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`, PAD, H - FOOTH / 2);
+    const blob = await new Promise((res) => cv.toBlob(res, 'image/png'));
+    showImage(blob, `${s.key}-${day}.png`);
   }
+
+  let imgUrl = null, imgFile = null;
+  const $ = (id) => document.getElementById(id);
+  function showImage(blob, name) {
+    if (imgUrl) URL.revokeObjectURL(imgUrl);
+    imgUrl = URL.createObjectURL(blob);
+    imgFile = new File([blob], name, { type: 'image/png' });
+    $('img-preview').src = imgUrl;
+    $('img-name').textContent = name;
+    $('img-dl').href = imgUrl; $('img-dl').download = name; $('img-dl').textContent = t(L.imgDownload);
+    $('img-close').textContent = t(L.imgClose);
+    $('img-hint').textContent = t(L.imgHint);
+    $('img-share').hidden = !(navigator.canShare && navigator.canShare({ files: [imgFile] }));
+    $('img-share').textContent = t(L.imgShare);
+    $('img-bg').classList.add('on');
+  }
+  $('img-share').onclick = async () => {
+    try { await navigator.share({ files: [imgFile] }); } catch (e) { if (e && e.name !== 'AbortError') alert(String(e.message || e)); }
+  };
+  $('img-close').onclick = () => $('img-bg').classList.remove('on');
+  $('img-bg').addEventListener('click', (e) => { if (e.target === $('img-bg')) $('img-bg').classList.remove('on'); });
 
   // ── Day report PDF ─────────────────────────────────────────────────────
   // The day on screen (and the station filter, if one is picked) as a plain
