@@ -74,6 +74,8 @@
     .daysum-head .hint{font-size:.75rem;color:var(--muted);margin-top:2px}
     .daysum-send{background:transparent;border:1px solid var(--green);color:var(--green);border-radius:10px;min-height:44px;padding:0 14px;
       font-family:'DM Mono',monospace;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+    .daysum-send:disabled{opacity:.35;cursor:default}
+    .daysum > .hint{font-size:.85rem;color:var(--muted)}
     .daysum-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
     .sum-table{border-collapse:collapse;font-family:'DM Mono',monospace;font-size:.85rem;min-width:100%}
     .sum-table th,.sum-table td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap}
@@ -146,6 +148,7 @@
     sumName: { en: 'Name', es: 'Nombre' },
     sumTotal: { en: 'Total', es: 'Total' },
     sumSend: { en: '💬 Send as text', es: '💬 Enviar como texto' },
+    sumNone: { en: 'Nothing weighed yet this day.', es: 'Aún no hay nada pesado este día.' },
     sumCopied: { en: '✓ Copied — paste in a text', es: '✓ Copiado — péguelo en un mensaje' },
     reportTitle: { en: 'Daily Operations Report', es: 'Reporte diario de operaciones' },
     summary: { en: 'Summary', es: 'Resumen' },
@@ -361,11 +364,15 @@
   function renderDaySum() {
     const box = document.getElementById('daysum');
     const d = daySumData();
-    if (!d || !d.emps.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+    if (!d) { box.style.display = 'none'; box.innerHTML = ''; return; }
     const { s, cfg, used, emps, grid, colTot, empTot, all, inLb, dp } = d;
     box.style.display = 'block';
-    box.innerHTML = `<div class="daysum-head"><div><h2>${esc(t(cfg.title || s.title))}</h2><div class="hint">${t(L.sumHint)}</div></div>` +
-      `<button type="button" class="daysum-send" id="daysum-send">${t(L.sumSend)}</button></div>` +
+    // Shown even on a day with nothing weighed, so the button is always
+    // where people expect it.
+    const head = `<div class="daysum-head"><div><h2>${esc(t(cfg.title || s.title))}</h2><div class="hint">${t(L.sumHint)}</div></div>` +
+      `<button type="button" class="daysum-send" id="daysum-send"${emps.length ? '' : ' disabled'}>${t(L.sumSend)}</button></div>`;
+    if (!emps.length) { box.innerHTML = head + `<div class="hint">${t(L.sumNone)}</div>`; return; }
+    box.innerHTML = head +
       `<div class="daysum-scroll"><table class="sum-table"><thead><tr><th>${esc(t(cfg.empLabel || L.sumEmp))}</th><th class="name">${t(L.sumName)}</th>` +
       used.map((p) => `<th>${esc(p.strain || '—')}<br>${esc(uid4(p))}</th>`).join('') +
       `<th class="tot">${t(L.sumTotal)} ${inLb ? 'lbs' : 'g'}</th></tr></thead><tbody>` +
