@@ -311,6 +311,7 @@
 <script src="/ops_common.js"></script>
 <script src="/ops_data.js"></script>
 <script src="/ops_analytics.js"></script>
+<script src="/labor_auto.js"></script>
 <script>
 // Labor Log — put people's hours against the UIDs they worked on.
 //
@@ -1506,24 +1507,9 @@
   // be placed. Times are the viewer's local time.
   let shiftData = null, shiftsLoading = null;
   const loadShifts = () => shiftsLoading || (shiftsLoading = getJson('connecteam_shifts.json').then((d) => { shiftData = d; return d; }));
-  const hhmm = (m) => { const x = ((Math.round(m) % 1440) + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
-  const toMin = (s) => { const [h, mi] = String(s || '').split(':').map(Number); return Number.isFinite(h) && Number.isFinite(mi) ? h * 60 + mi : null; };
+  // hhmm / toMin, and union / minus of [a,b) minute intervals (labor_auto.js).
+  const { hhmm, toMin, union, minus } = LaborAuto;
   const dayStart = (d) => new Date(d + 'T00:00:00');
-  // Union of [a,b) minute intervals, merged and sorted.
-  const union = (iv) => iv.slice().sort((x, y) => x[0] - y[0]).reduce((o, [a, b]) => {
-    if (o.length && a <= o[o.length - 1][1]) o[o.length - 1][1] = Math.max(o[o.length - 1][1], b); else o.push([a, b]);
-    return o;
-  }, []);
-  // Parts of `iv` not covered by `cover`; pieces under 5 minutes are noise.
-  const minus = (iv, cover) => {
-    const out = [];
-    union(iv).forEach(([a, b]) => {
-      let cur = a;
-      union(cover).forEach(([c, d]) => { if (d <= cur || c >= b) return; if (c > cur) out.push([cur, c]); cur = Math.max(cur, d); });
-      if (cur < b) out.push([cur, b]);
-    });
-    return out.filter(([a, b]) => b - a >= 5);
-  };
 
   $('tl-date').value = localDay();
   $('tl-q').placeholder = t(L.tlSearch);
@@ -1555,13 +1541,9 @@
     renderTimeline(shifts);
   }
 
-  // The clock-in a not-logged stretch overlaps most (a gap never spans two,
-  // but be safe), for its place and activity.
-  function gapShift(r, a, b) {
-    let best = null, most = 0;
-    r.shiftInfo.forEach((s) => { const o = Math.min(b, s.b) - Math.max(a, s.a); if (o > most) { most = o; best = s; } });
-    return best;
-  }
+  // The clock-in a not-logged stretch overlaps most, for its place and
+  // activity (labor_auto.js).
+  const gapShift = LaborAuto.gapShift;
 
   function renderTimeline() {
     const date = $('tl-date').value || localDay();
@@ -1571,41 +1553,10 @@
     if (!shiftData || !Array.isArray(shiftData.shifts)) $('tl-note').textContent = t(L.tlNoData);
     else $('tl-note').textContent = fill(t(L.tlNote), { t: new Date(shiftData.last_sync).toLocaleString() }) + ' ' + t(L.tlRightClick) + ' ' + t(L.autoHint);
 
-    // People: everyone clocked in that day, plus anyone with an entry.
-    const rows = new Map();
-    const rowFor = (key, name, userId) => rows.get(key) || rows.set(key, { key, name, userId, shifts: [], shiftInfo: [], places: new Set(), timed: [], untimed: 0, logged: 0, open: false }).get(key);
-    ((shiftData && shiftData.shifts) || []).forEach((sh) => {
-      const a = (Date.parse(sh.start) - day0) / 60000;
-      const openShift = !sh.end;
-      const b = openShift ? (isToday ? nowMin : a) : (Date.parse(sh.end) - day0) / 60000;
-      if (!(b > 0 && a < 1440) || b <= a) return;
-      const row = rowFor(String(sh.userId), sh.name, String(sh.userId));
-      row.shifts.push([Math.max(0, a), Math.min(1440, b)]);
-      // Where they clocked in: the Connecteam job, else the time clock's name.
-      // What they said they did: the Connecteam sub-job and/or their answers
-      // to the clock-in/out questions.
-      const place = sh.job || sh.clock || '';
-      row.shiftInfo.push({ a: Math.max(0, a), b: Math.min(1440, b), place, activity: sh.activity || '' });
-      if (place) row.places.add(place);
-      if (openShift && isToday) row.open = true;
-    });
-    tlEntries.forEach((r) => {
-      const f = r.fields || {};
-      const key = f.employeeId ? String(f.employeeId) : 'name:' + fold(f.employeeName);
-      const row = rowFor(key, f.employeeName, f.employeeId || '');
-      row.logged += num(f.hours);
-      const a = toMin(f.start), b0 = toMin(f.end);
-      if (a == null || b0 == null) { row.untimed += num(f.hours); return; }
-      const b = b0 <= a ? b0 + 1440 : b0;   // past midnight
-      row.timed.push({ a, b, f, rec: r });
-    });
-
-    let list = [...rows.values()].map((row) => {
-      const clocked = union(row.shifts).reduce((x, [a, b]) => x + (b - a), 0) / 60;
-      const timedIv = row.timed.map((e) => [e.a, e.b]);
-      return { ...row, clocked, unalloc: Math.max(0, clocked - row.logged),
-               gaps: minus(row.shifts, timedIv), outside: row.shifts.length ? minus(timedIv, row.shifts) : [] };
-    });
+    // People: everyone clocked in that day, plus anyone with an entry, with
+    // the clocked time no entry covers as `gaps` (laborDayRows in labor_auto.js).
+    let list = LaborAuto.laborDayRows((shiftData && shiftData.shifts) || [], tlEntries, { day0, nowMin, isToday });
+    const nAll = list.length;
     // Team numbers before filtering, so the totals don't move with the search.
     const tot = list.reduce((o, r) => ({ c: o.c + r.clocked, l: o.l + r.logged, u: o.u + r.unalloc }), { c: 0, l: 0, u: 0 });
     const pct = tot.c ? Math.min(1, (tot.c - tot.u) / tot.c) : null;
@@ -1621,7 +1572,7 @@
     if (q) list = list.filter((r) => fold(r.name).includes(q) || [...r.places].some((p) => fold(p).includes(q)));
     if ($('tl-only').checked) list = list.filter((r) => r.unalloc > 0.25);
     list.sort((x, y) => (y.unalloc > 0.25) - (x.unalloc > 0.25) || y.unalloc - x.unalloc || x.name.localeCompare(y.name));
-    if (!rows.size) { $('tl-body').innerHTML = `<div class="empty-big">${esc(t(L.tlEmpty))}</div>`; return; }
+    if (!nAll) { $('tl-body').innerHTML = `<div class="empty-big">${esc(t(L.tlEmpty))}</div>`; return; }
     if (!list.length) { $('tl-body').innerHTML = `<div class="empty-big">${esc(t($('tl-only').checked ? L.tlAllDone : L.empty))}</div>`; return; }
 
     // Hour range: whole hours around everything on screen.
@@ -1724,41 +1675,9 @@
   const menuEl = $('tl-menu');
   let menuCtx = null;
   const closeMenu = () => { menuEl.hidden = true; menuCtx = null; };
-  // A project's roles on one day, with Master Schedule's Change this day
-  // applied (fields.overrides[date]: people out, people added).
-  const personKey = (p) => p.userId ? 'id:' + p.userId : 'name:' + fold(p.name);
-  function dayRoles(f, date) {
-    const ov = (f.overrides || {})[date] || {};
-    const out = new Set(ov.out || []);
-    return projectRoles(f, t(L.projLead)).map((r) => ({ ...r, people: [
-      ...r.people.filter((x) => !out.has(personKey(x))),
-      ...(ov.extra || []).filter((x) => x.roleId === r.id).map((x) => ({ userId: x.userId || '', name: x.name }))] }));
-  }
-  function scheduledAround(date, a, b, userId, name) {
-    const out = [];
-    const isMe = (p) => userId ? String(p.userId) === String(userId) : fold(p.name) === fold(name);
-    // That day's shifts, and the day before's overnight ones running past
-    // midnight into this day (their hours less 24 h).
-    const d0 = new Date(date + 'T12:00:00'); d0.setDate(d0.getDate() - 1);
-    const prev = new Date(d0.getTime() - d0.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-    projects.forEach((p) => {
-      const f = p.fields;
-      [[date, 0], [prev, 1440]].forEach(([d, off]) => {
-        if (!projectRunsOn(f, d) || (f.overrides || {})[d]?.skip || out.some((o) => o.p === p)) return;
-        const overlaps = (spans) => spans.some(([s, e]) => s == null ? !off : s - off < b && e - off > a);
-        // The person's own roles, at their own hours there that day
-        // (personSpans — Crew Check-In's moves), else the role's.
-        let mine = 0;
-        dayRoles(f, d).forEach((role) => {
-          const x = role.people.find(isMe);
-          const spans = x ? personSpans(f, role, d, personKey(x)) : [];
-          if (x && overlaps(spans)) { out.push({ p, role, mine: true, off, spans }); mine++; }
-        });
-        if (!mine && overlaps([projectHours(f)])) out.push({ p, role: null, mine: false, off, spans: [projectHours(f)] });
-      });
-    });
-    return out.sort((x, y) => y.mine - x.mine || String(x.p.fields.name).localeCompare(String(y.p.fields.name)));
-  }
+  // The projects running around a stretch, the person's own roles first
+  // (scheduledAround in labor_auto.js).
+  const scheduledAround = (date, a, b, userId, name) => LaborAuto.scheduledAround(projects, date, a, b, userId, name, t(L.projLead));
   function openMenu(g, x, y) {
     const r = tlRows[+g.dataset.row];
     const a = +g.dataset.a, b = +g.dataset.b;
@@ -1864,20 +1783,7 @@
   });
   // A not-logged stretch [a, b) as an entry on a project (o from
   // scheduledAround): the role's process, else the project's, else Other.
-  function projectEntry(r, a, b, date, o) {
-    const hours = Math.round((b - a) / 60 * 100) / 100;
-    return {
-      station_key: ENTRY_KEY, status: 'submitted', owner_user: me || null, updated_by: me || null,
-      strain: null, work_date: date, submitted_at: new Date().toISOString(),
-      fields: {
-        process: (o.role && o.role.process) || o.p.fields.process || 'other',
-        employeeId: r.userId || '', employeeName: r.name, uids: [],
-        project: o.p.id, projectName: o.p.fields.name,
-        ...(o.role ? { role: o.role.id, roleName: o.role.name } : {}),
-        start: hhmm(a), end: hhmm(b), hours, notes: '', enteredBy: me
-      }
-    };
-  }
+  const projectEntry = (r, a, b, date, o) => LaborAuto.projectEntry(r, a, b, date, o, me);
 
   // Auto-assign: each not-logged stretch goes to the project the person is
   // scheduled on (their own role, that day's changes applied) when they
@@ -1888,60 +1794,10 @@
   // moved has their own hours on each project, and the stretch is split at
   // the move, so each part goes to its own project. A stretch with no such
   // project, or more than one, stays gold to log by hand.
+  // People checked in on Crew Check-In are also auto-assigned every hour,
+  // without the button (scripts/labor_autoassign.js, the same autoPlan).
   let tlAuto = [];
-  const locLabel = (f) => f.location === 'other' ? (f.locationName || '') : ((WORK_LOCATIONS.find((l) => l[0] === f.location) || [])[1] || '');
-  const samePlace = (place, f) => {
-    const x = fold(place).trim(), y = fold(locLabel(f)).trim();
-    return !!x && !!y && (x.includes(y) || y.includes(x));
-  };
-  // Where Crew Check-In moved the person that day (their own times on any
-  // project, as minutes into `date`): a stretch is split there first, so the
-  // time before a move and after it each find their own project.
-  function moveCuts(date, r) {
-    const cuts = new Set();
-    const d0 = new Date(date + 'T12:00:00'); d0.setDate(d0.getDate() - 1);
-    const prev = new Date(d0.getTime() - d0.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-    const isMe = (p) => r.userId ? String(p.userId) === String(r.userId) : fold(p.name) === fold(r.name);
-    projects.forEach((p) => [[date, 0], [prev, 1440]].forEach(([d, off]) => {
-      if (!projectRunsOn(p.fields, d)) return;
-      dayRoles(p.fields, d).forEach((role) => {
-        const x = role.people.find(isMe);
-        if (!x || !hasOwnTimes(p.fields, d, personKey(x))) return;
-        // Only the move times: a span's edge at the role's own start or end
-        // isn't one, and the usual slack around a shift stays with it.
-        const [s0, e0] = projectHours(p.fields, role);
-        personSpans(p.fields, role, d, personKey(x)).forEach(([s, e]) => {
-          if (s !== s0 && !(s0 == null && s === 0)) cuts.add(s - off);
-          if (e !== e0 && !(s0 == null && e === 1440)) cuts.add(e - off);
-        });
-      });
-    }));
-    return [...cuts].sort((x, y) => x - y);
-  }
-  function autoPlan(list, date) {
-    const plan = [];
-    list.forEach((r) => {
-      const cuts = moveCuts(date, r);
-      r.gaps.flatMap(([a, b]) => {
-        const at = cuts.filter((c) => c > a && c < b), pts = [a, ...at, b];
-        return pts.slice(1).map((x, i) => [pts[i], x]);
-      }).forEach(([a, b]) => {
-        const sh = gapShift(r, a, b);
-        if (!sh || !sh.place) return;
-        const inHours = (o) => o.spans.reduce((x, [s, e]) => s == null ? b - a : x + Math.max(0, Math.min(b, e - o.off) - Math.max(a, s - o.off)), 0) >= (b - a) / 2;
-        const opts = scheduledAround(date, a, b, r.userId, r.name).filter((o) => o.mine && samePlace(sh.place, o.p.fields) && inHours(o));
-        if (opts.length !== 1) return;
-        const o = opts[0];
-        // Right after an entry on the same project and role (an earlier
-        // auto-assign, while they were still on the clock)? Stretch that one
-        // instead of adding another, so running it again later in the day
-        // picks up the time since.
-        const ext = r.timed.find((e) => Math.abs(e.b - a) < 1 && e.f.project === o.p.id && (e.f.role || '') === ((o.role && o.role.id) || ''));
-        plan.push({ r, a: Math.round(a), b: Math.round(b), o, ext });
-      });
-    });
-    return plan;
-  }
+  const autoPlan = (list, date) => LaborAuto.autoPlan(projects, list, date);
   $('tl-auto').addEventListener('click', async () => {
     const plan = tlAuto.slice();
     if (!plan.length) return;
