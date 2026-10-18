@@ -119,6 +119,7 @@
     <div class="seg" id="scope"></div>
   </div>
   <div id="loose"></div>
+  <div id="fromlog"></div>
   <div id="board"><div class="empty" id="loading"></div></div>
 </main>
 <div id="toast"></div>
@@ -210,6 +211,10 @@
     saved:    { en: 'Saved', es: 'Guardado' },
     moved:    { en: '{n} → {p} at {t}', es: '{n} → {p} a las {t}' },
     failed:   { en: 'Couldn’t save —', es: 'No se pudo guardar —' },
+    fromLog:  { en: 'The Labor Log has {n} people on these projects this day who aren’t checked in yet.', es: 'El Registro de Mano de Obra tiene {n} personas en estos proyectos este día que aún no están registradas.' },
+    fromLogBtn: { en: 'Check them in', es: 'Registrarlos' },
+    fromLogQ: { en: 'Check in {n} people from the Labor Log on {d}?\n\n{list}', es: '¿Registrar a {n} personas del Registro de Mano de Obra el {d}?\n\n{list}' },
+    fromLogDone: { en: 'Checked in {n} people from the Labor Log', es: 'Se registraron {n} personas del Registro de Mano de Obra' },
     busy:     { en: 'someone else is saving this project; try again.', es: 'alguien más está guardando este proyecto; intente de nuevo.' }
   };
   const fill = (s, vars) => Object.entries(vars).reduce((a, [k, v]) => a.split(`{${k}}`).join(v), s);
@@ -376,6 +381,82 @@
     return changeDay(after, d, (day) => { putSpans(after, day, x.role, key, [...had, [T, end]]); });
   };
 
+  // ── From the Labor Log ──────────────────────────────────────────────────
+  // Time already logged to a project (Labor Log entries with `project`) is
+  // a check-in: the person was there. Each person logged to a project that
+  // runs that day is marked here on it (added under the entry's
+  // responsibility, else the project's first, when they aren't on it).
+  // Someone logged to two or more projects that day also gets their own
+  // hours on each — their entries' times there, as a Move would — unless a
+  // lead already gave them times there.
+  const laborByDay = new Map();   // date -> Promise<[entry fields]>
+  const loadLabor = (d) => laborByDay.get(d) || laborByDay.set(d, (async () => {
+    const { data, error } = await getClient().from('operations_forms').select('id,fields')
+      .eq('station_key', 'labor_entry').eq('status', 'submitted').eq('work_date', d);
+    if (error) { laborByDay.delete(d); return []; }
+    return (data || []).map((r) => r.fields || {}).filter((f) => !f.voided && f.project && f.employeeName);
+  })()).get(d);
+  // {pid: [{person, key, roleId, spans | null}]}, only what isn't there yet.
+  function laborPlan(d, entries) {
+    const byPerson = new Map();   // key -> Map pid -> [entries]
+    entries.forEach((e) => {
+      const key = personKey({ userId: e.employeeId || '', name: e.employeeName });
+      const m = byPerson.get(key) || byPerson.set(key, new Map()).get(key);
+      (m.get(e.project) || m.set(e.project, []).get(e.project)).push(e);
+    });
+    const plan = new Map();
+    byPerson.forEach((m, key) => {
+      const split = m.size > 1;
+      m.forEach((es, pid) => {
+        const p = projects.find((x) => x.id === pid);
+        if (!p || !runsOn(p, d)) return;
+        const f = p.fields, x = findIn(f, d, key);
+        const roles = targetRoles(f);
+        const roleId = x ? x.role.id : (roles.find((r) => r.id === es[0].role) || roles[0] || {}).id;
+        if (!roleId) return;
+        const role = projectRoles(f).find((r) => r.id === roleId);
+        let spans = null;
+        if (split && !hasOwnTimes(f, d, key)) {
+          spans = es.filter((e) => e.start && e.end).map((e) => {
+            const a = shiftMin(f, role, e.start); let b = shiftMin(f, role, e.end);
+            if (b <= a) b += 1440;
+            return [a, b];
+          });
+          if (!spans.length) spans = null;
+        }
+        if (x && x.status === 'here' && !spans) return;
+        const person = { userId: String(es[0].employeeId || ''), name: es[0].employeeName };
+        (plan.get(pid) || plan.set(pid, []).get(pid)).push({ person, key, roleId, spans });
+      });
+    });
+    return plan;
+  }
+  const fromLabor = (items) => (fields, d) => items.reduce((acc, it) => {
+    const after = addPerson(it.person, it.roleId)(acc, d);
+    if (!it.spans || hasOwnTimes(after, d, it.key)) return after;
+    const x = findIn(after, d, it.key);
+    return x ? changeDay(after, d, (day) => { putSpans(after, day, x.role, it.key, it.spans); }) : after;
+  }, fields);
+  async function renderFromLog() {
+    const d = curDate();
+    const entries = await loadLabor(d);
+    if (d !== curDate()) return;
+    const plan = laborPlan(d, entries);
+    const n = new Set([...plan.values()].flat().map((x) => x.key)).size;
+    $('fromlog').innerHTML = n ? `<div class="loose"><span>${esc(fill(t(L.fromLog), { n }))}</span>
+      <button type="button" class="btn btn-sm btn-gold" id="fromlog-go" style="margin-left:10px">${esc(t(L.fromLogBtn))}</button></div>` : '';
+  }
+  async function checkInFromLog(ask) {
+    const d = curDate();
+    const plan = laborPlan(d, await loadLabor(d));
+    const n = new Set([...plan.values()].flat().map((x) => x.key)).size;
+    if (!n) return 0;
+    const list = [...plan].map(([pid, items]) => `${(projects.find((x) => x.id === pid) || { fields: {} }).fields.name}: ${items.map((x) => x.person.name).join(', ')}`).join('\n');
+    if (ask && !confirm(fill(t(L.fromLogQ), { n, d: fmtDate(d), list }))) return 0;
+    for (const [pid, items] of plan) { if (!(await apply(pid, fromLabor(items)))) return -1; }
+    return n;
+  }
+
   async function apply(pid, mutate) {
     const res = await patchWorkProject(pid, (fields) => mutate(fields, curDate()), me);
     if (!res.ok) { toast(`${t(L.failed)} ${res.reason === 'busy' ? t(L.busy) : res.reason || ''}`, true); return false; }
@@ -414,10 +495,12 @@
     $('loose').innerHTML = loose.length ? `<div class="loose"><span class="dot"></span>${esc(t(L.loose))} <b>${loose.map((p) => esc(p.name)).join(', ')}</b> — ${esc(t(L.looseHint))}</div>` : '';
     const shown = useMine ? mine : all;
     if (!shown.length) {
+      $('fromlog').innerHTML = '';
       $('board').innerHTML = `<div class="empty">${esc(t(all.length ? L.nothingMine : L.nothing))}<br><a href="/master_schedule.html?date=${esc(d)}">${esc(t(L.goSched))} →</a></div>`;
       return;
     }
     $('board').innerHTML = shown.map((p) => card(p, d, today)).join('');
+    renderFromLog();
     if (panel) { const el = document.querySelector('[data-focus]'); if (el) el.focus(); }
   }
 
@@ -575,6 +658,15 @@
     document.querySelectorAll('#board button').forEach((el) => { el.disabled = true; });
     try { if (await run()) toast(done || t(L.saved)); } finally { busy = false; render(); }
   });
+  $('fromlog').addEventListener('click', async (e) => {
+    if (!e.target.closest('#fromlog-go') || busy) return;
+    busy = true;
+    e.target.disabled = true;
+    try {
+      const n = await checkInFromLog(true);
+      if (n > 0) toast(fill(t(L.fromLogDone), { n }));
+    } finally { busy = false; render(); }
+  });
   $('scope').addEventListener('click', (e) => {
     const b = e.target.closest('[data-scope]');
     if (!b) return;
@@ -590,6 +682,7 @@
   // Another lead's or tablet's taps: re-read the projects every minute, and
   // when the page comes back to the front — not while a Move / Add is open.
   async function reload() {
+    laborByDay.clear();
     projects = await listWorkProjects();
     if (!panel && !busy) render();
   }

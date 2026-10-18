@@ -1049,6 +1049,16 @@ gets it (derived in `index.html`, listed in `DERIVED_CARD_KEYS` in
   ("7:00 AM–11:30 AM → Take Down at 11:30 AM"). **↺** (Full shift) takes
   their own hours on that project back off. To undo a move, use ↺ on the
   first project and × on the second.
+- **From the Labor Log**: time already logged to a project (Labor Log
+  entries with `project`) counts as a check-in. When a day has some for
+  people who aren't checked in there, a banner offers **Check them in**
+  (`laborPlan` / `fromLabor`). It marks each of them Here on the project
+  they logged to, adding them under the entry's responsibility (else the
+  project's first) when they aren't on it. Someone logged to two or more
+  projects that day also gets their own hours on each, from their entries'
+  times, unless a lead already gave them times there. Entries on a project
+  that isn't running that day (Done, or outside its dates) are left out,
+  as is a project with no lead and no responsibilities to put people under.
 - Everything is saved on the project's day in the Master Schedule
   (`overrides[date]`, through `patchWorkProject` in `ops_data.js`, which
   re-reads and retries so two leads don't overwrite each other):
@@ -1056,8 +1066,9 @@ gets it (derived in `index.html`, listed in `DERIVED_CARD_KEYS` in
   - `out` — Not here, the same as Change this day.
   - `extra` — people added for the day.
   - `times` — `{personKey: [{start, end}]}`, a person's own hours there
-    that day ('HH:MM', blank = the responsibility's). `[]` means they were
-    moved off before it started.
+    that day ('HH:MM', blank = the responsibility's; an end at or before the
+    start runs past midnight). `[]` means they were moved off before it
+    started.
   - The page re-reads the projects every minute and whenever it comes
     back on screen.
 - `personSpans(f, role, date, key)` in `operations_stations.js` turns
