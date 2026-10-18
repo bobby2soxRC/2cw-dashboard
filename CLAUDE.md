@@ -54,6 +54,17 @@ intake's (allowing Strain Library aliases), Harvest Intakes and the Today
 board show "Check strain". Details: "Wet Intake: Metrc details come from the
 Canix sync" in `docs/OPERATIONS_APP.md`.
 
+### Crew Check-In (started 2026-10-18)
+
+`crew_checkin.html` (Workforce card, for anyone with Master Schedule or Labor
+Log): leads check in their Master Schedule crews once a shift (Here / Not
+here / add) and **Move** people to another project at a time, or home. It
+saves on the project's day (`overrides[date].here` / `.times`), and
+`personSpans` in `operations_stations.js` turns that into each person's
+hours, used by Master Schedule (conflicts, timeline, CSV) and the Labor Log's
+Auto-assign, which splits clocked time at the move. No SQL. Details: "Crew
+Check-In" in `docs/OPERATIONS_APP.md`.
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)

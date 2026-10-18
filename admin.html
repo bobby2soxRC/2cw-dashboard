@@ -289,11 +289,11 @@ const TOKEN_KEY = '2cw_admin_token';
 // Cards toggled directly in the editor — everything in CARD_DEFS except the
 // ones derived from other settings (production access derives
 // production_dashboard / production_today; FORM_ACCESS_COLS derives
-// field_forms).
+// field_forms; Master Schedule or Labor Log derives crew_checkin).
 // harvest_intakes and metrc_queue have their own View/Edit pair, and information_hub a View/Edit
 // pair per INFO_HUB_SECTIONS entry (hub_config.js), in the
 // editor instead.
-const DERIVED_CARD_KEYS = ['production_dashboard', 'production_today', 'field_forms', 'harvest_intakes', 'metrc_queue', 'information_hub'];
+const DERIVED_CARD_KEYS = ['production_dashboard', 'production_today', 'field_forms', 'harvest_intakes', 'metrc_queue', 'information_hub', 'crew_checkin'];
 const TOGGLE_CARDS = CARD_DEFS.filter(d => !DERIVED_CARD_KEYS.includes(d.key));
 
 // The Responsibilities tab talks to Supabase directly with the anon key,

@@ -1745,14 +1745,16 @@
       const f = p.fields;
       [[date, 0], [prev, 1440]].forEach(([d, off]) => {
         if (!projectRunsOn(f, d) || (f.overrides || {})[d]?.skip || out.some((o) => o.p === p)) return;
-        const overlaps = (role) => {
-          const [s, e] = projectHours(f, role);
-          if (s == null) return !off;
-          return s - off < b && e - off > a;
-        };
-        const mineRoles = dayRoles(f, d).filter((r) => r.people.some(isMe) && overlaps(r));
-        mineRoles.forEach((role) => out.push({ p, role, mine: true, off }));
-        if (!mineRoles.length && overlaps(null)) out.push({ p, role: null, mine: false, off });
+        const overlaps = (spans) => spans.some(([s, e]) => s == null ? !off : s - off < b && e - off > a);
+        // The person's own roles, at their own hours there that day
+        // (personSpans — Crew Check-In's moves), else the role's.
+        let mine = 0;
+        dayRoles(f, d).forEach((role) => {
+          const x = role.people.find(isMe);
+          const spans = x ? personSpans(f, role, d, personKey(x)) : [];
+          if (x && overlaps(spans)) { out.push({ p, role, mine: true, off, spans }); mine++; }
+        });
+        if (!mine && overlaps([projectHours(f)])) out.push({ p, role: null, mine: false, off, spans: [projectHours(f)] });
       });
     });
     return out.sort((x, y) => y.mine - x.mine || String(x.p.fields.name).localeCompare(String(y.p.fields.name)));
@@ -1764,11 +1766,11 @@
     const opts = scheduledAround(date, a, b, r.userId, r.name);
     menuCtx = { r, a, b, date, opts, g };
     const locOf = (f) => f.location === 'other' ? f.locationName : ((WORK_LOCATIONS.find((l) => l[0] === f.location) || [])[1] || '');
-    const span = (f, role) => { const [s, e] = projectHours(f, role); return s == null ? t(L.menuOngoing) : `${hhmm(s)}–${hhmm(e)}`; };
+    const span = (o) => o.spans.map(([s, e]) => s == null ? t(L.menuOngoing) : `${hhmm(s)}–${hhmm(e)}`).join(', ') || '—';
     menuEl.innerHTML = `<div class="mh">${esc(r.name)} · ${esc(hhmm(a))}–${esc(hhmm(b))} (${fmtNum((b - a) / 60, 2)} h)</div>` +
       (opts.length ? `<div class="mg">${esc(t(L.menuHd))}</div>` + opts.map((o, i) => {
         const f = o.p.fields;
-        const sub = [span(f, o.role), locOf(f), procTitle((o.role && o.role.process) || f.process || 'other')].filter(Boolean).join(' · ');
+        const sub = [span(o), locOf(f), procTitle((o.role && o.role.process) || f.process || 'other')].filter(Boolean).join(' · ');
         return `<button type="button" data-opt="${i}"><b>${esc(f.name)}</b>${o.mine ? ` <span class="ok">✓ ${esc(o.role.name || t(L.menuMine))}</span>` : ''}<span class="s">${esc(sub)}</span></button>`;
       }).join('') : `<div class="mg">${esc(t(L.menuNone))}</div>`) +
       `<button type="button" data-opt="form" class="other">${esc(t(L.menuForm))}</button>`;
@@ -1882,7 +1884,9 @@
   // clocked in at that project's location — Connecteam's job "Airway
   // Distribution" matches the location Airway — and at least half the
   // stretch is inside the scheduled hours (so an overnight shift's early
-  // hours don't land on a project starting at 7). A stretch with no such
+  // hours don't land on a project starting at 7). Someone Crew Check-In
+  // moved has their own hours on each project, and the stretch is split at
+  // the move, so each part goes to its own project. A stretch with no such
   // project, or more than one, stays gold to log by hand.
   let tlAuto = [];
   const locLabel = (f) => f.location === 'other' ? (f.locationName || '') : ((WORK_LOCATIONS.find((l) => l[0] === f.location) || [])[1] || '');
@@ -1890,25 +1894,52 @@
     const x = fold(place).trim(), y = fold(locLabel(f)).trim();
     return !!x && !!y && (x.includes(y) || y.includes(x));
   };
+  // Where Crew Check-In moved the person that day (their own times on any
+  // project, as minutes into `date`): a stretch is split there first, so the
+  // time before a move and after it each find their own project.
+  function moveCuts(date, r) {
+    const cuts = new Set();
+    const d0 = new Date(date + 'T12:00:00'); d0.setDate(d0.getDate() - 1);
+    const prev = new Date(d0.getTime() - d0.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    const isMe = (p) => r.userId ? String(p.userId) === String(r.userId) : fold(p.name) === fold(r.name);
+    projects.forEach((p) => [[date, 0], [prev, 1440]].forEach(([d, off]) => {
+      if (!projectRunsOn(p.fields, d)) return;
+      dayRoles(p.fields, d).forEach((role) => {
+        const x = role.people.find(isMe);
+        if (!x || !hasOwnTimes(p.fields, d, personKey(x))) return;
+        // Only the move times: a span's edge at the role's own start or end
+        // isn't one, and the usual slack around a shift stays with it.
+        const [s0, e0] = projectHours(p.fields, role);
+        personSpans(p.fields, role, d, personKey(x)).forEach(([s, e]) => {
+          if (s !== s0 && !(s0 == null && s === 0)) cuts.add(s - off);
+          if (e !== e0 && !(s0 == null && e === 1440)) cuts.add(e - off);
+        });
+      });
+    }));
+    return [...cuts].sort((x, y) => x - y);
+  }
   function autoPlan(list, date) {
     const plan = [];
-    list.forEach((r) => r.gaps.forEach(([a, b]) => {
-      const sh = gapShift(r, a, b);
-      if (!sh || !sh.place) return;
-      const inHours = (o) => {
-        const [s, e] = projectHours(o.p.fields, o.role);
-        return s == null || Math.min(b, e - o.off) - Math.max(a, s - o.off) >= (b - a) / 2;
-      };
-      const opts = scheduledAround(date, a, b, r.userId, r.name).filter((o) => o.mine && samePlace(sh.place, o.p.fields) && inHours(o));
-      if (opts.length !== 1) return;
-      const o = opts[0];
-      // Right after an entry on the same project and role (an earlier
-      // auto-assign, while they were still on the clock)? Stretch that one
-      // instead of adding another, so running it again later in the day
-      // picks up the time since.
-      const ext = r.timed.find((e) => Math.abs(e.b - a) < 1 && e.f.project === o.p.id && (e.f.role || '') === ((o.role && o.role.id) || ''));
-      plan.push({ r, a: Math.round(a), b: Math.round(b), o, ext });
-    }));
+    list.forEach((r) => {
+      const cuts = moveCuts(date, r);
+      r.gaps.flatMap(([a, b]) => {
+        const at = cuts.filter((c) => c > a && c < b), pts = [a, ...at, b];
+        return pts.slice(1).map((x, i) => [pts[i], x]);
+      }).forEach(([a, b]) => {
+        const sh = gapShift(r, a, b);
+        if (!sh || !sh.place) return;
+        const inHours = (o) => o.spans.reduce((x, [s, e]) => s == null ? b - a : x + Math.max(0, Math.min(b, e - o.off) - Math.max(a, s - o.off)), 0) >= (b - a) / 2;
+        const opts = scheduledAround(date, a, b, r.userId, r.name).filter((o) => o.mine && samePlace(sh.place, o.p.fields) && inHours(o));
+        if (opts.length !== 1) return;
+        const o = opts[0];
+        // Right after an entry on the same project and role (an earlier
+        // auto-assign, while they were still on the clock)? Stretch that one
+        // instead of adding another, so running it again later in the day
+        // picks up the time since.
+        const ext = r.timed.find((e) => Math.abs(e.b - a) < 1 && e.f.project === o.p.id && (e.f.role || '') === ((o.role && o.role.id) || ''));
+        plan.push({ r, a: Math.round(a), b: Math.round(b), o, ext });
+      });
+    });
     return plan;
   }
   $('tl-auto').addEventListener('click', async () => {

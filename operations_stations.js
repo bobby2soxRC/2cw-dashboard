@@ -1294,7 +1294,8 @@ const WORK_LOCATIONS = [
 // end (dates; no end = open-ended), days (0 = Sun … 6 = Sat; empty = every
 // day), startTime, endTime, status, lead: {userId, name} (the project lead),
 // roles: [{id, name, process, startTime?, endTime?, people: [{userId,
-// name}]}], uids, notes }. Roles are the standing responsibilities on the
+// name}]}], uids, notes, overrides: {date: {skip, note, out, extra, flc,
+// here, times}} }. Roles are the standing responsibilities on the
 // project and the people under each — the daily/weekly schedule is every
 // project running that day with its lead and roles. A role's start or end
 // is only set when it differs from the project's.
@@ -1327,6 +1328,33 @@ const projectRoles = (f, leadLabel) => [
   ...(f && f.lead && f.lead.name ? [{ id: '_lead', name: leadLabel || 'Lead', isLead: true, people: [{ ...f.lead, lead: true }] }] : []),
   ...((f && f.roles) || []).map((r) => ({ ...r, people: r.people || [] }))
 ];
+// A clock time ('HH:MM') as minutes inside a project's (or role's) hours
+// that day: past 1440 when the hours run overnight and the time is after
+// midnight ('02:00' in a 10 PM–6 AM shift is 1560). null for no time.
+const shiftMin = (f, role, hm) => {
+  const [h, m] = String(hm || '').split(':').map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+  const x = h * 60 + m, e = projectHours(f, role)[1];
+  return e != null && e > 1440 && x <= e - 1440 ? x + 1440 : x;
+};
+// One person's hours on a project on a day, as [[startMin, endMin], …]: the
+// role's (projectHours) unless that day's changes give them times of their
+// own — overrides[date].times[personKey] = [{start, end}] ('HH:MM', blank =
+// the role's), written by Crew Check-In (crew_checkin.html) when a lead
+// moves someone to another station partway through the day, or they go home
+// early. [] means no time there that day (moved off before it started). An
+// all-day role with times of its own runs midnight to midnight.
+const personSpans = (f, role, date, key) => {
+  const own = ((((f && f.overrides) || {})[date] || {}).times || {})[key];
+  const [s, e] = projectHours(f, role);
+  if (!Array.isArray(own)) return [[s, e]];
+  const s0 = s == null ? 0 : s, e0 = s == null ? 1440 : e;
+  return own.map((x) => [x.start ? shiftMin(f, role, x.start) : s0, x.end ? shiftMin(f, role, x.end) : e0])
+    .filter(([a, b]) => b > a).sort((x, y) => x[0] - y[0]);
+};
+// True when that day's changes give the person times of their own there.
+const hasOwnTimes = (f, date, key) => Array.isArray(((((f && f.overrides) || {})[date] || {}).times || {})[key]);
+
 // A crew check (Pre-Roll's `attendance`): the latest row per person per
 // day, as a Map 'day|key' -> row.
 const crewLatest = (rows) => {
@@ -1342,5 +1370,5 @@ const crewOnRun = (rows) => new Set([...crewLatest(rows).values()].filter((r) =>
 const processTitle = (k) => (STATION_BY_KEY[k] && STATION_BY_KEY[k].title) || LABOR_PROCESSES[k] || { en: k || '—', es: k || '—' };
 
 if (typeof module !== 'undefined') {
-  module.exports = { crewLatest, crewOnRun, OPERATIONS_STATIONS, STATION_BY_KEY, BIOMASS, SELLABLE, PREFILL_MAP, PIPELINE_ORDER, G_PER_LB, LABOR_PROCESSES, WORK_LOCATIONS, projectRunsOn, projectHours, projectRoles, processTitle, buckedLb };
+  module.exports = { crewLatest, crewOnRun, OPERATIONS_STATIONS, STATION_BY_KEY, BIOMASS, SELLABLE, PREFILL_MAP, PIPELINE_ORDER, G_PER_LB, LABOR_PROCESSES, WORK_LOCATIONS, projectRunsOn, projectHours, projectRoles, shiftMin, personSpans, hasOwnTimes, processTitle, buckedLb };
 }

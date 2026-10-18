@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Crew Check-In — 2CW</title>
+  <script>
+    (function(){ if (!sessionStorage.getItem('2cw_pin')) window.location.replace('/index.html'); })();
+  </script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0c0d0f">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0c0d0f;--surface:#13151a;--surface2:#181b21;--border:#1e2129;
+      --green:#3db87a;--gold:#d4a843;--blue:#5a9fd4;--purple:#9b7fd4;--red:#ef5350;
+      --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;
+    }
+    html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-text-size-adjust:100%}
+
+    .hdr{min-height:calc(54px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:12px;position:sticky;top:0;z-index:20}
+    .hdr-back{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
+    .hdr-div{width:1px;height:18px;background:var(--border)}
+    .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .lang{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;flex:0 0 auto}
+    .lang button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:12px;font-weight:600;padding:8px 12px;cursor:pointer;min-height:36px}
+    .lang button.on{background:var(--blue);color:#000}
+
+    main{padding:28px 16px 60px;max-width:900px;margin:0 auto}
+    .title{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,6vw,46px);letter-spacing:.04em;line-height:1}
+    .subtitle{margin-top:6px;font-size:.85rem;color:var(--subtext);line-height:1.5;max-width:680px}
+
+    .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0 12px}
+    .bar input[type=date]{flex:0 1 180px}
+    .nav{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;min-width:46px;min-height:46px;font-size:1.1rem;cursor:pointer}
+    .day-name{font-family:'DM Mono',monospace;font-size:.8rem;color:var(--subtext);letter-spacing:.06em;text-transform:uppercase}
+    .spacer{flex:1}
+    .seg{display:flex;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+    .seg button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;padding:0 14px;min-height:44px;cursor:pointer}
+    .seg button.on{background:var(--gold);color:#000}
+    input,select{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .75rem;font:inherit;font-size:1rem;min-height:46px;outline:none;width:100%}
+    input:focus,select:focus{border-color:var(--blue)}
+    input[type=date],input[type=time]{-webkit-appearance:none;appearance:none;min-width:0;display:block}
+    .btn{padding:.7rem 1.1rem;border:1px solid var(--border);border-radius:10px;font-family:'DM Mono',monospace;font-size:.76rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer;background:transparent;color:var(--text);min-height:46px;white-space:nowrap}
+    .btn-gold{background:var(--gold);border-color:var(--gold);color:#000}
+    .btn-ghost{color:var(--subtext)}
+    .btn-sm{min-height:40px;padding:.45rem .8rem;font-size:.68rem}
+    .btn:disabled{opacity:.5;cursor:default}
+
+    .loose{background:var(--surface);border:1px solid rgba(212,168,67,.35);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:.88rem;line-height:1.5;color:var(--subtext)}
+    .loose b{color:var(--gold)}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:14px;overflow:hidden}
+    .card-hd{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start}
+    .card-hd .main{flex:1;min-width:0}
+    .loc{font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+    .nm{font-weight:700;font-size:1.05rem;margin-top:2px}
+    .meta{font-family:'DM Mono',monospace;font-size:.74rem;color:var(--subtext);margin-top:3px}
+    .count{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--subtext);text-align:right;white-space:nowrap}
+    .count b{color:var(--green);font-size:1.2rem;font-family:'Bebas Neue',sans-serif;letter-spacing:.04em}
+    .mine-tag{display:inline-block;font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);border:1px solid var(--gold);border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle}
+
+    .row{display:flex;align-items:center;gap:8px;padding:10px 16px;border-top:1px solid var(--border);flex-wrap:wrap}
+    .row:first-child{border-top:none}
+    .row.out .who b{color:var(--muted);text-decoration:line-through}
+    .who{flex:1 1 180px;min-width:0}
+    .who b{font-weight:600}
+    .who .r{display:block;font-family:'DM Mono',monospace;font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+    .who .tm{display:block;font-family:'DM Mono',monospace;font-size:.74rem;color:var(--gold);margin-top:3px}
+    .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px;vertical-align:middle}
+    .tag{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;border-radius:99px;padding:2px 7px;margin-left:6px;vertical-align:middle;border:1px solid var(--blue);color:var(--blue)}
+    .acts{display:flex;gap:6px;flex-wrap:wrap}
+    .st{background:transparent;border:1px solid var(--border);color:var(--subtext);border-radius:10px;min-height:44px;padding:0 12px;font-weight:700;font-size:.85rem;cursor:pointer;font-family:inherit}
+    .st.here.on{background:var(--green);border-color:var(--green);color:#000}
+    .st.out.on{background:var(--red);border-color:var(--red);color:#000}
+    .st.mv{color:var(--gold);border-color:rgba(212,168,67,.45)}
+    .st.x{min-width:44px;font-size:1.1rem}
+    .st:disabled{opacity:.5;cursor:default}
+
+    .panel{background:var(--surface2);border-top:1px solid var(--border);padding:12px 16px;display:grid;grid-template-columns:2fr 1fr auto auto;gap:8px;align-items:end}
+    .panel label{display:block;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+    .panel .hint{grid-column:1/-1;font-size:.78rem;color:var(--subtext);line-height:1.4}
+    .foot{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--border);background:var(--surface2)}
+    .sum{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--subtext);padding:0 16px 12px;background:var(--surface2)}
+    .none{padding:12px 16px;color:var(--muted);font-size:.88rem}
+    .empty{color:var(--subtext);font-size:.92rem;padding:28px;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:12px;line-height:1.6}
+    .empty a{color:var(--gold)}
+    #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--green);color:#000;font-weight:700;
+      padding:12px 18px;border-radius:10px;z-index:90;display:none;max-width:calc(100vw - 32px)}
+    #toast.on{display:block}
+    #toast.err{background:var(--red)}
+    @media (max-width:600px){
+      .panel{grid-template-columns:1fr 1fr}
+      .panel .wide{grid-column:1/-1}
+      .acts{width:100%}
+      .acts .st{flex:1}
+      .acts .st.x{flex:0 0 44px}
+    }
+  </style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="/index.html" id="back">← Hub</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand" id="brand">Crew Check-In</div>
+  <div class="lang" id="lang"></div>
+</header>
+
+<main>
+  <div class="title" id="title">Crew Check-In</div>
+  <div class="subtitle" id="subtitle"></div>
+  <div class="bar">
+    <button type="button" class="nav" id="prev" aria-label="Previous">‹</button>
+    <input type="date" id="date">
+    <button type="button" class="nav" id="next" aria-label="Next">›</button>
+    <span class="day-name" id="day-name"></span>
+    <span class="spacer"></span>
+    <div class="seg" id="scope"></div>
+  </div>
+  <div id="loose"></div>
+  <div id="board"><div class="empty" id="loading"></div></div>
+</main>
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/config/supabase_config.js"></script>
+<script src="/operations_stations.js"></script>
+<script src="/ops_common.js"></script>
+<script src="/ops_data.js"></script>
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// Crew Check-In: a lead checks in the people on their Master Schedule
+// projects once a shift, instead of every station form naming who worked it.
+// It lists the projects running that day (the lead's own first), each with
+// its lead and responsibilities' people, that day's changes applied. Each
+// person is marked Here or Not here; anyone else working is added; and Move
+// sends someone to another project at a time (or home), for a person who
+// works one station in the morning and another in the afternoon.
+//
+// Everything is saved on the project's day in the Master Schedule
+// (fields.overrides[date], the same place as its Change this day and the
+// Pre-Roll crew check), through patchWorkProject in ops_data.js:
+//   here:  [personKey]  checked in here
+//   out:   [personKey]  not here (someone standing on the project)
+//   extra: [{roleId, userId, name}]  added for the day
+//   times: {personKey: [{start, end}]}  their own hours there that day
+//          ('HH:MM', blank = the role's) — personSpans in
+//          operations_stations.js reads them.
+// A move cuts the person's time on the project they leave at that time and
+// adds them (an extra, when they aren't on it already) to the one they go
+// to from it. Master Schedule then shows their hours there, doesn't flag
+// them as double-booked, and the Labor Log's Auto-assign splits their
+// clocked time at the move, so each part goes to its own project (and on to
+// its UIDs). Full shift (↺) takes a person's own hours there back off.
+// ─────────────────────────────────────────────────────────────────────────────
+(async function () {
+  const me = sessionStorage.getItem('2cw_user_name') || '';
+  const DATA_BASE = 'https://raw.githubusercontent.com/bobby2soxRC/2cw-dashboard/main/data/';
+  const L = {
+    title:    { en: 'Crew Check-In', es: 'Registro de Personal' },
+    subtitle: { en: 'Check in your crew once a shift, from the Master Schedule. Mark who’s here, add anyone else working, and use Move when someone goes to another station — the Labor Log then puts each part of their day on the right project.',
+                es: 'Registre a su equipo una vez por turno, desde el Plan Maestro. Marque quién está, agregue a quien más trabaje, y use Mover cuando alguien pase a otra estación — el Registro de Mano de Obra pone cada parte de su día en el proyecto correcto.' },
+    loading:  { en: 'Loading the schedule…', es: 'Cargando el horario…' },
+    noDb:     { en: 'Couldn’t reach the database.', es: 'No se pudo conectar a la base de datos.' },
+    mine:     { en: 'My projects', es: 'Mis proyectos' },
+    all:      { en: 'All', es: 'Todos' },
+    yours:    { en: 'Yours', es: 'Suyo' },
+    nothing:  { en: 'Nothing is on the Master Schedule this day.', es: 'No hay nada en el Plan Maestro este día.' },
+    nothingMine: { en: 'None of your projects run this day.', es: 'Ninguno de sus proyectos trabaja este día.' },
+    goSched:  { en: 'Open the Master Schedule', es: 'Abrir el Plan Maestro' },
+    allDay:   { en: 'All day', es: 'Todo el día' },
+    lead:     { en: 'Lead', es: 'Líder' },
+    here:     { en: 'Here', es: 'Presente' },
+    out:      { en: 'Not here', es: 'No vino' },
+    move:     { en: 'Move', es: 'Mover' },
+    added:    { en: 'Added', es: 'Agregado' },
+    full:     { en: 'Full shift', es: 'Turno completo' },
+    fullQ:    { en: 'Put {n} back on the whole shift here? (Their move times here come off.)', es: '¿Regresar a {n} al turno completo aquí? (Se quitan sus horas de cambio aquí.)' },
+    removeQ:  { en: 'Take {n} off {p} for this day?', es: '¿Quitar a {n} de {p} este día?' },
+    movedOff: { en: 'Moved off before starting here', es: 'Se movió antes de empezar aquí' },
+    toWhere:  { en: '→ {p} at {t}', es: '→ {p} a las {t}' },
+    fromWhere:{ en: 'from {p} at {t}', es: 'de {p} a las {t}' },
+    wentHome: { en: 'went home at {t}', es: 'se fue a las {t}' },
+    moveTo:   { en: 'Move to', es: 'Mover a' },
+    pickTo:   { en: 'Pick where they’re going…', es: 'Elija a dónde va…' },
+    home:     { en: 'Went home / left for the day', es: 'Se fue / terminó el día' },
+    at:       { en: 'At', es: 'A las' },
+    doMove:   { en: 'Move', es: 'Mover' },
+    cancel:   { en: 'Cancel', es: 'Cancelar' },
+    moveHint: { en: 'Their time here stops at that time and starts there. To undo, use Full shift here and × there.',
+                es: 'Su tiempo aquí termina a esa hora y empieza allá. Para deshacer, use Turno completo aquí y × allá.' },
+    allHere:  { en: '✓ Everyone else is here', es: '✓ Todos los demás están' },
+    addSome:  { en: '+ Add someone', es: '+ Agregar a alguien' },
+    pickWho:  { en: 'Who…', es: 'Quién…' },
+    clocked:  { en: 'Clocked in now', es: 'Marcados ahora' },
+    everyone: { en: 'Everyone', es: 'Todos' },
+    typeName: { en: 'Not in the list — type a name', es: 'No está en la lista — escriba un nombre' },
+    namePh:   { en: 'Name', es: 'Nombre' },
+    resp:     { en: 'Responsibility', es: 'Responsabilidad' },
+    add:      { en: 'Add', es: 'Agregar' },
+    sum:      { en: '{n} here · {o} not here · {u} not checked in yet', es: '{n} presentes · {o} no vinieron · {u} sin registrar' },
+    noRoles:  { en: 'This project has no lead or responsibilities to put people under yet — add them in the Master Schedule.',
+                es: 'Este proyecto todavía no tiene líder ni responsabilidades donde poner a la gente — agréguelos en el Plan Maestro.' },
+    nobody:   { en: 'Nobody is on this project yet — add the people working it.', es: 'Todavía no hay nadie en este proyecto — agregue a quienes trabajan.' },
+    loose:    { en: 'Clocked in but not on any project today:', es: 'Marcados pero en ningún proyecto hoy:' },
+    looseHint:{ en: 'Add them to the project they’re working.', es: 'Agréguelos al proyecto donde trabajan.' },
+    needTime: { en: 'Enter the time they moved.', es: 'Escriba la hora del cambio.' },
+    needTo:   { en: 'Pick where they’re going.', es: 'Elija a dónde va.' },
+    saved:    { en: 'Saved', es: 'Guardado' },
+    moved:    { en: '{n} → {p} at {t}', es: '{n} → {p} a las {t}' },
+    failed:   { en: 'Couldn’t save —', es: 'No se pudo guardar —' },
+    busy:     { en: 'someone else is saving this project; try again.', es: 'alguien más está guardando este proyecto; intente de nuevo.' }
+  };
+  const fill = (s, vars) => Object.entries(vars).reduce((a, [k, v]) => a.split(`{${k}}`).join(v), s);
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const $ = (id) => document.getElementById(id);
+  const fold = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+  const localDay = (d = new Date()) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  const addDays = (iso, n) => { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return localDay(d); };
+  const lang = () => getLang() === 'es' ? 'es-MX' : 'en-US';
+  const fmtDate = (iso, o) => new Date(iso + 'T12:00:00').toLocaleDateString(lang(), o || { month: 'short', day: 'numeric' });
+  const fmtMin = (m) => { const x = ((m % 1440) + 1440) % 1440; return new Date(2000, 0, 1, Math.floor(x / 60), x % 60).toLocaleTimeString(lang(), { hour: 'numeric', minute: '2-digit' }); };
+  const hm = (m) => { const x = ((m % 1440) + 1440) % 1440; return `${String(Math.floor(x / 60)).padStart(2, '0')}:${String(x % 60).padStart(2, '0')}`; };
+  const personKey = (p) => p.userId ? 'id:' + p.userId : 'name:' + fold(p.name);
+  const spanText = ([s, e]) => s == null ? t(L.allDay) : `${fmtMin(s)}–${fmtMin(e)}`;
+  const hoursText = (f, role) => spanText(projectHours(f, role));
+  const locName = (f) => f.location === 'other' ? (f.locationName || '') : ((WORK_LOCATIONS.find((l) => l[0] === f.location) || [])[1] || f.location || '');
+  const locOrder = (f) => { const i = WORK_LOCATIONS.findIndex((l) => l[0] === f.location); return i < 0 ? 99 : i; };
+  let toastTimer = null;
+  const toast = (msg, err) => {
+    const el = $('toast');
+    el.textContent = msg; el.className = 'on' + (err ? ' err' : '');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.className = ''; }, err ? 6000 : 2200);
+  };
+
+  mountLangToggle('lang');
+  document.title = `${t(L.title)} — 2CW`;
+  $('brand').textContent = $('title').textContent = t(L.title);
+  $('subtitle').textContent = t(L.subtitle);
+  $('loading').textContent = t(L.loading);
+
+  // ── Data: projects, roster, who's clocked in ────────────────────────────
+  let projects = [];
+  let roster = [];             // [{userId, name}]
+  const clockedIn = new Set(); // userIds
+  async function getJson(file) {
+    try { const r = await fetch(DATA_BASE + file + '?t=' + Date.now()); return r.ok ? await r.json() : null; } catch { return null; }
+  }
+  const rosterP = Promise.all([getJson('connecteam_roster.json'), getJson('connecteam_hours.json')]).then(([r, h]) => {
+    const byId = new Map();
+    ((r && r.people) || []).forEach((p) => byId.set(String(p.userId), { userId: String(p.userId), name: p.name }));
+    if (h) {
+      if (!byId.size) [...(h.week || []), ...(h.today || []), ...(h.clocked_in || [])].forEach((p) => byId.set(String(p.userId), { userId: String(p.userId), name: p.name }));
+      (h.clocked_in || []).forEach((p) => clockedIn.add(String(p.userId)));
+    }
+    roster = [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
+  });
+  if (!getClient()) { $('board').innerHTML = `<div class="empty">${esc(t(L.noDb))}</div>`; return; }
+
+  // ── A project's crew on a day ───────────────────────────────────────────
+  const ovFor = (f, d) => (f.overrides || {})[d] || {};
+  const runsOn = (p, d) => projectRunsOn(p.fields, d) && !ovFor(p.fields, d).skip;
+  const isMine = (f) => !!me && !!(f.lead && f.lead.name) && fold(f.lead.name) === fold(me);
+  // Everyone on the project that day, once each, with the role they're under:
+  // standing people (the lead first) and that day's extras. Not here people
+  // stay listed, marked out.
+  function crewOf(f, d) {
+    const ov = ovFor(f, d), out = new Set(ov.out || []), here = new Set(ov.here || []);
+    const rows = [], seen = new Set();
+    projectRoles(f, t(L.lead)).forEach((r) => {
+      const add = (x, extra) => {
+        const key = personKey(x);
+        if (!x.name || seen.has(key)) return;
+        seen.add(key);
+        rows.push({ key, userId: x.userId || '', name: x.name, role: r, extra, lead: !!r.isLead,
+                    status: out.has(key) ? 'out' : here.has(key) || extra ? 'here' : '',
+                    spans: personSpans(f, r, d, key), own: hasOwnTimes(f, d, key) });
+      };
+      (r.people || []).forEach((x) => add(x, false));
+      (ov.extra || []).filter((x) => x.roleId === r.id).forEach((x) => add(x, true));
+    });
+    return rows;
+  }
+  const findIn = (f, d, key) => crewOf(f, d).find((x) => x.key === key);
+  // The other project someone went to (or came from) at a time — for the
+  // "→ Take Down at 11:30 AM" line under their name.
+  function otherAt(d, key, pid, min, edge) {
+    for (const p of projects) {
+      if (p.id === pid || !runsOn(p, d)) continue;
+      const x = findIn(p.fields, d, key);
+      if (x && x.status !== 'out' && x.spans.some((s) => s[edge] === min)) return p;
+    }
+    return null;
+  }
+
+  // ── Changes, each made on the freshly read project (patchWorkProject) ──
+  // A change to one day: `fn(day)` edits a copy of overrides[d]; empty
+  // lists come off, and an empty day goes away.
+  const changeDay = (fields, d, fn) => {
+    const ovs = { ...(fields.overrides || {}) };
+    const day = { ...(ovs[d] || {}) };
+    if (fn(day) === false) return fields;
+    ['out', 'here', 'extra'].forEach((k) => { if (Array.isArray(day[k]) && !day[k].length) delete day[k]; });
+    if (day.times && !Object.keys(day.times).length) delete day.times;
+    if (Object.keys(day).length) ovs[d] = day; else delete ovs[d];
+    return { ...fields, overrides: ovs, updatedBy: me };
+  };
+  const standingOn = (fields, key) => projectRoles(fields).some((r) => (r.people || []).some((x) => personKey(x) === key));
+  const without = (list, key) => (list || []).filter((k) => k !== key);
+  const withKey = (list, key) => (list || []).includes(key) ? list : [...(list || []), key];
+  // Someone's own hours on the project as [[start, end]] minutes, saved as
+  // {start, end} with blanks where they match the role's — none at all when
+  // they're back to the role's whole shift.
+  function putSpans(fields, day, role, key, spans) {
+    const [s, e] = projectHours(fields, role);
+    const s0 = s == null ? 0 : s, e0 = s == null ? 1440 : e;
+    const merged = [];
+    spans.filter(([a, b]) => b > a).sort((x, y) => x[0] - y[0]).forEach(([a, b]) => {
+      const last = merged[merged.length - 1];
+      if (last && a <= last[1]) last[1] = Math.max(last[1], b); else merged.push([a, b]);
+    });
+    const times = { ...(day.times || {}) };
+    if (merged.length === 1 && merged[0][0] === s0 && merged[0][1] === e0) delete times[key];
+    else times[key] = merged.map(([a, b]) => ({ start: a === s0 ? '' : hm(a), end: b === e0 ? '' : hm(b) }));
+    day.times = times;
+  }
+  const spansOf = (fields, d, x) => personSpans(fields, x.role, d, x.key).map(([a, b]) => a == null ? [0, 1440] : [a, b]);
+
+  const setHere = (key) => (fields, d) => changeDay(fields, d, (day) => {
+    if ((day.here || []).includes(key) && !(day.out || []).includes(key)) return false;
+    day.here = withKey(day.here, key); day.out = without(day.out, key);
+  });
+  const setOut = (key) => (fields, d) => changeDay(fields, d, (day) => {
+    if ((day.out || []).includes(key)) return false;
+    day.out = withKey(day.out, key); day.here = without(day.here, key);
+  });
+  const removeExtra = (key) => (fields, d) => changeDay(fields, d, (day) => {
+    day.extra = (day.extra || []).filter((x) => personKey(x) !== key);
+    day.here = without(day.here, key);
+    if (day.times) { day.times = { ...day.times }; delete day.times[key]; }
+  });
+  const fullShift = (key) => (fields, d) => changeDay(fields, d, (day) => {
+    if (!day.times || !(key in day.times)) return false;
+    day.times = { ...day.times }; delete day.times[key];
+  });
+  // On the project and here: back from Not here if they're standing on it,
+  // else added as an extra under `roleId`.
+  const addPerson = (person, roleId) => (fields, d) => changeDay(fields, d, (day) => {
+    const key = personKey(person);
+    day.out = without(day.out, key);
+    day.here = withKey(day.here, key);
+    if (!standingOn(fields, key) && !(day.extra || []).some((x) => personKey(x) === key))
+      day.extra = [...(day.extra || []), { roleId, userId: person.userId || '', name: person.name }];
+  });
+  // Their time here stops at `at` ('HH:MM'). An extra left with no time here
+  // comes off; someone standing on it keeps an empty list (moved off).
+  const stopAt = (key, at) => (fields, d) => {
+    const x = findIn(fields, d, key);
+    if (!x) return fields;
+    const T = shiftMin(fields, x.role, at);
+    const kept = spansOf(fields, d, x).filter(([a]) => a < T).map(([a, b]) => [a, Math.min(b, T)]);
+    if (!kept.length && x.extra) return removeExtra(key)(fields, d);
+    return changeDay(fields, d, (day) => { putSpans(fields, day, x.role, key, kept); });
+  };
+  // On this project from `at` to the end of its shift: added (here) when
+  // they aren't on it, with that span on top of any own time they had here.
+  const startAt = (person, roleId, at) => (fields, d) => {
+    const key = personKey(person);
+    const after = addPerson(person, roleId)(fields, d);
+    const x = findIn(after, d, key);
+    if (!x) return after;
+    const [s0, e0] = projectHours(after, x.role);
+    const T = shiftMin(after, x.role, at), end = s0 == null ? 1440 : e0;
+    const had = hasOwnTimes(after, d, key) ? spansOf(after, d, x) : [];
+    return changeDay(after, d, (day) => { putSpans(after, day, x.role, key, [...had, [T, end]]); });
+  };
+
+  async function apply(pid, mutate) {
+    const res = await patchWorkProject(pid, (fields) => mutate(fields, curDate()), me);
+    if (!res.ok) { toast(`${t(L.failed)} ${res.reason === 'busy' ? t(L.busy) : res.reason || ''}`, true); return false; }
+    const p = projects.find((x) => x.id === pid);
+    if (p && res.fields) p.fields = res.fields;
+    return true;
+  }
+
+  // ── Page state ──────────────────────────────────────────────────────────
+  const params = new URLSearchParams(location.search);
+  $('date').value = params.get('date') || localDay();
+  const curDate = () => $('date').value || localDay();
+  let scope = 'mine';
+  try { scope = localStorage.getItem('2cw_checkin_scope') || 'mine'; } catch {}
+  let panel = null;   // {kind: 'move' | 'add', pid, key?}
+  let busy = false;
+
+  function running() {
+    const d = curDate();
+    return projects.filter((p) => runsOn(p, d))
+      .sort((a, b) => isMine(b.fields) - isMine(a.fields) || locOrder(a.fields) - locOrder(b.fields)
+        || (projectHours(a.fields)[0] ?? -1) - (projectHours(b.fields)[0] ?? -1) || String(a.fields.name).localeCompare(String(b.fields.name)));
+  }
+
+  function render() {
+    const d = curDate(), today = d === localDay();
+    $('day-name').textContent = fmtDate(d, { weekday: 'long' });
+    const all = running(), mine = all.filter((p) => isMine(p.fields));
+    const useMine = scope === 'mine' && mine.length;
+    $('scope').innerHTML = mine.length ? [['mine', `${t(L.mine)} (${mine.length})`], ['all', `${t(L.all)} (${all.length})`]]
+      .map(([k, l]) => `<button type="button" data-scope="${k}" class="${(useMine ? 'mine' : 'all') === k ? 'on' : ''}">${esc(l)}</button>`).join('') : '';
+    $('scope').style.display = mine.length ? '' : 'none';
+    // Clocked in now, but on none of the day's projects (or marked Not here).
+    const onSome = new Set(all.flatMap((p) => crewOf(p.fields, d).filter((x) => x.status !== 'out').map((x) => x.key)));
+    const loose = today ? roster.filter((p) => clockedIn.has(p.userId) && !onSome.has(personKey(p))) : [];
+    $('loose').innerHTML = loose.length ? `<div class="loose"><span class="dot"></span>${esc(t(L.loose))} <b>${loose.map((p) => esc(p.name)).join(', ')}</b> — ${esc(t(L.looseHint))}</div>` : '';
+    const shown = useMine ? mine : all;
+    if (!shown.length) {
+      $('board').innerHTML = `<div class="empty">${esc(t(all.length ? L.nothingMine : L.nothing))}<br><a href="/master_schedule.html?date=${esc(d)}">${esc(t(L.goSched))} →</a></div>`;
+      return;
+    }
+    $('board').innerHTML = shown.map((p) => card(p, d, today)).join('');
+    if (panel) { const el = document.querySelector('[data-focus]'); if (el) el.focus(); }
+  }
+
+  function card(p, d, today) {
+    const f = p.fields, crew = crewOf(f, d);
+    let n = 0, o = 0, u = 0;
+    crew.forEach((x) => { if (x.status === 'out') o++; else if (x.status === 'here') n++; else u++; });
+    const rows = crew.map((x) => personRow(p, d, x, today)).join('');
+    const addOpen = panel && panel.kind === 'add' && panel.pid === p.id;
+    return `<div class="card">
+      <div class="card-hd"><div class="main"><div class="loc">${esc(locName(f))}${isMine(f) ? `<span class="mine-tag">${esc(t(L.yours))}</span>` : ''}</div>
+        <div class="nm">${esc(f.name)}</div>
+        <div class="meta">${esc([hoursText(f), f.process ? t(processTitle(f.process)) : ''].filter(Boolean).join(' · '))}</div></div>
+        <div class="count"><b>${n}</b> / ${crew.length - o}</div></div>
+      ${rows || `<div class="none">${esc(t(L.nobody))}</div>`}
+      ${addOpen ? addPanel(p) : ''}
+      <div class="foot">
+        ${u ? `<button type="button" class="btn btn-sm btn-gold" data-act="allhere" data-pid="${p.id}">${esc(t(L.allHere))}</button>` : ''}
+        ${addOpen ? '' : `<button type="button" class="btn btn-sm" data-act="openadd" data-pid="${p.id}">${esc(t(L.addSome))}</button>`}
+      </div>
+      <div class="sum">${esc(fill(t(L.sum), { n, o, u }))}</div>
+    </div>`;
+  }
+
+  function personRow(p, d, x, today) {
+    const f = p.fields, [s0, e0] = projectHours(f, x.role);
+    const dot = today && x.userId && clockedIn.has(x.userId) ? '<span class="dot"></span>' : '';
+    // Their own hours here, and where they went / came from.
+    let tm = '';
+    if (x.own && x.status !== 'out') {
+      if (!x.spans.length) tm = t(L.movedOff);
+      else tm = x.spans.map(([a, b]) => {
+        const bits = [spanText([a, b])];
+        if (a !== s0 && !(s0 == null && a === 0)) { const q = otherAt(d, x.key, p.id, a, 1); if (q) bits.push(fill(t(L.fromWhere), { p: q.fields.name, t: fmtMin(a) })); }
+        if (b !== e0 && !(s0 == null && b === 1440)) {
+          const q = otherAt(d, x.key, p.id, b, 0);
+          bits.push(q ? fill(t(L.toWhere), { p: q.fields.name, t: fmtMin(b) }) : fill(t(L.wentHome), { t: fmtMin(b) }));
+        }
+        return bits.join(' ');
+      }).join(' · ');
+    }
+    const k = esc(x.key), pid = p.id;
+    const moveOpen = panel && panel.kind === 'move' && panel.pid === pid && panel.key === x.key;
+    const acts = [
+      `<button type="button" class="st here${x.status === 'here' ? ' on' : ''}" data-act="here" data-pid="${pid}" data-key="${k}">${esc(t(L.here))}</button>`,
+      x.extra ? `<button type="button" class="st x" data-act="remove" data-pid="${pid}" data-key="${k}" aria-label="×">×</button>`
+              : `<button type="button" class="st out${x.status === 'out' ? ' on' : ''}" data-act="out" data-pid="${pid}" data-key="${k}">${esc(t(L.out))}</button>`,
+      x.status !== 'out' ? `<button type="button" class="st mv" data-act="openmove" data-pid="${pid}" data-key="${k}">⇄ ${esc(t(L.move))}</button>` : '',
+      x.own && x.status !== 'out' ? `<button type="button" class="st x" data-act="full" data-pid="${pid}" data-key="${k}" title="${esc(t(L.full))}">↺</button>` : ''
+    ].join('');
+    return `<div class="row${x.status === 'out' ? ' out' : ''}"><div class="who">${dot}<b>${esc(x.name)}</b>${x.extra ? `<span class="tag">${esc(t(L.added))}</span>` : ''}
+        <span class="r">${esc(x.role.name)}${x.role.startTime || x.role.endTime ? ' · ' + esc(hoursText(f, x.role)) : ''}</span>${tm ? `<span class="tm">${esc(tm)}</span>` : ''}</div>
+      <div class="acts">${acts}</div></div>${moveOpen ? movePanel(p, d, x) : ''}`;
+  }
+
+  // Where someone can be added or moved to on a project: its
+  // responsibilities, else under its lead; a project with neither has
+  // nowhere to put them (Master Schedule only lists people under one).
+  const targetRoles = (f) => { const rs = (f.roles || []).filter((r) => r.name); return rs.length ? rs : f.lead && f.lead.name ? [{ id: '_lead', name: '' }] : []; };
+  const fmtAt = (at) => { const [h, m] = at.split(':').map(Number); return fmtMin(h * 60 + m); };
+  const nowHm = () => { const n = new Date(), m = Math.round((n.getHours() * 60 + n.getMinutes()) / 5) * 5; return hm(m); };
+  function movePanel(p, d, x) {
+    const opts = running().filter((q) => q.id !== p.id && targetRoles(q.fields).length).map((q) => `<optgroup label="${esc(`${locName(q.fields)} — ${q.fields.name}`)}">${targetRoles(q.fields).map((r) =>
+      `<option value="${q.id}|${esc(r.id)}">${esc(q.fields.name)}${r.name ? ' — ' + esc(r.name) : ''}</option>`).join('')}</optgroup>`).join('');
+    return `<div class="panel" data-panel="move">
+      <div class="wide"><label>${esc(t(L.moveTo))}</label><select id="mv-to" data-focus="1"><option value="">${esc(t(L.pickTo))}</option>${opts}<option value="home">${esc(t(L.home))}</option></select></div>
+      <div><label>${esc(t(L.at))}</label><input type="time" id="mv-at" value="${d === localDay() ? nowHm() : ''}"></div>
+      <button type="button" class="btn btn-gold" data-act="domove" data-pid="${p.id}" data-key="${esc(x.key)}">${esc(t(L.doMove))}</button>
+      <button type="button" class="btn btn-ghost" data-act="close">${esc(t(L.cancel))}</button>
+      <div class="hint">${esc(t(L.moveHint))}</div></div>`;
+  }
+  function addPanel(p) {
+    const d = curDate(), on = new Set(crewOf(p.fields, d).filter((x) => x.status !== 'out').map((x) => x.key));
+    const pool = roster.filter((r) => !on.has(personKey(r)));
+    const today = d === localDay();
+    const opt = (r) => `<option value="${esc(r.userId)}">${esc(r.name)}</option>`;
+    const ci = today ? pool.filter((r) => clockedIn.has(r.userId)) : [];
+    const rest = pool.filter((r) => !ci.includes(r));
+    const roles = targetRoles(p.fields);
+    if (!roles.length) return `<div class="panel" data-panel="add"><div class="hint">${esc(t(L.noRoles))} <a href="/master_schedule.html?id=${esc(p.id)}" style="color:var(--gold)">${esc(t(L.goSched))} →</a></div>
+      <button type="button" class="btn btn-ghost" data-act="close">${esc(t(L.cancel))}</button></div>`;
+    return `<div class="panel" data-panel="add">
+      <div class="wide"><label>${esc(t(L.pickWho))}</label><select id="ad-who" data-focus="1"><option value=""></option>
+        ${ci.length ? `<optgroup label="${esc(t(L.clocked))}">${ci.map(opt).join('')}</optgroup>` : ''}
+        <optgroup label="${esc(t(L.everyone))}">${rest.map(opt).join('')}</optgroup>
+        <option value="__type__">${esc(t(L.typeName))}</option></select>
+        <input type="text" id="ad-name" placeholder="${esc(t(L.namePh))}" style="display:none;margin-top:8px"></div>
+      ${roles.length > 1 ? `<div><label>${esc(t(L.resp))}</label><select id="ad-role">${roles.map((r) => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('')}</select></div>`
+                         : `<input type="hidden" id="ad-role" value="${esc(roles[0].id)}"><div></div>`}
+      <button type="button" class="btn btn-gold" data-act="doadd" data-pid="${p.id}">${esc(t(L.add))}</button>
+      <button type="button" class="btn btn-ghost" data-act="close">${esc(t(L.cancel))}</button></div>`;
+  }
+
+  // ── Taps ────────────────────────────────────────────────────────────────
+  $('board').addEventListener('change', (e) => {
+    if (e.target.id !== 'ad-who') return;
+    const inp = $('ad-name');
+    inp.style.display = e.target.value === '__type__' ? 'block' : 'none';
+    if (e.target.value === '__type__') inp.focus();
+  });
+  $('board').addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-act]');
+    if (!b || busy) return;
+    const act = b.dataset.act, pid = b.dataset.pid, key = b.dataset.key;
+    const p = projects.find((x) => x.id === pid);
+    const d = curDate();
+    if (act === 'close') { panel = null; render(); return; }
+    if (act === 'openmove') { panel = { kind: 'move', pid, key }; render(); return; }
+    if (act === 'openadd') { panel = { kind: 'add', pid }; render(); return; }
+    if (!p) return;
+    const x = key ? findIn(p.fields, d, key) : null;
+    let run = null, done = '';
+    if (act === 'here' && x) run = async () => apply(pid, setHere(key));
+    else if (act === 'out' && x) run = async () => apply(pid, setOut(key));
+    else if (act === 'remove' && x) {
+      if (!confirm(fill(t(L.removeQ), { n: x.name, p: p.fields.name }))) return;
+      run = async () => apply(pid, removeExtra(key));
+    } else if (act === 'full' && x) {
+      if (!confirm(fill(t(L.fullQ), { n: x.name }))) return;
+      run = async () => apply(pid, fullShift(key));
+    } else if (act === 'allhere') {
+      const keys = crewOf(p.fields, d).filter((y) => !y.status).map((y) => y.key);
+      run = async () => apply(pid, (fields, day) => keys.reduce((acc, k) => setHere(k)(acc, day), fields));
+    } else if (act === 'doadd') {
+      const sel = $('ad-who'), inp = $('ad-name');
+      const hit = sel.value && sel.value !== '__type__' ? roster.find((r) => r.userId === sel.value) : null;
+      const name = hit ? hit.name : sel.value === '__type__' ? inp.value.trim() : '';
+      if (!name) { (sel.value === '__type__' ? inp : sel).focus(); return; }
+      const person = { userId: hit ? hit.userId : '', name };
+      const roleId = $('ad-role').value;
+      run = async () => { const ok = await apply(pid, addPerson(person, roleId)); if (ok) panel = null; return ok; };
+    } else if (act === 'domove' && x) {
+      const to = $('mv-to').value, at = $('mv-at').value;
+      if (!to) { toast(t(L.needTo), true); $('mv-to').focus(); return; }
+      if (!at) { toast(t(L.needTime), true); $('mv-at').focus(); return; }
+      const person = { userId: x.userId, name: x.name };
+      if (to === 'home') {
+        // Home: their time stops at `at` on every project they're on that day.
+        const on = running().filter((q) => { const y = findIn(q.fields, d, key); return y && y.status !== 'out'; });
+        run = async () => { for (const q of on) { if (!(await apply(q.id, stopAt(key, at)))) return false; } panel = null; return true; };
+        done = `${x.name} ${fill(t(L.wentHome), { t: fmtAt(at) })}`;
+      } else {
+        const [qid, roleId] = to.split('|');
+        const q = projects.find((y) => y.id === qid);
+        run = async () => {
+          if (!(await apply(pid, stopAt(key, at)))) return false;
+          if (!(await apply(qid, startAt(person, roleId, at)))) return false;
+          panel = null; return true;
+        };
+        done = fill(t(L.moved), { n: x.name, p: q ? q.fields.name : '', t: fmtAt(at) });
+      }
+    }
+    if (!run) return;
+    busy = true;
+    document.querySelectorAll('#board button').forEach((el) => { el.disabled = true; });
+    try { if (await run()) toast(done || t(L.saved)); } finally { busy = false; render(); }
+  });
+  $('scope').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-scope]');
+    if (!b) return;
+    scope = b.dataset.scope;
+    try { localStorage.setItem('2cw_checkin_scope', scope); } catch {}
+    render();
+  });
+  const goDate = (v) => { $('date').value = v; panel = null; render(); };
+  $('prev').onclick = () => goDate(addDays(curDate(), -1));
+  $('next').onclick = () => goDate(addDays(curDate(), 1));
+  $('date').onchange = () => goDate(curDate());
+
+  // Another lead's or tablet's taps: re-read the projects every minute, and
+  // when the page comes back to the front — not while a Move / Add is open.
+  async function reload() {
+    projects = await listWorkProjects();
+    if (!panel && !busy) render();
+  }
+  setInterval(() => { if (document.visibilityState === 'visible') reload(); }, 60000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reload(); });
+
+  projects = await listWorkProjects();
+  await rosterP;
+  render();
+})();
+</script>
+</body>
+</html>
