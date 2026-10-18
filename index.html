@@ -604,6 +604,12 @@ async function buildHub(user){
   user.production_dashboard = (hasEdit || hasView) ? 'TRUE' : 'FALSE';  // historical yields/biomass
   user.production_today = (hasEdit || hasView) ? 'TRUE' : 'FALSE';       // live board
 
+  // Crew Check-In (crew_checkin.html): for leads, who put people on the
+  // Master Schedule's projects or their time in the Labor Log. It saves to
+  // the Master Schedule's day changes, so either of those cards brings it.
+  const isTrue = (col) => (user[CARD_SHEET_COLS[col] || col] || '').toUpperCase() === 'TRUE';
+  user.crew_checkin = (isTrue('scheduling') || isTrue('labor_log')) ? 'TRUE' : 'FALSE';
+
   // Work Orders (work_orders.html): the Bucking / Hand Trim / Pre-Roll
   // queues, for anyone who works or manages one of them. The page shows only
   // the tabs a person has: Bucking and Hand Trim by station edit access or

@@ -15,6 +15,7 @@ the existing Operations Hub — same login, same Netlify deploy.
 | `buck_hold.html` | On-Stem Flower: the bucking queue (managers set the order) and Take Downs on hold, with the Release to bucking buttons (all, or part under a new tag) |
 | `labor_log.html` | Labor Log — people's hours (Connecteam roster) against UIDs, split across several UIDs when needed — see below |
 | `master_schedule.html` | Master Schedule — projects, their responsibilities and people, UIDs, and the day/week work schedule (replaced `schedule.html`) — see below |
+| `crew_checkin.html` | Crew Check-In — a lead checks in the people on their Master Schedule projects once a shift and moves people between stations during the day — see "Crew Check-In" below |
 | `metrc.html` | Metrc Queue — every submitted Wet Intake, Take Down, Bucking, Hand Trim and Pre-Roll form, with its Metrc status — see below |
 | `operations_today.html` | Live board — every form in progress or finished today, for anyone with view access; the date picker (or `?date=YYYY-MM-DD`) shows any earlier day the same way; **Range** shows several days at once (`?date=FROM&to=TO`; it starts as the day before through the day showing, for overnight work like a green harvest, and ◀ ▶ step the whole range), with the Daily Summary table hidden. With Wet Intakes showing, a **Wet Intake by farm** table sits above the forms (and in the PDF): net wet lbs per farm (a license's name, so a farm's licenses add up), split into dry rooms vs freezers — freezer when Fresh Frozen is ticked or the Drying / Freezer Location is one of `reference.json`'s `freezers` — and each intake card shows farm → location (❄ for freezer). 📄 Share PDF prints the day or range as a report. People with `labor log costs` also get a **Labor $** box next to it (off each time the page opens): ticked, the PDF adds a Labor section — Labor Log hours and $ by station (only the picked station's with a filter), and, for all stations, Connecteam clocked hours and $ by activity (the shifts file holds the last 14 days) — at each person's rate from Labor Rates via `labor-rates.js`. A page with day tabs (Bucking, Hand Trim, Pre-Roll) is on every day something was logged on it, not only its start date, with that day's amount (the headline calc on that day's rows; label from `dayTabs.headline`, else "— that day") |
 | `operations_dashboard.html` | Pipeline, yields, biomass, labor, requests, exceptions (finished forms only) |
@@ -1006,12 +1007,76 @@ from them.
   startTime, endTime, people: [{userId, name}]}], contractors: [{id, name,
   shifts: [{id, count, startTime, endTime}]}], uids: [{uid, strain, addedAt,
   addedBy}], notes, overrides: { 'YYYY-MM-DD': { skip, note, out:
-  [personKey], extra: [{roleId, userId, name}], flc: {shiftId: count} } }, createdBy, updatedBy
-  }`. There's no SQL.
+  [personKey], extra: [{roleId, userId, name}], flc: {shiftId: count},
+  here: [personKey], times: {personKey: [{start, end}]} } }, createdBy,
+  updatedBy }`. There's no SQL. `here` and `times` come from Crew Check-In
+  (below); Change this day's save keeps them.
 - Every save re-reads the row and writes only if `updated_at` hasn't
   changed since, retrying on top of the newer version. That way two leads
   editing different days don't undo each other. Remove sets
   `fields.voided`.
+
+### Crew Check-In
+
+`crew_checkin.html` (hub card `crew_checkin`, in the Workforce folder) is for
+team leads, so people don't have to be named on every station form — a day
+of Wet Intakes is a lot of forms. The lead checks the crew in once a shift,
+and the Labor Log puts the time on the right project, and from there on
+the project's UIDs (the forms' Project dropdown puts their packages there).
+There's no checkbox of its own: anyone with Master Schedule or Labor Log
+gets it (derived in `index.html`, listed in `DERIVED_CARD_KEYS` in
+`admin.html`).
+
+- It lists the projects running that day (`projectRunsOn`, not marked as
+  not working), with that day's changes applied. **My projects** are the
+  ones whose Project lead is the logged-in user (by name), and they're
+  shown first; **All** shows every project. The choice is remembered per
+  device. ‹ › and the date pick another day.
+- Each person on a project (its lead, each responsibility's people, that
+  day's extras) gets **Here** / **Not here**. **✓ Everyone else is here**
+  marks the rest. **+ Add someone** puts anyone else on the project for
+  the day, from the Connecteam roster (people clocked in first) or typed
+  in, under a responsibility. Extras get × instead of Not here. A green dot
+  means clocked in now. A banner lists anyone clocked in who isn't on any
+  of the day's projects.
+- **⇄ Move** is for someone who works one station part of the day and
+  another the rest of it. Pick the project and responsibility they go to
+  and the time (now, rounded to 5 minutes, on today's date). Their time
+  on this project stops then. They're added to the other one (an extra,
+  unless they're already on it) from then to the end of its shift. **Went
+  home / left for the day** stops their time on every project they're on.
+  Their row then shows their hours there and where they went or came from
+  ("7:00 AM–11:30 AM → Take Down at 11:30 AM"). **↺** (Full shift) takes
+  their own hours on that project back off. To undo a move, use ↺ on the
+  first project and × on the second.
+- Everything is saved on the project's day in the Master Schedule
+  (`overrides[date]`, through `patchWorkProject` in `ops_data.js`, which
+  re-reads and retries so two leads don't overwrite each other):
+  - `here` — who's checked in.
+  - `out` — Not here, the same as Change this day.
+  - `extra` — people added for the day.
+  - `times` — `{personKey: [{start, end}]}`, a person's own hours there
+    that day ('HH:MM', blank = the responsibility's). `[]` means they were
+    moved off before it started.
+  - The page re-reads the projects every minute and whenever it comes
+    back on screen.
+- `personSpans(f, role, date, key)` in `operations_stations.js` turns
+  those times into a person's hours on a project (minutes, past 1440 for
+  overnight shifts — `shiftMin`). Without times of their own, it's the
+  responsibility's hours. Everything that reads people's hours off the
+  schedule goes through it:
+  - **Master Schedule**: the day card (✓ for checked in, their own hours
+    in gold), the week table, the timeline (a bar per stretch), the CSV
+    (a line per stretch), the image, and double-booking. Someone moved
+    from one project to the other isn't double-booked.
+  - **Labor Log**: the Timeline's right-click shows a person's own hours,
+    and **Auto-assign scheduled** splits a not-logged stretch at the move
+    time. Then 7:00–3:30 clocked at Adobe, moved at 11:30, logs 7:00–11:30
+    to the first project and 11:30–3:30 to the second. It only splits at
+    the move times, not at a shift's usual start and end.
+- The Pre-Roll form's Crew check still keeps its own marks per run (and
+  writes `out` / `extra` here as before). It doesn't read Crew Check-In's
+  `here` yet.
 
 The old **Scheduling** page (`schedule.html`, `work_schedule` rows) is no
 longer on the hub. It's still linked at the bottom of Master Schedule so

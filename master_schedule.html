@@ -93,6 +93,8 @@
     .ppl li.extra::after{content:' +';color:var(--blue);font-weight:700}
     .lead-tag{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;background:var(--green);color:#000;border-radius:99px;padding:2px 7px;margin-left:6px;vertical-align:middle}
     .conflict{display:block;color:var(--red);font-size:.76rem;margin-top:2px}
+    .ppl .own{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--gold);margin-left:6px;white-space:nowrap}
+    .ppl .ci{color:var(--green);font-weight:700;margin-left:4px}
     .conflict::before{content:'⚠ '}
     .off{font-size:.8rem;color:var(--muted);margin-top:8px}
     .tag{display:inline-block;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--border);color:var(--subtext);border-radius:99px;padding:2px 8px}
@@ -427,6 +429,8 @@
     nobody:   { en: 'Nobody yet', es: 'Nadie todavía' },
     also:     { en: 'also on {p} {t}', es: 'también en {p} {t}' },
     offToday: { en: 'Off this day: {n}', es: 'Libre este día: {n}' },
+    noTime:   { en: 'moved off', es: 'se movió' },
+    checkedIn:{ en: 'Checked in (Crew Check-In)', es: 'Registrado (Registro de Personal)' },
     editDay:  { en: 'Change this day', es: 'Cambiar este día' },
     editProj: { en: 'Edit project', es: 'Editar proyecto' },
     skipped:  { en: 'Not working this day', es: 'No trabaja este día' },
@@ -543,6 +547,9 @@
   const fmtMin = (m) => { const x = ((m % 1440) + 1440) % 1440; return new Date(2000, 0, 1, Math.floor(x / 60), x % 60).toLocaleTimeString(lang(), { hour: 'numeric', minute: '2-digit' }); };
   const hoursLabel = (f, role) => { const [s, e] = projectHours(f, role); return s == null ? t(L.allDay) : `${fmtMin(s)}–${fmtMin(e)}`; };
   const personKey = (p) => p.userId ? 'id:' + p.userId : 'name:' + fold(p.name);
+  // A person's own hours that day (moved partway through it), else ''.
+  const spanLabel = ([s, e]) => s == null ? t(L.allDay) : `${fmtMin(s)}–${fmtMin(e)}`;
+  const ownLabel = (x) => !x.own ? '' : x.spans.length ? x.spans.map(spanLabel).join(', ') : t(L.noTime);
   // Customer IDs (Information Hub → Customer IDs) for the project's Customer
   // field — invoice_services.js bills a project's Labor Log hours to it.
   let customers = [];
@@ -656,10 +663,19 @@
     const ov = ovFor(f, date);
     const out = new Set(ov.out || []);
     const off = [];
+    const here = new Set(ov.here || []);
     const roles = projectRoles(f, t(L.projLead)).map((r) => {
       const people = [];
-      (r.people || []).forEach((p) => { if (out.has(personKey(p))) off.push(p); else people.push(p); });
+      (r.people || []).forEach((p) => { if (out.has(personKey(p))) off.push(p); else people.push({ ...p }); });
       (ov.extra || []).filter((x) => x.roleId === r.id).forEach((x) => people.push({ userId: x.userId || '', name: x.name, extra: true }));
+      // Each person's hours there (personSpans): the role's, or their own
+      // when Crew Check-In moved them partway through the day.
+      people.forEach((x) => {
+        const k = personKey(x);
+        x.spans = personSpans(f, r, date, k);
+        x.own = hasOwnTimes(f, date, k);
+        x.here = here.has(k);
+      });
       return { ...r, people: people.sort((a, b) => (b.lead ? 1 : 0) - (a.lead ? 1 : 0)) };
     });
     return { roles, off, note: ov.note || '' };
@@ -686,8 +702,7 @@
     const list = [];
     projects.filter((p) => runsOn(p, date)).forEach((p) => {
       dayRoles(p.fields, date).roles.forEach((r) => {
-        const [s, e] = projectHours(p.fields, r);
-        r.people.forEach((x) => list.push({ key: personKey(x), pid: p.id, p, role: r, iv: s == null ? [0, 1440] : [s, e] }));
+        r.people.forEach((x) => x.spans.forEach(([s, e]) => list.push({ key: personKey(x), pid: p.id, p, role: r, iv: s == null ? [0, 1440] : [s, e] })));
       });
     });
     return list;
@@ -781,7 +796,7 @@
     const rolesHtml = roles.map((r) => `<div class="role"><div class="role-hd">${esc(r.name)}${r.startTime || r.endTime ? `<span class="tm">${esc(hoursLabel(f, r))}</span>` : ''}</div>
       <ul class="ppl">${r.people.length ? r.people.map((x) => {
         const c = conf.get(personKey(x) + '|' + p.id) || [];
-        return `<li class="${x.extra ? 'extra' : ''}">${esc(x.name)}${x.lead ? `<span class="lead-tag">${esc(t(L.lead))}</span>` : ''}
+        return `<li class="${x.extra ? 'extra' : ''}">${esc(x.name)}${x.here ? `<span class="ci" title="${esc(t(L.checkedIn))}">✓</span>` : ''}${x.lead ? `<span class="lead-tag">${esc(t(L.lead))}</span>` : ''}${x.own ? `<span class="own">${esc(ownLabel(x))}</span>` : ''}
           ${c.map((o) => `<span class="conflict">${esc(fill(t(L.also), { p: o.p.fields.name, t: hoursLabel(o.p.fields, o.role) }))}</span>`).join('')}</li>`;
       }).join('') : `<li class="none">${esc(t(L.nobody))}</li>`}</ul></div>`).join('') + flcHtml(f, date);
     return `<div class="card"><div class="card-hd"><div class="loc">${esc(locName(f))}</div><div class="nm">${esc(f.name)}</div>
@@ -848,7 +863,9 @@
             const n = Math.max(0, Math.round(Number(e.flc[sh.id]) || 0));
             if (n !== (Number(sh.count) || 0)) flc[sh.id] = n;
           }));
-          const day = { skip: e.skip || undefined, note: e.note.trim() || undefined, out: e.out.size ? [...e.out] : undefined, extra: e.extra.length ? e.extra : undefined,
+          // Starts from the saved day so what Crew Check-In keeps there (here,
+          // times) isn't lost.
+          const day = { ...(ov[date] || {}), skip: e.skip || undefined, note: e.note.trim() || undefined, out: e.out.size ? [...e.out] : undefined, extra: e.extra.length ? e.extra : undefined,
                         flc: Object.keys(flc).length ? flc : undefined };
           Object.keys(day).forEach((k) => day[k] === undefined && delete day[k]);
           if (Object.keys(day).length) ov[date] = day; else delete ov[date];
@@ -886,7 +903,7 @@
         return `<td><div class="tm">${esc(hoursLabel(f))}</div>${note ? `<div class="nt">${esc(note)}</div>` : ''}${roles.filter((r) => r.people.length).map((r) =>
           `<div class="rl">${esc(r.name)}</div><div class="pp">${r.people.map((x) => {
             const c = confs[d].has(personKey(x) + '|' + p.id);
-            return `<span class="${c ? 'c' : ''}">${esc(x.name)}${c ? ' ⚠' : ''}</span>`;
+            return `<span class="${c ? 'c' : ''}">${esc(x.name)}${x.own ? ` <span class="s">${esc(ownLabel(x))}</span>` : ''}${c ? ' ⚠' : ''}</span>`;
           }).join(', ')}</div>`).join('')}${projectFlc(f, d).length ? `<div class="rl fl">${esc(t(L.flc))}</div><div class="pp">${projectFlc(f, d).map((x) =>
             `${esc(x.name)} ×${x.count}${x.s != null && hoursLabel(f) !== x.label ? ` <span class="s">${esc(x.label)}</span>` : ''}`).join(', ')}</div>` : ''}</td>`;
       }).join('')}</tr>`;
@@ -914,12 +931,11 @@
     ps.forEach((p) => {
       const f = p.fields, g = farmOf(f);
       dayRoles(f, date).roles.forEach((r) => {
-        const [s, e] = projectHours(f, r);
         r.people.forEach((x) => {
           const k = personKey(x);
           const row = g.people.get(k) || g.people.set(k, { name: x.name, lead: false, bars: [] }).get(k);
           if (x.lead) row.lead = true;
-          row.bars.push({ s, e, color: color.get(p.id), time: hoursLabel(f, r), text: `${f.name} · ${r.name}`, conflict: conf.has(k + '|' + p.id) });
+          x.spans.forEach(([s, e]) => row.bars.push({ s, e, color: color.get(p.id), time: x.own ? spanLabel([s, e]) : hoursLabel(f, r), text: `${f.name} · ${r.name}`, conflict: conf.has(k + '|' + p.id) }));
         });
       });
       projectFlc(f, date).forEach((x) => g.crews.push({ name: x.name, count: x.count, flc: true,
@@ -1106,9 +1122,8 @@
         .forEach((p) => {
           const f = p.fields, { roles, note } = dayRoles(f, d);
           roles.forEach((r) => {
-            const [s, e] = projectHours(f, r);
-            r.people.forEach((x) => rows.push([d, locName(f), f.name, x.lead ? 'Lead' : 'Employee', r.name, x.name, 1, hhmm(s), hhmm(e), hrs(s, e), hrs(s, e),
-              conf.has(personKey(x) + '|' + p.id) ? 'yes' : '', note]));
+            r.people.forEach((x) => x.spans.forEach(([s, e]) => rows.push([d, locName(f), f.name, x.lead ? 'Lead' : 'Employee', r.name, x.name, 1, hhmm(s), hhmm(e), hrs(s, e), hrs(s, e),
+              conf.has(personKey(x) + '|' + p.id) ? 'yes' : '', note])));
           });
           projectFlc(f, d).forEach((x) => rows.push([d, locName(f), f.name, 'Contractor', '', x.name, x.count, hhmm(x.s), hhmm(x.e), hrs(x.s, x.e),
             x.s == null ? '' : +(x.count * (x.e - x.s) / 60).toFixed(2), '', note]));
@@ -2023,7 +2038,7 @@
       const headH = 12 + locLines.length * 32 + projLines.length * 24 + 26;
       const notes = note ? wrap(note, F.note, inner - 12) : [];
       const rs = roles.filter((r) => r.people.length).map((r) => ({ r, label: (r.name + (r.startTime || r.endTime ? '  ' + hoursLabel(f, r) : '')).toUpperCase(),
-        people: r.people.map((x) => ({ x, conflict: conf.has(personKey(x) + '|' + p.id), lines: wrap(x.name + (x.lead ? ` — ${t(L.lead)}` : ''), x.lead ? F.lead : F.name, inner - 30) })) }));
+        people: r.people.map((x) => ({ x, conflict: conf.has(personKey(x) + '|' + p.id), lines: wrap(x.name + (x.lead ? ` — ${t(L.lead)}` : '') + (x.own ? `  ${ownLabel(x)}` : ''), x.lead ? F.lead : F.name, inner - 30) })) }));
       const fl = projectFlc(f, d);
       if (fl.length) rs.push({ label: t(L.flc).toUpperCase(), people: fl.map((x) => ({ x: {}, conflict: false, lines: wrap(`${x.name} ×${x.count} · ${x.label}`, F.name, inner - 30) })) });
       let h = headH + 12 + (notes.length ? notes.length * 26 + 26 : 0);
