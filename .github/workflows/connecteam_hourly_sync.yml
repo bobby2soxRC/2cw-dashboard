@@ -44,3 +44,13 @@ jobs:
           git diff --staged --quiet || git commit -m "Hourly Connecteam staff hours sync"
           git pull --rebase origin main
           git push
+
+      # Logs clocked time to the project for people a lead checked in on Crew
+      # Check-In (scripts/labor_autoassign.js). Its own step, after the data
+      # is pushed, so a failure here never holds up the sync.
+      - name: Auto-assign Labor Log time for checked-in crews
+        continue-on-error: true
+        env:
+          TZ: America/Los_Angeles
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/labor_autoassign.js

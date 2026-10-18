@@ -1085,6 +1085,24 @@ gets it (derived in `index.html`, listed in `DERIVED_CARD_KEYS` in
     time. Then 7:00–3:30 clocked at Adobe, moved at 11:30, logs 7:00–11:30
     to the first project and 11:30–3:30 to the second. It only splits at
     the move times, not at a shift's usual start and end.
+- **Hourly auto-assign for checked-in people.** After the Connecteam
+  Hourly Sync pushes the clock-ins, its last step runs
+  `scripts/labor_autoassign.js` (Node, `TZ=America/Los_Angeles`, the
+  `SUPABASE_SERVICE_ROLE_KEY` secret; `continue-on-error`, so it never
+  holds up the sync). For today and yesterday, it logs each stretch of
+  clocked time no entry covers, the same way the Labor Log's **Auto-assign
+  scheduled** button does, with two limits:
+  - only projects the person is checked in on that day (`here`);
+  - only shifts they've clocked out of, so a Move recorded later in the
+    day still splits their time.
+
+  Entries are ordinary `labor_entry` rows with `enteredBy: 'Auto-assign
+  (Crew Check-In)'`, shown and removable in the Labor Log like any other.
+  A second run finds nothing new, because the time is already logged.
+  `DRY_RUN=1` prints the plan without writing. The button and the script
+  share their logic in `labor_auto.js` (`laborDayRows`, `scheduledAround`,
+  `moveCuts`, `autoPlan`, `projectEntry`): the button takes everyone
+  scheduled, the script only people checked in.
 - The Pre-Roll form's Crew check still keeps its own marks per run (and
   writes `out` / `extra` here as before). It doesn't read Crew Check-In's
   `here` yet.

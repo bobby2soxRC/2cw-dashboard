@@ -62,8 +62,11 @@ here / add) and **Move** people to another project at a time, or home. It
 saves on the project's day (`overrides[date].here` / `.times`), and
 `personSpans` in `operations_stations.js` turns that into each person's
 hours, used by Master Schedule (conflicts, timeline, CSV) and the Labor Log's
-Auto-assign, which splits clocked time at the move. No SQL. Details: "Crew
-Check-In" in `docs/OPERATIONS_APP.md`.
+Auto-assign, which splits clocked time at the move. Checked-in people's
+clocked time is also logged automatically every hour
+(`scripts/labor_autoassign.js`, last step of the Connecteam Hourly Sync;
+shared logic in `labor_auto.js`). No SQL. Details: "Crew Check-In" in
+`docs/OPERATIONS_APP.md`.
 
 ## Parked work
 
