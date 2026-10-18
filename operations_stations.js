@@ -1343,14 +1343,18 @@ const shiftMin = (f, role, hm) => {
 // the role's), written by Crew Check-In (crew_checkin.html) when a lead
 // moves someone to another station partway through the day, or they go home
 // early. [] means no time there that day (moved off before it started). An
-// all-day role with times of its own runs midnight to midnight.
+// all-day role with times of its own runs midnight to midnight, and an end
+// at or before its start runs past midnight (6:41 PM–12:00 AM).
 const personSpans = (f, role, date, key) => {
   const own = ((((f && f.overrides) || {})[date] || {}).times || {})[key];
   const [s, e] = projectHours(f, role);
   if (!Array.isArray(own)) return [[s, e]];
   const s0 = s == null ? 0 : s, e0 = s == null ? 1440 : e;
-  return own.map((x) => [x.start ? shiftMin(f, role, x.start) : s0, x.end ? shiftMin(f, role, x.end) : e0])
-    .filter(([a, b]) => b > a).sort((x, y) => x[0] - y[0]);
+  return own.map((x) => {
+    const a = x.start ? shiftMin(f, role, x.start) : s0;
+    const b = x.end ? shiftMin(f, role, x.end) : e0;
+    return [a, b <= a && x.end ? b + 1440 : b];
+  }).filter(([a, b]) => b > a).sort((x, y) => x[0] - y[0]);
 };
 // True when that day's changes give the person times of their own there.
 const hasOwnTimes = (f, date, key) => Array.isArray(((((f && f.overrides) || {})[date] || {}).times || {})[key]);
