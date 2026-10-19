@@ -976,6 +976,38 @@ from them.
   notes, responsibilities with their people, and contractors. It starts
   today with no end date, no UIDs and no day changes; the name gets
   "(copy)" and a Done status becomes Active. Nothing is written until Save.
+- **⇪ Import day plan** (Projects tab) turns the crew lead's day plan
+  spreadsheet into that day's projects. The sheet is
+  `templates/Plan_Proyectos_Template.xlsx` (blank copy linked from the
+  import screen; `scripts/make_day_plan_template.py` rebuilds it, e.g. when
+  the Connecteam roster changes, since its name dropdown is a copy). The
+  **Plan del Día** tab has one 2-column block per project: name, site,
+  start | end, lead, two contractor rows (name | how many, start | end),
+  notes, then a row per person with **Responsabilidad | Nombre**. A blank
+  responsibility is the one above; text in parentheses is a note ("Jorge
+  Rojas (sale 5am)"), or a responsibility's own hours ("Colgar
+  (5:30pm-2am)"). Upload the .xlsx (SheetJS, loaded from jsdelivr like
+  `menu.html`) or paste the tab's cells from Google Sheets.
+  - `day_plan.js` (global `DayPlan`; tests in `scripts/test_day_plan.js`)
+    reads it: rows are found by their column A labels and blocks by the
+    "Responsabilidad | Nombre" header row, so the template's hidden helper
+    columns are ignored. Each block becomes one project for the plan's date
+    ("Bucking" → "Bucking 10/19", one day, Active; overnight hours end the
+    next morning). Responsibilities get their Labor Log process from the
+    file's Listas tab (else `ROLE_PROCESS`), and the project gets the one
+    station process they share, if any. The same contractor on both rows
+    is one contractor with two times. Notes in parentheses go in the
+    project's notes.
+  - Names are matched to the Connecteam roster (`matchPerson`): exact
+    (accents, case, spacing aside), or close (one roster name has every
+    typed word, allowing a slip or a shortened word: "Dalet Castro" →
+    Dalett Castro, "Juan Parra" → Juan J. Parra). The preview lists every
+    name that isn't exact: a close match is used unless changed, several
+    possibles (or two people with one name) must be picked, and one not on
+    the roster is kept as typed (no Connecteam id) or left out.
+  - Projects already saved for that date (same name and location) start
+    unticked. Nothing is written until **Create**, which inserts one
+    `work_project` row per ticked block and opens that day's Schedule.
 - **Schedule tab — Day** shows every project running that day
   (`projectRunsOn`: Planned or Active, inside its dates, on one of its
   days), at its location and hours (`projectHours`), with each
