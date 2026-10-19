@@ -68,6 +68,16 @@ clocked time is also logged automatically every hour
 shared logic in `labor_auto.js`). No SQL. Details: "Crew Check-In" in
 `docs/OPERATIONS_APP.md`.
 
+### Master Schedule: import day plan (started 2026-10-19)
+
+The crew lead plans the day in `templates/Plan_Proyectos_Template.xlsx`
+(one block per project, a responsibility beside each name); **⇪ Import day
+plan** on Master Schedule's Projects tab reads it (`day_plan.js`), matches
+names to the Connecteam roster, previews, and creates that day's projects.
+Rebuild the template with `scripts/make_day_plan_template.py`; tests:
+`node scripts/test_day_plan.js`. Details: "Import day plan" in
+`docs/OPERATIONS_APP.md`.
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)

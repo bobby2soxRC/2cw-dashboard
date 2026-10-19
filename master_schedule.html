@@ -251,6 +251,29 @@
     .img-ft{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
     #img-name{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--subtext);word-break:break-all}
     #img-preview{display:block;width:100%;border-radius:8px;margin-top:10px;background:#fff}
+    /* Import day plan: a sheet → projects, previewed before saving */
+    #imp-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:80;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:calc(16px + env(safe-area-inset-top)) 12px 30px}
+    #imp-bg.on{display:flex}
+    #imp-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;width:100%;max-width:900px}
+    #imp-box h2{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.04em;font-weight:400;margin-bottom:6px}
+    #imp-box textarea{min-height:110px;font-family:'DM Mono',monospace;font-size:.78rem}
+    .imp-or{font-size:.82rem;color:var(--muted);margin:12px 0 6px}
+    .imp-names{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:6px 10px;align-items:center;margin-bottom:6px}
+    .imp-names .raw{font-size:.92rem}
+    .imp-names .raw .s{display:block}
+    .imp-names select{min-height:40px;padding:.4rem .6rem;font-size:.9rem}
+    .imp-names select.need{border-color:var(--red)}
+    .imp-card{border:1px solid var(--border);border-radius:12px;margin-top:10px;overflow:hidden}
+    .imp-card.off{opacity:.55}
+    .imp-card .card-hd{display:flex;gap:10px;align-items:center}
+    .imp-card .card-hd input{width:22px;height:22px;min-height:0;flex:0 0 auto}
+    .imp-card .card-hd .grow{flex:1;min-width:0}
+    .imp-card .flcs{font-size:.85rem;color:var(--purple);margin-top:8px}
+    .imp-iss{font-size:.84rem;margin-top:8px}
+    .imp-iss .e{color:var(--red)}
+    .imp-iss .w{color:var(--gold)}
+    .imp-card .ppl .typed{color:var(--gold)}
+    .imp-card .ppl .typed::after{content:' *'}
     #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--green);color:#000;font-weight:700;
       padding:12px 18px;border-radius:10px;z-index:90;display:none;max-width:calc(100vw - 32px)}
     #toast.on{display:block}
@@ -293,6 +316,7 @@
       <div class="seg" id="status-seg"></div>
       <input type="search" id="q">
       <button type="button" class="btn btn-ghost" id="now-img"></button>
+      <button type="button" class="btn btn-ghost" id="import"></button>
       <button type="button" class="btn btn-gold" id="add"></button>
     </div>
     <div id="plist"></div>
@@ -301,6 +325,7 @@
   <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution<br><br><a href="/schedule.html" id="old-link"></a></footer>
 </main>
 <div id="toast"></div>
+<div id="imp-bg"><div id="imp-box"></div></div>
 <div id="img-bg"><div id="img-box">
   <div class="img-ft"><span id="img-name"></span><span class="spacer"></span>
     <button type="button" class="btn btn-blue" id="img-share"></button>
@@ -315,6 +340,7 @@
 <script src="/operations_stations.js"></script>
 <script src="/ops_common.js"></script>
 <script src="/ops_data.js"></script>
+<script src="/day_plan.js"></script>
 <script>
 // Master Schedule — the bigger jobs ("Smalls Trimming" at Adobe, "Fresh
 // Frozen Harvest" at Comstock, "Preroll Production" at Adobe), who's on them,
@@ -351,6 +377,10 @@
 // go over the project's UIDs by pounds (laborAllocations in
 // ops_analytics.js). Its Timeline's right-click offers the projects running
 // at that time, the person's own roles first.
+//
+// Import day plan (Projects tab): the crew lead's day plan spreadsheet
+// (templates/Plan_Proyectos_Template.xlsx, read by day_plan.js) → that day's
+// projects, previewed with the names that need checking before anything saves.
 //
 // Saves re-read the row first and only write if nobody saved in between
 // (updated_at), retrying once on top of their change, so two leads editing
@@ -531,7 +561,50 @@
     share:    { en: 'Share / text', es: 'Compartir' },
     download: { en: 'Download', es: 'Descargar' },
     close:    { en: 'Close', es: 'Cerrar' },
-    nothingImg:{ en: 'Nothing scheduled to put in an image.', es: 'No hay nada programado para la imagen.' }
+    nothingImg:{ en: 'Nothing scheduled to put in an image.', es: 'No hay nada programado para la imagen.' },
+    // Import day plan
+    imp:      { en: '⇪ Import day plan', es: '⇪ Importar plan del día' },
+    impTitle: { en: 'Import day plan', es: 'Importar plan del día' },
+    impHint:  { en: 'The “Plan del Día” spreadsheet (Plan_Proyectos_Template): one 2-column block per project. Nothing is saved until you check the preview and press Create.',
+                es: 'La hoja “Plan del Día” (Plan_Proyectos_Template): un bloque de 2 columnas por proyecto. No se guarda nada hasta revisar la vista previa y presionar Crear.' },
+    impFile:  { en: 'Choose the spreadsheet (.xlsx)', es: 'Elegir la hoja (.xlsx)' },
+    impTemplate:{ en: 'Blank template', es: 'Plantilla en blanco' },
+    impOr:    { en: 'Or paste it: in Google Sheets click the “Plan del Día” tab, press Ctrl+A (⌘A), copy, and paste here.', es: 'O péguela: en Google Sheets abra la pestaña “Plan del Día”, presione Ctrl+A (⌘A), copie y pegue aquí.' },
+    impRead:  { en: 'Read pasted cells', es: 'Leer celdas pegadas' },
+    impLoading:{ en: 'Reading…', es: 'Leyendo…' },
+    impNoXlsx:{ en: 'Could not load the spreadsheet reader — paste the cells instead.', es: 'No se pudo cargar el lector de hojas — pegue las celdas.' },
+    impNoHeader:{ en: 'This doesn’t look like the day plan: no “Responsabilidad | Nombre” row was found. Copy the whole tab, column A included.', es: 'Esto no parece el plan del día: no hay fila “Responsabilidad | Nombre”. Copie toda la pestaña, con la columna A.' },
+    impNone:  { en: 'No projects filled in on this sheet.', es: 'No hay proyectos llenos en esta hoja.' },
+    impSheet: { en: 'Sheet: {s}', es: 'Hoja: {s}' },
+    impDate:  { en: 'Date of the plan', es: 'Fecha del plan' },
+    impNames: { en: 'Names to check', es: 'Nombres para revisar' },
+    impNamesHint:{ en: 'These didn’t match a Connecteam name exactly. Pick who it is, keep it as typed (not in Connecteam), or leave them out.', es: 'Estos no coinciden exactamente con un nombre de Connecteam. Elija quién es, déjelo como está escrito (no está en Connecteam) o quítelo.' },
+    impChoose:{ en: '— choose —', es: '— elegir —' },
+    impClose: { en: 'Close match', es: 'Parecido' },
+    impSeveral:{ en: 'Several fit', es: 'Varios posibles' },
+    impNotFound:{ en: 'Not in Connecteam', es: 'No está en Connecteam' },
+    impEveryone:{ en: 'Everyone', es: 'Todos' },
+    impTyped: { en: 'Keep as typed', es: 'Dejar como está escrito' },
+    impSkip:  { en: 'Leave out', es: 'Quitar' },
+    impProjects:{ en: 'Projects', es: 'Proyectos' },
+    impExists:{ en: 'Already in Master Schedule — tick to create it again', es: 'Ya está en el Plan Maestro — marque para crearlo otra vez' },
+    impTypedNote:{ en: '* not in Connecteam', es: '* no está en Connecteam' },
+    impCreate:{ en: 'Create {n} projects', es: 'Crear {n} proyectos' },
+    impCreate1:{ en: 'Create 1 project', es: 'Crear 1 proyecto' },
+    impBack:  { en: '‹ Another file', es: '‹ Otro archivo' },
+    impNeedDate:{ en: 'Set the date of the plan.', es: 'Ponga la fecha del plan.' },
+    impNeedNames:{ en: 'Choose who each name in red is.', es: 'Elija quién es cada nombre en rojo.' },
+    impFix:   { en: 'Fix the projects marked in red in the sheet (or untick them).', es: 'Corrija en la hoja los proyectos marcados en rojo (o desmárquelos).' },
+    impDone:  { en: 'Created {n} projects', es: 'Se crearon {n} proyectos' },
+    impPartial:{ en: 'Created {n} of {m} — the rest are still ticked. ', es: 'Se crearon {n} de {m} — los demás siguen marcados. ' },
+    iss_noName:{ en: 'No project name', es: 'Falta el nombre del proyecto' },
+    iss_noSite:{ en: 'No site', es: 'Falta el sitio' },
+    iss_badTime:{ en: 'Can’t read the time “{v}” — use 7am, 3:30pm or 16:00', es: 'No se entiende la hora “{v}” — use 7am, 3:30pm o 16:00' },
+    iss_allDay:{ en: 'No start time: all day', es: 'Sin hora de inicio: todo el día' },
+    iss_noEnd:{ en: 'No end time: 8 hours', es: 'Sin hora final: 8 horas' },
+    iss_noRole:{ en: '{n} people with no responsibility above them — put under “Personal”', es: '{n} personas sin responsabilidad arriba — van en “Personal”' },
+    iss_flcCount:{ en: 'Contractor {name}: how many?', es: 'Contratista {name}: ¿cuántos?' },
+    iss_empty:{ en: 'No lead, people or contractors', es: 'Sin líder, personas ni contratistas' }
   };
   const DOW = { en: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'], es: ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá'] };
   const fill = (s, vars) => Object.entries(vars).reduce((a, [k, v]) => a.split(`{${k}}`).join(v), s);
@@ -570,6 +643,7 @@
   $('back').textContent = t(L.back);
   $('sub').textContent = t(L.sub);
   $('add').textContent = t(L.add);
+  $('import').textContent = t(L.imp);
   $('now-img').textContent = '● ' + t(L.nowImg);
   $('png').textContent = t(L.png);
   $('csv').textContent = t(L.csv);
@@ -2130,6 +2204,166 @@
   $('img-close').onclick = () => $('img-bg').classList.remove('on');
   $('img-bg').addEventListener('click', (e) => { if (e.target === $('img-bg')) $('img-bg').classList.remove('on'); });
   $('png').onclick = () => view === 'timeline' ? makeTimelineImage() : makeImage();
+
+  // ── Import day plan ─────────────────────────────────────────────────────
+  // The crew lead's day plan sheet (day_plan.js reads it) → one new project
+  // per block, for that date. A preview first: names that aren't an exact
+  // Connecteam match are settled here (a close match is used unless changed),
+  // projects already saved for that date (same name and location) start
+  // unticked, and nothing is written until Create.
+  let imp = null;   // {rows, roleProcess, sheet, date, blocks, include: Set, choices: {foldedName: 'id:…' | 'typed' | 'skip' | ''}}
+  let xlsxP = null;
+  const loadXlsx = () => window.XLSX ? Promise.resolve() : (xlsxP ||= new Promise((resolve, reject) => {
+    const sc = document.createElement('script');
+    sc.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+    sc.onload = resolve;
+    sc.onerror = () => { xlsxP = null; reject(new Error(t(L.impNoXlsx))); };
+    document.head.appendChild(sc);
+  }));
+  const impKey = (raw) => DayPlan.fold(raw).replace(/\s+/g, ' ');
+  const impCtx = () => ({ roster, locations: LOCATIONS, roleProcess: imp.roleProcess, newId,
+    resolve: (raw) => {
+      const c = imp.choices[impKey(raw)];
+      if (c === 'skip') return { name: '' };
+      if (c === 'typed') return { userId: '', name: raw };
+      if (c && c.startsWith('id:')) { const p = roster.find((x) => x.userId === c.slice(3)); if (p) return { userId: p.userId, name: p.name }; }
+      return undefined;
+    } });
+  const impBuilt = () => imp.blocks.map((b) => DayPlan.buildProject(b, imp.date, impCtx()));
+  const impExists = (f) => projects.some((p) => fold(p.fields.name) === fold(f.name) && (p.fields.start || p.work_date) === f.start && p.fields.location === f.location);
+
+  function openImport() { imp = null; $('imp-bg').classList.add('on'); renderImport(); }
+  function closeImport() { $('imp-bg').classList.remove('on'); imp = null; }
+  function startImport(parsed) {
+    const g = DayPlan.parseGrid(parsed.rows);
+    if (g.problems.includes('noHeader')) throw new Error(t(L.impNoHeader));
+    if (!g.blocks.length) throw new Error(t(L.impNone));
+    imp = { ...parsed, date: g.date || $('date').value || localDay(), blocks: g.blocks, include: new Set(), choices: {} };
+    // Default answers for the unsure names: a close match is taken, one
+    // candidate is offered, nothing on the roster is kept as typed.
+    impBuilt().forEach((r) => r.names.forEach((n) => {
+      const k = impKey(n.raw);
+      if (n.match.how === 'exact' || k in imp.choices) return;
+      imp.choices[k] = n.match.how === 'close' ? 'id:' + n.match.person.userId
+        : n.match.how === 'none' ? 'typed'
+        : n.match.candidates.length === 1 ? 'id:' + n.match.candidates[0].userId : '';
+    }));
+    impBuilt().forEach((r, i) => { if (!impExists(r.fields)) imp.include.add(i); });
+    renderImport();
+  }
+  function renderImport() {
+    const box = $('imp-box');
+    const head = `<h2>${esc(t(L.impTitle))}</h2><div class="hint" style="margin-bottom:12px">${esc(t(L.impHint))}</div>`;
+    if (!imp) {
+      box.innerHTML = head + `
+        <label class="btn btn-gold" style="display:inline-flex;align-items:center">${esc(t(L.impFile))}
+          <input type="file" id="imp-file" accept=".xlsx,.xls,.ods,.csv" hidden></label>
+        <a class="btn btn-ghost" href="/templates/Plan_Proyectos_Template.xlsx" download>${esc(t(L.impTemplate))}</a>
+        <div class="imp-or">${esc(t(L.impOr))}</div>
+        <textarea id="imp-paste" spellcheck="false"></textarea>
+        <div class="err" id="imp-err"></div>
+        <div class="ed-ft"><button type="button" class="btn btn-ghost" id="imp-cancel">${esc(t(L.cancel))}</button>
+          <button type="button" class="btn btn-blue" id="imp-read">${esc(t(L.impRead))}</button></div>`;
+      const fail = (e) => { $('imp-err').textContent = String(e.message || e); };
+      $('imp-file').onchange = async (e) => {
+        const file = e.target.files[0]; if (!file) return;
+        $('imp-err').textContent = t(L.impLoading);
+        try {
+          await loadXlsx();
+          const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+          startImport(DayPlan.fromWorkbook(XLSX, wb));
+        } catch (err) { fail(err); }
+      };
+      $('imp-read').onclick = () => { try { startImport({ rows: DayPlan.fromText($('imp-paste').value), roleProcess: {} }); } catch (err) { fail(err); } };
+      $('imp-cancel').onclick = closeImport;
+      return;
+    }
+    const built = impBuilt();
+    // Unsure names across the ticked projects, each once.
+    const unsure = new Map();
+    built.forEach((r, i) => { if (imp.include.has(i)) r.names.forEach((n) => { if (n.match.how !== 'exact' && !unsure.has(impKey(n.raw))) unsure.set(impKey(n.raw), n); }); });
+    // Two people with one name (two Maria Mendoza) show their Connecteam id to tell them apart.
+    const twice = new Set(roster.filter((p, i) => roster.findIndex((x) => fold(x.name) === fold(p.name)) !== i).map((p) => fold(p.name)));
+    const opt = (p) => `<option value="id:${esc(p.userId)}">${esc(p.name)}${twice.has(fold(p.name)) ? ` (#${esc(p.userId)})` : ''}</option>`;
+    const everyone = roster.map(opt).join('');
+    const nameRows = [...unsure].map(([k, n]) => {
+      const c = imp.choices[k] || '';
+      const why = n.match.how === 'close' ? L.impClose : n.match.how === 'pick' ? L.impSeveral : L.impNotFound;
+      const cands = n.match.candidates.map(opt).join('');
+      const opts = `<option value="">${esc(t(L.impChoose))}</option>${cands ? `<optgroup label="${esc(t(why))}">${cands}</optgroup>` : ''}
+        <option value="typed">${esc(t(L.impTyped))}: ${esc(n.raw)}</option><option value="skip">${esc(t(L.impSkip))}</option>
+        <optgroup label="${esc(t(L.impEveryone))}">${everyone}</optgroup>`;
+      return `<div class="raw">${esc(n.raw)}<span class="s">${esc(t(why))}</span></div>
+        <select data-impname="${esc(k)}" class="${c ? '' : 'need'}">${opts.replace(`value="${esc(c)}"`, `value="${esc(c)}" selected`)}</select>`;
+    }).join('');
+    const issue = (x) => `<div class="${x.level === 'error' ? 'e' : 'w'}">${x.level === 'error' ? '✗' : '•'} ${esc(fill(t(L['iss_' + x.code] || { en: x.code, es: x.code }), { v: x.value || '', n: x.n || '', name: x.name || '' }))}</div>`;
+    const cards = built.map((r, i) => {
+      const f = r.fields, on = imp.include.has(i), exists = impExists(f);
+      const pname = (p) => `<li${p.userId ? '' : ' class="typed"'}>${esc(p.name)}</li>`;
+      const roles = [
+        ...(f.lead ? [`<div class="role"><div class="role-hd">${esc(t(L.lead))}</div><ul class="ppl">${pname(f.lead)}</ul></div>`] : []),
+        ...f.roles.map((ro) => `<div class="role"><div class="role-hd">${esc(ro.name)}<span class="tm">${esc(ro.process ? procTitle(ro.process) : '')}${ro.startTime || ro.endTime ? ' · ' + esc(hoursLabel(f, ro)) : ''}</span></div>
+          <ul class="ppl">${ro.people.length ? ro.people.map(pname).join('') : `<li class="none">${esc(t(L.nobody))}</li>`}</ul></div>`)
+      ].join('');
+      const flcs = f.contractors.map((c) => `${esc(c.name)}: ${c.shifts.map((x) => `${x.count} · ${esc(hoursLabel(f, x))}`).join(', ')}`).join('<br>');
+      const iss = [...(exists ? [{ level: 'warn', code: 'exists' }] : []), ...r.issues];
+      return `<div class="imp-card${on ? '' : ' off'}"><label class="card-hd st-active"><input type="checkbox" data-impinc="${i}" ${on ? 'checked' : ''}>
+          <div class="grow"><div class="loc">${esc(locName(f) || '—')}</div><div class="nm">${esc(f.name || '—')}</div>
+          <div class="time">${esc(hoursLabel(f))}${f.end !== f.start ? ' → ' + esc(fmtDate(f.end)) : ''}${f.process ? ' · ' + esc(procTitle(f.process)) : ''}</div></div></label>
+        <div class="card-body">${roles || ''}${flcs ? `<div class="flcs">${esc(t(L.flc))}<br>${flcs}</div>` : ''}
+          ${f.notes ? `<div class="note" style="margin-top:10px">${esc(f.notes)}</div>` : ''}
+          ${iss.length ? `<div class="imp-iss">${iss.map((x) => x.code === 'exists' ? `<div class="w">• ${esc(t(L.impExists))}</div>` : issue(x)).join('')}</div>` : ''}</div></div>`;
+    }).join('');
+    const n = imp.include.size;
+    box.innerHTML = head + `
+      <div class="row" style="display:grid;grid-template-columns:minmax(0,220px) 1fr;gap:10px;align-items:end">
+        <div><span class="lbl">${esc(t(L.impDate))}</span><input type="date" id="imp-date" value="${esc(imp.date)}"></div>
+        <div class="s">${imp.sheet ? esc(fill(t(L.impSheet), { s: imp.sheet })) : ''}</div></div>
+      ${nameRows ? `<div class="sec">${esc(t(L.impNames))}</div><div class="hint" style="margin:-2px 0 10px">${esc(t(L.impNamesHint))}</div><div class="imp-names">${nameRows}</div>` : ''}
+      <div class="sec">${esc(t(L.impProjects))}</div>
+      <div class="s">${esc(t(L.impTypedNote))}</div>
+      ${cards}
+      <div class="err" id="imp-err"></div>
+      <div class="ed-ft"><button type="button" class="btn btn-ghost" id="imp-back">${esc(t(L.impBack))}</button>
+        <button type="button" class="btn btn-ghost" id="imp-cancel">${esc(t(L.cancel))}</button>
+        <button type="button" class="btn btn-gold" id="imp-save" ${n ? '' : 'disabled'}>${esc(n === 1 ? t(L.impCreate1) : fill(t(L.impCreate), { n }))}</button></div>`;
+    $('imp-date').onchange = (e) => { imp.date = e.target.value; renderImport(); };
+    box.querySelectorAll('[data-impname]').forEach((sel) => { sel.onchange = () => { imp.choices[sel.dataset.impname] = sel.value; renderImport(); }; });
+    box.querySelectorAll('[data-impinc]').forEach((cb) => { cb.onchange = () => { const i = +cb.dataset.impinc; cb.checked ? imp.include.add(i) : imp.include.delete(i); renderImport(); }; });
+    $('imp-back').onclick = () => { imp = null; renderImport(); };
+    $('imp-cancel').onclick = closeImport;
+    $('imp-save').onclick = saveImport;
+  }
+  async function saveImport() {
+    const err = (m) => { $('imp-err').textContent = m; };
+    if (!client) return err(t(L.noDb));
+    if (!imp.date) return err(t(L.impNeedDate));
+    const built = impBuilt(), picks = [...imp.include].sort((a, b) => a - b);
+    if (picks.some((i) => built[i].names.some((x) => x.match.how !== 'exact' && !imp.choices[impKey(x.raw)]))) return err(t(L.impNeedNames));
+    if (picks.some((i) => built[i].issues.some((x) => x.level === 'error'))) return err(t(L.impFix));
+    const btn = $('imp-save');
+    btn.disabled = true; btn.textContent = t(L.saving);
+    let made = 0;
+    for (const i of picks) {
+      const fields = { ...built[i].fields, overrides: {}, createdBy: me, updatedBy: me };
+      const { data, error } = await client.from('operations_forms').insert({
+        station_key: KEY, status: 'submitted', owner_user: me || null, updated_by: me || null, work_date: fields.start,
+        submitted_at: new Date().toISOString(), fields
+      }).select();
+      if (error) {
+        renderImport();
+        return err(`${made ? fill(t(L.impPartial), { n: made, m: picks.length }) : ''}${t(L.failed)} ${error.message || error}`);
+      }
+      projects.push(data[0]); imp.include.delete(i); made++;
+    }
+    const date = imp.date;
+    closeImport();
+    toast(fill(t(L.impDone), { n: made }));
+    $('date').value = date; view = 'day'; dayEdit = null;
+    showTab('schedule');
+  }
+  $('import').onclick = openImport;
+  $('imp-bg').addEventListener('click', (e) => { if (e.target === $('imp-bg')) closeImport(); });
 
   function toast(msg) {
     const el = $('toast');
