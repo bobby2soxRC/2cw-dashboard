@@ -110,6 +110,16 @@ adds and edits both and shows the ID photos. The `drivers` and `trucks`
 tables are already created in Supabase. Details: "Harvest" in
 `docs/OPERATIONS_APP.md`, "Drivers and Trucks" in `docs/USER_ADMIN.md`.
 
+### Hand Trim output tags from the Metrc Queue (started 2026-10-19)
+
+Hand Trim's outputs (finished flower, smalls, Normal / A+ trim) each get a new
+Metrc tag, which only exists once the package is made in Metrc — so they're
+entered in the Metrc Queue's opened form ("New Metrc tags"), not on the floor
+form, and saved onto the record by `netlify/functions/metrc-queue.js`. Waste
+stays on the source tag. The list is `metrcTags` on the station in
+`operations_stations.js`. No SQL. Details: "New Metrc tags" in
+`docs/OPERATIONS_APP.md`.
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)

@@ -116,6 +116,17 @@
     .st-btns button.on.done{background:var(--green);border-color:var(--green);color:#000}
     .st-btns button.on.not_needed{background:var(--muted);border-color:var(--muted);color:#000}
     .st-box textarea{width:100%;min-height:64px;margin-top:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px;font:inherit;font-size:.95rem;resize:vertical}
+    .tag-box{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+    .tag-hd{font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--subtext)}
+    .tag-row{display:grid;grid-template-columns:minmax(110px,30%) 1fr;gap:10px;align-items:center}
+    .tag-row .tl{font-size:.88rem}
+    .tag-row .tl small{display:block;font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted)}
+    .tag-row input{width:100%;min-width:0;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 10px;
+      font-family:'DM Mono',monospace;font-size:.92rem;min-height:40px;text-transform:uppercase}
+    .tag-row input:focus{border-color:var(--blue);outline:none}
+    .tag-row .tv{font-family:'DM Mono',monospace;font-size:.9rem;word-break:break-all}
+    .tag-row .tv.none{color:var(--muted);font-family:inherit}
+    .hist .tags{margin-top:3px;font-family:'DM Mono',monospace;font-size:.8rem}
     .st-save{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
     .st-msg{font-size:.85rem;color:var(--subtext)}
     .st-msg.err{color:var(--red)}
@@ -242,6 +253,11 @@
     colWait:   { en: 'Waiting', es: 'Esperando' },
     colNote:   { en: 'Note', es: 'Nota' },
     colUpd:    { en: 'Last change', es: 'Último cambio' },
+    tagsHd:    { en: 'New Metrc tags', es: 'Etiquetas nuevas de Metrc' },
+    tagsHint:  { en: 'Scan or type each new package tag once it’s made in Metrc. Waste stays on the source tag.',
+                 es: 'Escanee o escriba cada etiqueta nueva cuando se cree el paquete en Metrc. El desecho se queda en la etiqueta de origen.' },
+    noTag:     { en: 'No tag yet', es: 'Sin etiqueta' },
+    tagsMissing:{ en: 'without a tag', es: 'sin etiqueta' },
     copyHint:  { en: 'Tap a value to copy it.', es: 'Toque un valor para copiarlo.' },
     copied:    { en: 'Copied ✓', es: 'Copiado ✓' },
     viewOnly:  { en: 'You can see this queue but not change it.', es: 'Puede ver esta cola pero no cambiarla.' },
@@ -290,6 +306,12 @@
   const statusOf = (r) => (queue.get(r.id) || {}).status || 'todo';
   const val = (r, k) => (r.fields || {})[k];
   const uids = (r) => val(r, 'sourceUid') || [...new Set((val(r, 'lines') || []).map((x) => x.sourceUid).filter(Boolean))].join(', ');
+  // The station's new Metrc package tags (`metrcTags` in
+  // operations_stations.js — Hand Trim's, one per output): the outputs this
+  // form actually made, plus any already tagged.
+  const tagDefs = (r) => ((stationOf(r) || {}).metrcTags || [])
+    .filter((x) => Number(val(r, x.from)) > 0.005 || val(r, x.k));
+  const newTags = (r) => tagDefs(r).map((x) => val(r, x.k)).filter(Boolean);
   const fmtDate = (d) => d ? new Date(`${d}T12:00:00`).toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
   const fmtWhen = (ts) => ts ? new Date(ts).toLocaleString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
 
@@ -369,7 +391,7 @@
     if (stationFilter && r.station_key !== stationFilter) return false;
     if (!query) return true;
     const q = queue.get(r.id) || {};
-    const hay = [r.strain, val(r, 'strain'), uids(r), val(r, 'newFinishedUid'), val(r, 'newPrerollUid'), val(r, 'newWasteUid'),
+    const hay = [r.strain, val(r, 'strain'), uids(r), val(r, 'newFinishedUid'), val(r, 'newPrerollUid'), val(r, 'newWasteUid'), ...newTags(r),
       val(r, 'incomingUid'), val(r, 'manifestNo'), val(r, 'completedBy'), r.owner_user, q.note, q.updated_by, t(stationOf(r).title)].join(' ').toLowerCase();
     return hay.includes(query);
   }
@@ -438,7 +460,8 @@
   function rowHtml(r) {
     const s = statusOf(r), q = queue.get(r.id) || {}, days = daysWaiting(r), open = s === 'todo' || s === 'in_progress';
     const picked = pending.get(r.id) || s;
-    const newUid = [val(r, 'newFinishedUid'), val(r, 'newPrerollUid')].filter(Boolean).join(', ');
+    const newUid = [...new Set([...newTags(r), val(r, 'newFinishedUid'), val(r, 'newPrerollUid')].filter(Boolean))].join(', ');
+    const untagged = tagDefs(r).filter((x) => !val(r, x.k)).length;
     const manifest = String(val(r, 'manifestNo') || '').trim();  // Wet Intake only
     const photos = photosOf(r);
     const statusCell = canEdit
@@ -456,7 +479,7 @@
         : awaitingCanix(r) ? `<span class="pill sync">${t(L.syncWait)}</span>`
         : canixNoManifest(r) ? `<span class="pill sync">${t(L.noManifest)}</span>` : '—'}</td>
       <td>${photos.length ? `<button type="button" class="copy-mini photo-mini">${t(L.photoBtn)}${photos.length > 1 ? ` (${photos.length})` : ''}</button>` : '—'}</td>
-      <td class="mono uid" title="${esc(newUid)}">${esc(newUid || '—')}</td>
+      <td class="mono uid" title="${esc(newUid)}">${esc(newUid || '—')}${newUid && untagged ? ` <span class="muted-note">+${untagged} ${t(L.tagsMissing)}</span>` : ''}</td>
       <td class="num">${esc(headline(r) || '—')}</td>
       <td>${esc(val(r, 'completedBy') || r.owner_user || '—')}</td>
       <td class="mono">${open && days !== null ? `<span class="age ${days >= 2 ? 'old' : ''}">${days}d</span>` : '—'}</td>
@@ -467,14 +490,17 @@
 
   // Saves a form's status — and its note, when one is passed; otherwise the
   // note stays — through metrc-queue.js, which checks edit access from the PIN.
-  async function saveStatus(id, status, note) {
+  // New package tags ({field: uid}), when passed, go onto the form record.
+  async function saveStatus(id, status, note, tags) {
     const res = await fetch('/.netlify/functions/metrc-queue', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pin: sessionStorage.getItem('2cw_pin') || '', id, status, note })
+      body: JSON.stringify({ pin: sessionStorage.getItem('2cw_pin') || '', id, status, note, tags })
     });
     const out = await res.json().catch(() => ({ ok: false, error: `HTTP ${res.status}` }));
     if (!out.ok) throw new Error(out.error || `HTTP ${res.status}`);
     queue.set(id, out.row);
+    const rec = forms.find((x) => x.id === id);
+    if (rec && out.fields) rec.fields = out.fields;
     return out.row;
   }
 
@@ -521,24 +547,48 @@
     return ok;
   }
 
+  // One line per output that gets its own Metrc tag: its pounds, and the
+  // tag (an input with Edit access).
+  function tagsHtml(r) {
+    const defs = tagDefs(r);
+    if (!defs.length) return '';
+    const lb = (x) => Number(val(r, x.from)) > 0 ? `${fmtNum(val(r, x.from), 2)} lb` : '';
+    return `<div class="tag-box"><div class="tag-hd">${t(L.tagsHd)}</div>
+      ${canEdit ? `<div class="muted-note">${t(L.tagsHint)}</div>` : ''}
+      ${defs.map((x) => `<div class="tag-row"><div class="tl">${esc(t(x.l))}<small>${esc(lb(x))}</small></div>${canEdit
+        ? `<input type="text" data-tag="${esc(x.k)}" value="${esc(val(r, x.k) || '')}" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="${esc(t(L.noTag))}">`
+        : `<div class="tv ${val(r, x.k) ? '' : 'none'}">${esc(val(r, x.k) || t(L.noTag))}</div>`}</div>`).join('')}
+    </div>`;
+  }
+
   function statusHtml(r) {
     const q = queue.get(r.id) || {}, s = statusOf(r);
     if (!canEdit) {
       return `<div class="st-box"><div class="st-hd">${t(L.status)}</div>
         <div class="st-view"><span class="pill ${s}">${t(L[s])}</span>${q.updated_by ? ` · ${esc(q.updated_by)} · ${esc(fmtWhen(q.updated_at))}` : ''}
-        <div style="margin-top:8px">${q.note ? esc(q.note) : `<span class="muted-note">${t(L.noNote)}</span>`}</div></div></div>`;
+        <div style="margin-top:8px">${q.note ? esc(q.note) : `<span class="muted-note">${t(L.noNote)}</span>`}</div></div>${tagsHtml(r)}</div>`;
     }
     return `<div class="st-box"><div class="st-hd">${t(L.status)}</div>
       <div class="st-btns">${STATUSES.map((k) => `<button type="button" class="${k} ${k === s ? 'on' : ''}" data-s="${k}">${t(L[k])}</button>`).join('')}</div>
+      ${tagsHtml(r)}
       <textarea id="st-note" maxlength="1000" placeholder="${esc(t(L.note))}">${esc(q.note || '')}</textarea>
       <div class="st-save"><button type="button" class="btn btn-blue" id="st-save">${t(L.save)}</button><span class="st-msg" id="st-msg"></span></div>
     </div>`;
   }
 
+  // A history entry's tag changes, "Smalls: 1A4…" — blank means cleared.
+  function tagLog(r, tags) {
+    const defs = (stationOf(r) || {}).metrcTags || [];
+    return Object.entries(tags).map(([k, v]) => {
+      const d = defs.find((x) => x.k === k);
+      return `${esc(d ? t(d.l) : k)}: ${esc(v || '—')}`;
+    }).join(' · ');
+  }
+
   function logHtml(r) {
     const log = (queue.get(r.id) || {}).log || [];
     const items = log.slice().reverse().map((h) =>
-      `<li><span class="pill ${esc(h.status)}">${t(L[h.status] || { en: h.status })}</span> <b>${esc(h.by || '—')}</b> · ${esc(fmtWhen(h.at))}${h.note ? `<div style="margin-top:3px">${esc(h.note)}</div>` : ''}</li>`);
+      `<li><span class="pill ${esc(h.status)}">${t(L[h.status] || { en: h.status })}</span> <b>${esc(h.by || '—')}</b> · ${esc(fmtWhen(h.at))}${h.note ? `<div style="margin-top:3px">${esc(h.note)}</div>` : ''}${h.tags ? `<div class="tags">${tagLog(r, h.tags)}</div>` : ''}</li>`);
     return `<div class="d-section"><div class="d-section-hd">${t(L.log)}</div>${
       items.length ? `<ul class="hist">${items.join('')}</ul>` : `<div class="muted-note">${t(L.logNone)}</div>`}</div>`;
   }
@@ -554,7 +604,9 @@
     save.onclick = async () => {
       save.disabled = true; msg.className = 'st-msg'; msg.textContent = t(L.saving);
       try {
-        await saveStatus(r.id, picked, document.getElementById('st-note').value);
+        const inputs = [...detail.querySelectorAll('.tag-row input[data-tag]')];
+        const tags = inputs.length ? Object.fromEntries(inputs.map((i) => [i.dataset.tag, i.value.trim()])) : undefined;
+        await saveStatus(r.id, picked, document.getElementById('st-note').value, tags);
         pending.delete(r.id);
         render();
         openDetail(r.id);

@@ -360,25 +360,27 @@
     });
 
     // Flower / Smalls / Trim — what each finishing form made.
+    // ownTag: output field -> the field holding its own new tag.
     const outputs = (rec, typeKey, list, ownTag) => {
       const lotUid = normUid(rec.sourceUid);
       const o = origin(rec, rec.sourceUid);
       list.forEach(([field, cat, label]) => {
         const lb = Number(rec[field]);
         if (!(lb > 0.005)) return;
-        const tagged = ownTag && ownTag.includes(field) && rec.newFinishedUid;
-        add(CAT_TAB[cat], rec, { key: `${rec.id}:${field}`, uid: tagged ? normUid(rec.newFinishedUid) : lotUid, ownUid: !!tagged,
+        const tagged = ownTag && ownTag[field] && rec[ownTag[field]];
+        add(CAT_TAB[cat], rec, { key: `${rec.id}:${field}`, uid: tagged ? normUid(tagged) : lotUid, ownUid: !!tagged,
           lb, cat, catLabel: label, type: typeKey, ...o });
       });
     };
     d.hand.forEach((r) => outputs(r, 'tHand', [
       ['finishedFlowerLb', 'flower_a'], ['smallsLb', 'smalls_b'], ['normTrimLb', 'trim', { en: 'Normal', es: 'Normal' }],
-      ['aPlusTrimLb', 'trim_a_plus', { en: 'A+', es: 'A+' }], ['sugarTrimLb', 'sugar_trim', { en: 'Sugar', es: 'Azucarada' }]], ['finishedFlowerLb']));
+      ['aPlusTrimLb', 'trim_a_plus', { en: 'A+', es: 'A+' }], ['sugarTrimLb', 'sugar_trim', { en: 'Sugar', es: 'Azucarada' }]],
+      Object.fromEntries(STATION_BY_KEY.hand_trim.metrcTags.map((x) => [x.from, x.k]))));
     d.machine.forEach((r) => outputs(r, 'tMachine', [
       ['flowerALb', 'flower_a'], ['smallsBLb', 'smalls_b'], ['sugarTrimLb', 'sugar_trim', { en: 'Sugar', es: 'Azucarada' }],
       ['machineShakeLb', 'shake', { en: 'Shake', es: 'Shake' }]]));
     d.smallsT.forEach((r) => outputs(r, 'tSmalls', [
-      ['finishedSmallsLb', 'smalls_b', { en: 'Finished', es: 'Terminados' }], ['shakeLb', 'shake', { en: 'Shake', es: 'Shake' }]], ['finishedSmallsLb']));
+      ['finishedSmallsLb', 'smalls_b', { en: 'Finished', es: 'Terminados' }], ['shakeLb', 'shake', { en: 'Shake', es: 'Shake' }]], { finishedSmallsLb: 'newFinishedUid' }));
     d.bucks.forEach((r) => outputs(r, 'tBuck', [['trimLb', 'trim', { en: 'Bucking trim', es: 'Recorte de desvarado' }]]));
 
     // What downstream forms took off a UID, oldest stock first. A Smalls Hand

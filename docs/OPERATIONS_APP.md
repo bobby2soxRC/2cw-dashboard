@@ -294,7 +294,11 @@ and the customer ID, traced back through Take Down to Wet Intake. A Queue tab
 flower brought in from elsewhere: a popup (`otherPopup`) asks for the strain
 and package UID, and the CID is entered by hand. Outputs: the weighing
 worksheet's finished flower, smalls, Normal Trim (`normTrimLb`, category
-`trim`), A+ Trim (`aPlusTrimLb`, `trim_a_plus`) and waste. Work order #,
+`trim`), A+ Trim (`aPlusTrimLb`, `trim_a_plus`) and waste. Each output but
+waste gets its own new Metrc package tag, which doesn't exist until the
+package is made in Metrc, so the tags aren't on this form: the Metrc Queue
+fills them in after submit (station `metrcTags` — see Metrc Queue below).
+Waste stays on the source tag and is wasted out there. Work order #,
 farm license, trim style and starting bins were dropped in October 2026;
 `sugarTrimLb` is off the form but stays in the totals and flow for older
 records.
@@ -507,6 +511,21 @@ form, where the note (adjustment #, new tags…) is set too. Opening one shows t
 and plain numbers, ready to paste into Metrc) — plus the status history.
 Fix form (for people who can fix submitted forms) opens `ops_form.html?edit=`.
 
+**New Metrc tags.** A station with `metrcTags` (operations_stations.js —
+for now Hand Trim: Finished Flower `newFinishedUid`, Smalls `newSmallsUid`,
+Normal Trim `newTrimUid`, A+ Trim `newAPlusTrimUid`, and Sugar Trim
+`newSugarTrimUid` on older records) gets a **New Metrc tags** box in the
+opened form: one line per output the form made (pounds > 0), with the new
+package tag typed or scanned once it's made in Metrc. Save sends them with the
+status and note; `metrc-queue.js` checks each against the station's
+`metrcTags`, upper-cases it, and writes the changed ones onto the form record's
+`fields` (blank clears one); the status history logs them. The table's New UID
+column lists them, with "+N without a tag" while some are missing. They aren't
+on the floor form (Fix form keeps them). Every tag traces back to the lot
+(`buildAliasMap`), Raw Inventory lists each output under its own tag, and the
+Labor Log and Master Schedule offer them as UIDs. To give another station
+per-output tags, add `metrcTags` to it (it must be in `METRC_STATIONS`).
+
 Statuses live in the `metrc_queue` table, one row per form, created the
 first time its status is set (no row = To do; deleting the form deletes the
 row); `log` keeps every change with who and when. The page reads it with the
@@ -533,7 +552,8 @@ forms). Each tab shows its packages and pounds. Farm license, farm name,
 farm code and CID come from the record or are traced back through Take Down to
 the Wet Intake; the full license is the Canix sync's shipper license, else the
 Canix facility whose license number ends in the farm code. A finished output
-with no new UID of its own is listed under its lot's UID ("lot UID").
+is listed under its own new tag (Hand Trim's `metrcTags`, Smalls Hand Trim's
+`newFinishedUid`) once it has one, else under its lot's UID ("lot UID").
 
 Search matches every word against strain, UID (the farm UIDs behind it too),
 license, farm name, farm code and CID. Column headers sort. **Export CSV**
@@ -1014,8 +1034,8 @@ from them.
     touched in the range. Each package can be ticked on or off, or **Add all**.
     It offers each form's *input* package (Take Down: the farm UID), which
     exists as soon as work starts. New tags made later trace back to it:
-    bucked (`newBuckedUid`), finished flower and smalls (`newFinishedUid`
-    on Hand Trim and Smalls), pre-rolls and their waste (`newPrerollUid`,
+    bucked (`newBuckedUid`), Hand Trim's per-output tags (`metrcTags`) and
+    Smalls' finished smalls (`newFinishedUid`), pre-rolls and their waste (`newPrerollUid`,
     `newWasteUid`), all in `buildAliasMap` (`ops_analytics.js`). So labor
     on the input follows the lot. A typed placeholder with no digits
     ("PENDIENTE") isn't shown as a new tag. Open-ended projects look back

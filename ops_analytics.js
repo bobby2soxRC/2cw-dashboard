@@ -63,8 +63,9 @@ function buildAliasMap(stages) {
   });
   // Trimming and Pre-Roll retag what they make (finished flower / smalls,
   // pre-rolls and their waste): the new tag is still the source package's
-  // lot, so labor put on it traces back the same way.
-  [['hand_trim', ['newFinishedUid']], ['smalls_trim', ['newFinishedUid']],
+  // lot, so labor put on it traces back the same way. Hand Trim's tags are
+  // its `metrcTags`, one per output, set from the Metrc Queue.
+  [['hand_trim', STATION_BY_KEY.hand_trim.metrcTags.map((x) => x.k)], ['smalls_trim', ['newFinishedUid']],
    ['preroll_production', ['newPrerollUid', 'newWasteUid']]].forEach(([key, cols]) => {
     (stages[key] || []).forEach((r) => {
       const src = normUid(r.sourceUid);

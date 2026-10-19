@@ -911,13 +911,22 @@ const OPERATIONS_STATIONS = [
       F.waste(),
       { k: 'bagCount', t: 'number', min: 0, step: 1, dp: 0,
         l: { en: 'Finished Bag Count', es: 'Conteo de bolsas terminadas' } },
-      // Traced back to the lot (buildAliasMap in ops_analytics.js), so labor
-      // put on the new tag still lands on this lot.
-      { k: 'newFinishedUid', t: 'uid', l: { en: 'New UID — Finished Flower', es: 'UID nuevo — flor terminada' },
-        hint: { en: 'The new Metrc tag on the finished flower, once it has one.',
-                es: 'La nueva etiqueta Metrc de la flor terminada, cuando la tenga.' } },
       ...totalsBlock('startingBuckedLb', ['finishedFlowerLb', 'smallsLb', 'normTrimLb', 'aPlusTrimLb', 'sugarTrimLb', 'wasteLb']),
       F.teamLead(), F.laborHours(), F.notes(), F.photo()
+    ],
+    // The new Metrc package tag on each output. They don't exist until the
+    // packages are made in Metrc, so they aren't on the floor form: the Metrc
+    // Queue (metrc.html) fills them in on the submitted record, through
+    // netlify/functions/metrc-queue.js. Waste stays on the source tag and is
+    // wasted out, so it has none. Each traces back to the lot
+    // (buildAliasMap in ops_analytics.js), and Raw Inventory lists the output
+    // under it.
+    metrcTags: [
+      { k: 'newFinishedUid', from: 'finishedFlowerLb', l: { en: 'Finished Flower', es: 'Flor terminada' } },
+      { k: 'newSmallsUid', from: 'smallsLb', l: { en: 'Smalls', es: 'Smalls' } },
+      { k: 'newTrimUid', from: 'normTrimLb', l: { en: 'Normal Trim', es: 'Recorte normal' } },
+      { k: 'newAPlusTrimUid', from: 'aPlusTrimLb', l: { en: 'A+ Trim', es: 'Recorte A+' } },
+      { k: 'newSugarTrimUid', from: 'sugarTrimLb', l: { en: 'Sugar Trim', es: 'Recorte azucarado' } }
     ],
     // sugarTrimLb isn't on the form any more (Normal / A+ Trim replaced it),
     // but older records have it, so it stays in the totals and the flow.
