@@ -152569,7 +152569,7 @@
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
-    "status": "In Progress",
+    "status": "Available To Sell",
     "item": {
       "id": 3436752,
       "name": "Mendogrown inc. * Flower * Donkey Kong *",
@@ -152607,10 +152607,10 @@
       "dutchie_product": null,
       "bills_of_materials": [],
       "phenotype": null,
-      "total_for_sale": 0.0,
+      "total_for_sale": 9.925,
       "ordered": 0.0,
       "backordered": 0.0,
-      "unordered": 0.0,
+      "unordered": 9.925,
       "updated_at": "2026-10-14T18:27:59.555Z"
     },
     "facility_id": 4929,
@@ -152625,7 +152625,7 @@
     "production_batch": "23-1259-R2",
     "lot_id": null,
     "cultivation_tax": null,
-    "available_for_sale": false,
+    "available_for_sale": true,
     "cannabis_cogs": null,
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
@@ -152674,13 +152674,448 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-10-14T18:27:59.238Z",
-    "test_results": null,
+    "updated_at": "2026-10-19T09:03:55.141Z",
+    "test_results": {
+      "thc": [
+        {
+          "value": null,
+          "measure": "mg"
+        },
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "cbd": [
+        {
+          "value": null,
+          "measure": "mg"
+        },
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 0.0,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "thca": [
+        {
+          "value": 278.195,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 27.8195,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbda": [
+        {
+          "value": 0.8840000000000001,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 0.0884,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbn": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbg": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbc": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        }
+      ],
+      "cbca": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        }
+      ],
+      "cbga": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "delta_8_thc": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "delta_8_thca": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "delta_9_thc": [
+        {
+          "value": 22.13,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 2.213,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "delta_9_thca": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "delta_10_thc": [
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "thcv": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "thcva": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "total_cbd": [
+        {
+          "value": 0.775,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 0.0775,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "total_cbg": [
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        }
+      ],
+      "total_delta_9_thc": [
+        {
+          "value": 266.107,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 26.6107,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "total_thc": [
+        {
+          "value": 266.107015,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 26.6107015,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "total_cannabinoid": [
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 30.1209,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbdv": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "cbdva": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "test_status": "TestPassed",
+      "tested_package_tag": "1A4060300047D39000015510",
+      "test_date": "2026-10-19",
+      "terpenes": {
+        "measure": "percent",
+        "top_three": {},
+        "values": {}
+      }
+    },
     "lab_test_url": null,
-    "coa_url": null,
+    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/6d6c9316/Package5510_COAfromMetrc_6d6c9316.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261019%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261019T134901Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=e4a1d6726ce5cd282b811f04066a7951acc6bc4d421d206ef3b9bbde19f6ded8",
     "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
+      "testing_facility_name": "SC LABORATORIES CALIFORNIA, LLC",
+      "testing_facility_license": "C8-0000013-LIC"
     },
     "_license_key_label": "All Facilities",
     "_facility_name": "Airway: C11-0001652-LIC",
@@ -152692,7 +153127,7 @@
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
-    "status": "In Progress",
+    "status": "Available To Sell",
     "item": {
       "id": 3436749,
       "name": "Mendogrown inc. * Flower * Lemon Ice *",
@@ -152730,10 +153165,10 @@
       "dutchie_product": null,
       "bills_of_materials": [],
       "phenotype": null,
-      "total_for_sale": 0.0,
+      "total_for_sale": 9.925,
       "ordered": 0.0,
       "backordered": 0.0,
-      "unordered": 0.0,
+      "unordered": 9.925,
       "updated_at": "2026-10-14T18:22:03.887Z"
     },
     "facility_id": 4929,
@@ -152748,7 +153183,7 @@
     "production_batch": "23-1260-R2",
     "lot_id": null,
     "cultivation_tax": null,
-    "available_for_sale": false,
+    "available_for_sale": true,
     "cannabis_cogs": null,
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
@@ -152797,13 +153232,448 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-10-14T18:22:03.521Z",
-    "test_results": null,
+    "updated_at": "2026-10-19T09:03:55.749Z",
+    "test_results": {
+      "thc": [
+        {
+          "value": null,
+          "measure": "mg"
+        },
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "cbd": [
+        {
+          "value": null,
+          "measure": "mg"
+        },
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 0.0,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "thca": [
+        {
+          "value": 250.408,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 25.0408,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbda": [
+        {
+          "value": 0.786,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 0.0786,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbn": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbg": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbc": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        }
+      ],
+      "cbca": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        }
+      ],
+      "cbga": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "delta_8_thc": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "delta_8_thca": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "delta_9_thc": [
+        {
+          "value": 7.544,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 0.7544,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "delta_9_thca": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "delta_10_thc": [
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "thcv": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "thcva": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "total_cbd": [
+        {
+          "value": 0.6890000000000001,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 0.0689,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "total_cbg": [
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        }
+      ],
+      "total_delta_9_thc": [
+        {
+          "value": 227.152,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 22.7152,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "total_thc": [
+        {
+          "value": 227.151816,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 22.7151816,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "total_cannabinoid": [
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 25.8738,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbdv": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "cbdva": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "test_status": "TestPassed",
+      "tested_package_tag": "1A4060300047D39000015509",
+      "test_date": "2026-10-19",
+      "terpenes": {
+        "measure": "percent",
+        "top_three": {},
+        "values": {}
+      }
+    },
     "lab_test_url": null,
-    "coa_url": null,
+    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/2a876377/Package5509_COAfromMetrc_2a876377.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261019%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261019T134901Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=218ffb8bea0bdd54605308341733ddde3d445005fcb27b153e5a0fae754d0565",
     "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
+      "testing_facility_name": "SC LABORATORIES CALIFORNIA, LLC",
+      "testing_facility_license": "C8-0000013-LIC"
     },
     "_license_key_label": "All Facilities",
     "_facility_name": "Airway: C11-0001652-LIC",
@@ -162421,6 +163291,312 @@
       }
     ],
     "updated_at": "2026-10-19T04:03:39.354Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
+    "_facility_license_number": "CCL26-0000027"
+  },
+  {
+    "id": 34812843,
+    "tag": "1A4060300089ABD000000103",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Transit",
+    "item": {
+      "id": 3492775,
+      "name": "Wet Flower - BNPC",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 5095,
+      "type": {
+        "id": 123268,
+        "name": "Fresh Cannabis Plant",
+        "quantity_type": "WeightBased",
+        "product_category": "Plants"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 713723,
+        "name": "BNPC"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-19T13:10:02.640Z"
+    },
+    "facility_id": 5095,
+    "weight": 689.0,
+    "original_weight": 689.0,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-19T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [],
+    "destination_packages": [],
+    "source_harvests": "AGP0027-BNPC-T3-10-19-2026",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [
+      {
+        "id": 359860,
+        "name": "AGP0027-BNPC-T3-10-19-2026"
+      }
+    ],
+    "updated_at": "2026-10-19T13:10:05.164Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
+    "_facility_license_number": "CCL26-0000027"
+  },
+  {
+    "id": 34812838,
+    "tag": "1A4060300089ABD000000102",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Transit",
+    "item": {
+      "id": 3486232,
+      "name": "Wet Flower - Grape Gas",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 5095,
+      "type": {
+        "id": 123268,
+        "name": "Fresh Cannabis Plant",
+        "quantity_type": "WeightBased",
+        "product_category": "Plants"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 735893,
+        "name": "Grape Gas"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-19T13:10:02.014Z"
+    },
+    "facility_id": 5095,
+    "weight": 1688.0,
+    "original_weight": 1688.0,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-19T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [],
+    "destination_packages": [],
+    "source_harvests": "AGP0027-GG-T3-10-19-2026",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [
+      {
+        "id": 359858,
+        "name": "AGP0027-GG-T3-10-19-2026"
+      }
+    ],
+    "updated_at": "2026-10-19T13:10:04.778Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
+    "_facility_license_number": "CCL26-0000027"
+  },
+  {
+    "id": 34810998,
+    "tag": "1A4060300089ABD000000101",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Transit",
+    "item": {
+      "id": 3486232,
+      "name": "Wet Flower - Grape Gas",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 5095,
+      "type": {
+        "id": 123268,
+        "name": "Fresh Cannabis Plant",
+        "quantity_type": "WeightBased",
+        "product_category": "Plants"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 735893,
+        "name": "Grape Gas"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-19T13:10:02.014Z"
+    },
+    "facility_id": 5095,
+    "weight": 1998.0,
+    "original_weight": 1998.0,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-19T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [],
+    "destination_packages": [],
+    "source_harvests": "AGP0027-GG-T2-10-19-2026",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [
+      {
+        "id": 359854,
+        "name": "AGP0027-GG-T2-10-19-2026"
+      }
+    ],
+    "updated_at": "2026-10-19T12:07:03.756Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
