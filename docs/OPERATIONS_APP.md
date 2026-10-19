@@ -278,7 +278,14 @@ the page has **day tabs** under the lot tabs (`dayTabs`): one per day with
 bags logged, today, and any added with "+ Add day" (kept in `runDays`,
 merged across tablets). The log shows the picked day's bags and stamps new
 ones with that day (`day`); the totals below are the whole lot, and the
-Daily Summary — Pounds by Person table follows the picked day. Smalls, trim,
+Daily Summary — Pounds by Person table follows the picked day. A bag's tab is
+the day it's credited to, which the operator picks — bags trimmed one day are
+often weighed the next: pick that day's tab before weighing, or tick the bags
+in the log and **✎ Move N checked to…** (`moveChecked`) moves just those to
+another day (Change date with nothing ticked moves the whole tab). A bag
+credited to another day than it was weighed shows the weighing date in the
+log. A page left open overnight that was on Today moves to the new Today
+when the date turns over (`rollDay`), so new bags don't land on yesterday. Smalls, trim,
 waste and the rest sit under an "End of Run" heading (`t: 'heading'`) and
 are filled in on the last day before submitting. It starts from bucked flower. Its
 Lot Number is a dropdown of every bucked lot (`picker: { list: 'bucked' }` —

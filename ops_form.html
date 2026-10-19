@@ -218,6 +218,8 @@
     .entry-table{margin-top:12px;font-family:'DM Mono',monospace;font-size:.9rem}
     .entry-table td{padding:8px 8px 8px 0;border-bottom:1px solid var(--border)}
     .entry-table td.at{color:var(--muted);font-size:.78rem;white-space:nowrap}
+    .entry-table td.pick{width:34px}
+    .entry-table td.pick input{width:24px;height:24px;margin:0;accent-color:var(--accent)}
     .entry-table tr.fresh td{color:var(--accent)}
     .entry-table .li-del{min-height:40px}
     .entry-empty{color:var(--muted);font-size:.85rem;margin-top:12px}
@@ -1074,15 +1076,16 @@
     move:  { en: '✎ Change date', es: '✎ Cambiar fecha' },
     remove:{ en: '✕ Remove day', es: '✕ Quitar día' },
     moveGo:{ en: 'Move', es: 'Mover' },
-    split: { en: '⇅ Sort by day weighed', es: '⇅ Ordenar por día pesado' },
-    splitAsk: { en: 'Move {n} entries on this tab to the day they were weighed ({list})?',
-                es: '¿Mover {n} registros de esta pestaña al día en que se pesaron ({list})?' }
+    moveSome: { en: '✎ Move {n} checked to…', es: '✎ Mover {n} marcados a…' }
   };
   // The day a row was logged (its `at`), the same way todayStr() counts days.
+  // A row's tab is the day it's credited to, which the operator picks — bags
+  // trimmed one day are often weighed the next — so the log shows the day
+  // weighed beside any row credited to another day.
   const loggedDay = (r) => (r.at ? String(r.at).slice(0, 10) : '');
-  // Rows on day `d` that were logged on another day: a page left open
-  // overnight kept adding to the old day's tab (see rollDay), or a backdate.
-  const strays = (d) => DTL.flatMap((k) => values[k] || []).filter((r) => rowDay(r) === d && loggedDay(r) && loggedDay(r) !== d);
+  // Rows checked in the log (by _id): Change date moves just those.
+  const checkedRows = new Set();
+  const checkedHere = () => DTL.flatMap((k) => values[k] || []).filter((r) => r._id && checkedRows.has(r._id) && rowDay(r) === curDay);
   function dayLabel(d) {
     const [, m, dd] = String(d).split('-').map(Number);
     return `${m}/${dd}`;
@@ -1137,9 +1140,8 @@
       (moving
         ? `<span class="chip day-add"><input type="date" id="day-move-in" value="${escapeAttr(curDay)}">` +
           `<button type="button" class="day-add-go" id="day-move-go">${t(DY.moveGo)}</button></span>`
-        : `<button type="button" class="chip new" id="day-move">${t(DY.move)}</button>`) +
-      (canRemoveDay(curDay) && !moving && !adding ? `<button type="button" class="chip new" id="day-remove">${t(DY.remove)}</button>` : '') +
-      (strays(curDay).length && !moving && !adding ? `<button type="button" class="chip new" id="day-split">${t(DY.split)}</button>` : '');
+        : `<button type="button" class="chip new" id="day-move">${checkedHere().length ? t(DY.moveSome).replace('{n}', checkedHere().length) : t(DY.move)}</button>`) +
+      (canRemoveDay(curDay) && !moving && !adding ? `<button type="button" class="chip new" id="day-remove">${t(DY.remove)}</button>` : '');
   }
   // Gives the rows `dayFor` picks a new day (it returns the day, or nothing
   // to leave the row be). Moved rows are re-added under new ids and the old
@@ -1163,22 +1165,17 @@
     values._deleted = [...gone];
     return days;
   }
-  // Sort by day weighed: the picked tab's rows logged on other days go to
-  // the day they were logged — "Change date" moves the whole tab, so it
-  // can't pull apart two days' bags that ended up on one tab.
-  function splitDay(d) {
-    const rows = strays(d);
-    if (!rows.length || isClosed) return;
-    const per = {};
-    rows.forEach((r) => { per[loggedDay(r)] = (per[loggedDay(r)] || 0) + 1; });
-    const list = Object.keys(per).sort().map((x) => `${dayLabel(x)}: ${per[x]}`).join(', ');
-    if (!confirm(t(DY.splitAsk).replace('{n}', rows.length).replace('{list}', list))) return;
-    const days = reDayRows((r) => (rowDay(r) === d && loggedDay(r) ? loggedDay(r) : null));
-    days.forEach(unhideDay);
-    values.runDays = [...new Set([...(values.runDays || []), ...days])].sort();
+  // Change date with rows checked: just those rows go to day `to` (bags
+  // weighed today for a day's trimming); the tab stays picked.
+  function moveChecked(to) {
+    const ids = new Set(checkedHere().map((r) => r._id));
+    if (!to || to === curDay || !ids.size || isClosed) return;
+    reDayRows((r) => (ids.has(r._id) ? to : null));
+    checkedRows.clear();
+    unhideDay(to);
+    values.runDays = [...new Set([...(values.runDays || []), to])].sort();
     markDirty();
-    pickDay(dayHasRows(d) ? d : [...days].sort().pop());
-    renderDays();
+    pickDay(curDay);
   }
   // A page left open past midnight would keep stamping new rows with the
   // old day: when the date turns over, a page that was on Today moves to
@@ -1223,6 +1220,7 @@
     renderDays();
   }
   function pickDay(d) {
+    if (d !== curDay) checkedRows.clear();
     curDay = d;
     if (perDayProj) fillProjectPicker();
     DTL.forEach((k) => entryRenderers[k] && entryRenderers[k]());
@@ -1245,11 +1243,11 @@
       renderDays();
       return;
     }
-    if (e.target.closest('#day-split')) { splitDay(curDay); return; }
     if (e.target.closest('#day-move-go')) {
       const d = document.getElementById('day-move-in').value;
       el.dataset.moving = '';
-      if (d && d !== curDay) moveDay(curDay, d); else renderDays();
+      if (d && d !== curDay && checkedHere().length) moveChecked(d);
+      else if (d && d !== curDay) moveDay(curDay, d); else renderDays();
       return;
     }
     if (e.target.closest('#day-add-go')) {
@@ -1323,7 +1321,8 @@
         const otherDay = byDay(f) ? (loggedDay(r) && loggedDay(r) !== curDay ? loggedDay(r) : '') : (r.day && r.day !== todayStr() ? r.day : '');
         const when = at ? ((otherDay ? new Date(`${otherDay}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' : '') +
           at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) : '';
-        tr.innerHTML = cols.map((c) => `<td>${escapeHtml(c.t === 'number' || c.t === 'calc' ? fmtNum(r[c.k], c.dp === undefined ? 2 : c.dp) : (r[c.k] ?? ''))}</td>`).join('') +
+        tr.innerHTML = (byDay(f) ? `<td class="pick"><input type="checkbox" data-pick="${escapeAttr(r._id || '')}"${checkedRows.has(r._id) ? ' checked' : ''}></td>` : '') +
+          cols.map((c) => `<td>${escapeHtml(c.t === 'number' || c.t === 'calc' ? fmtNum(r[c.k], c.dp === undefined ? 2 : c.dp) : (r[c.k] ?? ''))}</td>`).join('') +
           `<td class="at">${escapeHtml(when)}</td><td></td>`;
         const del = document.createElement('button');
         del.type = 'button'; del.className = 'li-del'; del.textContent = '×';
@@ -1336,6 +1335,11 @@
           render(); recompute(); markDirty();
         };
         tr.lastChild.appendChild(del);
+        const pick = tr.querySelector('[data-pick]');
+        if (pick) pick.onchange = () => {
+          if (pick.checked) checkedRows.add(r._id); else checkedRows.delete(r._id);
+          renderDays();
+        };
         tbody.appendChild(tr);
       });
       wrap.querySelector(`#ee_${f.k}`).style.display = shown.length ? 'none' : 'block';
