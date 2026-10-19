@@ -1213,7 +1213,12 @@
       delete pd[from];
       values.projectDays = pd;
     }
-    if (values.date === from) setFieldValue(station.fields.find((x) => x.k === 'date'), to);
+    // The Start Date follows its tab — to the run's first day now, which
+    // isn't `to` when `to` is after another tab.
+    if (values.date === from) {
+      const first = [to, ...DTL.flatMap((k) => (values[k] || []).map((r) => r.day).filter(Boolean)), ...(values.runDays || [])].sort()[0];
+      setFieldValue(station.fields.find((x) => x.k === 'date'), first);
+    }
     touched.add('date');
     markDirty();
     pickDay(to);
@@ -1222,12 +1227,36 @@
   function pickDay(d) {
     if (d !== curDay) checkedRows.clear();
     curDay = d;
+    syncDateBox();
     if (perDayProj) fillProjectPicker();
     DTL.forEach((k) => entryRenderers[k] && entryRenderers[k]());
     recompute();
     if (station.dailySummary && draftsOn) loadSummary(d);
   }
-  if (DT) form.addEventListener('change', (e) => { if (e.target.id === 'f_date') goToStartDay(); });
+  // With day tabs the Date box is the picked tab's date, not the Start Date
+  // (one value for the whole run, kept in values.date): it shows the tab's
+  // day, and changing it moves that tab like ✎ Change date. Otherwise
+  // changing it on one tab looked like it changed the other tabs too.
+  const dayDateBox = () => (DT && !editMode ? document.getElementById('f_date') : null);
+  function syncDateBox() {
+    const box = dayDateBox();
+    if (box && box.value !== curDay) box.value = curDay;
+  }
+  if (DT && !editMode) {
+    let dateTimer = null;
+    // Typing a date a part at a time passes through other dates; move once
+    // it settles. On the form: the box isn't built yet.
+    const onDateBox = (e) => {
+      if (e.target.id !== 'f_date') return;
+      clearTimeout(dateTimer);
+      dateTimer = setTimeout(() => {
+        const to = dayDateBox().value;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(to) && to !== curDay) moveDay(curDay, to); else syncDateBox();
+      }, 800);
+    };
+    form.addEventListener('input', onDateBox);
+    form.addEventListener('change', onDateBox);
+  }
   if (DT) document.getElementById('days').addEventListener('click', (e) => {
     const el = document.getElementById('days');
     const day = e.target.closest('[data-day]');
@@ -1592,6 +1621,8 @@
       values[f.k] = inp.value;
     }
     if (f.def) { inp.value = f.def; values[f.k] = f.def; }
+    // Day tabs: the Date box is the picked tab's (see syncDateBox).
+    if (f.k === 'date' && dayDateBox()) return;
 
     // Whoever is logged into this tablet is almost always the person signing
     // the form, so fill their name in for them — still editable, because
@@ -2530,6 +2561,7 @@
   function setFieldValue(f, val) {
     if (val === undefined || val === null) return;
     values[f.k] = val;
+    if (f.k === 'date' && dayDateBox()) return;
     const inp = document.getElementById(`f_${f.k}`);
     if (!inp) return;
     if (f.t === 'select') {
