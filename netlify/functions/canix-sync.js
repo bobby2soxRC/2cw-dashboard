@@ -41,6 +41,16 @@ function verifyToken(secret, token) {
   return crypto.timingSafeEqual(a, b);
 }
 
+async function ghError(res) {
+  if (res.status === 401) {
+    return new Error('GitHub rejected GITHUB_TOKEN (bad credentials): it was mistyped, expired or deleted. Make a new one and replace it in Netlify, then redeploy — see "Data Syncs" in docs/USER_ADMIN.md');
+  }
+  if (res.status === 403 || res.status === 404) {
+    return new Error(`GitHub ${res.status}: GITHUB_TOKEN can't run this repo's Actions — give it the 2cw-dashboard repository with "Actions: Read and write"`);
+  }
+  return new Error(`GitHub ${res.status}: ${await res.text()}`);
+}
+
 async function gh(ghToken, path, opts = {}) {
   return fetch(`https://api.github.com${path}`, {
     ...opts,
@@ -60,7 +70,9 @@ exports.handler = async (event) => {
   }
 
   const signingSecret = process.env.ADMIN_SIGNING_SECRET;
-  const ghToken = process.env.GITHUB_TOKEN;
+  // Trimmed, quotes dropped: a pasted token often picks up a stray space,
+  // newline or quotes, which GitHub rejects as "Bad credentials".
+  const ghToken = String(process.env.GITHUB_TOKEN || '').trim().replace(/^['"]|['"]$/g, '');
   const repo = process.env.GITHUB_REPO || 'bobby2soxRC/2cw-dashboard';
   if (!signingSecret) return json(500, { ok: false, error: 'Server missing ADMIN_SIGNING_SECRET' });
 
@@ -82,13 +94,13 @@ exports.handler = async (event) => {
   try {
     if (payload.action === 'run') {
       const res = await gh(ghToken, `${base}/dispatches`, { method: 'POST', body: JSON.stringify({ ref: BRANCH }) });
-      if (res.status !== 204) throw new Error(`GitHub ${res.status}: ${await res.text()}`);
+      if (res.status !== 204) throw await ghError(res);
       return json(200, { ok: true });
     }
 
     if (payload.action === 'status') {
       const res = await gh(ghToken, `${base}/runs?per_page=5`);
-      if (!res.ok) throw new Error(`GitHub ${res.status}: ${await res.text()}`);
+      if (!res.ok) throw await ghError(res);
       const runs = ((await res.json()).workflow_runs || []).map((r) => ({
         id: r.id,
         event: r.event,              // schedule | workflow_dispatch
