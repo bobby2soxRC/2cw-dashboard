@@ -447,6 +447,8 @@ const activeProducts = () => Object.values(products).filter((p) => p.active)
   .sort((a, b) => a.brand.localeCompare(b.brand) || a.pack_size - b.pack_size || a.name.localeCompare(b.name));
 const gTxt = (g) => `${Number(g).toLocaleString(locale(), { maximumFractionDigits: 2 })} g`;
 const packTxt = (p) => (p.pack_size === 1 ? t(L.single) : t(L.pack_n).replace('{n}', p.pack_size));
+// The Pre-Roll form's Pack Type code, as in preroll_queue.js.
+const packCode = (p) => (p.pack_size > 1 ? `${p.pack_size}pk` : 'single');
 const prerollsFor = (units, prod) => (prod ? units * prod.pack_size : units);
 // "28-pack · 0.5 g each": what one unit of a product is.
 function prodSpec(p) {
@@ -683,7 +685,8 @@ function renderQueue() {
       const startHref = '/ops_form.html?' + new URLSearchParams({
         station: 'preroll_production', set_prNum: x.ref, set_batchId: x.ref,
         ...(x.strain ? { set_strain: x.strain } : {}), ...(x.sourceUid ? { set_sourceUid: x.sourceUid } : {}),
-        ...(x.prod && x.prod.preroll_size_g ? { set_unitSizeG: x.prod.preroll_size_g } : {})
+        ...(x.prod && x.prod.preroll_size_g ? { set_unitSizeG: x.prod.preroll_size_g } : {}),
+        ...(x.brand ? { set_brand: x.brand } : {}), ...(x.prod ? { set_packType: packCode(x.prod) } : {})
       }).toString();
       const go = x.draft
         ? `<a class="btn btn-purple" href="/ops_form.html?station=preroll_production&draft=${esc(x.draft.id)}">${t(L.open_batch)}</a>`
@@ -790,7 +793,8 @@ function cardHtml(v) {
   const startHref = '/ops_form.html?' + new URLSearchParams({
     station: 'preroll_production', set_prNum: v.pr, set_batchId: v.pr,
     ...(v.strain ? { set_strain: v.strain } : {}), ...(p.source_uid ? { set_sourceUid: p.source_uid } : {}),
-    ...(v.prod && v.prod.preroll_size_g ? { set_unitSizeG: v.prod.preroll_size_g } : {})
+    ...(v.prod && v.prod.preroll_size_g ? { set_unitSizeG: v.prod.preroll_size_g } : {}),
+    ...(brandOf(v.bsku, v.product) ? { set_brand: brandOf(v.bsku, v.product) } : {}), ...(v.prod ? { set_packType: packCode(v.prod) } : {})
   }).toString();
   const sched = p.est_start || p.est_completion
     ? `${p.est_start ? fmtDate(p.est_start) : '?'} → ${p.est_completion ? fmtDate(p.est_completion) : '?'}`

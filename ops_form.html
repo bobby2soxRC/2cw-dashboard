@@ -1763,6 +1763,14 @@
     inp.style.display = sel.value === '__type__' ? 'block' : 'none';
     showPrInfo(f);
   }
+  // What a request's value is on the form: a select takes the option whose
+  // code or label matches (the request says "Soma Rosa"; Brand stores soma_rosa).
+  function prValue(ff, val) {
+    if (ff.t !== 'select' || prBlank(val)) return val;
+    const want = String(val).trim().toLowerCase();
+    const hit = optionsFor(ff).find((o) => String(o.v).toLowerCase() === want || String(o.label).toLowerCase() === want);
+    return hit ? hit.v : val;
+  }
   function setOrClear(ff, val) {
     if (!prBlank(val)) { setFieldValue(ff, val); return; }
     values[ff.k] = ff.t === 'number' ? null : '';
@@ -1788,7 +1796,7 @@
           if (!ff) return;
           const cur = values[key];
           if (!prBlank(cur) && !(key in prFilled && String(cur) === String(prFilled[key]))) return;
-          const val = x ? x[prop] : null;
+          const val = x ? prValue(ff, x[prop]) : null;
           setOrClear(ff, val);
           if (prBlank(val)) delete prFilled[key]; else prFilled[key] = val;
         });
@@ -3433,7 +3441,9 @@
           // The same link as the dashboard's Start batch.
           ? `<a class="q-go" href="/ops_form.html?${escapeAttr(new URLSearchParams({ station: station.key, set_prNum: p.ref, set_batchId: p.ref,
               ...(p.strain ? { set_strain: p.strain } : {}), ...(p.sourceUid ? { set_sourceUid: p.sourceUid } : {}),
-              ...(p.unitSizeG ? { set_unitSizeG: p.unitSizeG } : {}) }).toString())}">${escapeHtml(t(QT.start))}</a>`
+              ...(p.unitSizeG ? { set_unitSizeG: p.unitSizeG } : {}),
+              ...(p.brand ? { set_brand: p.brand } : {}),
+              ...(p.packType ? { set_packType: p.packType } : {}) }).toString())}">${escapeHtml(t(QT.start))}</a>`
           : `<a class="q-go" href="/ops_form.html?station=${station.key}&set_sourceUid=${encodeURIComponent(p.sourceUid)}">${escapeHtml(t(QT.start))}</a>`;
       if (prQ) return `<div class="q-row"><div class="q-n">${i + 1}</div>` +
         `<div class="q-main"><div class="q-strain">${escapeHtml(p.strain || p.type || t(QT.noStrain))}` +
@@ -3564,7 +3574,8 @@
     prFields.forEach((f) => {
       const x = prFind(values[f.k]);
       if (x) Object.entries(f.prPicker.fills || {}).forEach(([key, prop]) => {
-        if (!isBlank(values[key]) && String(values[key]) === String(x[prop])) prFilled[key] = values[key];
+        const ff = station.fields.find((s) => s.k === key);
+        if (ff && !isBlank(values[key]) && String(values[key]) === String(prValue(ff, x[prop]))) prFilled[key] = values[key];
       });
       fillPrPicker(f);
     });
@@ -3578,7 +3589,8 @@
     station.fields.forEach((f) => {
       if (['calc', 'lineitems', 'crewcheck', 'photo'].includes(f.t)) return;
       const v = params.get(`set_${f.k}`);
-      if (v !== null && v !== '') fields[f.k] = f.t === 'number' ? Number(v) : v;
+      // A select may be handed its label ("Soma Rosa") as well as its code.
+      if (v !== null && v !== '') fields[f.k] = f.t === 'number' ? Number(v) : f.t === 'select' ? prValue(f, v) : v;
     });
     if (!Object.keys(fields).length) return;
     hydrate(fields);

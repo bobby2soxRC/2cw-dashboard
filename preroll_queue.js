@@ -61,7 +61,7 @@ function brandOf(bsku, product) {
 
 // The open queue, in order, for the form's dropdown. Each item:
 // { ref, kind ('pr' | 'manual'), brand, productName, type, strain, sourceUid,
-//   units, packSize, target (pre-rolls), unitSizeG, readyDate, draftId, made }.
+//   units, packSize, packType, target (pre-rolls), unitSizeG, readyDate, draftId, made }.
 // A failure in one source drops only that source (no Sheet → hand-added
 // items only).
 async function loadPrerollQueue(client) {
@@ -92,6 +92,8 @@ async function loadPrerollQueue(client) {
       brand: base.brand || (prod && prod.brand) || '',
       productName: prod ? prod.name : base.productName || '',
       units, packSize: prod ? n(prod.pack_size) : 1,
+      // The form's Pack Type code: 'single' or '<n>pk'. Unknown without a product.
+      packType: prod ? (n(prod.pack_size) > 1 ? `${n(prod.pack_size)}pk` : 'single') : '',
       target: prod ? units * n(prod.pack_size) : units,
       unitSizeG: prod && prod.preroll_size_g != null ? n(prod.preroll_size_g) : null,
       draftId: draft ? draft.id : null,

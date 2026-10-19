@@ -1142,10 +1142,21 @@ const OPERATIONS_STATIONS = [
       // Picked from the pre-roll queue, in the dashboard's order: fills in
       // what the request knows; the rest is typed as usual.
       { k: 'prNum', t: 'text', l: { en: 'Production Request', es: 'Solicitud de producción' },
-        prPicker: { fills: { batchId: 'ref', strain: 'strain', sourceUid: 'sourceUid', unitSizeG: 'unitSizeG' } },
+        prPicker: { fills: { batchId: 'ref', brand: 'brand', packType: 'packType', strain: 'strain', sourceUid: 'sourceUid', unitSizeG: 'unitSizeG' } },
         hint: { en: 'Pick from the Pre-Roll Queue — it fills in what it can. Links this batch to the request on the Pre-Roll Dashboard.',
                 es: 'Elija de la fila de prerolls — llena lo que pueda. Vincula este lote con la solicitud en el tablero de prerolls.' } },
       { k: 'batchId', t: 'text', req: true, l: { en: 'Batch ID', es: 'ID de lote' } },
+      // Brand and pack come from the request's product (preroll_products);
+      // both show in the Metrc Queue.
+      { k: 'brand', t: 'select', ref: 'brands', allowOther: true,
+        l: { en: 'Brand', es: 'Marca' } },
+      { k: 'packType', t: 'select', allowOther: true,
+        l: { en: 'Pack Type', es: 'Tipo de empaque' },
+        opts: [
+          { v: 'single', l: { en: 'Single', es: 'Individual' } },
+          { v: '10pk', l: { en: '10-Pack', es: 'Paquete de 10' } },
+          { v: '28pk', l: { en: '28-Pack', es: 'Paquete de 28' } }
+        ] },
       F.strain(),
       { k: 'sourceUid', t: 'uid', req: true, l: { en: 'Source UID', es: 'UID de origen' },
         hint: { en: 'Metrc tag of the material going into the pre-rolls.',

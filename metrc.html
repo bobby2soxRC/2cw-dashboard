@@ -63,6 +63,7 @@
     .tbl .mono{font-family:'DM Mono',monospace;font-size:.8rem}
     .tbl .num{text-align:right;font-family:'DM Mono',monospace}
     .tbl .form-name{color:var(--blue)}
+    .tbl .form-name .sub-line{font-size:.82rem;color:var(--muted);margin-top:2px}
     .tbl .strain{font-weight:500}
     .tbl .note{max-width:220px;overflow:hidden;text-overflow:ellipsis;color:var(--subtext)}
     .tbl .age.old{color:var(--red)}
@@ -216,7 +217,7 @@
     not_needed:{ en: 'Not needed', es: 'No necesario' },
     all:       { en: 'All', es: 'Todos' },
     allForms:  { en: 'All forms', es: 'Todos los formularios' },
-    search:    { en: 'Search strain, UID, who, note…', es: 'Buscar variedad, UID, quién, nota…' },
+    search:    { en: 'Search strain, brand, UID, who, note…', es: 'Buscar variedad, marca, UID, quién, nota…' },
     forms:     { en: 'forms', es: 'formularios' },
     form:      { en: 'form', es: 'formulario' },
     empty:     { en: 'Nothing here.', es: 'Nada aquí.' },
@@ -360,6 +361,11 @@
   const photosOf = (r) => (stationOf(r) ? stationOf(r).fields : [])
     .filter((f) => f.t === 'photo' && (!f.showIf || f.showIf(r.fields || {})) && isUrl(val(r, f.k)))
     .map((f) => ({ label: t(f.l), url: val(r, f.k) }));
+  // Pre-Roll's Brand · Pack Type, as labels ('' when neither is filled in).
+  const productOf = (r) => ['brand', 'packType'].map((k) => {
+    const f = (stationOf(r) ? stationOf(r).fields : []).find((x) => x.k === k);
+    return f && val(r, k) ? display(f, val(r, k)) : '';
+  }).filter(Boolean).join(' · ');
   const daysWaiting = (r) => r.submitted_at ? Math.floor((Date.now() - new Date(r.submitted_at).getTime()) / 86400000) : null;
 
   // ── Counts + filters ───────────────────────────────────────────────────────
@@ -392,7 +398,7 @@
     if (!query) return true;
     const q = queue.get(r.id) || {};
     const hay = [r.strain, val(r, 'strain'), uids(r), val(r, 'newFinishedUid'), val(r, 'newPrerollUid'), val(r, 'newWasteUid'), ...newTags(r),
-      val(r, 'incomingUid'), val(r, 'manifestNo'), val(r, 'completedBy'), r.owner_user, q.note, q.updated_by, t(stationOf(r).title)].join(' ').toLowerCase();
+      productOf(r), val(r, 'incomingUid'), val(r, 'manifestNo'), val(r, 'completedBy'), r.owner_user, q.note, q.updated_by, t(stationOf(r).title)].join(' ').toLowerCase();
     return hay.includes(query);
   }
 
@@ -471,7 +477,7 @@
       : `<span class="pill ${s}">${t(L[s])}</span>`;
     return `<tr class="${s} ${pending.has(r.id) ? 'dirty' : ''}" data-id="${r.id}">
       <td>${statusCell}</td>
-      <td class="form-name">${esc(t(stationOf(r).title))}</td>
+      <td class="form-name">${esc(t(stationOf(r).title))}${productOf(r) ? `<div class="sub-line">${esc(productOf(r))}</div>` : ''}</td>
       <td class="mono">${esc(fmtDate(r.work_date))}</td>
       <td class="strain">${esc(r.strain || val(r, 'strain') || '—')}</td>
       <td class="mono uid" title="${esc(uids(r))}">${esc(uids(r) || '—')}</td>

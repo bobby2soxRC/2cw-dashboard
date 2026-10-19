@@ -424,9 +424,12 @@ dropdown of the open Pre-Roll Queue in the dashboard's order
 (`loadPrerollQueue` in `preroll_queue.js`, which the dashboard also uses for
 the Sheet URL, CSV parsing and the pre-roll filter). Each option shows rank,
 ref, product, strain (or type) and quantity; under it, the pre-rolls to make,
-the pre-roll size and the Ready Date. Picking one fills Batch ID, strain,
-source UID and Pre-Roll Size (`prPicker.fills`) with whatever the request
-has; the operator fills in the rest. A value a pick put in is replaced by the
+the pre-roll size and the Ready Date. Picking one fills Batch ID, Brand,
+Pack Type, strain, source UID and Pre-Roll Size (`prPicker.fills`) with
+whatever the request has (Brand and Pack Type come from its product in
+`preroll_products`; a brand name is matched to the Brand list's label); the
+operator fills in the rest. Start batch / Start pass Brand and Pack Type too.
+Brand · Pack Type show under the form name in the Metrc Queue. A value a pick put in is replaced by the
 next pick; anything typed over it is kept. "Other — type the PR #" shows a
 text box for a request not in the queue. A draft opened again, or a form
 started from the dashboard's Start batch, comes up with its request selected.
