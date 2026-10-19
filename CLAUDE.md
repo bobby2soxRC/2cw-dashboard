@@ -78,6 +78,38 @@ Rebuild the template with `scripts/make_day_plan_template.py`; tests:
 `node scripts/test_day_plan.js`. Details: "Import day plan" in
 `docs/OPERATIONS_APP.md`.
 
+### Raw Materials Inventory (started 2026-10-19)
+
+`raw_inventory.html` (Operations card, admin column `raw inventory`): on-hand
+material by stage from the station forms — All / Drying / On-Stem / Bucked /
+Flower / Smalls / Trim / Fresh Frozen — with search and CSV export. Finished
+stock that leaves without a form is marked Used up (shared
+`operations_forms` row `raw_inventory_marks`). No SQL. Details: "Raw
+Materials Inventory" in `docs/OPERATIONS_APP.md`.
+
+### Hourly people not in Connecteam (started 2026-10-19)
+
+Admin → Labor Rates → **+ Add person**: name, badge #, phone, for hourly
+workers (e.g. trimmers) who aren't in Connecteam. They get ID X1, X2, … in
+place of a Connecteam id, so rates, badges and the Labor Log work for them.
+Needs the `labor_people` table from `supabase/schema.sql` run first.
+Details: "Labor rates" in `docs/USER_ADMIN.md`.
+
+### Harvest form: license tables, plate & driver dropdowns (started 2026-10-19)
+
+Harvest (`operations_stations.js`) lost farm site / license / round /
+harvest style / destination; it has a Fresh Frozen checkbox, a License Plate
+dropdown (plates used on past Harvest forms + Other — Canix transfers carry
+no plates) and a Driver dropdown from the `drivers` table
+(`netlify/functions/drivers.js`; add a driver with name, ID # and ID photo).
+The worksheet is license → strain box (scan a plant tag; strain from Canix
+plant batches; location, Transfer UID) → bins (weight, plant count) —
+`buildLotSheet` in `ops_form.html`. After submit it offers a picture + CSV
+of the load to send on WhatsApp (`openShare`). Admin → Drivers shows the ID
+photos. Needs the `drivers`
+table from `supabase/schema.sql` run first. Details: "Harvest" in
+`docs/OPERATIONS_APP.md`, "Drivers" in `docs/USER_ADMIN.md`.
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)

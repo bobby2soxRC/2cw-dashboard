@@ -17,6 +17,7 @@ the existing Operations Hub — same login, same Netlify deploy.
 | `master_schedule.html` | Master Schedule — projects, their responsibilities and people, UIDs, and the day/week work schedule (replaced `schedule.html`) — see below |
 | `crew_checkin.html` | Crew Check-In — a lead checks in the people on their Master Schedule projects once a shift and moves people between stations during the day — see "Crew Check-In" below |
 | `metrc.html` | Metrc Queue — every submitted Wet Intake, Take Down, Bucking, Hand Trim and Pre-Roll form, with its Metrc status — see below |
+| `raw_inventory.html` | Raw Materials Inventory — what's on hand at each stage from the station forms, tabbed, searchable, CSV export — see below |
 | `operations_today.html` | Live board — every form in progress or finished today, for anyone with view access; the date picker (or `?date=YYYY-MM-DD`) shows any earlier day the same way; **Range** shows several days at once (`?date=FROM&to=TO`; it starts as the day before through the day showing, for overnight work like a green harvest, and ◀ ▶ step the whole range), with the Daily Summary table hidden. With Wet Intakes showing, a **Wet Intake by farm** table sits above the forms (and in the PDF): net wet lbs per farm (a license's name, so a farm's licenses add up), split into dry rooms vs freezers — freezer when Fresh Frozen is ticked or the Drying / Freezer Location is one of `reference.json`'s `freezers` — and each intake card shows farm → location (❄ for freezer). 📄 Share PDF prints the day or range as a report. People with `labor log costs` also get a **Labor $** box next to it (off each time the page opens): ticked, the PDF adds a Labor section — Labor Log hours and $ by station (only the picked station's with a filter), and, for all stations, Connecteam clocked hours and $ by activity (the shifts file holds the last 14 days) — at each person's rate from Labor Rates via `labor-rates.js`. A page with day tabs (Bucking, Hand Trim, Pre-Roll) is on every day something was logged on it, not only its start date, with that day's amount (the headline calc on that day's rows; label from `dayTabs.headline`, else "— that day") |
 | `operations_dashboard.html` | Pipeline, yields, biomass, labor, requests, exceptions (finished forms only) |
 | `operations_stations.js` | **The schema.** Station and field definitions, EN + ES |
@@ -145,17 +146,59 @@ which leaves out Canix packages that already have a Take Down until Metrc and
 the next sync catch up.
 
 Harvest (`harvest`) is the step before Wet Intake and is built the same
-way: one form per truck load, a worksheet row per group of bins/bags with
-its Metrc UID, strain, harvest/batch name, the block and row the plants
-came from, plant count, bins/bags and wet weight (all required; block
-carries down to the next row, row doesn't), split into one record per UID on submit. The batch
-name column has `lift: true`, so it's copied onto each UID's record like
-the UID and strain. Header fields required: farm license, harvest style,
-destination, license plate and photo of the driver's ID; truck # is
-optional. There are no crew/labor fields — harvest labor goes in the
-Labor Log. Photos aren't
-autosaved, so a resumed draft needs the driver ID photo retaken before it
-can be submitted.
+way: one form per truck load, split into one record per Source UID on
+submit. Since 2026-10-19 the worksheet follows the crew's notebook (a column
+per strain, a weight per bin, the plant count once): **license → strain →
+bins** (lineitems `group` + `lots`, `buildLotSheet` in `ops_form.html`).
+
+- It starts with one **Source License** dropdown (Farm Licenses, or Other);
+  **+ Add another license** adds another for a load from more than one.
+- Under a license, **scan a plant tag** in the scan box: a tag not on the
+  load yet starts a **strain box** with it as Source UID, and the strain
+  fills in from Canix (`canixStrainForUid(uid, true)` looks the tag up in
+  `data/canix_plant_batches.json`, then the package inventory; only a Strain
+  Library strain is filled in — otherwise the box says what Canix calls it).
+  A tag already on the load jumps to its box's next empty bin. **+ Add
+  strain** starts a blank box.
+- A strain box: Source UID, Strain, Location (typed), **Transfer UID** (the
+  package going on the truck — scan it), then 3 bin rows to start (**+ Add
+  bin** for more), each with Wet Wt (required) and Plant Count. The plant
+  count can be on every bin or once on any bin (like the notebook), but each
+  strain needs one (`lots.plantsReq`). The box shows its bins, lbs and plants.
+- `values.lines` is still one row per bin; every row carries its license
+  (`pid`), its box's fields, `_lot` and `bin`, and each record gets the
+  license, location and Transfer UID lifted to the top.
+- Header: date, a **Fresh Frozen** checkbox (off by default), truck #
+  (optional), **License Plate** and **Driver** (both required). No
+  crew/labor fields — harvest labor goes in the Labor Log.
+- **After submit** (`share: true` → `openShare`): a window with a picture of
+  the load (a column per strain, its bins, totals; driver, plate) and **Send
+  on WhatsApp**, which hands the picture and a CSV (a row per bin) to the
+  phone's share sheet — pick WhatsApp and the chat. It has to be a tap, not
+  automatic: phones only open the share sheet from one. A browser that can't
+  share files (desktop) downloads both and opens WhatsApp with a text
+  summary. It also opens for a submit saved offline. **New harvest form**
+  starts the next one.
+
+- **License Plate** (`platePicker`) lists every plate already used on a
+  submitted Harvest form, plus Other to type a new one (which is on the list
+  from then on). It can't come from the farms' Metrc transfers: Canix's
+  transfer data has no vehicle or driver details (Comstock, Wildcat and
+  Lucern's transfers only carry a route note like "follow GPS route").
+- **Driver** (`driverPicker`) is the `drivers` table, shown "Name — ID #",
+  read through `netlify/functions/drivers.js` (any logged-in PIN; no
+  photos). **+ Add a new driver** asks for first name, last name, ID number
+  and a photo of the ID, all required, and saves it right away (needs a
+  connection; an ID number already on the list just picks that driver). The
+  record keeps `driver` (the name), `driverIdNumber` and `driverId`. The ID
+  photos are seen only in the admin panel's **Drivers** tab
+  (`docs/USER_ADMIN.md`). Needs the `drivers` table from
+  `supabase/schema.sql` run first.
+
+Records from before this change keep their farm site, farm license (at the
+top), round, harvest style, destination, batch name, block/row and driver
+ID photo; reopening one with Edit puts them in a strain box per UID, but
+saving it then needs a Transfer UID.
 
 Pre-Roll Production (`preroll_production`) follows the paper pre-roll sheet
 and, since October 2026, runs like Hand Trim: one page per **run**
@@ -470,6 +513,38 @@ anon key and updates live. Access is two admin-panel checkboxes, View
 through `netlify/functions/metrc-queue.js`, which re-checks the column from
 the PIN — anon has no write access to the table. Separate from Wet Intake's
 own Metrc adjusted / adjusted lb fields, which stay as they are.
+
+**Raw Materials Inventory** (`raw_inventory.html`, hub card `raw_inventory`
+under Operations, admin checkbox column `raw inventory`) is the app-data
+counterpart to Canix Inventory: what's on hand at each stage, worked out on
+the page from the submitted station forms, no table of its own. Tabs: **All**,
+**Drying** (`currentlyDrying` — submitted Wet Intakes with no Take Down, wet
+lbs, drying room), **On-Stem** (the bucking queue's packages, less boxes
+pulled on an open Bucking page, plus Take Downs on hold — `loadBuckingQueue`),
+**Bucked** (the trimming queue — `loadTrimQueue` — less flower already weighed
+on an open Hand Trim page, and lots with a Machine Trim left out), **Flower**,
+**Smalls** and **Trim** (each Hand Trim, Machine Trim and Smalls Hand Trim's
+outputs, and Bucking's trim; trim shows its type — Normal, A+, Sugar, Shake,
+Bucking trim) and **Fresh Frozen** (fresh-frozen Wet Intakes and Fresh Frozen
+forms). Each tab shows its packages and pounds. Farm license, farm name,
+farm code and CID come from the record or are traced back through Take Down to
+the Wet Intake; the full license is the Canix sync's shipper license, else the
+Canix facility whose license number ends in the farm code. A finished output
+with no new UID of its own is listed under its lot's UID ("lot UID").
+
+Search matches every word against strain, UID (the farm UIDs behind it too),
+license, farm name, farm code and CID. Column headers sort. **Export CSV**
+downloads exactly the rows showing (tab, search, Show used up). The tab and
+search are in the URL (`?tab=flower&q=agp`).
+
+Flower, Smalls, Trim and Fresh Frozen come down when a Pre-Roll run,
+Manufacturing Run, Biomass Request (transferred) or Smalls Hand Trim names
+their UID and category (oldest first; the row shows what was taken). Sales and
+transfers aren't on any form, so those rows can be marked **Used up** (and
+Restored) by people with `buck release` or Metrc Queue edit. Marks live in one
+shared `operations_forms` row (`station_key 'raw_inventory_marks'`, fixed id),
+re-read before each write, logged by the edit history trigger; Show used up
+lists them again. The page reloads itself when forms change.
 
 **Information Hub** (`information_hub.html`, hub card `information_hub`
 under Operations) holds the reference lists the rest of the app runs on, one
@@ -1198,8 +1273,10 @@ or just hours, one or more people, and zero or more UIDs, then Save.
   Staff Hours sync) also writes `data/connecteam_roster.json`, every active,
   non-archived user (Connecteam user id + name). Anyone clocked in shows
   first with a green dot, and "Add everyone clocked in" adds the whole crew
-  at once. Someone not in Connecteam can be typed in and saved with no id.
-  Until the roster file has been written once, the page uses the names from
+  at once. People added in the admin panel's Labor Rates → **+ Add person**
+  (not in Connecteam, ids X1, X2, …; `docs/USER_ADMIN.md`) are listed too,
+  from `netlify/functions/badge-names.js`, and get their own rate. Anyone
+  else not in Connecteam can be typed in and saved with no id. Until the roster file has been written once, the page uses the names from
   `connecteam_hours.json` instead.
 - **UIDs** can be picked from a list or found by typing the last 4. The list
   is built from the last 60 days of `operations_forms`. UIDs whose latest

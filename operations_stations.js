@@ -45,8 +45,29 @@
 //   legacyTotal (entry log) a record saved with no rows but this key set
 //          (the field was one number before) opens with that number as
 //          its first row (Bucking's stems).
+//   group  (lineitems, with `lots`) { k, t, ref, allowOther, req, l, add } —
+//          the rows come in tables, one per value of `k` picked at the
+//          table's top (Harvest's source license); every row carries it, and
+//          `add` labels the button for another table. On a `splitBy` field
+//          it's lifted onto each record like a `lift` column.
+//   lots   (lineitems, with `group`) { cols, bins, plantsReq, add, scan,
+//          addBin } — each table holds strain boxes ("lots"): `lots.cols`
+//          filled once per box (Source UID, strain, …), then a row per bin
+//          with the field's own `cols`. Every bin row carries its box's
+//          values (and `_lot`, `bin`), and they're lifted onto each record.
+//          A scan box adds a box per new UID; `plantsReq` wants a plant
+//          count on at least one bin of each box (buildLotSheet).
+//   platePicker (select) Harvest's License Plate: the plates already used on
+//          Harvest forms, plus Other to type a new one (ops_form.html)
+//   driverPicker (select) Harvest's Driver: the drivers table, "Name — ID #",
+//          with a panel to add a new driver (name, ID #, photo of the ID)
+//          through netlify/functions/drivers.js. Sets driver (the name),
+//          driverIdNumber and driverId.
 //
-// Station option:
+// Station options:
+//   share    after submit, a window to send a picture of the load and a CSV
+//            of its rows (WhatsApp, through the phone's share sheet) —
+//            openShare in ops_form.html. Harvest.
 //   splitBy  key of a lineitems field whose rows carry sourceUid/strain — on
 //            submit the form is saved as one record per distinct UID+strain
 //            (see splitRecords in ops_form.html). Columns marked `lift: true`
@@ -251,11 +272,20 @@ const OPERATIONS_STATIONS = [
 
   // ── CULTIVATION: HARVEST ─────────────────────────────────────────────────
   // The step before Wet Intake: the farm side of loading a truck. Built like
-  // Wet Intake — one form per truck load, with a worksheet row per group of
-  // bins/bags carrying its own Metrc UID, strain, block/row and plant count — and split
-  // on submit into one record per UID (`splitBy`), so each harvest record
-  // lines up with the package Wet Intake receives. Crew and hours aren't
+  // Wet Intake — one form per truck load, with a worksheet row per
+  // bin carrying its strain's Source UID, strain, location and Transfer UID —
+  // and split on submit into one record per Source UID (`splitBy`). Laid
+  // out like the crew's notebook: a table per source license (`group`), a
+  // box per strain in it (`lots` — scan a plant tag to start one), a row
+  // per bin weighed; each record gets its license as `pid`. Crew and hours aren't
   // on this form — harvest labor is logged in the Labor Log.
+  //
+  // License Plate (`platePicker`) lists the plates already used on Harvest
+  // forms, plus any new one typed in. Driver (`driverPicker`) is picked from
+  // the drivers table (netlify/functions/drivers.js), or added there on the
+  // spot with name, ID # and a photo of the ID; the record keeps the name,
+  // ID # and the driver's row id (`driverId`). The ID photos are only seen in
+  // the admin panel's Drivers tab.
   {
     key: 'harvest',
     dept: { en: 'Cultivation', es: 'Cultivo' },
@@ -267,55 +297,44 @@ const OPERATIONS_STATIONS = [
     splitBy: 'lines',
     fields: [
       F.date(),
-      F.site(),
-      { k: 'pid', t: 'select', ref: 'properties', allowOther: true, req: true,
-        l: { en: 'Farm License', es: 'Licencia del rancho' } },
-      { k: 'round', t: 'select', allowOther: true,
-        l: { en: 'Season / Round', es: 'Temporada / ronda' },
-        opts: [
-          { v: 'R1', l: { en: 'Round 1', es: 'Ronda 1' } },
-          { v: 'R2', l: { en: 'Round 2', es: 'Ronda 2' } },
-          { v: 'R3', l: { en: 'Round 3', es: 'Ronda 3' } },
-          { v: 'R4', l: { en: 'Round 4', es: 'Ronda 4' } }
-        ] },
-      { k: 'harvestStyle', t: 'select', req: true,
-        l: { en: 'Harvest Style', es: 'Estilo de cosecha' },
-        opts: [
-          { v: 'whole_plant', l: { en: 'Whole plant — hang to dry', es: 'Planta entera — colgar a secar' } },
-          { v: 'fresh_frozen', l: { en: 'Fresh frozen — to freezer', es: 'Fresco congelado — a congelador' } }
-        ] },
-      { k: 'destination', t: 'select', req: true,
-        l: { en: 'Destination', es: 'Destino' },
-        opts: [
-          { v: 'dry_facility', l: { en: 'Drying facility', es: 'Instalación de secado' } },
-          { v: 'freezer', l: { en: 'Freezer (fresh frozen)', es: 'Congelador (fresco congelado)' } }
-        ] },
+      { k: 'freshFrozen', t: 'check',
+        l: { en: 'Fresh Frozen', es: 'Fresco congelado' } },
       { k: 'truckNo', t: 'text', l: { en: 'Truck #', es: 'N.º de camión' } },
-      { k: 'licensePlate', t: 'text', req: true, l: { en: 'License Plate', es: 'Placa del vehículo' } },
-      { k: 'driverIdPhoto', t: 'photo', req: true,
-        l: { en: 'Photo of Driver ID', es: 'Foto de la identificación del conductor' },
-        hint: { en: 'Photo of the driver’s license or ID card.',
-                es: 'Foto de la licencia de conducir o identificación del conductor.' } },
+      { k: 'licensePlate', t: 'select', platePicker: true, allowOther: true, req: true,
+        l: { en: 'License Plate', es: 'Placa del vehículo' } },
+      { k: 'driver', t: 'select', driverPicker: true, req: true,
+        l: { en: 'Driver', es: 'Conductor' } },
       { k: 'lines', t: 'lineitems', req: true,
-        l: { en: 'Load — by UID', es: 'Carga — por UID' },
-        hint: { en: 'One row per group of bins/bags loaded, with its Metrc UID (the last 5 is fine), strain, the block and row the plants came from, plant count and wet weight. Each UID is saved as its own harvest record.',
-                es: 'Una fila por cada grupo de bins/bolsas cargado, con su UID de Metrc (los últimos 5 son suficientes), variedad, el bloque y la hilera de donde vienen las plantas, número de plantas y peso húmedo. Cada UID se guarda como su propio registro de cosecha.' },
+        l: { en: 'Load', es: 'Carga' },
+        hint: { en: 'Pick the source license, then scan a plant tag (or tap + Add strain) for each strain on the truck — the strain fills in from Canix. Add its location and scan the Transfer UID, then weigh each bin. Plant count can go on each bin or once on any bin. Each strain is saved as its own harvest record.',
+                es: 'Elija la licencia de origen y luego escanee una etiqueta de planta (o toque + Agregar variedad) por cada variedad del camión — la variedad se llena desde Canix. Agregue su ubicación y escanee el UID de transferencia, luego pese cada bin. El número de plantas puede ir en cada bin o una sola vez en cualquier bin. Cada variedad se guarda como su propio registro de cosecha.' },
+        group: { k: 'pid', t: 'select', ref: 'properties', allowOther: true, req: true,
+                 l: { en: 'Source License', es: 'Licencia de origen' },
+                 add: { en: '+ Add another license', es: '+ Agregar otra licencia' } },
+        // Each strain (lot) is a box under its license: these fields once,
+        // then a row per bin. Every bin row carries the lot's fields.
+        lots: {
+          bins: 3,
+          plantsReq: true,
+          add: { en: '+ Add strain', es: '+ Agregar variedad' },
+          scan: { en: 'Scan a plant tag to add a strain', es: 'Escanee una etiqueta de planta para agregar una variedad' },
+          addBin: { en: '+ Add bin', es: '+ Agregar bin' },
+          cols: [
+            { k: 'sourceUid', t: 'uid', req: true, canixStrain: 'strain', canixPlants: true, l: { en: 'Source UID', es: 'UID de origen' } },
+            { k: 'strain', t: 'select', ref: 'strains', allowOther: true, req: true, l: { en: 'Strain', es: 'Variedad' } },
+            { k: 'location', t: 'text', l: { en: 'Location', es: 'Ubicación' } },
+            { k: 'transferUid', t: 'uid', req: true, l: { en: 'Transfer UID', es: 'UID de transferencia' } }
+          ]
+        },
         cols: [
-          { k: 'sourceUid', t: 'uid', req: true, carry: true, l: { en: 'Metrc UID', es: 'UID de Metrc' } },
-          { k: 'strain', t: 'select', ref: 'strains', allowOther: true, req: true, carry: true, l: { en: 'Strain', es: 'Variedad' } },
-          { k: 'harvestBatchName', t: 'text', req: true, carry: true, lift: true,
-            l: { en: 'Harvest / Batch Name', es: 'Nombre de cosecha / lote' } },
-          { k: 'block', t: 'text', req: true, carry: true, l: { en: 'Block', es: 'Bloque' } },
-          { k: 'row', t: 'text', req: true, l: { en: 'Row', es: 'Hilera' } },
-          { k: 'plantCount', t: 'number', req: true, l: { en: 'Plant Count', es: 'N.º de plantas' }, min: 0, step: 1, inputmode: 'numeric' },
-          { k: 'binCount', t: 'number', req: true, l: { en: 'Bins / Bags Loaded', es: 'Bins / bolsas cargadas' }, min: 0, step: 1, inputmode: 'numeric' },
-          { k: 'weight', t: 'number', req: true, l: { en: 'Wet Weight (lbs)', es: 'Peso húmedo (lbs)' }, min: 0, step: 0.01 }
+          { k: 'weight', t: 'number', req: true, l: { en: 'Wet Wt (lbs)', es: 'Peso húmedo (lbs)' }, min: 0, step: 0.01 },
+          { k: 'plantCount', t: 'number', l: { en: 'Plant Count', es: 'N.º de plantas' }, min: 0, step: 1, inputmode: 'numeric' }
         ],
         totalCol: 'weight' },
       { k: 'plantCount', t: 'calc', dp: 0, calc: (v) => (v.lines || []).reduce((a, r) => a + num(r.plantCount), 0),
         l: { en: 'Total Plant Count', es: 'Número total de plantas' } },
-      { k: 'binCount', t: 'calc', dp: 0, calc: (v) => (v.lines || []).reduce((a, r) => a + num(r.binCount), 0),
-        l: { en: 'Total Bins / Bags Loaded', es: 'Total de bins / bolsas cargadas' } },
+      { k: 'binCount', t: 'calc', dp: 0, calc: (v) => (v.lines || []).filter((r) => num(r.weight) > 0).length,
+        l: { en: 'Total Bins', es: 'Total de bins' } },
       { k: 'wetWeightLb', t: 'calc', calc: (v) => (v.lines || []).reduce((a, r) => a + num(r.weight), 0),
         l: { en: 'Total Wet Weight (lbs)', es: 'Peso húmedo total (lbs)' } },
       { k: 'lbPerPlant', t: 'calc',
@@ -326,6 +345,9 @@ const OPERATIONS_STATIONS = [
         l: { en: 'Wet lbs / Plant', es: 'Lbs húmedos por planta' } },
       F.teamLead(), F.notes(), F.photo()
     ],
+    // After submit: a picture of the load and a CSV of every bin, to send
+    // on WhatsApp from the phone (openShare in ops_form.html).
+    share: true,
     flow: { lossKind: 'origin', outputs: [{ field: 'wetWeightLb', category: 'wet_whole_plant' }] }
   },
 

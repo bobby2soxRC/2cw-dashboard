@@ -378,6 +378,21 @@ already has a rate stays listed after leaving the roster, marked "not in
 roster". The **Default** row covers everyone without their own rate,
 including people typed into the Labor Log by name.
 
+- **+ Add person** is for people paid by the hour who aren't in Connecteam
+  (e.g. trimmers on badge numbers only): name, badge # and optional phone.
+  Nothing goes to Connecteam. They get an ID of X1, X2, … that stands in
+  for the Connecteam id everywhere (rates, badges, Labor Log entries), so
+  their rate, badge and Workforce Log hours work like anyone else's. Their
+  row has **edit** (name, phone; a rename updates their badges and rates
+  too) and **mark inactive** (drops them from the Labor Log's people list,
+  keeps their rates). They're never deleted. Stored in `labor_people`
+  (`supabase/schema.sql`, service role only since it holds phones), through
+  `admin.js` (`labor_people_add` / `_update`; `labor_rates_list` returns
+  them). The Labor Log gets active ones' id + name, never the phone, from
+  `badge-names.js`. They have no Connecteam clock, so Crew Check-In,
+  Auto-assign and the staff-hours report don't see them; log their hours in
+  the Labor Log or the station forms by badge.
+
 - A rate takes effect from its date, or from the start if the date is left
   blank. Entering a raise with a date keeps earlier work at the old rate.
   Saving the same person and date again replaces that rate, and × removes
@@ -418,6 +433,27 @@ including people typed into the Labor Log by name.
   sheets: `supabase/seed_employee_badges.sql`, run after the schema block.
   It never overwrites a badge already set. Its header lists the badges it
   leaves out and the name matches worth a second look.
+
+## Drivers
+
+Admin → **Drivers**: the truck drivers on the Harvest form's Driver
+dropdown, with name, ID number, who added them and when. **View ID** shows
+the photo of their ID; **edit** fixes the name or ID number; **mark
+inactive** takes them off the dropdown (old Harvest records keep the name).
+
+- Drivers are added on the Harvest form itself (**+ Add a new driver**:
+  first name, last name, ID number and a photo of the ID, all required),
+  through `netlify/functions/drivers.js`, which checks the hub PIN. There's
+  no add button here.
+- Stored in the `drivers` table (`supabase/schema.sql`), service role only.
+  The ID photo is a JPEG data URL in the row (`id_photo`), not in the
+  uploads folder that the other form photos go to, because that folder is
+  public. The admin list leaves photos out (`drivers_list`) and fetches one
+  when asked (`driver_photo`); `driver_update` edits or deactivates. ID
+  numbers are unique (case-insensitive).
+- Run the `drivers` block of `supabase/schema.sql` in the Supabase SQL
+  editor before deploying; until then the tab says so and the form's
+  Driver dropdown can't load.
 
 ## On-Stem Flower (bucking queue and releasing held Take Downs)
 

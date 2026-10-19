@@ -222,8 +222,32 @@ function canixStrainMismatch(rec, reference) {
 // Loaded once, on first use; the Wet Intake form uses it to fill a scanned
 // row's strain. A full tag is looked up as is; a shorter tail only when one
 // package ends with it.
+// With `plants` (Harvest's plant tags), plant batches are searched too
+// (data/canix_plant_batches.json — each batch is named by its plant tag).
 let _canixStrains = null;
-function canixStrainForUid(uid) {
+let _canixPlantStrains = null;
+function canixStrainForUid(uid, plants) {
+  if (plants) {
+    if (!_canixPlantStrains) {
+      _canixPlantStrains = fetch('/data/canix_plant_batches.json').then((r) => (r.ok ? r.json() : []))
+        .then((list) => {
+          const m = new Map();
+          (list || []).forEach((b) => {
+            const name = b && b.strain && b.strain.name;
+            if (b && b.name && name) m.set(normUid(b.name), name);
+          });
+          return m;
+        })
+        .catch(() => new Map());
+    }
+    const q = normUid(uid);
+    if (q.length < 4) return Promise.resolve(null);
+    return _canixPlantStrains.then((m) => {
+      if (m.has(q)) return m.get(q);
+      const hits = q.length >= 24 ? [] : [...m.keys()].filter((tag) => tag.endsWith(q));
+      return hits.length === 1 ? m.get(hits[0]) : canixStrainForUid(uid);
+    });
+  }
   if (!_canixStrains) {
     _canixStrains = fetch('/data/canix_inventory.json').then((r) => (r.ok ? r.json() : []))
       .then((list) => {

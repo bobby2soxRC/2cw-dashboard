@@ -72,6 +72,17 @@ const CARD_DEFS = [
     href: '/canix_inventory.html'
   },
   {
+    key: 'raw_inventory',
+    color: 'green',
+    label: 'Operations',
+    dept: 'operations',
+    // Plain card column ('raw inventory', CARD_SHEET_COLS). Marking stock
+    // used up on the page is for 'buck release' or Metrc Queue edit.
+    title: 'Raw Materials Inventory',
+    desc: 'What’s on hand from the station forms — drying, on-stem, bucked, flower, smalls, trim and fresh frozen — searchable by strain, UID, license, farm or CID, with CSV export.',
+    href: '/raw_inventory.html'
+  },
+  {
     key: 'sales',
     color: 'green',
     label: 'Sales',
@@ -354,6 +365,7 @@ const CARD_ES = {
   twocw_dashboard:     { title: 'Clasificación de Ventas', desc: 'Rendimiento por vendedor, estado de cuentas, oportunidades de venta adicional y cobertura en todas las cuentas de 2CW.' },
   pipeline:            { title: 'Producción en Curso', desc: 'Vista en vivo de lo que está en producción — por etapa, marca y cepa. Actualizado desde la hoja de producción.' },
   inventory:           { title: 'Inventario y Producción', desc: 'Niveles de inventario actuales, días de suministro y recomendaciones de producción por grupo de producto.' },
+  raw_inventory:       { title: 'Inventario de Materia Prima', desc: 'Lo disponible según los formularios de estación — secando, en tallo, desvarado, flor, smalls, recorte y fresco congelado — con búsqueda por variedad, UID, licencia, rancho o CID, y exportación CSV.' },
   canix_inventory:     { title: 'Inventario Canix', desc: 'Inventario en vivo de cultivo/manufactura/distribución en las 16 licencias de Canix, por granja y etapa.' },
   sales:               { title: 'Panel de Ventas', desc: 'Ingresos mensuales por marca, ritmo y tendencia del mes, mezcla de productos y análisis de 12 meses.' },
   mendo:               { title: 'Panel de Mendo', desc: 'Ventas, inventario y producción de la marca Mendo — vista dedicada para el socio.' },
@@ -437,7 +449,8 @@ const CARD_SHEET_COLS = {
   brand_assets: 'brand assets',
   staff_hours: 'staff hours',
   labor_log: 'labor log',
-  buck_hold: 'buck release'
+  buck_hold: 'buck release',
+  raw_inventory: 'raw inventory'
 };
 // production, production_dashboard, and production_today are not sheet
 // columns — they're derived from 'production edit stations' / 'production

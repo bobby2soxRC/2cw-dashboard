@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Raw Materials Inventory — 2CW Operations</title>
+  <script>
+    (function(){ if (!sessionStorage.getItem('2cw_pin')) window.location.replace('/index.html'); })();
+  </script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0c0d0f">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0c0d0f;--surface:#13151a;--surface2:#181b21;--border:#1e2129;
+      --green:#3db87a;--gold:#d4a843;--blue:#5a9fd4;--purple:#9b7fd4;--red:#ef5350;--cyan:#4fc3d9;
+      --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;
+    }
+    html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-text-size-adjust:100%}
+
+    .hdr{min-height:calc(54px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:12px;position:sticky;top:0;z-index:20}
+    .hdr-back{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
+    .hdr-div{width:1px;height:18px;background:var(--border)}
+    .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--green);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .lang{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;flex:0 0 auto}
+    .lang button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:12px;font-weight:600;padding:8px 12px;cursor:pointer;min-height:36px}
+    .lang button.on{background:var(--blue);color:#000}
+
+    main{padding:28px 16px 60px;max-width:1700px;margin:0 auto}
+    .title{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,6vw,46px);letter-spacing:.04em;line-height:1}
+    .sub{margin-top:6px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+
+    .tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin-top:22px}
+    .tab{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;cursor:pointer;text-align:left;color:inherit;font:inherit;border-top:3px solid var(--c,var(--border))}
+    .tab:hover{border-color:var(--c,var(--blue))}
+    .tab.on{border-color:var(--c,var(--blue));background:var(--surface2)}
+    .tab .l{font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--subtext)}
+    .tab .n{font-family:'Bebas Neue',sans-serif;font-size:28px;line-height:1;margin-top:4px;color:var(--c,var(--text))}
+    .tab .s{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--muted);margin-top:2px}
+
+    .filters{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0 14px;align-items:center}
+    .filters input[type=search]{flex:1 1 280px;min-width:0;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .9rem;font-size:.95rem;min-height:44px;outline:none}
+    .filters input[type=search]:focus{border-color:var(--blue)}
+    .chk{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--subtext);cursor:pointer;min-height:44px}
+    .btn{padding:.65rem 1rem;border:1px solid var(--border);border-radius:10px;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer;background:var(--surface);color:var(--text);min-height:44px}
+    .btn:hover{border-color:var(--blue)}
+    .btn-blue{background:var(--blue);border-color:var(--blue);color:#000}
+
+    .totals{display:flex;flex-wrap:wrap;gap:8px 22px;margin:0 0 12px;font-family:'DM Mono',monospace;font-size:.78rem;color:var(--subtext)}
+    .totals b{color:var(--text);font-weight:500}
+
+    .tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+    .tbl{width:100%;border-collapse:collapse;font-size:.85rem}
+    .tbl th{background:var(--surface2);color:var(--muted);font-family:'DM Mono',monospace;font-size:.65rem;font-weight:500;
+      letter-spacing:.08em;text-transform:uppercase;text-align:left;padding:10px;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none}
+    .tbl th:hover{color:var(--subtext)}
+    .tbl th.sorted{color:var(--blue)}
+    .tbl td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle;white-space:nowrap}
+    .tbl tbody tr:hover{background:var(--surface2)}
+    .tbl tbody tr:last-child td{border-bottom:none}
+    .tbl tbody tr td:first-child{border-left:3px solid var(--c,var(--border))}
+    .tbl tbody tr.used{color:var(--muted)}
+    .tbl .mono{font-family:'DM Mono',monospace;font-size:.8rem}
+    .tbl .num{text-align:right;font-family:'DM Mono',monospace}
+    .tbl .strain{font-weight:500}
+    .tbl .uid{max-width:260px;overflow:hidden;text-overflow:ellipsis}
+    .tbl .small{font-size:.7rem;color:var(--muted);font-family:'DM Mono',monospace}
+    .tbl .age.old{color:var(--gold)}
+    .tbl .cat{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--c,var(--subtext))}
+    .pill{display:inline-block;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border-radius:99px;border:1px solid var(--border);white-space:nowrap;color:var(--subtext)}
+    .pill.go{border-color:var(--green);color:var(--green)}
+    .pill.work{border-color:var(--blue);color:var(--blue)}
+    .pill.hold{border-color:var(--gold);color:var(--gold)}
+    .pill.used{color:var(--muted)}
+    .mini{min-height:30px;padding:4px 10px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--subtext);
+      font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;cursor:pointer}
+    .mini:hover{border-color:var(--blue);color:var(--blue)}
+
+    .empty{color:var(--muted);text-align:center;padding:60px 0;font-size:.9rem;line-height:1.6}
+    .note{margin-top:14px;font-size:.8rem;color:var(--muted);line-height:1.55;max-width:900px}
+    .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
+  </style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="/index.html" id="back">← Hub</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand" id="brand">Raw Materials Inventory</div>
+  <div class="lang" id="lang"></div>
+</header>
+
+<main>
+  <div class="title" id="title">Raw Materials Inventory</div>
+  <div class="sub" id="sub">—</div>
+  <div class="tabs" id="tabs"></div>
+  <div class="filters" id="filters"></div>
+  <div class="totals" id="totals"></div>
+  <div id="board"><div class="empty">Loading…</div></div>
+  <div class="note" id="note"></div>
+  <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution</footer>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/config/supabase_config.js"></script>
+<script src="/operations_stations.js"></script>
+<script src="/ops_common.js"></script>
+<script src="/ops_data.js"></script>
+<script>
+// Raw Materials Inventory — what's on hand at each stage, built from the
+// station forms (not Canix): Drying (Wet Intakes with no Take Down), On-Stem
+// (Take Downs not bucked yet), Bucked (lots not trimmed yet), Flower / Smalls
+// / Trim (what Hand Trim, Machine Trim, Smalls Hand Trim and Bucking made,
+// less what a Pre-Roll run, Manufacturing Run, Biomass Request or Smalls Hand
+// Trim took off that UID) and Fresh Frozen. Farm license, CID and farm come
+// from the record or are traced back through Take Down to the Wet Intake.
+//
+// Finished outputs usually leave by sale or transfer, which no form records,
+// so they can be marked Used up here. The marks live in one shared
+// operations_forms row (station_key 'raw_inventory_marks', fixed id), like
+// the bucking queue; the edit history trigger logs each change. Marking is
+// for people with 'buck release' or Metrc Queue edit.
+(async function () {
+  mountLangToggle('lang');
+  const L = {
+    title:    { en: 'Raw Materials Inventory', es: 'Inventario de materia prima' },
+    back:     { en: '← Hub', es: '← Inicio' },
+    all:      { en: 'All', es: 'Todo' },
+    drying:   { en: 'Drying', es: 'Secando' },
+    onstem:   { en: 'On-Stem', es: 'En tallo' },
+    bucked:   { en: 'Bucked', es: 'Desvarado' },
+    flower:   { en: 'Flower', es: 'Flor' },
+    smalls:   { en: 'Smalls', es: 'Smalls' },
+    trim:     { en: 'Trim', es: 'Recorte' },
+    frozen:   { en: 'Fresh Frozen', es: 'Fresco congelado' },
+    search:   { en: 'Search strain, UID, license, farm name or code, CID…', es: 'Buscar variedad, UID, licencia, rancho o código, CID…' },
+    showUsed: { en: 'Show used up', es: 'Mostrar agotados' },
+    csv:      { en: '⇩ Export CSV', es: '⇩ Exportar CSV' },
+    pkgs:     { en: 'packages', es: 'paquetes' },
+    pkg:      { en: 'package', es: 'paquete' },
+    total:    { en: 'Total', es: 'Total' },
+    wet:      { en: 'wet', es: 'húmedo' },
+    empty:    { en: 'Nothing here.', es: 'Nada aquí.' },
+    noData:   { en: 'Could not load the inventory. Check your connection and reload.', es: 'No se pudo cargar el inventario. Revise su conexión y recargue.' },
+    colCat:   { en: 'Category', es: 'Categoría' },
+    colStatus:{ en: 'Status', es: 'Estado' },
+    colType:  { en: 'Type', es: 'Tipo' },
+    colStrain:{ en: 'Strain', es: 'Variedad' },
+    colFarm:  { en: 'Farm', es: 'Rancho' },
+    colCode:  { en: 'Farm Code', es: 'Código' },
+    colLic:   { en: 'License', es: 'Licencia' },
+    colLb:    { en: 'Lbs', es: 'Lbs' },
+    colLoc:   { en: 'Location', es: 'Ubicación' },
+    colSince: { en: 'Since', es: 'Desde' },
+    colDays:  { en: 'Days', es: 'Días' },
+    colFrom:  { en: 'From', es: 'De' },
+    lotTag:   { en: 'lot UID — no tag of its own yet', es: 'UID del lote — aún sin etiqueta propia' },
+    farmUid:  { en: 'farm', es: 'rancho' },
+    usedUp:   { en: 'Used up', es: 'Agotado' },
+    markUsed: { en: 'Used up', es: 'Agotado' },
+    restore:  { en: 'Restore', es: 'Restaurar' },
+    markAsk:  { en: 'Mark this as used up? It drops off the inventory (Show used up brings it back).', es: '¿Marcar como agotado? Sale del inventario (Mostrar agotados lo regresa).' },
+    saveFail: { en: 'Could not save:', es: 'No se pudo guardar:' },
+    took:     { en: 'taken', es: 'usado' },
+    // statuses
+    sDrying:  { en: 'Drying', es: 'Secando' },
+    sFreezer: { en: 'In freezer', es: 'En congelador' },
+    sReady:   { en: 'Ready to buck', es: 'Listo para desvarar' },
+    sBucking: { en: 'Being bucked', es: 'Desvarando' },
+    sHoldQ:   { en: 'Hold — quality', es: 'En espera — calidad' },
+    sHoldO:   { en: 'Hold — order', es: 'En espera — pedido' },
+    sToTrim:  { en: 'Ready to trim', es: 'Listo para cortar' },
+    sTrimming:{ en: 'Being trimmed', es: 'Cortando' },
+    sOnHand:  { en: 'On hand', es: 'Disponible' },
+    sPart:    { en: 'Part used', es: 'Usado en parte' },
+    // types / sources
+    tIntake:  { en: 'Wet Intake', es: 'Recepción húmeda' },
+    tFF:      { en: 'Fresh Frozen form', es: 'Formulario fresco congelado' },
+    tHand:    { en: 'Hand Trim', es: 'Corte a mano' },
+    tMachine: { en: 'Machine Trim', es: 'Corte a máquina' },
+    tSmalls:  { en: 'Smalls Hand Trim', es: 'Corte de smalls' },
+    tBuck:    { en: 'Bucking', es: 'Desvarado' },
+    tTake:    { en: 'Take Down', es: 'Bajada' },
+    note:     { en: 'Built from the station forms, not Canix. Drying, On-Stem and Bucked clear themselves as the next form is submitted. Flower, Smalls, Trim and Fresh Frozen come off when a Pre-Roll run, Manufacturing Run, Biomass Request (transferred) or Smalls Hand Trim names their UID; anything sold or moved some other way has to be marked Used up. Hand Trim outputs without their own new UID are listed under the lot’s UID. Drying and fresh-frozen intakes are wet weight; the rest is dry.',
+                es: 'Hecho con los formularios de estación, no con Canix. Secando, En tallo y Desvarado se vacían solos al enviar el siguiente formulario. Flor, Smalls, Recorte y Fresco congelado bajan cuando una corrida de prerolls, de manufactura, una solicitud de biomasa (transferida) o un corte de smalls usa su UID; lo vendido o movido de otra forma hay que marcarlo como Agotado. Lo del corte a mano sin UID nuevo aparece bajo el UID del lote. Secando y fresco congelado son peso húmedo; lo demás es seco.' }
+  };
+  const TABS = [
+    { k: 'all', c: 'var(--text)' }, { k: 'drying', c: 'var(--blue)' }, { k: 'onstem', c: 'var(--gold)' },
+    { k: 'bucked', c: 'var(--purple)' }, { k: 'flower', c: 'var(--green)' }, { k: 'smalls', c: '#8bc34a' },
+    { k: 'trim', c: '#c48b5a' }, { k: 'frozen', c: 'var(--cyan)' }
+  ];
+  const TAB_COLOR = Object.fromEntries(TABS.map((x) => [x.k, x.c]));
+  // Which tab a biomass category's stock sits on, for what a downstream form took.
+  const CAT_TAB = { flower_a: 'flower', smalls_b: 'smalls', trim: 'trim', trim_a_plus: 'trim', trim_a: 'trim', trim_b: 'trim',
+                    sugar_trim: 'trim', shake: 'trim', fresh_frozen: 'frozen' };
+
+  document.getElementById('title').textContent = t(L.title);
+  document.getElementById('brand').textContent = t(L.title);
+  document.getElementById('back').textContent = t(L.back);
+  document.getElementById('note').textContent = t(L.note);
+  document.title = `${t(L.title)} — 2CW`;
+  const board = document.getElementById('board');
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const r2 = (x) => Math.round(x * 100) / 100;
+  const uniq = (a) => [...new Set(a.map((x) => String(x == null ? '' : x).trim()).filter(Boolean))];
+  const canMark = sessionStorage.getItem('2cw_buck_release') === 'true' || sessionStorage.getItem('2cw_metrc_access') === 'edit';
+  const who = sessionStorage.getItem('2cw_user_name') || '';
+
+  const client = getClient();
+  if (!client) { board.innerHTML = `<div class="empty">${esc(t(L.noData))}</div>`; return; }
+
+  // ── Used-up marks ─────────────────────────────────────────────────────────
+  const MARKS_ID = '72617769-6e76-4000-8000-000000000001';
+  async function getMarks() {
+    const { data, error } = await client.from('operations_forms').select('fields').eq('id', MARKS_ID).maybeSingle();
+    if (error) throw error;
+    return ((data && data.fields) || {}).marks || {};
+  }
+  // Re-reads before writing, so two people marking at once don't undo each other.
+  async function setMark(key, mark) {
+    const marks = await getMarks();
+    if (mark) marks[key] = mark; else delete marks[key];
+    const { error } = await client.from('operations_forms').upsert({
+      id: MARKS_ID, station_key: 'raw_inventory_marks', status: 'submitted', owner_user: who || null, updated_by: who || null,
+      submitted_at: new Date().toISOString(), fields: { marks, updatedBy: who, updatedAt: new Date().toISOString() }
+    });
+    if (error) throw error;
+    return marks;
+  }
+
+  // ── Farm names, codes and licenses ────────────────────────────────────────
+  // A form's Farm License (`pid`) is usually the short code from the
+  // Information Hub ("027", Comstock), sometimes the full license. The full
+  // license is the Canix sync's shipper license, else the Canix facility whose
+  // license number ends in the code.
+  let pidCodes = [], facilities = [];
+  const digits = (s) => String(s || '').replace(/\D/g, '');
+  function farmOf(pid, shipperLicense) {
+    const p = String(pid || '').trim();
+    let code = '', license = String(shipperLicense || '').trim();
+    if (p && pidCodes.some((r) => r.code === p)) code = p;
+    else if (p && !license) license = p;
+    if (!code && license) {
+      const d = digits(license.split('-').pop());
+      const hit = pidCodes.find((r) => /^\d+$/.test(r.code) && Number(r.code) === Number(d)) ||
+        pidCodes.filter((r) => /^\d+$/.test(r.code) && d.endsWith(r.code)).sort((a, b) => b.code.length - a.code.length)[0];
+      if (hit) code = hit.code;
+    }
+    if (!license && code && /^\d+$/.test(code)) {
+      const tail = (f) => digits(String(f.license_number || '').split('-').pop());
+      const fac = facilities.find((f) => Number(tail(f)) === Number(code)) ||
+        (() => { const m = facilities.filter((f) => tail(f).endsWith(code)); return m.length === 1 ? m[0] : null; })();
+      if (fac) license = fac.license_number;
+    }
+    const ref = pidCodes.find((r) => r.code === code);
+    const fac = license && facilities.find((f) => f.license_number === license);
+    return { code: code || (p && p !== license ? p : ''), license, name: (ref && ref.name) || (fac && fac.farm_group) || '' };
+  }
+
+  // ── Load and build ────────────────────────────────────────────────────────
+  let rows = [], marks = {};
+  async function load() {
+    const [intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, mfg, biomass, bq, tq, codes, fac, mk, paper] = await Promise.all([
+      loadSubmitted('intake_wet'), loadSubmitted('dry_check'), loadSubmitted('buck'), loadSubmitted('hand_trim'),
+      loadSubmitted('machine_trim'), loadSubmitted('smalls_trim'), loadSubmitted('fresh_frozen'),
+      loadSubmitted('preroll_production'), loadSubmitted('mfg_output'), loadSubmitted('biomass_request'),
+      loadBuckingQueue(), loadTrimQueue(), getRefCodes(),
+      client.from('canix_facilities').select('license_number,farm_group').then((r) => r.data || []),
+      getMarks(),
+      client.from('operations_forms').select('id').eq('owner_user', 'paper_import').limit(10000).then((r) => r.data || [])
+    ]);
+    pidCodes = (codes || []).filter((r) => r.kind === 'pid');
+    facilities = fac;
+    marks = mk;
+    // Records loaded from the old paper sheets (Aug–Sep 2026, owner_user
+    // 'paper_import') still trace lots, but their output isn't stock any more.
+    const paperIds = new Set(paper.map((r) => r.id));
+    rows = build({ intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, mfg, biomass, bq, tq })
+      .filter((r) => !paperIds.has(r.recId));
+  }
+
+  function build(d) {
+    const out = [];
+    const groups = takeDownGroups(d.downs);
+    // The Take Downs behind an on-stem tag or a part released off one.
+    const downsFor = (uid) => {
+      if (!uid) return [];
+      for (const [u, members] of groups) if (uidTailMatch(u, uid)) return members;
+      for (const [, members] of groups) {
+        const part = members.filter((r) => (r.releases || []).some((x) => uidTailMatch(x.uid, uid)));
+        if (part.length) return part;
+      }
+      return [];
+    };
+    const intakeFor = (farmUid) => {
+      if (!farmUid) return null;
+      return d.intakes.find((i) => normUid(i.sourceUid) === normUid(farmUid)) ||
+        [...d.intakes].reverse().find((i) => uidTailMatch(i.sourceUid, farmUid)) || null;
+    };
+    // Farm, license, CID and farm UIDs for a record, from itself, its Take
+    // Downs (by `uid`, the on-stem or lot tag) and their Wet Intakes.
+    function origin(rec, uid, intakesIn) {
+      const tds = intakesIn ? [] : downsFor(uid);
+      const ins = intakesIn || tds.map((x) => intakeFor(x.incomingUid)).filter(Boolean);
+      const pids = uniq([rec.pid, ...tds.map((x) => x.pid), ...ins.map((i) => i.pid)]);
+      const lic = (pid) => { const i = ins.find((x) => x.pid === pid && x.canixSync && x.canixSync.shipperLicense); return i ? i.canixSync.shipperLicense : ''; };
+      const farms = pids.length ? pids.map((p) => farmOf(p, lic(p)))
+        : uniq(ins.map((i) => i.canixSync && i.canixSync.shipperLicense)).map((l) => farmOf('', l));
+      return {
+        farm: uniq(farms.map((f) => f.name)).join(', '), code: uniq(farms.map((f) => f.code)).join(', '),
+        license: uniq(farms.map((f) => f.license)).join(', '),
+        cid: uniq([rec.cid]).join(', ') || uniq([...tds.map((x) => x.cid), ...ins.map((i) => i.cid)]).join(', '),
+        farmUids: uniq([...tds.map((x) => x.incomingUid), ...ins.map((i) => i.sourceUid)])
+      };
+    }
+    const add = (tab, rec, x) => out.push({
+      tab, recId: rec.id, strain: rec.strain || '', date: String(rec.date || '').slice(0, 10), location: '',
+      ownUid: true, used: [], ...x, lb: r2(Number(x.lb) || 0), startLb: r2(Number(x.lb) || 0)
+    });
+
+    // Drying / Fresh Frozen — Wet Intakes (wet weight).
+    const drying = new Set(currentlyDrying(d.intakes, d.downs).map((i) => i.id));
+    d.intakes.forEach((i) => {
+      const ff = isFreshFrozen(i);
+      if (!ff && !drying.has(i.id)) return;
+      add(ff ? 'frozen' : 'drying', i, { key: `${i.id}:intake`, uid: normUid(i.sourceUid), lb: i.totalWetLb, wet: true,
+        status: ff ? 'sFreezer' : 'sDrying', pill: ff ? 'go' : 'work', type: 'tIntake', location: i.dryRoom || '',
+        ...origin(i, null, [i]) });
+    });
+    d.frozen.forEach((r) => add('frozen', r, { key: `${r.id}:ff`, uid: normUid(r.sourceUid), lb: r.totalLb, wet: true,
+      status: 'sFreezer', pill: 'go', type: 'tFF', location: [r.site, r.freezer].filter(Boolean).join(' · '),
+      ...origin(r, r.sourceUid) }));
+
+    // On-Stem — what's ready to buck (less boxes pulled on an open bucking
+    // page) and what's on hold.
+    const bucked = (uid) => d.bucks.some((b) => uidTailMatch(b.sourceUid, uid));
+    d.bq.items.forEach((p) => {
+      const lb = p.leftLb != null ? p.leftLb : p.unbuckedLb;
+      add('onstem', p, { key: `${p.id}:onstem:${normUid(p.sourceUid)}`, uid: normUid(p.sourceUid), lb,
+        status: p.draftId ? 'sBucking' : 'sReady', pill: p.draftId ? 'work' : 'go', type: 'tTake',
+        location: p.storageLocation || p.dryRoom || '', ...origin(p, p.sourceUid) });
+    });
+    groups.forEach((members, uid) => members.filter((r) => r.result !== 'pass').forEach((r) => {
+      if (bucked(uid)) return;
+      const lb = Number(r.dryWeightLb || 0) - (r.releases || []).reduce((a, x) => a + (Number(x.lb) || 0), 0);
+      if (lb <= 0.005) return;
+      add('onstem', r, { key: `${r.id}:onstem:${uid}`, uid, lb, status: r.result === 'hold_order' ? 'sHoldO' : 'sHoldQ', pill: 'hold',
+        type: 'tTake', location: r.storageLocation || r.dryRoom || '', ...origin(r, uid) });
+    }));
+
+    // Bucked — lots with no Hand Trim (or Machine Trim) submitted yet, less
+    // the finished flower already weighed on an open Hand Trim page.
+    d.tq.items.forEach((l) => {
+      if (d.machine.some((m) => uidTailMatch(m.sourceUid, l.sourceUid))) return;
+      const lb = Number(l.buckedFlowerLb || 0) - Number(l.trimmedLb || 0);
+      add('bucked', l, { key: `${l.buckDraftId || l.id}:bucked`, recId: l.buckDraftId || l.id, uid: normUid(l.sourceUid), lb,
+        status: l.inProgress ? 'sBucking' : l.draftId ? 'sTrimming' : 'sToTrim', pill: l.inProgress || l.draftId ? 'work' : 'go',
+        type: 'tBuck', ...origin(l, l.sourceUid) });
+    });
+
+    // Flower / Smalls / Trim — what each finishing form made.
+    const outputs = (rec, typeKey, list, ownTag) => {
+      const lotUid = normUid(rec.sourceUid);
+      const o = origin(rec, rec.sourceUid);
+      list.forEach(([field, cat, label]) => {
+        const lb = Number(rec[field]);
+        if (!(lb > 0.005)) return;
+        const tagged = ownTag && ownTag.includes(field) && rec.newFinishedUid;
+        add(CAT_TAB[cat], rec, { key: `${rec.id}:${field}`, uid: tagged ? normUid(rec.newFinishedUid) : lotUid, ownUid: !!tagged,
+          lb, cat, catLabel: label, type: typeKey, ...o });
+      });
+    };
+    d.hand.forEach((r) => outputs(r, 'tHand', [
+      ['finishedFlowerLb', 'flower_a'], ['smallsLb', 'smalls_b'], ['normTrimLb', 'trim', { en: 'Normal', es: 'Normal' }],
+      ['aPlusTrimLb', 'trim_a_plus', { en: 'A+', es: 'A+' }], ['sugarTrimLb', 'sugar_trim', { en: 'Sugar', es: 'Azucarada' }]], ['finishedFlowerLb']));
+    d.machine.forEach((r) => outputs(r, 'tMachine', [
+      ['flowerALb', 'flower_a'], ['smallsBLb', 'smalls_b'], ['sugarTrimLb', 'sugar_trim', { en: 'Sugar', es: 'Azucarada' }],
+      ['machineShakeLb', 'shake', { en: 'Shake', es: 'Shake' }]]));
+    d.smallsT.forEach((r) => outputs(r, 'tSmalls', [
+      ['finishedSmallsLb', 'smalls_b', { en: 'Finished', es: 'Terminados' }], ['shakeLb', 'shake', { en: 'Shake', es: 'Shake' }]], ['finishedSmallsLb']));
+    d.bucks.forEach((r) => outputs(r, 'tBuck', [['trimLb', 'trim', { en: 'Bucking trim', es: 'Recorte de desvarado' }]]));
+
+    // What downstream forms took off a UID, oldest stock first. A Smalls Hand
+    // Trim doesn't take from its own output.
+    const takers = [
+      ...d.prerolls.map((r) => ({ id: r.id, uid: r.sourceUid, cat: r.inputCategory, lb: r.startingLb, what: t(STATION_BY_KEY.preroll_production.title) })),
+      ...d.mfg.map((r) => ({ id: r.id, uid: r.sourceUid, cat: r.inputCategory, lb: r.inputLb, what: t(STATION_BY_KEY.mfg_output.title) })),
+      ...d.biomass.filter((r) => r.status === 'transferred').map((r) => ({ id: r.id, uid: r.sourceUid, cat: r.category, lb: r.transferredLb, what: t(STATION_BY_KEY.biomass_request.title) })),
+      ...d.smallsT.map((r) => ({ id: r.id, uid: r.sourceUid, cat: 'smalls_b', lb: r.startingLb, what: t(STATION_BY_KEY.smalls_trim.title) }))
+    ];
+    takers.forEach((c) => {
+      let left = Number(c.lb) || 0;
+      const tab = CAT_TAB[c.cat];
+      if (!(left > 0) || !tab || !c.uid) return;
+      out.filter((r) => r.tab === tab && r.recId !== c.id && r.lb > 0 && uidTailMatch(r.uid, c.uid) && (!r.cat || r.cat === c.cat || tab !== 'trim'))
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .forEach((r) => {
+          if (left <= 0) return;
+          const take = Math.min(left, r.lb);
+          r.lb = r2(r.lb - take); left -= take;
+          r.used.push(`${c.what}: ${fmtNum(take)} lb`);
+        });
+    });
+    out.forEach((r) => {
+      if (r.status) return;
+      r.status = r.lb <= 0.005 ? 'usedUp' : r.used.length ? 'sPart' : 'sOnHand';
+      r.pill = r.lb <= 0.005 ? 'used' : 'go';
+    });
+    return out;
+  }
+
+  // ── View ──────────────────────────────────────────────────────────────────
+  const params = new URLSearchParams(location.search);
+  let tab = TABS.some((x) => x.k === params.get('tab')) ? params.get('tab') : 'all';
+  let query = params.get('q') || '';
+  let showUsed = false;
+  let sortKey = 'date', sortDir = -1;
+
+  const isUsed = (r) => r.lb <= 0.005 || !!marks[r.key];
+  const statusLabel = (r) => (marks[r.key] ? t(L.usedUp) : r.status === 'usedUp' ? t(L.usedUp) : t(L[r.status]));
+  const typeLabel = (r) => [t(L[r.type]), r.catLabel ? t(r.catLabel) : ''].filter(Boolean).join(' · ');
+  const days = (r) => (r.date ? Math.max(0, Math.floor((Date.now() - new Date(`${r.date}T12:00:00`).getTime()) / 86400000)) : null);
+  const fmtDate = (s) => (s ? new Date(`${s}T12:00:00`).toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—');
+  const visible = (r) => showUsed || !isUsed(r);
+  function matches(r) {
+    if (!query) return true;
+    const hay = [r.strain, r.uid, ...(r.farmUids || []), r.license, r.farm, r.code, r.cid].join(' ').toLowerCase();
+    // Every word has to be there: "agp gelato" finds AGP's Gelato.
+    return query.toLowerCase().split(/\s+/).filter(Boolean).every((w) => hay.includes(w) || normUid(hay).includes(normUid(w)) && normUid(w).length >= 4);
+  }
+  const inTab = (r, k) => k === 'all' || r.tab === k;
+  const sumLb = (list) => r2(list.reduce((a, r) => a + r.lb, 0));
+
+  const COLS = [
+    { k: 'tab', l: L.colCat, v: (r) => t(L[r.tab]), allOnly: true },
+    { k: 'status', l: L.colStatus, v: statusLabel },
+    { k: 'uid', l: { en: 'UID', es: 'UID' }, v: (r) => r.uid },
+    { k: 'strain', l: L.colStrain, v: (r) => r.strain },
+    { k: 'farm', l: L.colFarm, v: (r) => r.farm },
+    { k: 'code', l: L.colCode, v: (r) => r.code },
+    { k: 'license', l: L.colLic, v: (r) => r.license },
+    { k: 'cid', l: { en: 'CID', es: 'CID' }, v: (r) => r.cid },
+    { k: 'lb', l: L.colLb, v: (r) => r.lb, num: true },
+    { k: 'type', l: L.colType, v: typeLabel },
+    { k: 'location', l: L.colLoc, v: (r) => r.location },
+    { k: 'date', l: L.colSince, v: (r) => r.date },
+    { k: 'days', l: L.colDays, v: days, num: true }
+  ];
+  const colsFor = () => COLS.filter((c) => !c.allOnly || tab === 'all');
+
+  function current() {
+    const col = COLS.find((c) => c.k === sortKey) || COLS[11];
+    return rows.filter((r) => inTab(r, tab) && visible(r) && matches(r)).sort((a, b) => {
+      const x = col.v(a), y = col.v(b);
+      const cmp = col.num ? (Number(x) || 0) - (Number(y) || 0) : String(x || '').localeCompare(String(y || ''), undefined, { numeric: true });
+      return cmp * sortDir || a.strain.localeCompare(b.strain);
+    });
+  }
+
+  const tabsEl = document.getElementById('tabs');
+  function renderTabs() {
+    tabsEl.innerHTML = TABS.map((x) => {
+      const list = rows.filter((r) => inTab(r, x.k) && !isUsed(r));
+      return `<button type="button" class="tab ${tab === x.k ? 'on' : ''}" data-k="${x.k}" style="--c:${x.c}">
+        <div class="l">${esc(t(L[x.k]))}</div><div class="n">${fmtNum(sumLb(list), 0)} lb</div>
+        <div class="s">${list.length} ${list.length === 1 ? t(L.pkg) : t(L.pkgs)}</div></button>`;
+    }).join('');
+    tabsEl.querySelectorAll('.tab').forEach((b) => { b.onclick = () => { tab = b.dataset.k; syncUrl(); render(); }; });
+  }
+
+  const filtersEl = document.getElementById('filters');
+  filtersEl.innerHTML = `<input type="search" id="q" placeholder="${esc(t(L.search))}" value="${esc(query)}">
+    <label class="chk"><input type="checkbox" id="used"> ${esc(t(L.showUsed))}</label>
+    <button type="button" class="btn btn-blue" id="csv">${esc(t(L.csv))}</button>`;
+  document.getElementById('q').addEventListener('input', (e) => { query = e.target.value.trim(); syncUrl(); render(); });
+  document.getElementById('used').onchange = (e) => { showUsed = e.target.checked; render(); };
+  document.getElementById('csv').onclick = exportCsv;
+  function syncUrl() {
+    const u = new URL(location.href);
+    if (tab === 'all') u.searchParams.delete('tab'); else u.searchParams.set('tab', tab);
+    if (query) u.searchParams.set('q', query); else u.searchParams.delete('q');
+    history.replaceState(null, '', u);
+  }
+
+  function render() {
+    renderTabs();
+    const list = current();
+    document.getElementById('sub').textContent = `${t(L[tab])} · ${list.length} ${list.length === 1 ? t(L.pkg) : t(L.pkgs)}`;
+    const onHand = list.filter((r) => !isUsed(r));
+    const wet = sumLb(onHand.filter((r) => r.wet)), dry = sumLb(onHand.filter((r) => !r.wet));
+    document.getElementById('totals').innerHTML = list.length
+      ? `<span>${esc(t(L.total))}: <b>${fmtNum(dry + wet)} lb</b></span>${wet && dry ? `<span>${esc(t(L.wet))}: <b>${fmtNum(wet)} lb</b></span>` : ''}`
+      : '';
+    if (!list.length) { board.innerHTML = `<div class="empty">${esc(t(L.empty))}</div>`; return; }
+    const cols = colsFor();
+    board.innerHTML = `<div class="tbl-wrap"><table class="tbl"><thead><tr>
+        ${cols.map((c) => `<th data-k="${c.k}" class="${c.num ? 'num' : ''} ${sortKey === c.k ? 'sorted' : ''}">${esc(t(c.l))}${sortKey === c.k ? (sortDir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('')}
+        ${canMark ? '<th></th>' : ''}
+      </tr></thead><tbody>${list.map(rowHtml).join('')}</tbody></table></div>`;
+    board.querySelectorAll('th[data-k]').forEach((th) => {
+      th.onclick = () => { if (sortKey === th.dataset.k) sortDir = -sortDir; else { sortKey = th.dataset.k; sortDir = ['lb', 'days', 'date'].includes(th.dataset.k) ? -1 : 1; } render(); };
+    });
+    board.querySelectorAll('.mini[data-key]').forEach((b) => { b.onclick = () => toggleMark(b); });
+  }
+
+  function rowHtml(r) {
+    const used = isUsed(r), dd = days(r);
+    const cells = {
+      tab: `<span class="cat" style="--c:${TAB_COLOR[r.tab]}">${esc(t(L[r.tab]))}</span>`,
+      status: `<span class="pill ${used ? 'used' : r.pill}">${esc(statusLabel(r))}</span>${r.used.length ? `<div class="small" title="${esc(r.used.join('\n'))}">${fmtNum(r.startLb)} lb − ${esc(t(L.took))}</div>` : ''}`,
+      uid: `<span title="${esc(r.uid)}">${esc(r.uid || '—')}</span>${!r.ownUid ? `<div class="small">${esc(t(L.lotTag))}</div>` : ''}${
+        r.farmUids && r.farmUids.length && !r.farmUids.every((u) => uidTailMatch(u, r.uid)) ? `<div class="small" title="${esc(r.farmUids.join(', '))}">${esc(t(L.farmUid))}: ${esc(r.farmUids.map((u) => '…' + normUid(u).slice(-6)).join(', '))}</div>` : ''}`,
+      strain: esc(r.strain || '—'),
+      farm: esc(r.farm || '—'), code: esc(r.code || '—'), license: esc(r.license || '—'), cid: esc(r.cid || '—'),
+      lb: `${fmtNum(r.lb)}${r.wet ? ` <span class="small">${esc(t(L.wet))}</span>` : ''}`,
+      type: `<span class="small">${esc(typeLabel(r))}</span>`,
+      location: esc(r.location || '—'),
+      date: esc(fmtDate(r.date)),
+      days: dd == null ? '—' : `<span class="age ${dd >= 30 ? 'old' : ''}">${dd}</span>`
+    };
+    const cls = { uid: 'mono uid', strain: 'strain', code: 'mono', license: 'mono', cid: 'mono', lb: 'num', date: 'mono', days: 'num' };
+    const mark = canMark ? `<td>${marks[r.key]
+      ? `<button type="button" class="mini" data-key="${esc(r.key)}" data-on="1" title="${esc(`${marks[r.key].by || ''} · ${marks[r.key].at ? new Date(marks[r.key].at).toLocaleString() : ''}`)}">${esc(t(L.restore))}</button>`
+      : r.lb > 0.005 ? `<button type="button" class="mini" data-key="${esc(r.key)}">${esc(t(L.markUsed))}</button>` : ''}</td>` : '';
+    return `<tr class="${used ? 'used' : ''}" style="--c:${TAB_COLOR[r.tab]}">${colsFor().map((c) => `<td class="${cls[c.k] || ''}">${cells[c.k]}</td>`).join('')}${mark}</tr>`;
+  }
+
+  async function toggleMark(b) {
+    const key = b.dataset.key, on = b.dataset.on === '1';
+    const r = rows.find((x) => x.key === key);
+    if (!on && !confirm(`${t(L.markAsk)}\n\n${r ? `${r.strain} · ${r.uid} · ${fmtNum(r.lb)} lb` : ''}`)) return;
+    b.disabled = true;
+    try {
+      marks = await setMark(key, on ? null : { by: who, at: new Date().toISOString(), lb: r ? r.lb : null });
+      render();
+    } catch (ex) {
+      b.disabled = false;
+      alert(`${t(L.saveFail)} ${ex.message || ex}`);
+    }
+  }
+
+  // The rows showing (this tab, search, used-up toggle), in the table's order.
+  function exportCsv() {
+    const list = current();
+    const head = ['Category', 'Status', 'UID', 'UID is', 'Farm UID(s)', 'Strain', 'Farm', 'Farm Code', 'License', 'CID',
+      'Lbs', 'Weight', 'Started Lbs', 'Taken By', 'Type', 'Location', 'Since', 'Days'];
+    const cell = (v) => { const s = String(v == null ? '' : v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+    const lines = [head, ...list.map((r) => [t(L[r.tab]), statusLabel(r), r.uid, r.ownUid ? 'package' : 'lot', (r.farmUids || []).join(' '),
+      r.strain, r.farm, r.code, r.license, r.cid, r.lb.toFixed(2), r.wet ? 'wet' : 'dry', r.startLb.toFixed(2), r.used.join('; '),
+      typeLabel(r), r.location, r.date, days(r) == null ? '' : days(r)])].map((row) => row.map(cell).join(','));
+    const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `raw_inventory_${tab}${query ? '_' + query.replace(/[^\w-]+/g, '_').slice(0, 30) : ''}_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
+  try { await load(); } catch (ex) { console.error('raw inventory', ex); board.innerHTML = `<div class="empty">${esc(t(L.noData))}</div>`; return; }
+  render();
+
+  // New forms, Take Downs, releases and marks show up without a reload.
+  let timer = null;
+  const reloadSoon = () => { clearTimeout(timer); timer = setTimeout(async () => { try { await load(); render(); } catch (ex) { console.error(ex); } }, 1500); };
+  client.channel('raw_inventory_page')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'operations_forms' }, (p) => {
+      const row = p.new || p.old || {};
+      if (!row.station_key || !['labor_entry', 'work_project', 'work_schedule'].includes(row.station_key)) reloadSoon();
+    })
+    .subscribe();
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reloadSoon(); });
+})();
+</script>
+<script src="/sw_register.js"></script>
+</body>
+</html>

@@ -606,7 +606,11 @@
       return await res.json();
     } catch { return null; }
   }
-  const rosterReady = Promise.all([getJson('connecteam_roster.json'), getJson('connecteam_hours.json')]).then(([r, h]) => {
+  // Plus people paid by the hour who aren't in Connecteam (admin panel →
+  // Labor Rates → + Add person; ids X1, X2, …), from badge-names.js.
+  const extraPeople = fetch('/.netlify/functions/badge-names').then((r) => (r.ok ? r.json() : {}))
+    .then((j) => (j && Array.isArray(j.people) ? j.people : [])).catch(() => []);
+  const rosterReady = Promise.all([getJson('connecteam_roster.json'), getJson('connecteam_hours.json'), extraPeople]).then(([r, h, extra]) => {
     const byId = new Map();
     if (r && Array.isArray(r.people)) r.people.forEach((p) => byId.set(String(p.userId), { userId: String(p.userId), name: p.name }));
     if (h) {
@@ -616,6 +620,7 @@
       (h.clocked_in || []).forEach((p) => clockedIn.add(String(p.userId)));
       (h.today || []).forEach((p) => { clockedToday[String(p.userId)] = p.hoursToday; });
     }
+    extra.forEach((p) => byId.set(p.userId, { userId: p.userId, name: p.name }));
     roster = [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
     if (!roster.length) $('h-people').textContent = t(L.noRoster);
     renderQuick();

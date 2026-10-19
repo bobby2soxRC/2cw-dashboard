@@ -225,12 +225,47 @@ exports.handler = async (event) => {
     // Badge numbers (employee_badges) come along; badges is null until that
     // table has been created, so the tab still loads without it.
     if (action === 'labor_rates_list') {
-      const [res, bRes] = await Promise.all([
+      const [res, bRes, pRes] = await Promise.all([
         supaFetch(supaUrl, serviceKey, 'labor_rates?select=*&order=employee_id.asc,effective_from.desc'),
-        supaFetch(supaUrl, serviceKey, 'employee_badges?select=badge_no,employee_id&order=badge_no.asc')
+        supaFetch(supaUrl, serviceKey, 'employee_badges?select=badge_no,employee_id&order=badge_no.asc'),
+        supaFetch(supaUrl, serviceKey, 'labor_people?select=*&order=name.asc')
       ]);
       if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
-      return json(200, { ok: true, rates: await res.json(), badges: bRes.ok ? await bRes.json() : null });
+      return json(200, { ok: true, rates: await res.json(), badges: bRes.ok ? await bRes.json() : null,
+        people: pRes.ok ? await pRes.json() : null });
+    }
+
+    // People paid by the hour who aren't in Connecteam (labor_people). Their
+    // employee id is 'X' + id. Add: {name, phone} -> {person}; update:
+    // {id, name?, phone?, active?}. Never deleted, so old entries keep a name.
+    if (action === 'labor_people_add' || action === 'labor_people_update') {
+      const row = {};
+      if (payload.name !== undefined) {
+        row.name = String(payload.name || '').trim().slice(0, 200);
+        if (!row.name) return json(400, { ok: false, error: 'Enter a name' });
+      }
+      if (payload.phone !== undefined) row.phone = String(payload.phone || '').trim().slice(0, 40) || null;
+      if (payload.active !== undefined) row.active = !!payload.active;
+      let res;
+      if (action === 'labor_people_add') {
+        if (!row.name) return json(400, { ok: false, error: 'Enter a name' });
+        res = await supaFetch(supaUrl, serviceKey, 'labor_people', { method: 'POST', prefer: 'return=representation', body: JSON.stringify(row) });
+      } else {
+        if (!/^\d+$/.test(String(payload.id || ''))) return json(400, { ok: false, error: 'Missing id' });
+        res = await supaFetch(supaUrl, serviceKey, `labor_people?id=eq.${payload.id}`, { method: 'PATCH', prefer: 'return=representation', body: JSON.stringify(row) });
+      }
+      if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+      const person = (await res.json())[0];
+      if (!person) return json(404, { ok: false, error: 'Person not found' });
+      // Keep the name on their badges and rates in step with a rename.
+      if (row.name && action === 'labor_people_update') {
+        const empQ = encodeURIComponent('X' + person.id);
+        for (const table of ['employee_badges', 'labor_rates']) {
+          const r = await supaFetch(supaUrl, serviceKey, `${table}?employee_id=eq.${empQ}`, { method: 'PATCH', body: JSON.stringify({ employee_name: row.name }) });
+          if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
+        }
+      }
+      return json(200, { ok: true, person });
     }
 
     // A person's badge numbers (station forms' Employee ID), replacing
@@ -287,6 +322,46 @@ exports.handler = async (event) => {
       if (!/^\d+$/.test(String(payload.id || ''))) return json(400, { ok: false, error: 'Missing id' });
       const res = await supaFetch(supaUrl, serviceKey, `labor_rates?id=eq.${payload.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+      return json(200, { ok: true });
+    }
+
+    // Truck drivers (drivers table — added from the Harvest form through
+    // drivers.js). The list leaves the ID photos out; driver_photo fetches
+    // one. drivers is null until the table has been created.
+    if (action === 'drivers_list') {
+      const res = await supaFetch(supaUrl, serviceKey,
+        'drivers?select=id,first_name,last_name,id_number,active,created_by,created_at&order=first_name.asc,last_name.asc');
+      if (!res.ok) {
+        const text = await res.text();
+        if (res.status === 404 || text.includes('42P01') || text.includes('PGRST205')) return json(200, { ok: true, drivers: null });
+        throw new Error(`${res.status} ${text}`);
+      }
+      return json(200, { ok: true, drivers: await res.json() });
+    }
+
+    if (action === 'driver_photo') {
+      if (!/^\d+$/.test(String(payload.id || ''))) return json(400, { ok: false, error: 'Missing id' });
+      const res = await supaFetch(supaUrl, serviceKey, `drivers?id=eq.${payload.id}&select=id_photo`);
+      if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+      const row = (await res.json())[0];
+      if (!row) return json(404, { ok: false, error: 'Driver not found' });
+      return json(200, { ok: true, photo: row.id_photo || null });
+    }
+
+    if (action === 'driver_update') {
+      if (!/^\d+$/.test(String(payload.id || ''))) return json(400, { ok: false, error: 'Missing id' });
+      const row = {};
+      const clean = (s, n) => String(s || '').trim().replace(/\s+/g, ' ').slice(0, n);
+      if (payload.first !== undefined) { row.first_name = clean(payload.first, 100); if (!row.first_name) return json(400, { ok: false, error: 'First name can’t be blank' }); }
+      if (payload.last !== undefined) { row.last_name = clean(payload.last, 100); if (!row.last_name) return json(400, { ok: false, error: 'Last name can’t be blank' }); }
+      if (payload.idNumber !== undefined) { row.id_number = clean(payload.idNumber, 40).toUpperCase(); if (!row.id_number) return json(400, { ok: false, error: 'ID number can’t be blank' }); }
+      if (payload.active !== undefined) row.active = !!payload.active;
+      const res = await supaFetch(supaUrl, serviceKey, `drivers?id=eq.${payload.id}`, { method: 'PATCH', body: JSON.stringify(row) });
+      if (!res.ok) {
+        const text = await res.text();
+        if (text.includes('23505')) return json(409, { ok: false, error: 'Another driver already has that ID number' });
+        throw new Error(`${res.status} ${text}`);
+      }
       return json(200, { ok: true });
     }
 

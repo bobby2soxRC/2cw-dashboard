@@ -204,6 +204,7 @@
       <button data-tab="orgchart" onclick="switchTab('orgchart')">Org Chart</button>
       <button data-tab="responsibilities" onclick="switchTab('responsibilities')">Responsibilities</button>
       <button data-tab="rates" onclick="switchTab('rates')">Labor Rates</button>
+      <button data-tab="drivers" onclick="switchTab('drivers')">Drivers</button>
     </div>
 
     <div id="users-view" class="view on">
@@ -230,11 +231,38 @@
     <div id="rates-view" class="view">
       <div class="toolbar">
         <h1>Labor Rates</h1>
+        <div class="toolbar-actions">
+          <button class="btn btn-gold" onclick="extraFormToggle()">+ Add person</button>
+        </div>
+      </div>
+      <div id="extra-form" style="display:none;margin:0 0 1rem">
+        <div class="status-line" style="color:var(--muted)">For someone paid by the hour who isn't in Connecteam. They get an ID (X1, X2, …) here instead, and show up in the Labor Log's people list. Nothing is added to Connecteam.</div>
+        <div class="rate-in" style="flex-wrap:wrap">
+          <input type="text" id="extra-name" placeholder="Full name" style="width:15rem;max-width:100%"/>
+          <input type="text" id="extra-badge" inputmode="numeric" placeholder="Badge #" title="Employee ID(s) on the station forms, comma-separated" style="width:6.5rem"/>
+          <input type="tel" id="extra-phone" placeholder="Phone (optional)" style="width:10rem"/>
+          <button class="btn btn-gold" style="padding:.45rem .8rem" onclick="extraAdd()">Add</button>
+          <button class="btn" style="padding:.45rem .8rem" onclick="extraFormToggle()">Cancel</button>
+        </div>
       </div>
       <div class="status-line" id="rates-status">Loading…</div>
       <div class="status-line" style="color:var(--muted)">Loaded cost per hour (wage + taxes + benefits) for the Labor Log's cost reports. A new rate applies from its effective date on, so a raise doesn't change the cost of work already done; leave the date blank for "from the start". The default covers anyone without their own rate, including people typed into the Labor Log by name. Badge # is the Employee ID people type on the station forms (several: separate with commas); it gives their Workforce Log hours their own rate and puts their name on the forms' daily summaries. Only users with "Labor Log — see costs" (user editor) can see these, in the Labor Log.</div>
       <div class="filters"><div class="search-wrap"><input type="text" id="rates-search" placeholder="Search people…" oninput="ratesRender()"/></div></div>
       <div class="table-scroll" id="rates-wrap"></div>
+    </div>
+
+    <div id="drivers-view" class="view">
+      <div class="toolbar">
+        <h1>Drivers</h1>
+      </div>
+      <div class="status-line" id="drivers-status">Loading…</div>
+      <div class="status-line" style="color:var(--muted)">Truck drivers for the Harvest form's Driver dropdown. New drivers are added on the form itself (name, ID number and a photo of their ID). Inactive drivers drop off the dropdown; their old Harvest records keep their name.</div>
+      <div class="filters"><div class="search-wrap"><input type="text" id="drivers-search" placeholder="Search drivers…" oninput="driversRender()"/></div></div>
+      <div class="table-scroll" id="drivers-wrap"></div>
+      <div id="driver-photo-box" style="display:none;margin-top:1rem">
+        <div class="toolbar"><h1 id="driver-photo-title" style="font-size:1rem"></h1><div class="toolbar-actions"><button class="btn" onclick="driverPhotoClose()">Close</button></div></div>
+        <img id="driver-photo-img" alt="Driver ID" style="max-width:100%;border-radius:10px;border:1px solid var(--border)"/>
+      </div>
     </div>
 
     <div id="responsibilities-view" class="view">
@@ -320,8 +348,10 @@ function switchTab(tab){
   document.getElementById('orgchart-view').classList.toggle('on', tab === 'orgchart');
   document.getElementById('responsibilities-view').classList.toggle('on', tab === 'responsibilities');
   document.getElementById('rates-view').classList.toggle('on', tab === 'rates');
+  document.getElementById('drivers-view').classList.toggle('on', tab === 'drivers');
   if(tab === 'orgchart') renderOrgChart();
   if(tab === 'rates' && !ratesLoaded){ ratesLoaded = true; ratesLoadAll(); }
+  if(tab === 'drivers' && !driversLoaded){ driversLoaded = true; driversLoadAll(); }
   if(tab === 'responsibilities'){
     history.replaceState(null, '', '#responsibilities');
     if(!respLoaded){ respLoaded = true; respLoadAll(); }
@@ -469,14 +499,17 @@ function renderTable(){
 // Per-person $/hr for the Labor Log's cost reports, in the labor_rates table
 // (no anon access — read and written only through admin.js here, and read by
 // netlify/functions/labor-rates.js for users with 'labor log costs'). People
-// come from the Connecteam roster the hourly sync writes; anyone who already
-// has a rate stays listed even after leaving the roster. '*' is the default.
+// come from the Connecteam roster the hourly sync writes, plus anyone added
+// here who isn't in Connecteam (labor_people, IDs X1, X2, …); anyone who
+// already has a rate stays listed even after leaving the roster. '*' is the
+// default.
 const ROSTER_URL = 'https://raw.githubusercontent.com/bobby2soxRC/2cw-dashboard/main/data/';
 const RATE_ALWAYS = '2000-01-01';
 let ratesLoaded = false;
 let rateRows = [];      // labor_rates rows
 let ratePeople = [];    // [{id, name, inRoster}]
 let rateBadges = null;  // Connecteam id -> [badge numbers] (employee_badges); null = table not created yet
+let rateExtraReady = false;  // labor_people table exists
 async function ratesLoadAll(){
   const status = document.getElementById('rates-status');
   status.textContent = 'Loading…';
@@ -494,6 +527,9 @@ async function ratesLoadAll(){
     if(roster && Array.isArray(roster.people)) roster.people.forEach(p => byId.set(String(p.userId), { id: String(p.userId), name: p.name, inRoster: true }));
     // Until the roster file exists, this week's Connecteam hours stand in.
     if(!byId.size && hours) [...(hours.week||[]), ...(hours.today||[])].forEach(p => byId.set(String(p.userId), { id: String(p.userId), name: p.name, inRoster: true }));
+    // People who aren't in Connecteam (labor_people), id 'X' + their row id.
+    rateExtraReady = Array.isArray(list.people);
+    (list.people || []).forEach(x => byId.set('X' + x.id, { id: 'X' + x.id, name: x.name, inRoster: true, extra: x }));
     rateRows.forEach(r => {
       if(r.employee_id !== '*' && !byId.has(r.employee_id)) byId.set(r.employee_id, { id: r.employee_id, name: r.employee_name || r.employee_id, inRoster: false });
     });
@@ -517,7 +553,7 @@ function ratesRender(){
     const future = rs.filter(r => r.effective_from > today);
     const hist = rs.map(r => `<div>$${Number(r.rate).toFixed(2)} ${esc(since(r.effective_from))}<button title="Remove this rate" onclick="rateDelete(${r.id})">×</button></div>`).join('');
     return `<tr>
-      <td>${esc(p.name)}${p.inRoster ? '' : ' <span class="pill">not in roster</span>'}</td>
+      <td>${esc(p.name)}${p.inRoster ? '' : ' <span class="pill">not in roster</span>'}${p.extra ? extraCell(p.extra) : ''}</td>
       <td>${p.id === '*' || !rateBadges ? '<span class="muted">—</span>' : `<div class="rate-in"><input type="text" class="badge-in" inputmode="numeric" placeholder="—" title="Employee ID(s) on the station forms, comma-separated" id="badge-${esc(p.id)}" value="${esc((rateBadges[p.id] || []).join(', '))}" onchange="badgeSave('${esc(p.id)}')"/></div>`}</td>
       <td class="rate-now">${cur ? '$' + Number(cur.rate).toFixed(2) : '<span class="muted">' + (p.id === '*' ? 'not set' : 'default') + '</span>'}${future.length ? `<div class="muted" style="font-size:.75rem">→ $${Number(future[future.length-1].rate).toFixed(2)} from ${esc(future[future.length-1].effective_from)}</div>` : ''}</td>
       <td class="rate-hist">${hist || '<span class="muted">—</span>'}</td>
@@ -528,7 +564,7 @@ function ratesRender(){
       </div></td>
     </tr>`;
   };
-  const people = ratePeople.filter(p => !q || p.name.toLowerCase().includes(q) || (rateBadges && (rateBadges[p.id] || []).some(b => b === q)));
+  const people = ratePeople.filter(p => !q || p.name.toLowerCase().includes(q) || p.id.toLowerCase() === q || (rateBadges && (rateBadges[p.id] || []).some(b => b === q)));
   document.getElementById('rates-wrap').innerHTML = `<table>
     <thead><tr><th>Person</th><th>Badge #</th><th>Current</th><th>History</th><th>New rate · effective from</th></tr></thead>
     <tbody>
@@ -572,6 +608,129 @@ async function rateDelete(rowId){
     await callAdmin({ action: 'labor_rates_delete', token: getToken(), id: rowId });
     await ratesLoadAll();
   } catch(err) { alert('Could not remove: ' + err.message); }
+}
+// People paid by the hour who aren't in Connecteam (labor_people, through
+// admin.js). Their ID is 'X' + row id; rates and badges work as for anyone.
+// Inactive ones drop out of the Labor Log's people list but keep their rates.
+function extraCell(x){
+  return ` <span class="pill" title="Not in Connecteam — ID used in the app">X${x.id}</span>` +
+    (x.active ? '' : ' <span class="pill">inactive</span>') +
+    `<div style="font-size:.75rem;color:var(--muted)">${x.phone ? esc(x.phone) + ' · ' : ''}` +
+    `<a href="#" onclick="extraEdit(${x.id});return false">edit</a> · ` +
+    `<a href="#" onclick="extraSetActive(${x.id}, ${!x.active});return false">${x.active ? 'mark inactive' : 'reactivate'}</a></div>`;
+}
+function extraFormToggle(){
+  const f = document.getElementById('extra-form');
+  if(!rateExtraReady && f.style.display === 'none'){ alert('Run the labor_people block from supabase/schema.sql in the Supabase SQL editor first.'); return; }
+  f.style.display = f.style.display === 'none' ? '' : 'none';
+  if(f.style.display === '') document.getElementById('extra-name').focus();
+}
+async function extraAdd(){
+  const nameEl = document.getElementById('extra-name'), badgeEl = document.getElementById('extra-badge'), phoneEl = document.getElementById('extra-phone');
+  const name = nameEl.value.trim();
+  if(!name){ alert('Enter a name.'); nameEl.focus(); return; }
+  const fold = (s) => s.toLowerCase().replace(/\s+/g, ' ');
+  const same = ratePeople.find(p => fold(p.name) === fold(name));
+  if(same && !confirm(`${same.name} is already listed${same.extra ? '' : ' (from Connecteam)'}. Add another person with this name anyway?`)) return;
+  try {
+    const j = await callAdmin({ action: 'labor_people_add', token: getToken(), name, phone: phoneEl.value });
+    const id = 'X' + j.person.id;
+    if(badgeEl.value.trim()){
+      try { await callAdmin({ action: 'labor_badges_set', token: getToken(), employeeId: id, employeeName: name, badges: badgeEl.value }); }
+      catch(err){ alert(`${name} was added as ${id}, but the badge # wasn't saved: ${err.message}`); }
+    }
+    nameEl.value = badgeEl.value = phoneEl.value = '';
+    document.getElementById('extra-form').style.display = 'none';
+    await ratesLoadAll();
+  } catch(err) { alert('Could not add: ' + err.message); }
+}
+async function extraEdit(rowId){
+  const p = ratePeople.find(q => q.extra && q.extra.id === rowId);
+  if(!p) return;
+  const name = prompt('Name', p.extra.name);
+  if(name === null) return;
+  if(!name.trim()){ alert('Name can’t be blank.'); return; }
+  const phone = prompt('Phone (blank for none)', p.extra.phone || '');
+  if(phone === null) return;
+  try {
+    await callAdmin({ action: 'labor_people_update', token: getToken(), id: rowId, name, phone });
+    await ratesLoadAll();
+  } catch(err) { alert('Could not save: ' + err.message); }
+}
+async function extraSetActive(rowId, active){
+  try {
+    await callAdmin({ action: 'labor_people_update', token: getToken(), id: rowId, active });
+    await ratesLoadAll();
+  } catch(err) { alert('Could not save: ' + err.message); }
+}
+
+// ── Drivers tab ─────────────────────────────────────────────────────────
+// Truck drivers (drivers table), added from the Harvest form through
+// drivers.js. The ID photo is fetched one at a time when asked for.
+let driversLoaded = false;
+let driverRows = [];
+async function driversLoadAll(){
+  const status = document.getElementById('drivers-status');
+  status.textContent = 'Loading…';
+  try {
+    const j = await callAdmin({ action: 'drivers_list', token: getToken() });
+    if(!Array.isArray(j.drivers)){ status.textContent = 'Run the drivers block from supabase/schema.sql in the Supabase SQL editor first.'; driverRows = []; driversRender(); return; }
+    driverRows = j.drivers;
+    status.textContent = `${driverRows.filter(d => d.active).length} active driver${driverRows.filter(d => d.active).length === 1 ? '' : 's'}` +
+      (driverRows.some(d => !d.active) ? ` · ${driverRows.filter(d => !d.active).length} inactive` : '');
+    driversRender();
+  } catch(err) {
+    status.textContent = 'Could not load drivers: ' + err.message;
+  }
+}
+function driversRender(){
+  const q = (document.getElementById('drivers-search').value || '').trim().toLowerCase();
+  const rows = driverRows.filter(d => !q || `${d.first_name} ${d.last_name} ${d.id_number}`.toLowerCase().includes(q));
+  const wrap = document.getElementById('drivers-wrap');
+  if(!rows.length){ wrap.innerHTML = `<div class="empty-note">${driverRows.length ? 'No drivers match.' : 'No drivers yet — they’re added from the Harvest form.'}</div>`; return; }
+  wrap.innerHTML = `<table>
+    <thead><tr><th>Name</th><th>ID number</th><th>ID photo</th><th>Added</th><th></th></tr></thead>
+    <tbody>${rows.map(d => `<tr>
+      <td>${esc(d.first_name)} ${esc(d.last_name)}${d.active ? '' : ' <span class="pill">inactive</span>'}</td>
+      <td style="font-family:'DM Mono',monospace">${esc(d.id_number)}</td>
+      <td><a href="#" onclick="driverPhoto(${d.id});return false">View ID</a></td>
+      <td class="muted">${esc((d.created_at || '').slice(0, 10))}${d.created_by ? ' · ' + esc(d.created_by) : ''}</td>
+      <td style="white-space:nowrap"><a href="#" onclick="driverEdit(${d.id});return false">edit</a> · <a href="#" onclick="driverSetActive(${d.id}, ${!d.active});return false">${d.active ? 'mark inactive' : 'reactivate'}</a></td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+async function driverPhoto(id){
+  const d = driverRows.find(x => x.id === id);
+  const box = document.getElementById('driver-photo-box'), img = document.getElementById('driver-photo-img');
+  document.getElementById('driver-photo-title').textContent = d ? `${d.first_name} ${d.last_name} — ID ${d.id_number}` : '';
+  img.removeAttribute('src'); img.alt = 'Loading…';
+  box.style.display = '';
+  box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  try {
+    const j = await callAdmin({ action: 'driver_photo', token: getToken(), id });
+    if(j.photo){ img.src = j.photo; img.alt = 'Driver ID'; } else img.alt = 'No photo on file';
+  } catch(err) { img.alt = 'Could not load the photo: ' + err.message; }
+}
+function driverPhotoClose(){
+  document.getElementById('driver-photo-box').style.display = 'none';
+  document.getElementById('driver-photo-img').removeAttribute('src');
+}
+async function driverEdit(id){
+  const d = driverRows.find(x => x.id === id);
+  if(!d) return;
+  const first = prompt('First name', d.first_name); if(first === null) return;
+  const last = prompt('Last name', d.last_name); if(last === null) return;
+  const idNumber = prompt('ID number', d.id_number); if(idNumber === null) return;
+  try {
+    await callAdmin({ action: 'driver_update', token: getToken(), id, first, last, idNumber });
+    await driversLoadAll();
+  } catch(err) { alert('Could not save: ' + err.message); }
+}
+async function driverSetActive(id, active){
+  try {
+    await callAdmin({ action: 'driver_update', token: getToken(), id, active });
+    await driversLoadAll();
+  } catch(err) { alert('Could not save: ' + err.message); }
 }
 
 // ── Org Chart tab ───────────────────────────────────────────────────────

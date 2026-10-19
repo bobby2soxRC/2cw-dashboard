@@ -1348,6 +1348,49 @@ alter table employee_badges enable row level security;   -- no policies: service
 revoke all on public.employee_badges from anon;
 grant select, insert, update, delete on public.employee_badges to service_role;
 
+-- ── People paid by the hour who aren't in Connecteam ─────────────────────
+-- e.g. trimmers on badge numbers only. Added in the admin panel (admin.html
+-- → Labor Rates → + Add person, through admin.js). Their employee id
+-- everywhere else (labor_rates, employee_badges, Labor Log entries) is 'X'
+-- followed by id — X1, X2, … — so it can't collide with a Connecteam user
+-- id. Phone is personal, so service role only; badge-names.js hands out
+-- id + name of active people for the Labor Log's people picker.
+create table if not exists labor_people (
+  id          bigint generated always as identity primary key,
+  name        text not null check (name <> ''),
+  phone       text,
+  active      boolean not null default true,
+  created_at  timestamptz not null default now()
+);
+
+alter table labor_people enable row level security;   -- no policies: service role only
+revoke all on public.labor_people from anon;
+grant select, insert, update, delete on public.labor_people to service_role;
+
+-- ── Truck drivers ─────────────────────────────────────────────────────────
+-- The Harvest form's Driver dropdown. Added from the form ("+ Add a new
+-- driver": name, ID number, photo of the ID) through
+-- netlify/functions/drivers.js, and seen / edited in the admin panel's
+-- Drivers tab (admin.js). The photo is a JPEG data URL kept in the row
+-- rather than in the (public) uploads folder, since it's someone's ID.
+-- Service role only. Never deleted — made inactive — so old Harvest
+-- records keep pointing at a driver (their `driverId`).
+create table if not exists drivers (
+  id          bigint generated always as identity primary key,
+  first_name  text not null check (first_name <> ''),
+  last_name   text not null check (last_name <> ''),
+  id_number   text not null check (id_number <> ''),
+  id_photo    text,
+  active      boolean not null default true,
+  created_by  text,
+  created_at  timestamptz not null default now()
+);
+create unique index if not exists drivers_id_number_key on drivers (upper(id_number));
+
+alter table drivers enable row level security;   -- no policies: service role only
+revoke all on public.drivers from anon;
+grant select, insert, update, delete on public.drivers to service_role;
+
 -- ── Metrc queue ──────────────────────────────────────────────────────────
 -- Most submitted station forms mean something has to be done in Metrc
 -- (a package created, a weight adjusted, a waste logged). metrc.html lists

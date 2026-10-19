@@ -154,6 +154,41 @@
     .li-del:hover{border-color:var(--red);color:var(--red)}
     .li-add{width:100%;margin-top:4px;background:transparent;border:1px dashed var(--border);color:var(--subtext);border-radius:10px;min-height:52px;font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer}
     .li-add:hover{border-color:var(--accent);color:var(--accent)}
+    /* One table per license (lineitems `group` — Harvest) */
+    .li-group{border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px}
+    .li-group-hd{display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .li-group-hd .lbl{margin-bottom:6px}
+    .li-group-del{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;width:40px;min-height:36px;font-size:18px;line-height:1;cursor:pointer}
+    .li-group-del:hover{border-color:var(--red);color:var(--red)}
+    .li-add-group{margin-top:0}
+    /* After-submit share window (station.share — Harvest) */
+    .share-ov{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
+    .share-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;width:100%;max-width:440px;max-height:100%;overflow:auto}
+    .share-box h2{margin:0 0 12px;font-size:1.15rem}
+    .share-prev{width:100%;border-radius:10px;border:1px solid var(--border);background:#fff;min-height:60px}
+    .share-note{color:var(--subtext);font-size:.85rem;margin:8px 0}
+    .share-go{width:100%;min-height:56px;border:0;border-radius:12px;background:#25d366;color:#05300f;font-family:inherit;font-size:1.05rem;font-weight:800;cursor:pointer;margin-top:4px}
+    .share-next{width:100%;min-height:48px;margin-top:10px;background:transparent;border:1px solid var(--border);color:var(--subtext);border-radius:12px;font-family:inherit;font-size:.95rem;font-weight:600;cursor:pointer}
+    /* Strain boxes inside a license (lineitems `lots` — buildLotSheet) */
+    .lot{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:12px}
+    .lot-hd{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+    .lot-title{font-weight:700;color:var(--accent)}
+    .lot-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;margin-bottom:10px}
+    .lot-f{display:block}
+    .lot-f .k{display:block;font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+    .lot-bins td:first-child{width:2.5em;text-align:center}
+    .lot-sum{font-family:'DM Mono',monospace;font-size:.8rem;color:var(--subtext);margin-top:8px;text-align:right}
+    .lot-scan{display:flex;gap:8px;margin-top:12px;align-items:stretch}
+    .lot-scan input{flex:1;min-width:0}
+    .lot-scan .li-add{width:auto;margin-top:0;padding:0 14px;white-space:nowrap}
+    @media (max-width:520px){ .lot-fields{grid-template-columns:1fr} .lot-scan{flex-direction:column} .lot-scan .li-add{width:100%} }
+    /* Driver picker: add-a-driver panel */
+    .drv-new{margin-top:10px;padding:12px;border:1px solid var(--border);border-radius:12px;display:none}
+    .drv-new .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .drv-new input{margin-bottom:8px}
+    .drv-new .lbl{margin-top:4px}
+    .drv-save{width:100%;min-height:48px;background:transparent;border:1px solid var(--accent);color:var(--accent);border-radius:10px;font-family:inherit;font-size:.95rem;font-weight:700;cursor:pointer;margin-top:4px}
+    .drv-save:disabled{opacity:.5}
     .li-total{display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
     .li-total .k{font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
     .li-total .v{font-family:'DM Mono',monospace;font-size:1.3rem;color:var(--accent)}
@@ -386,6 +421,24 @@
     perDay:  { en: 'The project for {d} — each day of the run can be on its own project.',
                es: 'El proyecto del {d} — cada día de la corrida puede tener su propio proyecto.' }
   };
+  // The Driver dropdown (driverPicker — Harvest).
+  const DV = {
+    loading: { en: 'Loading drivers…', es: 'Cargando conductores…' },
+    choose:  { en: 'Choose the driver…', es: 'Elija el conductor…' },
+    failed:  { en: 'Couldn’t load the driver list — check the connection', es: 'No se pudo cargar la lista de conductores — revise la conexión' },
+    addNew:  { en: '+ Add a new driver', es: '+ Agregar un conductor nuevo' },
+    id:      { en: 'ID', es: 'ID' },
+    first:   { en: 'First Name', es: 'Nombre' },
+    last:    { en: 'Last Name', es: 'Apellido' },
+    idNo:    { en: 'ID Number', es: 'Número de identificación' },
+    photo:   { en: 'Photo of the ID', es: 'Foto de la identificación' },
+    save:    { en: 'Save driver', es: 'Guardar conductor' },
+    saving:  { en: 'Saving…', es: 'Guardando…' },
+    need:    { en: 'Fill in first name, last name and ID number, and take a photo of the ID.',
+               es: 'Llene nombre, apellido y número de identificación, y tome una foto de la identificación.' },
+    existed: { en: 'A driver with that ID number is already on the list — they’ve been picked.', es: 'Ya hay un conductor con ese número en la lista — quedó seleccionado.' },
+    offline: { en: 'Adding a driver needs a connection — try again with signal.', es: 'Agregar un conductor necesita conexión — intente de nuevo con señal.' }
+  };
   const pkLoading = (f) => t(f.picker.list === 'buckable' ? PK.loadingBuck : f.picker.list === 'bucked' ? PK.loadingBucked : PK.loading);
   const reference = await loadReference();
   const form = document.getElementById('form');
@@ -415,7 +468,7 @@
       return wrap;
     }
 
-    if (f.t === 'lineitems') return f.entry ? buildEntryLog(f, wrap) : buildLineItems(f, wrap);
+    if (f.t === 'lineitems') return f.entry ? buildEntryLog(f, wrap) : f.lots ? buildLotSheet(f, wrap) : buildLineItems(f, wrap);
     if (f.t === 'crewcheck') {
       // Drawn by buildCrewCheck once the projects and roster load.
       values[f.k] = [];
@@ -438,7 +491,20 @@
     }
 
     let control = '';
-    if (f.projectPicker) {
+    if (f.driverPicker) {
+      // Filled once the driver list loads (wireDriverPicker below); "+ Add a
+      // new driver" opens the panel under it.
+      control = `<select id="dp_${f.k}"><option value="">${escapeHtml(t(DV.loading))}</option></select>` +
+        `<div class="drv-new" id="dn_${f.k}">` +
+          `<div class="row2"><div><label class="lbl">${escapeHtml(t(DV.first))}<span class="req">*</span></label><input type="text" data-k="first" autocapitalize="words"></div>` +
+          `<div><label class="lbl">${escapeHtml(t(DV.last))}<span class="req">*</span></label><input type="text" data-k="last" autocapitalize="words"></div></div>` +
+          `<label class="lbl">${escapeHtml(t(DV.idNo))}<span class="req">*</span></label><input type="text" data-k="idNumber" autocapitalize="characters">` +
+          `<label class="lbl">${escapeHtml(t(DV.photo))}<span class="req">*</span></label>` +
+          `<div class="photo-wrap"><input type="file" data-k="photo" accept="image/*" capture="environment"><img alt=""></div>` +
+          `<button type="button" class="drv-save">${escapeHtml(t(DV.save))}</button>` +
+          `<div class="match"></div>` +
+        `</div>`;
+    } else if (f.projectPicker) {
       // Filled once the projects load (wireProjectPicker below).
       control = `<select id="f_${f.k}"><option value="">${escapeHtml(t(PJ.loading))}</option></select>` +
                 `<div class="match" id="m_${f.k}"></div>`;
@@ -656,6 +722,276 @@
       addRow(); addRow(); addRow();   // start with a few rows ready to fill
     }, 0);
 
+    return wrap;
+  }
+
+  // License → strain → bins (lineitems with `group` + `lots` — Harvest), laid
+  // out like the crew's notebook: a table per source license; in it a box
+  // per strain (scan its plant tag, or + Add strain) with the strain's
+  // Source UID, strain, location and Transfer UID once, then a row per bin
+  // (weight, plant count). values[f.k] stays one flat row per bin, each
+  // carrying its license (g.k), its box's fields, `_lot` and `bin`, so the
+  // totals, the split into one record per UID and resume work as for any
+  // worksheet. hydrate() empties li_<k> and calls lineitemAdders once per
+  // saved row, which puts it back in its license table and box.
+  const LT = {
+    strainN:  { en: 'Strain {n}', es: 'Variedad {n}' },
+    bin:      { en: 'Bin', es: 'Bin' },
+    sum:      { en: '{b} bins · {w} lbs · {p} plants', es: '{b} bins · {w} lbs · {p} plantas' },
+    found:    { en: 'Already on this load — add its bins below.', es: 'Ya está en esta carga — agregue sus bins abajo.' },
+    canixOff: { en: 'Canix says “{s}” — not in the Strain Library; pick the strain.', es: 'Canix dice “{s}” — no está en la biblioteca de variedades; elija la variedad.' },
+    removeStrain: { en: 'Remove this strain and its bins?', es: '¿Quitar esta variedad y sus bins?' },
+    removeLicense: { en: 'Remove this license and everything under it?', es: '¿Quitar esta licencia y todo lo que tiene?' }
+  };
+  function buildLotSheet(f, wrap) {
+    values[f.k] = [];
+    const g = f.group, L = f.lots;
+    wrap.innerHTML = labelHtml(f) +
+      (f.hint ? `<div class="hint" style="margin-top:0;margin-bottom:10px">${t(f.hint)}</div>` : '') +
+      `<div id="li_${f.k}"></div>` +
+      `<button type="button" class="li-add li-add-group" id="addg_${f.k}">${escapeHtml(t(g.add))}</button>` +
+      `<div class="li-total"><span class="k">${t(UI.subtotal)}</span><span class="v" id="lit_${f.k}">0</span></div>`;
+    const box = wrap.querySelector(`#li_${f.k}`);
+    let groups = [];
+    const allLots = () => groups.flatMap((x) => x.lots);
+    const changed = () => { recompute(); updateVisibility(); markDirty(); };
+
+    // A select (ref list + Other) or text/uid/number input; returns
+    // {el, get(), set(v)} and calls onChange when the person changes it.
+    function control(c, onChange) {
+      const el = document.createElement('div');
+      let inp, other = null;
+      if (c.t === 'select') {
+        inp = document.createElement('select');
+        [{ v: '', label: '' }, ...(c.ref ? refOptions(reference, c.ref) : (c.opts || []).map((o) => ({ v: o.v, label: t(o.l) })))]
+          .concat(c.allowOther ? [{ v: '__other__', label: t(UI.other) }] : [])
+          .forEach((o) => { const op = document.createElement('option'); op.value = o.v; op.textContent = o.label; inp.appendChild(op); });
+        if (c.allowOther) {
+          other = document.createElement('input');
+          other.type = 'text'; other.placeholder = t(UI.otherPrompt); other.style.cssText = 'display:none;margin-top:6px';
+        }
+      } else {
+        inp = document.createElement('input');
+        inp.type = c.t === 'number' ? 'number' : 'text';
+        if (c.t === 'number') { inp.inputMode = c.inputmode || 'decimal'; inp.step = c.step || 'any'; if (c.min !== undefined) inp.min = c.min; }
+        if (c.t === 'uid') { inp.className = 'uid'; inp.autocapitalize = 'characters'; inp.placeholder = '1A40603…'; }
+      }
+      el.appendChild(inp); if (other) el.appendChild(other);
+      const get = () => {
+        if (c.t === 'number') return inp.value === '' ? null : Number(inp.value);
+        if (other && inp.value === '__other__') return other.value.trim();
+        if (c.t === 'uid') return inp.value.trim().toUpperCase();
+        return inp.value.trim();
+      };
+      const set = (v) => {
+        v = v === undefined || v === null ? '' : String(v);
+        inp.value = v;
+        if (c.t === 'select' && inp.value !== v) {
+          if (other) { inp.value = '__other__'; other.value = v; }
+          else { const op = document.createElement('option'); op.value = op.textContent = v; inp.appendChild(op); inp.value = v; }
+        }
+        if (other) other.style.display = inp.value === '__other__' ? 'block' : 'none';
+      };
+      const fire = () => { if (other) other.style.display = inp.value === '__other__' ? 'block' : 'none'; onChange(get()); };
+      inp.addEventListener('input', fire); inp.addEventListener('change', fire);
+      if (other) other.addEventListener('input', fire);
+      return { el, inp, get, set };
+    }
+
+    function addGroup(val) {
+      const sec = document.createElement('div');
+      sec.className = 'li-group';
+      sec.innerHTML = `<div class="li-group-hd"><label class="lbl">${escapeHtml(t(g.l))}${g.req ? '<span class="req">*</span>' : ''}</label>` +
+        `<button type="button" class="li-group-del" aria-label="${escapeAttr(t(UI.remove))}">×</button></div>` +
+        `<div class="lic"></div>` +
+        `<div class="lots"></div>` +
+        `<div class="lot-scan"><input type="text" class="uid" autocapitalize="characters" placeholder="${escapeAttr(t(L.scan))}">` +
+        `<button type="button" class="li-add">${escapeHtml(t(L.add))}</button></div>`;
+      const grp = { sec, value: val || '', lots: [], lotsEl: sec.querySelector('.lots'), del: sec.querySelector('.li-group-del') };
+      const lic = control(g, (v) => {
+        grp.value = v;
+        grp.lots.forEach((lot) => lot.rows.forEach((r) => { r[g.k] = v; }));
+        changed();
+      });
+      lic.set(grp.value);
+      sec.querySelector('.lic').appendChild(lic.el);
+      // Scan box: a tag already on this load goes to its strain box; a new
+      // one starts a box with it filled in (strain from Canix).
+      const scan = sec.querySelector('.lot-scan input');
+      const onScan = () => {
+        const uid = scan.value.trim().toUpperCase();
+        if (!uid) return;
+        scan.value = '';
+        const hit = allLots().find((l) => l.fields.sourceUid && uidTailMatch(l.fields.sourceUid, uid));
+        if (hit) { hit.say(t(LT.found), true); hit.focusBin(); return; }
+        const lot = addLot(grp, { sourceUid: uid });
+        lot.lookup();
+        lot.focusAfterUid();
+        changed();
+      };
+      scan.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); onScan(); } });
+      scan.addEventListener('change', onScan);
+      sec.querySelector('.lot-scan .li-add').onclick = () => { const lot = addLot(grp, {}); lot.focusFirst(); changed(); };
+      grp.del.onclick = () => {
+        if (grp.lots.some((l) => l.rows.some((r) => rowHasData(f, r))) && !confirm(t(LT.removeLicense))) return;
+        grp.lots.slice().forEach((l) => l.remove());
+        groups = groups.filter((x) => x !== grp);
+        sec.remove(); showGroupDels(); changed();
+      };
+      box.appendChild(sec);
+      groups.push(grp);
+      showGroupDels();
+      return grp;
+    }
+    const showGroupDels = () => groups.forEach((x) => { x.del.style.display = groups.length > 1 ? '' : 'none'; });
+
+    // One strain box. `init` holds its fields (and `_lot` on resume);
+    // `bins: false` skips the starter bin rows (resume adds the saved ones).
+    function addLot(grp, init, bins = true) {
+      const lot = { id: init._lot || crypto.randomUUID(), grp, fields: {}, rows: [], autoStrain: false };
+      L.cols.forEach((c) => { lot.fields[c.k] = init[c.k] ?? ''; });
+      const el = document.createElement('div');
+      el.className = 'lot';
+      el.innerHTML = `<div class="lot-hd"><span class="lot-title"></span><button type="button" class="li-group-del" aria-label="${escapeAttr(t(UI.remove))}">×</button></div>` +
+        `<div class="lot-fields"></div><div class="match lot-msg"></div>` +
+        `<table class="li-table lot-bins"><thead><tr><th>#</th>` +
+        f.cols.map((c) => `<th>${escapeHtml(t(c.l))}${c.req ? '<span class="req">*</span>' : ''}</th>`).join('') +
+        `<th></th></tr></thead><tbody></tbody></table>` +
+        `<button type="button" class="li-add">${escapeHtml(t(L.addBin))}</button>` +
+        `<div class="lot-sum"></div>`;
+      lot.el = el;
+      const msg = el.querySelector('.lot-msg');
+      lot.say = (text, ok) => { msg.textContent = text || ''; msg.style.display = text ? 'block' : 'none'; msg.style.color = ok ? 'var(--green)' : 'var(--gold)'; };
+      const ctl = {};
+      const fieldsEl = el.querySelector('.lot-fields');
+      L.cols.forEach((c) => {
+        const cell = document.createElement('label');
+        cell.className = 'lot-f';
+        cell.innerHTML = `<span class="k">${escapeHtml(t(c.l))}${c.req ? '<span class="req">*</span>' : ''}</span>`;
+        ctl[c.k] = control(c, (v) => {
+          lot.fields[c.k] = v;
+          lot.rows.forEach((r) => { r[c.k] = v; });
+          if (c.k === 'strain') lot.autoStrain = false;
+          if (c.canixStrain) lot.lookup();
+          lot.redraw(); changed();
+        });
+        ctl[c.k].set(lot.fields[c.k]);
+        cell.appendChild(ctl[c.k].el);
+        fieldsEl.appendChild(cell);
+      });
+      // Scanned/typed plant tag → its strain from Canix, unless someone
+      // picked one already. Only a Strain Library strain is filled in.
+      const uidCol = L.cols.find((c) => c.canixStrain);
+      lot.lookup = () => {
+        if (!uidCol) return;
+        const uid = lot.fields[uidCol.k];
+        if (!uid) return;
+        canixStrainForUid(uid, uidCol.canixPlants).then((name) => {
+          if (!name || lot.fields[uidCol.k] !== uid) return;
+          if (lot.fields[uidCol.canixStrain] && !lot.autoStrain) return;
+          const lc = name.trim().toLowerCase();
+          const hit = (reference.strains || []).find((x) => x.active !== false &&
+            [x.name, ...(x.aliases || [])].some((n) => String(n || '').trim().toLowerCase() === lc));
+          if (!hit) { lot.say(t(LT.canixOff).replace('{s}', name)); return; }
+          lot.say('');
+          ctl[uidCol.canixStrain].set(hit.name);
+          lot.fields[uidCol.canixStrain] = hit.name;
+          lot.rows.forEach((r) => { r[uidCol.canixStrain] = hit.name; });
+          lot.autoStrain = true;
+          lot.redraw(); changed();
+        });
+      };
+      const tbody = el.querySelector('tbody');
+      lot.addBin = (prefill) => {
+        const row = { ...(prefill || {}), [g.k]: grp.value, _lot: lot.id };
+        L.cols.forEach((c) => { row[c.k] = lot.fields[c.k]; });
+        values[f.k].push(row);
+        lot.rows.push(row);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td class="li-calc li-num"></td>`;
+        f.cols.forEach((c) => {
+          const td = document.createElement('td');
+          const x = control(c, (v) => { row[c.k] = v; lot.redraw(); changed(); });
+          if (row[c.k] !== undefined && row[c.k] !== null) x.set(row[c.k]);
+          td.appendChild(x.el); tr.appendChild(td);
+        });
+        const tdDel = document.createElement('td');
+        const del = document.createElement('button');
+        del.type = 'button'; del.className = 'li-del'; del.textContent = '×';
+        del.setAttribute('aria-label', t(UI.remove));
+        del.onclick = () => {
+          values[f.k].splice(values[f.k].indexOf(row), 1);
+          lot.rows.splice(lot.rows.indexOf(row), 1);
+          tr.remove(); lot.redraw(); changed();
+        };
+        tdDel.appendChild(del); tr.appendChild(tdDel);
+        tbody.appendChild(tr);
+        lot.redraw();
+        return tr;
+      };
+      lot.redraw = () => {
+        const n = grp.lots.indexOf(lot) + 1;
+        el.querySelector('.lot-title').textContent = (lot.fields.strain || t(LT.strainN).replace('{n}', n)) +
+          (lot.fields.sourceUid ? ` · …${String(lot.fields.sourceUid).slice(-5)}` : '');
+        lot.rows.forEach((r, i) => { r.bin = i + 1; });
+        tbody.querySelectorAll('.li-num').forEach((td, i) => { td.textContent = String(i + 1); });
+        // The last bin keeps its ×-less row so a box always has one to fill.
+        tbody.querySelectorAll('.li-del').forEach((b) => { b.style.visibility = lot.rows.length > 1 ? '' : 'hidden'; });
+        const filled = lot.rows.filter((r) => Number(r.weight) > 0);
+        el.querySelector('.lot-sum').textContent = t(LT.sum)
+          .replace('{b}', filled.length)
+          .replace('{w}', fmtNum(lot.rows.reduce((a, r) => a + (Number(r.weight) || 0), 0), 2))
+          .replace('{p}', fmtNum(lot.rows.reduce((a, r) => a + (Number(r.plantCount) || 0), 0), 0));
+      };
+      lot.remove = () => {
+        values[f.k] = values[f.k].filter((r) => !lot.rows.includes(r));
+        grp.lots.splice(grp.lots.indexOf(lot), 1);
+        el.remove();
+        grp.lots.forEach((l) => l.redraw());
+      };
+      el.querySelector('.lot-hd .li-group-del').onclick = () => {
+        if (lot.rows.some((r) => rowHasData(f, r)) && !confirm(t(LT.removeStrain))) return;
+        lot.remove(); changed();
+      };
+      el.querySelector(':scope > .li-add').onclick = () => {
+        const tr = lot.addBin();
+        const first = tr.querySelector('input'); if (first) first.focus();
+        changed();
+      };
+      const firstEmptyBin = () => [...tbody.querySelectorAll('tr')].find((tr, i) => !rowHasData(f, lot.rows[i]));
+      lot.focusBin = () => {
+        const tr = firstEmptyBin() || lot.addBin();
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const first = tr.querySelector('input'); if (first) first.focus();
+      };
+      lot.focusFirst = () => { const x = el.querySelector('.lot-fields input, .lot-fields select'); if (x) x.focus(); };
+      // After a scan: the next box that's still blank (location, Transfer UID).
+      lot.focusAfterUid = () => {
+        const next = L.cols.find((c) => c.k !== 'sourceUid' && c.t !== 'select' && !lot.fields[c.k]);
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (next) ctl[next.k].inp.focus(); else lot.focusBin();
+      };
+      grp.lots.push(lot);
+      grp.lotsEl.appendChild(el);
+      if (bins) for (let i = 0; i < (L.bins || 1); i++) lot.addBin();
+      lot.redraw();
+      return lot;
+    }
+
+    lineitemAdders[f.k] = (prefill) => {
+      groups = groups.filter((x) => x.sec.isConnected);
+      const val = prefill[g.k] || '';
+      const grp = groups.find((x) => x.value === val) || addGroup(val);
+      const key = prefill._lot || prefill.sourceUid || '';
+      const lot = grp.lots.find((l) => l.id === key || (!prefill._lot && l.fields.sourceUid === prefill.sourceUid))
+        || addLot(grp, { ...prefill, _lot: key || undefined }, false);
+      lot.addBin(prefill);
+    };
+    wrap.querySelector(`#addg_${f.k}`).onclick = () => {
+      const grp = addGroup('');
+      grp.sec.querySelector('.lic select').focus();
+    };
+    addGroup('');
     return wrap;
   }
 
@@ -1114,13 +1450,21 @@
   // banner — or null if nothing is.
   const LI = {
     needs:    { en: 'Every filled-in row needs:', es: 'Cada fila llena necesita:' },
-    twoStrains: { en: 'is listed with more than one strain — check the rows.', es: 'aparece con más de una variedad — revise las filas.' }
+    twoStrains: { en: 'is listed with more than one strain — check the rows.', es: 'aparece con más de una variedad — revise las filas.' },
+    plants:   { en: 'Put the plant count on a bin of:', es: 'Ponga el número de plantas en un bin de:' }
   };
   function lineProblem(f) {
     const rows = (values[f.k] || []).filter((r) => rowHasData(f, r));
     const blank = (x) => x === undefined || x === null || x === '';
-    const short = f.cols.filter((c) => c.req && rows.some((r) => blank(r[c.k])));
+    const short = [f.group, ...(f.lots ? f.lots.cols : []), ...f.cols].filter((c) => c && c.req && rows.some((r) => blank(r[c.k])));
     if (short.length) return `${t(LI.needs)} ${short.map((c) => t(c.l)).join(', ')}`;
+    // A strain box needs a plant count on at least one of its bins.
+    if (f.lots && f.lots.plantsReq) {
+      const plants = new Map();
+      rows.forEach((r) => { const k = r._lot || r.sourceUid; plants.set(k, (plants.get(k) || 0) + (Number(r.plantCount) || 0)); });
+      const none = [...plants].filter(([, n]) => !(n > 0)).map(([k]) => rows.find((r) => (r._lot || r.sourceUid) === k));
+      if (none.length) return `${t(LI.plants)} ${none.map((r) => r.strain || r.sourceUid).join(', ')}`;
+    }
     if (station.splitBy === f.k) {
       const seen = {};
       for (const r of rows) {
@@ -1150,7 +1494,9 @@
       groups.get(r.sourceUid).push(r);
     });
     const splitField = station.fields.find((f) => f.k === station.splitBy);
-    const lifted = splitField.cols.filter((c) => c.lift).map((c) => c.k);
+    const lifted = splitField.cols.filter((c) => c.lift).map((c) => c.k)
+      .concat(splitField.group ? [splitField.group.k] : [])
+      .concat(splitField.lots ? splitField.lots.cols.map((c) => c.k).filter((k) => k !== 'sourceUid' && k !== 'strain') : []);
     return [...groups.entries()].map(([uid, rows], i) => {
       const g = { ...base, [station.splitBy]: rows, sourceUid: uid, strain: rows[0].strain };
       lifted.forEach((k) => { g[k] = rows[0][k]; });
@@ -1244,6 +1590,116 @@
     // Down also has the on-stem UID, a brand-new tag nothing upstream knows.
     if (f.t === 'uid' && f.prefill === 'lookup') inp.addEventListener('change', () => tryPrefill(inp.value.trim(), f.k));
   });
+
+  // ── License plate list (platePicker — Harvest) ───────────────────────────
+  // Canix's transfers don't carry the truck's plate, so the list is every
+  // plate already used on a Harvest form; Other types a new one, which is
+  // on the list from then on.
+  station.fields.filter((f) => f.platePicker).forEach((f) => {
+    if (!draftsOn) return;
+    loadSubmitted(station.key).then((recs) => {
+      const sel = document.getElementById(`f_${f.k}`);
+      const have = new Set([...sel.options].map((o) => o.value));
+      const plates = [...new Set(recs.map((r) => String(r[f.k] || '').trim().toUpperCase()).filter(Boolean))].sort();
+      const otherOpt = sel.querySelector('option[value="__other__"]');
+      plates.filter((p) => !have.has(p)).forEach((p) => {
+        const o = document.createElement('option');
+        o.value = o.textContent = p;
+        sel.insertBefore(o, otherOpt);
+      });
+    }).catch((err) => console.error('plates', err));
+  });
+
+  // ── Driver dropdown (driverPicker — Harvest) ─────────────────────────────
+  // The drivers table through netlify/functions/drivers.js (it holds ID
+  // numbers and photos, so it isn't readable from the browser directly).
+  // Picking one sets driver (name), driverIdNumber and driverId; "+ Add a
+  // new driver" saves a new one (name, ID #, photo of the ID) and picks it.
+  const driverFields = station.fields.filter((f) => f.driverPicker);
+  let drivers = null;   // null while loading / if it failed
+  let driversFailed = false;
+  const driverName = (d) => `${d.first} ${d.last}`.trim();
+  const callDrivers = async (body) => {
+    const res = await fetch('/.netlify/functions/drivers', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...body, pin: sessionStorage.getItem('2cw_pin') || '' })
+    });
+    let j;
+    try { j = await res.json(); } catch { j = { ok: false, error: `HTTP ${res.status}` }; }
+    if (!res.ok || !j.ok) throw new Error(j.error || `HTTP ${res.status}`);
+    return j;
+  };
+  function fillDriverPicker(f) {
+    const sel = document.getElementById(`dp_${f.k}`);
+    if (!sel) return;
+    const list = drivers || [];
+    const cur = values.driverId !== undefined && values.driverId !== null ? String(values.driverId) : '';
+    const known = list.some((d) => String(d.id) === cur);
+    sel.innerHTML = `<option value="">${escapeHtml(t(drivers ? DV.choose : driversFailed ? DV.failed : DV.loading))}</option>` +
+      list.map((d) => `<option value="${escapeAttr(d.id)}">${escapeHtml(`${driverName(d)} — ${t(DV.id)} ${d.idNumber}`)}</option>`).join('') +
+      // A driver saved on this record but not on the list (made inactive since).
+      (!known && values[f.k] ? `<option value="__saved__">${escapeHtml(values[f.k] + (values.driverIdNumber ? ` — ${t(DV.id)} ${values.driverIdNumber}` : ''))}</option>` : '') +
+      `<option value="__new__">${escapeHtml(t(DV.addNew))}</option>`;
+    sel.value = known ? cur : values[f.k] ? '__saved__' : '';
+  }
+  function pickDriver(f, d) {
+    values[f.k] = d ? driverName(d) : '';
+    values.driverIdNumber = d ? d.idNumber : '';
+    values.driverId = d ? d.id : null;
+    touched.add(f.k);
+    els[f.k].classList.remove('invalid');
+    recompute(); updateVisibility(); markDirty();
+  }
+  driverFields.forEach((f) => {
+    const sel = document.getElementById(`dp_${f.k}`);
+    const panel = document.getElementById(`dn_${f.k}`);
+    const msg = panel.querySelector('.match');
+    const inp = (k) => panel.querySelector(`[data-k="${k}"]`);
+    const say = (text, ok) => { msg.textContent = text; msg.style.display = text ? 'block' : 'none'; msg.style.color = ok ? 'var(--green)' : 'var(--gold)'; };
+    let photo = null;
+    sel.addEventListener('change', () => {
+      panel.style.display = sel.value === '__new__' ? 'block' : 'none';
+      if (sel.value === '__new__') { say(''); inp('first').focus(); return; }
+      if (sel.value === '__saved__') return;
+      pickDriver(f, (drivers || []).find((d) => String(d.id) === sel.value) || null);
+    });
+    inp('photo').addEventListener('change', async () => {
+      const file = inp('photo').files && inp('photo').files[0];
+      photo = file ? await compressImage(file) : null;
+      const img = panel.querySelector('.photo-wrap img');
+      img.src = photo ? photo.dataUrl : ''; img.style.display = photo ? 'block' : 'none';
+    });
+    panel.querySelector('.drv-save').addEventListener('click', async (e) => {
+      const btnSave = e.currentTarget;
+      const first = inp('first').value.trim(), last = inp('last').value.trim(), idNumber = inp('idNumber').value.trim().toUpperCase();
+      if (!first || !last || !idNumber || !photo) return say(t(DV.need));
+      if (!navigator.onLine) return say(t(DV.offline));
+      btnSave.disabled = true; btnSave.textContent = t(DV.saving);
+      try {
+        const j = await callDrivers({ action: 'add', first, last, idNumber, photo: photo.dataUrl });
+        drivers = (drivers || []).filter((d) => d.id !== j.driver.id).concat(j.driver)
+          .sort((a, b) => driverName(a).localeCompare(driverName(b)));
+        driversFailed = false;
+        pickDriver(f, j.driver);
+        driverFields.forEach(fillDriverPicker);
+        ['first', 'last', 'idNumber', 'photo'].forEach((k) => { inp(k).value = ''; });
+        photo = null; panel.querySelector('.photo-wrap img').style.display = 'none';
+        panel.style.display = 'none';
+        say('');
+        if (j.existed) alert(t(DV.existed));
+      } catch (err) {
+        say(String(err.message || err));
+      } finally {
+        btnSave.disabled = false; btnSave.textContent = t(DV.save);
+      }
+    });
+  });
+  if (driverFields.length) {
+    callDrivers({ action: 'list' })
+      .then((j) => { drivers = j.drivers || []; })
+      .catch((err) => { console.error('drivers', err); driversFailed = true; })
+      .finally(() => driverFields.forEach(fillDriverPicker));
+  }
 
   // ── Pre-roll queue dropdown (prPicker) ───────────────────────────────────
   // The open pre-roll queue in the dashboard's order (loadPrerollQueue in
@@ -2039,6 +2495,7 @@
         // Records from before the UID/strain moved into the rows carry them
         // once at the top — put them on each row so the split keeps them.
         const lift = station.splitBy === f.k ? { sourceUid: fields.sourceUid, strain: fields.strain } : {};
+        if (f.group && fields[f.group.k]) lift[f.group.k] = fields[f.group.k];
         // A running log skips blank rows (a page saved back when it was a grid).
         rows.filter((r) => !f.entry || rowHasData(f, r))
           .forEach((r) => lineitemAdders[f.k] && lineitemAdders[f.k]({ ...lift, ...r }));
@@ -2046,6 +2503,11 @@
       }
       setFieldValue(f, fields[f.k]);
     });
+    if (driverFields.length) {
+      values.driverId = fields.driverId ?? null;
+      values.driverIdNumber = fields.driverIdNumber || '';
+      driverFields.forEach(fillDriverPicker);
+    }
     goToStartDay();
     // A removed Today isn't where the page should open.
     if (DT && !editMode && !dayList().includes(curDay)) { const ds = dayList(); pickDay(ds[ds.length - 1]); renderDays(); }
@@ -2511,7 +2973,10 @@
       banner.className = result.queued ? 'banner warn' : 'banner success';
       banner.textContent = result.queued ? t(UI.queued) : t(UI.submitted);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      if (!result.queued) {
+      // `share` (Harvest): the send-on-WhatsApp window instead; its New form
+      // button starts the next one.
+      if (station.share) openShare(payload);
+      else if (!result.queued) {
         // Start clean rather than reloading back into the just-finished draft.
         setTimeout(() => { location.href = `/ops_form.html?station=${station.key}`; }, 1400);
       }
@@ -2537,6 +3002,165 @@
     }
     return { ok: true };
   }
+  // ── Send the load on WhatsApp (station.share — Harvest) ──────────────────
+  // After submit: a picture of the load laid out like the crew's notebook (a
+  // column per strain, its bins down it) and a CSV with a row per bin, handed
+  // to the phone's share sheet in one tap — pick WhatsApp and the chat. The
+  // share sheet has to be opened from a tap, so it's a button in this window
+  // rather than automatic. Where the browser can't share files (a desktop),
+  // the two files download and WhatsApp opens with a text summary.
+  const SH = {
+    title:   { en: 'Harvest saved — send it', es: 'Cosecha guardada — envíela' },
+    queued:  { en: 'Saved on this phone — it sends when there’s signal. You can still share it now.', es: 'Guardada en este teléfono — se envía cuando haya señal. Igual puede compartirla ahora.' },
+    send:    { en: 'Send on WhatsApp', es: 'Enviar por WhatsApp' },
+    files:   { en: 'Picture of the load + CSV of every bin', es: 'Foto de la carga + CSV de cada bin' },
+    next:    { en: 'New harvest form', es: 'Nuevo formulario de cosecha' },
+    fallback:{ en: 'This browser can’t share files — they were downloaded; attach them in WhatsApp.', es: 'Este navegador no puede compartir archivos — se descargaron; adjúntelos en WhatsApp.' },
+    load:    { en: 'Harvest load', es: 'Carga de cosecha' },
+    driver:  { en: 'Driver', es: 'Conductor' },
+    plate:   { en: 'Plate', es: 'Placa' },
+    truck:   { en: 'Truck #', es: 'Camión' },
+    license: { en: 'License', es: 'Licencia' },
+    src:     { en: 'Source', es: 'Origen' },
+    xfer:    { en: 'Transfer', es: 'Transferencia' },
+    loc:     { en: 'Location', es: 'Ubicación' },
+    total:   { en: 'Total', es: 'Total' },
+    plants:  { en: 'plants', es: 'plantas' },
+    bins:    { en: 'bins', es: 'bins' },
+    ff:      { en: 'FRESH FROZEN', es: 'FRESCO CONGELADO' }
+  };
+  let shareOpen = false;
+  const licenseLabel = (pid) => {
+    const o = refOptions(reference, 'properties').find((x) => x.v === pid);
+    return o ? o.label : (pid || '—');
+  };
+  function shareLots(rows) {
+    const lots = new Map();
+    rows.forEach((r) => {
+      const k = r._lot || r.sourceUid;
+      if (!lots.has(k)) lots.set(k, { pid: r.pid, strain: r.strain, sourceUid: r.sourceUid, transferUid: r.transferUid, location: r.location, bins: [] });
+      lots.get(k).bins.push(r);
+    });
+    return [...lots.values()];
+  }
+  function shareCsv(p, rows) {
+    const q = (v) => { const x = v === undefined || v === null ? '' : String(v); return /[",\n]/.test(x) ? `"${x.replace(/"/g, '""')}"` : x; };
+    const head = ['Date', 'License', 'Strain', 'Source UID', 'Transfer UID', 'Location', 'Bin', 'Wet Weight (lbs)', 'Plant Count',
+      'Fresh Frozen', 'Driver', 'Driver ID #', 'License Plate', 'Truck #', 'Team Lead'];
+    const lines = rows.map((r) => [p.date, licenseLabel(r.pid), r.strain, r.sourceUid, r.transferUid, r.location, r.bin,
+      r.weight, r.plantCount, p.freshFrozen ? 'Yes' : 'No', p.driver, p.driverIdNumber, p.licensePlate, p.truckNo, p.teamLead]);
+    return [head, ...lines].map((l) => l.map(q).join(',')).join('\r\n') + '\r\n';
+  }
+  function shareImage(p, rows) {
+    const W = 1080, PAD = 40, COLS = 3, CW = (W - PAD * 2) / COLS, LH = 34;
+    const lots = shareLots(rows);
+    const byLic = new Map();
+    lots.forEach((l) => { if (!byLic.has(l.pid)) byLic.set(l.pid, []); byLic.get(l.pid).push(l); });
+    const colH = (l) => LH * (5 + l.bins.length + 2);
+    let H = PAD + LH * 5;
+    byLic.forEach((ls) => {
+      H += LH * 1.6;
+      for (let i = 0; i < ls.length; i += COLS) H += Math.max(...ls.slice(i, i + COLS).map(colH)) + LH * 0.5;
+    });
+    H += LH * 3 + PAD;
+    const cv = document.createElement('canvas');
+    cv.width = W; cv.height = Math.ceil(H);
+    const x = cv.getContext('2d');
+    x.fillStyle = '#ffffff'; x.fillRect(0, 0, W, H);
+    const txt = (s, X, Y, font, color = '#111', align = 'left') => { x.font = font; x.fillStyle = color; x.textAlign = align; x.fillText(String(s ?? ''), X, Y); };
+    const SANS = '-apple-system, Segoe UI, Roboto, sans-serif', MONO = 'ui-monospace, Menlo, Consolas, monospace';
+    let y = PAD + 30;
+    txt(`${t(SH.load)} — ${p.date || ''}`, PAD, y, `bold 38px ${SANS}`);
+    if (p.freshFrozen) txt(t(SH.ff), W - PAD, y, `bold 28px ${SANS}`, '#1565c0', 'right');
+    y += LH * 1.4;
+    txt(`${t(SH.driver)}: ${p.driver || '—'}${p.driverIdNumber ? ` (ID ${p.driverIdNumber})` : ''}`, PAD, y, `26px ${SANS}`);
+    y += LH;
+    txt(`${t(SH.plate)}: ${p.licensePlate || '—'}${p.truckNo ? `   ·   ${t(SH.truck)}: ${p.truckNo}` : ''}${p.teamLead ? `   ·   ${p.teamLead}` : ''}`, PAD, y, `26px ${SANS}`);
+    y += LH * 1.2;
+    byLic.forEach((ls, pid) => {
+      y += LH * 0.6;
+      x.fillStyle = '#e8f5e9'; x.fillRect(PAD - 10, y - 30, W - PAD * 2 + 20, LH * 1.2);
+      txt(`${t(SH.license)}: ${licenseLabel(pid)}`, PAD, y, `bold 28px ${SANS}`, '#1b5e20');
+      y += LH * 1.0;
+      for (let i = 0; i < ls.length; i += COLS) {
+        const row = ls.slice(i, i + COLS);
+        row.forEach((l, j) => {
+          const X = PAD + j * CW, w = CW - 20;
+          let yy = y + LH;
+          txt(l.strain || '—', X, yy, `bold 28px ${SANS}`);
+          yy += LH; txt(`${t(SH.src)} ${l.sourceUid || ''}`, X, yy, `17px ${MONO}`, '#444');
+          yy += LH * 0.8; txt(`${t(SH.xfer)} ${l.transferUid || ''}`, X, yy, `17px ${MONO}`, '#444');
+          yy += LH * 0.9; txt(l.location ? `${t(SH.loc)}: ${l.location}` : '', X, yy, `22px ${SANS}`, '#444');
+          yy += LH * 0.3;
+          l.bins.forEach((b) => {
+            yy += LH;
+            txt(b.bin, X, yy, `22px ${MONO}`, '#888');
+            txt(fmtNum(b.weight, 2), X + 150, yy, `26px ${MONO}`, '#111', 'right');
+            if (Number(b.plantCount) > 0) txt(`${fmtNum(b.plantCount, 0)} pl`, X + w, yy, `20px ${MONO}`, '#666', 'right');
+          });
+          yy += LH * 0.5;
+          x.fillStyle = '#111'; x.fillRect(X, yy - 6, w, 2);
+          const lb = l.bins.reduce((a, b) => a + (Number(b.weight) || 0), 0);
+          const pl = l.bins.reduce((a, b) => a + (Number(b.plantCount) || 0), 0);
+          yy += LH * 0.8;
+          txt(fmtNum(lb, 2), X + 150, yy, `bold 28px ${MONO}`, '#111', 'right');
+          txt(`${fmtNum(pl, 0)} ${t(SH.plants)}`, X + w, yy, `bold 22px ${SANS}`, '#111', 'right');
+          if (j) { x.fillStyle = '#ddd'; x.fillRect(X - 12, y + 6, 2, colH(l) - LH); }
+        });
+        y += Math.max(...row.map(colH)) + LH * 0.5;
+      }
+    });
+    const lb = rows.reduce((a, r) => a + (Number(r.weight) || 0), 0);
+    const pl = rows.reduce((a, r) => a + (Number(r.plantCount) || 0), 0);
+    y += LH;
+    x.fillStyle = '#111'; x.fillRect(PAD, y - 30, W - PAD * 2, 3);
+    y += LH * 0.4;
+    txt(`${t(SH.total)}: ${fmtNum(lb, 2)} lbs · ${fmtNum(pl, 0)} ${t(SH.plants)} · ${rows.filter((r) => Number(r.weight) > 0).length} ${t(SH.bins)}`, PAD, y, `bold 30px ${SANS}`);
+    return new Promise((res) => cv.toBlob(res, 'image/png'));
+  }
+  function shareSummary(p, rows) {
+    const lots = shareLots(rows);
+    return [`${t(SH.load)} ${p.date || ''}${p.freshFrozen ? ` — ${t(SH.ff)}` : ''}`,
+      `${t(SH.driver)}: ${p.driver || '—'}${p.driverIdNumber ? ` (ID ${p.driverIdNumber})` : ''} · ${t(SH.plate)}: ${p.licensePlate || '—'}`,
+      ...lots.map((l) => `${licenseLabel(l.pid)} · ${l.strain}: ${fmtNum(l.bins.reduce((a, b) => a + (Number(b.weight) || 0), 0), 2)} lbs, ` +
+        `${fmtNum(l.bins.reduce((a, b) => a + (Number(b.plantCount) || 0), 0), 0)} ${t(SH.plants)} (${t(SH.xfer)} ${l.transferUid || '—'})`)].join('\n');
+  }
+  function openShare(payload) {
+    shareOpen = true;
+    const rows = payload[station.splitBy] || [];
+    const base = `harvest_${payload.date || todayStr()}${payload.licensePlate ? '_' + String(payload.licensePlate).replace(/[^A-Za-z0-9]/g, '') : ''}`;
+    const csv = shareCsv(payload, rows);
+    const imgP = shareImage(payload, rows);
+    const ov = document.createElement('div');
+    ov.className = 'share-ov';
+    ov.innerHTML = `<div class="share-box"><h2>${escapeHtml(t(SH.title))}</h2>` +
+      (navigator.onLine ? '' : `<p class="share-note">${escapeHtml(t(SH.queued))}</p>`) +
+      `<img class="share-prev" alt="">` +
+      `<p class="share-note">${escapeHtml(t(SH.files))}</p>` +
+      `<button type="button" class="share-go">${escapeHtml(t(SH.send))}</button>` +
+      `<p class="share-note share-msg"></p>` +
+      `<button type="button" class="share-next">${escapeHtml(t(SH.next))}</button></div>`;
+    document.body.appendChild(ov);
+    imgP.then((blob) => { if (blob) ov.querySelector('.share-prev').src = URL.createObjectURL(blob); });
+    ov.querySelector('.share-next').onclick = () => { location.href = `/ops_form.html?station=${station.key}`; };
+    ov.querySelector('.share-go').onclick = async () => {
+      const blob = await imgP;
+      const files = [new File([blob], `${base}.png`, { type: 'image/png' }), new File([csv], `${base}.csv`, { type: 'text/csv' })];
+      const text = shareSummary(payload, rows);
+      if (navigator.canShare && navigator.canShare({ files })) {
+        try { await navigator.share({ files, title: t(SH.load), text }); } catch (err) { if (err.name !== 'AbortError') console.error('share', err); }
+        return;
+      }
+      files.forEach((file) => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(file); a.download = file.name;
+        document.body.appendChild(a); a.click(); a.remove();
+      });
+      ov.querySelector('.share-msg').textContent = t(SH.fallback);
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    };
+  }
+
   async function attemptPendingSubmit() {
     if (!pendingSubmits.length || !draftsOn) return;
     const sres = await flushPending();
@@ -2545,7 +3169,7 @@
     localStorage.removeItem(mirrorKey());
     banner.className = 'banner success';
     banner.textContent = t(UI.submitted);
-    setTimeout(() => { location.href = `/ops_form.html?station=${station.key}`; }, 1200);
+    if (!shareOpen) setTimeout(() => { location.href = `/ops_form.html?station=${station.key}`; }, 1200);
   }
   window.addEventListener('online', attemptPendingSubmit);
   if (entryFields.length) setInterval(pollEntries, 15000);
