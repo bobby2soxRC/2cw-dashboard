@@ -469,6 +469,29 @@ dropdowns.
   4TP2177 (unit 414856) and 4TR3721 (FLXZ 432936), Idealease trucks
   81758Y3, 81371Y3 and 78051C4, and 50683A4.
 
+## Data Syncs (run the Canix sync now)
+
+Admin → **Data Syncs** → **Run Canix Sync now** starts the Canix sync
+(`.github/workflows/canix_sync.yml`, normally every 3 hours) right away, and
+the tab lists its last 5 runs — scheduled or started by hand, Running /
+Success / Failed, how long it took, and a link to the run on GitHub. While a
+run is going the list refreshes itself every 15 seconds. A run takes a few
+minutes; dashboards show the new data once it says Success.
+
+`netlify/functions/canix-sync.js` checks the admin token, then calls
+GitHub's workflow_dispatch API — the sync itself still runs on GitHub with
+GitHub's secrets. Setup, once:
+
+1. GitHub → Settings → Developer settings → Fine-grained personal access
+   tokens → **Generate new token**: only the `2cw-dashboard` repository,
+   permission **Actions: Read and write**. Pick a long expiry and note it —
+   when it expires the button says GitHub 401.
+2. Netlify → Site configuration → Environment variables: add
+   `GITHUB_TOKEN` with that token (and `GITHUB_REPO` only if the repo ever
+   moves; it defaults to `bobby2soxRC/2cw-dashboard`). Redeploy.
+
+Until `GITHUB_TOKEN` is set the tab says so instead of listing runs.
+
 ## On-Stem Flower (bucking queue and releasing held Take Downs)
 
 Setting the bucking queue's order and releasing a held Take Down to

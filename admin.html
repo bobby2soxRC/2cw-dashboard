@@ -205,6 +205,7 @@
       <button data-tab="responsibilities" onclick="switchTab('responsibilities')">Responsibilities</button>
       <button data-tab="rates" onclick="switchTab('rates')">Labor Rates</button>
       <button data-tab="drivers" onclick="switchTab('drivers')">Drivers and Trucks</button>
+      <button data-tab="syncs" onclick="switchTab('syncs')">Data Syncs</button>
     </div>
 
     <div id="users-view" class="view on">
@@ -297,6 +298,19 @@
       <div class="table-scroll" id="trucks-wrap"></div>
     </div>
 
+    <div id="syncs-view" class="view">
+      <div class="toolbar">
+        <h1>Canix Sync</h1>
+        <div class="toolbar-actions">
+          <button class="btn btn-ghost" onclick="syncsLoad()">Refresh</button>
+          <button class="btn btn-gold" id="canix-run-btn" onclick="canixRun()">Run Canix Sync now</button>
+        </div>
+      </div>
+      <div class="status-line" style="color:var(--muted)">Pulls packages, transfers, plant batches and harvests from Canix and fills Wet Intake details (license, CID, manifest, driver). It runs on its own every 3 hours; this starts one now. It takes a few minutes — the dashboards show the new data once it shows Success.</div>
+      <div class="status-line" id="syncs-status">Loading…</div>
+      <div class="table-scroll" id="syncs-wrap"></div>
+    </div>
+
     <div id="responsibilities-view" class="view">
       <div class="toolbar">
         <h1>Responsibilities</h1>
@@ -381,9 +395,11 @@ function switchTab(tab){
   document.getElementById('responsibilities-view').classList.toggle('on', tab === 'responsibilities');
   document.getElementById('rates-view').classList.toggle('on', tab === 'rates');
   document.getElementById('drivers-view').classList.toggle('on', tab === 'drivers');
+  document.getElementById('syncs-view').classList.toggle('on', tab === 'syncs');
   if(tab === 'orgchart') renderOrgChart();
   if(tab === 'rates' && !ratesLoaded){ ratesLoaded = true; ratesLoadAll(); }
   if(tab === 'drivers' && !driversLoaded){ driversLoaded = true; driversLoadAll(); }
+  if(tab === 'syncs') syncsLoad();
   if(tab === 'responsibilities'){
     history.replaceState(null, '', '#responsibilities');
     if(!respLoaded){ respLoaded = true; respLoadAll(); }
@@ -697,6 +713,58 @@ async function extraSetActive(rowId, active){
 }
 
 // ── Drivers and Trucks tab ──────────────────────────────────────────────
+// Data Syncs — start the Canix sync (a GitHub Actions workflow) and show
+// its last few runs, through canix-sync.js. While a run is queued or going,
+// the list refreshes itself every 15 seconds.
+const CANIX_SYNC_ENDPOINT = '/.netlify/functions/canix-sync';
+let syncsTimer = null;
+async function syncsLoad(){
+  clearTimeout(syncsTimer);
+  const status = document.getElementById('syncs-status');
+  try {
+    const j = await callApi(CANIX_SYNC_ENDPOINT, { action: 'status', token: getToken() });
+    syncsRender(j.runs || []);
+    const busy = (j.runs || []).some(r => r.status !== 'completed');
+    status.textContent = busy ? 'A sync is running… (refreshes on its own)' : '';
+    if(busy && document.getElementById('syncs-view').classList.contains('on')) syncsTimer = setTimeout(syncsLoad, 15000);
+  } catch(e){
+    status.textContent = 'Could not load: ' + e.message;
+  }
+}
+function syncsRender(runs){
+  const fmt = t => t ? new Date(t).toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) : '';
+  const mins = r => r.status === 'completed' && r.started ? Math.max(1, Math.round((new Date(r.updated) - new Date(r.started)) / 60000)) + ' min' : '';
+  const state = r => {
+    if(r.status !== 'completed') return `<span class="pill" style="color:var(--gold)">${r.status === 'queued' ? 'Queued' : 'Running'}</span>`;
+    const ok = r.conclusion === 'success';
+    return `<span class="pill" style="color:var(--${ok ? 'green' : 'red'})">${esc(ok ? 'Success' : (r.conclusion || 'Failed'))}</span>`;
+  };
+  document.getElementById('syncs-wrap').innerHTML = runs.length ? `<table>
+    <thead><tr><th>Started</th><th>How</th><th>Status</th><th>Took</th><th></th></tr></thead>
+    <tbody>${runs.map(r => `<tr>
+      <td>${esc(fmt(r.started))}</td>
+      <td>${r.event === 'workflow_dispatch' ? 'Started by hand' : 'Every 3 hours'}</td>
+      <td>${state(r)}</td>
+      <td>${esc(mins(r))}</td>
+      <td><a href="${esc(r.url)}" target="_blank" rel="noopener" style="color:var(--blue)">Details</a></td>
+    </tr>`).join('')}</tbody></table>` : '<div class="status-line">No runs yet.</div>';
+}
+async function canixRun(){
+  const btn = document.getElementById('canix-run-btn'), status = document.getElementById('syncs-status');
+  btn.disabled = true;
+  status.textContent = 'Starting…';
+  try {
+    await callApi(CANIX_SYNC_ENDPOINT, { action: 'run', token: getToken() });
+    status.textContent = 'Started. It shows up below in a few seconds.';
+    // GitHub takes a moment to list a new run.
+    setTimeout(syncsLoad, 4000);
+  } catch(e){
+    status.textContent = 'Could not start: ' + e.message;
+  } finally {
+    setTimeout(() => { btn.disabled = false; }, 4000);
+  }
+}
+
 // Drivers (drivers table) — added here or on the Harvest form (drivers.js);
 // the ID photo is fetched one at a time when asked for. Trucks (trucks
 // table) — the Harvest form's License Plate list, only added here.

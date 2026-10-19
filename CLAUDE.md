@@ -120,6 +120,14 @@ stays on the source tag. The list is `metrcTags` on the station in
 `operations_stations.js`. No SQL. Details: "New Metrc tags" in
 `docs/OPERATIONS_APP.md`.
 
+### Run Canix Sync from Admin (started 2026-10-19)
+
+Admin → **Data Syncs**: **Run Canix Sync now** starts the
+`canix_sync.yml` GitHub workflow and lists its last runs, through
+`netlify/functions/canix-sync.js`. Needs a `GITHUB_TOKEN` (fine-grained,
+Actions read/write on this repo) in Netlify. Details: "Data Syncs" in
+`docs/USER_ADMIN.md`.
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)
