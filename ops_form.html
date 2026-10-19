@@ -1073,8 +1073,16 @@
     addGo: { en: 'Add', es: 'Agregar' },
     move:  { en: '✎ Change date', es: '✎ Cambiar fecha' },
     remove:{ en: '✕ Remove day', es: '✕ Quitar día' },
-    moveGo:{ en: 'Move', es: 'Mover' }
+    moveGo:{ en: 'Move', es: 'Mover' },
+    split: { en: '⇅ Sort by day weighed', es: '⇅ Ordenar por día pesado' },
+    splitAsk: { en: 'Move {n} entries on this tab to the day they were weighed ({list})?',
+                es: '¿Mover {n} registros de esta pestaña al día en que se pesaron ({list})?' }
   };
+  // The day a row was logged (its `at`), the same way todayStr() counts days.
+  const loggedDay = (r) => (r.at ? String(r.at).slice(0, 10) : '');
+  // Rows on day `d` that were logged on another day: a page left open
+  // overnight kept adding to the old day's tab (see rollDay), or a backdate.
+  const strays = (d) => DTL.flatMap((k) => values[k] || []).filter((r) => rowDay(r) === d && loggedDay(r) && loggedDay(r) !== d);
   function dayLabel(d) {
     const [, m, dd] = String(d).split('-').map(Number);
     return `${m}/${dd}`;
@@ -1130,7 +1138,64 @@
         ? `<span class="chip day-add"><input type="date" id="day-move-in" value="${escapeAttr(curDay)}">` +
           `<button type="button" class="day-add-go" id="day-move-go">${t(DY.moveGo)}</button></span>`
         : `<button type="button" class="chip new" id="day-move">${t(DY.move)}</button>`) +
-      (canRemoveDay(curDay) && !moving && !adding ? `<button type="button" class="chip new" id="day-remove">${t(DY.remove)}</button>` : '');
+      (canRemoveDay(curDay) && !moving && !adding ? `<button type="button" class="chip new" id="day-remove">${t(DY.remove)}</button>` : '') +
+      (strays(curDay).length && !moving && !adding ? `<button type="button" class="chip new" id="day-split">${t(DY.split)}</button>` : '');
+  }
+  // Gives the rows `dayFor` picks a new day (it returns the day, or nothing
+  // to leave the row be). Moved rows are re-added under new ids and the old
+  // ids go in `_deleted`, so other tablets on the run drop the old ones too.
+  // Returns the days rows moved to.
+  function reDayRows(dayFor) {
+    const gone = new Set(values._deleted || []);
+    const days = new Set();
+    DTL.forEach((k) => {
+      const f = station.fields.find((x) => x.k === k);
+      values[k] = (values[k] || []).map((r) => {
+        const to = dayFor(r);
+        if (!to || to === rowDay(r)) return r;
+        days.add(to);
+        const moved = { ...r, day: to };
+        (f.cols || []).filter((c) => c.fromDay).forEach((c) => { moved[c.k] = to; });
+        if (r._id) { gone.add(r._id); moved._id = crypto.randomUUID(); }
+        return moved;
+      });
+    });
+    values._deleted = [...gone];
+    return days;
+  }
+  // Sort by day weighed: the picked tab's rows logged on other days go to
+  // the day they were logged — "Change date" moves the whole tab, so it
+  // can't pull apart two days' bags that ended up on one tab.
+  function splitDay(d) {
+    const rows = strays(d);
+    if (!rows.length || isClosed) return;
+    const per = {};
+    rows.forEach((r) => { per[loggedDay(r)] = (per[loggedDay(r)] || 0) + 1; });
+    const list = Object.keys(per).sort().map((x) => `${dayLabel(x)}: ${per[x]}`).join(', ');
+    if (!confirm(t(DY.splitAsk).replace('{n}', rows.length).replace('{list}', list))) return;
+    const days = reDayRows((r) => (rowDay(r) === d && loggedDay(r) ? loggedDay(r) : null));
+    days.forEach(unhideDay);
+    values.runDays = [...new Set([...(values.runDays || []), ...days])].sort();
+    markDirty();
+    pickDay(dayHasRows(d) ? d : [...days].sort().pop());
+    renderDays();
+  }
+  // A page left open past midnight would keep stamping new rows with the
+  // old day: when the date turns over, a page that was on Today moves to
+  // the new Today.
+  let shownToday = todayStr();
+  function rollDay() {
+    const now = todayStr();
+    if (now === shownToday) return;
+    const was = shownToday;
+    shownToday = now;
+    if (!DT || editMode) return;
+    if (curDay === was) pickDay(now);
+    renderDays();
+  }
+  if (DT) {
+    setInterval(rollDay, 60000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) rollDay(); });
   }
   // Change date: the picked day tab, with everything logged on it, moves to
   // another day — for a tab that was made for the wrong date (a new run
@@ -1140,18 +1205,7 @@
   // the Start Date does when it was that day.
   function moveDay(from, to) {
     if (!to || to === from || isClosed) return;
-    const gone = new Set(values._deleted || []);
-    DTL.forEach((k) => {
-      const f = station.fields.find((x) => x.k === k);
-      values[k] = (values[k] || []).map((r) => {
-        if (rowDay(r) !== from) return r;
-        const moved = { ...r, day: to };
-        (f.cols || []).filter((c) => c.fromDay).forEach((c) => { moved[c.k] = to; });
-        if (r._id) { gone.add(r._id); moved._id = crypto.randomUUID(); }
-        return moved;
-      });
-    });
-    values._deleted = [...gone];
+    reDayRows((r) => (rowDay(r) === from ? to : null));
     values.runDays = [...new Set([...(values.runDays || []).filter((d) => d !== from), to])].sort();
     // The old tab doesn't stay behind empty (Today, on a backdated run).
     unhideDay(to);
@@ -1191,6 +1245,7 @@
       renderDays();
       return;
     }
+    if (e.target.closest('#day-split')) { splitDay(curDay); return; }
     if (e.target.closest('#day-move-go')) {
       const d = document.getElementById('day-move-in').value;
       el.dataset.moving = '';
@@ -1265,7 +1320,8 @@
         const tr = document.createElement('tr');
         if (r._id && fresh.has(r._id)) tr.className = 'fresh';
         const at = r.at ? new Date(r.at) : null;
-        const when = at ? ((r.day && r.day !== todayStr() && !byDay(f) ? new Date(`${r.day}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' : '') +
+        const otherDay = byDay(f) ? (loggedDay(r) && loggedDay(r) !== curDay ? loggedDay(r) : '') : (r.day && r.day !== todayStr() ? r.day : '');
+        const when = at ? ((otherDay ? new Date(`${otherDay}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' : '') +
           at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) : '';
         tr.innerHTML = cols.map((c) => `<td>${escapeHtml(c.t === 'number' || c.t === 'calc' ? fmtNum(r[c.k], c.dp === undefined ? 2 : c.dp) : (r[c.k] ?? ''))}</td>`).join('') +
           `<td class="at">${escapeHtml(when)}</td><td></td>`;
@@ -1328,6 +1384,7 @@
     };
 
     const add = () => {
+      if (byDay(f)) rollDay();
       if (M) return addMulti();
       const row = {};
       const short = [];
