@@ -180,18 +180,21 @@ bins** (lineitems `group` + `lots`, `buildLotSheet` in `ops_form.html`).
   summary. It also opens for a submit saved offline. **New harvest form**
   starts the next one.
 
-- **License Plate** (`platePicker`) lists every plate already used on a
-  submitted Harvest form, plus Other to type a new one (which is on the list
-  from then on). It can't come from the farms' Metrc transfers: Canix's
-  transfer data has no vehicle or driver details (Comstock, Wildcat and
-  Lucern's transfers only carry a route note like "follow GPS route").
+- **License Plate** (`platePicker`) lists the trucks set up in the admin
+  panel's **Drivers and Trucks** tab ("PLATE — #truck · description", the
+  `trucks` table, read through `drivers.js`), then any other plate already
+  used on a submitted Harvest form, plus Other to type a new one. Picking a
+  truck that has a Truck # fills the form's Truck # when it's blank. It
+  can't come from the farms' Metrc transfers: Canix's transfer data has no
+  vehicle or driver details (Comstock, Wildcat and Lucern's transfers only
+  carry a route note like "follow GPS route").
 - **Driver** (`driverPicker`) is the `drivers` table, shown "Name — ID #",
   read through `netlify/functions/drivers.js` (any logged-in PIN; no
   photos). **+ Add a new driver** asks for first name, last name, ID number
   and a photo of the ID, all required, and saves it right away (needs a
   connection; an ID number already on the list just picks that driver). The
   record keeps `driver` (the name), `driverIdNumber` and `driverId`. The ID
-  photos are seen only in the admin panel's **Drivers** tab
+  photos are seen only in the admin panel's **Drivers and Trucks** tab
   (`docs/USER_ADMIN.md`). Needs the `drivers` table from
   `supabase/schema.sql` run first.
 

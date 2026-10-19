@@ -99,16 +99,16 @@ Details: "Labor rates" in `docs/USER_ADMIN.md`.
 
 Harvest (`operations_stations.js`) lost farm site / license / round /
 harvest style / destination; it has a Fresh Frozen checkbox, a License Plate
-dropdown (plates used on past Harvest forms + Other — Canix transfers carry
-no plates) and a Driver dropdown from the `drivers` table
-(`netlify/functions/drivers.js`; add a driver with name, ID # and ID photo).
-The worksheet is license → strain box (scan a plant tag; strain from Canix
-plant batches; location, Transfer UID) → bins (weight, plant count) —
+dropdown (the `trucks` table + plates used on past Harvest forms + Other —
+Canix transfers carry no plates) and a Driver dropdown from the `drivers`
+table (`netlify/functions/drivers.js`; add a driver with name, ID # and ID
+photo). The worksheet is license → strain box (scan a plant tag; strain from
+Canix plant batches; location, Transfer UID) → bins (weight, plant count) —
 `buildLotSheet` in `ops_form.html`. After submit it offers a picture + CSV
-of the load to send on WhatsApp (`openShare`). Admin → Drivers shows the ID
-photos. Needs the `drivers`
-table from `supabase/schema.sql` run first. Details: "Harvest" in
-`docs/OPERATIONS_APP.md`, "Drivers" in `docs/USER_ADMIN.md`.
+of the load to send on WhatsApp (`openShare`). Admin → Drivers and Trucks
+adds and edits both and shows the ID photos. The `drivers` and `trucks`
+tables are already created in Supabase. Details: "Harvest" in
+`docs/OPERATIONS_APP.md`, "Drivers and Trucks" in `docs/USER_ADMIN.md`.
 
 ## Parked work
 

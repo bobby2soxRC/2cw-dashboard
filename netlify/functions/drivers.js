@@ -2,9 +2,11 @@
 // driverPicker). The drivers table holds ID numbers and a photo of each
 // driver's ID, so it has no anon access; this hands the list (no photos) to
 // anyone logged into the hub, and lets them add a driver who isn't on it.
-// The photos are only seen in the admin panel's Drivers tab (admin.js).
+// The photos are only seen in the admin panel's Drivers and Trucks tab (admin.js).
 //
-// POST {pin, action:'list'} -> {ok, drivers: [{id, first, last, idNumber}]}
+// POST {pin, action:'list'} -> {ok, drivers: [{id, first, last, idNumber}],
+//   trucks: [{plate, truckNo, description, active}]}   (trucks are set up
+//   in the admin panel; inactive ones come along so the form can hide them)
 // POST {pin, action:'add', first, last, idNumber, photo (image data URL)}
 //   -> {ok, driver, existed}   (an ID number already on the list returns
 //      that driver, existed: true, rather than adding a second one)
@@ -61,10 +63,14 @@ exports.handler = async (event) => {
     if (!user) return json(401, { ok: false, error: 'PIN not recognized — log in again.' });
 
     if (body.action === 'list') {
-      const res = await supaFetch(supaUrl, serviceKey,
-        'drivers?active=is.true&select=id,first_name,last_name,id_number&order=first_name.asc,last_name.asc');
+      const [res, tRes] = await Promise.all([
+        supaFetch(supaUrl, serviceKey, 'drivers?active=is.true&select=id,first_name,last_name,id_number&order=first_name.asc,last_name.asc'),
+        supaFetch(supaUrl, serviceKey, 'trucks?select=plate,truck_no,description,active&order=plate.asc')
+      ]);
       if (!res.ok) throw new Error(`drivers read failed: ${res.status} ${await res.text()}`);
-      return json(200, { ok: true, drivers: (await res.json()).map(shape) });
+      // No trucks table yet just means no trucks.
+      const trucks = tRes.ok ? (await tRes.json()).map((x) => ({ plate: x.plate, truckNo: x.truck_no, description: x.description, active: x.active })) : [];
+      return json(200, { ok: true, drivers: (await res.json()).map(shape), trucks });
     }
 
     if (body.action === 'add') {

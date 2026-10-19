@@ -204,7 +204,7 @@
       <button data-tab="orgchart" onclick="switchTab('orgchart')">Org Chart</button>
       <button data-tab="responsibilities" onclick="switchTab('responsibilities')">Responsibilities</button>
       <button data-tab="rates" onclick="switchTab('rates')">Labor Rates</button>
-      <button data-tab="drivers" onclick="switchTab('drivers')">Drivers</button>
+      <button data-tab="drivers" onclick="switchTab('drivers')">Drivers and Trucks</button>
     </div>
 
     <div id="users-view" class="view on">
@@ -253,16 +253,48 @@
 
     <div id="drivers-view" class="view">
       <div class="toolbar">
-        <h1>Drivers</h1>
+        <h1>Drivers and Trucks</h1>
+        <div class="toolbar-actions">
+          <button class="btn btn-gold" onclick="drvFormToggle('driver')">+ Add driver</button>
+          <button class="btn btn-gold" onclick="drvFormToggle('truck')">+ Add truck</button>
+        </div>
       </div>
+      <div class="status-line" style="color:var(--muted)">The Harvest form's Driver and License Plate dropdowns. Drivers can also be added on the form itself (name, ID number and a photo of their ID); trucks only here. Picking a truck's plate on the form fills its Truck #. Inactive ones drop off the dropdowns; old Harvest records keep them.</div>
+
+      <div id="driver-form" style="display:none;margin:0 0 1rem">
+        <div class="rate-in" style="flex-wrap:wrap">
+          <input type="text" id="drv-first" placeholder="First name" style="width:11rem"/>
+          <input type="text" id="drv-last" placeholder="Last name" style="width:11rem"/>
+          <input type="text" id="drv-idno" placeholder="ID number" style="width:9rem"/>
+          <label class="btn btn-ghost" style="padding:.45rem .8rem;cursor:pointer">Photo of ID<input type="file" id="drv-photo" accept="image/*" capture="environment" style="display:none" onchange="drvPhotoPicked()"/></label>
+          <img id="drv-photo-prev" alt="" style="display:none;width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--border)"/>
+          <button class="btn btn-gold" style="padding:.45rem .8rem" onclick="driverAdd()">Add</button>
+          <button class="btn" style="padding:.45rem .8rem" onclick="drvFormToggle('driver')">Cancel</button>
+        </div>
+      </div>
+      <div id="truck-form" style="display:none;margin:0 0 1rem">
+        <div class="rate-in" style="flex-wrap:wrap">
+          <input type="text" id="trk-plate" placeholder="License plate" style="width:9rem;text-transform:uppercase"/>
+          <input type="text" id="trk-no" placeholder="Truck # (optional)" style="width:9rem"/>
+          <input type="text" id="trk-desc" placeholder="Description, e.g. white Ford F-350 (optional)" style="width:20rem;max-width:100%"/>
+          <button class="btn btn-gold" style="padding:.45rem .8rem" onclick="truckAdd()">Add</button>
+          <button class="btn" style="padding:.45rem .8rem" onclick="drvFormToggle('truck')">Cancel</button>
+        </div>
+      </div>
+
+      <h2 style="font-size:1rem;margin:1.2rem 0 .4rem">Drivers</h2>
       <div class="status-line" id="drivers-status">Loading…</div>
-      <div class="status-line" style="color:var(--muted)">Truck drivers for the Harvest form's Driver dropdown. New drivers are added on the form itself (name, ID number and a photo of their ID). Inactive drivers drop off the dropdown; their old Harvest records keep their name.</div>
       <div class="filters"><div class="search-wrap"><input type="text" id="drivers-search" placeholder="Search drivers…" oninput="driversRender()"/></div></div>
       <div class="table-scroll" id="drivers-wrap"></div>
+      <input type="file" id="drv-photo-set" accept="image/*" capture="environment" style="display:none" onchange="driverPhotoPicked()"/>
       <div id="driver-photo-box" style="display:none;margin-top:1rem">
         <div class="toolbar"><h1 id="driver-photo-title" style="font-size:1rem"></h1><div class="toolbar-actions"><button class="btn" onclick="driverPhotoClose()">Close</button></div></div>
         <img id="driver-photo-img" alt="Driver ID" style="max-width:100%;border-radius:10px;border:1px solid var(--border)"/>
       </div>
+
+      <h2 style="font-size:1rem;margin:1.6rem 0 .4rem">Trucks</h2>
+      <div class="status-line" id="trucks-status"></div>
+      <div class="table-scroll" id="trucks-wrap"></div>
     </div>
 
     <div id="responsibilities-view" class="view">
@@ -664,40 +696,159 @@ async function extraSetActive(rowId, active){
   } catch(err) { alert('Could not save: ' + err.message); }
 }
 
-// ── Drivers tab ─────────────────────────────────────────────────────────
-// Truck drivers (drivers table), added from the Harvest form through
-// drivers.js. The ID photo is fetched one at a time when asked for.
+// ── Drivers and Trucks tab ──────────────────────────────────────────────
+// Drivers (drivers table) — added here or on the Harvest form (drivers.js);
+// the ID photo is fetched one at a time when asked for. Trucks (trucks
+// table) — the Harvest form's License Plate list, only added here.
 let driversLoaded = false;
 let driverRows = [];
+let truckRows = [];
+let driversReady = false, trucksReady = false;
+let drvPhoto = null;   // data URL of the photo picked for a new driver
 async function driversLoadAll(){
-  const status = document.getElementById('drivers-status');
+  const status = document.getElementById('drivers-status'), tStatus = document.getElementById('trucks-status');
   status.textContent = 'Loading…';
   try {
     const j = await callAdmin({ action: 'drivers_list', token: getToken() });
-    if(!Array.isArray(j.drivers)){ status.textContent = 'Run the drivers block from supabase/schema.sql in the Supabase SQL editor first.'; driverRows = []; driversRender(); return; }
-    driverRows = j.drivers;
-    status.textContent = `${driverRows.filter(d => d.active).length} active driver${driverRows.filter(d => d.active).length === 1 ? '' : 's'}` +
-      (driverRows.some(d => !d.active) ? ` · ${driverRows.filter(d => !d.active).length} inactive` : '');
+    driversReady = Array.isArray(j.drivers);
+    trucksReady = Array.isArray(j.trucks);
+    driverRows = j.drivers || [];
+    truckRows = j.trucks || [];
+    const count = (rows, word) => {
+      const on = rows.filter(d => d.active).length, off = rows.length - on;
+      return `${on} active ${word}${on === 1 ? '' : 's'}` + (off ? ` · ${off} inactive` : '');
+    };
+    const noPhoto = driverRows.filter(d => d.has_photo === false).length;
+    status.textContent = driversReady ? count(driverRows, 'driver') + (noPhoto ? ` · ${noPhoto} without an ID photo` : '') : 'Run the drivers block from supabase/schema.sql in the Supabase SQL editor first.';
+    tStatus.textContent = trucksReady ? count(truckRows, 'truck') : 'Run the trucks block from supabase/schema.sql in the Supabase SQL editor first.';
     driversRender();
+    trucksRender();
   } catch(err) {
-    status.textContent = 'Could not load drivers: ' + err.message;
+    status.textContent = 'Could not load drivers and trucks: ' + err.message;
   }
+}
+function drvFormToggle(which){
+  const f = document.getElementById(which + '-form');
+  if(f.style.display === 'none' && !(which === 'driver' ? driversReady : trucksReady)){ alert(`Run the ${which === 'driver' ? 'drivers' : 'trucks'} block from supabase/schema.sql in the Supabase SQL editor first.`); return; }
+  f.style.display = f.style.display === 'none' ? '' : 'none';
+  if(f.style.display === '') document.getElementById(which === 'driver' ? 'drv-first' : 'trk-plate').focus();
+}
+// Same size/quality as the form's photos (compressImage in ops_form.html).
+function compressPhoto(file){
+  return new Promise((resolve, reject) => {
+    const img = new Image(), reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => {
+      img.onerror = reject;
+      img.onload = () => {
+        const scale = Math.min(1, 1600 / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        resolve(c.toDataURL('image/jpeg', 0.72));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+async function drvPhotoPicked(){
+  const file = document.getElementById('drv-photo').files[0];
+  const prev = document.getElementById('drv-photo-prev');
+  drvPhoto = null; prev.style.display = 'none';
+  if(!file) return;
+  drvPhoto = await compressPhoto(file);
+  prev.src = drvPhoto; prev.style.display = '';
+}
+// Add or replace an existing driver's ID photo (one typed in without one,
+// or a renewed license): a hidden file input, opened from the row's link.
+let drvPhotoFor = null;
+function driverPhotoUpload(id){
+  drvPhotoFor = id;
+  const inp = document.getElementById('drv-photo-set');
+  inp.value = '';
+  inp.click();
+}
+async function driverPhotoPicked(){
+  const file = document.getElementById('drv-photo-set').files[0];
+  if(!file || !drvPhotoFor) return;
+  try {
+    const photo = await compressPhoto(file);
+    await callAdmin({ action: 'driver_photo_set', token: getToken(), id: drvPhotoFor, photo });
+    await driversLoadAll();
+  } catch(err) { alert('Could not save the photo: ' + (err.message || err)); }
+}
+async function driverAdd(){
+  const first = document.getElementById('drv-first'), last = document.getElementById('drv-last'), idno = document.getElementById('drv-idno');
+  if(!first.value.trim() || !last.value.trim() || !idno.value.trim()){ alert('Enter first name, last name and ID number.'); return; }
+  if(!drvPhoto){ alert('Add a photo of their ID.'); return; }
+  try {
+    await callAdmin({ action: 'driver_add', token: getToken(), first: first.value, last: last.value, idNumber: idno.value, photo: drvPhoto });
+    first.value = last.value = idno.value = '';
+    document.getElementById('drv-photo').value = '';
+    document.getElementById('drv-photo-prev').style.display = 'none';
+    drvPhoto = null;
+    document.getElementById('driver-form').style.display = 'none';
+    await driversLoadAll();
+  } catch(err) { alert('Could not add: ' + err.message); }
 }
 function driversRender(){
   const q = (document.getElementById('drivers-search').value || '').trim().toLowerCase();
   const rows = driverRows.filter(d => !q || `${d.first_name} ${d.last_name} ${d.id_number}`.toLowerCase().includes(q));
   const wrap = document.getElementById('drivers-wrap');
-  if(!rows.length){ wrap.innerHTML = `<div class="empty-note">${driverRows.length ? 'No drivers match.' : 'No drivers yet — they’re added from the Harvest form.'}</div>`; return; }
+  if(!rows.length){ wrap.innerHTML = `<div class="empty-note">${driverRows.length ? 'No drivers match.' : 'No drivers yet.'}</div>`; return; }
   wrap.innerHTML = `<table>
     <thead><tr><th>Name</th><th>ID number</th><th>ID photo</th><th>Added</th><th></th></tr></thead>
     <tbody>${rows.map(d => `<tr>
       <td>${esc(d.first_name)} ${esc(d.last_name)}${d.active ? '' : ' <span class="pill">inactive</span>'}</td>
       <td style="font-family:'DM Mono',monospace">${esc(d.id_number)}</td>
-      <td><a href="#" onclick="driverPhoto(${d.id});return false">View ID</a></td>
+      <td style="white-space:nowrap">${d.has_photo === false
+        ? `<span class="pill">no photo</span> <a href="#" onclick="driverPhotoUpload(${d.id});return false">upload ID photo</a>`
+        : `<a href="#" onclick="driverPhoto(${d.id});return false">View ID</a> · <a href="#" onclick="driverPhotoUpload(${d.id});return false">replace</a>`}</td>
       <td class="muted">${esc((d.created_at || '').slice(0, 10))}${d.created_by ? ' · ' + esc(d.created_by) : ''}</td>
       <td style="white-space:nowrap"><a href="#" onclick="driverEdit(${d.id});return false">edit</a> · <a href="#" onclick="driverSetActive(${d.id}, ${!d.active});return false">${d.active ? 'mark inactive' : 'reactivate'}</a></td>
     </tr>`).join('')}</tbody>
   </table>`;
+}
+function trucksRender(){
+  const wrap = document.getElementById('trucks-wrap');
+  if(!truckRows.length){ wrap.innerHTML = `<div class="empty-note">No trucks yet — + Add truck. (Plates typed on past Harvest forms still show on the form's list.)</div>`; return; }
+  wrap.innerHTML = `<table>
+    <thead><tr><th>License plate</th><th>Truck #</th><th>Description</th><th></th></tr></thead>
+    <tbody>${truckRows.map(x => `<tr>
+      <td style="font-family:'DM Mono',monospace">${esc(x.plate)}${x.active ? '' : ' <span class="pill">inactive</span>'}</td>
+      <td>${esc(x.truck_no || '')}</td>
+      <td>${esc(x.description || '')}</td>
+      <td style="white-space:nowrap"><a href="#" onclick="truckEdit(${x.id});return false">edit</a> · <a href="#" onclick="truckSetActive(${x.id}, ${!x.active});return false">${x.active ? 'mark inactive' : 'reactivate'}</a></td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+async function truckAdd(){
+  const plate = document.getElementById('trk-plate'), no = document.getElementById('trk-no'), desc = document.getElementById('trk-desc');
+  if(!plate.value.trim()){ alert('Enter the license plate.'); plate.focus(); return; }
+  try {
+    await callAdmin({ action: 'truck_add', token: getToken(), plate: plate.value, truckNo: no.value, description: desc.value });
+    plate.value = no.value = desc.value = '';
+    document.getElementById('truck-form').style.display = 'none';
+    await driversLoadAll();
+  } catch(err) { alert('Could not add: ' + err.message); }
+}
+async function truckEdit(id){
+  const x = truckRows.find(r => r.id === id);
+  if(!x) return;
+  const plate = prompt('License plate', x.plate); if(plate === null) return;
+  const truckNo = prompt('Truck # (blank for none)', x.truck_no || ''); if(truckNo === null) return;
+  const description = prompt('Description (blank for none)', x.description || ''); if(description === null) return;
+  try {
+    await callAdmin({ action: 'truck_update', token: getToken(), id, plate, truckNo, description });
+    await driversLoadAll();
+  } catch(err) { alert('Could not save: ' + err.message); }
+}
+async function truckSetActive(id, active){
+  try {
+    await callAdmin({ action: 'truck_update', token: getToken(), id, active });
+    await driversLoadAll();
+  } catch(err) { alert('Could not save: ' + err.message); }
 }
 async function driverPhoto(id){
   const d = driverRows.find(x => x.id === id);

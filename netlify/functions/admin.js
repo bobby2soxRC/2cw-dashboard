@@ -325,18 +325,88 @@ exports.handler = async (event) => {
       return json(200, { ok: true });
     }
 
-    // Truck drivers (drivers table — added from the Harvest form through
-    // drivers.js). The list leaves the ID photos out; driver_photo fetches
-    // one. drivers is null until the table has been created.
+    // Drivers and Trucks tab. Drivers (drivers table) are added here or from
+    // the Harvest form (drivers.js); trucks (trucks table) only here. The
+    // list leaves the ID photos out; driver_photo fetches one. Either list is
+    // null until its table has been created.
     if (action === 'drivers_list') {
-      const res = await supaFetch(supaUrl, serviceKey,
-        'drivers?select=id,first_name,last_name,id_number,active,created_by,created_at&order=first_name.asc,last_name.asc');
+      const missing = (status, text) => status === 404 || text.includes('42P01') || text.includes('PGRST205');
+      const [dRes, tRes] = await Promise.all([
+        supaFetch(supaUrl, serviceKey, 'drivers?select=id,first_name,last_name,id_number,active,created_by,created_at&order=first_name.asc,last_name.asc'),
+        supaFetch(supaUrl, serviceKey, 'trucks?select=*&order=plate.asc')
+      ]);
+      const read = async (res) => {
+        if (res.ok) return res.json();
+        const text = await res.text();
+        if (missing(res.status, text)) return null;
+        throw new Error(`${res.status} ${text}`);
+      };
+      const drivers = await read(dRes);
+      // Which drivers have no ID photo yet (added without one, e.g. typed in
+      // from a list) — asked separately so the list doesn't carry photos.
+      if (drivers && drivers.length) {
+        const nRes = await supaFetch(supaUrl, serviceKey, 'drivers?id_photo=is.null&select=id');
+        const none = new Set(nRes.ok ? (await nRes.json()).map((d) => d.id) : []);
+        drivers.forEach((d) => { d.has_photo = !none.has(d.id); });
+      }
+      return json(200, { ok: true, drivers, trucks: await read(tRes) });
+    }
+
+    // A driver's ID photo, added or replaced (a renewed license).
+    if (action === 'driver_photo_set') {
+      if (!/^\d+$/.test(String(payload.id || ''))) return json(400, { ok: false, error: 'Missing id' });
+      const photo = typeof payload.photo === 'string' ? payload.photo : '';
+      if (!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(photo)) return json(400, { ok: false, error: 'Pick a photo of the ID' });
+      if (photo.length > 3_000_000) return json(400, { ok: false, error: 'That photo is too large' });
+      const res = await supaFetch(supaUrl, serviceKey, `drivers?id=eq.${payload.id}`, { method: 'PATCH', body: JSON.stringify({ id_photo: photo }) });
+      if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+      return json(200, { ok: true });
+    }
+
+    if (action === 'driver_add') {
+      const clean = (s, n) => String(s || '').trim().replace(/\s+/g, ' ').slice(0, n);
+      const first = clean(payload.first, 100), last = clean(payload.last, 100);
+      const idNumber = clean(payload.idNumber, 40).toUpperCase();
+      const photo = typeof payload.photo === 'string' ? payload.photo : '';
+      if (!first || !last || !idNumber) return json(400, { ok: false, error: 'First name, last name and ID number are required' });
+      if (!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(photo)) return json(400, { ok: false, error: 'A photo of the ID is required' });
+      if (photo.length > 3_000_000) return json(400, { ok: false, error: 'That photo is too large' });
+      const res = await supaFetch(supaUrl, serviceKey, 'drivers', {
+        method: 'POST', body: JSON.stringify({ first_name: first, last_name: last, id_number: idNumber, id_photo: photo, created_by: 'admin panel' })
+      });
       if (!res.ok) {
         const text = await res.text();
-        if (res.status === 404 || text.includes('42P01') || text.includes('PGRST205')) return json(200, { ok: true, drivers: null });
+        if (text.includes('23505')) return json(409, { ok: false, error: 'A driver with that ID number is already on the list' });
         throw new Error(`${res.status} ${text}`);
       }
-      return json(200, { ok: true, drivers: await res.json() });
+      return json(200, { ok: true });
+    }
+
+    // Trucks: {plate, truckNo?, description?} -> add; {id, …, active?} -> update.
+    if (action === 'truck_add' || action === 'truck_update') {
+      const clean = (s, n) => String(s || '').trim().replace(/\s+/g, ' ').slice(0, n);
+      const row = {};
+      if (payload.plate !== undefined) {
+        row.plate = clean(payload.plate, 20).toUpperCase();
+        if (!row.plate) return json(400, { ok: false, error: 'Enter the license plate' });
+      }
+      if (payload.truckNo !== undefined) row.truck_no = clean(payload.truckNo, 40) || null;
+      if (payload.description !== undefined) row.description = clean(payload.description, 200) || null;
+      if (payload.active !== undefined) row.active = !!payload.active;
+      let res;
+      if (action === 'truck_add') {
+        if (!row.plate) return json(400, { ok: false, error: 'Enter the license plate' });
+        res = await supaFetch(supaUrl, serviceKey, 'trucks', { method: 'POST', body: JSON.stringify(row) });
+      } else {
+        if (!/^\d+$/.test(String(payload.id || ''))) return json(400, { ok: false, error: 'Missing id' });
+        res = await supaFetch(supaUrl, serviceKey, `trucks?id=eq.${payload.id}`, { method: 'PATCH', body: JSON.stringify(row) });
+      }
+      if (!res.ok) {
+        const text = await res.text();
+        if (text.includes('23505')) return json(409, { ok: false, error: 'That plate is already on the list' });
+        throw new Error(`${res.status} ${text}`);
+      }
+      return json(200, { ok: true });
     }
 
     if (action === 'driver_photo') {

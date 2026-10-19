@@ -1591,25 +1591,6 @@
     if (f.t === 'uid' && f.prefill === 'lookup') inp.addEventListener('change', () => tryPrefill(inp.value.trim(), f.k));
   });
 
-  // ── License plate list (platePicker — Harvest) ───────────────────────────
-  // Canix's transfers don't carry the truck's plate, so the list is every
-  // plate already used on a Harvest form; Other types a new one, which is
-  // on the list from then on.
-  station.fields.filter((f) => f.platePicker).forEach((f) => {
-    if (!draftsOn) return;
-    loadSubmitted(station.key).then((recs) => {
-      const sel = document.getElementById(`f_${f.k}`);
-      const have = new Set([...sel.options].map((o) => o.value));
-      const plates = [...new Set(recs.map((r) => String(r[f.k] || '').trim().toUpperCase()).filter(Boolean))].sort();
-      const otherOpt = sel.querySelector('option[value="__other__"]');
-      plates.filter((p) => !have.has(p)).forEach((p) => {
-        const o = document.createElement('option');
-        o.value = o.textContent = p;
-        sel.insertBefore(o, otherOpt);
-      });
-    }).catch((err) => console.error('plates', err));
-  });
-
   // ── Driver dropdown (driverPicker — Harvest) ─────────────────────────────
   // The drivers table through netlify/functions/drivers.js (it holds ID
   // numbers and photos, so it isn't readable from the browser directly).
@@ -1694,12 +1675,48 @@
       }
     });
   });
+  const plateFields = station.fields.filter((f) => f.platePicker);
+  const driversList = driverFields.length || plateFields.length ? callDrivers({ action: 'list' }) : null;
   if (driverFields.length) {
-    callDrivers({ action: 'list' })
+    driversList
       .then((j) => { drivers = j.drivers || []; })
       .catch((err) => { console.error('drivers', err); driversFailed = true; })
       .finally(() => driverFields.forEach(fillDriverPicker));
   }
+
+  // ── License plate list (platePicker — Harvest) ───────────────────────────
+  // Canix's transfers don't carry the truck's plate, so the list is the
+  // trucks set up in the admin panel (Drivers and Trucks — "PLATE — #truck ·
+  // description"), then any other plate already used on a Harvest form;
+  // Other types a new one. Picking a truck with a Truck # fills the form's
+  // Truck # if it's blank.
+  plateFields.forEach((f) => {
+    const sel = document.getElementById(`f_${f.k}`);
+    let trucks = [];
+    Promise.all([
+      driversList.then((j) => j.trucks || []).catch(() => []),
+      draftsOn ? loadSubmitted(station.key).catch((err) => { console.error('plates', err); return []; }) : []
+    ]).then(([list, recs]) => {
+      trucks = list;
+      const up = (x) => String(x || '').trim().toUpperCase();
+      const known = new Set(trucks.map((x) => up(x.plate)));
+      const otherOpt = sel.querySelector('option[value="__other__"]');
+      const add = (v, label) => {
+        let o = sel.querySelector(`option[value="${CSS.escape(v)}"]`);
+        if (!o) { o = document.createElement('option'); o.value = v; sel.insertBefore(o, otherOpt); }
+        o.textContent = label;
+      };
+      trucks.filter((x) => x.active).forEach((x) => add(up(x.plate),
+        [up(x.plate), [x.truckNo ? `#${x.truckNo}` : '', x.description || ''].filter(Boolean).join(' · ')].filter(Boolean).join(' — ')));
+      [...new Set(recs.map((r) => up(r[f.k])).filter(Boolean))].filter((v) => !known.has(v)).sort().forEach((v) => add(v, v));
+      if (values[f.k]) sel.value = values[f.k];
+    });
+    sel.addEventListener('change', () => {
+      const truck = trucks.find((x) => String(x.plate || '').trim().toUpperCase() === sel.value);
+      const noField = station.fields.find((x) => x.k === 'truckNo');
+      if (truck && truck.truckNo && noField && !values.truckNo) { setFieldValue(noField, truck.truckNo); markDirty(); }
+    });
+  });
 
   // ── Pre-roll queue dropdown (prPicker) ───────────────────────────────────
   // The open pre-roll queue in the dashboard's order (loadPrerollQueue in

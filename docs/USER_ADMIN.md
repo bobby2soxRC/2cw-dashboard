@@ -434,26 +434,40 @@ including people typed into the Labor Log by name.
   It never overwrites a badge already set. Its header lists the badges it
   leaves out and the name matches worth a second look.
 
-## Drivers
+## Drivers and Trucks
 
-Admin → **Drivers**: the truck drivers on the Harvest form's Driver
-dropdown, with name, ID number, who added them and when. **View ID** shows
-the photo of their ID; **edit** fixes the name or ID number; **mark
-inactive** takes them off the dropdown (old Harvest records keep the name).
+Admin → **Drivers and Trucks**: the Harvest form's Driver and License Plate
+dropdowns.
 
-- Drivers are added on the Harvest form itself (**+ Add a new driver**:
-  first name, last name, ID number and a photo of the ID, all required),
-  through `netlify/functions/drivers.js`, which checks the hub PIN. There's
-  no add button here.
-- Stored in the `drivers` table (`supabase/schema.sql`), service role only.
-  The ID photo is a JPEG data URL in the row (`id_photo`), not in the
-  uploads folder that the other form photos go to, because that folder is
-  public. The admin list leaves photos out (`drivers_list`) and fetches one
-  when asked (`driver_photo`); `driver_update` edits or deactivates. ID
-  numbers are unique (case-insensitive).
-- Run the `drivers` block of `supabase/schema.sql` in the Supabase SQL
-  editor before deploying; until then the tab says so and the form's
-  Driver dropdown can't load.
+- **Drivers**: name, ID number, who added them and when. **+ Add driver**
+  takes first name, last name, ID number and a photo of the ID (all
+  required, same as the form). **View ID** shows the photo; **edit** fixes
+  the name or ID number; **mark inactive** takes them off the dropdown (old
+  Harvest records keep the name). A driver without a photo shows **no
+  photo · upload ID photo**; **replace** swaps in a new one (a renewed
+  license) — `driver_photo_set`. Drivers can also be added on the Harvest
+  form itself (**+ Add a new driver**), through `netlify/functions/drivers.js`,
+  which checks the hub PIN.
+- **Trucks**: license plate, Truck # and a description. **+ Add truck**,
+  **edit**, **mark inactive**. Only added here. On the form the plate shows
+  as "PLATE — #truck · description", and picking it fills the form's
+  Truck # when blank. Plates typed on past Harvest forms still show on the
+  form's list after these.
+- Stored in the `drivers` and `trucks` tables (`supabase/schema.sql`),
+  service role only, through `admin.js` (`drivers_list`, `driver_add`,
+  `driver_update`, `driver_photo`, `driver_photo_set`, `truck_add`,
+  `truck_update`). The ID photo
+  is a JPEG data URL in the row (`id_photo`), not in the uploads folder the
+  other form photos go to, because that folder is public; the list leaves
+  photos out and fetches one when asked. ID numbers and plates are unique
+  (case-insensitive).
+- The first 3 drivers (2026-10-19) were typed in from photos of their
+  licenses, without the photos (they can't go in through SQL): Jorge Saul
+  Lopez Cruz, Bryan Robert Ogneff, Silverio Mata Chavolla — upload their
+  ID photos from the tab.
+- The first 6 trucks (2026-10-19) came from photos of the plates: trailers
+  4TP2177 (unit 414856) and 4TR3721 (FLXZ 432936), Idealease trucks
+  81758Y3, 81371Y3 and 78051C4, and 50683A4.
 
 ## On-Stem Flower (bucking queue and releasing held Take Downs)
 

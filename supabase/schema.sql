@@ -1370,8 +1370,8 @@ grant select, insert, update, delete on public.labor_people to service_role;
 -- ── Truck drivers ─────────────────────────────────────────────────────────
 -- The Harvest form's Driver dropdown. Added from the form ("+ Add a new
 -- driver": name, ID number, photo of the ID) through
--- netlify/functions/drivers.js, and seen / edited in the admin panel's
--- Drivers tab (admin.js). The photo is a JPEG data URL kept in the row
+-- netlify/functions/drivers.js, or in the admin panel's Drivers and Trucks
+-- tab (admin.js), where they're also seen and edited. The photo is a JPEG data URL kept in the row
 -- rather than in the (public) uploads folder, since it's someone's ID.
 -- Service role only. Never deleted — made inactive — so old Harvest
 -- records keep pointing at a driver (their `driverId`).
@@ -1390,6 +1390,25 @@ create unique index if not exists drivers_id_number_key on drivers (upper(id_num
 alter table drivers enable row level security;   -- no policies: service role only
 revoke all on public.drivers from anon;
 grant select, insert, update, delete on public.drivers to service_role;
+
+-- ── Trucks ────────────────────────────────────────────────────────────────
+-- The Harvest form's License Plate dropdown: these, plus any plate typed on
+-- a past Harvest form. Added and edited in the admin panel's Drivers and
+-- Trucks tab (admin.js); the form reads them through drivers.js. Picking
+-- one fills the form's Truck # when it has one. Made inactive, not deleted.
+create table if not exists trucks (
+  id          bigint generated always as identity primary key,
+  plate       text not null check (plate <> ''),
+  truck_no    text,
+  description text,
+  active      boolean not null default true,
+  created_at  timestamptz not null default now()
+);
+create unique index if not exists trucks_plate_key on trucks (upper(plate));
+
+alter table trucks enable row level security;   -- no policies: service role only
+revoke all on public.trucks from anon;
+grant select, insert, update, delete on public.trucks to service_role;
 
 -- ── Metrc queue ──────────────────────────────────────────────────────────
 -- Most submitted station forms mean something has to be done in Metrc
