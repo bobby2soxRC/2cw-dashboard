@@ -287,8 +287,8 @@ credited to another day than it was weighed shows the weighing date in the
 log. A page left open overnight that was on Today moves to the new Today
 when the date turns over (`rollDay`), so new bags don't land on yesterday. On a
 page with day tabs (Hand Trim, Bucking, Pre-Roll) the **Date** box at the
-top is the picked tab's date (`syncDateBox`), and changing it moves that tab
-like ✎ Change date. The run's Start Date (`values.date`, the record's
+top just shows the picked tab's date, read-only (`syncDateBox`); dates are
+changed on the tabs. The run's Start Date (`values.date`, the record's
 `work_date`) is kept behind it and follows its tab, to the run's first day. Smalls, trim,
 waste and the rest sit under an "End of Run" heading (`t: 'heading'`) and
 are filled in on the last day before submitting. It starts from bucked flower. Its
