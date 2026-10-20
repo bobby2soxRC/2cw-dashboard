@@ -385,7 +385,10 @@ seeds and pre-rolls aren't tracked there). No SQL.
 **Work Orders** (`work_orders.html`, hub card `work_orders` directly
 under Operations) puts the work queues on one page, a tab each (`?tab=buck|trim|preroll`):
 - **Bucking** — `loadBuckingQueue`, the same list and order as the On-Stem
-  Flower page (which still has it, with the holds).
+  Flower page (which still has it, with the holds). Each row shows its CID
+  — the Take Down's, plus each farm intake's from Wet Intake, comma-separated
+  when a package combines intakes from different customers. Hand Trim rows
+  show the CID too (traced back the same way, `buckedLots`).
 - **Hand Trim** — `loadTrimQueue` (`ops_data.js`): every bucked lot,
   including ones still being bucked, with no submitted Hand Trim yet, with
   bucked and trimmed-so-far pounds. The order is one shared

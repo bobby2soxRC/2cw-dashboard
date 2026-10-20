@@ -3562,11 +3562,11 @@
         `<div class="q-main"><div class="q-strain">${escapeHtml(p.strain || '—')}${abbr ? ` · ${escapeHtml(abbr)}` : ''}` +
         (p.inProgress ? `<span class="q-tag">${escapeHtml(t(QT.bucking))}</span>` : '') +
         (p.draftId ? `<span class="q-tag">${escapeHtml(t(QT.busy))}</span>` : '') + `</div>` +
-        `<div class="q-uid">${escapeHtml(p.sourceUid)}${p.cid ? ' · ' + escapeHtml(p.cid) : ''}</div></div>` + lbs + go + `</div>`;
+        `<div class="q-uid">${escapeHtml(p.sourceUid)}${p.cid ? ' · CID ' + escapeHtml(p.cid) : ''}</div></div>` + lbs + go + `</div>`;
       return `<div class="q-row"><div class="q-n">${i + 1}</div>` +
         `<div class="q-main"><div class="q-strain">${escapeHtml(p.strain || '—')}${abbr ? ` · ${escapeHtml(abbr)}` : ''}` +
         (p.draftId ? `<span class="q-tag">${escapeHtml(t(QT.busy))}</span>` : '') + `</div>` +
-        `<div class="q-uid">${escapeHtml(p.sourceUid)}${p.releasedFrom ? ' · ' + escapeHtml(t(QT.part).replace('{uid}', String(p.releasedFrom).slice(-4))) : ''}${(p.farmUids || []).length > 1 ? ' · ' + escapeHtml(t(QT.merged).replace('{n}', p.farmUids.length)) : ''}</div></div>` +
+        `<div class="q-uid">${escapeHtml(p.sourceUid)}${p.cid ? ' · CID ' + escapeHtml(p.cid) : ''}${p.releasedFrom ? ' · ' + escapeHtml(t(QT.part).replace('{uid}', String(p.releasedFrom).slice(-4))) : ''}${(p.farmUids || []).length > 1 ? ' · ' + escapeHtml(t(QT.merged).replace('{n}', p.farmUids.length)) : ''}</div></div>` +
         `<div class="q-lbs">` +
         `<div class="q-lb"><span class="k">${escapeHtml(t(QT.initLb))}</span>${p.unbuckedLb == null ? '—' : fmtNum(p.unbuckedLb, 2) + ' lb'}</div>` +
         `<div class="q-lb"><span class="k">${escapeHtml(t(QT.pulledLb))}</span>${fmtNum(p.pulledLb || 0, 2)} lb</div>` +

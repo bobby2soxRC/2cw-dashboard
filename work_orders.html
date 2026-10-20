@@ -233,8 +233,8 @@
       const tags = (p.inProgress ? `<span class="q-tag gold">${esc(t(L.bucking))}</span>` : '') +
         (p.draftId ? `<span class="q-tag">${esc(t(L.busy))}</span>` : '');
       const sub = buck
-        ? `${esc(p.sourceUid)}${p.releasedFrom ? ' · ' + esc(t(L.partOf).replace('{uid}', String(p.releasedFrom).slice(-4))) : ''}${(p.farmUids || []).length > 1 ? ' · ' + esc(t(L.merged).replace('{n}', p.farmUids.length)) : ''}`
-        : `${esc(p.sourceUid)}${p.cid ? ' · ' + esc(p.cid) : ''}`;
+        ? `${esc(p.sourceUid)}${p.cid ? ' · CID ' + esc(p.cid) : ''}${p.releasedFrom ? ' · ' + esc(t(L.partOf).replace('{uid}', String(p.releasedFrom).slice(-4))) : ''}${(p.farmUids || []).length > 1 ? ' · ' + esc(t(L.merged).replace('{n}', p.farmUids.length)) : ''}`
+        : `${esc(p.sourceUid)}${p.cid ? ' · CID ' + esc(p.cid) : ''}`;
       const lbs = buck
         ? `<div class="q-lb"><span class="k">${esc(t(L.initLb))}</span>${p.unbuckedLb == null ? '—' : lbTxt(p.unbuckedLb)}</div>
            <div class="q-lb"><span class="k">${esc(t(L.pulledLb))}</span>${lbTxt(p.pulledLb || 0)}</div>
