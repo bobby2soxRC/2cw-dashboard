@@ -192,9 +192,10 @@
     tMachine: { en: 'Machine Trim', es: 'Corte a máquina' },
     tSmalls:  { en: 'Smalls Hand Trim', es: 'Corte de smalls' },
     tBuck:    { en: 'Bucking', es: 'Desvarado' },
+    tMixed:   { en: 'Mixed Trim Package', es: 'Paquete de recorte mixto' },
     tTake:    { en: 'Take Down', es: 'Bajada' },
-    note:     { en: 'Built from the station forms, not Canix. Drying, On-Stem and Bucked clear themselves as the next form is submitted. Flower, Smalls, Trim and Fresh Frozen come off when a Pre-Roll run, Manufacturing Run, Biomass Request (transferred) or Smalls Hand Trim names their UID; anything sold or moved some other way has to be marked Used up. Hand Trim outputs without their own new UID are listed under the lot’s UID. Drying and fresh-frozen intakes are wet weight; the rest is dry.',
-                es: 'Hecho con los formularios de estación, no con Canix. Secando, En tallo y Desvarado se vacían solos al enviar el siguiente formulario. Flor, Smalls, Recorte y Fresco congelado bajan cuando una corrida de prerolls, de manufactura, una solicitud de biomasa (transferida) o un corte de smalls usa su UID; lo vendido o movido de otra forma hay que marcarlo como Agotado. Lo del corte a mano sin UID nuevo aparece bajo el UID del lote. Secando y fresco congelado son peso húmedo; lo demás es seco.' }
+    note:     { en: 'Built from the station forms, not Canix. Drying, On-Stem and Bucked clear themselves as the next form is submitted. Flower, Smalls, Trim and Fresh Frozen come off when a Pre-Roll run, Manufacturing Run, Biomass Request (transferred), Smalls Hand Trim, Mixed Trim Package or Outgoing Transfer names their UID; anything sold or moved some other way has to be marked Used up. Hand Trim outputs without their own new UID are listed under the lot’s UID. Drying and fresh-frozen intakes are wet weight; the rest is dry.',
+                es: 'Hecho con los formularios de estación, no con Canix. Secando, En tallo y Desvarado se vacían solos al enviar el siguiente formulario. Flor, Smalls, Recorte y Fresco congelado bajan cuando una corrida de prerolls, de manufactura, una solicitud de biomasa (transferida), un corte de smalls, un paquete de recorte mixto o una transferencia de salida usa su UID; lo vendido o movido de otra forma hay que marcarlo como Agotado. Lo del corte a mano sin UID nuevo aparece bajo el UID del lote. Secando y fresco congelado son peso húmedo; lo demás es seco.' }
   };
   const TABS = [
     { k: 'all', c: 'var(--text)' }, { k: 'drying', c: 'var(--blue)' }, { k: 'onstem', c: 'var(--gold)' },
@@ -272,10 +273,11 @@
   // ── Load and build ────────────────────────────────────────────────────────
   let rows = [], marks = {};
   async function load() {
-    const [intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, mfg, biomass, bq, tq, codes, fac, mk, paper] = await Promise.all([
+    const [intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, mfg, biomass, mixed, shipped, bq, tq, codes, fac, mk, paper] = await Promise.all([
       loadSubmitted('intake_wet'), loadSubmitted('dry_check'), loadSubmitted('buck'), loadSubmitted('hand_trim'),
       loadSubmitted('machine_trim'), loadSubmitted('smalls_trim'), loadSubmitted('fresh_frozen'),
       loadSubmitted('preroll_production'), loadSubmitted('mfg_output'), loadSubmitted('biomass_request'),
+      loadSubmitted('trim_package'), loadSubmitted('transfer_out'),
       loadBuckingQueue(), loadTrimQueue(), getRefCodes(),
       client.from('canix_facilities').select('license_number,farm_group').then((r) => r.data || []),
       getMarks(),
@@ -287,7 +289,7 @@
     // Records loaded from the old paper sheets (Aug–Sep 2026, owner_user
     // 'paper_import') still trace lots, but their output isn't stock any more.
     const paperIds = new Set(paper.map((r) => r.id));
-    rows = build({ intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, mfg, biomass, bq, tq })
+    rows = build({ intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, mfg, biomass, mixed, shipped, bq, tq })
       .filter((r) => !paperIds.has(r.recId));
   }
 
@@ -365,7 +367,8 @@
     d.tq.items.forEach((l) => {
       if (d.machine.some((m) => uidTailMatch(m.sourceUid, l.sourceUid))) return;
       const lb = Number(l.buckedFlowerLb || 0) - Number(l.trimmedLb || 0);
-      add('bucked', l, { key: `${l.buckDraftId || l.id}:bucked`, recId: l.buckDraftId || l.id, uid: normUid(l.sourceUid), lb,
+      // A lot held as bucked flower is under its own bucked tag once it has one.
+      add('bucked', l, { key: `${l.buckDraftId || l.id}:bucked`, recId: l.buckDraftId || l.id, uid: normUid(l.newBuckedUid || l.sourceUid), lb,
         status: l.inProgress ? 'sBucking' : l.draftId ? 'sTrimming' : 'sToTrim', pill: l.inProgress || l.draftId ? 'work' : 'go',
         type: 'tBuck', ...origin(l, l.sourceUid) });
     });
@@ -393,6 +396,16 @@
     d.smallsT.forEach((r) => outputs(r, 'tSmalls', [
       ['finishedSmallsLb', 'smalls_b', { en: 'Finished', es: 'Terminados' }], ['shakeLb', 'shake', { en: 'Shake', es: 'Shake' }]], { finishedSmallsLb: 'newFinishedUid' }));
     d.bucks.forEach((r) => outputs(r, 'tBuck', [['trimLb', 'trim', { en: 'Bucking trim', es: 'Recorte de desvarado' }]]));
+    // Mixed Trim Packages: one package of many lots' trim, under its new tag
+    // (blank until the Metrc Queue fills it in).
+    const pkgType = STATION_BY_KEY.trim_package.fields.find((f) => f.k === 'packageType');
+    d.mixed.forEach((r) => {
+      const cat = r.packageType || 'trim';
+      const opt = pkgType.opts.find((o) => o.v === cat);
+      add('trim', r, { key: `${r.id}:mixed`, uid: normUid(r.newMixedTrimUid), lb: r.totalLb,
+        strain: t({ en: 'Mixed', es: 'Mixto' }), cat, catLabel: opt ? opt.l : null, type: 'tMixed',
+        farm: '', code: '', license: '', cid: '', farmUids: [] });
+    });
 
     // What downstream forms took off a UID, oldest stock first. A Smalls Hand
     // Trim doesn't take from its own output.
@@ -400,13 +413,20 @@
       ...d.prerolls.map((r) => ({ id: r.id, uid: r.sourceUid, cat: r.inputCategory, lb: r.startingLb, what: t(STATION_BY_KEY.preroll_production.title) })),
       ...d.mfg.map((r) => ({ id: r.id, uid: r.sourceUid, cat: r.inputCategory, lb: r.inputLb, what: t(STATION_BY_KEY.mfg_output.title) })),
       ...d.biomass.filter((r) => r.status === 'transferred').map((r) => ({ id: r.id, uid: r.sourceUid, cat: r.category, lb: r.transferredLb, what: t(STATION_BY_KEY.biomass_request.title) })),
-      ...d.smallsT.map((r) => ({ id: r.id, uid: r.sourceUid, cat: 'smalls_b', lb: r.startingLb, what: t(STATION_BY_KEY.smalls_trim.title) }))
+      ...d.smallsT.map((r) => ({ id: r.id, uid: r.sourceUid, cat: 'smalls_b', lb: r.startingLb, what: t(STATION_BY_KEY.smalls_trim.title) })),
+      // Each row of a Mixed Trim Package, and of an outgoing transfer (by its
+      // product type code: TRANSFER_TYPES' tab, and category when it has one).
+      ...d.mixed.flatMap((r) => (r.lines || []).map((x) => ({ id: r.id, uid: x.sourceUid, cat: x.trimType || null, tab: 'trim', lb: x.weightLb,
+        what: t(STATION_BY_KEY.trim_package.title) }))),
+      ...d.shipped.flatMap((r) => (r.lines || []).filter((x) => (TRANSFER_TYPES[x.productType] || {}).tab).map((x) => ({
+        id: r.id, uid: x.sourceUid, cat: TRANSFER_TYPES[x.productType].cat || null, tab: TRANSFER_TYPES[x.productType].tab, lb: x.weight,
+        what: [t(STATION_BY_KEY.transfer_out.title), r.customer].filter(Boolean).join(' · ') })))
     ];
     takers.forEach((c) => {
       let left = Number(c.lb) || 0;
-      const tab = CAT_TAB[c.cat];
+      const tab = c.tab || CAT_TAB[c.cat];
       if (!(left > 0) || !tab || !c.uid) return;
-      out.filter((r) => r.tab === tab && r.recId !== c.id && r.lb > 0 && uidTailMatch(r.uid, c.uid) && (!r.cat || r.cat === c.cat || tab !== 'trim'))
+      out.filter((r) => r.tab === tab && r.recId !== c.id && r.lb > 0 && uidTailMatch(r.uid, c.uid) && (!r.cat || !c.cat || r.cat === c.cat || tab !== 'trim'))
         .sort((a, b) => a.date.localeCompare(b.date))
         .forEach((r) => {
           if (left <= 0) return;

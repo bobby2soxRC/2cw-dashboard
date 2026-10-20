@@ -231,7 +231,7 @@ const CARD_DEFS = [
     // ('metrc_queue' / 'metrc queue edit' — edit implies view; see buildHub
     // in index.html). Edit lets someone set a form's Metrc status and note.
     title: 'Metrc Queue',
-    desc: 'Every submitted Wet Intake, Take Down, Bucking, Hand Trim and Pre-Roll form waiting on Metrc — open one, copy its values, and mark where it stands.',
+    desc: 'Every submitted Wet Intake, Take Down, Bucking, Hand Trim, Mixed Trim, Pre-Roll and Outgoing Transfer form waiting on Metrc — open one, copy its values, and mark where it stands.',
     href: '/metrc.html'
   },
   {
@@ -379,7 +379,7 @@ const CARD_ES = {
   drying_schedule:     { title: 'Calendario de Secado', desc: 'Granjas externas para las que secamos — granja, licencia, tamaño, fechas estimadas de entrada y peso húmedo, con la carga semanal.' },
   work_orders:         { title: 'Órdenes de Trabajo', desc: 'Las filas de trabajo en un solo lugar — desvarado, corte a mano y prerolls — en el orden de trabajo, con Empezar o Abrir para cada uno.' },
   harvest_intakes:     { title: 'Recepciones de Cosecha', desc: 'Todas las recepciones de cosecha húmeda — abre una para ver el registro completo, o corrígela y registra el ajuste en Metrc si tienes acceso de edición.' },
-  metrc_queue:         { title: 'Cola de Metrc', desc: 'Cada recepción húmeda, bajada, desvarado, corte a mano y preroll enviado que espera en Metrc — ábralo, copie sus valores y marque en qué va.' },
+  metrc_queue:         { title: 'Cola de Metrc', desc: 'Cada recepción húmeda, bajada, desvarado, corte a mano, recorte mixto, preroll y transferencia de salida enviado que espera en Metrc — ábralo, copie sus valores y marque en qué va.' },
   information_hub:     { title: 'Centro de Información', desc: 'Las listas de referencia que usa el resto de la app — variedades, instalaciones de Canix, pronósticos de rendimiento, licencias de ranchos e IDs de clientes.' },
   production_today:    { title: 'Hoy — En Vivo', desc: 'Cada formulario en progreso o terminado hoy, actualizado en vivo — para quien tenga acceso de vista, pueda editarlo o no.' },
   brand_assets:        { title: 'Recursos de Marca', desc: 'Logotipos, fotografía y guías de marca de 2CW y marcas socias — carpeta compartida de Drive.' },

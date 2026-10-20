@@ -139,6 +139,20 @@ Canix until accepted, so those come from Wet Intakes whose package isn't in
 our Canix inventory yet (clock from the intake). No SQL. Details: "Incoming transfers to accept" in
 `docs/OPERATIONS_APP.md`.
 
+### Bucked tags only when held; mixed trim; outgoing transfers (started 2026-10-20)
+
+From a process talk with Kevin and Alonzo. Bucking makes no new Metrc tag
+unless the lot is ticked **Holding as bucked flower** (`holdBucked`; the
+Metrc Queue then asks for `newBuckedUid`). Hand Trim's trim outputs no
+longer get per-strain tags (`when: () => false` in its `metrcTags`); a new
+**Mixed Trim Package** form (`trim_package`) lists the trim packaged
+together and gets one tag. New **Product Transfer — Outgoing** form
+(`transfer_out`, from the paper v7 form; product codes `TRANSFER_TYPES`).
+Both new forms are in the Metrc Queue and take stock off Raw Inventory. No
+SQL. Users need the new stations ticked in Admin to see them. Details in
+`docs/OPERATIONS_APP.md` ("Holding as bucked flower", "Mixed Trim Package",
+"Product Transfer — Outgoing").
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)

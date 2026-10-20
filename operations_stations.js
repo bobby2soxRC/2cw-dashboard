@@ -187,6 +187,20 @@ const BUCK_OUTPUTS = ['buckedFlowerLb', 'trimLb', 'stemLb', 'moldLb', 'floorWast
 // recovered from the leaf (`recovered`).
 const buckedLb = (v) => [...(v.bucked || []), ...(v.recovered || [])].reduce((a, r) => a + num(r.weightLb), 0);
 
+// Product Transfer — Outgoing's product type codes (the paper form's list):
+// `tab` is the Raw Inventory tab the package comes off, `cat` the biomass
+// category when it has to match one; `pieces` rows are counted, not weighed.
+const TRANSFER_TYPES = {
+  1: { l: { en: 'Unbucked Flower', es: 'Flor sin desvarar' }, tab: 'onstem' },
+  2: { l: { en: 'Bucked Flower', es: 'Flor desvarada' }, tab: 'bucked' },
+  3: { l: { en: 'Trimmed Flower', es: 'Flor cortada' }, tab: 'flower', cat: 'flower_a' },
+  4: { l: { en: 'Smalls', es: 'Smalls' }, tab: 'smalls', cat: 'smalls_b' },
+  5: { l: { en: 'Trim / Biomass', es: 'Recorte / biomasa' }, tab: 'trim' },
+  6: { l: { en: 'Fresh Frozen', es: 'Fresco congelado' }, tab: 'frozen', cat: 'fresh_frozen' },
+  7: { l: { en: 'Seeds', es: 'Semillas' } },
+  8: { l: { en: 'Pre-Rolls', es: 'Prerolls' }, pieces: true }
+};
+
 const OPERATIONS_STATIONS = [
   // ── CULTIVATION (PLACEHOLDER) ────────────────────────────────────────────
   // Everything below, up to Harvest, is a stub. Cultivation runs several real
@@ -669,6 +683,13 @@ const OPERATIONS_STATIONS = [
       { k: 'buckerCount', t: 'calc', dp: 0,
         calc: (v) => new Set((v.bucked || []).map((r) => String(r.who || '').trim().toLowerCase()).filter(Boolean)).size,
         l: { en: 'People on this Batch', es: 'Personas en este lote' } },
+      // Bucked flower normally goes straight to trimming on the on-stem tag.
+      // Only a lot that will sit as bucked flower (waiting on an order, like
+      // the Gelato) gets a package of its own in Metrc — `metrcTags` below.
+      { k: 'holdBucked', t: 'check',
+        l: { en: 'Holding as bucked flower — needs its own Metrc tag', es: 'Se guarda como flor desvarada — necesita su propia etiqueta Metrc' },
+        hint: { en: 'Only when this lot will sit as bucked flower instead of going to trim. The Metrc Queue then asks for the new bucked-flower tag.',
+                es: 'Solo cuando este lote se quedará como flor desvarada en vez de ir a corte. La Cola de Metrc pedirá la nueva etiqueta de flor desvarada.' } },
 
       { k: 'trim', t: 'lineitems', entry: true,
         l: { en: 'Trim', es: 'Recorte (trim)' },
@@ -722,6 +743,13 @@ const OPERATIONS_STATIONS = [
       { k: 'buckYieldPct', t: 'calc', fmt: 'pct', calc: (v) => pct(v.buckedFlowerLb, v.startingDryLb),
         l: { en: 'Bucked Flower Yield %', es: '% de rendimiento de flor desvarada' } },
       F.notes(), F.photo()
+    ],
+    // A held lot's bucked-flower package (Holding as bucked flower, above),
+    // made in Metrc and entered from the Metrc Queue. `when`: the tag is
+    // only asked for on those lots. Hand Trim finds the lot by either tag.
+    metrcTags: [
+      { k: 'newBuckedUid', from: 'buckedFlowerLb', when: (v) => v.holdBucked === true || v.holdBucked === 'true',
+        l: { en: 'Bucked Flower', es: 'Flor desvarada' } }
     ],
     // bigLeafLb, wasteLb and the A+/A/B trim fields aren't on the form any
     // more, but the paper-form records imported before (data/operations/
@@ -924,12 +952,16 @@ const OPERATIONS_STATIONS = [
     // wasted out, so it has none. Each traces back to the lot
     // (buildAliasMap in ops_analytics.js), and Raw Inventory lists the output
     // under it.
+    // Trim isn't tagged per strain any more (October 2026): every few days
+    // the trim on hand is packaged together on a Mixed Trim Package form,
+    // which gets the one new tag. `when` false: the trim lines only show on
+    // records that already have a tag, from before.
     metrcTags: [
       { k: 'newFinishedUid', from: 'finishedFlowerLb', l: { en: 'Finished Flower', es: 'Flor terminada' } },
       { k: 'newSmallsUid', from: 'smallsLb', l: { en: 'Smalls', es: 'Smalls' } },
-      { k: 'newTrimUid', from: 'normTrimLb', l: { en: 'Normal Trim', es: 'Recorte normal' } },
-      { k: 'newAPlusTrimUid', from: 'aPlusTrimLb', l: { en: 'A+ Trim', es: 'Recorte A+' } },
-      { k: 'newSugarTrimUid', from: 'sugarTrimLb', l: { en: 'Sugar Trim', es: 'Recorte azucarado' } }
+      { k: 'newTrimUid', from: 'normTrimLb', when: () => false, l: { en: 'Normal Trim', es: 'Recorte normal' } },
+      { k: 'newAPlusTrimUid', from: 'aPlusTrimLb', when: () => false, l: { en: 'A+ Trim', es: 'Recorte A+' } },
+      { k: 'newSugarTrimUid', from: 'sugarTrimLb', when: () => false, l: { en: 'Sugar Trim', es: 'Recorte azucarado' } }
     ],
     // sugarTrimLb isn't on the form any more (Normal / A+ Trim replaced it),
     // but older records have it, so it stays in the totals and the flow.
@@ -1015,6 +1047,63 @@ const OPERATIONS_STATIONS = [
               { field: 'shakeLb', category: 'shake' },
               { field: 'wasteLb', category: 'waste' }
             ] }
+  },
+
+  // ── PROCESSING: MIXED TRIM PACKAGE ────────────────────────────────────────
+  // Trim isn't packaged per strain: every couple of days the trim on hand
+  // (Hand Trim's Normal / A+, Bucking's trim, …) goes into one "mixed"
+  // package. A row per source package going in; the new package's tag is
+  // made in Metrc and entered from the Metrc Queue (`metrcTags`). Raw
+  // Inventory takes each row off its source and lists the mixed package
+  // under the new tag.
+  {
+    key: 'trim_package',
+    dept: { en: 'Processing', es: 'Procesamiento' },
+    title: { en: 'Mixed Trim Package', es: 'Paquete de recorte mixto' },
+    desc: { en: 'The list of trim to package together as one mixed package — each source package and its pounds.',
+            es: 'La lista de recorte para empacar junto en un paquete mixto — cada paquete de origen y sus libras.' },
+    color: 'gold',
+    headline: 'totalLb',
+    fields: [
+      F.date(),
+      { k: 'requestedBy', t: 'text', req: true,
+        l: { en: 'List From', es: 'Lista de' },
+        hint: { en: 'Who put the list together.', es: 'Quién hizo la lista.' } },
+      { k: 'packageType', t: 'select', req: true, def: 'trim',
+        l: { en: 'New Package Is', es: 'El paquete nuevo es' },
+        opts: [
+          { v: 'trim', l: { en: 'Trim (mixed)', es: 'Recorte (mixto)' } },
+          { v: 'trim_a_plus', l: { en: 'A+ Trim (mixed)', es: 'Recorte A+ (mixto)' } },
+          { v: 'sugar_trim', l: { en: 'Sugar Trim (mixed)', es: 'Recorte azucarado (mixto)' } },
+          { v: 'shake', l: { en: 'Shake (mixed)', es: 'Shake (mixto)' } }
+        ] },
+      { k: 'lines', t: 'lineitems', req: true,
+        l: { en: 'Trim Going In', es: 'Recorte que entra' },
+        hint: { en: 'One row per source package: scan or type its UID (the strain fills in from Canix), the kind of trim and the pounds going in.',
+                es: 'Una fila por paquete de origen: escanee o escriba su UID (la variedad se llena desde Canix), el tipo de recorte y las libras que entran.' },
+        cols: [
+          { k: 'sourceUid', t: 'uid', req: true, canixStrain: 'strain', l: { en: 'Source UID', es: 'UID de origen' } },
+          { k: 'strain', t: 'select', ref: 'strains', allowOther: true, l: { en: 'Strain', es: 'Variedad' } },
+          { k: 'trimType', t: 'select', carry: true,
+            l: { en: 'Trim', es: 'Recorte' },
+            opts: [
+              { v: 'trim', l: { en: 'Normal', es: 'Normal' } },
+              { v: 'trim_a_plus', l: { en: 'A+', es: 'A+' } },
+              { v: 'sugar_trim', l: { en: 'Sugar', es: 'Azucarado' } },
+              { v: 'shake', l: { en: 'Shake', es: 'Shake' } }
+            ] },
+          { k: 'weightLb', t: 'number', req: true, min: 0, step: 0.01, l: { en: 'Weight (lbs)', es: 'Peso (lbs)' } }
+        ],
+        totalCol: 'weightLb' },
+      { k: 'totalLb', t: 'calc', calc: (v) => (v.lines || []).reduce((a, r) => a + num(r.weightLb), 0),
+        l: { en: 'Total Mixed Trim (lbs)', es: 'Recorte mixto total (lbs)' } },
+      { k: 'packageCount', t: 'calc', dp: 0, calc: (v) => new Set((v.lines || []).map((r) => r.sourceUid).filter(Boolean)).size,
+        l: { en: 'Source Packages', es: 'Paquetes de origen' } },
+      F.notes(), F.photo()
+    ],
+    metrcTags: [
+      { k: 'newMixedTrimUid', from: 'totalLb', l: { en: 'Mixed Trim', es: 'Recorte mixto' } }
+    ]
   },
 
   // ── CULTIVATION: FRESH FROZEN ────────────────────────────────────────────
@@ -1289,6 +1378,86 @@ const OPERATIONS_STATIONS = [
     // Finished goods leave the biomass ledger entirely, so the input weight
     // "disappearing" here is the run working, not weight going missing.
     flow: { lossKind: 'transform', input: { field: 'inputLb', categoryField: 'inputCategory' }, outputs: [] }
+  },
+
+  // ── SHIPPING: PRODUCT TRANSFER — OUTGOING ─────────────────────────────────
+  // The paper "Product Transfer Form (OUTGOING)", version 7: who it's for,
+  // the order numbers, driver and plate (the same pickers as Harvest), a row
+  // per package going out, and the office checklist. In the Metrc Queue for
+  // the manifest. Raw Inventory takes each row off its source package
+  // (TRANSFER_TYPES says which stock a product type code is).
+  {
+    key: 'transfer_out',
+    dept: { en: 'Shipping', es: 'Envíos' },
+    title: { en: 'Product Transfer — Outgoing', es: 'Transferencia de producto — salida' },
+    desc: { en: 'A transfer going out to a customer — customer, orders, driver and plate, each package and its weight, and the office checklist.',
+            es: 'Una transferencia que sale a un cliente — cliente, pedidos, conductor y placa, cada paquete y su peso, y la lista de verificación de oficina.' },
+    color: 'blue',
+    headline: 'totalLb',
+    fields: [
+      { k: 'completedBy', t: 'text', req: true, l: { en: 'Person Completing Form', es: 'Persona que llena el formulario' } },
+      { ...F.date(), l: { en: 'Date of Request', es: 'Fecha de la solicitud' } },
+      { k: 'requestor', t: 'text', l: { en: 'Requestor’s Name', es: 'Nombre de quien solicita' } },
+      { k: 'customer', t: 'text', req: true, l: { en: 'Customer Name', es: 'Nombre del cliente' } },
+      { k: 'dccLicense', t: 'text', l: { en: 'DCC License #', es: 'N.º de licencia DCC' } },
+      { k: 'destination', t: 'text', l: { en: 'Destination', es: 'Destino' } },
+      { k: 'customerOrderNo', t: 'text', l: { en: 'Customer Order #', es: 'N.º de pedido del cliente' } },
+      { k: 'salesOrderNo', t: 'text', l: { en: 'Sales Order #', es: 'N.º de orden de venta' } },
+      { k: 'invoiceNo', t: 'text', l: { en: 'Invoice #', es: 'N.º de factura' } },
+      { k: 'terms', t: 'select', l: { en: 'Terms', es: 'Términos' },
+        opts: [
+          { v: 'DF', l: { en: 'DF', es: 'DF' } },
+          { v: 'MC', l: { en: 'MC', es: 'MC' } }
+        ] },
+      { k: 'proposedDate', t: 'date', today: false, l: { en: 'Proposed Transfer Date', es: 'Fecha propuesta de transferencia' } },
+      { k: 'actualDate', t: 'date', today: false, l: { en: 'Actual Transfer Date', es: 'Fecha real de transferencia' } },
+      { k: 'driver', t: 'select', driverPicker: true, l: { en: 'Driver', es: 'Conductor' } },
+      { k: 'licensePlate', t: 'select', platePicker: true, allowOther: true, l: { en: 'Vehicle Plate #', es: 'Placa del vehículo' } },
+
+      { k: 'lines', t: 'lineitems', req: true,
+        l: { en: 'Products Going Out', es: 'Productos que salen' },
+        hint: { en: 'One row per package. Weight in lbs — pieces for pre-rolls. Transfer Package UID is the new tag on the package going out, if it gets one.',
+                es: 'Una fila por paquete. Peso en lbs — piezas para prerolls. El UID del paquete de transferencia es la etiqueta nueva del paquete que sale, si la lleva.' },
+        cols: [
+          { k: 'productType', t: 'select', req: true, carry: true, l: { en: 'Product Type', es: 'Tipo de producto' },
+            opts: [
+              { v: '', l: { en: '', es: '' } },
+              ...Object.entries(TRANSFER_TYPES).map(([v, x]) => ({ v, l: { en: `${v} — ${x.l.en}`, es: `${v} — ${x.l.es}` } }))
+            ] },
+          { k: 'strain', t: 'select', ref: 'strains', allowOther: true, l: { en: 'Strain', es: 'Variedad' } },
+          { k: 'pid', t: 'select', ref: 'properties', allowOther: true, l: { en: 'PID', es: 'PID' } },
+          { k: 'cid', t: 'select', ref: 'customers', allowOther: true, l: { en: 'CID', es: 'CID' } },
+          { k: 'sourceUid', t: 'uid', req: true, canixStrain: 'strain', l: { en: '2CW Source Package UID', es: 'UID del paquete de origen 2CW' } },
+          { k: 'weight', t: 'number', req: true, min: 0, step: 0.01, l: { en: 'Weight (lbs) / pieces', es: 'Peso (lbs) / piezas' } },
+          { k: 'transferUid', t: 'uid', l: { en: '2CW Transfer Package UID', es: 'UID del paquete de transferencia 2CW' } },
+          { k: 'pricePerLb', t: 'number', min: 0, step: 0.01, l: { en: 'Price per lb ($)', es: 'Precio por lb ($)' } }
+        ],
+        totalCol: 'weight' },
+      { k: 'totalLb', t: 'calc',
+        calc: (v) => (v.lines || []).filter((r) => !(TRANSFER_TYPES[r.productType] || {}).pieces).reduce((a, r) => a + num(r.weight), 0),
+        l: { en: 'Subtotal (lbs)', es: 'Subtotal (lbs)' },
+        hint: { en: 'Everything but pre-rolls.', es: 'Todo menos prerolls.' } },
+      { k: 'totalPieces', t: 'calc', dp: 0,
+        calc: (v) => { const p = (v.lines || []).filter((r) => (TRANSFER_TYPES[r.productType] || {}).pieces); return p.length ? p.reduce((a, r) => a + num(r.weight), 0) : null; },
+        l: { en: 'Pre-Rolls (pieces)', es: 'Prerolls (piezas)' } },
+      { k: 'totalValue', t: 'calc',
+        calc: (v) => { const p = (v.lines || []).filter((r) => num(r.pricePerLb) > 0); return p.length ? p.reduce((a, r) => a + num(r.weight) * num(r.pricePerLb), 0) : null; },
+        l: { en: 'Total ($)', es: 'Total ($)' },
+        hint: { en: 'Weight × price per lb, on the rows with a price.', es: 'Peso × precio por lb, en las filas con precio.' } },
+
+      { k: 'checklist', t: 'heading',
+        l: { en: 'Checklist', es: 'Lista de verificación' },
+        hint: { en: 'Tick each one as it’s done. Fix form in the Metrc Queue or Today board ticks the rest after submit.',
+                es: 'Marque cada uno al terminarlo. Corregir formulario en la Cola de Metrc o el tablero de Hoy marca el resto después de enviar.' } },
+      { k: 'ckTransferLog', t: 'check', l: { en: '2CW Transfer Log Updated', es: 'Registro de transferencias 2CW actualizado' } },
+      { k: 'ckOrderTracker', t: 'check', l: { en: '2CW Customer Order Tracker Updated', es: 'Seguimiento de pedidos de clientes 2CW actualizado' } },
+      { k: 'ckSalesTracker', t: 'check', l: { en: '2CW Sales Tracker Updated', es: 'Seguimiento de ventas 2CW actualizado' } },
+      { k: 'ckManifestInitiated', t: 'check', l: { en: 'Manifest Transfer Initiated', es: 'Transferencia de manifiesto iniciada' } },
+      { k: 'ckManifestAccepted', t: 'check', l: { en: 'Manifest Transfer Accepted', es: 'Transferencia de manifiesto aceptada' } },
+      { k: 'ckInvoiceSent', t: 'check', l: { en: '2CW Invoice Sent to Customer', es: 'Factura 2CW enviada al cliente' } },
+      { k: 'ckInventoryUpdated', t: 'check', l: { en: '2CW Processor Inventory Updated', es: 'Inventario del procesador 2CW actualizado' } },
+      F.notes(), F.photo()
+    ]
   }
 ];
 
@@ -1418,5 +1587,5 @@ const crewOnRun = (rows) => new Set([...crewLatest(rows).values()].filter((r) =>
 const processTitle = (k) => (STATION_BY_KEY[k] && STATION_BY_KEY[k].title) || LABOR_PROCESSES[k] || { en: k || '—', es: k || '—' };
 
 if (typeof module !== 'undefined') {
-  module.exports = { crewLatest, crewOnRun, OPERATIONS_STATIONS, STATION_BY_KEY, BIOMASS, SELLABLE, PREFILL_MAP, PIPELINE_ORDER, G_PER_LB, LABOR_PROCESSES, WORK_LOCATIONS, projectRunsOn, projectHours, projectRoles, shiftMin, personSpans, hasOwnTimes, processTitle, buckedLb };
+  module.exports = { TRANSFER_TYPES, crewLatest, crewOnRun, OPERATIONS_STATIONS, STATION_BY_KEY, BIOMASS, SELLABLE, PREFILL_MAP, PIPELINE_ORDER, G_PER_LB, LABOR_PROCESSES, WORK_LOCATIONS, projectRunsOn, projectHours, projectRoles, shiftMin, personSpans, hasOwnTimes, processTitle, buckedLb };
 }

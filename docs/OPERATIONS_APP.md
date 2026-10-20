@@ -16,7 +16,7 @@ the existing Operations Hub — same login, same Netlify deploy.
 | `labor_log.html` | Labor Log — people's hours (Connecteam roster) against UIDs, split across several UIDs when needed — see below |
 | `master_schedule.html` | Master Schedule — projects, their responsibilities and people, UIDs, and the day/week work schedule (replaced `schedule.html`) — see below |
 | `crew_checkin.html` | Crew Check-In — a lead checks in the people on their Master Schedule projects once a shift and moves people between stations during the day — see "Crew Check-In" below |
-| `metrc.html` | Metrc Queue — every submitted Wet Intake, Take Down, Bucking, Hand Trim and Pre-Roll form, with its Metrc status — see below |
+| `metrc.html` | Metrc Queue — every submitted Wet Intake, Take Down, Bucking, Hand Trim, Mixed Trim Package, Pre-Roll and Outgoing Transfer form, with its Metrc status — see below |
 | `raw_inventory.html` | Raw Materials Inventory — what's on hand at each stage from the station forms, tabbed, searchable, CSV export — see below |
 | `operations_today.html` | Live board — every form in progress or finished today, for anyone with view access; the date picker (or `?date=YYYY-MM-DD`) shows any earlier day the same way; **Range** shows several days at once (`?date=FROM&to=TO`; it starts as the day before through the day showing, for overnight work like a green harvest, and ◀ ▶ step the whole range), with the Daily Summary table hidden. With Wet Intakes showing, a **Wet Intake by farm** table sits above the forms (and in the PDF): net wet lbs per farm (a license's name, so a farm's licenses add up), split into dry rooms vs freezers — freezer when Fresh Frozen is ticked or the Drying / Freezer Location is one of `reference.json`'s `freezers` — and each intake card shows farm → location (❄ for freezer). 📄 Share PDF prints the day or range as a report. People with `labor log costs` also get a **Labor $** box next to it (off each time the page opens): ticked, the PDF adds a Labor section — Labor Log hours and $ by station (only the picked station's with a filter), and, for all stations, Connecteam clocked hours and $ by activity (the shifts file holds the last 14 days) — at each person's rate from Labor Rates via `labor-rates.js`. A page with day tabs (Bucking, Hand Trim, Pre-Roll) is on every day something was logged on it, not only its start date, with that day's amount (the headline calc on that day's rows; label from `dayTabs.headline`, else "— that day") |
 | `operations_dashboard.html` | Pipeline, yields, biomass, labor, requests, exceptions (finished forms only) |
@@ -38,8 +38,9 @@ the existing Operations Hub — same login, same Netlify deploy.
 **Cultivation** *(placeholder — see below)* — Plant Batch Log · IPM / Feed Log · Pre-Harvest Inspection
 **Harvest** — Harvest · Fresh Frozen
 **Drying** — Harvest Intake — Wet · Take Down — Dry
-**Processing** — Bucking · Machine Trim · Hand Trim / Hand Touch · Smalls Hand Trim
+**Processing** — Bucking · Machine Trim · Hand Trim / Hand Touch · Smalls Hand Trim · Mixed Trim Package
 **Manufacturing** — Biomass Request · Pre-Roll Production · Manufacturing Run
+**Shipping** — Product Transfer — Outgoing (directly under Operations on the hub)
 
 Wet Intake and Take Down are the two halves of the paper "Harvest Intake &
 Take Down Log", 5–10 days apart: Wet Intake is one form per truck, with the
@@ -309,16 +310,46 @@ and the customer ID, traced back through Take Down to Wet Intake. A Queue tab
 flower brought in from elsewhere: a popup (`otherPopup`) asks for the strain
 and package UID, and the CID is entered by hand. Outputs: the weighing
 worksheet's finished flower, smalls, Normal Trim (`normTrimLb`, category
-`trim`), A+ Trim (`aPlusTrimLb`, `trim_a_plus`) and waste. Each output but
-waste gets its own new Metrc package tag, which doesn't exist until the
-package is made in Metrc, so the tags aren't on this form: the Metrc Queue
-fills them in after submit (station `metrcTags` — see Metrc Queue below).
-Waste stays on the source tag and is wasted out there. The Trimmer Rate
+`trim`), A+ Trim (`aPlusTrimLb`, `trim_a_plus`) and waste. Finished flower
+and smalls each get their own new Metrc package tag, which doesn't exist
+until the package is made in Metrc, so the tags aren't on this form: the
+Metrc Queue fills them in after submit (station `metrcTags` — see Metrc
+Queue below). Trim isn't tagged per strain (since 2026-10-20): it waits on
+the lot's tag until a **Mixed Trim Package** (below) packages it with other
+lots' trim. Waste stays on the source tag and is wasted out there. The Trimmer Rate
 ($ per lb, `trimRatePerLb`) is required to submit — trimmer pay is pounds ×
 it. Work order #,
 farm license, trim style and starting bins were dropped in October 2026;
 `sugarTrimLb` is off the form but stays in the totals and flow for older
 records.
+
+**Mixed Trim Package** (`trim_package`, Processing) — every couple of days
+the trim on hand is packaged together instead of one package per strain. The
+form is the list: who made it (`requestedBy`), what the new package is
+(`packageType`: Trim / A+ / Sugar / Shake, mixed), and a row per source
+package going in (`lines`: UID — the strain fills in from Canix — trim type,
+lbs), totalled in `totalLb`. In the Metrc Queue its one new tag is
+`newMixedTrimUid` (`metrcTags`). Raw Inventory takes each row off its source
+package's trim and lists the mixed package (strain "Mixed") under its new
+tag. No SQL.
+
+**Product Transfer — Outgoing** (`transfer_out`, dept Shipping — it sits
+directly under Operations on the hub, as `index.html` puts any dept without
+a folder there) is the paper "Product Transfer Form (OUTGOING)", version 7:
+person completing it (`completedBy`), date of request, requestor, customer,
+DCC license #, destination, customer order / sales order / invoice #, terms
+(DF / MC), proposed and actual transfer dates, Driver and Vehicle Plate (the
+same `driverPicker` / `platePicker` as Harvest), then a row per package
+(`lines`: product type code 1–8 from `TRANSFER_TYPES` in
+`operations_stations.js`, strain, PID, CID, source package UID, weight —
+pieces for pre-rolls — transfer package UID, price per lb). Subtotal lbs
+(pre-rolls left out), pre-roll pieces and total $ are worked out. The
+office checklist is seven checkboxes (transfer log, order tracker, sales
+tracker, manifest initiated / accepted, invoice sent, processor inventory),
+ticked later with Fix form. It's in the Metrc Queue for the manifest, and
+Raw Inventory takes each row off its source package on the tab its product
+type says (1 On-Stem, 2 Bucked, 3 Flower, 4 Smalls, 5 Trim, 6 Fresh Frozen;
+seeds and pre-rolls aren't tracked there). No SQL.
 
 **Work Orders** (`work_orders.html`, hub card `work_orders` directly
 under Operations) puts the work queues on one page, a tab each (`?tab=buck|trim|preroll`):
@@ -514,7 +545,8 @@ note in `supabase/schema.sql`); for deletes it's verified from the PIN.
 
 **Metrc Queue** (`metrc.html`, hub card `metrc_queue` under Operations)
 lists every submitted form that usually means work in Metrc — Wet Intake,
-Take Down, Bucking, Hand Trim and Pre-Roll (`METRC_STATIONS` in the page
+Take Down, Bucking, Hand Trim, Mixed Trim Package, Pre-Roll and Product
+Transfer — Outgoing (`METRC_STATIONS` in the page
 and in `netlify/functions/metrc-queue.js`; change both together), however old —
 only ones submitted through the app: records loaded from the paper sheets
 (`owner_user` `paper_import`) are left out.
@@ -555,16 +587,20 @@ farms whose load isn't on a Wet Intake yet still only show in Metrc's
 Incoming tab.
 
 **New Metrc tags.** A station with `metrcTags` (operations_stations.js —
-for now Hand Trim: Finished Flower `newFinishedUid`, Smalls `newSmallsUid`,
-Normal Trim `newTrimUid`, A+ Trim `newAPlusTrimUid`, and Sugar Trim
-`newSugarTrimUid` on older records) gets a **New Metrc tags** box in the
-opened form: one line per output the form made (pounds > 0), with the new
+Hand Trim: Finished Flower `newFinishedUid`, Smalls `newSmallsUid`; Mixed
+Trim Package: `newMixedTrimUid`; Bucking: `newBuckedUid`, only on a lot
+ticked **Holding as bucked flower**) gets a **New Metrc tags** box in the
+opened form: one line per output the form made (pounds > 0, and the tag's
+`when(fields)` true if it has one), with the new
 package tag typed or scanned once it's made in Metrc. Save sends them with the
 status and note; `metrc-queue.js` checks each against the station's
 `metrcTags`, upper-cases it, and writes the changed ones onto the form record's
 `fields` (blank clears one); the status history logs them. The table's New UID
 column lists them, with "+N without a tag" while some are missing. They aren't
-on the floor form (Fix form keeps them). Every tag traces back to the lot
+on the floor form (Fix form keeps them). Hand Trim's Normal / A+ / Sugar
+Trim tags (`newTrimUid`, `newAPlusTrimUid`, `newSugarTrimUid`) have `when`
+false: trim is packaged mixed now, so they only show on older records that
+already have one. Every tag traces back to the lot
 (`buildAliasMap`), Raw Inventory lists each output under its own tag, and the
 Labor Log and Master Schedule offer them as UIDs. To give another station
 per-output tags, add `metrcTags` to it (it must be in `METRC_STATIONS`).
@@ -604,9 +640,10 @@ downloads exactly the rows showing (tab, search, Show used up). The tab and
 search are in the URL (`?tab=flower&q=agp`).
 
 Flower, Smalls, Trim and Fresh Frozen come down when a Pre-Roll run,
-Manufacturing Run, Biomass Request (transferred) or Smalls Hand Trim names
-their UID and category (oldest first; the row shows what was taken). Sales and
-transfers aren't on any form, so those rows can be marked **Used up** (and
+Manufacturing Run, Biomass Request (transferred), Smalls Hand Trim, Mixed
+Trim Package or Product Transfer — Outgoing names their UID and category
+(oldest first; the row shows what was taken). Anything that leaves without
+a form can be marked **Used up** (and
 Restored) by people with `buck release` or Metrc Queue edit. Marks live in one
 shared `operations_forms` row (`station_key 'raw_inventory_marks'`, fixed id),
 re-read before each write, logged by the edit history trigger; Show used up
@@ -844,6 +881,16 @@ totals, loss and yield below cover the whole batch. The Daily Summary
 follows the picked day, and each day can have its own Project
 (`projectDays`). Rows logged before the tabs already carry their `day`, so
 open pages split into tabs by themselves.
+
+**Holding as bucked flower.** Bucked flower normally goes straight to
+trimming on the on-stem tag — no new Metrc package (since 2026-10-20, so
+tracking keeps up when a whole lot is processed quickly). Only a lot that
+will sit as bucked flower (waiting on an order, like the Gelato) is ticked
+**Holding as bucked flower — needs its own Metrc tag** (`holdBucked`); the
+Metrc Queue then asks for its bucked-flower tag (`newBuckedUid`, a
+`metrcTags` entry with `when`). Hand Trim's lookup and `buildAliasMap`
+already find the lot by that tag, and Raw Inventory's Bucked tab lists it
+under it.
 
 **Deleting a page.** "Delete this page" under the form (station
 `canDelete`) is for a page started by mistake. It asks first (naming the

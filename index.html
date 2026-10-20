@@ -786,6 +786,8 @@ async function buildTree(){
       if(deptName === 'Cultivation') cultChildren.push(leaf);
       else if(deptName === 'Processing') procChildren.push(leaf);
       else if(deptName === 'Manufacturing') mfgChildren.push(leaf);
+      // Shipping (Product Transfer — Outgoing) has no folder of its own.
+      else opsDirect.push(leaf);
     }));
   }
 

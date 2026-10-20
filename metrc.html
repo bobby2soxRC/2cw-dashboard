@@ -222,7 +222,7 @@
   mountLangToggle('lang');
   // The station forms that feed the queue — keep in step with
   // METRC_STATIONS in netlify/functions/metrc-queue.js.
-  const METRC_STATIONS = ['intake_wet', 'dry_check', 'buck', 'hand_trim', 'preroll_production'];
+  const METRC_STATIONS = ['intake_wet', 'dry_check', 'buck', 'hand_trim', 'trim_package', 'preroll_production', 'transfer_out'];
   const access = sessionStorage.getItem('2cw_metrc_access') || '';
   const canEdit = access === 'edit';
 
@@ -413,9 +413,10 @@
   const uids = (r) => val(r, 'sourceUid') || [...new Set((val(r, 'lines') || []).map((x) => x.sourceUid).filter(Boolean))].join(', ');
   // The station's new Metrc package tags (`metrcTags` in
   // operations_stations.js — Hand Trim's, one per output): the outputs this
-  // form actually made, plus any already tagged.
+  // form actually made, plus any already tagged. A tag with `when` is only
+  // asked for when it says so (Bucking's, on a lot held as bucked flower).
   const tagDefs = (r) => ((stationOf(r) || {}).metrcTags || [])
-    .filter((x) => Number(val(r, x.from)) > 0.005 || val(r, x.k));
+    .filter((x) => val(r, x.k) || (Number(val(r, x.from)) > 0.005 && (!x.when || x.when(r.fields || {}))));
   const newTags = (r) => tagDefs(r).map((x) => val(r, x.k)).filter(Boolean);
   const fmtDate = (d) => d ? new Date(`${d}T12:00:00`).toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
   const fmtWhen = (ts) => ts ? new Date(ts).toLocaleString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';

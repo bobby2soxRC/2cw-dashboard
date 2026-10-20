@@ -29,7 +29,9 @@ const KNOWN_STATIONS = new Set([
   'fresh_frozen',
   'biomass_request',
   'preroll_production',
-  'mfg_output'
+  'mfg_output',
+  'trim_package',
+  'transfer_out'
 ]);
 
 // Guards against a runaway tablet filling the repo with junk.
