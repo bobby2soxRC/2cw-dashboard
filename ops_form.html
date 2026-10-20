@@ -2965,17 +2965,34 @@
       }
     }
 
+    // Correcting a submitted form (e.g. adding a note) only insists on the
+    // required fields the record already had — it can't blank one out, but a
+    // field made required since, or left empty then, doesn't block the save.
+    const isEmpty = (f, v) => (f.t === 'lineitems' ? !(v || []).some((r) => rowHasData(f, r))
+                                                   : v === undefined || v === null || v === '');
     const missing = station.fields.filter((f) => {
       if (!f.req || f.t === 'calc') return false;
       if (f.showIf && !f.showIf(values)) return false;
-      const v = values[f.k];
-      if (f.t === 'lineitems') return !(v || []).some((r) => rowHasData(f, r)) || !!lineProblem(f);
-      return v === undefined || v === null || v === '';
+      if (f.t === 'lineitems' && lineProblem(f)) return true;
+      if (editMode && isEmpty(f, (editRec && editRec.fields || {})[f.k])) return false;
+      return isEmpty(f, values[f.k]);
     });
     if (missing.length) {
       missing.forEach((f) => els[f.k] && els[f.k].classList.add('invalid'));
-      banner.className = 'banner error';
       const lp = missing.map((f) => f.t === 'lineitems' && lineProblem(f)).find(Boolean);
+      // An open page saves itself as it's typed in (notes included), so
+      // Submit isn't needed to keep a change — say so rather than just
+      // listing what's missing, and save now.
+      if (!lp && !editMode && draftsOn && !isClosed) {
+        clearTimeout(autosaveTimer);
+        doAutosave();
+        banner.className = 'banner warn';
+        banner.textContent = t({ en: 'Your changes are saved — this page stays open. Fill in the fields marked in red only when you’re ready to submit and close it out.',
+                                 es: 'Sus cambios están guardados — la hoja sigue abierta. Complete los campos marcados en rojo solo cuando esté listo para enviarla y cerrarla.' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      banner.className = 'banner error';
       banner.textContent = lp || t(UI.required);
       els[missing[0].k].scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
