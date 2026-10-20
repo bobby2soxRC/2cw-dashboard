@@ -32,7 +32,7 @@
     'comodin proceso': 'buck', 'comodin': 'buck', 'mobius': 'machine_trim', 'movius': 'machine_trim',
     'trim': 'hand_trim', 'trimming': 'hand_trim', 'smalls': 'smalls_trim', 'prerolls': 'preroll_production',
     'packing': '', 'chofer': 'transport', 'choferes': 'transport', 'regar': 'other', 'riego': 'other',
-    'watering': 'other', 'bomba': 'other', 'otro': 'other'
+    'watering': 'other', 'bomba': 'other', 'security': 'other', 'otro': 'other'
   };
 
   // "Name (note)" → { base: 'Name', note: 'note' }.
