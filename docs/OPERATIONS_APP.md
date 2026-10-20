@@ -563,7 +563,9 @@ form, where the note (adjustment #, new tags…) is set too. Opening one shows t
 and plain numbers, ready to paste into Metrc) — plus the status history.
 Fix form (for people who can fix submitted forms) opens `ops_form.html?edit=`.
 
-**Incoming transfers to accept.** Above the counts: every Metrc transfer to
+**Incoming transfers to accept.** Tap its heading to collapse it to one line
+(count, overdue, urgent); it stays collapsed on that device
+(`localStorage` `metrc_inc_open`). Above the counts: every Metrc transfer to
 one of our licenses (`data/canix_facilities.json`) with a package still
 "Shipped" — not yet accepted — from `data/canix_transfers_recent.json`
 (`incomingTransfers` in `metrc_transfers.js`; tests:
