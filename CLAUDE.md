@@ -165,6 +165,16 @@ Dashboard's Products (with the Sheet's BSKU) to queue pouches by hand. No
 SQL. Users need the station ticked in Admin. Details: "Ground Flower
 Pouches" in `docs/OPERATIONS_APP.md`.
 
+### Hand Trim — Past Records (started 2026-10-20)
+
+New Processing form `hand_trim_history` for typing in old paper hand trim
+sheets: a copy of Hand Trim in `STANDALONE_STATIONS` (`operations_stations.js`),
+kept out of `OPERATIONS_STATIONS` / `STATION_BY_KEY` so no inventory, Metrc,
+labor, dashboard or report code sees it (only the hub, admin access and
+`ops_form.html` use `ALL_STATIONS`). Report: `hand_trim_history.html` (by lot,
+by trimmer, CSV, print). No SQL. Users need the station ticked in Admin.
+Details: "Hand Trim — Past Records" in `docs/OPERATIONS_APP.md`.
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)

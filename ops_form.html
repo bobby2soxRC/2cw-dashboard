@@ -321,7 +321,7 @@
 <script>
 (async function () {
   const params = new URLSearchParams(location.search);
-  const station = STATION_BY_KEY[params.get('station')];
+  const station = ALL_STATION_BY_KEY[params.get('station')];
   if (!station) { location.replace('/index.html'); return; }
 
   // ?edit=<id> reopens an already-submitted record to correct it — only with
@@ -332,11 +332,12 @@
   // Harvest Intakes.
   const editId = params.get('edit');
   const fromToday = params.get('from') === 'today';
-  const editBack = (id) => fromToday || station.key !== 'intake_wet'
+  const editBack = (id) => station.recordsHref && !fromToday ? station.recordsHref
+    : fromToday || station.key !== 'intake_wet'
     ? '/operations_today.html' + (editRec && editRec.work_date && editRec.work_date !== todayStr() ? `?date=${editRec.work_date}` : '')
     : `/harvest_intakes.html?id=${id}`;
   if (editId && !canFixSubmitted(station.key)) {
-    location.replace(fromToday ? '/operations_today.html' : station.key === 'intake_wet' ? '/harvest_intakes.html' : '/index.html');
+    location.replace(fromToday ? '/operations_today.html' : station.key === 'intake_wet' ? '/harvest_intakes.html' : station.recordsHref || '/index.html');
     return;
   }
   const editMode = !!editId;
@@ -2935,6 +2936,7 @@
     saved:    { en: '✓ Changes saved', es: '✓ Cambios guardados' },
     back:     { en: '← Intakes', es: '← Recepciones' },
     backToday: { en: '← Today', es: '← Hoy' },
+    backReport: { en: '← Report', es: '← Reporte' },
     editing:  { en: 'Editing a submitted form from', es: 'Editando un formulario enviado del' },
     notFound: { en: 'This record could not be found, or it hasn’t been submitted yet.', es: 'No se encontró este registro, o aún no se ha enviado.' }
   };
@@ -3586,7 +3588,8 @@
   await new Promise((r) => setTimeout(r, 0));
 
   if (editMode) {
-    document.getElementById('back').textContent = t(fromToday || station.key !== 'intake_wet' ? ED.backToday : ED.back);
+    document.getElementById('back').textContent = t(station.recordsHref && !fromToday ? ED.backReport
+      : fromToday || station.key !== 'intake_wet' ? ED.backToday : ED.back);
     btn.textContent = t(ED.save);
     const rec = await getDraft(editId);
     editRec = rec;

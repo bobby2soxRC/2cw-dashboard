@@ -29,10 +29,10 @@ const STATIONS = {
 // 'Delete submitted forms': delete on any station form the person can edit
 // (station forms only — not Master Schedule projects or Labor Log entries).
 const OPS_DELETE_COL = 'ops delete submitted';
-const STATION_KEYS = new Set(require('../../operations_stations.js').OPERATIONS_STATIONS.map((st) => st.key));
+const STATION_KEYS = new Set(require('../../operations_stations.js').ALL_STATIONS.map((st) => st.key));
 
 // Stations whose open pages their crew can delete (delete_open).
-const OPEN_PAGE_DELETE = new Set(['buck', 'hand_trim', 'preroll_production', 'pouch_production']);
+const OPEN_PAGE_DELETE = new Set(['buck', 'hand_trim', 'hand_trim_history', 'preroll_production', 'pouch_production']);
 
 const HISTORY_LIMIT = 5000;
 

@@ -1493,7 +1493,7 @@ async function toggleActive(id, currentlyActive){
 // ── Editor ──────────────────────────────────────────────────────────────
 function stationDepts(){
   const depts = [];
-  OPERATIONS_STATIONS.forEach(s => {
+  ALL_STATIONS.forEach(s => {
     const name = t(s.dept);
     let g = depts.find(x => x.name === name);
     if(!g){ g = { name, stations: [] }; depts.push(g); }

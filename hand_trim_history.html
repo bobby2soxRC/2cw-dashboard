@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Hand Trim Past Records — 2CW Operations</title>
+  <script>
+    (function(){ if (!sessionStorage.getItem('2cw_pin')) window.location.replace('/index.html'); })();
+  </script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0c0d0f">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0c0d0f;--surface:#13151a;--surface2:#181b21;--border:#1e2129;
+      --green:#3db87a;--gold:#d4a843;--blue:#5a9fd4;--purple:#9b7fd4;--red:#ef5350;--cyan:#4fc3d9;
+      --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;
+    }
+    html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-text-size-adjust:100%}
+
+    .hdr{min-height:calc(54px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:12px;position:sticky;top:0;z-index:20}
+    .hdr-back{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
+    .hdr-div{width:1px;height:18px;background:var(--border)}
+    .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--cyan);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .lang{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;flex:0 0 auto}
+    .lang button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:12px;font-weight:600;padding:8px 12px;cursor:pointer;min-height:36px}
+    .lang button.on{background:var(--blue);color:#000}
+
+    main{padding:28px 16px 60px;max-width:1700px;margin:0 auto}
+    .title{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,6vw,46px);letter-spacing:.04em;line-height:1}
+    .sub{margin-top:6px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+
+    .tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:22px}
+    .tab{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;cursor:pointer;text-align:left;color:inherit;font:inherit;border-top:3px solid var(--c,var(--border))}
+    .tab:hover{border-color:var(--c,var(--blue))}
+    .tab.on{border-color:var(--c,var(--blue));background:var(--surface2)}
+    .tab .l{font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--subtext)}
+    .tab .n{font-family:'Bebas Neue',sans-serif;font-size:28px;line-height:1;margin-top:4px;color:var(--c,var(--text))}
+    .tab .s{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--muted);margin-top:2px}
+
+    .filters{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0 14px;align-items:center}
+    .filters input{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .9rem;font-size:.95rem;min-height:44px;outline:none;font-family:inherit}
+    .filters input[type=search]{flex:1 1 260px;min-width:0}
+    .filters input:focus{border-color:var(--blue)}
+    .filters label{font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);display:flex;align-items:center;gap:6px}
+    .btn{padding:.65rem 1rem;border:1px solid var(--border);border-radius:10px;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer;background:var(--surface);color:var(--text);min-height:44px;text-decoration:none;display:inline-flex;align-items:center}
+    .btn:hover{border-color:var(--blue)}
+    .btn-blue{background:var(--blue);border-color:var(--blue);color:#000}
+
+    .totals{display:flex;flex-wrap:wrap;gap:8px 22px;margin:0 0 12px;font-family:'DM Mono',monospace;font-size:.78rem;color:var(--subtext)}
+    .totals b{color:var(--text);font-weight:500}
+
+    .tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+    .tbl{width:100%;border-collapse:collapse;font-size:.85rem}
+    .tbl th{background:var(--surface2);color:var(--muted);font-family:'DM Mono',monospace;font-size:.65rem;font-weight:500;
+      letter-spacing:.08em;text-transform:uppercase;text-align:left;padding:10px;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none}
+    .tbl th:hover{color:var(--subtext)}
+    .tbl th.sorted{color:var(--blue)}
+    .tbl th.num{text-align:right}
+    .tbl td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle;white-space:nowrap}
+    .tbl tbody tr:hover{background:var(--surface2)}
+    .tbl tbody tr td:first-child{border-left:3px solid var(--cyan)}
+    .tbl tfoot td{background:var(--surface2);font-family:'DM Mono',monospace;font-weight:500;padding:10px;border-top:1px solid var(--border)}
+    .tbl .num{text-align:right;font-family:'DM Mono',monospace}
+    .tbl .mono{font-family:'DM Mono',monospace;font-size:.8rem}
+    .tbl .strain{font-weight:500}
+    .tbl .muted{color:var(--muted)}
+    .mini{min-height:30px;padding:4px 10px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--subtext);
+      font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}
+    .mini:hover{border-color:var(--blue);color:var(--blue)}
+
+    .empty{color:var(--muted);text-align:center;padding:60px 0;font-size:.9rem;line-height:1.6}
+    .note{margin-top:14px;font-size:.8rem;color:var(--muted);line-height:1.55;max-width:900px}
+    .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
+
+    @media print{
+      :root{--bg:#fff;--surface:#fff;--surface2:#f1f2f4;--border:#ccc;--text:#000;--muted:#555;--subtext:#333}
+      .hdr,.filters,.no-print,.mini{display:none !important}
+      main{padding:0}
+      .tabs .tab:not(.on){display:none}
+      .tbl{font-size:9pt}
+      .tbl-wrap{overflow:visible;border:none}
+    }
+  </style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="/index.html" id="back">← Hub</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand" id="brand">Hand Trim — Past Records</div>
+  <div class="lang" id="lang"></div>
+</header>
+
+<main>
+  <div class="title" id="title">Hand Trim — Past Records</div>
+  <div class="sub" id="sub">—</div>
+  <div class="tabs" id="tabs"></div>
+  <div class="filters" id="filters"></div>
+  <div class="totals" id="totals"></div>
+  <div id="board"><div class="empty">Loading…</div></div>
+  <div class="note" id="note"></div>
+  <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution</footer>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/config/supabase_config.js"></script>
+<script src="/operations_stations.js"></script>
+<script src="/ops_common.js"></script>
+<script src="/ops_data.js"></script>
+<script>
+// Hand Trim — Past Records report: the old paper hand trim sheets typed in on
+// the `hand_trim_history` form (STANDALONE_STATIONS in operations_stations.js).
+// Those records live only here — no other page reads that station — so this
+// is the one place to see them. By lot (one row per sheet) and by trimmer
+// (pounds per employee #, from the weighing worksheet), with a date range,
+// search, CSV and print. For anyone with edit or view access to the form.
+(async function () {
+  const KEY = 'hand_trim_history';
+  const station = ALL_STATION_BY_KEY[KEY];
+  const has = (k) => {
+    try {
+      const v = JSON.parse(sessionStorage.getItem(k) || 'null');
+      return v === 'all' || (Array.isArray(v) && v.includes(KEY));
+    } catch { return false; }
+  };
+  if (!has('2cw_ops_edit_access') && !has('2cw_ops_view_access')) { location.replace('/index.html'); return; }
+
+  mountLangToggle('lang');
+  const L = {
+    title:   station.title,
+    sub:     { en: 'Old hand trim sheets · kept apart from inventory, Metrc and labor', es: 'Hojas viejas de corte a mano · aparte del inventario, Metrc y labor' },
+    back:    { en: '← Hub', es: '← Inicio' },
+    byLot:   { en: 'By lot', es: 'Por lote' },
+    byEmp:   { en: 'By trimmer', es: 'Por persona' },
+    lots:    { en: 'lots', es: 'lotes' },
+    people:  { en: 'trimmers', es: 'personas' },
+    from:    { en: 'From', es: 'Desde' },
+    to:      { en: 'To', es: 'Hasta' },
+    search:  { en: 'Search strain, UID, CID, employee #, lead…', es: 'Buscar variedad, UID, CID, n.º de empleado, líder…' },
+    csv:     { en: '⇩ Export CSV', es: '⇩ Exportar CSV' },
+    print:   { en: 'Print', es: 'Imprimir' },
+    add:     { en: '+ Enter a sheet', es: '+ Capturar hoja' },
+    edit:    { en: 'Edit', es: 'Editar' },
+    none:    { en: 'No past hand trim records in this range yet.', es: 'Aún no hay registros pasados de corte a mano en este rango.' },
+    noData:  { en: 'Could not load the records — check the connection and reload.', es: 'No se pudieron cargar los registros — revise la conexión y recargue.' },
+    total:   { en: 'Total', es: 'Total' },
+    open:    { en: '{n} sheet(s) still open (not submitted) — they aren’t in this report until submitted.',
+               es: '{n} hoja(s) todavía abierta(s) (sin enviar) — no entran en este reporte hasta enviarlas.' },
+    noteLot: { en: 'By lot: one row per submitted sheet, in the range by its start date. Yield = finished flower ÷ starting bucked weight. Pay = finished lbs × trimmer rate.',
+               es: 'Por lote: una fila por hoja enviada, en el rango por su fecha de inicio. Rendimiento = flor terminada ÷ peso desvarado inicial. Pago = lbs terminadas × tarifa.' },
+    noteEmp: { en: 'By trimmer: finished flower from the weighing worksheets, in the range by the day each bag is credited to. Names come from Labor Rates → Badge #.',
+               es: 'Por persona: flor terminada de las hojas de pesaje, en el rango por el día de cada bolsa. Los nombres vienen de Tarifas → N.º de gafete.' }
+  };
+  const C = {
+    date:   { en: 'Start', es: 'Inicio' },
+    end:    { en: 'Last day', es: 'Último día' },
+    strain: { en: 'Strain', es: 'Variedad' },
+    grade:  { en: 'Grade', es: 'Grado' },
+    uid:    { en: 'Lot UID', es: 'UID del lote' },
+    cid:    { en: 'CID', es: 'CID' },
+    type:   { en: 'Trim', es: 'Corte' },
+    start:  { en: 'Bucked lbs', es: 'Lbs desvaradas' },
+    fin:    { en: 'Finished lbs', es: 'Lbs terminadas' },
+    yield:  { en: 'Yield', es: 'Rend.' },
+    smalls: { en: 'Smalls lbs', es: 'Lbs smalls' },
+    norm:   { en: 'Normal trim', es: 'Recorte normal' },
+    aplus:  { en: 'A+ trim', es: 'Recorte A+' },
+    waste:  { en: 'Waste lbs', es: 'Lbs desecho' },
+    bags:   { en: 'Bags', es: 'Bolsas' },
+    ppl:    { en: 'Trimmers', es: 'Personas' },
+    rate:   { en: '$ / lb', es: '$ / lb' },
+    pay:    { en: 'Pay', es: 'Pago' },
+    lead:   { en: 'Lead', es: 'Líder' },
+    hours:  { en: 'Labor hrs', es: 'Horas' },
+    emp:    { en: 'Employee #', es: 'N.º empleado' },
+    name:   { en: 'Name', es: 'Nombre' },
+    nLots:  { en: 'Lots', es: 'Lotes' },
+    days:   { en: 'Days', es: 'Días' },
+    perDay: { en: 'Lbs / day', es: 'Lbs / día' }
+  };
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const n = (v) => { const x = Number(v); return Number.isFinite(x) ? x : 0; };
+  const nOrNull = (v) => (v === '' || v == null || !Number.isFinite(Number(v)) ? null : Number(v));
+
+  document.title = `${t(L.title)} — 2CW Operations`;
+  document.getElementById('brand').textContent = t(L.title);
+  document.getElementById('title').textContent = t(L.title);
+  document.getElementById('sub').textContent = t(L.sub);
+  document.getElementById('back').textContent = t(L.back);
+  const board = document.getElementById('board');
+
+  // Per-view state, kept in the URL so a printed or shared link reopens it.
+  const params = new URLSearchParams(location.search);
+  let tab = params.get('tab') === 'emp' ? 'emp' : 'lot';
+  let from = params.get('from') || '';
+  let to = params.get('to') || '';
+  let query = params.get('q') || '';
+  const sort = { lot: { k: 'date', dir: -1 }, emp: { k: 'lb', dir: -1 } };
+  const canFix = canFixSubmitted(KEY);
+  const canEnter = has('2cw_ops_edit_access');
+
+  let lots = [], openCount = 0, names = {};
+  async function load() {
+    const [recs, drafts, nm] = await Promise.all([loadSubmitted(KEY), listOpenDrafts(KEY).catch(() => []), loadBadgeNames()]);
+    names = nm || {};
+    openCount = (drafts || []).length;
+    lots = recs.map((r) => {
+      const gone = new Set(r._deleted || []);
+      const bags = (r.weights || []).filter((w) => !(w._id && gone.has(w._id)) && (String(w.employeeNo || '').trim() || n(w.grams)))
+        .map((w) => ({ emp: String(w.employeeNo || '').trim(), g: n(w.grams), day: w.day || r.date || '' }));
+      const fin = bags.reduce((a, b) => a + b.g, 0) / G_PER_LB;
+      const start = nOrNull(r.startingBuckedLb);
+      const rate = nOrNull(r.trimRatePerLb);
+      const days = [...new Set(bags.map((b) => b.day).filter(Boolean))].sort();
+      return {
+        id: r.id, date: r.date || '', end: days.length ? days[days.length - 1] : (r.date || ''),
+        strain: r.strain || '', grade: r.strainGrade || '', uid: r.sourceUid || '', cid: r.cid || '',
+        type: [r.machineTrimmed ? 'Machine' : '', r.handTrimmed ? 'Hand' : ''].filter(Boolean).join(' + '),
+        start, fin, yield: start ? fin / start : null,
+        smalls: nOrNull(r.smallsLb), norm: nOrNull(r.normTrimLb), aplus: nOrNull(r.aPlusTrimLb), waste: nOrNull(r.wasteLb),
+        bags: bags.length, ppl: new Set(bags.map((b) => b.emp).filter(Boolean)).size,
+        rate, pay: rate != null ? fin * rate : null, lead: r.teamLead || '', hours: nOrNull(r.laborHours),
+        bagRows: bags
+      };
+    });
+  }
+
+  const inRange = (d) => (!from || (d && d >= from)) && (!to || (d && d <= to));
+  const nameOf = (e) => names[badgeKey(e)] || '';
+  const matchLot = (x) => {
+    if (!query) return true;
+    const q = query.toLowerCase();
+    return [x.strain, x.uid, x.cid, x.lead, x.grade, ...x.bagRows.map((b) => b.emp)].some((v) => String(v || '').toLowerCase().includes(q));
+  };
+  function lotRows() {
+    return lots.filter((x) => inRange(x.date) && matchLot(x));
+  }
+  function empRows() {
+    const q = query.toLowerCase();
+    const m = new Map();
+    lots.forEach((x) => {
+      // A search that names the lot keeps every trimmer on it; otherwise it
+      // has to name the trimmer (employee # or name).
+      const lotHit = !query || [x.strain, x.uid, x.cid, x.lead, x.grade].some((v) => String(v || '').toLowerCase().includes(q));
+      x.bagRows.filter((b) => inRange(b.day)).forEach((b) => {
+        const k = b.emp || '—';
+        if (!lotHit && !(k.toLowerCase().includes(q) || nameOf(k).toLowerCase().includes(q))) return;
+        const e = m.get(k) || { emp: k, name: nameOf(k), lb: 0, pay: 0, payKnown: true, lotSet: new Set(), daySet: new Set(), bags: 0 };
+        const lb = b.g / G_PER_LB;
+        e.lb += lb;
+        if (x.rate != null) e.pay += lb * x.rate; else e.payKnown = false;
+        e.lotSet.add(x.id); if (b.day) e.daySet.add(b.day); e.bags++;
+        m.set(k, e);
+      });
+    });
+    return [...m.values()].map((e) => ({ ...e, lots: e.lotSet.size, days: e.daySet.size, perDay: e.daySet.size ? e.lb / e.daySet.size : null }));
+  }
+
+  const LOT_COLS = [
+    ['date', 'date'], ['end', 'date'], ['strain', 'text'], ['grade', 'text'], ['uid', 'mono'], ['cid', 'text'], ['type', 'text'],
+    ['start', 'lb'], ['fin', 'lb'], ['yield', 'pct'], ['smalls', 'lb'], ['norm', 'lb'], ['aplus', 'lb'], ['waste', 'lb'],
+    ['bags', 'int'], ['ppl', 'int'], ['rate', 'money'], ['pay', 'money'], ['lead', 'text'], ['hours', 'num']
+  ];
+  const EMP_COLS = [['emp', 'mono'], ['name', 'text'], ['lots', 'int'], ['days', 'int'], ['bags', 'int'], ['lb', 'lb'], ['perDay', 'lb'], ['pay', 'money']];
+  const colLabel = (k) => t(C[k] || (k === 'lb' ? C.fin : { en: k, es: k }));
+  const fmtCell = (v, kind) => {
+    if (v == null || v === '') return kind === 'text' || kind === 'mono' || kind === 'date' ? '' : '—';
+    if (kind === 'lb' || kind === 'num') return fmtNum(v, 2);
+    if (kind === 'int') return fmtNum(v, 0);
+    if (kind === 'pct') return fmtPct(v);
+    if (kind === 'money') return `$${fmtNum(v, 2)}`;
+    return esc(v);
+  };
+  const isNum = (kind) => !['text', 'mono', 'date'].includes(kind);
+  function sorted(list, s) {
+    return list.slice().sort((a, b) => {
+      const x = a[s.k], y = b[s.k];
+      if (x == null || x === '') return 1;
+      if (y == null || y === '') return -1;
+      return (typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y))) * s.dir;
+    });
+  }
+  const sum = (list, k) => { const v = list.map((x) => x[k]).filter((x) => x != null); return v.length ? v.reduce((a, b) => a + b, 0) : null; };
+
+  function syncUrl() {
+    const p = new URLSearchParams();
+    if (tab === 'emp') p.set('tab', 'emp');
+    if (from) p.set('from', from);
+    if (to) p.set('to', to);
+    if (query) p.set('q', query);
+    history.replaceState(null, '', location.pathname + (p.toString() ? `?${p}` : ''));
+  }
+
+  function renderFilters() {
+    document.getElementById('filters').innerHTML =
+      `<label>${esc(t(L.from))} <input type="date" id="f-from" value="${esc(from)}"></label>` +
+      `<label>${esc(t(L.to))} <input type="date" id="f-to" value="${esc(to)}"></label>` +
+      `<input type="search" id="f-q" placeholder="${esc(t(L.search))}" value="${esc(query)}">` +
+      `<button type="button" class="btn btn-blue" id="csv">${esc(t(L.csv))}</button>` +
+      `<button type="button" class="btn" id="print">${esc(t(L.print))}</button>` +
+      (canEnter ? `<a class="btn" href="/ops_form.html?station=${KEY}">${esc(t(L.add))}</a>` : '');
+    document.getElementById('f-from').onchange = (e) => { from = e.target.value; render(); };
+    document.getElementById('f-to').onchange = (e) => { to = e.target.value; render(); };
+    document.getElementById('f-q').oninput = (e) => { query = e.target.value.trim(); render(); };
+    document.getElementById('csv').onclick = exportCsv;
+    document.getElementById('print').onclick = () => window.print();
+  }
+
+  function render() {
+    syncUrl();
+    const lr = lotRows(), er = empRows();
+    const finLb = sum(lr, 'fin'), startLb = sum(lr, 'start');
+    const startedFin = sum(lr.filter((x) => x.start), 'fin');
+    document.getElementById('tabs').innerHTML = [
+      ['lot', L.byLot, lr.length, `${fmtNum(finLb || 0, 2)} lb`],
+      ['emp', L.byEmp, er.length, t(L.people)]
+    ].map(([k, l, num, s]) => `<button type="button" class="tab${tab === k ? ' on' : ''}" data-tab="${k}" style="--c:var(--cyan)">` +
+      `<div class="l">${esc(t(l))}</div><div class="n">${num}</div><div class="s">${esc(s)}</div></button>`).join('');
+    document.querySelectorAll('#tabs .tab').forEach((b) => { b.onclick = () => { tab = b.dataset.tab; render(); }; });
+
+    const tot = [
+      [L.lots, fmtNum(lr.length, 0)],
+      [C.start, fmtNum(startLb, 2)], [C.fin, fmtNum(finLb, 2)],
+      [C.yield, startLb ? fmtPct(startedFin / startLb) : '—'],
+      [C.smalls, fmtNum(sum(lr, 'smalls'), 2)], [C.norm, fmtNum(sum(lr, 'norm'), 2)], [C.aplus, fmtNum(sum(lr, 'aplus'), 2)],
+      [C.waste, fmtNum(sum(lr, 'waste'), 2)], [C.pay, sum(lr, 'pay') != null ? `$${fmtNum(sum(lr, 'pay'), 2)}` : '—']
+    ];
+    document.getElementById('totals').innerHTML = tot.map(([l, v]) => `<span>${esc(t(l))}: <b>${esc(v)}</b></span>`).join('');
+
+    const note = [t(tab === 'lot' ? L.noteLot : L.noteEmp)];
+    if (openCount) note.push(t(L.open).replace('{n}', openCount));
+    document.getElementById('note').innerHTML = note.map((x) => `<div>${esc(x)}</div>`).join('');
+
+    const cols = tab === 'lot' ? LOT_COLS : EMP_COLS;
+    const list = sorted(tab === 'lot' ? lr : er, sort[tab]);
+    if (!list.length) { board.innerHTML = `<div class="empty">${esc(t(L.none))}</div>`; return; }
+    const s = sort[tab];
+    const foot = tab === 'lot'
+      ? { date: t(L.total), start: sum(lr, 'start'), fin: finLb, yield: startLb ? startedFin / startLb : null, smalls: sum(lr, 'smalls'),
+          norm: sum(lr, 'norm'), aplus: sum(lr, 'aplus'), waste: sum(lr, 'waste'), bags: sum(lr, 'bags'), pay: sum(lr, 'pay'), hours: sum(lr, 'hours') }
+      : { emp: t(L.total), bags: sum(er, 'bags'), lb: sum(er, 'lb'), pay: sum(er.filter((e) => e.payKnown || e.pay), 'pay') };
+    board.innerHTML = `<div class="tbl-wrap"><table class="tbl"><thead><tr>` +
+      cols.map(([k, kind]) => `<th data-k="${k}" class="${isNum(kind) ? 'num' : ''}${s.k === k ? ' sorted' : ''}">${esc(colLabel(k))}${s.k === k ? (s.dir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('') +
+      (tab === 'lot' && canFix ? '<th class="no-print"></th>' : '') + `</tr></thead><tbody>` +
+      list.map((x) => '<tr>' + cols.map(([k, kind]) => {
+        const v = tab === 'emp' && k === 'pay' && !x.payKnown && !x.pay ? null : x[k];
+        return `<td class="${isNum(kind) ? 'num' : kind === 'mono' ? 'mono' : k === 'strain' ? 'strain' : ''}">${fmtCell(v, kind)}</td>`;
+      }).join('') +
+      (tab === 'lot' && canFix ? `<td class="no-print"><a class="mini" href="/ops_form.html?station=${KEY}&edit=${encodeURIComponent(x.id)}">${esc(t(L.edit))}</a></td>` : '') +
+      '</tr>').join('') +
+      `</tbody><tfoot><tr>` + cols.map(([k, kind]) => {
+        const v = foot[k];
+        return `<td class="${isNum(kind) ? 'num' : ''}">${typeof v === 'string' ? esc(v) : v == null ? '' : fmtCell(v, kind)}</td>`;
+      }).join('') + (tab === 'lot' && canFix ? '<td class="no-print"></td>' : '') + `</tr></tfoot></table></div>`;
+    board.querySelectorAll('th[data-k]').forEach((th) => {
+      th.onclick = () => {
+        const k = th.dataset.k;
+        sort[tab] = s.k === k ? { k, dir: -s.dir } : { k, dir: ['text', 'mono'].includes((cols.find((c) => c[0] === k) || [])[1]) ? 1 : -1 };
+        render();
+      };
+    });
+  }
+
+  // The rows showing (this tab, range, search), in the table's order.
+  function exportCsv() {
+    const cols = tab === 'lot' ? LOT_COLS : EMP_COLS;
+    const list = sorted(tab === 'lot' ? lotRows() : empRows(), sort[tab]);
+    const cell = (v) => { const s = String(v == null ? '' : v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+    const raw = (v, kind) => (v == null ? '' : kind === 'pct' ? (v * 100).toFixed(1) + '%' : typeof v === 'number' ? (kind === 'int' ? String(v) : v.toFixed(2)) : v);
+    const head = cols.map(([k]) => (C[k] || (k === 'lb' ? C.fin : { en: k })).en);
+    const lines = [head, ...list.map((x) => cols.map(([k, kind]) => raw(tab === 'emp' && k === 'pay' && !x.payKnown && !x.pay ? null : x[k], kind)))]
+      .map((row) => row.map(cell).join(','));
+    const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `hand_trim_past_${tab === 'lot' ? 'lots' : 'trimmers'}${from ? '_' + from : ''}${to ? '_to_' + to : ''}_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
+  renderFilters();
+  try { await load(); } catch (ex) { console.error('hand trim history', ex); board.innerHTML = `<div class="empty">${esc(t(L.noData))}</div>`; return; }
+  render();
+})();
+</script>
+<script src="/sw_register.js"></script>
+</body>
+</html>

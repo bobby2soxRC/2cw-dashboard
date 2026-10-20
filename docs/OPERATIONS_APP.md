@@ -355,6 +355,28 @@ farm license, trim style and starting bins were dropped in October 2026;
 `sugarTrimLb` is off the form but stays in the totals and flow for older
 records.
 
+**Hand Trim — Past Records** (`hand_trim_history`, Processing) — for typing
+in old paper hand trim sheets whose stock is long gone. It's Hand Trim's own
+form (same weighing worksheet, day tabs, End of Run, Daily Summary), built
+from it in `STANDALONE_STATIONS` (`operations_stations.js`), less what ties it
+to the flow: the Lot Number is typed (no bucked-lot list, nothing
+prefilled), no Project, no Queue tab, no Metrc tags, no `flow`, and the
+Trimmer Rate is optional. Standalone stations are **not** in
+`OPERATIONS_STATIONS` / `STATION_BY_KEY`, so nothing that walks the stations
+reads them — Raw Inventory, Metrc Queue, Today board, Labor Log, Master
+Schedule, dashboards, analytics, emailed reports, lot pickers. Only the hub
+tile, the admin panel's station access and `ops_form.html` use
+`ALL_STATIONS` / `ALL_STATION_BY_KEY`. To backdate a sheet, use the day
+tabs' **✎ Change date** (or **+ Add day** for a lot trimmed over several
+days). Its report is `hand_trim_history.html` (Report → on the form; anyone
+with edit or view access to the station): **By lot** (one row per submitted
+sheet, filtered by start date — bucked, finished, yield, smalls, trim,
+waste, bags, trimmers, rate, pay) and **By trimmer** (pounds per employee #
+from the worksheets, filtered by each bag's day, with pay where the sheet
+had a rate), with a date range, search, CSV and Print. Edit on a row (with
+Fix submitted forms) reopens the sheet and comes back to the report. No
+SQL. Users need the station ticked in Admin.
+
 **Mixed Trim Package** (`trim_package`, Processing) — every couple of days
 the trim on hand is packaged together instead of one package per strain. The
 form is the list: who made it (`requestedBy`), what the new package is

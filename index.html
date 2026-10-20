@@ -762,7 +762,7 @@ async function buildTree(){
   // Station forms — same visibility rule the old operations.html picker used:
   // edit access only (view-only access surfaces on Today/Processing Dashboard,
   // not as an individual submit-form tile).
-  const visibleStations = (typeof OPERATIONS_STATIONS !== 'undefined' ? OPERATIONS_STATIONS : [])
+  const visibleStations = (typeof ALL_STATIONS !== 'undefined' ? ALL_STATIONS : [])
     .filter((s) => hasAnyAccess(editList) && (editList === 'all' || editList.includes(s.key)));
 
   if(visibleStations.length){

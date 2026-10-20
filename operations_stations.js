@@ -1568,6 +1568,56 @@ const OPERATIONS_STATIONS = [
   }
 ];
 
+// Forms that stand apart from the flow: entered through ops_form.html like
+// any station, but left out of OPERATIONS_STATIONS, so nothing that walks the
+// stations (Raw Inventory, Metrc Queue, Today board, Labor Log, dashboards,
+// analytics, emailed reports, lot lookups) ever reads them. Only the hub,
+// the admin panel's station access and the form itself use ALL_STATIONS.
+//
+// Hand Trim — Past Records (`hand_trim_history`): old paper hand trim sheets
+// typed in after the stock is long gone, for the record and for its report
+// (hand_trim_history.html). Hand Trim's own form, less what ties it to the
+// flow: the Lot Number is typed (no bucked-lot list, nothing prefilled), and
+// no Queue tab, Metrc tags or flow.
+const STANDALONE_STATIONS = [
+  (() => {
+    const ht = OPERATIONS_STATIONS.find((s) => s.key === 'hand_trim');
+    const drop = new Set(['project']);
+    const fields = ht.fields.filter((f) => !drop.has(f.k)).map((f) => {
+      const { prefill, picker, pickedLabel, ...rest } = f;
+      if (f.k === 'sourceUid') return { ...rest,
+        hint: { en: 'The package UID from the paper sheet.', es: 'El UID del paquete de la hoja de papel.' } };
+      // Old sheets don't always show the rate.
+      if (f.k === 'trimRatePerLb') return { ...rest, req: false,
+        hint: { en: 'What the trimmers were paid per pound, if the sheet shows it.',
+                es: 'Lo que se pagó por libra, si la hoja lo muestra.' } };
+      return rest;
+    });
+    return {
+      ...ht,
+      key: 'hand_trim_history',
+      standalone: true,
+      title: { en: 'Hand Trim — Past Records', es: 'Corte a mano — registros pasados' },
+      desc: { en: 'Type in old hand trim sheets. Kept on its own: it never touches inventory, Metrc, the Labor Log or the dashboards.',
+              es: 'Capture hojas viejas de corte a mano. Queda aparte: nunca toca el inventario, Metrc, el registro de labor ni los tableros.' },
+      color: 'cyan',
+      switcher: { open: { en: 'Sheets open', es: 'Hojas abiertas' }, add: { en: '+ New sheet', es: '+ Nueva hoja' },
+                  one: { en: 'sheet', es: 'hoja' }, many: { en: 'sheets', es: 'hojas' },
+                  page: { en: 'past hand trim', es: 'corte a mano pasado' } },
+      queueTab: false,
+      links: [{ href: '/hand_trim_history.html', l: { en: 'Report →', es: 'Reporte →' } }],
+      // Edit on a submitted record goes back to the report, not the Today board.
+      recordsHref: '/hand_trim_history.html',
+      dailySummary: { ...ht.dailySummary,
+                      hint: { en: 'Finished flower credited to that day on every past-records sheet, in pounds. Open sheets included.',
+                              es: 'Flor terminada de ese día en todas las hojas de registros pasados, en libras. Incluye hojas abiertas.' } },
+      fields,
+      metrcTags: undefined,
+      flow: undefined
+    };
+  })()
+];
+
 // Which stage a station pulls its `prefill: 'lookup'` values from, and which
 // field on that stage supplies each prefilled key.
 const PREFILL_MAP = {
@@ -1596,6 +1646,10 @@ const PREFILL_MAP = {
 const PIPELINE_ORDER = ['harvest', 'intake_wet', 'dry_check', 'buck', 'machine_trim', 'hand_trim'];
 
 const STATION_BY_KEY = Object.fromEntries(OPERATIONS_STATIONS.map((s) => [s.key, s]));
+// Every form ops_form.html can open, standalone ones included (see
+// STANDALONE_STATIONS) — for the hub, admin access and the form page only.
+const ALL_STATIONS = [...OPERATIONS_STATIONS, ...STANDALONE_STATIONS];
+const ALL_STATION_BY_KEY = Object.fromEntries(ALL_STATIONS.map((s) => [s.key, s]));
 
 // Labor Log processes that aren't station forms (labor_log.html's process
 // list, alongside the stations). 'other' is "Other / general".
@@ -1694,5 +1748,5 @@ const crewOnRun = (rows) => new Set([...crewLatest(rows).values()].filter((r) =>
 const processTitle = (k) => (STATION_BY_KEY[k] && STATION_BY_KEY[k].title) || LABOR_PROCESSES[k] || { en: k || '—', es: k || '—' };
 
 if (typeof module !== 'undefined') {
-  module.exports = { TRANSFER_TYPES, crewLatest, crewOnRun, OPERATIONS_STATIONS, STATION_BY_KEY, BIOMASS, SELLABLE, PREFILL_MAP, PIPELINE_ORDER, G_PER_LB, LABOR_PROCESSES, WORK_LOCATIONS, projectRunsOn, projectHours, projectRoles, shiftMin, personSpans, hasOwnTimes, processTitle, buckedLb };
+  module.exports = { TRANSFER_TYPES, crewLatest, crewOnRun, OPERATIONS_STATIONS, STATION_BY_KEY, STANDALONE_STATIONS, ALL_STATIONS, ALL_STATION_BY_KEY, BIOMASS, SELLABLE, PREFILL_MAP, PIPELINE_ORDER, G_PER_LB, LABOR_PROCESSES, WORK_LOCATIONS, projectRunsOn, projectHours, projectRoles, shiftMin, personSpans, hasOwnTimes, processTitle, buckedLb };
 }
