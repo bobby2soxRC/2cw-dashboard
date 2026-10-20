@@ -93,6 +93,21 @@
     .pill.sync{border-color:var(--gold);color:var(--gold);border-style:dashed}
     .row-station{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--blue)}
 
+    /* Incoming transfers to accept (metrc_transfers.js) */
+    .inc{margin-top:22px}
+    .inc-hd{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;margin-bottom:8px}
+    .inc-hd .h{font-family:'DM Mono',monospace;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text);font-weight:700}
+    .inc-hd .s{font-size:.8rem;color:var(--muted)}
+    .inc .tbl tbody tr{cursor:default}
+    .inc .tbl tbody tr td:first-child{border-left-color:var(--muted)}
+    .inc .tbl tbody tr.urgent td:first-child{border-left-color:var(--gold)}
+    .inc .tbl tbody tr.overdue td:first-child{border-left-color:var(--red)}
+    .inc .tbl tbody tr.overdue{background:rgba(239,83,80,.08)}
+    .pill.overdue{border-color:var(--red);background:var(--red);color:#000;font-weight:700}
+    .pill.urgent{border-color:var(--gold);background:var(--gold);color:#000;font-weight:700}
+    .pill.ok{color:var(--subtext)}
+    .inc-none{font-size:.85rem;color:var(--muted);padding:10px 0}
+
     .empty{color:var(--muted);text-align:center;padding:60px 0;font-size:.9rem;line-height:1.6}
     .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
 
@@ -172,6 +187,7 @@
 <main>
   <div class="title" id="title">Metrc Queue</div>
   <div class="sub" id="sub">—</div>
+  <div class="inc" id="incoming"></div>
   <div class="counts" id="counts"></div>
   <div class="filters" id="filters"></div>
   <div id="board"></div>
@@ -191,6 +207,7 @@
 <script src="/operations_stations.js"></script>
 <script src="/ops_common.js"></script>
 <script src="/ops_data.js"></script>
+<script src="/metrc_transfers.js"></script>
 <script>
 // Metrc Queue — every submitted Wet Intake, Take Down, Bucking, Hand Trim and
 // Pre-Roll form, each needing something done in Metrc, with where it stands
@@ -266,7 +283,22 @@
                  es: 'Aún no tiene acceso a la Cola de Metrc. Pida a su gerente que lo active en el panel de administración.' },
     noData:    { en: 'Could not load the queue. Check your connection and reload.', es: 'No se pudo cargar la cola. Revise su conexión y recargue.' },
     noTable:   { en: 'The Metrc queue table isn’t set up yet — run supabase/schema.sql in the Supabase SQL editor.',
-                 es: 'La tabla de la cola de Metrc no existe todavía — ejecute supabase/schema.sql en Supabase.' }
+                 es: 'La tabla de la cola de Metrc no existe todavía — ejecute supabase/schema.sql en Supabase.' },
+    incHd:     { en: 'Incoming transfers to accept', es: 'Transferencias entrantes por aceptar' },
+    incRule:   { en: 'Accept in Metrc within 24 h of receipt (4 CCR § 15049) — counted from departure.',
+                 es: 'Aceptar en Metrc dentro de 24 h de recibir (4 CCR § 15049) — contado desde la salida.' },
+    incAsOf:   { en: 'Canix sync', es: 'Sincronización de Canix' },
+    incNone:   { en: 'No incoming transfers waiting to be accepted.', es: 'No hay transferencias entrantes por aceptar.' },
+    incErr:    { en: 'Could not load transfers from Canix.', es: 'No se pudieron cargar las transferencias de Canix.' },
+    overdue:   { en: 'Overdue', es: 'Vencida' },
+    urgent:    { en: 'Urgent', es: 'Urgente' },
+    hLeft:     { en: 'left', es: 'restantes' },
+    hOver:     { en: 'over', es: 'de retraso' },
+    colFrom:   { en: 'From', es: 'De' },
+    colTo:     { en: 'To', es: 'Para' },
+    colLeft:   { en: 'Departed', es: 'Salió' },
+    colDue:    { en: 'Accept by', es: 'Aceptar antes de' },
+    colPkgs:   { en: 'Packages', es: 'Paquetes' }
   };
   const STATUSES = ['todo', 'in_progress', 'done', 'not_needed'];
   document.getElementById('title').textContent = t(L.title);
@@ -277,6 +309,55 @@
   const board = document.getElementById('board');
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
   if (!access) { board.innerHTML = `<div class="empty">${esc(t(L.noAccess))}</div>`; return; }
+
+  // ── Incoming transfers to accept ───────────────────────────────────────────
+  // From the last Canix sync (metrc_transfers.js); re-drawn every few minutes
+  // so the hours left stay current, re-fetched when the page comes back.
+  const incEl = document.getElementById('incoming');
+  let incoming = null, canixAt = null;
+  const fmtAt = (ms) => ms ? new Date(ms).toLocaleString(getLang() === 'es' ? 'es-MX' : 'en-US', { timeZone: 'America/Los_Angeles', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—';
+  async function loadIncoming() {
+    const get = (f) => fetch(`/data/${f}?t=${Date.now()}`).then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); });
+    try {
+      const [tr, fac, meta] = await Promise.all([get('canix_transfers_recent.json'), get('canix_facilities.json'), get('canix_meta.json').catch(() => ({}))]);
+      incoming = { transfers: tr, facilities: fac };
+      canixAt = meta.last_sync || null;
+    } catch (ex) { console.error('canix transfers', ex); incoming = null; }
+    renderIncoming();
+  }
+  function renderIncoming() {
+    const hd = `<div class="inc-hd"><span class="h">${t(L.incHd)}</span><span class="s">${t(L.incRule)}${canixAt ? ` · ${t(L.incAsOf)} ${esc(fmtAt(canixAt))}` : ''}</span></div>`;
+    if (!incoming) { incEl.innerHTML = hd + `<div class="inc-none">${t(L.incErr)}</div>`; return; }
+    const list = MetrcTransfers.incomingTransfers(incoming.transfers, incoming.facilities, Date.now());
+    if (!list.length) { incEl.innerHTML = hd + `<div class="inc-none">${t(L.incNone)}</div>`; return; }
+    const hrs = (h) => { const a = Math.abs(h); return a >= 48 ? `${Math.floor(a / 24)}d ${Math.round(a % 24)}h` : a >= 1 ? `${Math.floor(a)}h ${Math.round((a % 1) * 60)}m` : `${Math.round(a * 60)}m`; };
+    const pill = (x) => x.hoursLeft === null ? `<span class="pill urgent">${t(L.urgent)}</span>`
+      : `<span class="pill ${x.level}">${x.level === 'ok' ? '' : t(L[x.level]) + ' · '}${hrs(x.hoursLeft)} ${t(x.hoursLeft < 0 ? L.hOver : L.hLeft)}</span>`;
+    const short = (name) => String(name || '').split(':')[0];
+    incEl.innerHTML = hd + `<div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>${t(L.colStatus)}</th><th>${t(L.colManifest)}</th><th>${t(L.colFrom)}</th><th>${t(L.colTo)}</th>
+        <th>${t(L.colLeft)}</th><th>${t(L.colDue)}</th><th class="num">${t(L.colPkgs)}</th><th class="num">${t(L.colAmount)}</th></tr></thead>
+      <tbody>${list.map((x) => `<tr class="${x.level}">
+        <td>${pill(x)}</td>
+        <td class="mono"><div class="mf-cell"><span>${esc(x.manifest)}</span><button type="button" class="copy-mini" data-copy="${esc(x.manifest)}">${t(L.copyBtn)}</button></div></td>
+        <td title="${esc(x.fromName)}">${esc(short(x.fromName))} <span class="muted-note mono">${esc(x.fromLicense)}</span></td>
+        <td title="${esc(x.toName)}">${esc(short(x.toName))} <span class="muted-note mono">${esc(x.toLicense)}</span></td>
+        <td class="mono">${esc(fmtAt(x.departure))}</td>
+        <td class="mono">${esc(fmtAt(x.due))}</td>
+        <td class="num" title="${esc(x.tags.join('\n'))}">${x.packages}</td>
+        <td class="num">${x.weightLb ? `${fmtNum(x.weightLb, 0)} lb` : '—'}</td>
+      </tr>`).join('')}</tbody></table></div>`;
+    incEl.querySelectorAll('.copy-mini').forEach((cp) => {
+      cp.onclick = async () => {
+        if (!(await writeClipboard(cp.dataset.copy))) return;
+        cp.classList.add('ok'); cp.textContent = t(L.copyDone);
+        setTimeout(() => { cp.classList.remove('ok'); cp.textContent = t(L.copyBtn); }, 1200);
+      };
+    });
+  }
+  loadIncoming();
+  setInterval(renderIncoming, 5 * 60000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') loadIncoming(); });
 
   const client = getClient();
   const reference = await loadReference();

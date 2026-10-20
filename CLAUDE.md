@@ -128,6 +128,16 @@ Admin → **Data Syncs**: **Run Canix Sync now** starts the
 Actions read/write on this repo) in Netlify. Details: "Data Syncs" in
 `docs/USER_ADMIN.md`.
 
+### Incoming transfers deadline (started 2026-10-20)
+
+Metrc Queue (`metrc.html`) has an **Incoming transfers to accept** section:
+transfers to our licenses not yet accepted, from the Canix sync, with the
+24-hour accept deadline (4 CCR § 15049(b), counted from departure) — Urgent
+at ≤ 8 h left, Overdue past it. Logic in `metrc_transfers.js`; tests:
+`node scripts/test_metrc_transfers.js`. Outside farms' transfers aren't in
+Canix until received. No SQL. Details: "Incoming transfers to accept" in
+`docs/OPERATIONS_APP.md`.
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)

@@ -525,6 +525,21 @@ form, where the note (adjustment #, new tags…) is set too. Opening one shows t
 and plain numbers, ready to paste into Metrc) — plus the status history.
 Fix form (for people who can fix submitted forms) opens `ops_form.html?edit=`.
 
+**Incoming transfers to accept.** Above the counts: every Metrc transfer to
+one of our licenses (`data/canix_facilities.json`) with a package still
+"Shipped" — not yet accepted — from `data/canix_transfers_recent.json`
+(`incomingTransfers` in `metrc_transfers.js`; tests:
+`node scripts/test_metrc_transfers.js`). California requires receipt to be
+recorded in Metrc within 24 hours (4 CCR § 15049(b)); Canix has no arrival
+time, so the clock starts at departure (the earlier, safe deadline). Each
+row shows hours left; **Urgent** at 8 h or less (`URGENT_H`), **Overdue**
+past 24 h, soonest first. Canix's `departure_time` is California wall-clock
+time with a "Z" on it, read as Pacific (`pacificTime`). Limits: it's only as
+fresh as the last Canix sync (every 3 hours; Admin → Data Syncs runs one
+now), and a transfer sent by a license we don't have in Canix (an outside
+farm) isn't in Canix until it's received, so it never shows here — check
+Metrc's Incoming tab for those.
+
 **New Metrc tags.** A station with `metrcTags` (operations_stations.js —
 for now Hand Trim: Finished Flower `newFinishedUid`, Smalls `newSmallsUid`,
 Normal Trim `newTrimUid`, A+ Trim `newAPlusTrimUid`, and Sugar Trim
