@@ -274,14 +274,18 @@ function canixStrainForUid(uid, plants) {
 // record). Both lists are flat records ({id, sourceUid, date, freshFrozen} /
 // {incomingUid, date}). An exact UID wins; otherwise, of the intakes not
 // already taken down, the newest one on or before the take-down date.
+// A package that came in on two trucks has an intake per load under the
+// same full tag; one Take Down takes down all of them. (A short typed tail
+// like "00070" can be two farms' packages, so only full tags count.)
 function matchTakeDowns(intakes, downs) {
   const out = new Map();
   [...downs].sort((a, b) => String(a.date || '').localeCompare(String(b.date || ''))).forEach((d) => {
     const pool = intakes.filter((i) => !isFreshFrozen(i) && uidTailMatch(i.sourceUid, d.incomingUid));
-    const exact = pool.find((i) => normUid(i.sourceUid) === normUid(d.incomingUid));
+    const exact = pool.filter((i) => normUid(i.sourceUid) === normUid(d.incomingUid));
+    if (exact.length > 1 && normUid(d.incomingUid).length >= 16) { exact.forEach((i) => out.set(i.id, d)); return; }
     const open = pool.filter((i) => !out.has(i.id))
       .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
-    const hit = exact || open.find((i) => !d.date || !i.date || i.date <= d.date) || open[0];
+    const hit = exact[0] || open.find((i) => !d.date || !i.date || i.date <= d.date) || open[0];
     if (hit) out.set(hit.id, d);
   });
   return out;

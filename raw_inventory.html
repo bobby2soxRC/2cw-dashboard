@@ -51,6 +51,15 @@
     .totals{display:flex;flex-wrap:wrap;gap:8px 22px;margin:0 0 12px;font-family:'DM Mono',monospace;font-size:.78rem;color:var(--subtext)}
     .totals b{color:var(--text);font-weight:500}
 
+    /* On a computer the tabs, search and totals stay put while the table
+       scrolls under them; on a phone they'd cover the table, so they don't. */
+    @media (min-width:900px) and (min-height:640px){
+      .pin{position:sticky;top:calc(54px + env(safe-area-inset-top));z-index:10;background:var(--bg);padding-bottom:2px;margin:0 -16px;padding:0 16px 2px}
+      .pin.stuck{border-bottom:1px solid var(--border);box-shadow:0 8px 16px rgba(0,0,0,.35)}
+      .pin.stuck .tabs{margin-top:12px}
+      .pin.stuck .tab{padding:8px 12px}
+      .pin.stuck .tab .n{font-size:22px}
+    }
     .tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
     .tbl{width:100%;border-collapse:collapse;font-size:.85rem}
     .tbl th{background:var(--surface2);color:var(--muted);font-family:'DM Mono',monospace;font-size:.65rem;font-weight:500;
@@ -94,9 +103,11 @@
 <main>
   <div class="title" id="title">Raw Materials Inventory</div>
   <div class="sub" id="sub">—</div>
-  <div class="tabs" id="tabs"></div>
-  <div class="filters" id="filters"></div>
-  <div class="totals" id="totals"></div>
+  <div class="pin" id="pin">
+    <div class="tabs" id="tabs"></div>
+    <div class="filters" id="filters"></div>
+    <div class="totals" id="totals"></div>
+  </div>
   <div id="board"><div class="empty">Loading…</div></div>
   <div class="note" id="note"></div>
   <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution</footer>
@@ -468,7 +479,7 @@
         <div class="l">${esc(t(L[x.k]))}</div><div class="n">${fmtNum(sumLb(list), 0)} lb</div>
         <div class="s">${list.length} ${list.length === 1 ? t(L.pkg) : t(L.pkgs)}</div></button>`;
     }).join('');
-    tabsEl.querySelectorAll('.tab').forEach((b) => { b.onclick = () => { tab = b.dataset.k; syncUrl(); render(); }; });
+    tabsEl.querySelectorAll('.tab').forEach((b) => { b.onclick = () => { tab = b.dataset.k; syncUrl(); render(); toListTop(); }; });
   }
 
   const filtersEl = document.getElementById('filters');
@@ -483,6 +494,14 @@
     if (tab === 'all') u.searchParams.delete('tab'); else u.searchParams.set('tab', tab);
     if (query) u.searchParams.set('q', query); else u.searchParams.delete('q');
     history.replaceState(null, '', u);
+  }
+
+  // Scrolled down with the tabs pinned: show the new list from its first row.
+  function toListTop() {
+    const pin = document.getElementById('pin');
+    if (getComputedStyle(pin).position !== 'sticky') return;
+    const y = board.getBoundingClientRect().top + window.scrollY - pin.getBoundingClientRect().height - 54;
+    if (window.scrollY > y) window.scrollTo({ top: Math.max(0, y) });
   }
 
   function render() {
@@ -558,6 +577,11 @@
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
+
+  // Compact the pinned block once it's stuck to the top.
+  const pin = document.getElementById('pin');
+  const onScroll = () => pin.classList.toggle('stuck', pin.getBoundingClientRect().top <= 56 + 1 && window.scrollY > 60);
+  window.addEventListener('scroll', onScroll, { passive: true });
 
   try { await load(); } catch (ex) { console.error('raw inventory', ex); board.innerHTML = `<div class="empty">${esc(t(L.noData))}</div>`; return; }
   render();
