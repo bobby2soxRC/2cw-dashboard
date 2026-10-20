@@ -1478,9 +1478,11 @@ is logged. Each person who clocked in that day, or has an entry, gets a row:
   stretch opens Log time with that person, the date and those times filled
   in.
   - **Right-clicking** a hatched stretch (or long-pressing it, where the
-    browser supports that) opens a menu of the Master Schedule projects
-    running at that time. The person's own responsibilities come first
-    ("✓ Trimmers"), then other projects whose hours overlap. Picking one
+    browser supports that) opens a menu of every Master Schedule project
+    on that day, whatever its hours or status (done projects and skipped
+    days included; voided ones aren't). The person's own responsibilities
+    come first ("✓ Trimmers"), then other projects, those whose hours
+    overlap the stretch ahead of the rest. Picking one
     saves an entry for the whole stretch right away. It takes the person,
     the gap's start/end, the project, the responsibility (`role`,
     `roleName`), and the responsibility's process, else the project's,

@@ -108,8 +108,10 @@
   // less 24 h). The person's own roles come first (`mine`, at their own
   // hours there — personSpans, Crew Check-In's moves — else the role's,
   // and `here` when they're checked in there), then the other projects
-  // whose hours overlap.
-  function scheduledAround(projects, date, a, b, userId, name, leadLabel) {
+  // whose hours overlap. `all` (the Labor Log's right-click menu) takes
+  // every project on that day whatever its hours or status (done, day
+  // skipped); those overlapping [a, b) are listed first (`near`).
+  function scheduledAround(projects, date, a, b, userId, name, leadLabel, { all = false } = {}) {
     const out = [];
     const isMe = (p) => userId ? String(p.userId) === String(userId) : fold(p.name) === fold(name);
     const prev = prevDay(date);
@@ -117,18 +119,22 @@
       const f = p.fields;
       [[date, 0], [prev, 1440]].forEach(([d, off]) => {
         const ov = (f.overrides || {})[d] || {};
-        if (!S.projectRunsOn(f, d) || ov.skip || out.some((o) => o.p === p)) return;
+        const any = all && !off;
+        if (out.some((o) => o.p === p)) return;
+        if (any ? !S.projectRunsOn({ ...f, status: 'active' }, d) : (!S.projectRunsOn(f, d) || ov.skip)) return;
         const overlaps = (spans) => spans.some(([s, e]) => s == null ? !off : s - off < b && e - off > a);
         let mine = 0;
         dayRoles(f, d, leadLabel).forEach((role) => {
           const x = role.people.find(isMe);
           const spans = x ? S.personSpans(f, role, d, personKey(x)) : [];
-          if (x && overlaps(spans)) { out.push({ p, role, mine: true, here: (ov.here || []).includes(personKey(x)), off, spans }); mine++; }
+          const near = x && overlaps(spans);
+          if (near || (x && any)) { out.push({ p, role, mine: true, near, here: (ov.here || []).includes(personKey(x)), off, spans }); mine++; }
         });
-        if (!mine && overlaps([S.projectHours(f)])) out.push({ p, role: null, mine: false, here: false, off, spans: [S.projectHours(f)] });
+        const near = overlaps([S.projectHours(f)]);
+        if (!mine && (near || any)) out.push({ p, role: null, mine: false, near, here: false, off, spans: [S.projectHours(f)] });
       });
     });
-    return out.sort((x, y) => y.mine - x.mine || String(x.p.fields.name).localeCompare(String(y.p.fields.name)));
+    return out.sort((x, y) => y.mine - x.mine || y.near - x.near || String(x.p.fields.name).localeCompare(String(y.p.fields.name)));
   }
 
   const locLabel = (f) => f.location === 'other' ? (f.locationName || '') : ((S.WORK_LOCATIONS.find((l) => l[0] === f.location) || [])[1] || '');

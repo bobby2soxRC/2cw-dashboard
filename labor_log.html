@@ -489,8 +489,8 @@
     sumProject:{ en: 'Split over the project’s {u} UIDs by the pounds each one had at this process:', es: 'Dividido entre los {u} UIDs del proyecto según las libras de cada uno en este proceso:' },
     projPool:  { en: 'waiting for UIDs', es: 'esperando UIDs' },
     projLead:  { en: 'Project lead', es: 'Líder del proyecto' },
-    menuHd:    { en: 'Log this time to a scheduled project', es: 'Registrar este tiempo a un proyecto programado' },
-    menuNone:  { en: 'No projects scheduled around this time.', es: 'No hay proyectos programados a esta hora.' },
+    menuHd:    { en: 'Log this time to a project that day', es: 'Registrar este tiempo a un proyecto del día' },
+    menuNone:  { en: 'No projects that day.', es: 'No hay proyectos ese día.' },
     menuOngoing:{ en: 'Running this day', es: 'En curso este día' },
     menuMine:  { en: 'assigned', es: 'asignado' },
     menuForm:  { en: 'Something else… (open Log time)', es: 'Otra cosa… (abrir Registrar horas)' },
@@ -1671,19 +1671,19 @@
     $('process').focus();
   });
 
-  // Right-click (or long-press) a not-logged stretch: the Master Schedule
-  // projects running around that time (projectRunsOn / projectHours in
-  // operations_stations.js), to log the whole stretch to one in a single
-  // step. The person's own responsibilities come first ("✓ Trimmers"), then
-  // the rest of the projects whose hours overlap. The entry takes the gap's
+  // Right-click (or long-press) a not-logged stretch: every Master Schedule
+  // project on that day, whatever its hours or status (done included), to
+  // log the whole stretch to one in a single step. The person's own
+  // responsibilities come first ("✓ Trimmers"), then the rest, those whose
+  // hours overlap the stretch ahead of the others. The entry takes the gap's
   // start/end, the person, and the role's process (else the project's, else
   // Other / general).
   const menuEl = $('tl-menu');
   let menuCtx = null;
   const closeMenu = () => { menuEl.hidden = true; menuCtx = null; };
-  // The projects running around a stretch, the person's own roles first
-  // (scheduledAround in labor_auto.js).
-  const scheduledAround = (date, a, b, userId, name) => LaborAuto.scheduledAround(projects, date, a, b, userId, name, t(L.projLead));
+  // The day's projects, the person's own roles first (scheduledAround in
+  // labor_auto.js).
+  const scheduledAround = (date, a, b, userId, name) => LaborAuto.scheduledAround(projects, date, a, b, userId, name, t(L.projLead), { all: true });
   function openMenu(g, x, y) {
     const r = tlRows[+g.dataset.row];
     const a = +g.dataset.a, b = +g.dataset.b;
@@ -1695,7 +1695,8 @@
     menuEl.innerHTML = `<div class="mh">${esc(r.name)} · ${esc(hhmm(a))}–${esc(hhmm(b))} (${fmtNum((b - a) / 60, 2)} h)</div>` +
       (opts.length ? `<div class="mg">${esc(t(L.menuHd))}</div>` + opts.map((o, i) => {
         const f = o.p.fields;
-        const sub = [span(o), locOf(f), procTitle((o.role && o.role.process) || f.process || 'other')].filter(Boolean).join(' · ');
+        const sub = [span(o), locOf(f), procTitle((o.role && o.role.process) || f.process || 'other'),
+          (f.status || 'active') === 'done' ? t(L.projDone) : ''].filter(Boolean).join(' · ');
         return `<button type="button" data-opt="${i}"><b>${esc(f.name)}</b>${o.mine ? ` <span class="ok">✓ ${esc(o.role.name || t(L.menuMine))}</span>` : ''}<span class="s">${esc(sub)}</span></button>`;
       }).join('') : `<div class="mg">${esc(t(L.menuNone))}</div>`) +
       `<button type="button" data-opt="form" class="other">${esc(t(L.menuForm))}</button>`;
