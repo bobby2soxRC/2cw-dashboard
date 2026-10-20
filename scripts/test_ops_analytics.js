@@ -22,7 +22,7 @@ function check(name, actual, expected, tol = 1e-6) {
 console.log('\nhand-trim worksheet');
 const grams = stages.hand_trim[0].weights.reduce((a, w) => a + w.grams, 0);
 check('total grams', grams, 986);
-check('grams → lbs uses ÷453.592, not ×454', grams / G_PER_LB, 2.1738, 1e-4);
+check('grams → lbs uses ÷454', grams / G_PER_LB, 2.1718, 1e-4);
 
 console.log('\nlot tracking');
 const lots = A.buildLots(stages, ASOF);

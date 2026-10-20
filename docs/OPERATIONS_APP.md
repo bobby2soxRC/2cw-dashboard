@@ -338,7 +338,7 @@ Pre-Roll Dashboard card (`2cw_preroll_dash`, set at login). The card is
 **Smalls Hand Trim** (`smalls_trim`) is the paper "Work Order Form (Smalls |
 By the Hourly)": one page per flavor per day — package UID, strain, starting
 lbs, then the weighing worksheet (employee #, grams, one row per bag), with
-grams → lbs worked out (÷ 453.592, not the form's "× 454"), shake, waste and
+grams → lbs worked out (÷ 454, `G_PER_LB`), shake, waste and
 variance, and the back-of-form initials (waste adjusted, processor inventory)
 plus manager notes. No farm license, CID or grade — those come from the UID.
 A page is filled in over the whole day and autosaves; someone who closes it
@@ -1657,10 +1657,9 @@ static `data/operations/*.json` files. Nothing breaks on a fresh checkout.
 
 - **The trimming work order has a maths error printed on it.** It says
   *"Total Finished Flower in Pounds (total trimmed grams × 454)"*. It should be
-  **÷ 453.592**. Multiplying by 454 overstates the pounds by roughly 206,000×,
-  so presumably everyone on the floor ignores the instruction and divides — but
-  it's on Version 4 of a printed form and worth correcting at the source. The
-  app divides.
+  **÷ 454** — the floor divides, and so does the app (454 g per lb, the
+  industry figure, `G_PER_LB` in `operations_stations.js`) — but it's on
+  Version 4 of a printed form and worth correcting at the source.
 - **Strain names are drifting.** The workbook has `Blue Nerds` / `Blue Nerdz`,
   `Itz Pluto` / `It'z Pluto` / `It'z Pluto - AF`, and `Super Bluff Cherry` /
   `Super Buff Cherry` — the same strain reported as two or three different ones,

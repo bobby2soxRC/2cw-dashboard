@@ -75,7 +75,9 @@
 //            sourceUid and strain are.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const G_PER_LB = 453.59237;
+// Grams per pound: 454, the industry's (and the floor's) round figure, not
+// the exact 453.592.
+const G_PER_LB = 454;
 
 // Biomass categories — the vocabulary the inventory ledger is built from.
 const BIOMASS = {
@@ -884,8 +886,7 @@ const OPERATIONS_STATIONS = [
       { k: 'finishedFlowerLb', t: 'calc',
         calc: (v) => (v.weights || []).reduce((a, r) => a + num(r.grams), 0) / G_PER_LB,
         l: { en: 'Total Finished Flower (lbs)', es: 'Flor terminada total (lbs)' },
-        hint: { en: 'grams ÷ 453.592. (The printed form says "× 454" — that is a typo on the form.)',
-                es: 'gramos ÷ 453.592. (El formulario impreso dice "× 454" — es un error del formulario.)' } },
+        hint: { en: 'grams ÷ 454.', es: 'gramos ÷ 454.' } },
       { k: 'trimmerCount', t: 'calc', dp: 0,
         calc: (v) => new Set((v.weights || []).map((r) => String(r.employeeNo || '').trim()).filter(Boolean)).size,
         l: { en: 'Trimmers on this Order', es: 'Personas en esta orden' } },
@@ -986,8 +987,7 @@ const OPERATIONS_STATIONS = [
       { k: 'finishedSmallsLb', t: 'calc',
         calc: (v) => (v.weights || []).reduce((a, r) => a + num(r.grams), 0) / G_PER_LB,
         l: { en: 'Total Finished Smalls (lbs)', es: 'Smalls terminados total (lbs)' },
-        hint: { en: 'grams ÷ 453.592. (The printed form says "× 454" — that is a typo on the form.)',
-                es: 'gramos ÷ 453.592. (El formulario impreso dice "× 454" — es un error del formulario.)' } },
+        hint: { en: 'grams ÷ 454.', es: 'gramos ÷ 454.' } },
       { k: 'trimmerCount', t: 'calc', dp: 0,
         calc: (v) => new Set((v.weights || []).map((r) => String(r.employeeNo || '').trim()).filter(Boolean)).size,
         l: { en: 'Trimmers on this Page', es: 'Personas en esta hoja' } },
