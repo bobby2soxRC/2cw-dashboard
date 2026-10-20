@@ -145,7 +145,7 @@
     smalls:   { en: 'Smalls', es: 'Smalls' },
     trim:     { en: 'Trim', es: 'Recorte' },
     frozen:   { en: 'Fresh Frozen', es: 'Fresco congelado' },
-    search:   { en: 'Search strain, UID, license, farm name or code, CID…', es: 'Buscar variedad, UID, licencia, rancho o código, CID…' },
+    search:   { en: 'Search strain, UID, license, farm name or code, CID, location…', es: 'Buscar variedad, UID, licencia, rancho o código, CID, ubicación…' },
     showUsed: { en: 'Show used up', es: 'Mostrar agotados' },
     csv:      { en: '⇩ Export CSV', es: '⇩ Exportar CSV' },
     pkgs:     { en: 'packages', es: 'paquetes' },
@@ -438,7 +438,7 @@
   const visible = (r) => showUsed || !isUsed(r);
   function matches(r) {
     if (!query) return true;
-    const hay = [r.strain, r.uid, ...(r.farmUids || []), r.license, r.farm, r.code, r.cid].join(' ').toLowerCase();
+    const hay = [r.strain, r.uid, ...(r.farmUids || []), r.license, r.farm, r.code, r.cid, r.location].join(' ').toLowerCase();
     // Every word has to be there: "agp gelato" finds AGP's Gelato.
     return query.toLowerCase().split(/\s+/).filter(Boolean).every((w) => hay.includes(w) || normUid(hay).includes(normUid(w)) && normUid(w).length >= 4);
   }

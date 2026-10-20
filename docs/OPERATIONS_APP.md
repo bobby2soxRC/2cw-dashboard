@@ -111,7 +111,11 @@ counted over the filled-in rows only, so there are no gaps).
 **Currently drying** means a submitted Wet Intake with no submitted Take Down
 for its farm UID (`currentlyDrying` / `matchTakeDowns` in `ops_common.js`;
 UIDs match when one ends with the other, 4+ characters). Fresh-frozen intakes
-never count as drying. Any submitted Take Down counts, whatever its Release.
+never count as drying — Fresh Frozen ticked, or a Drying / Freezer Location
+that's a freezer (`isFreshFrozen`: FRZ-…, "freezer"), the same rule as the
+Today board's Wet Intake by farm. A package logged as several intakes under
+one full tag (two loads, or a row per strain) is taken down by one Take Down.
+Any submitted Take Down counts, whatever its Release.
 Release is **Release to bucking** (`pass`, the default; Bucking warns on
 anything else), **Hold — quality issue** (`rework`) or **Hold — until
 needed for an order** (`hold_order`). Material that needs more dry time just
@@ -595,7 +599,7 @@ is listed under its own new tag (Hand Trim's `metrcTags`, Smalls Hand Trim's
 `newFinishedUid`) once it has one, else under its lot's UID ("lot UID").
 
 Search matches every word against strain, UID (the farm UIDs behind it too),
-license, farm name, farm code and CID. Column headers sort. **Export CSV**
+license, farm name, farm code, CID and location (FRZ, 3A…). Column headers sort. **Export CSV**
 downloads exactly the rows showing (tab, search, Show used up). The tab and
 search are in the URL (`?tab=flower&q=agp`).
 

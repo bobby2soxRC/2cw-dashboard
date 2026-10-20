@@ -173,7 +173,11 @@ function uidTailMatch(a, b) {
   if (Math.min(a.length, b.length) < 4) return false;
   return a.endsWith(b) || b.endsWith(a);
 }
-const isFreshFrozen = (i) => i.freshFrozen === true || i.freshFrozen === 'true';
+// Fresh Frozen ticked, or a Drying / Freezer Location that's a freezer
+// (FRZ-1…, or "Freezer" typed under Other) — the same rule the Today board's
+// Wet Intake by farm uses, so a missed tick can't leave it "drying".
+const isFreshFrozen = (i) => i.freshFrozen === true || i.freshFrozen === 'true' ||
+  String(i.dryRoom || '').split(/[,&/+]/).some((p) => /freez|frz|congel/i.test(p));
 
 // ── Metrc details from the Canix sync ───────────────────────────────────────
 // Wet Intake leaves the farm license, CID and manifest # off the form (its
