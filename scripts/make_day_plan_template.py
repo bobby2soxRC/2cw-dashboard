@@ -25,11 +25,13 @@ box = Border(left=thin, right=thin, top=thin, bottom=thin)
 center = Alignment(horizontal='center', vertical='center', wrap_text=True)
 left = Alignment(horizontal='left', vertical='center', wrap_text=True)
 
-NB = 8                      # project blocks per day
+NB = 10                     # project blocks per day
 FIRST, LAST = 15, 64        # people rows
 ROLE = lambda i: 2 + 2 * i  # B, D, F ...
 NAME = lambda i: 3 + 2 * i  # C, E, G ...
-HL, HE, HC = 20, 30, 40     # hidden helpers: last role / effective role / clean name
+LASTCOL = 1 + 2 * NB         # last visible column (U for 10 blocks)
+# Hidden helpers past the blocks: last role / effective role / clean name.
+HL = LASTCOL + 3; HE = HL + NB; HC = HE + NB
 EFF_RANGE = f"${L(HE)}${FIRST}:${L(HE+NB-1)}${LAST}"
 CLEAN_RANGE = f"${L(HC)}$6:${L(HC+NB-1)}${LAST}"
 clean = lambda ref: f'TRIM(IFERROR(LEFT({ref},FIND("(",{ref})-1),{ref}))'
@@ -55,6 +57,7 @@ ROLES = [
   ('Chofer', 'Driver', 'transport'),
   ('Regar', 'Watering', 'other'),
   ('Bomba', 'Pump', 'other'),
+  ('Security', 'Security / guard', 'other'),
   ('Otro', 'Other - explain in Notas', 'other'),
 ]
 SITES = ['Adobe', 'Airway', 'Wildcat', 'Comstock', 'Lucerne', 'Sulphur Bank', 'Highland', 'Otro']
@@ -67,7 +70,7 @@ def plan_sheet(ws, title_note, date=None):
     for i in range(NB):
         ws.column_dimensions[L(ROLE(i))].width = 16
         ws.column_dimensions[L(NAME(i))].width = 24
-    for c in range(18, HC + NB):
+    for c in range(LASTCOL + 1, HC + NB):
         ws.column_dimensions[L(c)].hidden = True
     ws['A1'] = 'PLAN DEL DÍA'; ws['A1'].font = font(bold=True, size=14)
     ws['B1'] = 'Fecha / Date:'; ws['B1'].font = font(bold=True); ws['B1'].alignment = Alignment(horizontal='right')
@@ -242,7 +245,7 @@ rows = [
   ('Menús', "Si escribes algo que no está en el menú sale un aviso; puedes seguir. Nombres nuevos: agrégalos en 'Personal'. Responsabilidades nuevas: agrégalas en 'Listas'."),
   ('Resumen', 'Una fila por proyecto y personas por responsabilidad. Si sale "(sin responsabilidad)" hay un nombre sin responsabilidad arriba.'),
   ('Personal', f'Lista de Connecteam al {TODAY} (para el menú de nombres). Si un nombre está dos veces (dos "Maria Mendoza"), al importar se elige cuál.'),
-  ('Columnas ocultas', 'Las columnas después de Q son cálculos. No borrar.'),
+  ('Columnas ocultas', f'Las columnas después de {L(LASTCOL)} son cálculos. No borrar.'),
 ]
 for k, (a, b) in enumerate(rows, 3):
     hw.cell(k, 1, a).font = font(bold=True); hw.cell(k, 2, b).font = font()

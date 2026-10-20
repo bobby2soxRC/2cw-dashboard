@@ -981,7 +981,7 @@ from them.
   `templates/Plan_Proyectos_Template.xlsx` (blank copy linked from the
   import screen; `scripts/make_day_plan_template.py` rebuilds it, e.g. when
   the Connecteam roster changes, since its name dropdown is a copy). The
-  **Plan del Día** tab has one 2-column block per project: name, site,
+  **Plan del Día** tab has one 2-column block per project (up to 10): name, site,
   start | end, lead, two contractor rows (name | how many, start | end),
   notes, then a row per person with **Responsabilidad | Nombre**. A blank
   responsibility is the one above; text in parentheses is a note ("Jorge
