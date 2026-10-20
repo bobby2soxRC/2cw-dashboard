@@ -309,7 +309,9 @@ worksheet's finished flower, smalls, Normal Trim (`normTrimLb`, category
 waste gets its own new Metrc package tag, which doesn't exist until the
 package is made in Metrc, so the tags aren't on this form: the Metrc Queue
 fills them in after submit (station `metrcTags` — see Metrc Queue below).
-Waste stays on the source tag and is wasted out there. Work order #,
+Waste stays on the source tag and is wasted out there. The Trimmer Rate
+($ per lb, `trimRatePerLb`) is required to submit — trimmer pay is pounds ×
+it. Work order #,
 farm license, trim style and starting bins were dropped in October 2026;
 `sugarTrimLb` is off the form but stays in the totals and flow for older
 records.

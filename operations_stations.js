@@ -856,10 +856,12 @@ const OPERATIONS_STATIONS = [
       { k: 'handTrimmed', t: 'check', group: 'trimType',
         l: { en: 'Hand', es: 'Mano' } },
       // What the trimmers are paid on this lot, per finished pound.
-      { k: 'trimRatePerLb', t: 'number', min: 0, step: 0.01,
+      // Required: the trimmers' pay is pounds × this (a lot can't be
+      // submitted without it).
+      { k: 'trimRatePerLb', t: 'number', req: true, min: 0, step: 0.01,
         l: { en: 'Trimmer Rate ($ per lb)', es: 'Tarifa de corte ($ por lb)' },
-        hint: { en: 'What we pay the trimmers per pound on this lot.',
-                es: 'Lo que se paga a las personas de corte por libra en este lote.' } },
+        hint: { en: 'What we pay the trimmers per pound on this lot. Needed to submit.',
+                es: 'Lo que se paga a las personas de corte por libra en este lote. Necesaria para enviar.' } },
 
       // The weighing worksheet from the paper form, as a running log (like
       // Bucking's) so two tablets on one lot merge their bags.
