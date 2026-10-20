@@ -11,7 +11,7 @@
 // licenses (data/canix_facilities.json) with a package still "Shipped" (not
 // Accepted / Rejected / Voided). Only transfers sent from a license we have
 // Canix for show up — an outside farm's transfer isn't in Canix until it's
-// received.
+// received; those come from Wet Intake instead (unacceptedIntakes below).
 //
 // Tests: node scripts/test_metrc_transfers.js
 (function (root) {
@@ -74,7 +74,51 @@
     return out.sort((a, b) => (a.due === null ? -Infinity : a.due) - (b.due === null ? -Infinity : b.due));
   }
 
-  const api = { ACCEPT_WITHIN_H, URGENT_H, pacificTime, incomingTransfers };
+  // Outside farms: their transfer isn't in Canix, and their package only
+  // shows up in our Canix inventory once it's accepted. So a Wet Intake whose
+  // scanned package is on none of our transfers and not in our inventory
+  // was received on the floor but not accepted in Metrc yet — clock from
+  // when the intake form was started (the truck's there). Only intakes from
+  // the last INTAKE_DAYS: after a few days the wet package can go inactive
+  // (taken down) and drop out of the inventory file.
+  //
+  // intakes: [{ id, startedAt (ms), uids: [...], manifest, farm, strain, lb }]
+  const INTAKE_DAYS = 4;
+  const normTag = (v) => String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  function unacceptedIntakes(intakes, transfers, inventory, facilities, now) {
+    const ours = new Set((facilities || []).map((f) => f && f.license_number).filter(Boolean));
+    const known = [];   // tags on our transfers, and packages received at our licenses
+    for (const t of transfers || []) for (const d of t.destinations || []) for (const c of d.contents || []) {
+      const tag = normTag(((c || {}).package || {}).tag);
+      if (tag) known.push(tag);
+    }
+    for (const p of inventory || []) if (p && ours.has(p._facility_license_number)) known.push(normTag(p.tag));
+    const seen = (uid) => { const u = normTag(uid); return u.length >= 4 && known.some((k) => k === u || k.endsWith(u)); };
+    const groups = new Map();
+    for (const r of intakes || []) {
+      if (!r.startedAt || now - r.startedAt > INTAKE_DAYS * 86400000) continue;
+      const missing = (r.uids || []).filter((u) => normTag(u).length >= 4 && !seen(u));
+      if (!missing.length) continue;
+      // One row per manifest when it was typed in, else per intake form.
+      const key = r.manifest ? `m:${r.manifest}` : `i:${r.id}`;
+      const g = groups.get(key) || { manifest: r.manifest || '', fromLicense: r.farm || '', fromName: r.farm || '', toLicense: '', toName: '',
+        intake: true, ids: [], startedAt: r.startedAt, tags: [], strains: [], weightLb: 0 };
+      g.ids.push(r.id);
+      g.startedAt = Math.min(g.startedAt, r.startedAt);
+      missing.forEach((u) => { if (!g.tags.includes(normTag(u))) g.tags.push(normTag(u)); });   // a UID repeats on each bin row
+      g.weightLb += Number(r.lb) || 0;
+      if (r.strain && !g.strains.includes(r.strain)) g.strains.push(r.strain);
+      if (!g.fromLicense && r.farm) g.fromLicense = g.fromName = r.farm;
+      groups.set(key, g);
+    }
+    return [...groups.values()].map((g) => {
+      const due = g.startedAt + ACCEPT_WITHIN_H * 3600000, hoursLeft = (due - now) / 3600000;
+      return { ...g, departure: g.startedAt, due, hoursLeft, packages: g.tags.length,
+        level: hoursLeft < 0 ? 'overdue' : hoursLeft <= URGENT_H ? 'urgent' : 'ok' };
+    }).sort((a, b) => a.due - b.due);
+  }
+
+  const api = { ACCEPT_WITHIN_H, URGENT_H, INTAKE_DAYS, pacificTime, incomingTransfers, unacceptedIntakes };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.MetrcTransfers = api;
 })(this);

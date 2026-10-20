@@ -45,5 +45,27 @@ check('packages still shipped only', got.find((x) => x.manifest === 'G-partly').
 check('weight', got.find((x) => x.manifest === 'B-urgent').weightLb, 1000);
 check('destination name', got[0].toName, 'Adobe: CCL22-0001284');
 
+// Outside farms, from Wet Intake.
+const inventory = [
+  { tag: '1A4060300089ABD000000050', _facility_license_number: 'CCL22-0001284', received_date: '2026-10-18T10:00:00Z' },
+  { tag: '1A40603000769A9000000777', _facility_license_number: 'C11-0009999-LIC' }   // not ours
+];
+const h = 3600000;
+const intakes = [
+  { id: 'own-farm', startedAt: now - 2 * h, uids: ['1A10'], farm: '027' },   // a tag on one of our transfers
+  { id: 'accepted', startedAt: now - 30 * h, uids: ['1A4060300089ABD000000050'], farm: 'CCL24-0000469' },
+  { id: 'ff1', startedAt: now - 30 * h, uids: ['1A40603000769A9000000119', '1A40603000769A9000000119'], manifest: '0011716496', farm: 'CCL24-0000469', strain: 'Glass Candy' },
+  { id: 'ff2', startedAt: now - 29 * h, uids: ['1A40603000769A9000000120'], manifest: '0011716496', farm: 'CCL24-0000469', strain: 'Cherry Guluz' },
+  { id: 'bro', startedAt: now - 20 * h, uids: ['1A406030001B135000001229'], strain: 'BRO2 ORANGE' },
+  { id: 'elsewhere', startedAt: now - 3 * h, uids: ['1A40603000769A9000000777'] },
+  { id: 'old', startedAt: now - 5 * 24 * h, uids: ['1A406030001B135000009999'] }
+];
+const ui = M.unacceptedIntakes(intakes, transfers, inventory, facilities, now);
+check('intakes not in Canix, one row per manifest', ui.map((x) => x.manifest || x.ids.join()), ['0011716496', 'bro', 'elsewhere']);
+check('intake levels', ui.map((x) => x.level), ['overdue', 'urgent', 'ok']);
+check('clock from the first intake on the manifest', Math.round(ui[0].hoursLeft), -6);
+check('a package counted once', ui[0].packages, 2);
+check('intake strains', ui[0].strains, ['Glass Candy', 'Cherry Guluz']);
+
 if (failures) { console.log(`\n${failures} failed`); process.exit(1); }
 console.log('\nAll passed');

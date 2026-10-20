@@ -536,9 +536,17 @@ row shows hours left; **Urgent** at 8 h or less (`URGENT_H`), **Overdue**
 past 24 h, soonest first. Canix's `departure_time` is California wall-clock
 time with a "Z" on it, read as Pacific (`pacificTime`). Limits: it's only as
 fresh as the last Canix sync (every 3 hours; Admin → Data Syncs runs one
-now), and a transfer sent by a license we don't have in Canix (an outside
-farm) isn't in Canix until it's received, so it never shows here — check
-Metrc's Incoming tab for those.
+now). **Outside farms** (a license we don't have in Canix) aren't in Canix
+until their package is accepted, so they come from Wet Intake instead
+(`unacceptedIntakes`): an intake from the last 4 days (`INTAKE_DAYS`) whose
+scanned UID is on none of our Canix transfers and not in our Canix inventory
+(`data/canix_inventory.json`) at one of our licenses — received on the floor,
+not accepted in Metrc yet. Its clock starts when the intake form was started;
+one row per manifest # (else per intake), "Wet Intake — not in Metrc yet"
+opens the form. It drops off once the next sync sees the package at our
+license. A UID typed wrong can keep one listed — fix it with Edit. Outside
+farms whose load isn't on a Wet Intake yet still only show in Metrc's
+Incoming tab.
 
 **New Metrc tags.** A station with `metrcTags` (operations_stations.js —
 for now Hand Trim: Finished Flower `newFinishedUid`, Smalls `newSmallsUid`,

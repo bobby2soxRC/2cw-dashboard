@@ -106,6 +106,8 @@
     .pill.overdue{border-color:var(--red);background:var(--red);color:#000;font-weight:700}
     .pill.urgent{border-color:var(--gold);background:var(--gold);color:#000;font-weight:700}
     .pill.ok{color:var(--subtext)}
+    .inc-intake{color:var(--blue);text-decoration:none}
+    .inc-intake:hover{text-decoration:underline}
     .inc-none{font-size:.85rem;color:var(--muted);padding:10px 0}
 
     .empty{color:var(--muted);text-align:center;padding:60px 0;font-size:.9rem;line-height:1.6}
@@ -285,8 +287,8 @@
     noTable:   { en: 'The Metrc queue table isn’t set up yet — run supabase/schema.sql in the Supabase SQL editor.',
                  es: 'La tabla de la cola de Metrc no existe todavía — ejecute supabase/schema.sql en Supabase.' },
     incHd:     { en: 'Incoming transfers to accept', es: 'Transferencias entrantes por aceptar' },
-    incRule:   { en: 'Accept in Metrc within 24 h of receipt (4 CCR § 15049) — counted from departure.',
-                 es: 'Aceptar en Metrc dentro de 24 h de recibir (4 CCR § 15049) — contado desde la salida.' },
+    incRule:   { en: 'Accept in Metrc within 24 h of receipt (4 CCR § 15049) — counted from departure, or for an outside farm from its Wet Intake.',
+                 es: 'Aceptar en Metrc dentro de 24 h de recibir (4 CCR § 15049) — contado desde la salida o, para una granja externa, desde su recepción húmeda.' },
     incAsOf:   { en: 'Canix sync', es: 'Sincronización de Canix' },
     incNone:   { en: 'No incoming transfers waiting to be accepted.', es: 'No hay transferencias entrantes por aceptar.' },
     incErr:    { en: 'Could not load transfers from Canix.', es: 'No se pudieron cargar las transferencias de Canix.' },
@@ -296,9 +298,11 @@
     hOver:     { en: 'over', es: 'de retraso' },
     colFrom:   { en: 'From', es: 'De' },
     colTo:     { en: 'To', es: 'Para' },
-    colLeft:   { en: 'Departed', es: 'Salió' },
+    colLeft:   { en: 'Departed / received', es: 'Salió / recibido' },
     colDue:    { en: 'Accept by', es: 'Aceptar antes de' },
-    colPkgs:   { en: 'Packages', es: 'Paquetes' }
+    colPkgs:   { en: 'Packages', es: 'Paquetes' },
+    incIntake: { en: 'Wet Intake — not in Metrc yet', es: 'Recepción húmeda — aún no en Metrc' },
+    outsideFarm:{ en: 'Outside farm', es: 'Granja externa' }
   };
   const STATUSES = ['todo', 'in_progress', 'done', 'not_needed'];
   document.getElementById('title').textContent = t(L.title);
@@ -314,13 +318,15 @@
   // From the last Canix sync (metrc_transfers.js); re-drawn every few minutes
   // so the hours left stay current, re-fetched when the page comes back.
   const incEl = document.getElementById('incoming');
-  let incoming = null, canixAt = null;
+  let incoming = null, canixAt = null, incomingAt = 0;
   const fmtAt = (ms) => ms ? new Date(ms).toLocaleString(getLang() === 'es' ? 'es-MX' : 'en-US', { timeZone: 'America/Los_Angeles', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—';
   async function loadIncoming() {
     const get = (f) => fetch(`/data/${f}?t=${Date.now()}`).then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); });
     try {
-      const [tr, fac, meta] = await Promise.all([get('canix_transfers_recent.json'), get('canix_facilities.json'), get('canix_meta.json').catch(() => ({}))]);
-      incoming = { transfers: tr, facilities: fac };
+      const [tr, fac, inv, meta] = await Promise.all([get('canix_transfers_recent.json'), get('canix_facilities.json'),
+        get('canix_inventory.json'), get('canix_meta.json').catch(() => ({}))]);
+      incoming = { transfers: tr, facilities: fac, inventory: inv };
+      incomingAt = Date.now();
       canixAt = meta.last_sync || null;
     } catch (ex) { console.error('canix transfers', ex); incoming = null; }
     renderIncoming();
@@ -328,7 +334,19 @@
   function renderIncoming() {
     const hd = `<div class="inc-hd"><span class="h">${t(L.incHd)}</span><span class="s">${t(L.incRule)}${canixAt ? ` · ${t(L.incAsOf)} ${esc(fmtAt(canixAt))}` : ''}</span></div>`;
     if (!incoming) { incEl.innerHTML = hd + `<div class="inc-none">${t(L.incErr)}</div>`; return; }
-    const list = MetrcTransfers.incomingTransfers(incoming.transfers, incoming.facilities, Date.now());
+    const now = Date.now();
+    // Wet Intakes (from the queue's forms) whose package Canix hasn't got at
+    // one of our licenses: an outside farm's load, received but not accepted.
+    const pidField = STATION_BY_KEY.intake_wet.fields.find((f) => f.k === 'pid');
+    const intakes = forms.filter((r) => r.station_key === 'intake_wet').map((r) => ({
+      id: r.id, startedAt: Date.parse(r.created_at || r.submitted_at) || null,
+      uids: [val(r, 'sourceUid'), ...(val(r, 'lines') || []).map((x) => x.sourceUid)].filter(Boolean),
+      manifest: String(val(r, 'manifestNo') || '').trim(), farm: val(r, 'pid') ? display(pidField, val(r, 'pid')) : '',
+      strain: r.strain || val(r, 'strain') || '', lb: Number(val(r, 'totalWetLb')) || 0
+    }));
+    const list = [...MetrcTransfers.incomingTransfers(incoming.transfers, incoming.facilities, now),
+      ...MetrcTransfers.unacceptedIntakes(intakes, incoming.transfers, incoming.inventory, incoming.facilities, now)]
+      .sort((a, b) => (a.due === null ? -Infinity : a.due) - (b.due === null ? -Infinity : b.due));
     if (!list.length) { incEl.innerHTML = hd + `<div class="inc-none">${t(L.incNone)}</div>`; return; }
     const hrs = (h) => { const a = Math.abs(h); return a >= 48 ? `${Math.floor(a / 24)}d ${Math.round(a % 24)}h` : a >= 1 ? `${Math.floor(a)}h ${Math.round((a % 1) * 60)}m` : `${Math.round(a * 60)}m`; };
     const pill = (x) => x.hoursLeft === null ? `<span class="pill urgent">${t(L.urgent)}</span>`
@@ -339,14 +357,18 @@
         <th>${t(L.colLeft)}</th><th>${t(L.colDue)}</th><th class="num">${t(L.colPkgs)}</th><th class="num">${t(L.colAmount)}</th></tr></thead>
       <tbody>${list.map((x) => `<tr class="${x.level}">
         <td>${pill(x)}</td>
-        <td class="mono"><div class="mf-cell"><span>${esc(x.manifest)}</span><button type="button" class="copy-mini" data-copy="${esc(x.manifest)}">${t(L.copyBtn)}</button></div></td>
-        <td title="${esc(x.fromName)}">${esc(short(x.fromName))} <span class="muted-note mono">${esc(x.fromLicense)}</span></td>
-        <td title="${esc(x.toName)}">${esc(short(x.toName))} <span class="muted-note mono">${esc(x.toLicense)}</span></td>
+        <td class="mono">${x.manifest ? `<div class="mf-cell"><span>${esc(x.manifest)}</span><button type="button" class="copy-mini" data-copy="${esc(x.manifest)}">${t(L.copyBtn)}</button></div>` : '—'}</td>
+        ${x.intake
+          ? `<td>${esc(x.fromName || t(L.outsideFarm))}${x.strains.length ? `<div class="muted-note">${esc(x.strains.join(', '))}</div>` : ''}</td>
+             <td><a class="inc-intake" href="?id=${esc(x.ids[0])}" data-id="${esc(x.ids[0])}">${t(L.incIntake)}</a></td>`
+          : `<td title="${esc(x.fromName)}">${esc(short(x.fromName))} <span class="muted-note mono">${esc(x.fromLicense)}</span></td>
+             <td title="${esc(x.toName)}">${esc(short(x.toName))} <span class="muted-note mono">${esc(x.toLicense)}</span></td>`}
         <td class="mono">${esc(fmtAt(x.departure))}</td>
         <td class="mono">${esc(fmtAt(x.due))}</td>
         <td class="num" title="${esc(x.tags.join('\n'))}">${x.packages}</td>
         <td class="num">${x.weightLb ? `${fmtNum(x.weightLb, 0)} lb` : '—'}</td>
       </tr>`).join('')}</tbody></table></div>`;
+    incEl.querySelectorAll('.inc-intake').forEach((a) => { a.onclick = (e) => { e.preventDefault(); openDetail(a.dataset.id); }; });
     incEl.querySelectorAll('.copy-mini').forEach((cp) => {
       cp.onclick = async () => {
         if (!(await writeClipboard(cp.dataset.copy))) return;
@@ -355,9 +377,6 @@
       };
     });
   }
-  loadIncoming();
-  setInterval(renderIncoming, 5 * 60000);
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') loadIncoming(); });
 
   const client = getClient();
   const reference = await loadReference();
@@ -383,6 +402,10 @@
   }
   const loadErr = await load();
   if (loadErr) { board.innerHTML = `<div class="empty">${esc(loadErr)}</div>`; return; }
+  // Incoming transfers needs the forms (Wet Intakes), so it starts here.
+  loadIncoming();
+  setInterval(renderIncoming, 5 * 60000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && Date.now() - incomingAt > 10 * 60000) loadIncoming(); });
 
   const stationOf = (r) => STATION_BY_KEY[r.station_key];
   const statusOf = (r) => (queue.get(r.id) || {}).status || 'todo';
@@ -488,6 +511,7 @@
   const pending = new Map();
 
   function render() {
+    if (incoming) renderIncoming();
     filtersEl.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x.dataset.k === mode));
     renderCounts();
     let list = forms.filter(matches);

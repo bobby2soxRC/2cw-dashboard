@@ -135,7 +135,8 @@ transfers to our licenses not yet accepted, from the Canix sync, with the
 24-hour accept deadline (4 CCR § 15049(b), counted from departure) — Urgent
 at ≤ 8 h left, Overdue past it. Logic in `metrc_transfers.js`; tests:
 `node scripts/test_metrc_transfers.js`. Outside farms' transfers aren't in
-Canix until received. No SQL. Details: "Incoming transfers to accept" in
+Canix until accepted, so those come from Wet Intakes whose package isn't in
+our Canix inventory yet (clock from the intake). No SQL. Details: "Incoming transfers to accept" in
 `docs/OPERATIONS_APP.md`.
 
 ## Parked work
