@@ -153,6 +153,18 @@ SQL. Users need the new stations ticked in Admin to see them. Details in
 `docs/OPERATIONS_APP.md` ("Holding as bucked flower", "Mixed Trim Package",
 "Product Transfer — Outgoing").
 
+### Ground Flower Pouches (started 2026-10-20)
+
+New Manufacturing form `pouch_production` (`operations_stations.js`), a copy
+of Pre-Roll Production for pouches of ground flower (Howie Roll 14 g for
+now): Pouch Output log, `totalPouches`, `newPouchUid`. Its work orders share
+the pre-roll queue so the team ranks both in one list — `QUEUE_LINES` /
+`queueLine` in `preroll_queue.js`: a product or Sheet request whose name says
+"Ground" is pouches. Needs a "Ground" product added in the Pre-Roll
+Dashboard's Products (with the Sheet's BSKU) to queue pouches by hand. No
+SQL. Users need the station ticked in Admin. Details: "Ground Flower
+Pouches" in `docs/OPERATIONS_APP.md`.
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)

@@ -101,7 +101,8 @@
 //   Hand Trim — every bucked lot, including ones still being bucked, with no
 //               submitted Hand Trim yet (loadTrimQueue), the order Hand
 //               Trim's Queue tab and lot dropdown follow.
-//   Pre-Roll  — the Pre-Roll Dashboard's queue, embedded (?embed=queue), so
+//   Pre-Roll  — the Pre-Roll Dashboard's queue (pre-rolls and ground flower
+//               pouches, ranked together), embedded (?embed=queue), so
 //               ordering, adding and Start batch work exactly as they do there.
 // Bucking and Hand Trim are reordered with ▲ ▼ / Top by managers ('buck
 // release'); everyone else sees the order. Start opens a new form page for
@@ -115,7 +116,8 @@
   const TABS = [
     { key: 'buck', show: manager || canEdit('buck'), l: { en: 'Bucking', es: 'Desvarado' } },
     { key: 'trim', show: manager || canEdit('hand_trim'), l: { en: 'Hand Trim', es: 'Corte a mano' } },
-    { key: 'preroll', show: prerollDash || canEdit('preroll_production'), l: { en: 'Pre-Roll', es: 'Prerolls' } }
+    { key: 'preroll', show: prerollDash || canEdit('preroll_production') || canEdit('pouch_production'),
+      l: { en: 'Pre-Roll & Pouches', es: 'Prerolls y bolsas' } }
   ].filter((x) => x.show);
   if (!TABS.length) { location.replace('/index.html'); return; }
   mountLangToggle('lang');

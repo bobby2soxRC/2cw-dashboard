@@ -63,6 +63,7 @@
   .pill.stage-in_production{color:var(--blue);border-color:rgba(90,159,212,.4)}
   .pill.stage-done{color:var(--green);border-color:rgba(61,184,122,.4)}
   .pill.late{color:var(--red);border-color:rgba(239,83,80,.45)}
+  .pill.pouch{color:var(--slate);border-color:rgba(125,136,153,.5)}
   .c-meta{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 18px;font-size:.82rem;color:var(--subtext)}
   .c-meta b{color:var(--text);font-weight:500}
   .c-meta .none{color:var(--gold)}
@@ -237,15 +238,19 @@
 // Requests come live from the same published Sheet tab production.html and
 // inventory.html read. The team's plan for each one is the preroll_plans
 // table (see supabase/schema.sql); progress comes from Pre-Roll Production
-// forms (operations_forms, station preroll_production) carrying its prNum.
+// and Ground Flower Pouches forms (operations_forms, QUEUE_STATIONS) carrying
+// its prNum.
 //
-// The queue on top is the order to make things in: every open pre-roll
-// request (not on hold) plus batches added by hand (preroll_queue_items,
+// The queue on top is the order to make things in, pre-rolls and ground
+// flower pouches together (the same team): every open request (not on hold)
+// plus batches added by hand (preroll_queue_items,
 // "PQ-<queue_no>"), ranked with ▲ ▼ / Top. The order is one shared
 // operations_forms row, like the bucking queue (BUCK_QUEUE_ID in ops_data.js):
 // `fields.order` = refs (PR# or PQ-#). Anything not in it goes last, by
 // Ready Date / when it was added. An item drops off once a Pre-Roll
-// Production form carrying its ref is submitted.
+// Production / Ground Flower Pouches form carrying its ref is submitted.
+// Which form an item goes to is its line (queueLine in preroll_queue.js): a
+// product or request whose name says "ground" is pouches.
 // ?embed=queue: only the queue, for the Work Orders page's Pre-Roll tab —
 // its links (Start / Open batch) open in the whole window, not the frame.
 if (new URLSearchParams(location.search).get('embed') === 'queue') {
@@ -255,7 +260,8 @@ if (new URLSearchParams(location.search).get('embed') === 'queue') {
   document.head.appendChild(base);
 }
 // PRODUCTION_REQUESTS_CSV_URL, PREROLL_QUEUE_ID, BRAND_CODES, parseCsv,
-// isPrerollRequest and brandOf come from preroll_queue.js.
+// QUEUE_LINES, QUEUE_STATIONS, queueLine, isQueueRequest, runMade,
+// queueStartHref and brandOf come from preroll_queue.js.
 const REFRESH_MS = 60 * 1000;
 
 // Every on-screen string, English and Spanish side by side (t() and the
@@ -264,8 +270,8 @@ const L = {
   title: { en: 'Pre-Roll Dashboard', es: 'Tablero de prerolls' },
   hub: { en: '← Hub', es: '← Inicio' },
   h1: { en: 'Pre-Roll Production', es: 'Producción de prerolls' },
-  intro: { en: 'Pre-roll requests from the Production Requests Sheet. Assign the strain, schedule it, then start the batch — progress fills in from the Pre-Roll Production form.',
-           es: 'Solicitudes de prerolls de la hoja de solicitudes de producción. Asigne la variedad, prográmela y luego inicie el lote — el avance se llena desde el formulario de producción de prerolls.' },
+  intro: { en: 'Pre-roll and ground flower pouch requests from the Production Requests Sheet. Assign the strain, schedule it, then start the batch — progress fills in from the Pre-Roll Production or Ground Flower Pouches form.',
+           es: 'Solicitudes de prerolls y de bolsas de flor molida de la hoja de solicitudes de producción. Asigne la variedad, prográmela y luego inicie el lote — el avance se llena desde el formulario de producción de prerolls o de bolsas de flor molida.' },
   loading: { en: 'Loading…', es: 'Cargando…' },
   updated: { en: 'Updated', es: 'Actualizado' },
   search: { en: 'Search PR#, product, strain…', es: 'Buscar PR#, producto, variedad…' },
@@ -277,6 +283,7 @@ const L = {
   f_all: { en: 'All', es: 'Todas' },
   t_open: { en: 'Open requests', es: 'Solicitudes abiertas' },
   t_qty: { en: 'Pre-rolls requested', es: 'Prerolls solicitados' },
+  t_pouches: { en: 'Pouches requested', es: 'Bolsas solicitadas' },
   t_needs: { en: 'Needs planning', es: 'Por planear' },
   t_prod: { en: 'In production', es: 'En producción' },
   t_late: { en: 'Running late', es: 'Atrasadas' },
@@ -287,7 +294,7 @@ const L = {
   g_in_production: { en: 'In production', es: 'En producción' },
   g_week: { en: 'Week of', es: 'Semana del' },
   g_past: { en: '(past)', es: '(pasada)' },
-  none_requests: { en: 'No pre-roll requests in the Production Requests Sheet right now.', es: 'No hay solicitudes de prerolls en la hoja de solicitudes de producción por ahora.' },
+  none_requests: { en: 'No pre-roll or pouch requests in the Production Requests Sheet right now.', es: 'No hay solicitudes de prerolls ni de bolsas en la hoja de solicitudes de producción por ahora.' },
   none_match: { en: 'Nothing matches this filter.', es: 'Nada coincide con este filtro.' },
   late: { en: 'Late', es: 'Atrasada' },
   plan: { en: 'Plan', es: 'Planear' },
@@ -305,6 +312,7 @@ const L = {
   made: { en: 'Made', es: 'Hechos' },
   any_type: { en: 'Any type', es: 'Cualquier tipo' },
   prerolls: { en: 'pre-rolls', es: 'prerolls' },
+  pouches: { en: 'pouches', es: 'bolsas' },
   ready_by_lc: { en: 'ready by', es: 'lista para' },
   e_strain_ph: { en: 'Pick or type a strain', es: 'Elija o escriba una variedad' },
   e_uid: { en: 'Source UID (optional)', es: 'UID de origen (opcional)' },
@@ -322,11 +330,11 @@ const L = {
   err_sheet: { en: 'Could not read the Production Requests Sheet', es: 'No se pudo leer la hoja de solicitudes de producción' },
   err_plans: { en: 'Could not load plans — has supabase/schema.sql been re-run?', es: 'No se pudieron cargar los planes — ¿se volvió a ejecutar supabase/schema.sql?' },
   // Queue
-  q_title: { en: 'Pre-Roll Queue', es: 'Fila de prerolls' },
-  q_hint: { en: 'What to make, in order: open pre-roll requests plus anything added here. Use ▲ ▼ or Top to change the order. Requests on hold stay out; an item drops off once its batch is submitted.',
-            es: 'Qué hacer, en orden: solicitudes de prerolls abiertas y lo que se agregue aquí. Use ▲ ▼ o Arriba para cambiar el orden. Las solicitudes en espera quedan fuera; un renglón sale cuando se envía su lote.' },
+  q_title: { en: 'Pre-Roll & Pouch Queue', es: 'Fila de prerolls y bolsas' },
+  q_hint: { en: 'What to make, in order: open pre-roll and ground flower pouch requests plus anything added here, ranked together. Use ▲ ▼ or Top to change the order. Requests on hold stay out; an item drops off once its batch is submitted.',
+            es: 'Qué hacer, en orden: solicitudes abiertas de prerolls y de bolsas de flor molida y lo que se agregue aquí, en una sola fila. Use ▲ ▼ o Arriba para cambiar el orden. Las solicitudes en espera quedan fuera; un renglón sale cuando se envía su lote.' },
   q_add: { en: '+ Add to queue', es: '+ Agregar a la fila' },
-  q_none: { en: 'Nothing in the queue. Add a batch, or wait for a pre-roll request in the Sheet.', es: 'No hay nada en la fila. Agregue un lote o espere una solicitud de prerolls en la hoja.' },
+  q_none: { en: 'Nothing in the queue. Add a batch, or wait for a pre-roll or pouch request in the Sheet.', es: 'No hay nada en la fila. Agregue un lote o espere una solicitud de prerolls o de bolsas en la hoja.' },
   q_top: { en: 'Top', es: 'Arriba' },
   q_up: { en: 'Move up', es: 'Subir' },
   q_down: { en: 'Move down', es: 'Bajar' },
@@ -338,7 +346,7 @@ const L = {
   q_save_fail: { en: 'Could not save the order. Reloading the queue.', es: 'No se pudo guardar el orden. Recargando la fila.' },
   q_load_fail: { en: 'Could not load the queue — has supabase/schema.sql been re-run?', es: 'No se pudo cargar la fila — ¿se volvió a ejecutar supabase/schema.sql?' },
   r_title: { en: 'Production Requests', es: 'Solicitudes de producción' },
-  i_new: { en: 'Add to the pre-roll queue', es: 'Agregar a la fila de prerolls' },
+  i_new: { en: 'Add to the queue', es: 'Agregar a la fila' },
   i_new_sub: { en: 'A batch that isn’t on the Production Requests Sheet. It goes to the bottom of the queue.', es: 'Un lote que no está en la hoja de solicitudes de producción. Va al final de la fila.' },
   i_brand: { en: 'Brand', es: 'Marca' },
   i_brand_ph: { en: 'Pick or type a brand', es: 'Elija o escriba una marca' },
@@ -346,44 +354,45 @@ const L = {
   i_product: { en: 'Product', es: 'Producto' },
   i_any_brand: { en: 'Any brand', es: 'Cualquier marca' },
   p_none: { en: 'No product — quantity is pre-rolls', es: 'Sin producto — la cantidad es en prerolls' },
+  pouch_tag: { en: 'Pouches', es: 'Bolsas' },
   units: { en: 'units', es: 'unidades' },
   each: { en: 'each', es: 'c/u' },
-  calc_total: { en: '{qty} × {pack} = {n} pre-rolls', es: '{qty} × {pack} = {n} prerolls' },
+  calc_total: { en: '{qty} × {pack} = {n} {unit}', es: '{qty} × {pack} = {n} {unit}' },
   calc_flower: { en: '{g} of flower', es: '{g} de flor' },
-  no_size: { en: 'pre-roll size not set', es: 'tamaño de preroll sin fijar' },
+  no_size: { en: 'size not set', es: 'tamaño sin fijar' },
   single: { en: 'single', es: 'individual' },
   pack_n: { en: '{n}-pack', es: 'paquete de {n}' },
   p_btn: { en: 'Products', es: 'Productos' },
-  p_title: { en: 'Pre-roll products', es: 'Productos de prerolls' },
-  p_sub: { en: 'What a request can be for. Quantities are entered in packs (or singles); the dashboard multiplies by the pre-rolls per pack.',
-           es: 'Para qué puede ser una solicitud. Las cantidades se escriben en paquetes (o individuales); el tablero multiplica por los prerolls por paquete.' },
+  p_title: { en: 'Pre-roll & pouch products', es: 'Productos de prerolls y bolsas' },
+  p_sub: { en: 'What a request can be for. Quantities are entered in packs (or singles); the dashboard multiplies by the pre-rolls per pack. A ground flower pouch product has “Ground” in its name (e.g. Howie Roll Ground Flower Pouch 14g), 1 per pack, size 14 g — its requests go to the Ground Flower Pouches form.',
+           es: 'Para qué puede ser una solicitud. Las cantidades se escriben en paquetes (o individuales); el tablero multiplica por los prerolls por paquete. Un producto de bolsas de flor molida lleva “Ground” en el nombre (p. ej. Howie Roll Ground Flower Pouch 14g), 1 por paquete, tamaño 14 g — sus solicitudes van al formulario de bolsas de flor molida.' },
   p_new: { en: '+ New product', es: '+ Nuevo producto' },
   p_edit_title: { en: 'Edit product', es: 'Editar producto' },
-  p_new_title: { en: 'New pre-roll product', es: 'Nuevo producto de prerolls' },
+  p_new_title: { en: 'New product', es: 'Nuevo producto' },
   p_bsku: { en: 'BSKU / code', es: 'BSKU / código' },
   p_bsku_hint: { en: 'Like the Sheet’s BSKU, e.g. SRF021004', es: 'Como el BSKU de la hoja, p. ej. SRF021004' },
   p_name: { en: 'Name', es: 'Nombre' },
-  p_pack: { en: 'Pre-rolls per pack', es: 'Prerolls por paquete' },
-  p_size: { en: 'Pre-roll size (grams)', es: 'Tamaño del preroll (gramos)' },
+  p_pack: { en: 'Pre-rolls (or pouches) per pack', es: 'Prerolls (o bolsas) por paquete' },
+  p_size: { en: 'Size of each (grams)', es: 'Tamaño de cada uno (gramos)' },
   p_active: { en: 'Active (shows in the pickers)', es: 'Activo (aparece en las listas)' },
   p_inactive: { en: 'inactive', es: 'inactivo' },
   p_back: { en: '← Products', es: '← Productos' },
   p_close: { en: 'Close', es: 'Cerrar' },
-  p_err: { en: 'Fill in the code, brand, name and pre-rolls per pack.', es: 'Llene el código, la marca, el nombre y los prerolls por paquete.' },
+  p_err: { en: 'Fill in the code, brand, name and how many per pack.', es: 'Llene el código, la marca, el nombre y cuántos por paquete.' },
   p_none_yet: { en: 'No products yet — has supabase/schema.sql been re-run?', es: 'Aún no hay productos — ¿se volvió a ejecutar supabase/schema.sql?' },
   i_save: { en: 'Save', es: 'Guardar' },
   i_add: { en: 'Add to queue', es: 'Agregar a la fila' },
   i_remove: { en: 'Remove from queue', es: 'Quitar de la fila' },
   i_remove_q: { en: 'Remove {ref} from the queue?', es: '¿Quitar {ref} de la fila?' },
-  i_err_qty: { en: 'Enter how many pre-rolls.', es: 'Escriba cuántos prerolls.' },
+  i_err_qty: { en: 'Enter how many.', es: 'Escriba cuántos.' },
   e_type: { en: 'Type', es: 'Tipo' },
   e_sheet: { en: 'Sheet:', es: 'Hoja:' },
   e_qty_hint: { en: 'Sheet says {n}', es: 'La hoja dice {n}' },
   // Submitted runs
   s_title: { en: 'Submitted Runs', es: 'Corridas enviadas' },
-  s_hint: { en: 'Every submitted Pre-Roll Production form, newest first. Tap one to see the whole record.',
-            es: 'Cada formulario de producción de prerolls enviado, el más reciente primero. Toque uno para ver el registro completo.' },
-  s_none: { en: 'No submitted pre-roll runs yet.', es: 'Aún no hay corridas de prerolls enviadas.' },
+  s_hint: { en: 'Every submitted Pre-Roll Production and Ground Flower Pouches form, newest first. Tap one to see the whole record.',
+            es: 'Cada formulario enviado de producción de prerolls y de bolsas de flor molida, el más reciente primero. Toque uno para ver el registro completo.' },
+  s_none: { en: 'No submitted runs yet.', es: 'Aún no hay corridas enviadas.' },
   s_more: { en: 'Show all {n}', es: 'Mostrar las {n}' },
   s_less: { en: 'Show fewer', es: 'Mostrar menos' },
   s_no_pr: { en: 'no production request', es: 'sin solicitud de producción' },
@@ -402,7 +411,7 @@ const L = {
   // Labor cost (only with 'preroll costs')
   c_head: { en: 'Labor Cost', es: 'Costo de mano de obra' },
   c_total: { en: 'Labor cost (whole run)', es: 'Costo de mano de obra (toda la corrida)' },
-  c_each: { en: 'Labor cost per pre-roll', es: 'Costo de mano de obra por preroll' },
+  c_each: { en: 'Labor cost each', es: 'Costo de mano de obra c/u' },
   c_each_short: { en: 'each', es: 'c/u' },
   c_default: { en: '{h} of {t} labor hrs are at the default rate (Labor Rates), since the Workforce Log’s employee IDs aren’t matched to people’s own rates.',
                es: '{h} de {t} hrs de trabajo van a la tarifa general (Tarifas de trabajo), porque los ID de empleado del registro no están vinculados a la tarifa de cada persona.' },
@@ -450,6 +459,9 @@ const packTxt = (p) => (p.pack_size === 1 ? t(L.single) : t(L.pack_n).replace('{
 // The Pre-Roll form's Pack Type code, as in preroll_queue.js.
 const packCode = (p) => (p.pack_size > 1 ? `${p.pack_size}pk` : 'single');
 const prerollsFor = (units, prod) => (prod ? units * prod.pack_size : units);
+// "pre-rolls" or "pouches", by line.
+const unitWord = (line) => t(line === 'pouch' ? L.pouches : L.prerolls);
+const pouchPill = (line) => (line === 'pouch' ? `<span class="pill pouch">${t(L.pouch_tag)}</span>` : '');
 // "28-pack · 0.5 g each": what one unit of a product is.
 function prodSpec(p) {
   return `${packTxt(p)} · ${p.preroll_size_g ? `${gTxt(p.preroll_size_g)} ${t(L.each)}` : `<span class="none">${t(L.no_size)}</span>`}`;
@@ -462,10 +474,10 @@ if (!sessionStorage.getItem('2cw_pin')) location.replace('/index.html');
 let client = null;
 if (typeof SUPABASE_URL !== 'undefined' && SUPABASE_URL) client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let requests = [];      // from the Sheet, pre-roll crew only
+let requests = [];      // from the Sheet, pre-roll and ground flower pouch requests only
 let plans = {};         // pr_num -> preroll_plans row
 let batches = {};       // pr_num -> [operations_forms rows]
-let runs = [];          // every Pre-Roll Production form, linked to a request or not
+let runs = [];          // every Pre-Roll Production / Ground Flower Pouches form, linked to a request or not
 let showAllRuns = false;
 let viewingRun = null;  // id of the run open in the detail modal
 // Labor $ per run, only for 'preroll costs' (2cw_preroll_costs, set at hub
@@ -504,7 +516,7 @@ async function loadRequests() {
   const res = await fetch(PRODUCTION_REQUESTS_CSV_URL + '&t=' + Date.now());
   if (!res.ok) throw new Error(`${t(L.err_sheet)} (HTTP ${res.status})`);
   return parseCsv(await res.text())
-    .filter(isPrerollRequest)
+    .filter((r) => isQueueRequest(r, products))
     .map((r) => ({
       pr: r['PR#'], product: r['Product'], bsku: r['BSKU'], asku: r['ASKU'],
       type: r['Strain Type'], outputStrain: r['Output Strain'],
@@ -524,7 +536,7 @@ async function loadPlans() {
 async function loadBatches() {
   if (!client) return {};
   const { data, error } = await client.from('operations_forms')
-    .select('id,status,owner_user,updated_by,strain,work_date,submitted_at,fields').eq('station_key', 'preroll_production');
+    .select('id,station_key,status,owner_user,updated_by,strain,work_date,submitted_at,fields').in('station_key', QUEUE_STATIONS);
   if (error) { console.error('loadBatches', error); return {}; }
   runs = data || [];
   const out = {};
@@ -611,7 +623,7 @@ function view(r) {
   const runs = batches[r.pr.toUpperCase()] || [];
   const submitted = runs.filter((b) => b.status === 'submitted');
   const draft = runs.find((b) => b.status === 'draft');
-  const made = runs.reduce((a, b) => a + num(b.fields && b.fields.totalPrerolls), 0);
+  const made = runs.reduce((a, b) => a + runMade(b.fields), 0);
   const strain = plan.strain || r.outputStrain || '';
   let stage;
   if (submitted.length) stage = 'done';
@@ -631,7 +643,8 @@ function view(r) {
   const type = plan.strain_type || r.type;
   const prod = productFor(plan.product_bsku || r.bsku);
   const target = prerollsFor(batchSize, prod);
-  return { ...r, batchSize, type, prod, target, plan, strain, stage, open, late, made, draft, submitted };
+  const line = queueLine(prod, r.product);
+  return { ...r, batchSize, type, prod, line, target, plan, strain, stage, open, late, made, draft, submitted };
 }
 
 function passes(v, q) {
@@ -650,7 +663,7 @@ function passes(v, q) {
 // anything not ordered yet by Ready Date / date added.
 function queueItems() {
   const fromRequests = requests.map(view).filter((v) => v.open && v.stage !== 'on_hold').map((v) => ({
-    ref: v.pr, kind: 'pr', brand: brandOf(v.bsku, v.product), product: v.product || v.bsku,
+    ref: v.pr, kind: 'pr', line: v.line, brand: brandOf(v.bsku, v.product), product: v.product || v.bsku,
     type: v.type, strain: v.strain, sourceUid: v.plan.source_uid || '', qty: v.batchSize, prod: v.prod, target: v.target, made: v.made,
     draft: v.draft, late: v.late, readyDate: v.readyDate, sortDate: v.readyDate || '9999'
   }));
@@ -659,10 +672,10 @@ function queueItems() {
     const runs = batches[ref] || [];
     const prod = productFor(m.product_bsku);
     return {
-      ref, kind: 'manual', row: m, brand: m.brand || (prod && prod.brand) || '', product: prod ? prod.name : '',
+      ref, kind: 'manual', line: queueLine(prod), row: m, brand: m.brand || (prod && prod.brand) || '', product: prod ? prod.name : '',
       type: m.strain_type || '', strain: m.strain || '',
       sourceUid: m.source_uid || '', qty: num(m.quantity), prod, target: prerollsFor(num(m.quantity), prod),
-      made: runs.reduce((a, b) => a + num(b.fields && b.fields.totalPrerolls), 0),
+      made: runs.reduce((a, b) => a + runMade(b.fields), 0),
       draft: runs.find((b) => b.status === 'draft'), done: runs.some((b) => b.status === 'submitted'),
       notes: m.notes || '', sortDate: String(m.created_at || '').slice(0, 10) || '9999'
     };
@@ -682,14 +695,10 @@ function renderQueue() {
   box.innerHTML = (queueErr ? `<div class="err" style="margin-bottom:8px">${esc(queueErr)}</div>` : '') +
     `<div class="q-list">` + shownQueue.map((x, i) => {
       const off = savingOrder || !client;
-      const startHref = '/ops_form.html?' + new URLSearchParams({
-        station: 'preroll_production', set_prNum: x.ref, set_batchId: x.ref,
-        ...(x.strain ? { set_strain: x.strain } : {}), ...(x.sourceUid ? { set_sourceUid: x.sourceUid } : {}),
-        ...(x.prod && x.prod.preroll_size_g ? { set_unitSizeG: x.prod.preroll_size_g } : {}),
-        ...(x.brand ? { set_brand: x.brand } : {}), ...(x.prod ? { set_packType: packCode(x.prod) } : {})
-      }).toString();
+      const startHref = queueStartHref({ line: x.line, ref: x.ref, strain: x.strain, sourceUid: x.sourceUid, brand: x.brand,
+        unitSizeG: x.prod && x.prod.preroll_size_g, packType: x.prod && packCode(x.prod) });
       const go = x.draft
-        ? `<a class="btn btn-purple" href="/ops_form.html?station=preroll_production&draft=${esc(x.draft.id)}">${t(L.open_batch)}</a>`
+        ? `<a class="btn btn-purple" href="/ops_form.html?station=${esc(x.draft.station_key)}&draft=${esc(x.draft.id)}">${t(L.open_batch)}</a>`
         : `<a class="btn btn-purple" href="${esc(startHref)}">${t(L.start_batch)}</a>`;
       const edit = x.kind === 'pr'
         ? `<button class="btn" onclick="openEditor('${esc(x.ref)}')">${t(L.edit_plan)}</button>`
@@ -698,7 +707,7 @@ function renderQueue() {
         <div class="q-n">${i + 1}</div>
         <div class="q-main">
           <div class="q-strain">${x.brand ? esc(x.brand) + ' · ' : ''}${x.strain ? esc(x.strain) : `<span class="none">${t(L.q_no_strain)}</span>`}
-            ${typePill(x.type)}
+            ${pouchPill(x.line)}${typePill(x.type)}
             ${x.draft ? `<span class="pill stage-in_production">${t(L.q_busy)}</span>` : ''}
             ${x.late ? `<span class="pill late">${t(L.late)}</span>` : ''}</div>
           <div class="q-sub"><span class="q-ref">${esc(x.ref)}</span>${x.product ? ' · ' + esc(x.product) : ''} ·
@@ -706,7 +715,7 @@ function renderQueue() {
             ${x.readyDate ? ` · ${t(L.ready_by_lc)} ${esc(fmtDate(x.readyDate))}` : ''}${x.notes ? ' · ' + esc(x.notes) : ''}</div>
         </div>
         <div class="q-qty"><span class="k">${t(L.qty)}</span>${fmtN(x.qty)}${x.prod && x.prod.pack_size > 1 ? ` × ${x.prod.pack_size}` : ''}
-          <span class="pr">${x.prod ? `${fmtN(x.target)} ${t(L.prerolls)}${x.prod.preroll_size_g ? ' · ' + gTxt(x.prod.preroll_size_g) : ''}` : t(L.prerolls)}</span>
+          <span class="pr">${x.prod ? `${fmtN(x.target)} ${unitWord(x.line)}${x.prod.preroll_size_g ? ' · ' + gTxt(x.prod.preroll_size_g) : ''}` : unitWord(x.line)}</span>
           ${x.made ? `<span class="made">${t(L.made)} ${fmtN(x.made)}</span>` : ''}</div>
         <div class="q-move">
           <button type="button" data-move="top" data-i="${i}" ${i === 0 || off ? 'disabled' : ''}>${t(L.q_top)}</button>
@@ -749,7 +758,9 @@ function render() {
   const open = all.filter((v) => v.open);
   const tiles = [
     { k: t(L.t_open), v: open.length, f: 'open' },
-    { k: t(L.t_qty), v: fmtN(open.reduce((a, v) => a + v.target, 0)), f: 'open' },
+    { k: t(L.t_qty), v: fmtN(open.filter((v) => v.line !== 'pouch').reduce((a, v) => a + v.target, 0)), f: 'open' },
+    ...(open.some((v) => v.line === 'pouch')
+      ? [{ k: t(L.t_pouches), v: fmtN(open.filter((v) => v.line === 'pouch').reduce((a, v) => a + v.target, 0)), f: 'open' }] : []),
     { k: t(L.t_needs), v: open.filter((v) => ['needs_strain', 'needs_schedule'].includes(v.stage)).length, f: 'needs', cls: 'warn' },
     { k: t(L.t_prod), v: open.filter((v) => v.stage === 'in_production').length, f: 'in_production', cls: 'go' },
     { k: t(L.t_late), v: open.filter((v) => v.late).length, f: 'late', cls: 'bad' }
@@ -790,12 +801,8 @@ function render() {
 function cardHtml(v) {
   const p = v.plan;
   const pctMade = v.target > 0 ? Math.min(100, Math.round(v.made / v.target * 100)) : 0;
-  const startHref = '/ops_form.html?' + new URLSearchParams({
-    station: 'preroll_production', set_prNum: v.pr, set_batchId: v.pr,
-    ...(v.strain ? { set_strain: v.strain } : {}), ...(p.source_uid ? { set_sourceUid: p.source_uid } : {}),
-    ...(v.prod && v.prod.preroll_size_g ? { set_unitSizeG: v.prod.preroll_size_g } : {}),
-    ...(brandOf(v.bsku, v.product) ? { set_brand: brandOf(v.bsku, v.product) } : {}), ...(v.prod ? { set_packType: packCode(v.prod) } : {})
-  }).toString();
+  const startHref = queueStartHref({ line: v.line, ref: v.pr, strain: v.strain, sourceUid: p.source_uid, brand: brandOf(v.bsku, v.product),
+    unitSizeG: v.prod && v.prod.preroll_size_g, packType: v.prod && packCode(v.prod) });
   const sched = p.est_start || p.est_completion
     ? `${p.est_start ? fmtDate(p.est_start) : '?'} → ${p.est_completion ? fmtDate(p.est_completion) : '?'}`
     : `<span class="none">${t(L.not_scheduled)}</span>`;
@@ -804,17 +811,17 @@ function cardHtml(v) {
     <div class="c-top">
       <span class="pr">${esc(v.pr)}</span>
       <span class="prod">${esc(p.product_bsku && v.prod ? v.prod.name : v.product || v.bsku)}</span>
-      ${typePill(v.type)}
+      ${pouchPill(v.line)}${typePill(v.type)}
       <span class="pill stage-${v.stage}">${t(STAGE_LABELS[v.stage])}</span>
       ${v.late ? `<span class="pill late">${t(L.late)}</span>` : ''}
     </div>
     <div class="c-actions">
       <button class="btn" onclick="openEditor('${esc(v.pr)}')">${t(v.strain || p.est_completion ? L.edit_plan : L.plan)}</button>
-      ${v.draft ? `<a class="btn btn-purple" href="/ops_form.html?station=preroll_production&draft=${esc(v.draft.id)}">${t(L.open_batch)}</a>`
+      ${v.draft ? `<a class="btn btn-purple" href="/ops_form.html?station=${esc(v.draft.station_key)}&draft=${esc(v.draft.id)}">${t(L.open_batch)}</a>`
         : v.stage !== 'done' ? `<a class="btn btn-purple" href="${esc(startHref)}">${t(L.start_batch)}</a>` : ''}
     </div>
     <div class="c-meta">
-      <span>${t(L.qty)} <b>${fmtN(v.batchSize)}</b>${v.prod ? ` × ${v.prod.pack_size} = <b>${fmtN(v.target)}</b> ${t(L.prerolls)}` : ` ${t(L.prerolls)}`}</span>
+      <span>${t(L.qty)} <b>${fmtN(v.batchSize)}</b>${v.prod ? ` × ${v.prod.pack_size} = <b>${fmtN(v.target)}</b> ${unitWord(v.line)}` : ` ${unitWord(v.line)}`}</span>
       ${v.prod ? `<span>${prodSpec(v.prod)}</span>` : ''}
       <span>${t(L.strain)} ${v.strain ? `<b>${esc(v.strain)}</b>` : `<span class="none">${t(L.not_assigned)}</span>`}</span>
       <span>${t(L.plan_lbl)} ${sched}</span>
@@ -838,25 +845,26 @@ document.querySelectorAll('#bar .chip').forEach((c) => c.addEventListener('click
 document.getElementById('search').addEventListener('input', render);
 
 // ── Submitted runs ───────────────────────────────────────────────────────
-// Every submitted Pre-Roll Production form, newest first, including ones not
-// linked to a request. Tapping one opens the whole record, drawn straight
+// Every submitted Pre-Roll Production and Ground Flower Pouches form, newest
+// first, including ones not linked to a request. Tapping one opens the whole record, drawn straight
 // off the station definition in operations_stations.js, like Harvest Intakes.
 const RUNS_SHOWN = 10;
-const RUN_STATION = STATION_BY_KEY.preroll_production;
+const runStation = (r) => STATION_BY_KEY[r.station_key] || STATION_BY_KEY.preroll_production;
+const runLine = (r) => (r.station_key === QUEUE_LINES.pouch.station ? 'pouch' : 'preroll');
 const runWhen = (r) => r.submitted_at || r.work_date || '';
 const isFlagged = (fd, v) => !!fd.flag && v !== null && v !== undefined && v !== '' &&
   Number.isFinite(Number(v)) && fd.flag(Number(v));
 // Calc fields with a `flag` (Starting Weight Accounted For) that's tripped.
-const runFlags = (r) => RUN_STATION.fields.filter((fd) => isFlagged(fd, (r.fields || {})[fd.k]));
+const runFlags = (r) => runStation(r).fields.filter((fd) => isFlagged(fd, (r.fields || {})[fd.k]));
 
 const fmtMoney = (x) => '$' + Number(x).toLocaleString(locale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 // A pre-roll costs cents, so under $1 shows four places ($0.0263).
 const fmtEach = (x) => '$' + Number(x).toLocaleString(locale(), x < 1
   ? { minimumFractionDigits: 4, maximumFractionDigits: 4 } : { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-// Labor $ per pre-roll for a run, or null (no access, no cost, none made).
+// Labor $ per pre-roll (or pouch) for a run, or null (no access, no cost, none made).
 function perPreroll(r) {
   const c = costs[r.id];
-  const made = num((r.fields || {}).totalPrerolls);
+  const made = runMade(r.fields);
   return c && c.cost > 0 && made > 0 ? c.cost / made : null;
 }
 
@@ -874,13 +882,13 @@ function renderRuns() {
     return `<button type="button" class="run" onclick="openRun('${esc(r.id)}')">
       <div class="run-main">
         <div class="run-title">${esc(r.strain || f.strain || '—')}
-          ${runFlags(r).length ? `<span class="pill warn">${t(L.s_check)}</span>` : ''}</div>
+          ${pouchPill(runLine(r))}${runFlags(r).length ? `<span class="pill warn">${t(L.s_check)}</span>` : ''}</div>
         <div class="run-sub">${esc(dates)} · ${f.prNum ? `<span class="q-ref">${esc(f.prNum)}</span>` : `<span class="none">${t(L.s_no_pr)}</span>`}${
           f.batchId && f.batchId !== f.prNum ? ` · ${esc(f.batchId)}` : ''}
           ${num(f.laborHours) > 0 ? `· ${fmtNum(f.laborHours, 1)} ${t(L.s_hours)}` : num(f.crewSize) > 0 ? `· ${fmtNum(f.crewSize, 0)} ${t(L.s_people)}` : ''}${f.accountedPct != null ? ` · ${fmtPct(f.accountedPct)} ${t(L.s_accounted)}` : ''}
           · ${esc(r.owner_user || '—')}</div>
       </div>
-      <div class="run-n"><span class="k">${t(L.prerolls)}</span>${fmtN(f.totalPrerolls)}${
+      <div class="run-n"><span class="k">${unitWord(runLine(r))}</span>${fmtN(runMade(f))}${
         each != null ? `<span class="cost">${fmtEach(each)} ${t(L.c_each_short)}</span>` : ''}</div>
     </button>`;
   }).join('') + (done.length > RUNS_SHOWN
@@ -978,7 +986,7 @@ function openRun(id) {
   const url = new URL(location.href); url.searchParams.set('run', id); history.replaceState(null, '', url);
   const f = r.fields || {};
   // Edit is the same correction mode as the Today board's (ops_form.html?edit=).
-  const canEdit = r.status === 'submitted' && canFixSubmitted('preroll_production');
+  const canEdit = r.status === 'submitted' && canFixSubmitted(r.station_key);
   const sub = [
     r.status === 'submitted'
       ? `${t(L.s_submitted)} ${r.submitted_at ? new Date(r.submitted_at).toLocaleString(locale()) : ''}${r.owner_user ? ` ${t(L.s_by)} ${r.owner_user}` : ''}`
@@ -990,14 +998,14 @@ function openRun(id) {
   modal.innerHTML = `
     <div class="d-top">
       <div><h2>${esc(r.strain || f.strain || '—')}</h2>
-        <div class="m-sub" style="margin-bottom:0">${esc(t(RUN_STATION.title))}${f.prNum ? ' · ' + esc(f.prNum) : ''}</div></div>
+        <div class="m-sub" style="margin-bottom:0">${esc(t(runStation(r).title))}${f.prNum ? ' · ' + esc(f.prNum) : ''}</div></div>
       <div class="d-acts">
-        ${canEdit ? `<a class="btn btn-purple" href="/ops_form.html?station=preroll_production&edit=${encodeURIComponent(r.id)}">${t(L.s_edit)}</a>` : ''}
+        ${canEdit ? `<a class="btn btn-purple" href="/ops_form.html?station=${encodeURIComponent(r.station_key)}&edit=${encodeURIComponent(r.id)}">${t(L.s_edit)}</a>` : ''}
         <button type="button" class="btn" onclick="closeEditor()">${t(L.s_close)}</button>
       </div>
     </div>
     <div class="m-sub">${sub.map(esc).join('<br>')}</div>
-    ${RUN_STATION.fields.map((fd) => runFieldHtml(fd, r)).join('')}
+    ${runStation(r).fields.map((fd) => runFieldHtml(fd, r)).join('')}
     ${costHtml(r)}`;
   document.getElementById('backdrop').style.display = 'block';
 }
@@ -1040,7 +1048,7 @@ function updateCalc(prefix) {
   const prod = productFor(document.getElementById(prefix + '-prod').value);
   if (!prod) { out.innerHTML = units ? `= ${fmtN(units)} ${t(L.prerolls)}` : ''; return; }
   const n = units * prod.pack_size;
-  out.innerHTML = t(L.calc_total).replace('{qty}', fmtN(units)).replace('{pack}', prod.pack_size).replace('{n}', `<b>${fmtN(n)}</b>`) +
+  out.innerHTML = t(L.calc_total).replace('{qty}', fmtN(units)).replace('{pack}', prod.pack_size).replace('{n}', `<b>${fmtN(n)}</b>`).replace('{unit}', unitWord(queueLine(prod))) +
     ` · ${prod.preroll_size_g ? `${gTxt(prod.preroll_size_g)} ${t(L.each)} · ${t(L.calc_flower).replace('{g}', gTxt(n * prod.preroll_size_g))}` : `<span class="none">${t(L.no_size)}</span>`}`;
 }
 
@@ -1085,7 +1093,7 @@ function editProduct(bsku) {
         <input id="pp-pack" type="number" min="1" step="1" inputmode="numeric" value="${esc(p ? p.pack_size : '')}"/></div>
       <div class="fld"><label class="lbl" for="pp-size">${t(L.p_size)}</label>
         <input id="pp-size" type="number" min="0" step="0.05" inputmode="decimal" list="pp-size-list" value="${esc(p && p.preroll_size_g != null ? p.preroll_size_g : '')}"/>
-        <datalist id="pp-size-list"><option value="0.5"><option value="1"></datalist></div>
+        <datalist id="pp-size-list"><option value="0.5"><option value="1"><option value="14"></datalist></div>
     </div>
     <label class="check"><input type="checkbox" id="pp-active" ${!p || p.active ? 'checked' : ''}/> ${t(L.p_active)}</label>
     <div class="m-err" id="pp-err"></div>

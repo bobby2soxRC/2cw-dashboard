@@ -1,9 +1,10 @@
-// Labor cost per Pre-Roll Production run, for the Pre-Roll Dashboard
-// (preroll_dashboard.html). Rates are pay, so the labor_rates table has no
-// anon access; this works the costs out here and hands back only each run's
-// totals — never a rate — and only to someone whose app_users row has
-// 'preroll costs' ticked (admin panel → user editor → Special access),
-// looked up from the PIN they logged in with, like labor-rates.js.
+// Labor cost per Pre-Roll Production and Ground Flower Pouches run, for the
+// Pre-Roll Dashboard (preroll_dashboard.html). Rates are pay, so the
+// labor_rates table has no anon access; this works the costs out here and
+// hands back only each run's totals — never a rate — and only to someone
+// whose app_users row has 'preroll costs' ticked (admin panel → user editor
+// → Special access), looked up from the PIN they logged in with, like
+// labor-rates.js.
 //
 // Pre-Roll runs from before October 2026 have a Workforce Log of hours
 // (fields.crew; the form now only confirms who's there) and are costed from
@@ -152,7 +153,7 @@ exports.handler = async (event) => {
     }
     const [ratesRes, runsRes, badgesRes] = await Promise.all([
       supaFetch(supaUrl, serviceKey, 'labor_rates?select=employee_id,rate,effective_from&order=effective_from.asc'),
-      supaFetch(supaUrl, serviceKey, 'operations_forms?station_key=eq.preroll_production&select=id,work_date,fields'),
+      supaFetch(supaUrl, serviceKey, 'operations_forms?station_key=in.(preroll_production,pouch_production)&select=id,work_date,fields'),
       supaFetch(supaUrl, serviceKey, 'employee_badges?select=badge_no,employee_id')
     ]);
     if (!ratesRes.ok) throw new Error(`rates read failed: ${ratesRes.status} ${await ratesRes.text()}`);

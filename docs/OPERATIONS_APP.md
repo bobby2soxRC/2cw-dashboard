@@ -16,7 +16,7 @@ the existing Operations Hub — same login, same Netlify deploy.
 | `labor_log.html` | Labor Log — people's hours (Connecteam roster) against UIDs, split across several UIDs when needed — see below |
 | `master_schedule.html` | Master Schedule — projects, their responsibilities and people, UIDs, and the day/week work schedule (replaced `schedule.html`) — see below |
 | `crew_checkin.html` | Crew Check-In — a lead checks in the people on their Master Schedule projects once a shift and moves people between stations during the day — see "Crew Check-In" below |
-| `metrc.html` | Metrc Queue — every submitted Wet Intake, Take Down, Bucking, Hand Trim, Mixed Trim Package, Pre-Roll and Outgoing Transfer form, with its Metrc status — see below |
+| `metrc.html` | Metrc Queue — every submitted Wet Intake, Take Down, Bucking, Hand Trim, Mixed Trim Package, Pre-Roll, Ground Flower Pouches and Outgoing Transfer form, with its Metrc status — see below |
 | `raw_inventory.html` | Raw Materials Inventory — what's on hand at each stage from the station forms, tabbed, searchable, CSV export — see below |
 | `operations_today.html` | Live board — every form in progress or finished today, for anyone with view access; the date picker (or `?date=YYYY-MM-DD`) shows any earlier day the same way; **Range** shows several days at once (`?date=FROM&to=TO`; it starts as the day before through the day showing, for overnight work like a green harvest, and ◀ ▶ step the whole range), with the Daily Summary table hidden. With Wet Intakes showing, a **Wet Intake by farm** table sits above the forms (and in the PDF): net wet lbs per farm (a license's name, so a farm's licenses add up), split into dry rooms vs freezers — freezer when Fresh Frozen is ticked or the Drying / Freezer Location is one of `reference.json`'s `freezers` — and each intake card shows farm → location (❄ for freezer). 📄 Share PDF prints the day or range as a report. People with `labor log costs` also get a **Labor $** box next to it (off each time the page opens): ticked, the PDF adds a Labor section — Labor Log hours and $ by station (only the picked station's with a filter), and, for all stations, Connecteam clocked hours and $ by activity (the shifts file holds the last 14 days) — at each person's rate from Labor Rates via `labor-rates.js`. A page with day tabs (Bucking, Hand Trim, Pre-Roll) is on every day something was logged on it, not only its start date, with that day's amount (the headline calc on that day's rows; label from `dayTabs.headline`, else "— that day") |
 | `operations_dashboard.html` | Pipeline, yields, biomass, labor, requests, exceptions (finished forms only) |
@@ -39,7 +39,7 @@ the existing Operations Hub — same login, same Netlify deploy.
 **Harvest** — Harvest · Fresh Frozen
 **Drying** — Harvest Intake — Wet · Take Down — Dry
 **Processing** — Bucking · Machine Trim · Hand Trim / Hand Touch · Smalls Hand Trim · Mixed Trim Package
-**Manufacturing** — Biomass Request · Pre-Roll Production · Manufacturing Run
+**Manufacturing** — Biomass Request · Pre-Roll Production · Ground Flower Pouches · Manufacturing Run
 **Shipping** — Product Transfer — Outgoing (directly under Operations on the hub)
 
 Wet Intake and Take Down are the two halves of the paper "Harvest Intake &
@@ -271,6 +271,37 @@ run, the same `set_…` link as the dashboard's Start batch) or Open (the run
 already going); and the Production Request dropdown leaves out requests
 already open on another run.
 
+**Ground Flower Pouches** (`pouch_production`, Manufacturing, since
+2026-10-20) is Pre-Roll Production for ground flower pouches — for now only
+Howie Roll 14 g. Same team, same page: runs (`sharedDay`, Runs open / + New
+run), day tabs over the **Pouch Output** log (pouches each + waste g) and the
+Crew check, Delete this page, Queue tab, and End of Run (`newPouchUid`,
+`newWasteUid`, finish date, QC, secondary verification). Pouch Size
+(`unitSizeG`) starts at 14 g and drives the "Starting Weight Accounted For"
+check ((pouches × size + waste) ÷ starting weight); the total is
+`totalPouches`. No Pack Type. Like Pre-Roll it's in the Metrc Queue, takes
+its source UID off Raw Inventory, is costed by `preroll-costs.js` (Pre-Roll
+Dashboard → Submitted Runs, which lists both forms), and its crew check finds
+Master Schedule projects whose process (or a responsibility's) is
+`pouch_production`; the day-plan responsibility **Bolsas** maps to it. Users
+need the station ticked in Admin to see it. No SQL.
+
+**Its work orders share the pre-roll queue**, so pre-rolls and pouches are
+ranked in one list (the Pre-Roll Dashboard's **Pre-Roll & Pouch Queue**, and
+Work Orders' **Pre-Roll & Pouches** tab). Each item has a line
+(`queueLine` / `QUEUE_LINES` in `preroll_queue.js`): **a product or Sheet
+request whose name contains "Ground" is pouches**, everything else
+pre-rolls. Sheet requests join the queue when they're pre-roll (`02` BSKU)
+or ground (name says Ground, or the BSKU is a ground product's —
+`isQueueRequest`). Start / Start batch opens the item's own form
+(`queueStartHref`); each form's Production Request dropdown lists only its
+own line, numbered by rank in the whole queue, while both forms' Queue tabs
+show the whole queue. To queue pouches by hand, first add the product in
+the dashboard's **Products** (e.g. "Howie Roll Ground Flower Pouch 14g", the
+Sheet's BSKU, 1 per pack, 14 g), then **+ Add to queue** with it. Done =
+a submitted form carrying the ref, as for pre-rolls (`runMade` reads
+`totalPrerolls` or `totalPouches`).
+
 **Hand Trim / Hand Touch** (`hand_trim`) runs like Bucking: one page per
 lot (`sharedDay` — every open page, anyone's, is in the "Lots open"
 switcher; a lot open on another page drops out of the dropdown), autosaved
@@ -361,14 +392,15 @@ under Operations) puts the work queues on one page, a tab each (`?tab=buck|trim|
   `operations_forms` row like the bucking queue (`TRIM_QUEUE_ID`,
   station_key `trim_queue`); unordered lots go last, oldest bucked first
   (`orderTrimQueue`).
-- **Pre-Roll** — the Pre-Roll Dashboard's queue in a frame
+- **Pre-Roll & Pouches** — the Pre-Roll Dashboard's queue (pre-rolls and
+  ground flower pouches ranked together) in a frame
   (`preroll_dashboard.html?embed=queue`, which hides everything else and
   opens links in the whole window), so ordering, adding and Start batch work
   exactly as on the dashboard, which keeps its queue too.
 
 Bucking and Hand Trim are reordered by 'buck release' managers; others see
 the order. Tabs show by access: Bucking / Hand Trim to their station's edit
-access or 'buck release', Pre-Roll to `preroll_production` edit access or the
+access or 'buck release', Pre-Roll & Pouches to `preroll_production` or `pouch_production` edit access or the
 Pre-Roll Dashboard card (`2cw_preroll_dash`, set at login). The card is
 `ambient`, so someone with only one station still lands straight on it.
 

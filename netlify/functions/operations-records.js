@@ -12,8 +12,9 @@
 //   forms) plus edit access to that station.
 // POST {action:'delete_open', pin, stationKey, id}     -> {ok} | {ok:false, code}
 //   An open (not yet submitted) page the station's own crew can delete —
-//   a Bucking, Hand Trim or Pre-Roll page started by mistake. Needs edit access to that station
-//   ('production edit stations'), not a separate checkbox. code is
+//   a Bucking, Hand Trim, Pre-Roll or Ground Flower Pouches page started by
+//   mistake. Needs edit access to that station ('production edit
+//   stations'), not a separate checkbox. code is
 //   'submitted' (too late — never deleted this way) or 'gone'.
 //
 // Required env vars (Netlify site config), same as admin.js:
@@ -31,7 +32,7 @@ const OPS_DELETE_COL = 'ops delete submitted';
 const STATION_KEYS = new Set(require('../../operations_stations.js').OPERATIONS_STATIONS.map((st) => st.key));
 
 // Stations whose open pages their crew can delete (delete_open).
-const OPEN_PAGE_DELETE = new Set(['buck', 'hand_trim', 'preroll_production']);
+const OPEN_PAGE_DELETE = new Set(['buck', 'hand_trim', 'preroll_production', 'pouch_production']);
 
 const HISTORY_LIMIT = 5000;
 

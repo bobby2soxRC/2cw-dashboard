@@ -613,8 +613,9 @@ async function buildHub(user){
   // Work Orders (work_orders.html): the Bucking / Hand Trim / Pre-Roll
   // queues, for anyone who works or manages one of them. The page shows only
   // the tabs a person has: Bucking and Hand Trim by station edit access or
-  // 'buck release' (who can also reorder those two), Pre-Roll by station
-  // edit access or the Pre-Roll Dashboard card.
+  // 'buck release' (who can also reorder those two), Pre-Roll (pre-rolls and
+  // ground flower pouches) by either station's edit access or the Pre-Roll
+  // Dashboard card.
   const canEdit = (k) => editList === 'all' || (Array.isArray(editList) && editList.includes(k));
   // 'preroll costs' shows labor $ per run on the Pre-Roll Dashboard (and
   // implies the card). Only shows/hides them — the numbers come from
@@ -625,7 +626,7 @@ async function buildHub(user){
   const prerollDash = (user.preroll_dashboard || '').toUpperCase() === 'TRUE';
   sessionStorage.setItem('2cw_preroll_dash', prerollDash ? 'true' : 'false');
   const buckRelease = (user['buck release'] || '').toUpperCase() === 'TRUE';
-  user.work_orders = (buckRelease || prerollDash || ['buck', 'hand_trim', 'preroll_production'].some(canEdit)) ? 'TRUE' : 'FALSE';
+  user.work_orders = (buckRelease || prerollDash || ['buck', 'hand_trim', 'preroll_production', 'pouch_production'].some(canEdit)) ? 'TRUE' : 'FALSE';
 
   // Harvest Intakes page: view, or view + edit submitted intakes. Edit
   // implies view. Read by harvest_intakes.html and ops_form.html's edit mode.

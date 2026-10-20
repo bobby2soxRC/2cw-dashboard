@@ -20,7 +20,7 @@ const EDIT_COL = 'metrc queue edit';
 const STATUSES = new Set(['todo', 'in_progress', 'done', 'not_needed']);
 // The station forms that feed the queue — keep in step with METRC_STATIONS
 // in metrc.html.
-const METRC_STATIONS = new Set(['intake_wet', 'dry_check', 'buck', 'hand_trim', 'trim_package', 'preroll_production', 'transfer_out']);
+const METRC_STATIONS = new Set(['intake_wet', 'dry_check', 'buck', 'hand_trim', 'trim_package', 'preroll_production', 'pouch_production', 'transfer_out']);
 const { STATION_BY_KEY } = require('../../operations_stations.js');
 // Metrc package tags: letters and digits only, spaces dropped, upper case.
 const normTag = (u) => String(u == null ? '' : u).toUpperCase().replace(/\s/g, '');
