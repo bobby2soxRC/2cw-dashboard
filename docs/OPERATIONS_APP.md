@@ -283,15 +283,16 @@ check ((pouches × size + waste) ÷ starting weight); the total is
 its source UID off Raw Inventory, is costed by `preroll-costs.js` (Pre-Roll
 Dashboard → Submitted Runs, which lists both forms), and its crew check finds
 Master Schedule projects whose process (or a responsibility's) is
-`pouch_production`; the day-plan responsibility **Bolsas** maps to it. Users
+`pouch_production`; the day-plan responsibility **Flor molida** maps to it (not a generic "bolsas" — this is only ground flower, never other flower pouches). Users
 need the station ticked in Admin to see it. No SQL.
 
 **Its work orders share the pre-roll queue**, so pre-rolls and pouches are
-ranked in one list (the Pre-Roll Dashboard's **Pre-Roll & Pouch Queue**, and
-Work Orders' **Pre-Roll & Pouches** tab). Each item has a line
+ranked in one list (the Pre-Roll Dashboard's **Pre-Roll & Ground Flower Queue**, and
+Work Orders' **Pre-Roll & Ground Flower** tab). Each item has a line
 (`queueLine` / `QUEUE_LINES` in `preroll_queue.js`): **a product or Sheet
-request whose name contains "Ground" is pouches**, everything else
-pre-rolls. Sheet requests join the queue when they're pre-roll (`02` BSKU)
+request whose name contains "Ground" is ground flower pouches**,
+everything else pre-rolls. Other flower pouches (e.g. Smalls 14g) are never
+picked up — only pre-roll (`02`) and "Ground" requests join the queue. Sheet requests join the queue when they're pre-roll (`02` BSKU)
 or ground (name says Ground, or the BSKU is a ground product's —
 `isQueueRequest`). Start / Start batch opens the item's own form
 (`queueStartHref`); each form's Production Request dropdown lists only its
@@ -395,7 +396,7 @@ under Operations) puts the work queues on one page, a tab each (`?tab=buck|trim|
   `operations_forms` row like the bucking queue (`TRIM_QUEUE_ID`,
   station_key `trim_queue`); unordered lots go last, oldest bucked first
   (`orderTrimQueue`).
-- **Pre-Roll & Pouches** — the Pre-Roll Dashboard's queue (pre-rolls and
+- **Pre-Roll & Ground Flower** — the Pre-Roll Dashboard's queue (pre-rolls and
   ground flower pouches ranked together) in a frame
   (`preroll_dashboard.html?embed=queue`, which hides everything else and
   opens links in the whole window), so ordering, adding and Start batch work
@@ -403,7 +404,7 @@ under Operations) puts the work queues on one page, a tab each (`?tab=buck|trim|
 
 Bucking and Hand Trim are reordered by 'buck release' managers; others see
 the order. Tabs show by access: Bucking / Hand Trim to their station's edit
-access or 'buck release', Pre-Roll & Pouches to `preroll_production` or `pouch_production` edit access or the
+access or 'buck release', Pre-Roll & Ground Flower to `preroll_production` or `pouch_production` edit access or the
 Pre-Roll Dashboard card (`2cw_preroll_dash`, set at login). The card is
 `ambient`, so someone with only one station still lands straight on it.
 

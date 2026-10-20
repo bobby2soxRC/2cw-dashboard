@@ -206,7 +206,7 @@ const CARD_DEFS = [
     // trimmer with just Hand Trim still lands straight on their form.
     ambient: true,
     title: 'Work Orders',
-    desc: 'The work queues in one place — Bucking, Hand Trim and Pre-Roll & Pouches — in the order to work them, with Start or Open for each.',
+    desc: 'The work queues in one place — Bucking, Hand Trim and Pre-Roll & Ground Flower — in the order to work them, with Start or Open for each.',
     href: '/work_orders.html'
   },
   {
@@ -377,7 +377,7 @@ const CARD_ES = {
   menu:                { title: 'Menú', desc: 'El menú de esta semana de Howie Roll, Soma Rosa y Mendo — cambia entre NorCal (Alameda) y SoCal (Van Nuys) para ver qué hay en cada almacén.' },
   production_dashboard:{ title: 'Panel de Procesamiento', desc: 'Dónde está cada lote, rendimiento y merma por etapa y cepa, biomasa disponible y producción de los trimmers.' },
   drying_schedule:     { title: 'Calendario de Secado', desc: 'Granjas externas para las que secamos — granja, licencia, tamaño, fechas estimadas de entrada y peso húmedo, con la carga semanal.' },
-  work_orders:         { title: 'Órdenes de Trabajo', desc: 'Las filas de trabajo en un solo lugar — desvarado, corte a mano y prerolls y bolsas — en el orden de trabajo, con Empezar o Abrir para cada uno.' },
+  work_orders:         { title: 'Órdenes de Trabajo', desc: 'Las filas de trabajo en un solo lugar — desvarado, corte a mano y prerolls y flor molida — en el orden de trabajo, con Empezar o Abrir para cada uno.' },
   harvest_intakes:     { title: 'Recepciones de Cosecha', desc: 'Todas las recepciones de cosecha húmeda — abre una para ver el registro completo, o corrígela y registra el ajuste en Metrc si tienes acceso de edición.' },
   metrc_queue:         { title: 'Cola de Metrc', desc: 'Cada recepción húmeda, bajada, desvarado, corte a mano, recorte mixto, preroll y transferencia de salida enviado que espera en Metrc — ábralo, copie sus valores y marque en qué va.' },
   information_hub:     { title: 'Centro de Información', desc: 'Las listas de referencia que usa el resto de la app — variedades, instalaciones de Canix, pronósticos de rendimiento, licencias de ranchos e IDs de clientes.' },
