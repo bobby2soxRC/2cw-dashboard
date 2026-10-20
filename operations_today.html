@@ -496,7 +496,7 @@
     return [...out];
   }
   function idsLine(f) {
-    const uids = idsOf(f, 'sourceUid'), cids = idsOf(f, 'cid');
+    const uids = [...new Set(idsOf(f, 'sourceUid').map((u) => u.length > 5 ? `…${u.slice(-5)}` : u))], cids = idsOf(f, 'cid');
     const part = (lbl, xs) => xs.length ? `${lbl} <b>${xs.map(esc).join(', ')}</b>` : '';
     const parts = [part('UID', uids), part('CID', cids)].filter(Boolean);
     return parts.length ? `<div class="row-ids">${parts.join(' · ')}</div>` : '';
