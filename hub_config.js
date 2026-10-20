@@ -147,7 +147,7 @@ const CARD_DEFS = [
     dept: 'operations',
     subdept: 'manufacturing',
     title: 'Pre-Roll Dashboard',
-    desc: 'Pre-roll production requests from the Sheet — assign the strain, schedule start and finish dates, and see each batch’s progress.',
+    desc: 'Pre-roll and ground flower pouch requests from the Sheet in one ranked queue — assign the strain, schedule start and finish dates, and see each batch’s progress.',
     href: '/preroll_dashboard.html'
   },
   {
@@ -206,7 +206,7 @@ const CARD_DEFS = [
     // trimmer with just Hand Trim still lands straight on their form.
     ambient: true,
     title: 'Work Orders',
-    desc: 'The work queues in one place — Bucking, Hand Trim and Pre-Roll — in the order to work them, with Start or Open for each.',
+    desc: 'The work queues in one place — Bucking, Hand Trim and Pre-Roll & Ground Flower — in the order to work them, with Start or Open for each.',
     href: '/work_orders.html'
   },
   {
@@ -373,11 +373,11 @@ const CARD_ES = {
   field_forms:         { title: 'Formularios de Campo', desc: 'Registra capacitaciones de budtenders, reuniones con compradores, muestras al personal y visitas a tiendas.' },
   menu_health:         { title: 'Salud del Menú', desc: 'Puntajes de mezcla, frescura y volumen de T-SKU a B-SKU a Marca — con la tendencia en el tiempo.' },
   production_requests: { title: 'Solicitudes de Producción', desc: 'Solicitudes semanales de producción y espacios de abastecimiento para Howie Roll, Soma Rosa Farms y Mendo — solo lectura, sincronizado cada hora.' },
-  preroll_dashboard:   { title: 'Panel de Pre-Rolls', desc: 'Solicitudes de producción de pre-rolls — asigna la cepa, programa fechas de inicio y fin, y ve el avance de cada lote.' },
+  preroll_dashboard:   { title: 'Panel de Pre-Rolls', desc: 'Solicitudes de pre-rolls y de bolsas de flor molida en una sola fila — asigna la cepa, programa fechas de inicio y fin, y ve el avance de cada lote.' },
   menu:                { title: 'Menú', desc: 'El menú de esta semana de Howie Roll, Soma Rosa y Mendo — cambia entre NorCal (Alameda) y SoCal (Van Nuys) para ver qué hay en cada almacén.' },
   production_dashboard:{ title: 'Panel de Procesamiento', desc: 'Dónde está cada lote, rendimiento y merma por etapa y cepa, biomasa disponible y producción de los trimmers.' },
   drying_schedule:     { title: 'Calendario de Secado', desc: 'Granjas externas para las que secamos — granja, licencia, tamaño, fechas estimadas de entrada y peso húmedo, con la carga semanal.' },
-  work_orders:         { title: 'Órdenes de Trabajo', desc: 'Las filas de trabajo en un solo lugar — desvarado, corte a mano y prerolls — en el orden de trabajo, con Empezar o Abrir para cada uno.' },
+  work_orders:         { title: 'Órdenes de Trabajo', desc: 'Las filas de trabajo en un solo lugar — desvarado, corte a mano y prerolls y flor molida — en el orden de trabajo, con Empezar o Abrir para cada uno.' },
   harvest_intakes:     { title: 'Recepciones de Cosecha', desc: 'Todas las recepciones de cosecha húmeda — abre una para ver el registro completo, o corrígela y registra el ajuste en Metrc si tienes acceso de edición.' },
   metrc_queue:         { title: 'Cola de Metrc', desc: 'Cada recepción húmeda, bajada, desvarado, corte a mano, recorte mixto, preroll y transferencia de salida enviado que espera en Metrc — ábralo, copie sus valores y marque en qué va.' },
   information_hub:     { title: 'Centro de Información', desc: 'Las listas de referencia que usa el resto de la app — variedades, instalaciones de Canix, pronósticos de rendimiento, licencias de ranchos e IDs de clientes.' },

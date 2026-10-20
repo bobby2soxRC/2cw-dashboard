@@ -216,8 +216,8 @@
 <script src="/ops_data.js"></script>
 <script src="/metrc_transfers.js"></script>
 <script>
-// Metrc Queue — every submitted Wet Intake, Take Down, Bucking, Hand Trim and
-// Pre-Roll form, each needing something done in Metrc, with where it stands
+// Metrc Queue — every submitted Wet Intake, Take Down, Bucking, Hand Trim,
+// Pre-Roll and Ground Flower Pouches form (and the others in METRC_STATIONS), each needing something done in Metrc, with where it stands
 // (To do / In progress / Done / Not needed) and a note. Statuses live in the
 // metrc_queue table (supabase/schema.sql), read here with the anon key and
 // changed only through netlify/functions/metrc-queue.js, which re-checks
@@ -227,7 +227,7 @@
   mountLangToggle('lang');
   // The station forms that feed the queue — keep in step with
   // METRC_STATIONS in netlify/functions/metrc-queue.js.
-  const METRC_STATIONS = ['intake_wet', 'dry_check', 'buck', 'hand_trim', 'trim_package', 'preroll_production', 'transfer_out'];
+  const METRC_STATIONS = ['intake_wet', 'dry_check', 'buck', 'hand_trim', 'trim_package', 'preroll_production', 'pouch_production', 'transfer_out'];
   const access = sessionStorage.getItem('2cw_metrc_access') || '';
   const canEdit = access === 'edit';
 
@@ -526,7 +526,7 @@
     if (stationFilter && r.station_key !== stationFilter) return false;
     if (!query) return true;
     const q = queue.get(r.id) || {};
-    const hay = [r.strain, val(r, 'strain'), uids(r), val(r, 'newFinishedUid'), val(r, 'newPrerollUid'), val(r, 'newWasteUid'), ...newTags(r),
+    const hay = [r.strain, val(r, 'strain'), uids(r), val(r, 'newFinishedUid'), val(r, 'newPrerollUid'), val(r, 'newPouchUid'), val(r, 'newWasteUid'), ...newTags(r),
       productOf(r), val(r, 'incomingUid'), val(r, 'manifestNo'), val(r, 'completedBy'), r.owner_user, q.note, q.updated_by, t(stationOf(r).title)].join(' ').toLowerCase();
     return hay.includes(query);
   }
@@ -596,7 +596,7 @@
   function rowHtml(r) {
     const s = statusOf(r), q = queue.get(r.id) || {}, days = daysWaiting(r), open = s === 'todo' || s === 'in_progress';
     const picked = pending.get(r.id) || s;
-    const newUid = [...new Set([...newTags(r), val(r, 'newFinishedUid'), val(r, 'newPrerollUid')].filter(Boolean))].join(', ');
+    const newUid = [...new Set([...newTags(r), val(r, 'newFinishedUid'), val(r, 'newPrerollUid'), val(r, 'newPouchUid')].filter(Boolean))].join(', ');
     const untagged = tagDefs(r).filter((x) => !val(r, x.k)).length;
     const manifest = String(val(r, 'manifestNo') || '').trim();  // Wet Intake only
     const photos = photosOf(r);

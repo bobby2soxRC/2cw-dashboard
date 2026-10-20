@@ -330,13 +330,19 @@ async function saveBuckQueue(order, who) {
 // order, each marked with the bucking page it's open on (`draftId`), if any,
 // and the pounds pulled off it so far (`pulledLb`: the boxes logged on that
 // page) and what's left (`leftLb`, from the starting weight `unbuckedLb`).
+// `cid` is the customer ID(s): the Take Down's, plus each farm intake's
+// (Wet Intake) — a package combined from several intakes can have more than
+// one, comma-separated.
 async function loadBuckingQueue() {
-  const [downs, bucked, open, queue] = await Promise.all([
-    loadSubmitted('dry_check'), loadSubmitted('buck'), listOpenDrafts('buck'), getBuckQueue()]);
+  const [downs, bucked, open, queue, intakes] = await Promise.all([
+    loadSubmitted('dry_check'), loadSubmitted('buck'), listOpenDrafts('buck'), getBuckQueue(), loadSubmitted('intake_wet')]);
   const drafts = (open || []).filter((d) => d.fields && d.fields.sourceUid);
+  const intakeCid = (uid) => ((intakes || []).find((i) => uid && uidTailMatch(i.sourceUid, uid)) || {}).cid || '';
   const items = orderBuckQueue(buckablePackages(downs || [], bucked || []), queue).map((p) => {
     const d = drafts.find((x) => uidTailMatch(x.fields.sourceUid, p.sourceUid));
-    return withPulled(d ? { ...p, draftId: d.id } : p, d ? d.fields.boxes : []);
+    const farm = (p.farmUids || []).length ? p.farmUids : [p.incomingUid];
+    const cid = [...new Set([p.cid, ...farm.map(intakeCid)].map((c) => String(c || '').trim()).filter(Boolean))].join(', ');
+    return withPulled({ ...p, cid, ...(d ? { draftId: d.id } : {}) }, d ? d.fields.boxes : []);
   });
   return { items, queue, downs: downs || [] };
 }

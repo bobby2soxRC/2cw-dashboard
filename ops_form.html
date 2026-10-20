@@ -396,15 +396,16 @@
     otherLot:  { en: 'Other — not on the list', es: 'Otro — no aparece' },
     bucking:   { en: 'bucking in progress', es: 'desvarándose' }
   };
-  // The pre-roll queue dropdown (prPicker — Pre-Roll Production's request).
+  // The pre-roll queue dropdown (prPicker — Pre-Roll Production's and Ground
+  // Flower Pouches' request).
   const PR = {
-    loading: { en: 'Loading the pre-roll queue…', es: 'Cargando la fila de prerolls…' },
+    loading: { en: 'Loading the queue…', es: 'Cargando la fila…' },
     choose:  { en: 'Choose the production request…', es: 'Elija la solicitud de producción…' },
-    none:    { en: 'Nothing in the pre-roll queue — pick Other', es: 'No hay nada en la fila de prerolls — elija Otro' },
+    none:    { en: 'Nothing in the queue for this form — pick Other', es: 'No hay nada en la fila para este formulario — elija Otro' },
     other:   { en: 'Other — type the PR #', es: 'Otro — escriba el N.º de solicitud' },
     noStrain:{ en: 'no strain yet', es: 'sin variedad aún' },
     open:    { en: 'batch open', es: 'lote abierto' },
-    make:    { en: 'Make {n} pre-rolls', es: 'Hacer {n} prerolls' },
+    make:    { en: 'Make {n} {unit}', es: 'Hacer {n} {unit}' },
     packs:   { en: '{units} × {pack}-pack', es: '{units} × paquete de {pack}' },
     each:    { en: '{g} g each', es: '{g} g c/u' },
     ready:   { en: 'ready by {d}', es: 'lista para {d}' }
@@ -1801,16 +1802,20 @@
   // preroll_queue.js). Picking one stores its ref (PR# / PQ-#) and fills the
   // `fills` fields; a value a pick put in is replaced by the next pick, and
   // anything typed over it is left alone. "Other" is for a PR# not listed.
+  // Pre-rolls and pouches share the queue; the dropdown lists only this
+  // form's line (`prPicker.line`), each with its rank in the whole queue.
   const prFields = station.fields.filter((f) => f.prPicker);
+  const prLine = ((prFields[0] || {}).prPicker || {}).line || 'preroll';
+  const prUnit = QUEUE_LINES[prLine].unit;
   const prLoaded = prFields.length && draftsOn
     ? loadPrerollQueue(getClient()).catch((err) => { console.error('pre-roll queue', err); return []; }) : null;
   let prItems = prFields.length && !draftsOn ? [] : null;
   const prFilled = {};
   const prBlank = (x) => x === undefined || x === null || String(x).trim() === '';
   const prFind = (ref) => (prItems || []).find((x) => x.ref.toUpperCase() === String(ref || '').trim().toUpperCase());
-  function prLabel(x, i) {
+  function prLabel(x) {
     const qty = fmtNum(x.units, 0) + (x.packSize > 1 ? ` × ${x.packSize}` : '');
-    return `${i + 1}. ${x.ref} — ${x.productName || x.brand || '?'} · ${x.strain || x.type || t(PR.noStrain)} · ${qty}` +
+    return `${x.rank}. ${x.ref} — ${x.productName || x.brand || '?'} · ${x.strain || x.type || t(PR.noStrain)} · ${qty}` +
       (x.draftId ? ` · ${t(PR.open)}` : '');
   }
   function showPrInfo(f) {
@@ -1818,7 +1823,7 @@
     const x = prFind(values[f.k]);
     if (!x) { box.style.display = 'none'; return; }
     box.textContent = [
-      t(PR.make).replace('{n}', fmtNum(x.target, 0)) +
+      t(PR.make).replace('{n}', fmtNum(x.target, 0)).replace('{unit}', t(prUnit)) +
         (x.packSize > 1 ? ` (${t(PR.packs).replace('{units}', fmtNum(x.units, 0)).replace('{pack}', x.packSize)})` : ''),
       x.unitSizeG ? t(PR.each).replace('{g}', x.unitSizeG) : '',
       x.readyDate ? t(PR.ready).replace('{d}', new Date(x.readyDate + 'T12:00:00').toLocaleDateString(getLang() === 'es' ? 'es-US' : 'en-US', { month: 'short', day: 'numeric' })) : ''
@@ -1834,8 +1839,8 @@
     // One run per request: a request already open on another run is reached
     // from the switcher or the Queue tab, not started again here.
     sel.innerHTML = `<option value="">${escapeHtml(t(!prItems ? PR.loading : items.length ? PR.choose : PR.none))}</option>` +
-      items.map((x, i) => (x.draftId && x.draftId !== draftId ? ''
-        : `<option value="${escapeAttr(x.ref)}">${escapeHtml(prLabel(x, i))}</option>`)).join('') +
+      items.map((x) => (x.draftId && x.draftId !== draftId ? ''
+        : `<option value="${escapeAttr(x.ref)}">${escapeHtml(prLabel(x))}</option>`)).join('') +
       (prItems ? `<option value="__type__">${escapeHtml(t(PR.other))}</option>` : '');
     sel.value = hit ? hit.ref : (!prBlank(cur) && prItems) ? '__type__' : '';
     inp.style.display = sel.value === '__type__' ? 'block' : 'none';
@@ -2055,8 +2060,8 @@
     loading:  { en: 'Loading the schedule…', es: 'Cargando el horario…' },
     from:     { en: 'Master Schedule — {p}', es: 'Plan Maestro — {p}' },
     notOn:    { en: '{p} isn’t on the schedule this day.', es: '{p} no está en el horario este día.' },
-    none:     { en: 'Nobody is scheduled for pre-rolls this day — pick the run’s Project above, or add people below.',
-                es: 'No hay nadie programado para prerolls este día — elija el Proyecto de la corrida arriba, o agregue personas abajo.' },
+    none:     { en: 'Nobody is scheduled here this day — pick the run’s Project above, or add people below.',
+                es: 'No hay nadie programado aquí este día — elija el Proyecto de la corrida arriba, o agregue personas abajo.' },
     here:     { en: 'Here', es: 'Presente' },
     out:      { en: 'Not here', es: 'No vino' },
     added:    { en: 'Added', es: 'Agregado' },
@@ -3484,18 +3489,20 @@
     pulledLb:{ en: 'Trimmed', es: 'Cortado' },
     bucking: { en: 'bucking', es: 'desvarándose' }
   });
-  // Pre-Roll's Queue tab: the pre-roll queue (loadPrerollQueue in
-  // preroll_queue.js), in the order set on the Pre-Roll Dashboard. One run
-  // per request: Start opens a new run for it, Open the run already going.
-  const prQ = station.key === 'preroll_production';
+  // Pre-Roll's and Ground Flower Pouches' Queue tab: the whole pre-roll
+  // queue, both lines (loadPrerollQueue in preroll_queue.js), in the order
+  // set on the Pre-Roll Dashboard. One run per request: Start opens a new run
+  // for it on its line's form, Open the run already going.
+  const prQ = QUEUE_STATIONS.includes(station.key);
   if (prQ) Object.assign(QT, {
     form:    { en: 'Run page', es: 'Hoja de corrida' },
-    note:    { en: 'Make in this order. A manager sets it on the Pre-Roll Dashboard.',
-               es: 'Haga en este orden. Un gerente lo fija en el tablero de prerolls.' },
-    none:    { en: 'Nothing in the pre-roll queue.', es: 'No hay nada en la fila de prerolls.' },
+    note:    { en: 'Make in this order — pre-rolls and ground flower pouches together. A manager sets it on the Pre-Roll Dashboard.',
+               es: 'Haga en este orden — prerolls y bolsas de flor molida juntos. Un gerente lo fija en el tablero de prerolls.' },
+    none:    { en: 'Nothing in the queue.', es: 'No hay nada en la fila.' },
     initLb:  { en: 'To make', es: 'Por hacer' },
     pulledLb:{ en: 'Made', es: 'Hechos' },
-    noStrain:{ en: 'no strain yet', es: 'sin variedad aún' }
+    noStrain:{ en: 'no strain yet', es: 'sin variedad aún' },
+    pouch:   { en: 'ground flower', es: 'flor molida' }
   });
   const ftabs = document.getElementById('ftabs');
   function showTab(tab) {
@@ -3521,7 +3528,7 @@
     // This page's own boxes / bags come from what's typed here, not its last save.
     // This run's own count comes from what's typed here, not its last save.
     queueItems = prQ
-      ? (await loadPrerollQueue(getClient())).map((x) => (x.draftId && x.draftId === draftId ? { ...x, made: num(values.totalPrerolls) } : x))
+      ? (await loadPrerollQueue(getClient())).map((x) => (x.draftId && x.draftId === draftId ? { ...x, made: num(values[station.headline]) } : x))
       : trimQ
       ? (await loadTrimQueue()).items.map((p) => (p.draftId && p.draftId === draftId ? withTrimmed(p, values.weights) : p))
       : (await loadBuckingQueue()).items.map((p) => (p.draftId && p.draftId === draftId ? withPulled(p, values.boxes) : p));
@@ -3532,17 +3539,14 @@
       const go = here
         ? `<a class="q-go open" href="#" data-here="1">${escapeHtml(t(QT.here))}</a>`
         : p.draftId
-          ? `<a class="q-go open" href="/ops_form.html?station=${station.key}&draft=${encodeURIComponent(p.draftId)}">${escapeHtml(t(QT.open))}</a>`
+          ? `<a class="q-go open" href="/ops_form.html?station=${p.station || station.key}&draft=${encodeURIComponent(p.draftId)}">${escapeHtml(t(QT.open))}</a>`
           : prQ
-          // The same link as the dashboard's Start batch.
-          ? `<a class="q-go" href="/ops_form.html?${escapeAttr(new URLSearchParams({ station: station.key, set_prNum: p.ref, set_batchId: p.ref,
-              ...(p.strain ? { set_strain: p.strain } : {}), ...(p.sourceUid ? { set_sourceUid: p.sourceUid } : {}),
-              ...(p.unitSizeG ? { set_unitSizeG: p.unitSizeG } : {}),
-              ...(p.brand ? { set_brand: p.brand } : {}),
-              ...(p.packType ? { set_packType: p.packType } : {}) }).toString())}">${escapeHtml(t(QT.start))}</a>`
+          // The same link as the dashboard's Start batch, on the item's line's form.
+          ? `<a class="q-go" href="${escapeAttr(queueStartHref(p))}">${escapeHtml(t(QT.start))}</a>`
           : `<a class="q-go" href="/ops_form.html?station=${station.key}&set_sourceUid=${encodeURIComponent(p.sourceUid)}">${escapeHtml(t(QT.start))}</a>`;
       if (prQ) return `<div class="q-row"><div class="q-n">${i + 1}</div>` +
         `<div class="q-main"><div class="q-strain">${escapeHtml(p.strain || p.type || t(QT.noStrain))}` +
+        (p.line === 'pouch' ? `<span class="q-tag">${escapeHtml(t(QT.pouch))}</span>` : '') +
         (p.draftId ? `<span class="q-tag">${escapeHtml(t(QT.busy))}</span>` : '') + `</div>` +
         `<div class="q-uid">${escapeHtml([p.ref, p.productName || p.brand, fmtNum(p.units, 0) + (p.packSize > 1 ? ` × ${p.packSize}` : '')].filter(Boolean).join(' · '))}</div></div>` +
         `<div class="q-lbs">` +
@@ -3558,11 +3562,11 @@
         `<div class="q-main"><div class="q-strain">${escapeHtml(p.strain || '—')}${abbr ? ` · ${escapeHtml(abbr)}` : ''}` +
         (p.inProgress ? `<span class="q-tag">${escapeHtml(t(QT.bucking))}</span>` : '') +
         (p.draftId ? `<span class="q-tag">${escapeHtml(t(QT.busy))}</span>` : '') + `</div>` +
-        `<div class="q-uid">${escapeHtml(p.sourceUid)}${p.cid ? ' · ' + escapeHtml(p.cid) : ''}</div></div>` + lbs + go + `</div>`;
+        `<div class="q-uid">${escapeHtml(p.sourceUid)}${p.cid ? ' · CID ' + escapeHtml(p.cid) : ''}</div></div>` + lbs + go + `</div>`;
       return `<div class="q-row"><div class="q-n">${i + 1}</div>` +
         `<div class="q-main"><div class="q-strain">${escapeHtml(p.strain || '—')}${abbr ? ` · ${escapeHtml(abbr)}` : ''}` +
         (p.draftId ? `<span class="q-tag">${escapeHtml(t(QT.busy))}</span>` : '') + `</div>` +
-        `<div class="q-uid">${escapeHtml(p.sourceUid)}${p.releasedFrom ? ' · ' + escapeHtml(t(QT.part).replace('{uid}', String(p.releasedFrom).slice(-4))) : ''}${(p.farmUids || []).length > 1 ? ' · ' + escapeHtml(t(QT.merged).replace('{n}', p.farmUids.length)) : ''}</div></div>` +
+        `<div class="q-uid">${escapeHtml(p.sourceUid)}${p.cid ? ' · CID ' + escapeHtml(p.cid) : ''}${p.releasedFrom ? ' · ' + escapeHtml(t(QT.part).replace('{uid}', String(p.releasedFrom).slice(-4))) : ''}${(p.farmUids || []).length > 1 ? ' · ' + escapeHtml(t(QT.merged).replace('{n}', p.farmUids.length)) : ''}</div></div>` +
         `<div class="q-lbs">` +
         `<div class="q-lb"><span class="k">${escapeHtml(t(QT.initLb))}</span>${p.unbuckedLb == null ? '—' : fmtNum(p.unbuckedLb, 2) + ' lb'}</div>` +
         `<div class="q-lb"><span class="k">${escapeHtml(t(QT.pulledLb))}</span>${fmtNum(p.pulledLb || 0, 2)} lb</div>` +
@@ -3665,8 +3669,9 @@
   // has (a resumed draft, or the dashboard's Start batch), treating the
   // values that match it as filled by the pick.
   if (prLoaded) {
-    prItems = await prLoaded;
-    if (station.queueTab && !editMode) { queueItems = prItems; queueTabLabel(prItems.length); }
+    const prQueue = await prLoaded;   // both lines — the Queue tab shows it all
+    prItems = prQueue.filter((x) => x.line === prLine);
+    if (station.queueTab && !editMode) { queueItems = prQueue; queueTabLabel(prQueue.length); }
     prFields.forEach((f) => {
       const x = prFind(values[f.k]);
       if (x) Object.entries(f.prPicker.fills || {}).forEach(([key, prop]) => {

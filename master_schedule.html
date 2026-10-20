@@ -1925,7 +1925,7 @@
       data.forEach((r) => {
         const f = r.fields || {};
         const note = (raw, strain) => { const u = normUid(raw); if (u.length >= 4 && !uidIndex.has(u)) uidIndex.set(u, { uid: u, strain: strain || '' }); };
-        ['sourceUid', 'batchTag', 'newBuckedUid', 'newBigLeafUid', 'incomingUid', 'newFinishedUid', 'newPrerollUid', 'newWasteUid',
+        ['sourceUid', 'batchTag', 'newBuckedUid', 'newBigLeafUid', 'incomingUid', 'newFinishedUid', 'newPrerollUid', 'newPouchUid', 'newWasteUid',
          ...STATION_BY_KEY.hand_trim.metrcTags.map((x) => x.k)].forEach((k) => f[k] && note(f[k], r.strain || f.strain));
         (f.lines || []).forEach((ln) => ln && ln.sourceUid && note(ln.sourceUid, ln.strain || r.strain));
       });
@@ -1955,7 +1955,7 @@
   // finished flower, pre-rolls) traces back to it (buildAliasMap in
   // ops_analytics.js), so labor split onto it follows the lot.
   const STATION_KEYS = OPERATIONS_STATIONS.map((s) => s.key);
-  const NEW_TAG = { dry_check: 'sourceUid', buck: 'newBuckedUid', hand_trim: 'newFinishedUid', smalls_trim: 'newFinishedUid', preroll_production: 'newPrerollUid' };
+  const NEW_TAG = { dry_check: 'sourceUid', buck: 'newBuckedUid', hand_trim: 'newFinishedUid', smalls_trim: 'newFinishedUid', preroll_production: 'newPrerollUid', pouch_production: 'newPouchUid' };
   const MAX_WORKED_DAYS = 31;
   const worked = {};          // 'from|to' -> rows | 'loading'
   let workedAllProcs = false;

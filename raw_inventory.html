@@ -123,8 +123,8 @@
 // station forms (not Canix): Drying (Wet Intakes with no Take Down), On-Stem
 // (Take Downs not bucked yet), Bucked (lots not trimmed yet), Flower / Smalls
 // / Trim (what Hand Trim, Machine Trim, Smalls Hand Trim and Bucking made,
-// less what a Pre-Roll run, Manufacturing Run, Biomass Request or Smalls Hand
-// Trim took off that UID) and Fresh Frozen. Farm license, CID and farm come
+// less what a Pre-Roll run, Ground Flower Pouch run, Manufacturing Run,
+// Biomass Request or Smalls Hand Trim took off that UID) and Fresh Frozen. Farm license, CID and farm come
 // from the record or are traced back through Take Down to the Wet Intake.
 //
 // Finished outputs usually leave by sale or transfer, which no form records,
@@ -194,8 +194,8 @@
     tBuck:    { en: 'Bucking', es: 'Desvarado' },
     tMixed:   { en: 'Mixed Trim Package', es: 'Paquete de recorte mixto' },
     tTake:    { en: 'Take Down', es: 'Bajada' },
-    note:     { en: 'Built from the station forms, not Canix. Drying, On-Stem and Bucked clear themselves as the next form is submitted. Flower, Smalls, Trim and Fresh Frozen come off when a Pre-Roll run, Manufacturing Run, Biomass Request (transferred), Smalls Hand Trim, Mixed Trim Package or Outgoing Transfer names their UID; anything sold or moved some other way has to be marked Used up. Hand Trim outputs without their own new UID are listed under the lot’s UID. Drying and fresh-frozen intakes are wet weight; the rest is dry.',
-                es: 'Hecho con los formularios de estación, no con Canix. Secando, En tallo y Desvarado se vacían solos al enviar el siguiente formulario. Flor, Smalls, Recorte y Fresco congelado bajan cuando una corrida de prerolls, de manufactura, una solicitud de biomasa (transferida), un corte de smalls, un paquete de recorte mixto o una transferencia de salida usa su UID; lo vendido o movido de otra forma hay que marcarlo como Agotado. Lo del corte a mano sin UID nuevo aparece bajo el UID del lote. Secando y fresco congelado son peso húmedo; lo demás es seco.' }
+    note:     { en: 'Built from the station forms, not Canix. Drying, On-Stem and Bucked clear themselves as the next form is submitted. Flower, Smalls, Trim and Fresh Frozen come off when a Pre-Roll run, Ground Flower Pouch run, Manufacturing Run, Biomass Request (transferred), Smalls Hand Trim, Mixed Trim Package or Outgoing Transfer names their UID; anything sold or moved some other way has to be marked Used up. Hand Trim outputs without their own new UID are listed under the lot’s UID. Drying and fresh-frozen intakes are wet weight; the rest is dry.',
+                es: 'Hecho con los formularios de estación, no con Canix. Secando, En tallo y Desvarado se vacían solos al enviar el siguiente formulario. Flor, Smalls, Recorte y Fresco congelado bajan cuando una corrida de prerolls, de bolsas de flor molida, de manufactura, una solicitud de biomasa (transferida), un corte de smalls, un paquete de recorte mixto o una transferencia de salida usa su UID; lo vendido o movido de otra forma hay que marcarlo como Agotado. Lo del corte a mano sin UID nuevo aparece bajo el UID del lote. Secando y fresco congelado son peso húmedo; lo demás es seco.' }
   };
   const TABS = [
     { k: 'all', c: 'var(--text)' }, { k: 'drying', c: 'var(--blue)' }, { k: 'onstem', c: 'var(--gold)' },
@@ -273,10 +273,10 @@
   // ── Load and build ────────────────────────────────────────────────────────
   let rows = [], marks = {};
   async function load() {
-    const [intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, mfg, biomass, mixed, shipped, bq, tq, codes, fac, mk, paper] = await Promise.all([
+    const [intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, pouches, mfg, biomass, mixed, shipped, bq, tq, codes, fac, mk, paper] = await Promise.all([
       loadSubmitted('intake_wet'), loadSubmitted('dry_check'), loadSubmitted('buck'), loadSubmitted('hand_trim'),
       loadSubmitted('machine_trim'), loadSubmitted('smalls_trim'), loadSubmitted('fresh_frozen'),
-      loadSubmitted('preroll_production'), loadSubmitted('mfg_output'), loadSubmitted('biomass_request'),
+      loadSubmitted('preroll_production'), loadSubmitted('pouch_production'), loadSubmitted('mfg_output'), loadSubmitted('biomass_request'),
       loadSubmitted('trim_package'), loadSubmitted('transfer_out'),
       loadBuckingQueue(), loadTrimQueue(), getRefCodes(),
       client.from('canix_facilities').select('license_number,farm_group').then((r) => r.data || []),
@@ -289,7 +289,7 @@
     // Records loaded from the old paper sheets (Aug–Sep 2026, owner_user
     // 'paper_import') still trace lots, but their output isn't stock any more.
     const paperIds = new Set(paper.map((r) => r.id));
-    rows = build({ intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, mfg, biomass, mixed, shipped, bq, tq })
+    rows = build({ intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, pouches, mfg, biomass, mixed, shipped, bq, tq })
       .filter((r) => !paperIds.has(r.recId));
   }
 
@@ -411,6 +411,7 @@
     // Trim doesn't take from its own output.
     const takers = [
       ...d.prerolls.map((r) => ({ id: r.id, uid: r.sourceUid, cat: r.inputCategory, lb: r.startingLb, what: t(STATION_BY_KEY.preroll_production.title) })),
+      ...d.pouches.map((r) => ({ id: r.id, uid: r.sourceUid, cat: r.inputCategory, lb: r.startingLb, what: t(STATION_BY_KEY.pouch_production.title) })),
       ...d.mfg.map((r) => ({ id: r.id, uid: r.sourceUid, cat: r.inputCategory, lb: r.inputLb, what: t(STATION_BY_KEY.mfg_output.title) })),
       ...d.biomass.filter((r) => r.status === 'transferred').map((r) => ({ id: r.id, uid: r.sourceUid, cat: r.category, lb: r.transferredLb, what: t(STATION_BY_KEY.biomass_request.title) })),
       ...d.smallsT.map((r) => ({ id: r.id, uid: r.sourceUid, cat: 'smalls_b', lb: r.startingLb, what: t(STATION_BY_KEY.smalls_trim.title) })),

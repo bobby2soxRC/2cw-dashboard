@@ -101,7 +101,8 @@
 //   Hand Trim — every bucked lot, including ones still being bucked, with no
 //               submitted Hand Trim yet (loadTrimQueue), the order Hand
 //               Trim's Queue tab and lot dropdown follow.
-//   Pre-Roll  — the Pre-Roll Dashboard's queue, embedded (?embed=queue), so
+//   Pre-Roll  — the Pre-Roll Dashboard's queue (pre-rolls and ground flower
+//               flower pouches, ranked together), embedded (?embed=queue), so
 //               ordering, adding and Start batch work exactly as they do there.
 // Bucking and Hand Trim are reordered with ▲ ▼ / Top by managers ('buck
 // release'); everyone else sees the order. Start opens a new form page for
@@ -115,7 +116,8 @@
   const TABS = [
     { key: 'buck', show: manager || canEdit('buck'), l: { en: 'Bucking', es: 'Desvarado' } },
     { key: 'trim', show: manager || canEdit('hand_trim'), l: { en: 'Hand Trim', es: 'Corte a mano' } },
-    { key: 'preroll', show: prerollDash || canEdit('preroll_production'), l: { en: 'Pre-Roll', es: 'Prerolls' } }
+    { key: 'preroll', show: prerollDash || canEdit('preroll_production') || canEdit('pouch_production'),
+      l: { en: 'Pre-Roll & Ground Flower', es: 'Prerolls y flor molida' } }
   ].filter((x) => x.show);
   if (!TABS.length) { location.replace('/index.html'); return; }
   mountLangToggle('lang');
@@ -231,8 +233,8 @@
       const tags = (p.inProgress ? `<span class="q-tag gold">${esc(t(L.bucking))}</span>` : '') +
         (p.draftId ? `<span class="q-tag">${esc(t(L.busy))}</span>` : '');
       const sub = buck
-        ? `${esc(p.sourceUid)}${p.releasedFrom ? ' · ' + esc(t(L.partOf).replace('{uid}', String(p.releasedFrom).slice(-4))) : ''}${(p.farmUids || []).length > 1 ? ' · ' + esc(t(L.merged).replace('{n}', p.farmUids.length)) : ''}`
-        : `${esc(p.sourceUid)}${p.cid ? ' · ' + esc(p.cid) : ''}`;
+        ? `${esc(p.sourceUid)}${p.cid ? ' · CID ' + esc(p.cid) : ''}${p.releasedFrom ? ' · ' + esc(t(L.partOf).replace('{uid}', String(p.releasedFrom).slice(-4))) : ''}${(p.farmUids || []).length > 1 ? ' · ' + esc(t(L.merged).replace('{n}', p.farmUids.length)) : ''}`
+        : `${esc(p.sourceUid)}${p.cid ? ' · CID ' + esc(p.cid) : ''}`;
       const lbs = buck
         ? `<div class="q-lb"><span class="k">${esc(t(L.initLb))}</span>${p.unbuckedLb == null ? '—' : lbTxt(p.unbuckedLb)}</div>
            <div class="q-lb"><span class="k">${esc(t(L.pulledLb))}</span>${lbTxt(p.pulledLb || 0)}</div>

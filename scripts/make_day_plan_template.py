@@ -53,6 +53,7 @@ ROLES = [
   ('Trim', 'Hand trim', 'hand_trim'),
   ('Smalls', 'Smalls trim', 'smalls_trim'),
   ('Prerolls', 'Pre-rolls', 'preroll_production'),
+  ('Flor molida', 'Ground flower pouches', 'pouch_production'),
   ('Packing', 'Packing', '(project\'s process)'),
   ('Chofer', 'Driver', 'transport'),
   ('Regar', 'Watering', 'other'),

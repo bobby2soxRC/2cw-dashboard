@@ -31,6 +31,7 @@
     'descolgar': 'dry_check', 'descogar': 'dry_check', 'destronche': 'buck', 'desoje': 'buck', 'pesar': 'buck',
     'comodin proceso': 'buck', 'comodin': 'buck', 'mobius': 'machine_trim', 'movius': 'machine_trim',
     'trim': 'hand_trim', 'trimming': 'hand_trim', 'smalls': 'smalls_trim', 'prerolls': 'preroll_production',
+    'flor molida': 'pouch_production', 'molido': 'pouch_production', 'ground flower': 'pouch_production',
     'packing': '', 'chofer': 'transport', 'choferes': 'transport', 'regar': 'other', 'riego': 'other',
     'watering': 'other', 'bomba': 'other', 'security': 'other', 'otro': 'other'
   };

@@ -61,12 +61,12 @@ function buildAliasMap(stages) {
       if (n && n !== src) alias[n] = src;
     });
   });
-  // Trimming and Pre-Roll retag what they make (finished flower / smalls,
-  // pre-rolls and their waste): the new tag is still the source package's
+  // Trimming, Pre-Roll and Ground Flower Pouches retag what they make
+  // (finished flower / smalls, pre-rolls, pouches and their waste): the new tag is still the source package's
   // lot, so labor put on it traces back the same way. Hand Trim's tags are
   // its `metrcTags`, one per output, set from the Metrc Queue.
   [['hand_trim', STATION_BY_KEY.hand_trim.metrcTags.map((x) => x.k)], ['smalls_trim', ['newFinishedUid']],
-   ['preroll_production', ['newPrerollUid', 'newWasteUid']]].forEach(([key, cols]) => {
+   ['preroll_production', ['newPrerollUid', 'newWasteUid']], ['pouch_production', ['newPouchUid', 'newWasteUid']]].forEach(([key, cols]) => {
     (stages[key] || []).forEach((r) => {
       const src = normUid(r.sourceUid);
       if (!src) return;

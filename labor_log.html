@@ -636,7 +636,7 @@
     dry_check: [['incomingUid', 'in'], ['sourceUid', 'out']]
   };
   const DEFAULT_UID_FIELDS = [['sourceUid', 'out'], ['batchTag', 'out'], ['newBuckedUid', 'out'], ['newBigLeafUid', 'out'],
-                              ['newFinishedUid', 'out'], ['newPrerollUid', 'out'], ['newWasteUid', 'out'],
+                              ['newFinishedUid', 'out'], ['newPrerollUid', 'out'], ['newPouchUid', 'out'], ['newWasteUid', 'out'],
                               ...STATION_BY_KEY.hand_trim.metrcTags.filter((x) => x.k !== 'newFinishedUid').map((x) => [x.k, 'out'])];
   // Which stations' UIDs are up next at each process.
   const FEEDS = {
@@ -647,6 +647,7 @@
     buck: ['dry_check', 'buck'], machine_trim: ['buck', 'machine_trim'],
     hand_trim: ['buck', 'machine_trim', 'hand_trim'], fresh_frozen: ['harvest', 'fresh_frozen'],
     preroll_production: ['machine_trim', 'hand_trim', 'preroll_production'],
+    pouch_production: ['machine_trim', 'hand_trim', 'smalls_trim', 'pouch_production'],
     mfg_output: ['machine_trim', 'hand_trim', 'mfg_output']
   };
   const RECENT_DAYS = 3;   // a UID last seen at this very process counts as "at this stage" for this long

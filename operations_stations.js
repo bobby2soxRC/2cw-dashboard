@@ -27,7 +27,8 @@
 //   prPicker (text) a dropdown of the open pre-roll queue (preroll_queue.js)
 //          plus "Other — type it"; picking one stores its ref (PR# / PQ-#)
 //          and fills { fieldKey: item property } from `fills` (see
-//          wirePrPickers in ops_form.html)
+//          wirePrPickers in ops_form.html); `line` ('preroll' default, or
+//          'pouch') picks which of the queue's work orders it lists
 //   projectPicker (select) a dropdown of the open Master Schedule projects
 //          (F.project — see wireProjectPicker in ops_form.html)
 //   crewcheck  who's working, confirmed against the Master Schedule (Pre-Roll's
@@ -1160,6 +1161,7 @@ const OPERATIONS_STATIONS = [
         l: { en: 'For Which Line?', es: '¿Para qué línea?' },
         opts: [
           { v: 'prerolls', l: { en: 'Manufacturing — Prerolls', es: 'Manufactura — Prerolls' } },
+          { v: 'pouches', l: { en: 'Manufacturing — Ground Flower Pouches', es: 'Manufactura — Bolsas de flor molida' } },
           { v: 'flower', l: { en: 'Manufacturing — Flower', es: 'Manufactura — Flor' } },
           { v: 'concentrates', l: { en: 'Manufacturing — Concentrates', es: 'Manufactura — Concentrados' } },
           { v: 'bulk_sale', l: { en: 'Bulk sale / transfer out', es: 'Venta a granel / transferencia' } }
@@ -1330,6 +1332,111 @@ const OPERATIONS_STATIONS = [
     // Pre-rolls are made from material already moved to manufacturing (a
     // Biomass Request), so the input comes off the manufacturing side of the
     // ledger, like a Manufacturing Run.
+    flow: { lossKind: 'transform', input: { field: 'startingLb', categoryField: 'inputCategory' }, outputs: [] }
+  },
+
+  // ── MANUFACTURING: GROUND FLOWER POUCHES ──────────────────────────────────
+  // Same team and the same shape as Pre-Roll Production — a page per run,
+  // day tabs, output log, crew check, End of Run — but the output is pouches
+  // of ground flower (for now only Howie Roll 14 g). Its work orders share the
+  // pre-roll queue (preroll_queue.js, line 'pouch'), so both are ranked in
+  // one list on the Pre-Roll Dashboard and Work Orders.
+  {
+    key: 'pouch_production',
+    dept: { en: 'Manufacturing', es: 'Manufactura' },
+    title: { en: 'Ground Flower Pouches', es: 'Bolsas de flor molida' },
+    desc: { en: 'One run of ground flower pouches (Howie Roll 14 g) from start to finish — output, waste, and who’s working on it, a tab per day. Stays open across days until submitted.',
+            es: 'Una corrida de bolsas de flor molida (Howie Roll 14 g) de principio a fin — producción, desecho y quién trabajó, una pestaña por día. Queda abierta varios días hasta enviarla.' },
+    color: 'purple',
+    headline: 'totalPouches',
+    sharedDay: true,
+    switcher: { open: { en: 'Runs open', es: 'Corridas abiertas' }, add: { en: '+ New run', es: '+ Nueva corrida' },
+                one: { en: 'run', es: 'corrida' }, many: { en: 'runs', es: 'corridas' },
+                page: { en: 'pouch run', es: 'corrida de bolsas' } },
+    canDelete: true,
+    queueTab: true,
+    links: [{ href: '/work_orders.html?tab=preroll', l: { en: 'Work Orders →', es: 'Órdenes de trabajo →' } }],
+    dayTabs: { lines: ['output', 'attendance'],
+               headline: { en: 'Pouches Made That Day', es: 'Bolsas hechas ese día' } },
+    fields: [
+      { ...F.date(), l: { en: 'Start Date', es: 'Fecha de inicio' } },
+      F.project(),
+      { k: 'prNum', t: 'text', l: { en: 'Production Request', es: 'Solicitud de producción' },
+        prPicker: { line: 'pouch', fills: { batchId: 'ref', brand: 'brand', strain: 'strain', sourceUid: 'sourceUid', unitSizeG: 'unitSizeG' } },
+        hint: { en: 'Pick from the queue — it fills in what it can. Links this batch to the request on the Pre-Roll Dashboard.',
+                es: 'Elija de la fila — llena lo que pueda. Vincula este lote con la solicitud en el tablero de prerolls.' } },
+      { k: 'batchId', t: 'text', req: true, l: { en: 'Batch ID', es: 'ID de lote' } },
+      { k: 'brand', t: 'select', ref: 'brands', allowOther: true,
+        l: { en: 'Brand', es: 'Marca' } },
+      F.strain(),
+      { k: 'sourceUid', t: 'uid', req: true, l: { en: 'Source UID', es: 'UID de origen' },
+        hint: { en: 'Metrc tag of the flower being ground.',
+                es: 'Etiqueta Metrc de la flor que se muele.' } },
+      { k: 'inputCategory', t: 'select', refConst: 'BIOMASS', req: true,
+        l: { en: 'Input Material', es: 'Material de entrada' } },
+      { k: 'startingWtG', t: 'number', req: true, min: 0, step: 0.1, dp: 1,
+        l: { en: 'Starting Weight (grams)', es: 'Peso inicial (gramos)' } },
+      { k: 'startingLb', t: 'calc', calc: (v) => (num(v.startingWtG) > 0 ? num(v.startingWtG) / G_PER_LB : null),
+        l: { en: 'Starting Weight (lbs)', es: 'Peso inicial (lbs)' } },
+      { k: 'humidityPct', t: 'number', min: 0, max: 100, step: 0.1, dp: 1,
+        l: { en: 'Humidity %', es: '% de humedad' } },
+      { k: 'unitSizeG', t: 'number', min: 0, step: 0.01, def: 14,
+        l: { en: 'Pouch Size (grams each)', es: 'Tamaño de la bolsa (gramos c/u)' },
+        hint: { en: 'Howie Roll pouches are 14 g — used for the yield check below.', es: 'Las bolsas Howie Roll son de 14 g — se usa para el rendimiento abajo.' } },
+
+      { k: 'output', t: 'lineitems', entry: true, req: true,
+        l: { en: 'Pouch Output', es: 'Producción de bolsas' },
+        hint: { en: 'Add a row each time a count is taken — pouches filled and waste weighed out.',
+                es: 'Agregue una fila cada vez que se cuente — bolsas llenadas y desecho pesado.' },
+        cols: [
+          { k: 'count', t: 'number', l: { en: 'Pouches (each)', es: 'Bolsas (c/u)' }, min: 0, step: 1, dp: 0, inputmode: 'numeric' },
+          { k: 'wasteG', t: 'number', l: { en: 'Waste (grams)', es: 'Desecho (gramos)' }, min: 0, step: 0.1, dp: 1 },
+          { k: 'notes', t: 'text', l: { en: 'Notes', es: 'Notas' } }
+        ],
+        totalCol: 'count' },
+      { k: 'totalPouches', t: 'calc', dp: 0, calc: (v) => (v.output || []).reduce((a, r) => a + num(r.count), 0),
+        l: { en: 'Total Pouches (whole run)', es: 'Total de bolsas (toda la corrida)' } },
+      { k: 'totalWasteG', t: 'calc', dp: 1, calc: (v) => (v.output || []).reduce((a, r) => a + num(r.wasteG), 0),
+        l: { en: 'Total Waste (grams)', es: 'Desecho total (gramos)' } },
+      { k: 'accountedPct', t: 'calc', fmt: 'pct',
+        calc: (v) => {
+          if (!(num(v.unitSizeG) > 0)) return null;
+          const made = (v.output || []).reduce((a, r) => a + num(r.count), 0) * num(v.unitSizeG);
+          const waste = (v.output || []).reduce((a, r) => a + num(r.wasteG), 0);
+          return pct(made + waste, v.startingWtG);
+        },
+        l: { en: 'Starting Weight Accounted For', es: 'Peso inicial contabilizado' },
+        hint: { en: '(pouches × size + waste) ÷ starting weight. Should land near 100% by the end of the run.',
+                es: '(bolsas × tamaño + desecho) ÷ peso inicial. Debe acercarse al 100% al final de la corrida.' },
+        flag: (x) => x < 0.95 || x > 1.05 },
+
+      { k: 'attendance', t: 'crewcheck', entry: true,
+        l: { en: 'Crew', es: 'Personal' },
+        hint: { en: 'Who is working on the pouches today, from the Master Schedule. Mark anyone who isn’t here, and add anyone who is but isn’t on the schedule.',
+                es: 'Quién trabaja hoy en las bolsas, según el Plan Maestro. Marque a quien no vino y agregue a quien está pero no aparece en el horario.' } },
+      { k: 'crewSize', t: 'calc', dp: 0, calc: (v) => crewOnRun(v.attendance).size || null,
+        l: { en: 'People on this Run', es: 'Personas en esta corrida' } },
+
+      { k: 'endOfRun', t: 'heading',
+        l: { en: 'End of Run', es: 'Fin de la corrida' },
+        hint: { en: 'Fill these in on the last day of the run, then submit.',
+                es: 'Llene esto el último día de la corrida y luego envíe.' } },
+      { k: 'newPouchUid', t: 'uid', l: { en: 'New UID — Pouches', es: 'UID nuevo — bolsas' } },
+      { k: 'newWasteUid', t: 'uid', l: { en: 'New UID — Waste', es: 'UID nuevo — desecho' } },
+      { k: 'finishDate', t: 'date', today: false, l: { en: 'Finish Date', es: 'Fecha de terminación' } },
+      { k: 'qcComplete', t: 'select', req: true,
+        l: { en: 'Q.C. Complete', es: 'Control de calidad completo' },
+        opts: [
+          { v: 'yes', l: { en: 'Yes', es: 'Sí' } },
+          { v: 'no', l: { en: 'Not yet', es: 'Todavía no' } }
+        ] },
+      { k: 'verifiedBy', t: 'text', req: true,
+        l: { en: 'Secondary Verification — Name', es: 'Verificación secundaria — nombre' },
+        hint: { en: 'The second person who checked the counts. Typing your name here is your sign-off.',
+                es: 'La segunda persona que revisó los conteos. Escribir su nombre aquí es su firma.' } },
+      { k: 'verifiedDate', t: 'date', today: false, l: { en: 'Verification Date', es: 'Fecha de verificación' } },
+      F.notes(), F.photo()
+    ],
     flow: { lossKind: 'transform', input: { field: 'startingLb', categoryField: 'inputCategory' }, outputs: [] }
   },
 
