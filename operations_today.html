@@ -99,6 +99,8 @@
     .sum-table .frz{color:var(--blue)}
     .row-dest{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--gold);margin-top:4px}
     .row-dest.frz{color:var(--blue)}
+    .row-ids{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--muted);margin-top:4px;word-break:break-all}
+    .row-ids b{font-weight:400;color:var(--text)}
 
     /* Image preview (Send as image), as on the Master Schedule. */
     #img-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:80;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:calc(16px + env(safe-area-inset-top)) 12px 30px}
@@ -483,6 +485,23 @@
     document.title = `${title} — 2CW`;
   }
 
+  // UID and CID for the card: the form's own (a Wet Intake's CID fills in
+  // from the Canix sync), else the distinct ones on its worksheet rows.
+  function idsOf(f, k) {
+    if (f[k]) return [String(f[k])];
+    const out = new Set();
+    Object.values(f).forEach((v) => {
+      if (Array.isArray(v)) v.forEach((row) => { if (row && typeof row === 'object' && row[k]) out.add(String(row[k])); });
+    });
+    return [...out];
+  }
+  function idsLine(f) {
+    const uids = idsOf(f, 'sourceUid'), cids = idsOf(f, 'cid');
+    const part = (lbl, xs) => xs.length ? `${lbl} <b>${xs.map(esc).join(', ')}</b>` : '';
+    const parts = [part('UID', uids), part('CID', cids)].filter(Boolean);
+    return parts.length ? `<div class="row-ids">${parts.join(' · ')}</div>` : '';
+  }
+
   function render() {
     const filtered = stationFilter ? rows.filter((r) => r.station_key === stationFilter) : rows;
     renderDaySum();
@@ -503,7 +522,7 @@
           <div>
             <div class="row-station">${station ? t(station.title) : r.station_key}</div>
             <div class="row-strain">${esc(r.strain || r.fields.harvestBatchName || '—')}</div>${
-              r.station_key === 'intake_wet' && destOf(r.fields) ? `<div class="row-dest${toFreezer(r.fields) ? ' frz' : ''}">${toFreezer(r.fields) ? '❄ ' : ''}${esc(pidFarm(r.fields.pid))} → ${esc(destOf(r.fields))}</div>` : ''}
+              r.station_key === 'intake_wet' && destOf(r.fields) ? `<div class="row-dest${toFreezer(r.fields) ? ' frz' : ''}">${toFreezer(r.fields) ? '❄ ' : ''}${esc(pidFarm(r.fields.pid))} → ${esc(destOf(r.fields))}</div>` : ''}${idsLine(r.fields)}
           </div>
           <div class="pills"><span class="pill ${r.status}">${r.status === 'draft' ? t(L.draftPill) : t(L.submittedPill)}</span>${
             // Canix has a different strain for this Wet Intake's package
