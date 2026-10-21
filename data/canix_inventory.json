@@ -173118,15 +173118,15 @@
     "_facility_license_number": "CCL26-0000027"
   },
   {
-    "id": 34871923,
-    "tag": "1A406030007975D000000475",
+    "id": 34871789,
+    "tag": "1A406030007975D000009574",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "In Transit",
     "item": {
-      "id": 3495599,
-      "name": "Wet Flower - Garlic Cocktail",
+      "id": 3492564,
+      "name": "Fresh Frozen - Toad Venom",
       "sku": null,
       "is_active": true,
       "facility_id": 4924,
@@ -173145,8 +173145,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 737387,
-        "name": "Garlic Cocktail"
+        "id": 670445,
+        "name": "Toad Venom"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -173165,11 +173165,11 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-10-21T03:15:34.035Z"
+      "updated_at": "2026-10-21T01:09:39.923Z"
     },
     "facility_id": 4924,
-    "weight": 1942.0,
-    "original_weight": 1942.0,
+    "weight": 2232.0,
+    "original_weight": 2232.0,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-10-20T00:00:00.000Z",
@@ -173184,7 +173184,7 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [],
     "destination_packages": [],
-    "source_harvests": "AGP0167-V-GC-T1-10-20-2026",
+    "source_harvests": "AGP0167-TV-T1-10-20-2026",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -173203,11 +173203,11 @@
     },
     "harvests": [
       {
-        "id": 360326,
-        "name": "AGP0167-V-GC-T1-10-20-2026"
+        "id": 360325,
+        "name": "AGP0167-TV-T1-10-20-2026"
       }
     ],
-    "updated_at": "2026-10-21T03:15:35.996Z",
+    "updated_at": "2026-10-21T01:12:38.209Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -173220,15 +173220,15 @@
     "_facility_license_number": "CCL25-0000167"
   },
   {
-    "id": 34871794,
-    "tag": "1A406030005E0B2000010113",
+    "id": 34871790,
+    "tag": "1A406030005E0B2000010110",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "In Transit",
     "item": {
-      "id": 3495597,
-      "name": "Flower - Ice Cream Cake",
+      "id": 2976748,
+      "name": "Flower - Blue Dream",
       "sku": null,
       "is_active": true,
       "facility_id": 4923,
@@ -173247,8 +173247,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 648848,
-        "name": "Ice Cream Cake"
+        "id": 649020,
+        "name": "Blue Dream"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -173267,7 +173267,7 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-10-21T01:13:02.179Z"
+      "updated_at": "2026-10-21T01:13:02.934Z"
     },
     "facility_id": 4923,
     "weight": 10.0,
@@ -173286,21 +173286,21 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": 34726917,
-        "tag": "1A406030005E0B2000010006",
+        "id": 34839038,
+        "tag": "1A406030005E0B2000010100",
         "weight": 10.0,
         "weight_unit": "Pounds",
         "pulled_weight": 10.0,
         "pulled_weight_unit": "Pounds",
         "item": {
-          "id": 3486659,
-          "name": "Unbucked Flower - Ice Cream Cake",
+          "id": 2976748,
+          "name": "Flower - Blue Dream",
           "sku": null
         }
       }
     ],
     "destination_packages": [],
-    "source_harvests": "ICC 10-03-26",
+    "source_harvests": "Blue Dream (HVN) 10-03-26",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -173318,118 +173318,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-10-21T01:16:15.989Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 34871793,
-    "tag": "1A406030005E0B2000010112",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3495596,
-      "name": "Flower - #13 Grape Lobster",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119074,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 736176,
-        "name": "#13 Grape Lobster"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-10-21T01:13:01.491Z"
-    },
-    "facility_id": 4923,
-    "weight": 10.0,
-    "original_weight": 10.0,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-10-20T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 34722644,
-        "tag": "1A406030005E0B2000010002",
-        "weight": 10.0,
-        "weight_unit": "Pounds",
-        "pulled_weight": 10.0,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3486655,
-          "name": "Unbucked Flower - #13 Grape Lobster",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "#13 Grape Lobster (HVN) 10-03-26",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-10-21T01:16:15.153Z",
+    "updated_at": "2026-10-21T01:16:13.718Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -173553,15 +173442,15 @@
     "_facility_license_number": "CCL22-0001284"
   },
   {
-    "id": 34871790,
-    "tag": "1A406030005E0B2000010110",
+    "id": 34871793,
+    "tag": "1A406030005E0B2000010112",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "In Transit",
     "item": {
-      "id": 2976748,
-      "name": "Flower - Blue Dream",
+      "id": 3495596,
+      "name": "Flower - #13 Grape Lobster",
       "sku": null,
       "is_active": true,
       "facility_id": 4923,
@@ -173580,8 +173469,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 649020,
-        "name": "Blue Dream"
+        "id": 736176,
+        "name": "#13 Grape Lobster"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -173600,7 +173489,7 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-10-21T01:13:02.934Z"
+      "updated_at": "2026-10-21T01:13:01.491Z"
     },
     "facility_id": 4923,
     "weight": 10.0,
@@ -173619,21 +173508,21 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": 34839038,
-        "tag": "1A406030005E0B2000010100",
+        "id": 34722644,
+        "tag": "1A406030005E0B2000010002",
         "weight": 10.0,
         "weight_unit": "Pounds",
         "pulled_weight": 10.0,
         "pulled_weight_unit": "Pounds",
         "item": {
-          "id": 2976748,
-          "name": "Flower - Blue Dream",
+          "id": 3486655,
+          "name": "Unbucked Flower - #13 Grape Lobster",
           "sku": null
         }
       }
     ],
     "destination_packages": [],
-    "source_harvests": "Blue Dream (HVN) 10-03-26",
+    "source_harvests": "#13 Grape Lobster (HVN) 10-03-26",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -173651,7 +173540,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-10-21T01:16:13.718Z",
+    "updated_at": "2026-10-21T01:16:15.153Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -173664,23 +173553,23 @@
     "_facility_license_number": "CCL22-0001284"
   },
   {
-    "id": 34871789,
-    "tag": "1A406030007975D000009574",
+    "id": 34871794,
+    "tag": "1A406030005E0B2000010113",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "In Transit",
     "item": {
-      "id": 3492564,
-      "name": "Fresh Frozen - Toad Venom",
+      "id": 3495597,
+      "name": "Flower - Ice Cream Cake",
       "sku": null,
       "is_active": true,
-      "facility_id": 4924,
+      "facility_id": 4923,
       "type": {
-        "id": 119117,
-        "name": "Fresh Cannabis Plant",
+        "id": 119074,
+        "name": "Flower",
         "quantity_type": "WeightBased",
-        "product_category": "Plants"
+        "product_category": "Buds"
       },
       "sub_type": null,
       "brand": null,
@@ -173691,8 +173580,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 670445,
-        "name": "Toad Venom"
+        "id": 648848,
+        "name": "Ice Cream Cake"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -173711,11 +173600,122 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-10-21T01:09:39.923Z"
+      "updated_at": "2026-10-21T01:13:02.179Z"
+    },
+    "facility_id": 4923,
+    "weight": 10.0,
+    "original_weight": 10.0,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-20T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": 34726917,
+        "tag": "1A406030005E0B2000010006",
+        "weight": 10.0,
+        "weight_unit": "Pounds",
+        "pulled_weight": 10.0,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3486659,
+          "name": "Unbucked Flower - Ice Cream Cake",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "ICC 10-03-26",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-10-21T01:16:15.989Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 34871923,
+    "tag": "1A406030007975D000000475",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Transit",
+    "item": {
+      "id": 3495599,
+      "name": "Wet Flower - Garlic Cocktail",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4924,
+      "type": {
+        "id": 119117,
+        "name": "Fresh Cannabis Plant",
+        "quantity_type": "WeightBased",
+        "product_category": "Plants"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 737387,
+        "name": "Garlic Cocktail"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-21T03:15:34.035Z"
     },
     "facility_id": 4924,
-    "weight": 2232.0,
-    "original_weight": 2232.0,
+    "weight": 1942.0,
+    "original_weight": 1942.0,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-10-20T00:00:00.000Z",
@@ -173730,7 +173730,7 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [],
     "destination_packages": [],
-    "source_harvests": "AGP0167-TV-T1-10-20-2026",
+    "source_harvests": "AGP0167-V-GC-T1-10-20-2026",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -173749,11 +173749,11 @@
     },
     "harvests": [
       {
-        "id": 360325,
-        "name": "AGP0167-TV-T1-10-20-2026"
+        "id": 360326,
+        "name": "AGP0167-V-GC-T1-10-20-2026"
       }
     ],
-    "updated_at": "2026-10-21T01:12:38.209Z",
+    "updated_at": "2026-10-21T03:15:35.996Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
