@@ -1,78 +1,48 @@
 {
-  "last_sync": "2026-10-21T05:26:08.011906+00:00",
+  "last_sync": "2026-10-21T10:40:39.738554+00:00",
   "clocked_in": [
-    {
-      "userId": "16753057",
-      "name": "Antonio Sonato",
-      "clockIn": "2026-10-20T11:54:35+00:00",
-      "elapsedHours": 17.53
-    },
-    {
-      "userId": "30700221",
-      "name": "Natanael Cruz Mendez",
-      "clockIn": "2026-10-20T13:07:29+00:00",
-      "elapsedHours": 16.31
-    },
-    {
-      "userId": "30716951",
-      "name": "Mario Calvo Cruz",
-      "clockIn": "2026-10-20T13:10:00+00:00",
-      "elapsedHours": 16.27
-    },
-    {
-      "userId": "30717078",
-      "name": "Axel Cruz Calvo",
-      "clockIn": "2026-10-20T13:10:02+00:00",
-      "elapsedHours": 16.27
-    },
-    {
-      "userId": "30787391",
-      "name": "Esteban Cruz Aguilar",
-      "clockIn": "2026-10-20T13:13:38+00:00",
-      "elapsedHours": 16.21
-    },
-    {
-      "userId": "30787390",
-      "name": "Natanael Calvo Ruiz",
-      "clockIn": "2026-10-20T13:13:41+00:00",
-      "elapsedHours": 16.21
-    },
     {
       "userId": "14920776",
       "name": "Raquel Garcia",
       "clockIn": "2026-10-20T13:58:55+00:00",
-      "elapsedHours": 15.45
+      "elapsedHours": 20.7
     },
     {
       "userId": "30765227",
       "name": "Dolores Jeronimo",
       "clockIn": "2026-10-21T00:34:51+00:00",
-      "elapsedHours": 4.85
-    },
-    {
-      "userId": "5475211",
-      "name": "Gilberto Diaz",
-      "clockIn": "2026-10-21T01:55:13+00:00",
-      "elapsedHours": 3.52
+      "elapsedHours": 10.1
     },
     {
       "userId": "14917345",
       "name": "Juan Carlos Lopez",
       "clockIn": "2026-10-21T02:02:09+00:00",
-      "elapsedHours": 3.4
-    },
-    {
-      "userId": "30787392",
-      "name": "Eder Santiago Mendez Calvo",
-      "clockIn": "2026-10-21T02:50:48+00:00",
-      "elapsedHours": 2.59
+      "elapsedHours": 8.64
     }
   ],
   "today": [
     {
       "userId": "30765227",
       "name": "Dolores Jeronimo",
-      "hoursToday": 4.85,
+      "hoursToday": 10.1,
+      "shiftsToday": 1
+    },
+    {
+      "userId": "14917345",
+      "name": "Juan Carlos Lopez",
+      "hoursToday": 8.64,
+      "shiftsToday": 1
+    },
+    {
+      "userId": "5475211",
+      "name": "Gilberto Diaz",
+      "hoursToday": 5.07,
+      "shiftsToday": 1
+    },
+    {
+      "userId": "30787392",
+      "name": "Eder Santiago Mendez Calvo",
+      "hoursToday": 4.07,
       "shiftsToday": 1
     },
     {
@@ -106,12 +76,6 @@
       "shiftsToday": 1
     },
     {
-      "userId": "5475211",
-      "name": "Gilberto Diaz",
-      "hoursToday": 3.52,
-      "shiftsToday": 1
-    },
-    {
       "userId": "16546117",
       "name": "Roberto Castro",
       "hoursToday": 3.51,
@@ -124,18 +88,6 @@
       "shiftsToday": 1
     },
     {
-      "userId": "14917345",
-      "name": "Juan Carlos Lopez",
-      "hoursToday": 3.4,
-      "shiftsToday": 1
-    },
-    {
-      "userId": "30787392",
-      "name": "Eder Santiago Mendez Calvo",
-      "hoursToday": 2.59,
-      "shiftsToday": 1
-    },
-    {
       "userId": "11168917",
       "name": "Jorge Sanchez",
       "hoursToday": 0.63,
@@ -144,15 +96,33 @@
   ],
   "week": [
     {
+      "userId": "16753057",
+      "name": "Antonio Sonato",
+      "hoursWeek": 33.65,
+      "overtime": false
+    },
+    {
       "userId": "5386883",
       "name": "Antonio Rivas",
       "hoursWeek": 31.25,
       "overtime": false
     },
     {
-      "userId": "16753057",
-      "name": "Antonio Sonato",
-      "hoursWeek": 30.74,
+      "userId": "14917345",
+      "name": "Juan Carlos Lopez",
+      "hoursWeek": 31.22,
+      "overtime": false
+    },
+    {
+      "userId": "5475211",
+      "name": "Gilberto Diaz",
+      "hoursWeek": 29.26,
+      "overtime": false
+    },
+    {
+      "userId": "14920776",
+      "name": "Raquel Garcia",
+      "hoursWeek": 29.23,
       "overtime": false
     },
     {
@@ -162,27 +132,21 @@
       "overtime": false
     },
     {
-      "userId": "5045860",
-      "name": "Ernesto Daniel Sicairos",
-      "hoursWeek": 28.32,
-      "overtime": false
-    },
-    {
-      "userId": "5475211",
-      "name": "Gilberto Diaz",
-      "hoursWeek": 27.71,
-      "overtime": false
-    },
-    {
       "userId": "30787390",
       "name": "Natanael Calvo Ruiz",
-      "hoursWeek": 27.27,
+      "hoursWeek": 28.76,
       "overtime": false
     },
     {
       "userId": "30787391",
       "name": "Esteban Cruz Aguilar",
-      "hoursWeek": 27.23,
+      "hoursWeek": 28.72,
+      "overtime": false
+    },
+    {
+      "userId": "5045860",
+      "name": "Ernesto Daniel Sicairos",
+      "hoursWeek": 28.32,
       "overtime": false
     },
     {
@@ -192,9 +156,21 @@
       "overtime": false
     },
     {
-      "userId": "14917345",
-      "name": "Juan Carlos Lopez",
-      "hoursWeek": 25.98,
+      "userId": "30717078",
+      "name": "Axel Cruz Calvo",
+      "hoursWeek": 25.78,
+      "overtime": false
+    },
+    {
+      "userId": "30700221",
+      "name": "Natanael Cruz Mendez",
+      "hoursWeek": 25.67,
+      "overtime": false
+    },
+    {
+      "userId": "30716951",
+      "name": "Mario Calvo Cruz",
+      "hoursWeek": 25.63,
       "overtime": false
     },
     {
@@ -264,33 +240,15 @@
       "overtime": false
     },
     {
-      "userId": "30717078",
-      "name": "Axel Cruz Calvo",
-      "hoursWeek": 24.35,
-      "overtime": false
-    },
-    {
-      "userId": "30700221",
-      "name": "Natanael Cruz Mendez",
-      "hoursWeek": 24.24,
-      "overtime": false
-    },
-    {
-      "userId": "30716951",
-      "name": "Mario Calvo Cruz",
-      "hoursWeek": 24.21,
+      "userId": "30787392",
+      "name": "Eder Santiago Mendez Calvo",
+      "hoursWeek": 24.62,
       "overtime": false
     },
     {
       "userId": "4704804",
       "name": "Eduardo Leon",
       "hoursWeek": 24.06,
-      "overtime": false
-    },
-    {
-      "userId": "14920776",
-      "name": "Raquel Garcia",
-      "hoursWeek": 23.99,
       "overtime": false
     },
     {
@@ -303,12 +261,6 @@
       "userId": "7240420",
       "name": "Geovani Vega",
       "hoursWeek": 23.18,
-      "overtime": false
-    },
-    {
-      "userId": "30787392",
-      "name": "Eder Santiago Mendez Calvo",
-      "hoursWeek": 23.14,
       "overtime": false
     },
     {
@@ -810,6 +762,12 @@
       "overtime": false
     },
     {
+      "userId": "30765227",
+      "name": "Dolores Jeronimo",
+      "hoursWeek": 10.1,
+      "overtime": false
+    },
+    {
       "userId": "4423514",
       "name": "Jesus Ayerin Sicairos",
       "hoursWeek": 9.7,
@@ -915,12 +873,6 @@
       "userId": "18517523",
       "name": "Oscar Cruz Ruiz",
       "hoursWeek": 5.03,
-      "overtime": false
-    },
-    {
-      "userId": "30765227",
-      "name": "Dolores Jeronimo",
-      "hoursWeek": 4.85,
       "overtime": false
     },
     {
