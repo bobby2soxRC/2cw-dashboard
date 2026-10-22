@@ -119,11 +119,13 @@
   }
 
   // ── Outgoing transfers with no Product Transfer — Outgoing form ──────────
-  // A manifest made in Metrc from one of our licenses to someone else's,
-  // carrying raw material (weighed in pounds or kilograms — pre-rolls and
-  // finished goods go by the piece, lab samples by the gram), with no
-  // submitted transfer_out form for it: the Metrc Queue lists it as "Needs
-  // form", and its link opens the form filled in from the transfer.
+  // A manifest made in Metrc from Adobe (OUTGOING_FROM) to someone else's
+  // license, carrying raw material (weighed in pounds or kilograms) or
+  // pre-rolls (counted by the piece — an "Each" package whose Canix item is a
+  // pre-roll, or whose item we can't see), with no submitted transfer_out
+  // form for it: the Metrc Queue lists it as "Needs form", and its link opens
+  // the form filled in from the transfer. Lab samples (grams) and other
+  // finished goods are left out.
   //
   // A form covers a transfer when its Manifest # matches, or any of its rows'
   // source / transfer package UIDs is one of the transfer's tags (a typed
@@ -135,6 +137,7 @@
   // inventory: Canix packages, for each tag's item and strain when the sync
   //            didn't put them on the transfer (_item / _strain).
   const NEEDS_FORM_SINCE = '2026-10-20';
+  const OUTGOING_FROM = ['CCL22-0001284'];   // Adobe
   const LB_PER = { pounds: 1, pound: 1, lb: 1, lbs: 1, kilograms: 2.20462, kilogram: 2.20462, kg: 2.20462 };
   const toLb = (w, unit) => {
     const k = LB_PER[String(unit || '').trim().toLowerCase()];
@@ -160,7 +163,8 @@
   // A transfer's departure as the California calendar day, YYYY-MM-DD.
   const pacificDay = (s) => (/^(\d{4}-\d\d-\d\d)/.exec(String(s || '')) || [])[1] || '';
 
-  function outgoingNeedingForm(transfers, facilities, forms, inventory, since = NEEDS_FORM_SINCE) {
+  const isEach = (unit) => /^each$/i.test(String(unit || '').trim());
+  function outgoingNeedingForm(transfers, facilities, forms, inventory, since = NEEDS_FORM_SINCE, from = OUTGOING_FROM) {
     const ours = new Set((facilities || []).map((f) => f && f.license_number).filter(Boolean));
     const invByTag = new Map((inventory || []).filter((p) => p && p.tag).map((p) => [normTag(p.tag), p]));
     const formManifests = new Set(), formUids = [];
@@ -173,29 +177,33 @@
     const out = [];
     for (const t of transfers || []) {
       const manifest = String((t && t.manifest_number) || '').trim();
-      if (!manifest || !ours.has(t._facility_license_number)) continue;
+      if (!manifest || !from.includes(t._facility_license_number)) continue;
       for (const d of t.destinations || []) {
         if (!d || ours.has(d.destination_facility)) continue;   // between our own licenses
         const day = pacificDay(d.departure_time);
         if (since && (!day || day < since)) continue;
         const live = (d.contents || []).filter((c) => c && c.status !== 'Voided');
-        const raw = live.filter((c) => toLb(c.shipped_weight, c.shipped_weight_unit) !== null);
-        if (!raw.length) continue;
-        if (formManifests.has(normManifest(manifest))) continue;
-        const tags = live.map((c) => normTag((c.package || {}).tag)).filter(Boolean);
-        if (tags.some(covered)) continue;
-        const packages = raw.map((c) => {
+        const packages = live.map((c) => {
           const tag = String((c.package || {}).tag || '');
           const item = ((invByTag.get(normTag(tag)) || {}).item) || {};
           const name = c._item || item.name || '';
+          const lb = toLb(c.shipped_weight, c.shipped_weight_unit);
+          const pieces = isEach(c.shipped_weight_unit) && (!name || productTypeOf(name) === '8') && Number.isFinite(Number(c.shipped_weight));
+          if (lb === null && !pieces) return null;
           return {
             tag,
-            lb: Math.round(toLb(c.shipped_weight, c.shipped_weight_unit) * 100) / 100,
+            pieces,
+            qty: pieces ? Number(c.shipped_weight) : Math.round(lb * 100) / 100,
+            lb: pieces ? 0 : Math.round(lb * 100) / 100,
             item: name,
             strain: c._strain || (item.strain || {}).name || '',
-            productType: productTypeOf(name)
+            productType: pieces ? '8' : productTypeOf(name)
           };
-        });
+        }).filter(Boolean);
+        if (!packages.length) continue;
+        if (formManifests.has(normManifest(manifest))) continue;
+        const tags = live.map((c) => normTag((c.package || {}).tag)).filter(Boolean);
+        if (tags.some(covered)) continue;
         out.push({
           manifest,
           fromLicense: t._facility_license_number || '',
@@ -209,14 +217,15 @@
           packages,
           tags: packages.map((p) => p.tag),
           strains: [...new Set(packages.map((p) => p.strain).filter(Boolean))],
-          weightLb: Math.round(packages.reduce((s, p) => s + p.lb, 0) * 100) / 100
+          weightLb: Math.round(packages.reduce((s, p) => s + p.lb, 0) * 100) / 100,
+          pieces: packages.reduce((s, p) => s + (p.pieces ? p.qty : 0), 0)
         });
       }
     }
     return out.sort((a, b) => (a.departure || 0) - (b.departure || 0));
   }
 
-  const api = { ACCEPT_WITHIN_H, URGENT_H, INTAKE_DAYS, NEEDS_FORM_SINCE, pacificTime, incomingTransfers, unacceptedIntakes, productTypeOf, outgoingNeedingForm };
+  const api = { ACCEPT_WITHIN_H, URGENT_H, INTAKE_DAYS, NEEDS_FORM_SINCE, OUTGOING_FROM, pacificTime, incomingTransfers, unacceptedIntakes, productTypeOf, outgoingNeedingForm };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.MetrcTransfers = api;
 })(this);

@@ -318,7 +318,8 @@
     needs_form:{ en: 'Needs form', es: 'Falta formulario' },
     nfSub:     { en: 'Manifest made in Metrc — no form yet', es: 'Manifiesto hecho en Metrc — sin formulario' },
     nfGo:      { en: 'Fill out form →', es: 'Llenar formulario →' },
-    nfTo:      { en: 'To', es: 'Para' }
+    nfTo:      { en: 'To', es: 'Para' },
+    pcs:       { en: 'pcs', es: 'pzas' }
   };
   const STATUSES = ['todo', 'in_progress', 'done', 'not_needed'];
   document.getElementById('title').textContent = t(L.title);
@@ -508,7 +509,7 @@
   const daysWaiting = (r) => r.submitted_at ? Math.floor((Date.now() - new Date(r.submitted_at).getTime()) / 86400000) : null;
 
   // ── Needs form ─────────────────────────────────────────────────────────────
-  // Outgoing manifests of raw material made in Metrc with no Product Transfer
+  // Adobe's outgoing manifests of raw material or pre-rolls made in Metrc with no Product Transfer
   // — Outgoing form for them (MetrcTransfers.outgoingNeedingForm). Not
   // metrc_queue rows: each goes away by itself once its form is submitted
   // (matched by Manifest # or package UID). Its link opens a new form filled
@@ -543,7 +544,7 @@
     set('actualDate', x.date);
     set('ckManifestInitiated', 'true');
     if (x.accepted) set('ckManifestAccepted', 'true');
-    set('lines', JSON.stringify(x.packages.map((pk) => ({ productType: pk.productType, strain: libStrain(pk.strain), sourceUid: pk.tag, weight: pk.lb }))));
+    set('lines', JSON.stringify(x.packages.map((pk) => ({ productType: pk.productType, strain: libStrain(pk.strain), sourceUid: pk.tag, weight: pk.qty }))));
     return `/ops_form.html?${p}`;
   }
   function nfMatches(x) {
@@ -567,7 +568,7 @@
       <td class="mono"><div class="mf-cell"><span>${esc(x.manifest)}</span><button type="button" class="copy-mini" data-copy="${esc(x.manifest)}">${t(L.copyBtn)}</button></div></td>
       <td>—</td>
       <td>—</td>
-      <td class="num">${fmtNum(x.weightLb, 2)} lb</td>
+      <td class="num">${[x.weightLb ? `${fmtNum(x.weightLb, 2)} lb` : '', x.pieces ? `${fmtNum(x.pieces, 0)} ${t(L.pcs)}` : ''].filter(Boolean).join(' · ')}</td>
       <td>${esc(String(x.fromName).split(':')[0])}</td>
       <td class="mono">${days !== null ? `<span class="age ${days >= 2 ? 'old' : ''}">${days}d</span>` : '—'}</td>
       <td class="note" title="${esc(to)}">${t(L.nfTo)} ${esc(to ? `${to} · ` : '')}<span class="mono">${esc(x.toLicense)}</span></td>

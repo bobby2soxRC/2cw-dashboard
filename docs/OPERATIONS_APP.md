@@ -662,12 +662,14 @@ farms whose load isn't on a Wet Intake yet still only show in Metrc's
 Incoming tab.
 
 **Needs form — outgoing manifests with no form.** A manifest made in Metrc
-from one of our licenses to someone else's, carrying raw material (packages
-weighed in pounds or kilograms — pre-rolls go by the piece and lab samples by
-the gram, so they're left out), with no submitted Product Transfer —
+from **Adobe** (`OUTGOING_FROM`, CCL22-0001284) to someone else's license,
+carrying raw material (packages weighed in pounds or kilograms) or pre-rolls
+("Each" packages whose Canix item is a pre-roll, or whose item we can't see;
+they go on the form as type 8, in pieces) — lab samples (grams) and other
+finished goods are left out — with no submitted Product Transfer —
 Outgoing form, is listed at the top of the queue as **Needs form** (purple; a
 count and a filter of its own; `outgoingNeedingForm` in `metrc_transfers.js`,
-from `data/canix_transfers_recent.json`). Transfers between our own licenses
+from `data/canix_transfers_recent.json`). Transfers to our own licenses
 don't count, and only manifests that left on or after `NEEDS_FORM_SINCE`
 (2026-10-20, when the form went live). A form covers the manifest when its
 **Metrc Manifest #** (`manifestNo`, on the form since 2026-10-22) matches, or
@@ -682,7 +684,7 @@ order), sales order #, Manifest Transfer Initiated (and Accepted once every
 package is), and a row per package: source UID = the tag shipped, weight in
 lb, strain (spelled as the Strain Library has it) and product type guessed
 from the Canix item name (`productTypeOf`: whole plant → 1, bucked → 2,
-flower → 3, smalls → 4, trim → 5, fresh frozen → 6). Driver, plate, prices,
+flower → 3, smalls → 4, trim → 5, fresh frozen → 6, pre-roll → 8). Driver, plate, prices,
 customer order # and invoice # aren't in Canix — fill those in. Item names
 come from the Canix sync (`label_transfer` in `scripts/canix_sync.py` puts
 `_item` / `_strain` on each package, and `_sales_order_no` /

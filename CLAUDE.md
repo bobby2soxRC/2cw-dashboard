@@ -183,8 +183,8 @@ Details: "Hand Trim — Past Records" in `docs/OPERATIONS_APP.md`.
 
 ### Metrc Queue: Needs form for outgoing manifests (started 2026-10-22)
 
-An outgoing Metrc manifest of raw material (lb/kg packages, from our license
-to someone else's, since 2026-10-20) with no Product Transfer — Outgoing form
+An outgoing Metrc manifest from Adobe (CCL22-0001284) of raw material (lb/kg
+packages) or pre-rolls (pieces), to someone else's license, since 2026-10-20, with no Product Transfer — Outgoing form
 shows at the top of `metrc.html` as **Needs form**; clicking it opens the form
 filled in from the transfer (`?set_` link prefill). Logic:
 `outgoingNeedingForm` in `metrc_transfers.js` (tests:
