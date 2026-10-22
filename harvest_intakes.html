@@ -62,6 +62,7 @@
     .tbl .mono{font-family:'DM Mono',monospace;font-size:.8rem}
     .tbl .num{text-align:right;font-family:'DM Mono',monospace}
     .tbl .strain{font-weight:500}
+    .tbl .row-time{margin-top:2px;font-size:.7rem;color:var(--muted)}
     .tbl .clip{max-width:220px;overflow:hidden;text-overflow:ellipsis}
     .tbl .pills{display:flex;gap:5px}
     .tbl td.empty{padding:40px 0}
@@ -362,6 +363,18 @@
     [...new Set((val(r, 'lines') || []).map((x) => x.sourceUid).filter(Boolean))].join(', ');
   const shown = (r, k) => fieldByKey[k] ? display(fieldByKey[k], val(r, k)) : (val(r, k) || '—');
   const fmtDate = (d) => d ? new Date(`${d}T12:00:00`).toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+  // When the intake was submitted (a draft: when it was started), shown under
+  // the work date. A late entry gets its own day too, so it doesn't read as
+  // the work date's time.
+  const savedAt = (r) => r.submitted_at || r.created_at || '';
+  const fmtTime = (r) => {
+    const ts = savedAt(r);
+    if (!ts) return '';
+    const d = new Date(ts), loc = getLang() === 'es' ? 'es-MX' : 'en-US';
+    const time = d.toLocaleTimeString(loc, { hour: 'numeric', minute: '2-digit' });
+    const day = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    return day === r.work_date ? time : d.toLocaleDateString(loc, { month: 'short', day: 'numeric' }) + ', ' + time;
+  };
 
   function pills(r) {
     if (r._deleted) return `<span class="pill deleted">${t(L.deletedP)}</span>`;
@@ -449,7 +462,8 @@
   };
   const wetLb = (r) => { const n = parseFloat(val(r, 'totalWetLb')); return Number.isFinite(n) ? n : -Infinity; };
   const COLS = [
-    { k: 'date', l: L.date, html: (r) => esc(fmtDate(r.work_date)), sort: (r) => r.work_date || '', cls: 'mono' },
+    { k: 'date', l: L.date, html: (r) => esc(fmtDate(r.work_date)) + (fmtTime(r) ? `<div class="row-time">${esc(fmtTime(r))}</div>` : ''),
+      sort: (r) => (r.work_date || '') + savedAt(r), cls: 'mono' },
     { k: 'strain', l: fieldByKey.lines.cols.find((c) => c.k === 'strain').l, html: (r) => esc(r.strain || val(r, 'strain') || '—'), cls: 'strain' },
     { k: 'uid', l: { en: 'UID', es: 'UID' }, html: (r) => esc(uids(r) || '—'), cls: 'mono clip' },
     { k: 'pid', l: L.license, html: (r) => esc(shown(r, 'pid')), cls: 'clip' },
