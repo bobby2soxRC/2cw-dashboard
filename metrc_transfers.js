@@ -118,7 +118,105 @@
     }).sort((a, b) => a.due - b.due);
   }
 
-  const api = { ACCEPT_WITHIN_H, URGENT_H, INTAKE_DAYS, pacificTime, incomingTransfers, unacceptedIntakes };
+  // ── Outgoing transfers with no Product Transfer — Outgoing form ──────────
+  // A manifest made in Metrc from one of our licenses to someone else's,
+  // carrying raw material (weighed in pounds or kilograms — pre-rolls and
+  // finished goods go by the piece, lab samples by the gram), with no
+  // submitted transfer_out form for it: the Metrc Queue lists it as "Needs
+  // form", and its link opens the form filled in from the transfer.
+  //
+  // A form covers a transfer when its Manifest # matches, or any of its rows'
+  // source / transfer package UIDs is one of the transfer's tags (a typed
+  // UID can be just the end of the tag). Only manifests that left on or after
+  // NEEDS_FORM_SINCE — the day the form went live — so older ones, done on
+  // paper, don't flood the queue.
+  //
+  // forms:     [{ id, manifest, uids: [...] }]
+  // inventory: Canix packages, for each tag's item and strain when the sync
+  //            didn't put them on the transfer (_item / _strain).
+  const NEEDS_FORM_SINCE = '2026-10-20';
+  const LB_PER = { pounds: 1, pound: 1, lb: 1, lbs: 1, kilograms: 2.20462, kilogram: 2.20462, kg: 2.20462 };
+  const toLb = (w, unit) => {
+    const k = LB_PER[String(unit || '').trim().toLowerCase()];
+    return k && Number.isFinite(Number(w)) ? Number(w) * k : null;
+  };
+  const normManifest = (v) => String(v || '').replace(/\D/g, '').replace(/^0+/, '');
+  // Canix item name → Product Transfer type code (TRANSFER_TYPES in
+  // operations_stations.js). Most specific first: "Cured - Whole Plant - …
+  // Flower" is unbucked, "Flower | Smalls | OG" is smalls.
+  function productTypeOf(name) {
+    const s = String(name || '').toLowerCase();
+    if (!s) return '';
+    if (/fresh\s*frozen|\bff\b/.test(s)) return '6';
+    if (/pre-?\s?roll/.test(s)) return '8';
+    if (/seed/.test(s)) return '7';
+    if (/whole\s*plant|wet|unbucked|on[\s-]?stem/.test(s)) return '1';
+    if (/bucked/.test(s)) return '2';
+    if (/trim|biomass|shake|sugar/.test(s)) return '5';
+    if (/small|\bb[\s-]?bud/.test(s)) return '4';
+    if (/flower|bud/.test(s)) return '3';
+    return '';
+  }
+  // A transfer's departure as the California calendar day, YYYY-MM-DD.
+  const pacificDay = (s) => (/^(\d{4}-\d\d-\d\d)/.exec(String(s || '')) || [])[1] || '';
+
+  function outgoingNeedingForm(transfers, facilities, forms, inventory, since = NEEDS_FORM_SINCE) {
+    const ours = new Set((facilities || []).map((f) => f && f.license_number).filter(Boolean));
+    const invByTag = new Map((inventory || []).filter((p) => p && p.tag).map((p) => [normTag(p.tag), p]));
+    const formManifests = new Set(), formUids = [];
+    for (const f of forms || []) {
+      const m = normManifest(f.manifest);
+      if (m) formManifests.add(m);
+      for (const u of f.uids || []) { const n = normTag(u); if (n.length >= 6) formUids.push(n); }
+    }
+    const covered = (tag) => formUids.some((u) => u === tag || tag.endsWith(u));
+    const out = [];
+    for (const t of transfers || []) {
+      const manifest = String((t && t.manifest_number) || '').trim();
+      if (!manifest || !ours.has(t._facility_license_number)) continue;
+      for (const d of t.destinations || []) {
+        if (!d || ours.has(d.destination_facility)) continue;   // between our own licenses
+        const day = pacificDay(d.departure_time);
+        if (since && (!day || day < since)) continue;
+        const live = (d.contents || []).filter((c) => c && c.status !== 'Voided');
+        const raw = live.filter((c) => toLb(c.shipped_weight, c.shipped_weight_unit) !== null);
+        if (!raw.length) continue;
+        if (formManifests.has(normManifest(manifest))) continue;
+        const tags = live.map((c) => normTag((c.package || {}).tag)).filter(Boolean);
+        if (tags.some(covered)) continue;
+        const packages = raw.map((c) => {
+          const tag = String((c.package || {}).tag || '');
+          const item = ((invByTag.get(normTag(tag)) || {}).item) || {};
+          const name = c._item || item.name || '';
+          return {
+            tag,
+            lb: Math.round(toLb(c.shipped_weight, c.shipped_weight_unit) * 100) / 100,
+            item: name,
+            strain: c._strain || (item.strain || {}).name || '',
+            productType: productTypeOf(name)
+          };
+        });
+        out.push({
+          manifest,
+          fromLicense: t._facility_license_number || '',
+          fromName: t._facility_name || t._facility_license_number || '',
+          toLicense: d.destination_facility || '',
+          departure: pacificTime(d.departure_time),
+          date: day,
+          salesOrderNo: t._sales_order_no || '',
+          customer: t._customer_name || '',
+          accepted: live.every((c) => c.status === 'Accepted'),
+          packages,
+          tags: packages.map((p) => p.tag),
+          strains: [...new Set(packages.map((p) => p.strain).filter(Boolean))],
+          weightLb: Math.round(packages.reduce((s, p) => s + p.lb, 0) * 100) / 100
+        });
+      }
+    }
+    return out.sort((a, b) => (a.departure || 0) - (b.departure || 0));
+  }
+
+  const api = { ACCEPT_WITHIN_H, URGENT_H, INTAKE_DAYS, NEEDS_FORM_SINCE, pacificTime, incomingTransfers, unacceptedIntakes, productTypeOf, outgoingNeedingForm };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.MetrcTransfers = api;
 })(this);

@@ -37,6 +37,7 @@
     .count:hover,.count.on{border-color:var(--green)}
     .count .n{font-family:'Bebas Neue',sans-serif;font-size:30px;line-height:1}
     .count .l{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);margin-top:4px}
+    .count.needs_form .n{color:var(--purple)}
     .count.todo .n{color:var(--red)} .count.in_progress .n{color:var(--gold)} .count.done .n{color:var(--green)} .count.not_needed .n{color:var(--muted)}
 
     .filters{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0 22px}
@@ -90,6 +91,10 @@
     .pill.in_progress{border-color:var(--gold);color:var(--gold)}
     .pill.done{border-color:var(--green);color:var(--green)}
     .pill.not_needed{color:var(--muted)}
+    .pill.needs_form{border-color:var(--purple);color:var(--purple)}
+    .tbl tbody tr.needs_form td:first-child{border-left-color:var(--purple)}
+    .nf-go{display:inline-block;margin-top:6px;font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;
+      color:#000;background:var(--purple);border-radius:8px;padding:6px 10px;text-decoration:none;white-space:nowrap}
     .pill.sync{border-color:var(--gold);color:var(--gold);border-style:dashed}
     .row-station{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--blue)}
 
@@ -309,7 +314,11 @@
     colDue:    { en: 'Accept by', es: 'Aceptar antes de' },
     colPkgs:   { en: 'Packages', es: 'Paquetes' },
     incIntake: { en: 'Wet Intake — not in Metrc yet', es: 'Recepción húmeda — aún no en Metrc' },
-    outsideFarm:{ en: 'Outside farm', es: 'Granja externa' }
+    outsideFarm:{ en: 'Outside farm', es: 'Granja externa' },
+    needs_form:{ en: 'Needs form', es: 'Falta formulario' },
+    nfSub:     { en: 'Manifest made in Metrc — no form yet', es: 'Manifiesto hecho en Metrc — sin formulario' },
+    nfGo:      { en: 'Fill out form →', es: 'Llenar formulario →' },
+    nfTo:      { en: 'To', es: 'Para' }
   };
   const STATUSES = ['todo', 'in_progress', 'done', 'not_needed'];
   document.getElementById('title').textContent = t(L.title);
@@ -333,13 +342,14 @@
   async function loadIncoming() {
     const get = (f) => fetch(`/data/${f}?t=${Date.now()}`).then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); });
     try {
-      const [tr, fac, inv, meta] = await Promise.all([get('canix_transfers_recent.json'), get('canix_facilities.json'),
-        get('canix_inventory.json'), get('canix_meta.json').catch(() => ({}))]);
-      incoming = { transfers: tr, facilities: fac, inventory: inv };
+      const [tr, fac, inv, meta, cust] = await Promise.all([get('canix_transfers_recent.json'), get('canix_facilities.json'),
+        get('canix_inventory.json'), get('canix_meta.json').catch(() => ({})), get('customers.json').catch(() => [])]);
+      incoming = { transfers: tr, facilities: fac, inventory: inv, customers: Array.isArray(cust) ? cust : [] };
       incomingAt = Date.now();
       canixAt = meta.last_sync || null;
     } catch (ex) { console.error('canix transfers', ex); incoming = null; }
-    renderIncoming();
+    // The whole board: the Needs form rows come from Canix too.
+    if (incoming) render(); else renderIncoming();
   }
   function renderIncoming() {
     incEl.classList.toggle('closed', !incOpen);
@@ -497,17 +507,86 @@
   }).filter(Boolean).join(' · ');
   const daysWaiting = (r) => r.submitted_at ? Math.floor((Date.now() - new Date(r.submitted_at).getTime()) / 86400000) : null;
 
+  // ── Needs form ─────────────────────────────────────────────────────────────
+  // Outgoing manifests of raw material made in Metrc with no Product Transfer
+  // — Outgoing form for them (MetrcTransfers.outgoingNeedingForm). Not
+  // metrc_queue rows: each goes away by itself once its form is submitted
+  // (matched by Manifest # or package UID). Its link opens a new form filled
+  // in from the transfer (ops_form.html's ?set_<field>= link prefill).
+  const editAccess = (() => { try { return JSON.parse(sessionStorage.getItem('2cw_ops_edit_access') || 'null'); } catch (_) { return null; } })();
+  const canFillTransfer = !editAccess || editAccess === 'all' || (Array.isArray(editAccess) && editAccess.includes('transfer_out'));
+  function needsForm() {
+    if (!incoming) return [];
+    const outForms = forms.filter((r) => r.station_key === 'transfer_out').map((r) => ({
+      id: r.id, manifest: val(r, 'manifestNo'),
+      uids: (val(r, 'lines') || []).flatMap((x) => [x.sourceUid, x.transferUid]).filter(Boolean)
+    }));
+    return MetrcTransfers.outgoingNeedingForm(incoming.transfers, incoming.facilities, outForms, incoming.inventory);
+  }
+  // A Canix strain as the Strain Library spells it, when it's there.
+  const strainOpts = refOptions(reference, 'strains');
+  const libStrain = (name) => {
+    const w = String(name || '').trim().toLowerCase();
+    const hit = w && strainOpts.find((o) => String(o.v).toLowerCase() === w || String(o.label).toLowerCase() === w);
+    return hit ? hit.v : (name || '');
+  };
+  const customerOf = (x) => (incoming && incoming.customers || []).find((c) => c && c.LicenseNum && c.LicenseNum === x.toLicense) || {};
+  function nfHref(x) {
+    const p = new URLSearchParams({ station: 'transfer_out' });
+    const set = (k, v) => { if (v !== undefined && v !== null && v !== '') p.set(`set_${k}`, v); };
+    const cust = customerOf(x);
+    set('customer', x.customer || cust.CustomerName);
+    set('dccLicense', x.toLicense);
+    set('destination', cust.Address);
+    set('salesOrderNo', x.salesOrderNo);
+    set('manifestNo', x.manifest);
+    set('actualDate', x.date);
+    set('ckManifestInitiated', 'true');
+    if (x.accepted) set('ckManifestAccepted', 'true');
+    set('lines', JSON.stringify(x.packages.map((pk) => ({ productType: pk.productType, strain: libStrain(pk.strain), sourceUid: pk.tag, weight: pk.lb }))));
+    return `/ops_form.html?${p}`;
+  }
+  function nfMatches(x) {
+    if (!(mode === 'open' || mode === 'needs_form' || mode === 'all')) return false;
+    if (stationFilter && stationFilter !== 'transfer_out') return false;
+    if (!query) return true;
+    const cust = customerOf(x);
+    return [x.manifest, x.fromName, x.toLicense, x.customer, cust.CustomerName, ...x.tags, ...x.strains, ...x.packages.map((p) => p.item), t(L.needs_form)]
+      .join(' ').toLowerCase().includes(query);
+  }
+  function nfRowHtml(x) {
+    const cust = customerOf(x);
+    const days = x.departure ? Math.floor((Date.now() - x.departure) / 86400000) : null;
+    const to = x.customer || cust.CustomerName || '';
+    return `<tr class="needs_form" data-nf="${esc(x.manifest)}">
+      <td><span class="pill needs_form">${t(L.needs_form)}</span>${canFillTransfer ? `<div><a class="nf-go" href="${esc(nfHref(x))}">${t(L.nfGo)}</a></div>` : ''}</td>
+      <td class="form-name">${esc(t(STATION_BY_KEY.transfer_out.title))}<div class="sub-line">${t(L.nfSub)}</div></td>
+      <td class="mono">${esc(fmtDate(x.date))}</td>
+      <td class="strain">${esc(x.strains.join(', ') || '—')}</td>
+      <td class="mono uid" title="${esc(x.tags.join('\n'))}">${esc(x.tags.join(', '))}</td>
+      <td class="mono"><div class="mf-cell"><span>${esc(x.manifest)}</span><button type="button" class="copy-mini" data-copy="${esc(x.manifest)}">${t(L.copyBtn)}</button></div></td>
+      <td>—</td>
+      <td>—</td>
+      <td class="num">${fmtNum(x.weightLb, 2)} lb</td>
+      <td>${esc(String(x.fromName).split(':')[0])}</td>
+      <td class="mono">${days !== null ? `<span class="age ${days >= 2 ? 'old' : ''}">${days}d</span>` : '—'}</td>
+      <td class="note" title="${esc(to)}">${t(L.nfTo)} ${esc(to ? `${to} · ` : '')}<span class="mono">${esc(x.toLicense)}</span></td>
+      <td class="mono">—</td>
+    </tr>`;
+  }
+
   // ── Counts + filters ───────────────────────────────────────────────────────
   let mode = 'open', stationFilter = '', query = '';
   const countsEl = document.getElementById('counts');
   function renderCounts() {
     const n = (s) => forms.filter((r) => (!stationFilter || r.station_key === stationFilter) && statusOf(r) === s).length;
-    countsEl.innerHTML = STATUSES.map((s) =>
-      `<button type="button" class="count ${s} ${mode === s ? 'on' : ''}" data-k="${s}"><div class="n">${n(s)}</div><div class="l">${t(L[s])}</div></button>`).join('');
+    const nf = !stationFilter || stationFilter === 'transfer_out' ? needsForm().length : 0;
+    countsEl.innerHTML = (nf || mode === 'needs_form' ? [['needs_form', nf]] : []).concat(STATUSES.map((s) => [s, n(s)])).map(([s, c]) =>
+      `<button type="button" class="count ${s} ${mode === s ? 'on' : ''}" data-k="${s}"><div class="n">${c}</div><div class="l">${t(L[s])}</div></button>`).join('');
     countsEl.querySelectorAll('.count').forEach((b) => { b.onclick = () => setMode(b.dataset.k); });
   }
   const filtersEl = document.getElementById('filters');
-  const MODES = [['open', L.open], ['todo', L.todo], ['in_progress', L.in_progress], ['done', L.done], ['not_needed', L.not_needed], ['all', L.all]];
+  const MODES = [['open', L.open], ['needs_form', L.needs_form], ['todo', L.todo], ['in_progress', L.in_progress], ['done', L.done], ['not_needed', L.not_needed], ['all', L.all]];
   filtersEl.innerHTML = MODES.map(([k, l]) => `<button type="button" data-k="${k}">${t(l)}</button>`).join('') +
     `<select id="st" style="background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .9rem;min-height:44px;font:inherit">
        <option value="">${esc(t(L.allForms))}</option>
@@ -520,6 +599,7 @@
   function setMode(k) { mode = k; render(); }
 
   function matches(r) {
+    if (mode === 'needs_form') return false;
     const s = statusOf(r);
     if (mode === 'open' && !(s === 'todo' || s === 'in_progress')) return false;
     if (STATUSES.includes(mode) && s !== mode) return false;
@@ -542,19 +622,28 @@
     let list = forms.filter(matches);
     // Open work is a queue: oldest first. Finished work: newest first.
     if (!(mode === 'open' || mode === 'todo' || mode === 'in_progress')) list = list.slice().reverse();
-    document.getElementById('sub').textContent = `${list.length} ${list.length === 1 ? t(L.form) : t(L.forms)}${canEdit ? '' : ' · ' + t(L.viewOnly)}`;
-    if (!list.length) { board.innerHTML = `<div class="empty">${esc(t(mode === 'open' ? L.emptyOpen : L.empty))}</div>`; return; }
+    // Manifests still needing their form go on top.
+    const nfList = needsForm().filter(nfMatches);
+    const total = list.length + nfList.length;
+    document.getElementById('sub').textContent = `${total} ${total === 1 ? t(L.form) : t(L.forms)}${canEdit ? '' : ' · ' + t(L.viewOnly)}`;
+    if (!total) { board.innerHTML = `<div class="empty">${esc(t(mode === 'open' ? L.emptyOpen : L.empty))}</div>`; return; }
     board.innerHTML = `<div class="tbl-wrap"><table class="tbl">
       <thead><tr>
         <th>${t(L.colStatus)}</th><th>${t(L.colForm)}</th><th>${t(L.colDate)}</th><th>${t(L.colStrain)}</th>
         <th>UID</th><th>${t(L.colManifest)}</th><th>${t(L.colPhoto)}</th><th>${t(L.colNewUid)}</th><th class="num">${t(L.colAmount)}</th><th>${t(L.colBy)}</th>
         <th>${t(L.colWait)}</th><th>${t(L.colNote)}</th><th>${t(L.colUpd)}</th>
       </tr></thead>
-      <tbody>${list.map(rowHtml).join('')}</tbody></table></div>`;
+      <tbody>${nfList.map(nfRowHtml).join('')}${list.map(rowHtml).join('')}</tbody></table></div>`;
     board.querySelectorAll('tbody tr').forEach((tr) => {
+      // A Needs form row opens the form, filled in from the Metrc transfer.
+      if (tr.dataset.nf !== undefined) {
+        const go = tr.querySelector('.nf-go');
+        tr.onclick = (e) => { if (go && !e.target.closest('.copy-mini, .nf-go')) location.href = go.href; };
+        if (!go) tr.style.cursor = 'default';
+      }
       const id = tr.dataset.id;
       // The status dropdown and Save don't open the form; the rest of the row does.
-      tr.onclick = (e) => { if (!e.target.closest('.st-cell, .row-err, .copy-mini, .photo-mini')) openDetail(id); };
+      if (id) tr.onclick = (e) => { if (!e.target.closest('.st-cell, .row-err, .copy-mini, .photo-mini')) openDetail(id); };
       const ph = tr.querySelector('.photo-mini');
       if (ph) ph.onclick = () => openPhotos(photosOf(forms.find((x) => x.id === id)));
       const cp = tr.querySelector('.copy-mini');
@@ -564,7 +653,7 @@
         setTimeout(() => { cp.classList.remove('ok'); cp.textContent = t(L.copyBtn); }, 1200);
       };
       const sel = tr.querySelector('.st-sel'), btn = tr.querySelector('.row-save');
-      if (!sel) return;
+      if (!sel || !id) return;
       sel.onchange = () => {
         const r = forms.find((x) => x.id === id);
         if (sel.value === statusOf(r)) pending.delete(id); else pending.set(id, sel.value);

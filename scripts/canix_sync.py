@@ -228,14 +228,49 @@ def slim_record(value, depth=0, max_depth=3):
     return value
 
 
-def recent_transfers(transfers, now):
+def recent_transfers(transfers, now, packages=(), sales_orders=()):
     since = (now - timedelta(days=RECENT_TRANSFER_DAYS)).strftime("%Y-%m-%dT%H:%M:%S")
     recent = [
         t for t in transfers
         if max(str(t.get("created_at") or ""), str(t.get("updated_at") or "")) >= since
     ]
     recent.sort(key=lambda t: str(t.get("created_at") or t.get("updated_at") or ""), reverse=True)
-    return [slim_record(t) for t in recent]
+    pkg_by_tag = {norm_tag(p.get("tag")): p for p in packages if p.get("tag")}
+    so_by_id = {str(o.get("id")): o for o in sales_orders if o.get("id") is not None}
+    return [slim_record(label_transfer(t, pkg_by_tag, so_by_id)) for t in recent]
+
+
+def label_transfer(t, pkg_by_tag, so_by_id):
+    """A copy of the transfer with each package's item name and strain
+    (_item, _strain, from the packages history — slim_record drops the
+    package's nested item, and the package leaves our inventory once it's
+    accepted) and its sales order # and customer (_sales_order_no,
+    _customer_name). The Metrc Queue's "Needs form" rows fill the Product
+    Transfer — Outgoing form from these."""
+    t = dict(t)
+    so = t.get("sales_order")
+    if so is not None and not isinstance(so, dict):
+        so = so_by_id.get(str(so))
+    if isinstance(so, dict):
+        so = so_by_id.get(str(so.get("id")), so)
+        t["_sales_order_no"] = so.get("name")
+        t["_customer_name"] = (so.get("customer") or {}).get("company_name")
+    dests = []
+    for d in t.get("destinations") or []:
+        d = dict(d)
+        contents = []
+        for c in d.get("contents") or []:
+            c = dict(c or {})
+            item = (pkg_by_tag.get(norm_tag((c.get("package") or {}).get("tag"))) or {}).get("item") or {}
+            if item.get("name"):
+                c["_item"] = item.get("name")
+            if (item.get("strain") or {}).get("name"):
+                c["_strain"] = item["strain"]["name"]
+            contents.append(c)
+        d["contents"] = contents
+        dests.append(d)
+    t["destinations"] = dests
+    return t
 
 
 # ── SUPABASE FACILITY ROSTER SYNC ───────────────────────────────────────────
@@ -651,7 +686,8 @@ def main():
     current_inventory = [r for r in histories["packages"].values() if r.get("is_active")]
     save("canix_inventory.json", current_inventory)
 
-    transfers_recent = recent_transfers(histories["transfers"].values(), started)
+    transfers_recent = recent_transfers(histories["transfers"].values(), started,
+                                        list(histories["packages"].values()), list(histories["sales_orders"].values()))
     save("canix_transfers_recent.json", transfers_recent)
 
     # Never fails the sync — the data files above still get committed.

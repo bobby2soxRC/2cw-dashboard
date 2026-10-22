@@ -181,6 +181,18 @@ labor, dashboard or report code sees it (only the hub, admin access and
 by trimmer, CSV, print). No SQL. Users need the station ticked in Admin.
 Details: "Hand Trim — Past Records" in `docs/OPERATIONS_APP.md`.
 
+### Metrc Queue: Needs form for outgoing manifests (started 2026-10-22)
+
+An outgoing Metrc manifest of raw material (lb/kg packages, from our license
+to someone else's, since 2026-10-20) with no Product Transfer — Outgoing form
+shows at the top of `metrc.html` as **Needs form**; clicking it opens the form
+filled in from the transfer (`?set_` link prefill). Logic:
+`outgoingNeedingForm` in `metrc_transfers.js` (tests:
+`node scripts/test_metrc_transfers.js`); the form got a `manifestNo` field
+for matching; the Canix sync now puts item/strain/sales order on
+`canix_transfers_recent.json` (`label_transfer`). No SQL. Details: "Needs
+form" in `docs/OPERATIONS_APP.md`.
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)

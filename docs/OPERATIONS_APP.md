@@ -661,6 +661,36 @@ license. A UID typed wrong can keep one listed — fix it with Edit. Outside
 farms whose load isn't on a Wet Intake yet still only show in Metrc's
 Incoming tab.
 
+**Needs form — outgoing manifests with no form.** A manifest made in Metrc
+from one of our licenses to someone else's, carrying raw material (packages
+weighed in pounds or kilograms — pre-rolls go by the piece and lab samples by
+the gram, so they're left out), with no submitted Product Transfer —
+Outgoing form, is listed at the top of the queue as **Needs form** (purple; a
+count and a filter of its own; `outgoingNeedingForm` in `metrc_transfers.js`,
+from `data/canix_transfers_recent.json`). Transfers between our own licenses
+don't count, and only manifests that left on or after `NEEDS_FORM_SINCE`
+(2026-10-20, when the form went live). A form covers the manifest when its
+**Metrc Manifest #** (`manifestNo`, on the form since 2026-10-22) matches, or
+any of its rows' source / transfer package UIDs is one of the manifest's tags
+(the end of a tag is enough), so the row goes away by itself once the form is
+submitted. It's not a `metrc_queue` row and has no status to set.
+**Fill out form →** (or the row) opens a new form through
+`ops_form.html`'s `?set_<field>=` link prefill: Manifest #, Actual Transfer
+Date (departure, Pacific), DCC License # (destination), customer name and
+address when the license is in `data/customers.json` (or from the Canix sales
+order), sales order #, Manifest Transfer Initiated (and Accepted once every
+package is), and a row per package: source UID = the tag shipped, weight in
+lb, strain (spelled as the Strain Library has it) and product type guessed
+from the Canix item name (`productTypeOf`: whole plant → 1, bucked → 2,
+flower → 3, smalls → 4, trim → 5, fresh frozen → 6). Driver, plate, prices,
+customer order # and invoice # aren't in Canix — fill those in. Item names
+come from the Canix sync (`label_transfer` in `scripts/canix_sync.py` puts
+`_item` / `_strain` on each package, and `_sales_order_no` /
+`_customer_name` on the transfer), else from the current inventory; a
+manifest synced before that change whose packages have already left our
+inventory comes without product type or strain. The button only shows for
+people who can open the Product Transfer form.
+
 **New Metrc tags.** A station with `metrcTags` (operations_stations.js —
 Hand Trim: Finished Flower `newFinishedUid`, Smalls `newSmallsUid`; Mixed
 Trim Package: `newMixedTrimUid`; Bucking: `newBuckedUid`, only on a lot

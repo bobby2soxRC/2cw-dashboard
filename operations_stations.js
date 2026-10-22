@@ -1526,6 +1526,9 @@ const OPERATIONS_STATIONS = [
       { k: 'customerOrderNo', t: 'text', l: { en: 'Customer Order #', es: 'N.º de pedido del cliente' } },
       { k: 'salesOrderNo', t: 'text', l: { en: 'Sales Order #', es: 'N.º de orden de venta' } },
       { k: 'invoiceNo', t: 'text', l: { en: 'Invoice #', es: 'N.º de factura' } },
+      // The Metrc manifest this form is for — how the Metrc Queue knows a
+      // manifest already has its form (otherwise it lists it as Needs form).
+      { k: 'manifestNo', t: 'text', inputmode: 'numeric', l: { en: 'Metrc Manifest #', es: 'N.º de manifiesto de Metrc' } },
       { k: 'terms', t: 'select', l: { en: 'Terms', es: 'Términos' },
         opts: [
           { v: 'DF', l: { en: 'DF', es: 'DF' } },
