@@ -17,7 +17,7 @@ the existing Operations Hub — same login, same Netlify deploy.
 | `master_schedule.html` | Master Schedule — projects, their responsibilities and people, UIDs, and the day/week work schedule (replaced `schedule.html`) — see below |
 | `crew_checkin.html` | Crew Check-In — a lead checks in the people on their Master Schedule projects once a shift and moves people between stations during the day — see "Crew Check-In" below |
 | `metrc.html` | Metrc Queue — every submitted Wet Intake, Take Down, Bucking, Hand Trim, Mixed Trim Package, Pre-Roll, Ground Flower Pouches and Outgoing Transfer form, with its Metrc status — see below |
-| `raw_inventory.html` | Raw Materials Inventory — what's on hand at each stage from the station forms, tabbed, searchable, CSV export — see below |
+| `raw_inventory.html` | Raw Materials Inventory — what's on hand at each stage from the station forms, tabbed, searchable, CSV export, plus a History view tracing every record from intake to customer — see below |
 | `operations_today.html` | Live board — every form in progress or finished today, for anyone with view access; the date picker (or `?date=YYYY-MM-DD`) shows any earlier day the same way; **Range** shows several days at once (`?date=FROM&to=TO`; it starts as the day before through the day showing, for overnight work like a green harvest, and ◀ ▶ step the whole range), with the Daily Summary table hidden. With Wet Intakes showing, a **Wet Intake by farm** table sits above the forms (and in the PDF): net wet lbs per farm (a license's name, so a farm's licenses add up), split into dry rooms vs freezers — freezer when Fresh Frozen is ticked or the Drying / Freezer Location is one of `reference.json`'s `freezers` — and each intake card shows farm → location (❄ for freezer). 📄 Share PDF prints the day or range as a report. People with `labor log costs` also get a **Labor $** box next to it (off each time the page opens): ticked, the PDF adds a Labor section — Labor Log hours and $ by station (only the picked station's with a filter), and, for all stations, Connecteam clocked hours and $ by activity (the shifts file holds the last 14 days) — at each person's rate from Labor Rates via `labor-rates.js`. A page with day tabs (Bucking, Hand Trim, Pre-Roll) is on every day something was logged on it, not only its start date, with that day's amount (the headline calc on that day's rows; label from `dayTabs.headline`, else "— that day") |
 | `operations_dashboard.html` | Pipeline, yields, biomass, labor, requests, exceptions (finished forms only) |
 | `operations_stations.js` | **The schema.** Station and field definitions, EN + ES |
@@ -752,13 +752,33 @@ search are in the URL (`?tab=flower&q=agp`).
 
 Flower, Smalls, Trim and Fresh Frozen come down when a Pre-Roll run,
 Manufacturing Run, Biomass Request (transferred), Smalls Hand Trim, Mixed
-Trim Package or Product Transfer — Outgoing names their UID and category
-(oldest first; the row shows what was taken). Anything that leaves without
+Trim Package or Product Transfer — Outgoing names their UID — the output's
+own new tag or its lot's UID, since people often write the lot number — and
+category (oldest first; the row shows what was taken). Anything that leaves without
 a form can be marked **Used up** (and
 Restored) by people with `buck release` or Metrc Queue edit. Marks live in one
 shared `operations_forms` row (`station_key 'raw_inventory_marks'`, fixed id),
 re-read before each write, logged by the edit history trigger; Show used up
 lists them again. The page reloads itself when forms change.
+
+**History** (the On hand / History switch, `?view=history`) has the same
+tabs but every record each stage ever had (`buildHistory`): every Wet Intake
+(Drying, or Fresh Frozen), every on-stem package (one row per Take Down
+group, all its Take Downs' dry lbs), every bucked lot (`loadTrimQueue().all`),
+every finished output and Fresh Frozen form, paper imports included. Columns
+add **In** (what it started with), **Left** (what's on hand now — the
+matching On hand rows, so Used up marks count) and **Went to**. Clicking a
+row opens its trail: **Came from** and **Went to** link to the other
+stages' rows (clicking one jumps to that tab, opens and flashes the row),
+and runs, transfers and sales show the form, date and lbs; an outgoing
+transfer shows the customer, invoice #, SO #, PO #, DCC license,
+destination, driver and plate. **Open form ↗** opens the record in the
+Metrc Queue's detail (`metrc.html?id=`) for the stations it covers. Links:
+Wet Intake → Take Down (`matchTakeDowns`) → Bucking lot and Bucking trim
+(`groupOf`) → Hand / Machine Trim outputs → whatever `applyTakers`
+allocated (a Smalls Hand Trim or Mixed Trim Package links to the rows it
+made). Status says where it ended: Taken down, Bucked, Trimmed, Shipped,
+Used up, or the On hand status if some is left. CSV adds Came From / Went To.
 
 **Information Hub** (`information_hub.html`, hub card `information_hub`
 under Operations) holds the reference lists the rest of the app runs on, one

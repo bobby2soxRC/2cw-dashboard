@@ -85,7 +85,10 @@ material by stage from the station forms — All / Drying / On-Stem / Bucked /
 Flower / Smalls / Trim / Fresh Frozen — with search and CSV export. Finished
 stock that leaves without a form is marked Used up (shared
 `operations_forms` row `raw_inventory_marks`). No SQL. Details: "Raw
-Materials Inventory" in `docs/OPERATIONS_APP.md`.
+Materials Inventory" in `docs/OPERATIONS_APP.md`. Since 2026-10-22 it also
+has a **History** view (`?view=history`, `buildHistory`): every record each
+stage ever had, linked stage to stage down to the transfer customer; and
+downstream forms match an output's lot UID as well as its new tag.
 
 ### Hourly people not in Connecteam (started 2026-10-19)
 

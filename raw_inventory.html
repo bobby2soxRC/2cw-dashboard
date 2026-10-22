@@ -87,6 +87,33 @@
       font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;cursor:pointer}
     .mini:hover{border-color:var(--blue);color:var(--blue)}
 
+    .pill.ship{border-color:var(--purple);color:var(--purple)}
+
+    /* On hand / History */
+    .views{display:inline-flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:18px}
+    .views button{background:var(--surface);border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;
+      text-transform:uppercase;font-weight:700;padding:10px 18px;cursor:pointer;min-height:40px}
+    .views button.on{background:var(--blue);color:#000}
+    .pin.stuck .views{margin-top:10px}
+    .views + .tabs{margin-top:12px}
+    .tbl.hist tbody tr.hrow{cursor:pointer}
+    .tbl.hist tbody tr.hrow.open{background:var(--surface2)}
+    .tbl .caret{color:var(--muted);font-size:.7rem}
+    .tbl .to{max-width:240px;overflow:hidden;text-overflow:ellipsis}
+    .tbl tbody tr.flash td{animation:flash 1.8s ease-out}
+    @keyframes flash{0%{background:rgba(90,159,212,.35)}100%{background:transparent}}
+    .tbl tbody tr.det td{white-space:normal;background:var(--bg);padding:12px 16px 16px}
+    /* Stays in view when the table scrolls sideways. */
+    .trail{display:grid;gap:12px;font-size:.85rem;line-height:1.5;position:sticky;left:16px;max-width:min(980px,calc(100vw - 72px))}
+    .trail .tl{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+    .trail ul{list-style:none;display:grid;gap:6px}
+    .trail .sale{margin-top:2px}
+    .go{display:inline-block;margin:2px 6px 2px 0;padding:3px 9px;border:1px solid var(--c,var(--border));border-radius:8px;color:var(--text);
+      text-decoration:none;font-size:.78rem}
+    .go b{color:var(--c,var(--text));font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;font-weight:500}
+    .go:hover{background:var(--surface2)}
+    .ext{color:var(--blue);font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.06em;text-decoration:none;white-space:nowrap}
+
     .empty{color:var(--muted);text-align:center;padding:60px 0;font-size:.9rem;line-height:1.6}
     .note{margin-top:14px;font-size:.8rem;color:var(--muted);line-height:1.55;max-width:900px}
     .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
@@ -104,6 +131,7 @@
   <div class="title" id="title">Raw Materials Inventory</div>
   <div class="sub" id="sub">—</div>
   <div class="pin" id="pin">
+    <div class="views" id="views"></div>
     <div class="tabs" id="tabs"></div>
     <div class="filters" id="filters"></div>
     <div class="totals" id="totals"></div>
@@ -132,6 +160,11 @@
 // operations_forms row (station_key 'raw_inventory_marks', fixed id), like
 // the bucking queue; the edit history trigger logs each change. Marking is
 // for people with 'buck release' or Metrc Queue edit.
+//
+// History (?view=history) lists every record each stage ever had — every
+// Wet Intake, on-stem package, bucked lot and finished output — linked to
+// what it came from and where it went, down to the customer on an outgoing
+// transfer.
 (async function () {
   mountLangToggle('lang');
   const L = {
@@ -194,6 +227,37 @@
     tBuck:    { en: 'Bucking', es: 'Desvarado' },
     tMixed:   { en: 'Mixed Trim Package', es: 'Paquete de recorte mixto' },
     tTake:    { en: 'Take Down', es: 'Bajada' },
+    // History view
+    vOnHand:  { en: 'On hand', es: 'Disponible' },
+    vHistory: { en: 'History', es: 'Historial' },
+    rec:      { en: 'record', es: 'registro' },
+    recs:     { en: 'records', es: 'registros' },
+    colIn:    { en: 'In', es: 'Entró' },
+    colLeft:  { en: 'Left', es: 'Queda' },
+    colTo:    { en: 'Went to', es: 'Se fue a' },
+    cameFrom: { en: 'Came from', es: 'Vino de' },
+    wentTo:   { en: 'Went to', es: 'Se fue a' },
+    farmIn:   { en: 'Farm', es: 'Rancho' },
+    nothingYet:{ en: 'Nothing yet — all of it is still here.', es: 'Nada aún — todo sigue aquí.' },
+    stillHere:{ en: 'Still on hand', es: 'Aún disponible' },
+    thisRec:  { en: 'This record', es: 'Este registro' },
+    openForm: { en: 'Open form', es: 'Abrir formulario' },
+    marked:   { en: 'marked', es: 'marcado' },
+    lot:      { en: 'lot', es: 'lote' },
+    hTaken:   { en: 'Taken down', es: 'Bajado' },
+    hBucked:  { en: 'Bucked', es: 'Desvarado' },
+    hTrimmed: { en: 'Trimmed', es: 'Cortado' },
+    hShipped: { en: 'Shipped', es: 'Enviado' },
+    hPaper:   { en: 'Paper record', es: 'Registro en papel' },
+    sInvoice: { en: 'Invoice #', es: 'Factura' },
+    sOrder:   { en: 'SO #', es: 'OV' },
+    sCustOrder:{ en: 'PO #', es: 'Pedido' },
+    sDcc:     { en: 'DCC', es: 'DCC' },
+    sDest:    { en: 'To', es: 'A' },
+    sDriver:  { en: 'Driver', es: 'Conductor' },
+    sPlate:   { en: 'Plate', es: 'Placa' },
+    histNote: { en: 'Every record each stage ever had, from the station forms. Click a row to see where it came from and where it went; click a linked record to jump to it. In is what the record started with (Drying and Fresh Frozen intakes are wet weight); Left is what is still on hand now. Outgoing transfers show the customer, date, pounds and invoice / sales order.',
+                es: 'Cada registro que tuvo cada etapa, de los formularios de estación. Toque una fila para ver de dónde vino y a dónde se fue; toque un registro enlazado para ir a él. Entró es con lo que empezó (Secando y fresco congelado son peso húmedo); Queda es lo que sigue disponible. Las transferencias de salida muestran cliente, fecha, libras y factura / orden de venta.' },
     note:     { en: 'Built from the station forms, not Canix. Drying, On-Stem and Bucked clear themselves as the next form is submitted. Flower, Smalls, Trim and Fresh Frozen come off when a Pre-Roll run, Ground Flower Pouch run, Manufacturing Run, Biomass Request (transferred), Smalls Hand Trim, Mixed Trim Package or Outgoing Transfer names their UID; anything sold or moved some other way has to be marked Used up. Hand Trim outputs without their own new UID are listed under the lot’s UID. Drying and fresh-frozen intakes are wet weight; the rest is dry.',
                 es: 'Hecho con los formularios de estación, no con Canix. Secando, En tallo y Desvarado se vacían solos al enviar el siguiente formulario. Flor, Smalls, Recorte y Fresco congelado bajan cuando una corrida de prerolls, de bolsas de flor molida, de manufactura, una solicitud de biomasa (transferida), un corte de smalls, un paquete de recorte mixto o una transferencia de salida usa su UID; lo vendido o movido de otra forma hay que marcarlo como Agotado. Lo del corte a mano sin UID nuevo aparece bajo el UID del lote. Secando y fresco congelado son peso húmedo; lo demás es seco.' }
   };
@@ -271,7 +335,9 @@
   }
 
   // ── Load and build ────────────────────────────────────────────────────────
-  let rows = [], marks = {};
+  // rows: what's on hand. hist: the History view — every package each stage
+  // ever had, linked to what it came from and where it went.
+  let rows = [], hist = [], marks = {}, recs = new Map();
   async function load() {
     const [intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, pouches, mfg, biomass, mixed, shipped, bq, tq, codes, fac, mk, paper] = await Promise.all([
       loadSubmitted('intake_wet'), loadSubmitted('dry_check'), loadSubmitted('buck'), loadSubmitted('hand_trim'),
@@ -286,15 +352,16 @@
     pidCodes = (codes || []).filter((r) => r.kind === 'pid');
     facilities = fac;
     marks = mk;
+    const d = { intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, pouches, mfg, biomass, mixed, shipped, bq, tq };
+    recs = new Map([intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, pouches, mfg, biomass, mixed, shipped].flat().map((r) => [r.id, r]));
     // Records loaded from the old paper sheets (Aug–Sep 2026, owner_user
     // 'paper_import') still trace lots, but their output isn't stock any more.
     const paperIds = new Set(paper.map((r) => r.id));
-    rows = build({ intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, pouches, mfg, biomass, mixed, shipped, bq, tq })
-      .filter((r) => !paperIds.has(r.recId));
+    rows = build(d).filter((r) => !paperIds.has(r.recId));
+    hist = buildHistory(d, rows, paperIds);
   }
 
-  function build(d) {
-    const out = [];
+  function tracer(d) {
     const groups = takeDownGroups(d.downs);
     // The Take Downs behind an on-stem tag or a part released off one.
     const downsFor = (uid) => {
@@ -327,10 +394,98 @@
         farmUids: uniq([...tds.map((x) => x.incomingUid), ...ins.map((i) => i.sourceUid)])
       };
     }
-    const add = (tab, rec, x) => out.push({
-      tab, recId: rec.id, strain: rec.strain || '', date: String(rec.date || '').slice(0, 10), location: '',
-      ownUid: true, used: [], ...x, lb: r2(Number(x.lb) || 0), startLb: r2(Number(x.lb) || 0)
+    // The on-stem UID a lot (or a part released off one) was bucked from.
+    const groupOf = (uid) => {
+      if (!uid) return null;
+      for (const [u, members] of groups) {
+        if (uidTailMatch(u, uid) || members.some((r) => (r.releases || []).some((x) => uidTailMatch(x.uid, uid)))) return u;
+      }
+      return null;
+    };
+    return { groups, origin, groupOf };
+  }
+  const adder = (out) => (tab, rec, x) => out.push({
+    tab, recId: rec.id, station: rec.stationKey, strain: rec.strain || '', date: String(rec.date || '').slice(0, 10), location: '',
+    ownUid: true, used: [], ...x, lb: r2(Number(x.lb) || 0), startLb: r2(Number(x.lb) || 0)
+  });
+
+  // Flower / Smalls / Trim — what each finishing form made. `lotUid` is the
+  // lot it came off: a form downstream may name that instead of the new tag.
+  function finishedRows(d, tr, add) {
+    // ownTag: output field -> the field holding its own new tag.
+    const outputs = (rec, typeKey, list, ownTag) => {
+      const lotUid = normUid(rec.sourceUid);
+      const o = tr.origin(rec, rec.sourceUid);
+      list.forEach(([field, cat, label]) => {
+        const lb = Number(rec[field]);
+        if (!(lb > 0.005)) return;
+        const tagged = ownTag && ownTag[field] && rec[ownTag[field]];
+        add(CAT_TAB[cat], rec, { key: `${rec.id}:${field}`, uid: tagged ? normUid(tagged) : lotUid, lotUid, ownUid: !!tagged,
+          lb, cat, catLabel: label, type: typeKey, ...o });
+      });
+    };
+    d.hand.forEach((r) => outputs(r, 'tHand', [
+      ['finishedFlowerLb', 'flower_a'], ['smallsLb', 'smalls_b'], ['normTrimLb', 'trim', { en: 'Normal', es: 'Normal' }],
+      ['aPlusTrimLb', 'trim_a_plus', { en: 'A+', es: 'A+' }], ['sugarTrimLb', 'sugar_trim', { en: 'Sugar', es: 'Azucarada' }]],
+      Object.fromEntries(STATION_BY_KEY.hand_trim.metrcTags.map((x) => [x.from, x.k]))));
+    d.machine.forEach((r) => outputs(r, 'tMachine', [
+      ['flowerALb', 'flower_a'], ['smallsBLb', 'smalls_b'], ['sugarTrimLb', 'sugar_trim', { en: 'Sugar', es: 'Azucarada' }],
+      ['machineShakeLb', 'shake', { en: 'Shake', es: 'Shake' }]]));
+    d.smallsT.forEach((r) => outputs(r, 'tSmalls', [
+      ['finishedSmallsLb', 'smalls_b', { en: 'Finished', es: 'Terminados' }], ['shakeLb', 'shake', { en: 'Shake', es: 'Shake' }]], { finishedSmallsLb: 'newFinishedUid' }));
+    d.bucks.forEach((r) => outputs(r, 'tBuck', [['trimLb', 'trim', { en: 'Bucking trim', es: 'Recorte de desvarado' }]]));
+    // Mixed Trim Packages: one package of many lots' trim, under its new tag
+    // (blank until the Metrc Queue fills it in).
+    const pkgType = STATION_BY_KEY.trim_package.fields.find((f) => f.k === 'packageType');
+    d.mixed.forEach((r) => {
+      const cat = r.packageType || 'trim';
+      const opt = pkgType.opts.find((o) => o.v === cat);
+      add('trim', r, { key: `${r.id}:mixed`, uid: normUid(r.newMixedTrimUid), lb: r.totalLb,
+        strain: t({ en: 'Mixed', es: 'Mixto' }), cat, catLabel: opt ? opt.l : null, type: 'tMixed',
+        farm: '', code: '', license: '', cid: '', farmUids: [] });
     });
+  }
+
+  // What downstream forms took, and off which UID. A Smalls Hand Trim doesn't
+  // take from its own output.
+  function takersOf(d) {
+    const run = (key, r, x) => ({ id: r.id, station: key, date: String(r.date || '').slice(0, 10), what: t(STATION_BY_KEY[key].title), ...x });
+    return [
+      ...d.prerolls.map((r) => run('preroll_production', r, { uid: r.sourceUid, cat: r.inputCategory, lb: r.startingLb })),
+      // Ground Flower Pouches: each input row (flower, smalls, trim…) off its own UID.
+      ...d.pouches.flatMap((r) => (r.lines || []).map((x) => run('pouch_production', r, { uid: x.sourceUid, cat: x.material, lb: num(x.weightG) / G_PER_LB }))),
+      ...d.mfg.map((r) => run('mfg_output', r, { uid: r.sourceUid, cat: r.inputCategory, lb: r.inputLb })),
+      ...d.biomass.filter((r) => r.status === 'transferred').map((r) => run('biomass_request', r, { uid: r.sourceUid, cat: r.category, lb: r.transferredLb })),
+      ...d.smallsT.map((r) => run('smalls_trim', r, { uid: r.sourceUid, cat: 'smalls_b', lb: r.startingLb })),
+      // Each row of a Mixed Trim Package, and of an outgoing transfer (by its
+      // product type code: TRANSFER_TYPES' tab, and category when it has one).
+      ...d.mixed.flatMap((r) => (r.lines || []).map((x) => run('trim_package', r, { uid: x.sourceUid, cat: x.trimType || null, tab: 'trim', lb: x.weightLb }))),
+      ...d.shipped.flatMap((r) => (r.lines || []).filter((x) => (TRANSFER_TYPES[x.productType] || {}).tab).map((x) => run('transfer_out', r, {
+        uid: x.sourceUid, cat: TRANSFER_TYPES[x.productType].cat || null, tab: TRANSFER_TYPES[x.productType].tab, lb: x.weight,
+        date: String(r.actualDate || r.date || '').slice(0, 10), customer: r.customer || '', sale: true })))
+    ];
+  }
+  // Takes each one off the rows with its UID (or their lot's), oldest stock first.
+  function applyTakers(out, takers) {
+    takers.forEach((c) => {
+      let left = Number(c.lb) || 0;
+      const tab = c.tab || CAT_TAB[c.cat];
+      if (!(left > 0) || !tab || !c.uid) return;
+      out.filter((r) => r.tab === tab && r.recId !== c.id && r.lb > 0 && (uidTailMatch(r.uid, c.uid) || uidTailMatch(r.lotUid, c.uid)) &&
+          (!r.cat || !c.cat || r.cat === c.cat || tab !== 'trim'))
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .forEach((r) => {
+          if (left <= 0) return;
+          const take = Math.min(left, r.lb);
+          r.lb = r2(r.lb - take); left -= take;
+          r.used.push({ ...c, lb: r2(take) });
+        });
+    });
+  }
+  const usedText = (u) => `${[u.what, u.customer].filter(Boolean).join(' · ')}: ${fmtNum(u.lb)} lb`;
+
+  function build(d) {
+    const out = [], add = adder(out), tr = tracer(d), { groups, origin } = tr;
 
     // Drying / Fresh Frozen — Wet Intakes (wet weight).
     const drying = new Set(currentlyDrying(d.intakes, d.downs).map((i) => i.id));
@@ -368,76 +523,13 @@
       if (d.machine.some((m) => uidTailMatch(m.sourceUid, l.sourceUid))) return;
       const lb = Number(l.buckedFlowerLb || 0) - Number(l.trimmedLb || 0);
       // A lot held as bucked flower is under its own bucked tag once it has one.
-      add('bucked', l, { key: `${l.buckDraftId || l.id}:bucked`, recId: l.buckDraftId || l.id, uid: normUid(l.newBuckedUid || l.sourceUid), lb,
-        status: l.inProgress ? 'sBucking' : l.draftId ? 'sTrimming' : 'sToTrim', pill: l.inProgress || l.draftId ? 'work' : 'go',
+      add('bucked', l, { key: `${l.buckDraftId || l.id}:bucked`, recId: l.buckDraftId || l.id, uid: normUid(l.newBuckedUid || l.sourceUid),
+        lotUid: normUid(l.sourceUid), lb, status: l.inProgress ? 'sBucking' : l.draftId ? 'sTrimming' : 'sToTrim', pill: l.inProgress || l.draftId ? 'work' : 'go',
         type: 'tBuck', ...origin(l, l.sourceUid) });
     });
 
-    // Flower / Smalls / Trim — what each finishing form made.
-    // ownTag: output field -> the field holding its own new tag.
-    const outputs = (rec, typeKey, list, ownTag) => {
-      const lotUid = normUid(rec.sourceUid);
-      const o = origin(rec, rec.sourceUid);
-      list.forEach(([field, cat, label]) => {
-        const lb = Number(rec[field]);
-        if (!(lb > 0.005)) return;
-        const tagged = ownTag && ownTag[field] && rec[ownTag[field]];
-        add(CAT_TAB[cat], rec, { key: `${rec.id}:${field}`, uid: tagged ? normUid(tagged) : lotUid, ownUid: !!tagged,
-          lb, cat, catLabel: label, type: typeKey, ...o });
-      });
-    };
-    d.hand.forEach((r) => outputs(r, 'tHand', [
-      ['finishedFlowerLb', 'flower_a'], ['smallsLb', 'smalls_b'], ['normTrimLb', 'trim', { en: 'Normal', es: 'Normal' }],
-      ['aPlusTrimLb', 'trim_a_plus', { en: 'A+', es: 'A+' }], ['sugarTrimLb', 'sugar_trim', { en: 'Sugar', es: 'Azucarada' }]],
-      Object.fromEntries(STATION_BY_KEY.hand_trim.metrcTags.map((x) => [x.from, x.k]))));
-    d.machine.forEach((r) => outputs(r, 'tMachine', [
-      ['flowerALb', 'flower_a'], ['smallsBLb', 'smalls_b'], ['sugarTrimLb', 'sugar_trim', { en: 'Sugar', es: 'Azucarada' }],
-      ['machineShakeLb', 'shake', { en: 'Shake', es: 'Shake' }]]));
-    d.smallsT.forEach((r) => outputs(r, 'tSmalls', [
-      ['finishedSmallsLb', 'smalls_b', { en: 'Finished', es: 'Terminados' }], ['shakeLb', 'shake', { en: 'Shake', es: 'Shake' }]], { finishedSmallsLb: 'newFinishedUid' }));
-    d.bucks.forEach((r) => outputs(r, 'tBuck', [['trimLb', 'trim', { en: 'Bucking trim', es: 'Recorte de desvarado' }]]));
-    // Mixed Trim Packages: one package of many lots' trim, under its new tag
-    // (blank until the Metrc Queue fills it in).
-    const pkgType = STATION_BY_KEY.trim_package.fields.find((f) => f.k === 'packageType');
-    d.mixed.forEach((r) => {
-      const cat = r.packageType || 'trim';
-      const opt = pkgType.opts.find((o) => o.v === cat);
-      add('trim', r, { key: `${r.id}:mixed`, uid: normUid(r.newMixedTrimUid), lb: r.totalLb,
-        strain: t({ en: 'Mixed', es: 'Mixto' }), cat, catLabel: opt ? opt.l : null, type: 'tMixed',
-        farm: '', code: '', license: '', cid: '', farmUids: [] });
-    });
-
-    // What downstream forms took off a UID, oldest stock first. A Smalls Hand
-    // Trim doesn't take from its own output.
-    const takers = [
-      ...d.prerolls.map((r) => ({ id: r.id, uid: r.sourceUid, cat: r.inputCategory, lb: r.startingLb, what: t(STATION_BY_KEY.preroll_production.title) })),
-      // Ground Flower Pouches: each input row (flower, smalls, trim…) off its own UID.
-      ...d.pouches.flatMap((r) => (r.lines || []).map((x) => ({ id: r.id, uid: x.sourceUid, cat: x.material, lb: num(x.weightG) / G_PER_LB,
-        what: t(STATION_BY_KEY.pouch_production.title) }))),
-      ...d.mfg.map((r) => ({ id: r.id, uid: r.sourceUid, cat: r.inputCategory, lb: r.inputLb, what: t(STATION_BY_KEY.mfg_output.title) })),
-      ...d.biomass.filter((r) => r.status === 'transferred').map((r) => ({ id: r.id, uid: r.sourceUid, cat: r.category, lb: r.transferredLb, what: t(STATION_BY_KEY.biomass_request.title) })),
-      ...d.smallsT.map((r) => ({ id: r.id, uid: r.sourceUid, cat: 'smalls_b', lb: r.startingLb, what: t(STATION_BY_KEY.smalls_trim.title) })),
-      // Each row of a Mixed Trim Package, and of an outgoing transfer (by its
-      // product type code: TRANSFER_TYPES' tab, and category when it has one).
-      ...d.mixed.flatMap((r) => (r.lines || []).map((x) => ({ id: r.id, uid: x.sourceUid, cat: x.trimType || null, tab: 'trim', lb: x.weightLb,
-        what: t(STATION_BY_KEY.trim_package.title) }))),
-      ...d.shipped.flatMap((r) => (r.lines || []).filter((x) => (TRANSFER_TYPES[x.productType] || {}).tab).map((x) => ({
-        id: r.id, uid: x.sourceUid, cat: TRANSFER_TYPES[x.productType].cat || null, tab: TRANSFER_TYPES[x.productType].tab, lb: x.weight,
-        what: [t(STATION_BY_KEY.transfer_out.title), r.customer].filter(Boolean).join(' · ') })))
-    ];
-    takers.forEach((c) => {
-      let left = Number(c.lb) || 0;
-      const tab = c.tab || CAT_TAB[c.cat];
-      if (!(left > 0) || !tab || !c.uid) return;
-      out.filter((r) => r.tab === tab && r.recId !== c.id && r.lb > 0 && uidTailMatch(r.uid, c.uid) && (!r.cat || !c.cat || r.cat === c.cat || tab !== 'trim'))
-        .sort((a, b) => a.date.localeCompare(b.date))
-        .forEach((r) => {
-          if (left <= 0) return;
-          const take = Math.min(left, r.lb);
-          r.lb = r2(r.lb - take); left -= take;
-          r.used.push(`${c.what}: ${fmtNum(take)} lb`);
-        });
-    });
+    finishedRows(d, tr, add);
+    applyTakers(out, takersOf(d));
     out.forEach((r) => {
       if (r.status) return;
       r.status = r.lb <= 0.005 ? 'usedUp' : r.used.length ? 'sPart' : 'sOnHand';
@@ -446,28 +538,107 @@
     return out;
   }
 
+  // History: each Wet Intake, on-stem package (all its Take Downs), bucked
+  // lot and finished output ever, with `from` (row keys) and `to` (the next
+  // stage's rows, or the run, transfer or sale that took it). What's left and
+  // the live status come from the on-hand rows (`now`).
+  function buildHistory(d, onHand, paperIds) {
+    const out = [], add = adder(out), tr = tracer(d), { groups, origin, groupOf } = tr;
+    d.intakes.forEach((i) => add(isFreshFrozen(i) ? 'frozen' : 'drying', i, { key: `${i.id}:intake`, uid: normUid(i.sourceUid),
+      lb: i.totalWetLb, wet: true, type: 'tIntake', location: i.dryRoom || '', ...origin(i, null, [i]) }));
+    d.frozen.forEach((r) => add('frozen', r, { key: `${r.id}:ff`, uid: normUid(r.sourceUid), lb: r.totalLb, wet: true,
+      type: 'tFF', location: [r.site, r.freezer].filter(Boolean).join(' · '), ...origin(r, r.sourceUid) }));
+    groups.forEach((members, uid) => {
+      const first = members[members.length - 1];
+      add('onstem', first, { key: `onstem:${uid}`, uid, lb: members.reduce((a, r) => a + (Number(r.dryWeightLb) || 0), 0),
+        parts: uniq(members.flatMap((r) => (r.releases || []).map((x) => normUid(x.uid)))),
+        type: 'tTake', location: first.storageLocation || first.dryRoom || '', ...origin(first, uid) });
+    });
+    d.tq.all.forEach((l) => add('bucked', l, { key: `bucked:${l.sourceUid}`, recId: l.buckDraftId || l.id,
+      uid: normUid(l.newBuckedUid || l.sourceUid), lotUid: l.sourceUid, lb: l.buckedFlowerLb, type: 'tBuck', ...origin(l, l.sourceUid) }));
+    finishedRows(d, tr, add);
+    applyTakers(out, takersOf(d));
+
+    const byKey = new Map(out.map((r) => [r.key, r]));
+    out.forEach((r) => { r.from = []; r.to = []; });
+    const link = (from, to, x) => {
+      if (!from || !to || from === to) return;
+      const had = from.to.find((e) => e.key === to.key);
+      if (had) { had.lb = r2(had.lb + (Number(x.lb) || 0)); return; }
+      from.to.push({ ...x, key: to.key, lb: r2(Number(x.lb) || 0) });
+      to.from.push(from.key);
+    };
+    const step = (r, what) => ({ id: r.recId, station: r.station, what, date: r.date, lb: r.startLb });
+    // Wet Intake → the on-stem package its Take Down made.
+    matchTakeDowns(d.intakes, d.downs).forEach((td, iid) => link(byKey.get(`${iid}:intake`), byKey.get(`onstem:${normUid(td.sourceUid)}`),
+      { id: td.id, station: 'dry_check', what: t(L.tTake), date: String(td.date || '').slice(0, 10), lb: td.dryWeightLb }));
+    // On-stem → the bucked lot and the trim Bucking made.
+    out.filter((r) => r.type === 'tBuck').forEach((r) => { const g = groupOf(r.lotUid); link(g && byKey.get(`onstem:${g}`), r, step(r, t(L.tBuck))); });
+    // Bucked lot → what Hand Trim / Machine Trim made of it.
+    out.filter((r) => r.type === 'tHand' || r.type === 'tMachine').forEach((r) => {
+      const lot = out.find((x) => x.tab === 'bucked' && (uidTailMatch(x.lotUid, r.lotUid) || uidTailMatch(x.uid, r.lotUid)));
+      const g = !lot && groupOf(r.lotUid);
+      link(lot || (g && byKey.get(`onstem:${g}`)), r, step(r, t(L[r.type])));
+    });
+    // Whatever a downstream form took: the rows it made (Smalls Hand Trim,
+    // Mixed Trim Package), else the run, transfer or sale itself.
+    out.forEach((r) => r.used.forEach((u) => {
+      const made = out.filter((x) => x.recId === u.id);
+      if (made.length) made.forEach((x) => link(r, x, u)); else r.to.push({ ...u, key: null });
+    }));
+    out.forEach((r) => {
+      r.now = r.tab === 'onstem' ? onHand.filter((x) => x.tab === 'onstem' && [r.uid, ...r.parts].some((u) => uidTailMatch(x.uid, u)))
+        : r.tab === 'bucked' ? onHand.filter((x) => x.tab === 'bucked' && uidTailMatch(x.lotUid, r.lotUid))
+        : onHand.filter((x) => x.key === r.key);
+      r.paper = paperIds.has(r.recId);
+      r.shipped = r2(r.to.filter((e) => e.sale).reduce((a, e) => a + e.lb, 0));
+    });
+    return out;
+  }
+
   // ── View ──────────────────────────────────────────────────────────────────
   const params = new URLSearchParams(location.search);
+  let view = params.get('view') === 'history' ? 'history' : 'onhand';
   let tab = TABS.some((x) => x.k === params.get('tab')) ? params.get('tab') : 'all';
   let query = params.get('q') || '';
   let showUsed = false;
   let sortKey = 'date', sortDir = -1;
+  const openRows = new Set();   // History rows opened to show their trail
+  const H = () => view === 'history';
+  const histByKey = (k) => hist.find((r) => r.key === k);
 
   const isUsed = (r) => r.lb <= 0.005 || !!marks[r.key];
-  const statusLabel = (r) => (marks[r.key] ? t(L.usedUp) : r.status === 'usedUp' ? t(L.usedUp) : t(L[r.status]));
+  const leftOf = (r) => r2(r.now.filter((x) => !isUsed(x)).reduce((a, x) => a + x.lb, 0));
+  function histStatus(r) {
+    const live = r.now.find((x) => !isUsed(x));
+    if (live) return { s: live.status, pill: live.pill };
+    if (r.paper && !r.to.length) return { s: 'hPaper', pill: 'used' };
+    const s = { drying: 'hTaken', onstem: 'hBucked', bucked: 'hTrimmed' }[r.tab] || (r.shipped ? 'hShipped' : 'usedUp');
+    return { s, pill: s === 'hShipped' ? 'ship' : 'used' };
+  }
+  const statusLabel = (r) => (H() ? t(L[histStatus(r).s])
+    : marks[r.key] ? t(L.usedUp) : r.status === 'usedUp' ? t(L.usedUp) : t(L[r.status]));
   const typeLabel = (r) => [t(L[r.type]), r.catLabel ? t(r.catLabel) : ''].filter(Boolean).join(' · ');
   const days = (r) => (r.date ? Math.max(0, Math.floor((Date.now() - new Date(`${r.date}T12:00:00`).getTime()) / 86400000)) : null);
   const fmtDate = (s) => (s ? new Date(`${s}T12:00:00`).toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—');
-  const visible = (r) => showUsed || !isUsed(r);
+  const shortUid = (u) => (u ? '…' + normUid(u).slice(-6) : '—');
+  // Where a History row went, in a line: the next stages, customers, runs.
+  const toText = (r) => r.to.map((e) => {
+    const x = e.key && histByKey(e.key);
+    return `${x ? t(L[x.tab]) : e.customer || e.what} ${fmtNum(e.lb)} lb`;
+  }).join(', ');
+  const visible = (r) => H() || showUsed || !isUsed(r);
   function matches(r) {
     if (!query) return true;
-    const hay = [r.strain, r.uid, ...(r.farmUids || []), r.license, r.farm, r.code, r.cid, r.location].join(' ').toLowerCase();
+    const hay = [r.strain, r.uid, r.lotUid, ...(r.farmUids || []), r.license, r.farm, r.code, r.cid, r.location,
+      ...(r.to || []).map((e) => e.customer)].join(' ').toLowerCase();
     // Every word has to be there: "agp gelato" finds AGP's Gelato.
     return query.toLowerCase().split(/\s+/).filter(Boolean).every((w) => hay.includes(w) || normUid(hay).includes(normUid(w)) && normUid(w).length >= 4);
   }
   const inTab = (r, k) => k === 'all' || r.tab === k;
-  const sumLb = (list) => r2(list.reduce((a, r) => a + r.lb, 0));
+  const sumLb = (list, f = 'lb') => r2(list.reduce((a, r) => a + r[f], 0));
 
+  // onhand / hist: only in that view.
   const COLS = [
     { k: 'tab', l: L.colCat, v: (r) => t(L[r.tab]), allOnly: true },
     { k: 'status', l: L.colStatus, v: statusLabel },
@@ -477,43 +648,56 @@
     { k: 'code', l: L.colCode, v: (r) => r.code },
     { k: 'license', l: L.colLic, v: (r) => r.license },
     { k: 'cid', l: { en: 'CID', es: 'CID' }, v: (r) => r.cid },
-    { k: 'lb', l: L.colLb, v: (r) => r.lb, num: true },
+    { k: 'lb', l: L.colLb, v: (r) => r.lb, num: true, onhand: true },
+    { k: 'startLb', l: L.colIn, v: (r) => r.startLb, num: true, hist: true },
+    { k: 'left', l: L.colLeft, v: leftOf, num: true, hist: true },
+    { k: 'to', l: L.colTo, v: toText, hist: true },
     { k: 'type', l: L.colType, v: typeLabel },
     { k: 'location', l: L.colLoc, v: (r) => r.location },
     { k: 'date', l: L.colSince, v: (r) => r.date },
-    { k: 'days', l: L.colDays, v: days, num: true }
+    { k: 'days', l: L.colDays, v: days, num: true, onhand: true }
   ];
-  const colsFor = () => COLS.filter((c) => !c.allOnly || tab === 'all');
+  const colsFor = () => COLS.filter((c) => (!c.allOnly || tab === 'all') && !(c.onhand && H()) && !(c.hist && !H()));
 
   function current() {
-    const col = COLS.find((c) => c.k === sortKey) || COLS[11];
-    return rows.filter((r) => inTab(r, tab) && visible(r) && matches(r)).sort((a, b) => {
+    const col = colsFor().find((c) => c.k === sortKey) || COLS.find((c) => c.k === 'date');
+    return (H() ? hist : rows).filter((r) => inTab(r, tab) && visible(r) && matches(r)).sort((a, b) => {
       const x = col.v(a), y = col.v(b);
       const cmp = col.num ? (Number(x) || 0) - (Number(y) || 0) : String(x || '').localeCompare(String(y || ''), undefined, { numeric: true });
       return cmp * sortDir || a.strain.localeCompare(b.strain);
     });
   }
 
+  const viewsEl = document.getElementById('views');
+  function renderViews() {
+    viewsEl.innerHTML = [['onhand', L.vOnHand], ['history', L.vHistory]]
+      .map(([v, l]) => `<button type="button" class="${view === v ? 'on' : ''}" data-v="${v}">${esc(t(l))}</button>`).join('');
+    viewsEl.querySelectorAll('button').forEach((b) => {
+      b.onclick = () => { if (view === b.dataset.v) return; view = b.dataset.v; sortKey = 'date'; sortDir = -1; syncUrl(); render(); toListTop(); };
+    });
+  }
+
   const tabsEl = document.getElementById('tabs');
   function renderTabs() {
     tabsEl.innerHTML = TABS.map((x) => {
-      const list = rows.filter((r) => inTab(r, x.k) && !isUsed(r));
+      const list = H() ? hist.filter((r) => inTab(r, x.k)) : rows.filter((r) => inTab(r, x.k) && !isUsed(r));
       return `<button type="button" class="tab ${tab === x.k ? 'on' : ''}" data-k="${x.k}" style="--c:${x.c}">
-        <div class="l">${esc(t(L[x.k]))}</div><div class="n">${fmtNum(sumLb(list), 0)} lb</div>
-        <div class="s">${list.length} ${list.length === 1 ? t(L.pkg) : t(L.pkgs)}</div></button>`;
+        <div class="l">${esc(t(L[x.k]))}</div><div class="n">${fmtNum(sumLb(list, H() ? 'startLb' : 'lb'), 0)} lb</div>
+        <div class="s">${list.length} ${H() ? t(list.length === 1 ? L.rec : L.recs) : list.length === 1 ? t(L.pkg) : t(L.pkgs)}</div></button>`;
     }).join('');
     tabsEl.querySelectorAll('.tab').forEach((b) => { b.onclick = () => { tab = b.dataset.k; syncUrl(); render(); toListTop(); }; });
   }
 
   const filtersEl = document.getElementById('filters');
   filtersEl.innerHTML = `<input type="search" id="q" placeholder="${esc(t(L.search))}" value="${esc(query)}">
-    <label class="chk"><input type="checkbox" id="used"> ${esc(t(L.showUsed))}</label>
+    <label class="chk" id="usedWrap"><input type="checkbox" id="used"> ${esc(t(L.showUsed))}</label>
     <button type="button" class="btn btn-blue" id="csv">${esc(t(L.csv))}</button>`;
   document.getElementById('q').addEventListener('input', (e) => { query = e.target.value.trim(); syncUrl(); render(); });
   document.getElementById('used').onchange = (e) => { showUsed = e.target.checked; render(); };
   document.getElementById('csv').onclick = exportCsv;
   function syncUrl() {
     const u = new URL(location.href);
+    if (H()) u.searchParams.set('view', 'history'); else u.searchParams.delete('view');
     if (tab === 'all') u.searchParams.delete('tab'); else u.searchParams.set('tab', tab);
     if (query) u.searchParams.set('q', query); else u.searchParams.delete('q');
     history.replaceState(null, '', u);
@@ -528,46 +712,130 @@
   }
 
   function render() {
+    renderViews();
     renderTabs();
+    document.getElementById('usedWrap').style.display = H() ? 'none' : '';
+    document.getElementById('note').textContent = t(H() ? L.histNote : L.note);
     const list = current();
-    document.getElementById('sub').textContent = `${t(L[tab])} · ${list.length} ${list.length === 1 ? t(L.pkg) : t(L.pkgs)}`;
-    const onHand = list.filter((r) => !isUsed(r));
-    const wet = sumLb(onHand.filter((r) => r.wet)), dry = sumLb(onHand.filter((r) => !r.wet));
-    document.getElementById('totals').innerHTML = list.length
-      ? `<span>${esc(t(L.total))}: <b>${fmtNum(dry + wet)} lb</b></span>${wet && dry ? `<span>${esc(t(L.wet))}: <b>${fmtNum(wet)} lb</b></span>` : ''}`
-      : '';
+    document.getElementById('sub').textContent = `${H() ? t(L.vHistory) + ' · ' : ''}${t(L[tab])} · ${list.length} ${
+      H() ? t(list.length === 1 ? L.rec : L.recs) : list.length === 1 ? t(L.pkg) : t(L.pkgs)}`;
+    const totalsEl = document.getElementById('totals');
+    if (H()) {
+      const shipped = r2(list.reduce((a, r) => a + r.shipped, 0));
+      totalsEl.innerHTML = list.length ? `<span>${esc(t(L.colIn))}: <b>${fmtNum(sumLb(list, 'startLb'))} lb</b></span>
+        <span>${esc(t(L.stillHere))}: <b>${fmtNum(r2(list.reduce((a, r) => a + leftOf(r), 0)))} lb</b></span>
+        ${shipped ? `<span>${esc(t(L.hShipped))}: <b>${fmtNum(shipped)} lb</b></span>` : ''}` : '';
+    } else {
+      const onHand = list.filter((r) => !isUsed(r));
+      const wet = sumLb(onHand.filter((r) => r.wet)), dry = sumLb(onHand.filter((r) => !r.wet));
+      totalsEl.innerHTML = list.length
+        ? `<span>${esc(t(L.total))}: <b>${fmtNum(dry + wet)} lb</b></span>${wet && dry ? `<span>${esc(t(L.wet))}: <b>${fmtNum(wet)} lb</b></span>` : ''}`
+        : '';
+    }
     if (!list.length) { board.innerHTML = `<div class="empty">${esc(t(L.empty))}</div>`; return; }
     const cols = colsFor();
-    board.innerHTML = `<div class="tbl-wrap"><table class="tbl"><thead><tr>
+    board.innerHTML = `<div class="tbl-wrap"><table class="tbl ${H() ? 'hist' : ''}"><thead><tr>
         ${cols.map((c) => `<th data-k="${c.k}" class="${c.num ? 'num' : ''} ${sortKey === c.k ? 'sorted' : ''}">${esc(t(c.l))}${sortKey === c.k ? (sortDir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('')}
-        ${canMark ? '<th></th>' : ''}
-      </tr></thead><tbody>${list.map(rowHtml).join('')}</tbody></table></div>`;
+        ${canMark && !H() ? '<th></th>' : ''}
+      </tr></thead><tbody>${list.map(H() ? histRowHtml : rowHtml).join('')}</tbody></table></div>`;
     board.querySelectorAll('th[data-k]').forEach((th) => {
-      th.onclick = () => { if (sortKey === th.dataset.k) sortDir = -sortDir; else { sortKey = th.dataset.k; sortDir = ['lb', 'days', 'date'].includes(th.dataset.k) ? -1 : 1; } render(); };
+      th.onclick = () => { if (sortKey === th.dataset.k) sortDir = -sortDir; else { sortKey = th.dataset.k; sortDir = ['lb', 'startLb', 'left', 'days', 'date'].includes(th.dataset.k) ? -1 : 1; } render(); };
     });
     board.querySelectorAll('.mini[data-key]').forEach((b) => { b.onclick = () => toggleMark(b); });
+    board.querySelectorAll('tr[data-row]').forEach((tr) => {
+      tr.onclick = () => { const k = tr.dataset.row; if (openRows.has(k)) openRows.delete(k); else openRows.add(k); render(); };
+    });
+    board.querySelectorAll('a.go').forEach((a) => { a.onclick = (e) => { e.preventDefault(); go(a.dataset.go); }; });
   }
+
+  // Jump to a History row (another stage's), open it and flash it.
+  function go(key) {
+    const r = histByKey(key);
+    if (!r) return;
+    tab = r.tab;
+    if (!matches(r)) { query = ''; document.getElementById('q').value = ''; }
+    openRows.add(key);
+    syncUrl(); render();
+    const tr = board.querySelector(`tr[data-row="${CSS.escape(key)}"]`);
+    if (!tr) return;
+    tr.scrollIntoView({ block: 'center' });
+    tr.classList.add('flash');
+    setTimeout(() => tr.classList.remove('flash'), 1800);
+  }
+
+  function baseCells(r) {
+    return {
+      tab: `<span class="cat" style="--c:${TAB_COLOR[r.tab]}">${esc(t(L[r.tab]))}</span>`,
+      uid: `<span title="${esc(r.uid)}">${esc(r.uid || '—')}</span>${!r.ownUid ? `<div class="small">${esc(t(L.lotTag))}</div>` : ''}${
+        r.ownUid && r.lotUid && !uidTailMatch(r.lotUid, r.uid) ? `<div class="small" title="${esc(r.lotUid)}">${esc(t(L.lot))}: ${esc(shortUid(r.lotUid))}</div>` : ''}${
+        r.farmUids && r.farmUids.length && !r.farmUids.every((u) => uidTailMatch(u, r.uid)) ? `<div class="small" title="${esc(r.farmUids.join(', '))}">${esc(t(L.farmUid))}: ${esc(r.farmUids.map(shortUid).join(', '))}</div>` : ''}`,
+      strain: esc(r.strain || '—'),
+      farm: esc(r.farm || '—'), code: esc(r.code || '—'), license: esc(r.license || '—'), cid: esc(r.cid || '—'),
+      type: `<span class="small">${esc(typeLabel(r))}</span>`,
+      location: esc(r.location || '—'),
+      date: esc(fmtDate(r.date))
+    };
+  }
+  const CLS = { uid: 'mono uid', strain: 'strain', code: 'mono', license: 'mono', cid: 'mono', lb: 'num', startLb: 'num', left: 'num', date: 'mono', days: 'num', to: 'to' };
 
   function rowHtml(r) {
     const used = isUsed(r), dd = days(r);
     const cells = {
-      tab: `<span class="cat" style="--c:${TAB_COLOR[r.tab]}">${esc(t(L[r.tab]))}</span>`,
-      status: `<span class="pill ${used ? 'used' : r.pill}">${esc(statusLabel(r))}</span>${r.used.length ? `<div class="small" title="${esc(r.used.join('\n'))}">${fmtNum(r.startLb)} lb − ${esc(t(L.took))}</div>` : ''}`,
-      uid: `<span title="${esc(r.uid)}">${esc(r.uid || '—')}</span>${!r.ownUid ? `<div class="small">${esc(t(L.lotTag))}</div>` : ''}${
-        r.farmUids && r.farmUids.length && !r.farmUids.every((u) => uidTailMatch(u, r.uid)) ? `<div class="small" title="${esc(r.farmUids.join(', '))}">${esc(t(L.farmUid))}: ${esc(r.farmUids.map((u) => '…' + normUid(u).slice(-6)).join(', '))}</div>` : ''}`,
-      strain: esc(r.strain || '—'),
-      farm: esc(r.farm || '—'), code: esc(r.code || '—'), license: esc(r.license || '—'), cid: esc(r.cid || '—'),
+      ...baseCells(r),
+      status: `<span class="pill ${used ? 'used' : r.pill}">${esc(statusLabel(r))}</span>${r.used.length ? `<div class="small" title="${esc(r.used.map(usedText).join('\n'))}">${fmtNum(r.startLb)} lb − ${esc(t(L.took))}</div>` : ''}`,
       lb: `${fmtNum(r.lb)}${r.wet ? ` <span class="small">${esc(t(L.wet))}</span>` : ''}`,
-      type: `<span class="small">${esc(typeLabel(r))}</span>`,
-      location: esc(r.location || '—'),
-      date: esc(fmtDate(r.date)),
       days: dd == null ? '—' : `<span class="age ${dd >= 30 ? 'old' : ''}">${dd}</span>`
     };
-    const cls = { uid: 'mono uid', strain: 'strain', code: 'mono', license: 'mono', cid: 'mono', lb: 'num', date: 'mono', days: 'num' };
     const mark = canMark ? `<td>${marks[r.key]
       ? `<button type="button" class="mini" data-key="${esc(r.key)}" data-on="1" title="${esc(`${marks[r.key].by || ''} · ${marks[r.key].at ? new Date(marks[r.key].at).toLocaleString() : ''}`)}">${esc(t(L.restore))}</button>`
       : r.lb > 0.005 ? `<button type="button" class="mini" data-key="${esc(r.key)}">${esc(t(L.markUsed))}</button>` : ''}</td>` : '';
-    return `<tr class="${used ? 'used' : ''}" style="--c:${TAB_COLOR[r.tab]}">${colsFor().map((c) => `<td class="${cls[c.k] || ''}">${cells[c.k]}</td>`).join('')}${mark}</tr>`;
+    return `<tr class="${used ? 'used' : ''}" style="--c:${TAB_COLOR[r.tab]}">${colsFor().map((c) => `<td class="${CLS[c.k] || ''}">${cells[c.k]}</td>`).join('')}${mark}</tr>`;
+  }
+
+  function histRowHtml(r) {
+    const st = histStatus(r), left = leftOf(r), open = openRows.has(r.key), cols = colsFor();
+    const cells = {
+      ...baseCells(r),
+      status: `<span class="pill ${st.pill}">${esc(t(L[st.s]))}</span>`,
+      startLb: `${fmtNum(r.startLb)}${r.wet ? ` <span class="small">${esc(t(L.wet))}</span>` : ''}`,
+      left: left > 0.005 ? fmtNum(left) : '<span class="small">0</span>',
+      to: `<span class="small" title="${esc(toText(r))}">${esc(toText(r) || '—')}</span>`
+    };
+    return `<tr class="hrow ${open ? 'open' : ''}" data-row="${esc(r.key)}" style="--c:${TAB_COLOR[r.tab]}">${
+      cols.map((c) => `<td class="${CLS[c.k] || ''}">${c.k === 'tab' || (c.k === 'status' && !cols.some((x) => x.k === 'tab')) ? `<span class="caret">${open ? '▾' : '▸'}</span> ` : ''}${cells[c.k]}</td>`).join('')}</tr>${
+      open ? `<tr class="det" style="--c:${TAB_COLOR[r.tab]}"><td colspan="${cols.length}">${detailHtml(r)}</td></tr>` : ''}`;
+  }
+
+  // The forms the Metrc Queue can open (read-only detail, ?id=).
+  const FORM_PAGE = ['intake_wet', 'dry_check', 'buck', 'hand_trim', 'trim_package', 'preroll_production', 'pouch_production', 'transfer_out'];
+  const formLink = (id, station) => (FORM_PAGE.includes(station) && recs.has(id)
+    ? ` <a class="ext" href="/metrc.html?id=${encodeURIComponent(id)}" target="_blank" rel="noopener">${esc(t(L.openForm))} ↗</a>` : '');
+  function chip(x) {
+    if (!x) return '';
+    return `<a href="#" class="go" data-go="${esc(x.key)}" style="--c:${TAB_COLOR[x.tab]}"><b>${esc(t(L[x.tab]))}</b> ${esc(x.strain || '')} · ${
+      esc(shortUid(x.uid))} · ${fmtNum(x.startLb)} lb${x.wet ? ' ' + esc(t(L.wet)) : ''} · ${esc(fmtDate(x.date))}</a>`;
+  }
+  function saleInfo(rec) {
+    if (!rec) return '';
+    const bits = [[L.sInvoice, rec.invoiceNo], [L.sOrder, rec.salesOrderNo], [L.sCustOrder, rec.customerOrderNo], [L.sDcc, rec.dccLicense],
+      [L.sDest, rec.destination], [L.sDriver, rec.driver], [L.sPlate, rec.licensePlate]].filter(([, v]) => v);
+    return bits.length ? `<div class="small sale">${bits.map(([l, v]) => `${esc(t(l))} ${esc(v)}`).join(' · ')}</div>` : '';
+  }
+  function detailHtml(r) {
+    const from = r.from.map((k) => chip(histByKey(k))).join('');
+    const origin = r.tab === 'drying' || (r.tab === 'frozen' && r.type === 'tIntake')
+      ? [r.farm, r.code, r.license, r.cid].filter(Boolean).join(' · ') : '';
+    const to = r.to.map((e) => `<li><span>${esc(e.what)}${e.customer ? ` → <b>${esc(e.customer)}</b>` : ''} · ${esc(fmtDate(e.date))} · <b>${fmtNum(e.lb)} lb</b></span>${
+      e.key ? ' ' + chip(histByKey(e.key)) : ''}${formLink(e.id, e.station)}${e.sale ? saleInfo(recs.get(e.id)) : ''}</li>`);
+    r.now.filter((x) => marks[x.key]).forEach((x) => to.push(`<li>${esc(t(L.usedUp))} (${esc(t(L.marked))}) · ${fmtNum(marks[x.key].lb != null ? marks[x.key].lb : x.lb)} lb · ${
+      esc(marks[x.key].by || '')} · ${esc(marks[x.key].at ? fmtDate(marks[x.key].at.slice(0, 10)) : '')}</li>`));
+    const left = leftOf(r);
+    if (left > 0.005) to.push(`<li><b>${fmtNum(left)} lb</b> ${esc(t(L.stillHere).toLowerCase())} · ${esc(t(L[histStatus(r).s]))}</li>`);
+    return `<div class="trail">
+      <div><div class="tl">${esc(t(L.cameFrom))}</div>${from || `<span class="small">${esc(origin ? `${t(L.farmIn)}: ${origin}` : '—')}</span>`}</div>
+      <div><div class="tl">${esc(t(L.wentTo))}</div><ul>${to.join('') || `<li class="small">${esc(t(L.nothingYet))}</li>`}</ul></div>
+      <div class="small">${esc(t(L.thisRec))}: ${esc(typeLabel(r))} · ${esc(fmtDate(r.date))}${r.paper ? ` · ${esc(t(L.hPaper))}` : ''}${formLink(r.recId, r.station)}</div>
+    </div>`;
   }
 
   async function toggleMark(b) {
@@ -584,19 +852,31 @@
     }
   }
 
-  // The rows showing (this tab, search, used-up toggle), in the table's order.
+  // The rows showing (this view and tab, search, used-up toggle), in the table's order.
   function exportCsv() {
     const list = current();
-    const head = ['Category', 'Status', 'UID', 'UID is', 'Farm UID(s)', 'Strain', 'Farm', 'Farm Code', 'License', 'CID',
-      'Lbs', 'Weight', 'Started Lbs', 'Taken By', 'Type', 'Location', 'Since', 'Days'];
     const cell = (v) => { const s = String(v == null ? '' : v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
-    const lines = [head, ...list.map((r) => [t(L[r.tab]), statusLabel(r), r.uid, r.ownUid ? 'package' : 'lot', (r.farmUids || []).join(' '),
-      r.strain, r.farm, r.code, r.license, r.cid, r.lb.toFixed(2), r.wet ? 'wet' : 'dry', r.startLb.toFixed(2), r.used.join('; '),
-      typeLabel(r), r.location, r.date, days(r) == null ? '' : days(r)])].map((row) => row.map(cell).join(','));
+    const edge = (e) => {
+      const x = e.key && histByKey(e.key);
+      return [e.what, e.customer, e.date, `${fmtNum(e.lb)} lb`, x ? `${t(L[x.tab])} ${x.uid}` : ''].filter(Boolean).join(' ');
+    };
+    const table = H()
+      ? [['Category', 'Status', 'UID', 'Lot UID', 'Farm UID(s)', 'Strain', 'Farm', 'Farm Code', 'License', 'CID', 'Lbs In', 'Weight', 'Lbs Left',
+          'Shipped Lbs', 'Came From', 'Went To', 'Type', 'Location', 'Date'],
+        ...list.map((r) => [t(L[r.tab]), statusLabel(r), r.uid, r.lotUid || '', (r.farmUids || []).join(' '), r.strain, r.farm, r.code, r.license, r.cid,
+          r.startLb.toFixed(2), r.wet ? 'wet' : 'dry', leftOf(r).toFixed(2), r.shipped ? r.shipped.toFixed(2) : '',
+          r.from.map((k) => { const x = histByKey(k); return x ? `${t(L[x.tab])} ${x.uid}` : ''; }).join('; '), r.to.map(edge).join('; '),
+          typeLabel(r), r.location, r.date])]
+      : [['Category', 'Status', 'UID', 'UID is', 'Farm UID(s)', 'Strain', 'Farm', 'Farm Code', 'License', 'CID',
+          'Lbs', 'Weight', 'Started Lbs', 'Taken By', 'Type', 'Location', 'Since', 'Days'],
+        ...list.map((r) => [t(L[r.tab]), statusLabel(r), r.uid, r.ownUid ? 'package' : 'lot', (r.farmUids || []).join(' '),
+          r.strain, r.farm, r.code, r.license, r.cid, r.lb.toFixed(2), r.wet ? 'wet' : 'dry', r.startLb.toFixed(2), r.used.map(usedText).join('; '),
+          typeLabel(r), r.location, r.date, days(r) == null ? '' : days(r)])];
+    const lines = table.map((row) => row.map(cell).join(','));
     const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `raw_inventory_${tab}${query ? '_' + query.replace(/[^\w-]+/g, '_').slice(0, 30) : ''}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `raw_inventory_${H() ? 'history_' : ''}${tab}${query ? '_' + query.replace(/[^\w-]+/g, '_').slice(0, 30) : ''}_${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
