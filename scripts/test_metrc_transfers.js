@@ -107,5 +107,22 @@ check('needs form: item from the sync, else the inventory', nf[1].packages.map((
 check('needs form: day, destination, weight', [nf[1].date, nf[1].toLicense, nf[1].weightLb], ['2026-10-21', 'C11-0002020-LIC', 82]);
 check('needs form: accepted yet', nf.map((x) => x.accepted), [true, false]);
 
+// A shipped package cut from a lot: the form names the lot (a short UID),
+// two steps back — Lalo's form for manifest 0011742507.
+const lotInv = [
+  { tag: '1A406030005E0B2000010114', item: { name: 'Flower - Gelato #41' }, source_packages: [{ tag: '1A406030005E0B2000010042' }] },
+  { tag: '1A406030005E0B2000010042', source_packages: [{ tag: '1A406030005E0B2000010005' }] },
+  { tag: '1A406030005E0B2000010116', item: { name: 'Flower - Ice Cream Cake' }, source_packages: [{ tag: '1A406030005E0B2000010006' }] }
+];
+const lotTr = [out('0011742507', 'CCL22-0001284', 'C11-0002020-LIC', '2026-10-21T16:25:00.000Z',
+  [pkg('1A406030005E0B2000010114', 'Shipped', 50), pkg('1A406030005E0B2000010116', 'Shipped', 24)])];
+check('lot UIDs on the form cover the packages cut from them', M.outgoingNeedingForm(lotTr, facilities, [{ id: 'lalo', uids: ['10005'] }], lotInv).length, 0);
+check('an unrelated short UID does not', M.outgoingNeedingForm(lotTr, facilities, [{ id: 'x', uids: ['10007'] }], lotInv).length, 1);
+const lotNf = M.outgoingNeedingForm(lotTr, facilities, [], lotInv)[0];
+check('the package it was cut from, for the Source UID', lotNf.packages.map((p) => p.source), ['1A406030005E0B2000010042', '1A406030005E0B2000010006']);
+check('the sync’s _sources / _source win', M.outgoingNeedingForm([out('0011742508', 'CCL22-0001284', 'C11-0002020-LIC', '2026-10-21T16:25:00.000Z',
+  [{ ...pkg('1A406030005E0B2000010999', 'Accepted', 5), _sources: ['1A406030005E0B2000010888', '1A406030005E0B2000010777'], _source: '1A406030005E0B2000010888' }])],
+  facilities, [{ id: 'y', uids: ['10777'] }], []).length, 0);
+
 if (failures) { console.log(`\n${failures} failed`); process.exit(1); }
 console.log('\nAll passed');

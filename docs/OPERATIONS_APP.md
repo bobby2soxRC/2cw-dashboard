@@ -674,15 +674,19 @@ don't count, and only manifests that left on or after `NEEDS_FORM_SINCE`
 (2026-10-20, when the form went live). A form covers the manifest when its
 **Metrc Manifest #** (`manifestNo`, on the form since 2026-10-22) matches, or
 any of its rows' source / transfer package UIDs is one of the manifest's tags
-(the end of a tag is enough), so the row goes away by itself once the form is
+or a tag one was made from (a package shipped out is often cut from a lot the
+floor knows by its own UID — e.g. 10116 cut from lot 10006): the sync's
+`_sources` (`package_sources`, up to 4 steps back), else the inventory's
+`source_packages`. The end of a tag is enough, 4 characters or more, so the row goes away by itself once the form is
 submitted. It's not a `metrc_queue` row and has no status to set.
 **Fill out form →** (or the row) opens a new form through
 `ops_form.html`'s `?set_<field>=` link prefill: Manifest #, Actual Transfer
 Date (departure, Pacific), DCC License # (destination), customer name and
 address when the license is in `data/customers.json` (or from the Canix sales
 order), sales order #, Manifest Transfer Initiated (and Accepted once every
-package is), and a row per package: source UID = the tag shipped, weight in
-lb, strain (spelled as the Strain Library has it) and product type guessed
+package is), and a row per package: Source UID = the package it was cut from when there's
+just one (`_source`), with the shipped tag as Transfer Package UID — else the
+shipped tag as Source UID — weight in lb (pieces for pre-rolls), strain (spelled as the Strain Library has it) and product type guessed
 from the Canix item name (`productTypeOf`: whole plant → 1, bucked → 2,
 flower → 3, smalls → 4, trim → 5, fresh frozen → 6, pre-roll → 8). Driver, plate, prices,
 customer order # and invoice # aren't in Canix — fill those in. Item names

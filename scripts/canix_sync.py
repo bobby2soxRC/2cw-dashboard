@@ -240,9 +240,29 @@ def recent_transfers(transfers, now, packages=(), sales_orders=()):
     return [slim_record(label_transfer(t, pkg_by_tag, so_by_id)) for t in recent]
 
 
+def package_sources(tag, pkg_by_tag, depth=4):
+    """The tags a package was made from — its source packages, theirs, and so
+    on, nearest first, up to `depth` steps back. A package shipped out is
+    often a new one cut from a lot the floor knows by its own UID."""
+    out, level = [], [tag]
+    for _ in range(depth):
+        nxt = []
+        for t in level:
+            for s in (pkg_by_tag.get(t) or {}).get("source_packages") or []:
+                st = norm_tag(s.get("tag"))
+                if st and st != tag and st not in out:
+                    out.append(st)
+                    nxt.append(st)
+        level = nxt
+        if not level:
+            break
+    return out
+
+
 def label_transfer(t, pkg_by_tag, so_by_id):
     """A copy of the transfer with each package's item name and strain
-    (_item, _strain, from the packages history — slim_record drops the
+    (_item, _strain) and the tags it was made from (_sources), from the
+    packages history — slim_record drops the
     package's nested item, and the package leaves our inventory once it's
     accepted) and its sales order # and customer (_sales_order_no,
     _customer_name). The Metrc Queue's "Needs form" rows fill the Product
@@ -266,6 +286,11 @@ def label_transfer(t, pkg_by_tag, so_by_id):
                 c["_item"] = item.get("name")
             if (item.get("strain") or {}).get("name"):
                 c["_strain"] = item["strain"]["name"]
+            sources = package_sources(norm_tag((c.get("package") or {}).get("tag")), pkg_by_tag)
+            if sources:
+                c["_sources"] = sources
+            direct = {norm_tag(s.get("tag")) for s in (pkg_by_tag.get(norm_tag((c.get("package") or {}).get("tag"))) or {}).get("source_packages") or [] if s.get("tag")}
+            c["_source"] = direct.pop() if len(direct) == 1 else ""
             contents.append(c)
         d["contents"] = contents
         dests.append(d)

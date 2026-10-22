@@ -128,8 +128,10 @@
   // finished goods are left out.
   //
   // A form covers a transfer when its Manifest # matches, or any of its rows'
-  // source / transfer package UIDs is one of the transfer's tags (a typed
-  // UID can be just the end of the tag). Only manifests that left on or after
+  // source / transfer package UIDs is one of the transfer's tags or a tag one
+  // of them was made from (_sources from the sync, else the inventory's
+  // source_packages, a few steps back) — a typed UID can be just the end of
+  // the tag, 4 characters or more. Only manifests that left on or after
   // NEEDS_FORM_SINCE — the day the form went live — so older ones, done on
   // paper, don't flood the queue.
   //
@@ -171,9 +173,30 @@
     for (const f of forms || []) {
       const m = normManifest(f.manifest);
       if (m) formManifests.add(m);
-      for (const u of f.uids || []) { const n = normTag(u); if (n.length >= 6) formUids.push(n); }
+      for (const u of f.uids || []) { const n = normTag(u); if (n.length >= 4) formUids.push(n); }
     }
     const covered = (tag) => formUids.some((u) => u === tag || tag.endsWith(u));
+    // The one package it was cut from (none when it came from several).
+    const directSource = (c) => {
+      if (c._source !== undefined) return c._source || '';
+      const direct = ((invByTag.get(normTag((c.package || {}).tag)) || {}).source_packages || []).map((s) => normTag(s && s.tag)).filter(Boolean);
+      return new Set(direct).size === 1 ? direct[0] : '';
+    };
+    // The tags a package was made from, nearest first.
+    const sourcesOf = (c) => {
+      if (Array.isArray(c._sources)) return c._sources.map(normTag);
+      const self = normTag((c.package || {}).tag), out = [];
+      let level = [self];
+      for (let i = 0; i < 4 && level.length; i++) {
+        const next = [];
+        for (const tg of level) for (const s of (invByTag.get(tg) || {}).source_packages || []) {
+          const st = normTag(s && s.tag);
+          if (st && st !== self && !out.includes(st)) { out.push(st); next.push(st); }
+        }
+        level = next;
+      }
+      return out;
+    };
     const out = [];
     for (const t of transfers || []) {
       const manifest = String((t && t.manifest_number) || '').trim();
@@ -188,10 +211,15 @@
           const item = ((invByTag.get(normTag(tag)) || {}).item) || {};
           const name = c._item || item.name || '';
           const lb = toLb(c.shipped_weight, c.shipped_weight_unit);
+          const sources = sourcesOf(c);
           const pieces = isEach(c.shipped_weight_unit) && (!name || productTypeOf(name) === '8') && Number.isFinite(Number(c.shipped_weight));
           if (lb === null && !pieces) return null;
           return {
             tag,
+            sources,
+            // The package it was cut from, when there's just one — the UID
+            // the floor (and Raw Inventory) knows it by.
+            source: directSource(c),
             pieces,
             qty: pieces ? Number(c.shipped_weight) : Math.round(lb * 100) / 100,
             lb: pieces ? 0 : Math.round(lb * 100) / 100,
@@ -203,7 +231,7 @@
         if (!packages.length) continue;
         if (formManifests.has(normManifest(manifest))) continue;
         const tags = live.map((c) => normTag((c.package || {}).tag)).filter(Boolean);
-        if (tags.some(covered)) continue;
+        if (tags.some(covered) || packages.some((p) => p.sources.some(covered))) continue;
         out.push({
           manifest,
           fromLicense: t._facility_license_number || '',

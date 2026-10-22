@@ -544,7 +544,7 @@
     set('actualDate', x.date);
     set('ckManifestInitiated', 'true');
     if (x.accepted) set('ckManifestAccepted', 'true');
-    set('lines', JSON.stringify(x.packages.map((pk) => ({ productType: pk.productType, strain: libStrain(pk.strain), sourceUid: pk.tag, weight: pk.qty }))));
+    set('lines', JSON.stringify(x.packages.map((pk) => ({ productType: pk.productType, strain: libStrain(pk.strain), sourceUid: pk.source || pk.tag, transferUid: pk.source ? pk.tag : '', weight: pk.qty }))));
     return `/ops_form.html?${p}`;
   }
   function nfMatches(x) {
