@@ -102,6 +102,9 @@
     .tbl .to{max-width:240px;overflow:hidden;text-overflow:ellipsis}
     .tbl tbody tr.flash td{animation:flash 1.8s ease-out}
     @keyframes flash{0%{background:rgba(90,159,212,.35)}100%{background:transparent}}
+    .tbl tbody tr.grp{cursor:pointer;background:var(--surface2)}
+    .tbl tbody tr.grp td{border-left:3px solid var(--blue);padding:10px 12px;font-size:.88rem}
+    .tbl tbody tr.grp td .small{margin-left:8px}
     .tbl tbody tr.det td{white-space:normal;background:var(--bg);padding:12px 16px 16px}
     /* Stays in view when the table scrolls sideways. */
     .trail{display:grid;gap:12px;font-size:.85rem;line-height:1.5;position:sticky;left:16px;max-width:min(980px,calc(100vw - 72px))}
@@ -231,6 +234,7 @@
     vOnHand:  { en: 'On hand', es: 'Disponible' },
     vHistory: { en: 'History', es: 'Historial' },
     rec:      { en: 'record', es: 'registro' },
+    noFarm:   { en: 'No farm on record', es: 'Sin rancho registrado' },
     recs:     { en: 'records', es: 'registros' },
     colIn:    { en: 'In', es: 'Entró' },
     colLeft:  { en: 'Left', es: 'Queda' },
@@ -737,7 +741,10 @@
     board.innerHTML = `<div class="tbl-wrap"><table class="tbl ${H() ? 'hist' : ''}"><thead><tr>
         ${cols.map((c) => `<th data-k="${c.k}" class="${c.num ? 'num' : ''} ${sortKey === c.k ? 'sorted' : ''}">${esc(t(c.l))}${sortKey === c.k ? (sortDir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('')}
         ${canMark && !H() ? '<th></th>' : ''}
-      </tr></thead><tbody>${list.map(H() ? histRowHtml : rowHtml).join('')}</tbody></table></div>`;
+      </tr></thead><tbody>${tab === 'drying' ? byFarmHtml(list, cols.length + (canMark && !H() ? 1 : 0)) : list.map(H() ? histRowHtml : rowHtml).join('')}</tbody></table></div>`;
+    board.querySelectorAll('tr.grp').forEach((tr) => {
+      tr.onclick = () => { const k = tr.dataset.farm; if (closedFarms.has(k)) closedFarms.delete(k); else closedFarms.add(k); render(); };
+    });
     board.querySelectorAll('th[data-k]').forEach((th) => {
       th.onclick = () => { if (sortKey === th.dataset.k) sortDir = -sortDir; else { sortKey = th.dataset.k; sortDir = ['lb', 'startLb', 'left', 'days', 'date'].includes(th.dataset.k) ? -1 : 1; } render(); };
     });
@@ -748,11 +755,32 @@
     board.querySelectorAll('a.go').forEach((a) => { a.onclick = (e) => { e.preventDefault(); go(a.dataset.go); }; });
   }
 
+  // Drying, grouped by farm: a header per farm with its packages and pounds
+  // (biggest farm first), the rows under it in the table's sort. A click on
+  // the header folds the farm away.
+  const closedFarms = new Set();
+  const farmKey = (r) => r.farm || r.code || r.license || '';
+  function byFarmHtml(list, span) {
+    const farms = new Map();
+    list.forEach((r) => { const k = farmKey(r); if (!farms.has(k)) farms.set(k, []); farms.get(k).push(r); });
+    const lbOf = (rs) => (H() ? sumLb(rs, 'startLb') : sumLb(rs.filter((r) => !isUsed(r))));
+    return [...farms].sort((a, b) => lbOf(b[1]) - lbOf(a[1])).map(([k, rs]) => {
+      const f = rs[0], closed = closedFarms.has(k);
+      const name = k ? [f.farm || f.code, f.farm && f.code, f.license].filter(Boolean).join(' · ') : t(L.noFarm);
+      const left = H() ? r2(rs.reduce((a, r) => a + leftOf(r), 0)) : null;
+      return `<tr class="grp" data-farm="${esc(k)}"><td colspan="${span}"><span class="caret">${closed ? '▸' : '▾'}</span> <b>${esc(name)}</b>
+        <span class="small">${rs.length} ${H() ? t(rs.length === 1 ? L.rec : L.recs) : t(rs.length === 1 ? L.pkg : L.pkgs)} · ${
+          H() ? `${esc(t(L.colIn))} ${fmtNum(lbOf(rs))} lb · ${esc(t(L.colLeft))} ${fmtNum(left)} lb` : `${fmtNum(lbOf(rs))} lb`} ${esc(t(L.wet))}</span></td></tr>${
+        closed ? '' : rs.map(H() ? histRowHtml : rowHtml).join('')}`;
+    }).join('');
+  }
+
   // Jump to a History row (another stage's), open it and flash it.
   function go(key) {
     const r = histByKey(key);
     if (!r) return;
     tab = r.tab;
+    closedFarms.delete(farmKey(r));
     if (!matches(r)) { query = ''; document.getElementById('q').value = ''; }
     openRows.add(key);
     syncUrl(); render();

@@ -745,6 +745,11 @@ Canix facility whose license number ends in the farm code. A finished output
 is listed under its own new tag (Hand Trim's `metrcTags`, Smalls Hand Trim's
 `newFinishedUid`) once it has one, else under its lot's UID ("lot UID").
 
+Drying (both views) is grouped by farm (`byFarmHtml`): a header per farm —
+name, code, license, packages and wet lbs (History: In and Left) — biggest
+first, rows under it in the table's sort; clicking a header folds it.
+Intakes with no farm traced sit under "No farm on record".
+
 Search matches every word against strain, UID (the farm UIDs behind it too),
 license, farm name, farm code, CID and location (FRZ, 3A…). Column headers sort. **Export CSV**
 downloads exactly the rows showing (tab, search, Show used up). The tab and
