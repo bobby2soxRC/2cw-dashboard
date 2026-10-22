@@ -411,7 +411,9 @@
     // Trim doesn't take from its own output.
     const takers = [
       ...d.prerolls.map((r) => ({ id: r.id, uid: r.sourceUid, cat: r.inputCategory, lb: r.startingLb, what: t(STATION_BY_KEY.preroll_production.title) })),
-      ...d.pouches.map((r) => ({ id: r.id, uid: r.sourceUid, cat: r.inputCategory, lb: r.startingLb, what: t(STATION_BY_KEY.pouch_production.title) })),
+      // Ground Flower Pouches: each input row (flower, smalls, trim…) off its own UID.
+      ...d.pouches.flatMap((r) => (r.lines || []).map((x) => ({ id: r.id, uid: x.sourceUid, cat: x.material, lb: num(x.weightG) / G_PER_LB,
+        what: t(STATION_BY_KEY.pouch_production.title) }))),
       ...d.mfg.map((r) => ({ id: r.id, uid: r.sourceUid, cat: r.inputCategory, lb: r.inputLb, what: t(STATION_BY_KEY.mfg_output.title) })),
       ...d.biomass.filter((r) => r.status === 'transferred').map((r) => ({ id: r.id, uid: r.sourceUid, cat: r.category, lb: r.transferredLb, what: t(STATION_BY_KEY.biomass_request.title) })),
       ...d.smallsT.map((r) => ({ id: r.id, uid: r.sourceUid, cat: 'smalls_b', lb: r.startingLb, what: t(STATION_BY_KEY.smalls_trim.title) })),

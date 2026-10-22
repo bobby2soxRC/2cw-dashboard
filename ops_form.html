@@ -1855,6 +1855,18 @@
     const hit = optionsFor(ff).find((o) => String(o.v).toLowerCase() === want || String(o.label).toLowerCase() === want);
     return hit ? hit.v : val;
   }
+  // A work order's input rows (Ground Flower Pouches' Material Going In):
+  // put in only while the table has nothing typed, and taken back out when
+  // the pick changes, unless someone has typed in them since.
+  function setPrRows(ff, rows) {
+    const cur = values[ff.k] || [];
+    if (cur.some((r) => rowHasData(ff, r)) && !(ff.k in prFilled && JSON.stringify(cur.map(prRowKey)) === prFilled[ff.k])) return;
+    document.getElementById(`li_${ff.k}`).innerHTML = '';
+    values[ff.k] = [];
+    (Array.isArray(rows) && rows.length ? rows : [{}]).forEach((r) => lineitemAdders[ff.k] && lineitemAdders[ff.k]({ ...r }));
+    if (Array.isArray(rows) && rows.length) prFilled[ff.k] = JSON.stringify(values[ff.k].map(prRowKey)); else delete prFilled[ff.k];
+  }
+  const prRowKey = (r) => [r.material || '', r.sourceUid || '', r.weightG ?? ''].join('|');
   function setOrClear(ff, val) {
     if (!prBlank(val)) { setFieldValue(ff, val); return; }
     values[ff.k] = ff.t === 'number' ? null : '';
@@ -1878,6 +1890,7 @@
         Object.entries(f.prPicker.fills || {}).forEach(([key, prop]) => {
           const ff = station.fields.find((s) => s.k === key);
           if (!ff) return;
+          if (ff.t === 'lineitems') { setPrRows(ff, x ? x[prop] : null); return; }
           const cur = values[key];
           if (!prBlank(cur) && !(key in prFilled && String(cur) === String(prFilled[key]))) return;
           const val = x ? prValue(ff, x[prop]) : null;
@@ -3679,6 +3692,11 @@
       const x = prFind(values[f.k]);
       if (x) Object.entries(f.prPicker.fills || {}).forEach(([key, prop]) => {
         const ff = station.fields.find((s) => s.k === key);
+        if (ff && ff.t === 'lineitems') {
+          const want = JSON.stringify((x[prop] || []).map(prRowKey));
+          if ((x[prop] || []).length && JSON.stringify((values[key] || []).filter((r) => rowHasData(ff, r)).map(prRowKey)) === want) prFilled[key] = JSON.stringify((values[key] || []).map(prRowKey));
+          return;
+        }
         if (ff && !isBlank(values[key]) && String(values[key]) === String(prValue(ff, x[prop]))) prFilled[key] = values[key];
       });
       fillPrPicker(f);
@@ -3691,8 +3709,14 @@
   function applyLinkPrefill() {
     const fields = {};
     station.fields.forEach((f) => {
-      if (['calc', 'lineitems', 'crewcheck', 'photo'].includes(f.t)) return;
+      if (['calc', 'crewcheck', 'photo'].includes(f.t)) return;
       const v = params.get(`set_${f.k}`);
+      // A table's rows come as JSON (a work order's inputs: queueStartHref).
+      if (f.t === 'lineitems') {
+        if (f.entry || !v) return;
+        try { const rows = JSON.parse(v); if (Array.isArray(rows) && rows.length) fields[f.k] = rows.filter((r) => r && typeof r === 'object'); } catch { /* ignore */ }
+        return;
+      }
       // A select may be handed its label ("Soma Rosa") as well as its code.
       if (v !== null && v !== '') fields[f.k] = f.t === 'number' ? Number(v) : f.t === 'select' ? prValue(f, v) : v;
     });

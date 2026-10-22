@@ -101,6 +101,11 @@ const BIOMASS = {
 
 // Categories that are sellable / usable biomass (the rest is waste or an
 // intermediate that gets consumed by the next stage).
+// What a Ground Flower Pouches run (and a pre-roll / pouch work order) can
+// grind: flower, smalls and trim, A or A+.
+const POUCH_INPUTS = ['flower_a', 'smalls_b', 'trim_a', 'trim_a_plus', 'trim'];
+// Plain "Trim" is Hand Trim's Normal trim — say so next to A and A+.
+const pouchInputLabel = (v) => (v === 'trim' ? { en: 'Trim (Normal)', es: 'Recorte (normal)' } : BIOMASS[v]);
 const SELLABLE = ['flower_a', 'smalls_b', 'sugar_trim', 'trim', 'trim_a_plus', 'trim_a', 'trim_b', 'shake', 'fresh_frozen'];
 
 const num = (x) => { const n = parseFloat(x); return Number.isFinite(n) ? n : 0; };
@@ -1362,19 +1367,27 @@ const OPERATIONS_STATIONS = [
       { ...F.date(), l: { en: 'Start Date', es: 'Fecha de inicio' } },
       F.project(),
       { k: 'prNum', t: 'text', l: { en: 'Production Request', es: 'Solicitud de producción' },
-        prPicker: { line: 'pouch', fills: { batchId: 'ref', brand: 'brand', strain: 'strain', sourceUid: 'sourceUid', unitSizeG: 'unitSizeG' } },
+        prPicker: { line: 'pouch', fills: { batchId: 'ref', brand: 'brand', strain: 'strain', lines: 'inputs', unitSizeG: 'unitSizeG' } },
         hint: { en: 'Pick from the queue — it fills in what it can. Links this batch to the request on the Pre-Roll Dashboard.',
                 es: 'Elija de la fila — llena lo que pueda. Vincula este lote con la solicitud en el tablero de prerolls.' } },
       { k: 'batchId', t: 'text', req: true, l: { en: 'Batch ID', es: 'ID de lote' } },
       { k: 'brand', t: 'select', ref: 'brands', allowOther: true,
         l: { en: 'Brand', es: 'Marca' } },
       F.strain(),
-      { k: 'sourceUid', t: 'uid', req: true, l: { en: 'Source UID', es: 'UID de origen' },
-        hint: { en: 'Metrc tag of the flower being ground.',
-                es: 'Etiqueta Metrc de la flor que se muele.' } },
-      { k: 'inputCategory', t: 'select', refConst: 'BIOMASS', req: true,
-        l: { en: 'Input Material', es: 'Material de entrada' } },
-      { k: 'startingWtG', t: 'number', req: true, min: 0, step: 0.1, dp: 1,
+      // A run can grind several packages together — flower, smalls and A / A+
+      // trim — so the input is a row per source package (POUCH_INPUTS).
+      { k: 'lines', t: 'lineitems', req: true,
+        l: { en: 'Material Going In', es: 'Material que entra' },
+        hint: { en: 'One row per source package: what it is, its Metrc tag and the grams going in.',
+                es: 'Una fila por paquete de origen: qué es, su etiqueta Metrc y los gramos que entran.' },
+        cols: [
+          { k: 'material', t: 'select', req: true, carry: true, l: { en: 'Material', es: 'Material' },
+            opts: POUCH_INPUTS.map((v) => ({ v, l: pouchInputLabel(v) })) },
+          { k: 'sourceUid', t: 'uid', req: true, l: { en: 'Source UID', es: 'UID de origen' } },
+          { k: 'weightG', t: 'number', req: true, min: 0, step: 0.1, l: { en: 'Grams', es: 'Gramos' } }
+        ],
+        totalCol: 'weightG' },
+      { k: 'startingWtG', t: 'calc', dp: 1, calc: (v) => (v.lines || []).reduce((a, r) => a + num(r.weightG), 0) || null,
         l: { en: 'Starting Weight (grams)', es: 'Peso inicial (gramos)' } },
       { k: 'startingLb', t: 'calc', calc: (v) => (num(v.startingWtG) > 0 ? num(v.startingWtG) / G_PER_LB : null),
         l: { en: 'Starting Weight (lbs)', es: 'Peso inicial (lbs)' } },
@@ -1437,7 +1450,9 @@ const OPERATIONS_STATIONS = [
       { k: 'verifiedDate', t: 'date', today: false, l: { en: 'Verification Date', es: 'Fecha de verificación' } },
       F.notes(), F.photo()
     ],
-    flow: { lossKind: 'transform', input: { field: 'startingLb', categoryField: 'inputCategory' }, outputs: [] }
+    // Each row comes off its own category (lines: biomassLedger in
+    // ops_analytics.js).
+    flow: { lossKind: 'transform', input: { field: 'startingLb', lines: { field: 'lines', categoryCol: 'material', gramsCol: 'weightG' } }, outputs: [] }
   },
 
   // ── MANUFACTURING OUTPUT ──────────────────────────────────────────────────

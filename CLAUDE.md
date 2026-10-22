@@ -165,6 +165,12 @@ Dashboard's Products (with the Sheet's BSKU) to queue pouches by hand. No
 SQL. Users need the station ticked in Admin. Details: "Ground Flower
 Pouches" in `docs/OPERATIONS_APP.md`.
 
+Since 2026-10-22 a run's input is a table (`lines`: material — flower,
+smalls, A / A+ / Normal trim — UID, grams), and work orders (Edit plan / + Add
+to queue) have an **Inputs** list (`inputs` jsonb on `preroll_plans` /
+`preroll_queue_items`, already added in Supabase) that Start batch copies
+into it. Details: "Work order inputs" in `docs/OPERATIONS_APP.md`.
+
 ### Hand Trim — Past Records (started 2026-10-20)
 
 New Processing form `hand_trim_history` for typing in old paper hand trim

@@ -322,12 +322,18 @@ function biomassLedger(stages, filter) {
         add(processing, o.category, v); add(produced, o.category, v);
       });
       if (flow.input) {
-        const cat = flow.input.categoryField ? r[flow.input.categoryField] : flow.input.category;
-        const v = num(r[flow.input.field]);
+        // A form with an input row per package (Ground Flower Pouches) takes
+        // each row off its own category; otherwise one category and weight.
+        const li = flow.input.lines;
+        const takes = li
+          ? (r[li.field] || []).map((x) => [x[li.categoryCol], num(x[li.gramsCol]) / S.G_PER_LB])
+          : [[flow.input.categoryField ? r[flow.input.categoryField] : flow.input.category, num(r[flow.input.field])]];
         // Manufacturing stations (Manufacturing Run, Pre-Roll Production) draw
         // on material already transferred to manufacturing.
-        if (cat && station.dept.en === 'Manufacturing') { add(manufacturing, cat, -v); add(consumed, cat, v); }
-        else if (cat) { add(processing, cat, -v); add(consumed, cat, v); }
+        takes.forEach(([cat, v]) => {
+          if (cat && station.dept.en === 'Manufacturing') { add(manufacturing, cat, -v); add(consumed, cat, v); }
+          else if (cat) { add(processing, cat, -v); add(consumed, cat, v); }
+        });
       }
       if (flow.transfer && r.status === flow.transfer.whenStatus) {
         const cat = r[flow.transfer.categoryField];

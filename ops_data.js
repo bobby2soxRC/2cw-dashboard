@@ -446,7 +446,8 @@ function formProjectUids(stationKey, fields) {
   const f = fields || {};
   const seen = new Map();
   const add = (raw, strain) => { const u = normUid(raw); if (u.length >= 4 && !seen.has(u)) seen.set(u, { uid: u, strain: strain || '' }); };
-  if (stationKey === 'intake_wet') (f.lines || []).forEach((ln) => ln && add(ln.sourceUid, ln.strain || f.strain));
+  // Wet Intake and Ground Flower Pouches carry a package per row.
+  if (stationKey === 'intake_wet' || stationKey === 'pouch_production') (f.lines || []).forEach((ln) => ln && add(ln.sourceUid, ln.strain || f.strain));
   else add(stationKey === 'dry_check' ? (f.incomingUid || f.sourceUid) : f.sourceUid, f.strain);
   return [...seen.values()];
 }

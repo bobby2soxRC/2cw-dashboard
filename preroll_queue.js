@@ -81,14 +81,32 @@ function isQueueRequest(r, prodBy) {
   return !!p && queueLine(p) === 'pouch';
 }
 
+// A work order's inputs (preroll_plans / preroll_queue_items `inputs`): what
+// goes in, as rows { material (a POUCH_INPUTS code), sourceUid, weightG } —
+// flower, smalls, A / A+ trim, any mix. Rows with nothing in them are dropped.
+// Old work orders only have source_uid; that becomes one row.
+function workOrderInputs(row) {
+  const list = (Array.isArray(row && row.inputs) ? row.inputs : [])
+    .map((x) => ({ material: String(x.material || ''), sourceUid: String(x.sourceUid || '').trim().toUpperCase(),
+      weightG: Number(x.weightG) > 0 ? Number(x.weightG) : null }))
+    .filter((x) => x.material || x.sourceUid || x.weightG);
+  if (!list.length && row && row.source_uid) list.push({ material: '', sourceUid: String(row.source_uid).toUpperCase(), weightG: null });
+  return list;
+}
+// The first input's UID — what Pre-Roll Production (one Source UID) is given.
+const firstInputUid = (inputs) => ((inputs || []).find((x) => x.sourceUid) || {}).sourceUid || '';
+
 // The Start link for a queue item: a new page on its line's form, filled in
-// with what the item knows ({ line, ref, strain, sourceUid, unitSizeG,
-// brand, packType }). Pack Type is pre-roll only.
+// with what the item knows ({ line, ref, strain, sourceUid, inputs,
+// unitSizeG, brand, packType }). Pack Type is pre-roll only; the input rows
+// go to the pouch form's Material Going In table (lines).
 function queueStartHref(x) {
   const line = QUEUE_LINES[x.line] || QUEUE_LINES.preroll;
+  const rows = x.line === 'pouch' ? (x.inputs || []).filter((r) => r.material || r.sourceUid) : [];
   return '/ops_form.html?' + new URLSearchParams({
     station: line.station, set_prNum: x.ref, set_batchId: x.ref,
-    ...(x.strain ? { set_strain: x.strain } : {}), ...(x.sourceUid ? { set_sourceUid: x.sourceUid } : {}),
+    ...(x.strain ? { set_strain: x.strain } : {}),
+    ...(rows.length ? { set_lines: JSON.stringify(rows) } : x.sourceUid ? { set_sourceUid: x.sourceUid } : {}),
     ...(x.unitSizeG ? { set_unitSizeG: x.unitSizeG } : {}), ...(x.brand ? { set_brand: x.brand } : {}),
     ...(x.packType && x.line !== 'pouch' ? { set_packType: x.packType } : {})
   }).toString();
@@ -103,7 +121,7 @@ function brandOf(bsku, product) {
 
 // The open queue, in order, for the forms' dropdowns and Queue tabs. Each item:
 // { ref, kind ('pr' | 'manual'), line ('preroll' | 'pouch'), station, rank,
-//   brand, productName, type, strain, sourceUid, units, packSize, packType,
+//   brand, productName, type, strain, sourceUid, inputs, units, packSize, packType,
 //   target (pre-rolls / pouches), unitSizeG, readyDate, draftId, made }.
 // A failure in one source drops only that source (no Sheet → hand-added
 // items only).
@@ -155,12 +173,13 @@ async function loadPrerollQueue(client) {
     return item({
       ref: r['PR#'], kind: 'pr', brand: brandOf(r['BSKU'], r['Product']), productName: r['Product'],
       type: plan.strain_type || r['Strain Type'] || '', strain: plan.strain || r['Output Strain'] || '',
-      sourceUid: plan.source_uid || '', readyDate: r['Ready Date'] || '', sortDate: r['Ready Date'] || '9999'
+      sourceUid: firstInputUid(workOrderInputs(plan)), inputs: workOrderInputs(plan),
+      readyDate: r['Ready Date'] || '', sortDate: r['Ready Date'] || '9999'
     }, prod, units);
   }).filter(Boolean);
   const fromManual = manual.map((m) => item({
     ref: 'PQ-' + m.queue_no, kind: 'manual', brand: m.brand || '', type: m.strain_type || '', strain: m.strain || '',
-    sourceUid: m.source_uid || '', readyDate: '', sortDate: String(m.created_at || '').slice(0, 10) || '9999'
+    sourceUid: firstInputUid(workOrderInputs(m)), inputs: workOrderInputs(m), readyDate: '', sortDate: String(m.created_at || '').slice(0, 10) || '9999'
   }, prodBy[up(m.product_bsku)] || null, n(m.quantity)));
   const pos = (x) => { const i = order.indexOf(x.ref); return i < 0 ? Infinity : i; };
   return fromSheet.concat(fromManual).filter((x) => !x.done)

@@ -94,15 +94,15 @@ async function projectAllocations(supaUrl, serviceKey, projectIds, rates) {
 }
 
 // A run's share of its project's Labor Log hours: the allocations on its
-// source UID.
+// source UID(s) — a pouch run has one per input row (lines).
 function projectRunCost(run, allocs, rates) {
   const f = run.fields || {};
-  const uid = normUid(f.sourceUid);
+  const uids = new Set([f.sourceUid, ...(Array.isArray(f.lines) ? f.lines.map((x) => x && x.sourceUid) : [])].map(normUid).filter(Boolean));
   const pids = new Set(runProjects(f));
   const own = rates.filter((r) => r.employeeId !== '*');
   let cost = 0, hours = 0, defaultHours = 0, unratedHours = 0;
   allocs.forEach((a) => {
-    if (!pids.has(a.project) || !uid || normUid(a.uid) !== uid || !(a.hours > 0)) return;
+    if (!pids.has(a.project) || !uids.has(normUid(a.uid)) || !(a.hours > 0)) return;
     hours += a.hours;
     if (a.cost == null) { unratedHours += a.hours; return; }
     if (OpsAnalytics.rateFor(own, a.employeeNo, a.date) == null) defaultHours += a.hours;

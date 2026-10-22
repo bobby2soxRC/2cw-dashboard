@@ -128,6 +128,11 @@
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   label.lbl{display:block;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
   .fld{margin-bottom:12px}
+  .fld .hint{font-size:.78rem;color:var(--muted);margin:0 0 8px}
+  .in-row{display:grid;grid-template-columns:1.1fr 1.4fr .8fr auto;gap:6px;margin-bottom:6px}
+  .in-row .x{padding:0 10px}
+  .in-tot{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--muted);margin:2px 0 0}
+  @media (max-width:560px){ .in-row{grid-template-columns:1fr 1fr} }
   .modal input,.modal select,.modal textarea{width:100%;background:#0c0d0f;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:.6rem .7rem;font-family:inherit;font-size:.92rem;outline:none}
   .modal input:focus,.modal select:focus,.modal textarea:focus{border-color:var(--purple)}
   .check{display:flex;gap:8px;align-items:center;font-size:.88rem;color:var(--subtext);margin-bottom:12px}
@@ -315,8 +320,17 @@ const L = {
   pouches: { en: 'ground flower pouches', es: 'bolsas de flor molida' },
   ready_by_lc: { en: 'ready by', es: 'lista para' },
   e_strain_ph: { en: 'Pick or type a strain', es: 'Elija o escriba una variedad' },
-  e_uid: { en: 'Source UID (optional)', es: 'UID de origen (opcional)' },
-  e_uid_ph: { en: 'Metrc tag of the flower going in', es: 'Etiqueta Metrc de la flor que entra' },
+  e_uid_ph: { en: 'Metrc tag (optional)', es: 'Etiqueta Metrc (opcional)' },
+  e_inputs: { en: 'Inputs — what goes in', es: 'Entradas — lo que entra' },
+  e_inputs_hint: { en: 'Add a row for each kind of material or package: flower, smalls, A or A+ trim — any mix. The tag and grams can wait.',
+                   es: 'Agregue una fila por cada tipo de material o paquete: flor, flor pequeña, recorte A o A+ — cualquier mezcla. La etiqueta y los gramos pueden esperar.' },
+  e_add_input: { en: '+ Add input', es: '+ Agregar entrada' },
+  e_material: { en: 'Material…', es: 'Material…' },
+  e_grams: { en: 'grams', es: 'gramos' },
+  e_remove_input: { en: 'Remove this input', es: 'Quitar esta entrada' },
+  e_inputs_total: { en: 'Total {g}', es: 'Total {g}' },
+  q_inputs: { en: 'Inputs', es: 'Entradas' },
+  q_no_inputs: { en: 'no inputs yet', es: 'sin entradas' },
   e_start: { en: 'Est. start', es: 'Inicio estimado' },
   e_done: { en: 'Est. completion', es: 'Terminación estimada' },
   e_hold: { en: 'On hold', es: 'En espera' },
@@ -339,7 +353,6 @@ const L = {
   q_up: { en: 'Move up', es: 'Subir' },
   q_down: { en: 'Move down', es: 'Bajar' },
   q_busy: { en: 'in progress', es: 'en curso' },
-  q_no_uid: { en: 'no source UID', es: 'sin UID de origen' },
   q_no_strain: { en: 'strain not assigned', es: 'variedad sin asignar' },
   q_added: { en: 'Added', es: 'Agregado' },
   q_edit: { en: 'Edit', es: 'Editar' },
@@ -664,7 +677,7 @@ function passes(v, q) {
 function queueItems() {
   const fromRequests = requests.map(view).filter((v) => v.open && v.stage !== 'on_hold').map((v) => ({
     ref: v.pr, kind: 'pr', line: v.line, brand: brandOf(v.bsku, v.product), product: v.product || v.bsku,
-    type: v.type, strain: v.strain, sourceUid: v.plan.source_uid || '', qty: v.batchSize, prod: v.prod, target: v.target, made: v.made,
+    type: v.type, strain: v.strain, inputs: workOrderInputs(v.plan), qty: v.batchSize, prod: v.prod, target: v.target, made: v.made,
     draft: v.draft, late: v.late, readyDate: v.readyDate, sortDate: v.readyDate || '9999'
   }));
   const fromManual = manual.map((m) => {
@@ -674,7 +687,7 @@ function queueItems() {
     return {
       ref, kind: 'manual', line: queueLine(prod), row: m, brand: m.brand || (prod && prod.brand) || '', product: prod ? prod.name : '',
       type: m.strain_type || '', strain: m.strain || '',
-      sourceUid: m.source_uid || '', qty: num(m.quantity), prod, target: prerollsFor(num(m.quantity), prod),
+      inputs: workOrderInputs(m), qty: num(m.quantity), prod, target: prerollsFor(num(m.quantity), prod),
       made: runs.reduce((a, b) => a + runMade(b.fields), 0),
       draft: runs.find((b) => b.status === 'draft'), done: runs.some((b) => b.status === 'submitted'),
       notes: m.notes || '', sortDate: String(m.created_at || '').slice(0, 10) || '9999'
@@ -695,7 +708,7 @@ function renderQueue() {
   box.innerHTML = (queueErr ? `<div class="err" style="margin-bottom:8px">${esc(queueErr)}</div>` : '') +
     `<div class="q-list">` + shownQueue.map((x, i) => {
       const off = savingOrder || !client;
-      const startHref = queueStartHref({ line: x.line, ref: x.ref, strain: x.strain, sourceUid: x.sourceUid, brand: x.brand,
+      const startHref = queueStartHref({ line: x.line, ref: x.ref, strain: x.strain, sourceUid: firstInputUid(x.inputs), inputs: x.inputs, brand: x.brand,
         unitSizeG: x.prod && x.prod.preroll_size_g, packType: x.prod && packCode(x.prod) });
       const go = x.draft
         ? `<a class="btn btn-purple" href="/ops_form.html?station=${esc(x.draft.station_key)}&draft=${esc(x.draft.id)}">${t(L.open_batch)}</a>`
@@ -711,7 +724,7 @@ function renderQueue() {
             ${x.draft ? `<span class="pill stage-in_production">${t(L.q_busy)}</span>` : ''}
             ${x.late ? `<span class="pill late">${t(L.late)}</span>` : ''}</div>
           <div class="q-sub"><span class="q-ref">${esc(x.ref)}</span>${x.product ? ' · ' + esc(x.product) : ''} ·
-            ${x.sourceUid ? esc(x.sourceUid) : `<span class="none">${t(L.q_no_uid)}</span>`}
+            ${x.inputs.length ? esc(inputsSummary(x.inputs)) : `<span class="none">${t(L.q_no_inputs)}</span>`}
             ${x.readyDate ? ` · ${t(L.ready_by_lc)} ${esc(fmtDate(x.readyDate))}` : ''}${x.notes ? ' · ' + esc(x.notes) : ''}</div>
         </div>
         <div class="q-qty"><span class="k">${t(L.qty)}</span>${fmtN(x.qty)}${x.prod && x.prod.pack_size > 1 ? ` × ${x.prod.pack_size}` : ''}
@@ -801,7 +814,8 @@ function render() {
 function cardHtml(v) {
   const p = v.plan;
   const pctMade = v.target > 0 ? Math.min(100, Math.round(v.made / v.target * 100)) : 0;
-  const startHref = queueStartHref({ line: v.line, ref: v.pr, strain: v.strain, sourceUid: p.source_uid, brand: brandOf(v.bsku, v.product),
+  const inputs = workOrderInputs(p);
+  const startHref = queueStartHref({ line: v.line, ref: v.pr, strain: v.strain, sourceUid: firstInputUid(inputs), inputs, brand: brandOf(v.bsku, v.product),
     unitSizeG: v.prod && v.prod.preroll_size_g, packType: v.prod && packCode(v.prod) });
   const sched = p.est_start || p.est_completion
     ? `${p.est_start ? fmtDate(p.est_start) : '?'} → ${p.est_completion ? fmtDate(p.est_completion) : '?'}`
@@ -824,6 +838,7 @@ function cardHtml(v) {
       <span>${t(L.qty)} <b>${fmtN(v.batchSize)}</b>${v.prod ? ` × ${v.prod.pack_size} = <b>${fmtN(v.target)}</b> ${unitWord(v.line)}` : ` ${unitWord(v.line)}`}</span>
       ${v.prod ? `<span>${prodSpec(v.prod)}</span>` : ''}
       <span>${t(L.strain)} ${v.strain ? `<b>${esc(v.strain)}</b>` : `<span class="none">${t(L.not_assigned)}</span>`}</span>
+      ${inputs.length ? `<span>${t(L.q_inputs)} <b>${esc(inputsSummary(inputs))}</b></span>` : ''}
       <span>${t(L.plan_lbl)} ${sched}</span>
       <span>${t(L.ready_by)} <b>${esc(fmtDate(v.readyDate) || '—')}</b></span>
       ${v.shipDate ? `<span>${t(L.ship)} <b>${esc(fmtDate(v.shipDate))}</b></span>` : ''}
@@ -1041,6 +1056,56 @@ function pickBrand(prefix) {
   sel.innerHTML = productOptions(brand, cur && (!brand || cur.brand === brand) ? cur.bsku : first ? first.bsku : '');
   updateCalc(prefix);
 }
+// ── Work order inputs ────────────────────────────────────────────────────
+// What goes into a batch: a row per material or package (flower, smalls,
+// A / A+ trim, any mix — POUCH_INPUTS), each with an optional Metrc tag and
+// grams. Saved as `inputs` on the plan / queue item (workOrderInputs in
+// preroll_queue.js); Start batch hands the rows to the Ground Flower Pouches
+// form, and the first tag to Pre-Roll Production's Source UID.
+const matLabel = (m) => (pouchInputLabel(m) ? t(pouchInputLabel(m)) : m);
+function inputRowHtml(prefix, x) {
+  x = x || {};
+  return `<div class="in-row">
+      <select class="in-mat"><option value="">${t(L.e_material)}</option>
+        ${POUCH_INPUTS.map((m) => `<option value="${m}" ${m === x.material ? 'selected' : ''}>${esc(matLabel(m))}</option>`).join('')}</select>
+      <input class="in-uid" value="${esc(x.sourceUid || '')}" autocapitalize="characters" placeholder="${esc(t(L.e_uid_ph))}"/>
+      <input class="in-g" type="number" min="0" step="0.1" inputmode="decimal" value="${esc(x.weightG || '')}" placeholder="${esc(t(L.e_grams))}" oninput="inputsTotal('${prefix}')"/>
+      <button type="button" class="btn x" title="${esc(t(L.e_remove_input))}" onclick="this.parentNode.remove();inputsTotal('${prefix}')">✕</button>
+    </div>`;
+}
+function inputsEditor(prefix, inputs) {
+  const rows = inputs && inputs.length ? inputs : [{}];
+  return `<div class="fld"><label class="lbl">${t(L.e_inputs)}</label>
+      <div class="hint">${t(L.e_inputs_hint)}</div>
+      <div id="${prefix}-inputs">${rows.map((x) => inputRowHtml(prefix, x)).join('')}</div>
+      <button type="button" class="btn" onclick="addInputRow('${prefix}')">${t(L.e_add_input)}</button>
+      <div class="in-tot" id="${prefix}-in-tot"></div></div>`;
+}
+function addInputRow(prefix) {
+  const box = document.getElementById(prefix + '-inputs');
+  const last = [...box.querySelectorAll('.in-mat')].pop();
+  box.insertAdjacentHTML('beforeend', inputRowHtml(prefix, { material: last ? last.value : '' }));
+  box.lastElementChild.querySelector('.in-uid').focus();
+}
+function readInputs(prefix) {
+  return [...document.querySelectorAll(`#${prefix}-inputs .in-row`)].map((el) => ({
+    material: el.querySelector('.in-mat').value,
+    sourceUid: el.querySelector('.in-uid').value.trim().toUpperCase(),
+    weightG: parseFloat(el.querySelector('.in-g').value) > 0 ? parseFloat(el.querySelector('.in-g').value) : null
+  })).filter((x) => x.material || x.sourceUid || x.weightG);
+}
+function inputsTotal(prefix) {
+  const out = document.getElementById(prefix + '-in-tot');
+  if (!out) return;
+  const g = readInputs(prefix).reduce((a, x) => a + (x.weightG || 0), 0);
+  out.textContent = g > 0 ? t(L.e_inputs_total).replace('{g}', gTxt(g)) : '';
+}
+// "Flower (A-Bud) …1234 · 500 g, Trim (A+)": a work order's inputs in a line.
+function inputsSummary(inputs) {
+  return (inputs || []).map((x) => [x.material ? matLabel(x.material) : '', x.sourceUid ? '…' + x.sourceUid.slice(-5) : '',
+    x.weightG ? gTxt(x.weightG) : ''].filter(Boolean).join(' ')).join(', ');
+}
+
 function updateCalc(prefix) {
   const out = document.getElementById(prefix + '-calc');
   if (!out) return;
@@ -1159,8 +1224,7 @@ function openEditor(pr) {
     <div class="fld"><label class="lbl" for="e-strain">${t(L.strain)}</label>
       <input id="e-strain" list="strain-list" value="${esc(strain)}" placeholder="${esc(t(L.e_strain_ph))}"/>
       <datalist id="strain-list">${strains.map((s) => `<option value="${esc(s)}">`).join('')}</datalist></div>
-    <div class="fld"><label class="lbl" for="e-uid">${t(L.e_uid)}</label>
-      <input id="e-uid" value="${esc(p.source_uid || '')}" autocapitalize="characters" placeholder="${esc(t(L.e_uid_ph))}"/></div>
+    ${inputsEditor('e', workOrderInputs(p))}
     <div class="row2">
       <div class="fld"><label class="lbl" for="e-start">${t(L.e_start)}</label><input id="e-start" type="date" value="${esc(p.est_start || '')}"/></div>
       <div class="fld"><label class="lbl" for="e-done">${t(L.e_done)}</label><input id="e-done" type="date" value="${esc(p.est_completion || '')}"/></div>
@@ -1176,6 +1240,7 @@ function openEditor(pr) {
     </div>`;
   document.getElementById('backdrop').style.display = 'block';
   updateCalc('e');
+  inputsTotal('e');
   setTimeout(() => document.getElementById('e-strain').focus(), 30);
 }
 
@@ -1212,8 +1277,7 @@ function openItemEditor(id) {
     <div class="fld"><label class="lbl" for="i-strain">${t(L.strain)}</label>
       <input id="i-strain" list="strain-list" value="${esc(m ? m.strain || '' : '')}" placeholder="${esc(t(L.e_strain_ph))}"/>
       <datalist id="strain-list">${strains.map((s) => `<option value="${esc(s)}">`).join('')}</datalist></div>
-    <div class="fld"><label class="lbl" for="i-uid">${t(L.e_uid)}</label>
-      <input id="i-uid" value="${esc(m ? m.source_uid || '' : '')}" autocapitalize="characters" placeholder="${esc(t(L.e_uid_ph))}"/></div>
+    ${inputsEditor('i', m ? workOrderInputs(m) : [])}
     <div class="fld"><label class="lbl" for="i-notes">${t(L.e_notes)}</label><textarea id="i-notes" rows="2">${esc(m ? m.notes || '' : '')}</textarea></div>
     <div class="m-err" id="i-err"></div>
     <div class="m-actions">
@@ -1223,6 +1287,7 @@ function openItemEditor(id) {
     </div>`;
   document.getElementById('backdrop').style.display = 'block';
   updateCalc('i');
+  inputsTotal('i');
   setTimeout(() => document.getElementById(m ? 'i-qty' : 'i-brand').focus(), 30);
 }
 
@@ -1237,7 +1302,8 @@ async function saveItem() {
     brand: (prod && prod.brand) || val('i-brand') || null,
     strain_type: val('i-type') || null,
     strain: val('i-strain') || null,
-    source_uid: val('i-uid').toUpperCase() || null,
+    inputs: readInputs('i'),
+    source_uid: firstInputUid(readInputs('i')) || null,
     quantity: qty,
     notes: val('i-notes') || null,
     updated_by: currentUser || null
@@ -1292,7 +1358,8 @@ async function saveEditor() {
     quantity: qty && qty !== r.batchSize ? qty : null,
     strain_type: type && type.toLowerCase() !== String(r.type || '').toLowerCase() ? type : null,
     strain: val('e-strain') || null,
-    source_uid: val('e-uid').toUpperCase() || null,
+    inputs: readInputs('e'),
+    source_uid: firstInputUid(readInputs('e')) || null,
     est_start: val('e-start') || null,
     est_completion: val('e-done') || null,
     assigned_to: val('e-lead') || null,

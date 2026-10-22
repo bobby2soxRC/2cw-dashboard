@@ -279,8 +279,12 @@ Crew check, Delete this page, Queue tab, and End of Run (`newPouchUid`,
 `newWasteUid`, finish date, QC, secondary verification). Pouch Size
 (`unitSizeG`) starts at 14 g and drives the "Starting Weight Accounted For"
 check ((pouches × size + waste) ÷ starting weight); the total is
-`totalPouches`. No Pack Type. Like Pre-Roll it's in the Metrc Queue, takes
-its source UID off Raw Inventory, is costed by `preroll-costs.js` (Pre-Roll
+`totalPouches`. No Pack Type. What goes in is a table, **Material Going In**
+(`lines`: Material — Flower, Smalls, Trim (A), Trim (A+) or Trim (Normal),
+`POUCH_INPUTS` — Source UID, Grams), since a run can grind any mix;
+Starting Weight is their total. Like Pre-Roll it's in the Metrc Queue, takes
+each row off its own UID in Raw Inventory and off its own category in the
+biomass ledger (`flow.input.lines`), is costed by `preroll-costs.js` (Pre-Roll
 Dashboard → Submitted Runs, which lists both forms), and its crew check finds
 Master Schedule projects whose process (or a responsibility's) is
 `pouch_production`; the day-plan responsibility **Flor molida** maps to it (not a generic "bolsas" — this is only ground flower, never other flower pouches). Users
@@ -302,6 +306,17 @@ the dashboard's **Products** (e.g. "Howie Roll Ground Flower Pouch 14g", the
 Sheet's BSKU, 1 per pack, 14 g), then **+ Add to queue** with it. Done =
 a submitted form carrying the ref, as for pre-rolls (`runMade` reads
 `totalPrerolls` or `totalPouches`).
+
+**Work order inputs** (since 2026-10-22). Edit plan and + Add to queue
+have an **Inputs** list in place of the one Source UID: a row per material
+or package — Material, Metrc tag (optional), grams (optional) — any mix of
+flower, smalls and A / A+ / Normal trim. Saved as `inputs` jsonb on
+`preroll_plans` / `preroll_queue_items` (`workOrderInputs` in
+`preroll_queue.js`; `source_uid` keeps the first tag, and an old work order's
+`source_uid` reads as one row). Start batch (and picking the work order in the
+form's Production Request dropdown) fills Ground Flower Pouches' Material
+Going In with the rows (`set_lines` as JSON); Pre-Roll Production gets the
+first tag as its Source UID.
 
 **Hand Trim / Hand Touch** (`hand_trim`) runs like Bucking: one page per
 lot (`sharedDay` — every open page, anyone's, is in the "Lots open"
@@ -472,9 +487,9 @@ Ready Date has passed. English/Spanish via the shared `2cw_lang` toggle.
 **Pre-Roll Queue** (top of the Pre-Roll Dashboard) is the order to make
 things in, like the bucking queue. It lists every open pre-roll request that
 isn't on hold, plus batches added by hand with **+ Add to queue** (brand,
-type, strain, source UID, quantity, notes — `preroll_queue_items`, shown as
+type, strain, inputs, quantity, notes — `preroll_queue_items`, shown as
 `PQ-<queue_no>`). Each row shows brand · strain, the ref (PR# or PQ-#), the
-source UID, the quantity and how many are made, with ▲ ▼ / Top, Edit plan /
+inputs, the quantity and how many are made, with ▲ ▼ / Top, Edit plan /
 Edit, and Start batch / Open batch. The order is one shared `operations_forms`
 row (`station_key: 'preroll_queue'`, fixed id `PREROLL_QUEUE_ID`,
 `fields.order` = refs); anything not in it goes last by Ready Date / date

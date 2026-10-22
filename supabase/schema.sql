@@ -993,6 +993,12 @@ alter table preroll_queue_items add column if not exists strain_type text;
 -- The product (preroll_products.bsku); quantity is then in its units (packs).
 alter table preroll_queue_items add column if not exists product_bsku text;
 
+-- What goes into a work order (plan or queue item): any mix of flower,
+-- smalls and A / A+ trim, as [{ material, sourceUid, weightG }]
+-- (workOrderInputs in preroll_queue.js). source_uid keeps the first tag.
+alter table preroll_plans       add column if not exists inputs jsonb;
+alter table preroll_queue_items add column if not exists inputs jsonb;
+
 drop trigger if exists trg_touch_preroll_queue_items on preroll_queue_items;
 create trigger trg_touch_preroll_queue_items
   before update on preroll_queue_items
