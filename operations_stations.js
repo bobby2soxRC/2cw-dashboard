@@ -193,6 +193,26 @@ const BUCK_OUTPUTS = ['buckedFlowerLb', 'trimLb', 'stemLb', 'moldLb', 'floorWast
 // recovered from the leaf (`recovered`).
 const buckedLb = (v) => [...(v.bucked || []), ...(v.recovered || [])].reduce((a, r) => a + num(r.weightLb), 0);
 
+// Weight sign-off on a submitted form whose station has `weightCheck` (the
+// output weight fields a manager confirms in the Metrc Queue before its
+// Metrc work — tags, Done — can go ahead). The sign-off is
+// fields.weightsConfirmed = {by, at, lbs: {field: value}}; it only counts
+// while the weights still match what was confirmed, so a Fix form that
+// changes one puts the form back to waiting.
+//   null       — the station has no weight check
+//   'waiting'  — not confirmed yet
+//   'changed'  — confirmed, but a weight has changed since
+//   'confirmed'
+const weightSnapshot = (station, fields) =>
+  Object.fromEntries((station.weightCheck || []).map((k) => [k, Math.round(num((fields || {})[k]) * 100) / 100]));
+function weightCheckState(station, fields) {
+  if (!station || !station.weightCheck) return null;
+  const c = (fields || {}).weightsConfirmed;
+  if (!c || !c.lbs) return 'waiting';
+  const now = weightSnapshot(station, fields);
+  return Object.keys(now).every((k) => num(c.lbs[k]) === now[k]) ? 'confirmed' : 'changed';
+}
+
 // Product Transfer — Outgoing's product type codes (the paper form's list):
 // `tab` is the Raw Inventory tab the package comes off, `cat` the biomass
 // category when it has to match one; `pieces` rows are counted, not weighed.
@@ -951,6 +971,9 @@ const OPERATIONS_STATIONS = [
       ...totalsBlock('startingBuckedLb', ['finishedFlowerLb', 'smallsLb', 'normTrimLb', 'aPlusTrimLb', 'sugarTrimLb', 'wasteLb']),
       F.teamLead(), F.laborHours(), F.notes(), F.photo()
     ],
+    // A manager signs off the output weights before anything is done in
+    // Metrc (weightCheckState below; the Metrc Queue's Confirm weights).
+    weightCheck: ['finishedFlowerLb', 'smallsLb', 'normTrimLb', 'aPlusTrimLb', 'sugarTrimLb', 'wasteLb'],
     // The new Metrc package tag on each output. They don't exist until the
     // packages are made in Metrc, so they aren't on the floor form: the Metrc
     // Queue (metrc.html) fills them in on the submitted record, through
@@ -1766,5 +1789,5 @@ const crewOnRun = (rows) => new Set([...crewLatest(rows).values()].filter((r) =>
 const processTitle = (k) => (STATION_BY_KEY[k] && STATION_BY_KEY[k].title) || LABOR_PROCESSES[k] || { en: k || '—', es: k || '—' };
 
 if (typeof module !== 'undefined') {
-  module.exports = { TRANSFER_TYPES, crewLatest, crewOnRun, OPERATIONS_STATIONS, STATION_BY_KEY, STANDALONE_STATIONS, ALL_STATIONS, ALL_STATION_BY_KEY, BIOMASS, SELLABLE, PREFILL_MAP, PIPELINE_ORDER, G_PER_LB, LABOR_PROCESSES, WORK_LOCATIONS, projectRunsOn, projectHours, projectRoles, shiftMin, personSpans, hasOwnTimes, processTitle, buckedLb };
+  module.exports = { weightCheckState, weightSnapshot, TRANSFER_TYPES, crewLatest, crewOnRun, OPERATIONS_STATIONS, STATION_BY_KEY, STANDALONE_STATIONS, ALL_STATIONS, ALL_STATION_BY_KEY, BIOMASS, SELLABLE, PREFILL_MAP, PIPELINE_ORDER, G_PER_LB, LABOR_PROCESSES, WORK_LOCATIONS, projectRunsOn, projectHours, projectRoles, shiftMin, personSpans, hasOwnTimes, processTitle, buckedLb };
 }

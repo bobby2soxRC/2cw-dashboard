@@ -13,15 +13,24 @@
 //   one), and `fields` comes back. Each change is appended to the row's log
 //   with who and when, tags included.
 //
+// POST {pin, id, action: 'confirm_weights'} -> {ok, row, fields}
+//   A manager's sign-off on a form's output weights (stations with
+//   `weightCheck` — Hand Trim), needing the admin panel's Metrc Queue →
+//   Confirm weights ('metrc confirm weights'). Saves
+//   fields.weightsConfirmed = {by, at, lbs} on the form record and logs it.
+//   Until the weights are confirmed (weightCheckState in
+//   operations_stations.js), the form can't be marked Done or get tags.
+//
 // Required env vars (Netlify site config), same as admin.js:
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
 const EDIT_COL = 'metrc queue edit';
+const CONFIRM_COL = 'metrc confirm weights';
 const STATUSES = new Set(['todo', 'in_progress', 'done', 'not_needed']);
 // The station forms that feed the queue — keep in step with METRC_STATIONS
 // in metrc.html.
 const METRC_STATIONS = new Set(['intake_wet', 'dry_check', 'buck', 'hand_trim', 'trim_package', 'preroll_production', 'pouch_production', 'transfer_out']);
-const { STATION_BY_KEY } = require('../../operations_stations.js');
+const { STATION_BY_KEY, weightCheckState, weightSnapshot } = require('../../operations_stations.js');
 // Metrc package tags: letters and digits only, spaces dropped, upper case.
 const normTag = (u) => String(u == null ? '' : u).toUpperCase().replace(/\s/g, '');
 
@@ -64,17 +73,19 @@ exports.handler = async (event) => {
   let body;
   try { body = JSON.parse(event.body || '{}'); } catch { return json(400, { ok: false, error: 'Invalid JSON body' }); }
   const { pin, id, status } = body;
+  const confirming = body.action === 'confirm_weights';
   const note = typeof body.note === 'string' ? body.note.trim().slice(0, 1000) : null;
   if (typeof pin !== 'string' || !pin.trim()) return json(401, { ok: false, error: 'Not logged in' });
   if (!/^[0-9a-f-]{36}$/i.test(String(id || ''))) return json(400, { ok: false, error: 'Invalid record id' });
-  if (!STATUSES.has(status)) return json(400, { ok: false, error: 'Unknown status' });
+  if (!confirming && !STATUSES.has(status)) return json(400, { ok: false, error: 'Unknown status' });
   const tagsIn = body.tags && typeof body.tags === 'object' && !Array.isArray(body.tags) ? body.tags : null;
 
   try {
     const user = await userForPin(supaUrl, serviceKey, pin.trim());
     if (!user) return json(401, { ok: false, error: 'PIN not recognized — log in again.' });
-    if (String((user.columns || {})[EDIT_COL] || '').toUpperCase() !== 'TRUE') {
-      return json(403, { ok: false, error: 'You don’t have edit access to the Metrc queue.' });
+    const hasCol = (col) => String((user.columns || {})[col] || '').toUpperCase() === 'TRUE';
+    if (!hasCol(confirming ? CONFIRM_COL : EDIT_COL)) {
+      return json(403, { ok: false, error: confirming ? 'You can’t confirm weights in the Metrc queue.' : 'You don’t have edit access to the Metrc queue.' });
     }
 
     const formRes = await supaFetch(supaUrl, serviceKey, `operations_forms?id=eq.${id}&select=station_key,status,owner_user,fields`);
@@ -83,6 +94,39 @@ exports.handler = async (event) => {
     if (!form) return json(404, { ok: false, error: 'That form is gone — it may have been deleted.' });
     if (form.status !== 'submitted' || !METRC_STATIONS.has(form.station_key) || form.owner_user === 'paper_import') {
       return json(400, { ok: false, error: 'That form isn’t in the Metrc queue.' });
+    }
+    const station = STATION_BY_KEY[form.station_key];
+    const weightState = weightCheckState(station, form.fields);
+
+    if (confirming) {
+      if (!weightState) return json(400, { ok: false, error: 'This form has no weights to confirm.' });
+      const now = new Date().toISOString();
+      const lbs = weightSnapshot(station, form.fields);
+      const fields = { ...(form.fields || {}), weightsConfirmed: { by: user.name, at: now, lbs } };
+      const fr = await supaFetch(supaUrl, serviceKey, `operations_forms?id=eq.${id}`, {
+        method: 'PATCH', headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({ fields, updated_by: user.name })
+      });
+      if (!fr.ok) throw new Error(`confirm failed: ${fr.status} ${await fr.text()}`);
+      const curRes = await supaFetch(supaUrl, serviceKey, `metrc_queue?form_id=eq.${id}&select=status,note,log`);
+      if (!curRes.ok) throw new Error(`queue lookup failed: ${curRes.status} ${await curRes.text()}`);
+      const cur = (await curRes.json())[0];
+      const curStatus = cur ? cur.status : 'todo';
+      const up = await supaFetch(supaUrl, serviceKey, 'metrc_queue?on_conflict=form_id', {
+        method: 'POST',
+        headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
+        body: JSON.stringify({ form_id: id, station_key: form.station_key, status: curStatus, note: cur ? cur.note : null,
+          log: [...((cur && cur.log) || []), { status: curStatus, weights: lbs, by: user.name, at: now }],
+          updated_by: user.name, updated_at: now })
+      });
+      if (!up.ok) throw new Error(`save failed: ${up.status} ${await up.text()}`);
+      return json(200, { ok: true, row: (await up.json())[0], fields });
+    }
+    if (weightState && weightState !== 'confirmed') {
+      const tagging = tagsIn && Object.values(tagsIn).some((v) => normTag(v));
+      if (status === 'done' || tagging) {
+        return json(409, { ok: false, error: 'A manager has to confirm this form’s weights before it can get tags or be marked Done.' });
+      }
     }
 
     // New package tags go on the form record. Only the ones that changed are

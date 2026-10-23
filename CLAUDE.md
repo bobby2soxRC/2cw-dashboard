@@ -209,6 +209,17 @@ Admin → Material Flow: View / Change requests / Manage. Requests in the
 generated from `operations_stations.js`: update them when a form changes.
 Details: "Material Flow" in `docs/OPERATIONS_APP.md`.
 
+### Hand Trim weight sign-off (started 2026-10-23)
+
+From a Material Flow change request. A Hand Trim in the Metrc Queue shows
+**Waiting for weight validation** until a manager (Admin → Metrc Queue →
+**Confirm weights**, `metrc confirm weights`) taps **Confirm weights**;
+until then its tags and Done are locked (page and `metrc-queue.js`). Stored
+on the form as `fields.weightsConfirmed`; `weightCheckState` /
+`weightCheck` in `operations_stations.js` — a weight changed later puts it
+back to waiting. No SQL. Details: "Weight sign-off" in
+`docs/OPERATIONS_APP.md`.
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)

@@ -503,6 +503,16 @@ the page from the Bucking page, read-only. Like
 the other station access, this is checked in the browser only — the
 release itself is a direct Supabase update with the anon key.
 
+## Metrc Queue: Confirm weights
+
+The admin user editor's **Metrc Queue** section has a third checkbox,
+**Confirm weights** (`metrc confirm weights`, implies View): the manager
+sign-off on a Hand Trim's output weights. Until someone with it taps
+**Confirm weights** on the form in the Metrc Queue, its new tags can't be
+entered and it can't be marked Done. `netlify/functions/metrc-queue.js`
+re-checks the column from the PIN. Details: "Weight sign-off" in
+`docs/OPERATIONS_APP.md`.
+
 ## Material Flow (View / Change requests / Manage)
 
 The admin user editor's **Material Flow** section has three checkboxes, each

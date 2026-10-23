@@ -401,6 +401,7 @@ varianceLb       = totalOutputLb − startingBuckedLb
 lossPct          = (start − totalOutput) ÷ start
 trimmer pay      = pounds × trimRatePerLb</pre></div>
         <div><h4>Then</h4><ul>
+          <li>Weight sign-off: in the Metrc Queue it shows <b>Waiting for weight validation</b> until a manager (Metrc Queue → Confirm weights) checks the weights and taps <b>Confirm weights</b>; then <b>Weight confirmed</b>. Until then its tags can't go in and it can't be marked Done. Changing a weight afterwards (Fix form) puts it back to waiting</li>
           <li>Metrc Queue asks for the new tags: <code>newFinishedUid</code> (flower) and <code>newSmallsUid</code></li>
           <li>Trim gets no per-strain tag; it waits on the lot tag for a Mixed Trim Package</li>
           <li>Waste stays on the source tag and is wasted out there</li>
