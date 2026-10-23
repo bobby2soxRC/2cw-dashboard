@@ -524,9 +524,11 @@ implying the ones before it:
   and hold on a phone) or use ✎ Request a change on a description to send a
   change request, and see the Change requests log: who asked, when, the
   change, comments. They can comment on any request.
-- **Manage** (`material flow manage`) — also sets a request's status (Open,
-  In progress, Implemented, Declined) and writes how it was implemented,
-  which shows on the request's card. Implemented needs that note.
+- **Manage** (`material flow manage`) — the approver. New requests wait
+  for approval; Manage approves them (note optional) or declines them (with
+  why), then moves approved ones to In progress and Implemented, writing how
+  it was implemented, which shows on the request's card. Nothing is worked
+  on until it's approved, so give Manage only to whoever approves changes.
 
 Hub login turns them into `2cw_flow_access` (`view` | `request` | `manage`).
 That only shows or hides the controls: the requests are read and written

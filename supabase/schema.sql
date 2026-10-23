@@ -1463,9 +1463,12 @@ end $$;
 -- A request to change a box on the Material Flow page: the box (`target`, e.g.
 -- 'st-buck' for the Bucking description), its text when the request was made
 -- (`original_text`) and the text the person wants (`proposed_text`), plus why.
--- Managers set the status and, when it's done, how it was implemented.
+-- New requests wait for approval; only Manage approves or declines them, and
+-- work starts only on approved ones. Then the status and, when it's done, how
+-- it was implemented.
 --
--- status: open | in_progress | implemented | declined.
+-- status: pending | approved | in_progress | implemented | declined ('open'
+-- is the old name for pending).
 -- comments: [{by, at, text}], oldest first. log: every status change,
 -- [{status, implementation?, by, at}].
 --
@@ -1480,7 +1483,7 @@ create table if not exists flow_change_requests (
   original_text   text,
   proposed_text   text,
   note            text,
-  status          text not null default 'open' check (status in ('open', 'in_progress', 'implemented', 'declined')),
+  status          text not null default 'pending',
   implementation  text,
   comments        jsonb not null default '[]'::jsonb,
   log             jsonb not null default '[]'::jsonb,
@@ -1490,6 +1493,12 @@ create table if not exists flow_change_requests (
   updated_at      timestamptz not null default now()
 );
 create index if not exists idx_flow_change_requests_target on flow_change_requests (target);
+-- Approval step (2026-10-23): pending / approved added, 'open' → pending.
+alter table flow_change_requests alter column status set default 'pending';
+alter table flow_change_requests drop constraint if exists flow_change_requests_status_check;
+alter table flow_change_requests add constraint flow_change_requests_status_check
+  check (status in ('open', 'pending', 'approved', 'in_progress', 'implemented', 'declined'));
+update flow_change_requests set status = 'pending' where status = 'open';
 
 alter table flow_change_requests enable row level security;
 revoke all on public.flow_change_requests from anon;

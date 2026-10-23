@@ -15,6 +15,11 @@ live data. Docs live in `docs/` — `OPERATIONS_APP.md` (station forms,
 - Schema changes go in `supabase/schema.sql` (idempotent) and must be run in
   the Supabase SQL editor **before** pushing code that reads/writes the new
   columns.
+- **Material Flow change requests need Robert's approval.** Only work on
+  `flow_change_requests` rows with status `approved` (or `in_progress`).
+  Never approve or decline one yourself, and don't build anything for a
+  `pending` request — at most point it out. When one is done, set it
+  `implemented` with how.
 
 ## In progress
 
@@ -202,6 +207,8 @@ form" in `docs/OPERATIONS_APP.md`.
 customer, a description of each with its math, and change requests —
 right-click a box or ✎ on a description, edit its text, submit; the Change
 requests tab is the log with diffs, comments and "how it was implemented".
+New requests wait for approval (`pending`); Manage approves or declines
+them, and only approved ones get worked on (see the rule at the top).
 Admin → Material Flow: View / Change requests / Manage. Requests in the
 `flow_change_requests` table (no anon access) through
 `netlify/functions/flow-requests.js` — needs the table from
