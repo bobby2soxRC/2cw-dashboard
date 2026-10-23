@@ -717,6 +717,24 @@ already have one. Every tag traces back to the lot
 Labor Log and Master Schedule offer them as UIDs. To give another station
 per-output tags, add `metrcTags` to it (it must be in `METRC_STATIONS`).
 
+**Weight sign-off (Hand Trim).** A station with `weightCheck`
+(operations_stations.js — only Hand Trim, since 2026-10-23: finished
+flower, smalls, Normal / A+ / Sugar trim, waste) needs a manager to confirm
+its output weights before its Metrc work. Until then the queue shows
+**Waiting for weight validation** under the form name, its New Metrc tags
+are locked and Done can't be picked; the opened form has a **Weight
+sign-off** box with the weights and, for people with Metrc Queue → **Confirm
+weights** (`metrc confirm weights`, implies view; `2cw_metrc_confirm` at
+login), a **Confirm weights** button. It's a sign-off only — no numbers
+typed. `metrc-queue.js` (`action: 'confirm_weights'`) saves
+`fields.weightsConfirmed = {by, at, lbs}` on the form record and logs it in
+the status history; after that it shows **Weight confirmed**, with who and
+when. `weightCheckState` compares the saved `lbs` with the record's weights,
+so a Fix form that changes one puts the form back to waiting (**Weights
+changed — confirm again**). The server refuses Done and tags while it's not
+confirmed. Forms already Done stay Done. No SQL. From a Material Flow change
+request.
+
 Statuses live in the `metrc_queue` table, one row per form, created the
 first time its status is set (no row = To do; deleting the form deletes the
 row); `log` keeps every change with who and when. The page reads it with the

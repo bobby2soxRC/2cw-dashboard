@@ -644,10 +644,14 @@ async function buildHub(user){
 
   // Metrc Queue (metrc.html): view, or view + set statuses. Edit implies
   // view; netlify/functions/metrc-queue.js re-checks edit from the PIN.
+  // 'metrc confirm weights' (a manager's sign-off on Hand Trim weights,
+  // before its Metrc work) also implies view.
   const metrcEdit = (user['metrc queue edit'] || '').toUpperCase() === 'TRUE';
-  const metrcView = metrcEdit || (user['metrc_queue'] || '').toUpperCase() === 'TRUE';
+  const metrcConfirm = (user['metrc confirm weights'] || '').toUpperCase() === 'TRUE';
+  const metrcView = metrcEdit || metrcConfirm || (user['metrc_queue'] || '').toUpperCase() === 'TRUE';
   user.metrc_queue = metrcView ? 'TRUE' : 'FALSE';
   sessionStorage.setItem('2cw_metrc_access', metrcEdit ? 'edit' : metrcView ? 'view' : '');
+  sessionStorage.setItem('2cw_metrc_confirm', metrcConfirm ? 'true' : 'false');
 
   // Material Flow (material_flow.html): view; change requests (make them,
   // see the log, comment); manage (set a request's status and how it was

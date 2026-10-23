@@ -509,7 +509,9 @@ function cardSummary(u){
   if((cols['harvest intakes edit']||'').toUpperCase()==='TRUE') pills.push(['Harvest Intakes: edit', ...hiExtra].join(', '));
   else if(hiExtra.length) pills.push('Harvest Intakes: ' + hiExtra.join(', '));
   else if((cols['harvest_intakes']||'').toUpperCase()==='TRUE') pills.push('Harvest Intakes: view');
-  if((cols['metrc queue edit']||'').toUpperCase()==='TRUE') pills.push('Metrc Queue: edit');
+  const mqConfirm = (cols['metrc confirm weights']||'').toUpperCase()==='TRUE' ? ', confirm weights' : '';
+  if((cols['metrc queue edit']||'').toUpperCase()==='TRUE') pills.push('Metrc Queue: edit' + mqConfirm);
+  else if(mqConfirm) pills.push('Metrc Queue: view' + mqConfirm);
   else if((cols['metrc_queue']||'').toUpperCase()==='TRUE') pills.push('Metrc Queue: view');
   if((cols['material flow manage']||'').toUpperCase()==='TRUE') pills.push('Material Flow: manage');
   else if((cols['material flow requests']||'').toUpperCase()==='TRUE') pills.push('Material Flow: requests');
@@ -1580,8 +1582,9 @@ function openEditor(id){
 
     <div class="section-hd">Metrc Queue</div>
     <div class="check-grid">
-      <label class="check-item"><input type="checkbox" data-card="metrc_queue" id="mq-view" ${(cols['metrc_queue']||'').toUpperCase()==='TRUE' || (cols['metrc queue edit']||'').toUpperCase()==='TRUE' ?'checked':''}/> View</label>
+      <label class="check-item"><input type="checkbox" data-card="metrc_queue" id="mq-view" ${['metrc_queue','metrc queue edit','metrc confirm weights'].some(c => (cols[c]||'').toUpperCase()==='TRUE') ?'checked':''}/> View</label>
       <label class="check-item"><input type="checkbox" data-card="metrc queue edit" id="mq-edit" ${(cols['metrc queue edit']||'').toUpperCase()==='TRUE'?'checked':''}/> Edit (set each form's Metrc status and note)</label>
+      <label class="check-item"><input type="checkbox" data-card="metrc confirm weights" id="mq-confirm" ${(cols['metrc confirm weights']||'').toUpperCase()==='TRUE'?'checked':''}/> Confirm weights (manager sign-off on Hand Trim weights; its tags and Done wait for it)</label>
     </div>
 
     <div class="section-hd">Material Flow</div>
@@ -1643,7 +1646,8 @@ function openEditor(id){
   ['hi-edit', 'hi-delete', 'hi-history'].forEach(id => document.getElementById(id).addEventListener('change', e => { if(e.target.checked) document.getElementById('hi-view').checked = true; }));
   document.getElementById('hi-view').addEventListener('change', e => { if(!e.target.checked) ['hi-edit', 'hi-delete', 'hi-history'].forEach(id => document.getElementById(id).checked = false); });
   document.getElementById('mq-edit').addEventListener('change', e => { if(e.target.checked) document.getElementById('mq-view').checked = true; });
-  document.getElementById('mq-view').addEventListener('change', e => { if(!e.target.checked) document.getElementById('mq-edit').checked = false; });
+  document.getElementById('mq-confirm').addEventListener('change', e => { if(e.target.checked) document.getElementById('mq-view').checked = true; });
+  document.getElementById('mq-view').addEventListener('change', e => { if(!e.target.checked){ document.getElementById('mq-edit').checked = false; document.getElementById('mq-confirm').checked = false; } });
   const mf = ['mf-view', 'mf-req', 'mf-manage'].map(id => document.getElementById(id));
   mf.forEach((box, i) => box.addEventListener('change', () => {
     if(box.checked) mf.slice(0, i).forEach(b => { b.checked = true; });

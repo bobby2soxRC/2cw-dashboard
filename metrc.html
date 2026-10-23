@@ -96,6 +96,13 @@
     .nf-go{display:inline-block;margin-top:6px;font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;
       color:#000;background:var(--purple);border-radius:8px;padding:6px 10px;text-decoration:none;white-space:nowrap}
     .pill.sync{border-color:var(--gold);color:var(--gold);border-style:dashed}
+    .pill.wwait{border-color:var(--gold);background:var(--gold);color:#000;font-weight:700}
+    .pill.wok{border-color:var(--green);color:var(--green)}
+    .w-box{border:1px solid var(--gold);border-radius:10px;padding:12px;margin-bottom:12px;display:flex;flex-direction:column;gap:8px}
+    .w-box.ok{border-color:var(--green)}
+    .w-lbs{display:flex;flex-wrap:wrap;gap:6px 16px;font-family:'DM Mono',monospace;font-size:.8rem;color:var(--subtext)}
+    .w-lbs b{color:var(--text);font-weight:500}
+    .st-btns button:disabled,.tag-row input:disabled{opacity:.4;cursor:not-allowed}
     .row-station{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--blue)}
 
     /* Incoming transfers to accept (metrc_transfers.js) */
@@ -235,6 +242,10 @@
   const METRC_STATIONS = ['intake_wet', 'dry_check', 'buck', 'hand_trim', 'trim_package', 'preroll_production', 'pouch_production', 'transfer_out'];
   const access = sessionStorage.getItem('2cw_metrc_access') || '';
   const canEdit = access === 'edit';
+  // Metrc Queue → Confirm weights: a manager's sign-off on a form's output
+  // weights (stations with `weightCheck` — Hand Trim). Until then its tags
+  // and Done are locked here and refused by metrc-queue.js.
+  const canConfirm = sessionStorage.getItem('2cw_metrc_confirm') === 'true';
 
   const L = {
     title:     { en: 'Metrc Queue', es: 'Cola de Metrc' },
@@ -288,6 +299,14 @@
                  es: 'Escanee o escriba cada etiqueta nueva cuando se cree el paquete en Metrc. El desecho se queda en la etiqueta de origen.' },
     noTag:     { en: 'No tag yet', es: 'Sin etiqueta' },
     tagsMissing:{ en: 'without a tag', es: 'sin etiqueta' },
+    wWait:     { en: 'Waiting for weight validation', es: 'Esperando validación de peso' },
+    wChanged:  { en: 'Weights changed — confirm again', es: 'Pesos cambiados — confirme de nuevo' },
+    wOk:       { en: 'Weight confirmed', es: 'Peso confirmado' },
+    wHd:       { en: 'Weight sign-off', es: 'Aprobación de pesos' },
+    wBtn:      { en: 'Confirm weights', es: 'Confirmar pesos' },
+    wFirst:    { en: 'A manager confirms these weights before the new tags go in or it’s marked Done.', es: 'Un gerente confirma estos pesos antes de poner las etiquetas nuevas o marcarlo Hecho.' },
+    wBy:       { en: 'Confirmed by', es: 'Confirmado por' },
+    wLog:      { en: 'Weights confirmed', es: 'Pesos confirmados' },
     copyHint:  { en: 'Tap a value to copy it.', es: 'Toque un valor para copiarlo.' },
     copied:    { en: 'Copied ✓', es: 'Copiado ✓' },
     viewOnly:  { en: 'You can see this queue but not change it.', es: 'Puede ver esta cola pero no cambiarla.' },
@@ -453,6 +472,13 @@
   const tagDefs = (r) => ((stationOf(r) || {}).metrcTags || [])
     .filter((x) => val(r, x.k) || (Number(val(r, x.from)) > 0.005 && (!x.when || x.when(r.fields || {}))));
   const newTags = (r) => tagDefs(r).map((x) => val(r, x.k)).filter(Boolean);
+  const weightState = (r) => weightCheckState(stationOf(r), r.fields);
+  const weightBlocked = (r) => { const w = weightState(r); return !!w && w !== 'confirmed'; };
+  const weightPill = (r) => {
+    const w = weightState(r);
+    if (!w) return '';
+    return w === 'confirmed' ? `<span class="pill wok">✓ ${t(L.wOk)}</span>` : `<span class="pill wwait">${t(w === 'changed' ? L.wChanged : L.wWait)}</span>`;
+  };
   const fmtDate = (d) => d ? new Date(`${d}T12:00:00`).toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
   const fmtWhen = (ts) => ts ? new Date(ts).toLocaleString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
 
@@ -692,12 +718,12 @@
     const photos = photosOf(r);
     const statusCell = canEdit
       ? `<div class="st-cell"><select class="st-sel ${picked}" aria-label="${esc(t(L.colStatus))}">${STATUSES.map((k) =>
-          `<option value="${k}" ${k === picked ? 'selected' : ''}>${t(L[k])}</option>`).join('')}</select>
+          `<option value="${k}" ${k === picked ? 'selected' : ''} ${k === 'done' && weightBlocked(r) && k !== s ? 'disabled' : ''}>${t(L[k])}</option>`).join('')}</select>
          <button type="button" class="row-save" ${pending.has(r.id) ? '' : 'disabled'}>${t(L.save)}</button></div>`
       : `<span class="pill ${s}">${t(L[s])}</span>`;
     return `<tr class="${s} ${pending.has(r.id) ? 'dirty' : ''}" data-id="${r.id}">
       <td>${statusCell}</td>
-      <td class="form-name">${esc(t(stationOf(r).title))}${productOf(r) ? `<div class="sub-line">${esc(productOf(r))}</div>` : ''}</td>
+      <td class="form-name">${esc(t(stationOf(r).title))}${productOf(r) ? `<div class="sub-line">${esc(productOf(r))}</div>` : ''}${weightPill(r) ? `<div class="sub-line">${weightPill(r)}</div>` : ''}</td>
       <td class="mono">${esc(fmtDate(r.work_date))}</td>
       <td class="strain">${esc(r.strain || val(r, 'strain') || '—')}</td>
       <td class="mono uid" title="${esc(uids(r))}">${esc(uids(r) || '—')}</td>
@@ -782,20 +808,36 @@
     return `<div class="tag-box"><div class="tag-hd">${t(L.tagsHd)}</div>
       ${canEdit ? `<div class="muted-note">${t(L.tagsHint)}</div>` : ''}
       ${defs.map((x) => `<div class="tag-row"><div class="tl">${esc(t(x.l))}<small>${esc(lb(x))}</small></div>${canEdit
-        ? `<input type="text" data-tag="${esc(x.k)}" value="${esc(val(r, x.k) || '')}" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="${esc(t(L.noTag))}">`
+        ? `<input type="text" data-tag="${esc(x.k)}" value="${esc(val(r, x.k) || '')}" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="${esc(t(L.noTag))}" ${weightBlocked(r) ? 'disabled' : ''}>`
         : `<div class="tv ${val(r, x.k) ? '' : 'none'}">${esc(val(r, x.k) || t(L.noTag))}</div>`}</div>`).join('')}
+    </div>`;
+  }
+
+  // The weight sign-off box (stations with `weightCheck`): the weights, and
+  // Confirm weights for managers, or who confirmed them and when.
+  function weightHtml(r) {
+    const w = weightState(r);
+    if (!w) return '';
+    const st = stationOf(r), c = val(r, 'weightsConfirmed') || {};
+    const label = (k) => { const f = st.fields.find((x) => x.k === k); return f ? t(f.l) : k; };
+    const lbs = st.weightCheck.filter((k) => Number(val(r, k)) > 0 || k === 'finishedFlowerLb')
+      .map((k) => `<span>${esc(label(k))}: <b>${esc(fmtNum(val(r, k), 2))} lb</b></span>`).join('');
+    return `<div class="w-box ${w === 'confirmed' ? 'ok' : ''}"><div class="st-hd">${t(L.wHd)} ${weightPill(r)}</div>
+      <div class="w-lbs">${lbs}</div>
+      ${w === 'confirmed' ? `<div class="muted-note">${t(L.wBy)} ${esc(c.by || '—')} · ${esc(fmtWhen(c.at))}</div>`
+        : `<div class="muted-note">${t(L.wFirst)}</div>${canConfirm ? `<div><button type="button" class="btn btn-blue" id="w-confirm">${t(L.wBtn)}</button> <span class="st-msg" id="w-msg"></span></div>` : ''}`}
     </div>`;
   }
 
   function statusHtml(r) {
     const q = queue.get(r.id) || {}, s = statusOf(r);
     if (!canEdit) {
-      return `<div class="st-box"><div class="st-hd">${t(L.status)}</div>
+      return `${weightHtml(r)}<div class="st-box"><div class="st-hd">${t(L.status)}</div>
         <div class="st-view"><span class="pill ${s}">${t(L[s])}</span>${q.updated_by ? ` · ${esc(q.updated_by)} · ${esc(fmtWhen(q.updated_at))}` : ''}
         <div style="margin-top:8px">${q.note ? esc(q.note) : `<span class="muted-note">${t(L.noNote)}</span>`}</div></div>${tagsHtml(r)}</div>`;
     }
-    return `<div class="st-box"><div class="st-hd">${t(L.status)}</div>
-      <div class="st-btns">${STATUSES.map((k) => `<button type="button" class="${k} ${k === s ? 'on' : ''}" data-s="${k}">${t(L[k])}</button>`).join('')}</div>
+    return `${weightHtml(r)}<div class="st-box"><div class="st-hd">${t(L.status)}</div>
+      <div class="st-btns">${STATUSES.map((k) => `<button type="button" class="${k} ${k === s ? 'on' : ''}" data-s="${k}" ${k === 'done' && k !== s && weightBlocked(r) ? 'disabled' : ''}>${t(L[k])}</button>`).join('')}</div>
       ${tagsHtml(r)}
       <textarea id="st-note" maxlength="1000" placeholder="${esc(t(L.note))}">${esc(q.note || '')}</textarea>
       <div class="st-save"><button type="button" class="btn btn-blue" id="st-save">${t(L.save)}</button><span class="st-msg" id="st-msg"></span></div>
@@ -814,12 +856,32 @@
   function logHtml(r) {
     const log = (queue.get(r.id) || {}).log || [];
     const items = log.slice().reverse().map((h) =>
-      `<li><span class="pill ${esc(h.status)}">${t(L[h.status] || { en: h.status })}</span> <b>${esc(h.by || '—')}</b> · ${esc(fmtWhen(h.at))}${h.note ? `<div style="margin-top:3px">${esc(h.note)}</div>` : ''}${h.tags ? `<div class="tags">${tagLog(r, h.tags)}</div>` : ''}</li>`);
+      `<li><span class="pill ${esc(h.status)}">${t(L[h.status] || { en: h.status })}</span> <b>${esc(h.by || '—')}</b> · ${esc(fmtWhen(h.at))}${h.note ? `<div style="margin-top:3px">${esc(h.note)}</div>` : ''}${h.tags ? `<div class="tags">${tagLog(r, h.tags)}</div>` : ''}${h.weights ? `<div class="tags">✓ ${t(L.wLog)}</div>` : ''}</li>`);
     return `<div class="d-section"><div class="d-section-hd">${t(L.log)}</div>${
       items.length ? `<ul class="hist">${items.join('')}</ul>` : `<div class="muted-note">${t(L.logNone)}</div>`}</div>`;
   }
 
   function wireStatus(r) {
+    const conf = document.getElementById('w-confirm');
+    if (conf) conf.onclick = async () => {
+      const msg = document.getElementById('w-msg');
+      conf.disabled = true; msg.className = 'st-msg'; msg.textContent = t(L.saving);
+      try {
+        const res = await fetch('/.netlify/functions/metrc-queue', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pin: sessionStorage.getItem('2cw_pin') || '', id: r.id, action: 'confirm_weights' })
+        });
+        const out = await res.json().catch(() => ({ ok: false, error: `HTTP ${res.status}` }));
+        if (!out.ok) throw new Error(out.error || `HTTP ${res.status}`);
+        queue.set(r.id, out.row);
+        r.fields = out.fields;
+        render();
+        openDetail(r.id);
+      } catch (ex) {
+        msg.className = 'st-msg err'; msg.textContent = `${t(L.saveFail)} ${ex.message}`;
+        conf.disabled = false;
+      }
+    };
     const save = document.getElementById('st-save');
     if (!save) return;
     let picked = statusOf(r);
