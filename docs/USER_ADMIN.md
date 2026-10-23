@@ -503,6 +503,28 @@ the page from the Bucking page, read-only. Like
 the other station access, this is checked in the browser only — the
 release itself is a direct Supabase update with the anon key.
 
+## Material Flow (View / Change requests / Manage)
+
+The admin user editor's **Material Flow** section has three checkboxes, each
+implying the ones before it:
+
+- **View** (`material_flow` column) — the hub card and the page
+  (`material_flow.html`): the chart and the process descriptions.
+- **Change requests** (`material flow requests`) — right-click a box (press
+  and hold on a phone) or use ✎ Request a change on a description to send a
+  change request, and see the Change requests log: who asked, when, the
+  change, comments. They can comment on any request.
+- **Manage** (`material flow manage`) — also sets a request's status (Open,
+  In progress, Implemented, Declined) and writes how it was implemented,
+  which shows on the request's card. Implemented needs that note.
+
+Hub login turns them into `2cw_flow_access` (`view` | `request` | `manage`).
+That only shows or hides the controls: the requests are read and written
+only through `netlify/functions/flow-requests.js`, which looks the person up
+from their PIN and re-checks the columns. The `flow_change_requests` table
+has no anon access, so people with only View can't read the log. Needs the
+table from `supabase/schema.sql` run first.
+
 ## Why `app_users` isn't as open as `operations_forms`
 
 `operations_forms`' RLS intentionally allows anonymous read/write — see the

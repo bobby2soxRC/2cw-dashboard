@@ -364,10 +364,11 @@ const TOKEN_KEY = '2cw_admin_token';
 // ones derived from other settings (production access derives
 // production_dashboard / production_today; FORM_ACCESS_COLS derives
 // field_forms; Master Schedule or Labor Log derives crew_checkin).
-// harvest_intakes and metrc_queue have their own View/Edit pair, and information_hub a View/Edit
+// harvest_intakes and metrc_queue have their own View/Edit pair, material_flow
+// View / Change requests / Manage, and information_hub a View/Edit
 // pair per INFO_HUB_SECTIONS entry (hub_config.js), in the
 // editor instead.
-const DERIVED_CARD_KEYS = ['production_dashboard', 'production_today', 'field_forms', 'harvest_intakes', 'metrc_queue', 'information_hub', 'crew_checkin'];
+const DERIVED_CARD_KEYS = ['production_dashboard', 'production_today', 'field_forms', 'harvest_intakes', 'metrc_queue', 'material_flow', 'information_hub', 'crew_checkin'];
 const TOGGLE_CARDS = CARD_DEFS.filter(d => !DERIVED_CARD_KEYS.includes(d.key));
 
 // The Responsibilities tab talks to Supabase directly with the anon key,
@@ -510,6 +511,9 @@ function cardSummary(u){
   else if((cols['harvest_intakes']||'').toUpperCase()==='TRUE') pills.push('Harvest Intakes: view');
   if((cols['metrc queue edit']||'').toUpperCase()==='TRUE') pills.push('Metrc Queue: edit');
   else if((cols['metrc_queue']||'').toUpperCase()==='TRUE') pills.push('Metrc Queue: view');
+  if((cols['material flow manage']||'').toUpperCase()==='TRUE') pills.push('Material Flow: manage');
+  else if((cols['material flow requests']||'').toUpperCase()==='TRUE') pills.push('Material Flow: requests');
+  else if((cols['material_flow']||'').toUpperCase()==='TRUE') pills.push('Material Flow: view');
   const infoEdit = INFO_HUB_SECTIONS.filter(s => (cols[s.edit]||'').toUpperCase()==='TRUE').length;
   const infoView = INFO_HUB_SECTIONS.filter(s => (cols[s.edit]||'').toUpperCase()!=='TRUE' && (cols[s.view]||'').toUpperCase()==='TRUE').length;
   if(infoEdit || infoView) pills.push('Info Hub: ' + [infoEdit ? infoEdit+' edit' : '', infoView ? infoView+' view' : ''].filter(Boolean).join(', '));
@@ -1580,6 +1584,13 @@ function openEditor(id){
       <label class="check-item"><input type="checkbox" data-card="metrc queue edit" id="mq-edit" ${(cols['metrc queue edit']||'').toUpperCase()==='TRUE'?'checked':''}/> Edit (set each form's Metrc status and note)</label>
     </div>
 
+    <div class="section-hd">Material Flow</div>
+    <div class="check-grid">
+      <label class="check-item"><input type="checkbox" data-card="material_flow" id="mf-view" ${['material_flow','material flow requests','material flow manage'].some(c => (cols[c]||'').toUpperCase()==='TRUE') ?'checked':''}/> View</label>
+      <label class="check-item"><input type="checkbox" data-card="material flow requests" id="mf-req" ${['material flow requests','material flow manage'].some(c => (cols[c]||'').toUpperCase()==='TRUE') ?'checked':''}/> Change requests (make them, see the log, comment)</label>
+      <label class="check-item"><input type="checkbox" data-card="material flow manage" id="mf-manage" ${(cols['material flow manage']||'').toUpperCase()==='TRUE'?'checked':''}/> Manage (set a request's status and how it was implemented)</label>
+    </div>
+
     <div class="section-hd">Information Hub</div>
     ${INFO_HUB_SECTIONS.map(s => {
       const ed = (cols[s.edit]||'').toUpperCase()==='TRUE';
@@ -1633,6 +1644,11 @@ function openEditor(id){
   document.getElementById('hi-view').addEventListener('change', e => { if(!e.target.checked) ['hi-edit', 'hi-delete', 'hi-history'].forEach(id => document.getElementById(id).checked = false); });
   document.getElementById('mq-edit').addEventListener('change', e => { if(e.target.checked) document.getElementById('mq-view').checked = true; });
   document.getElementById('mq-view').addEventListener('change', e => { if(!e.target.checked) document.getElementById('mq-edit').checked = false; });
+  const mf = ['mf-view', 'mf-req', 'mf-manage'].map(id => document.getElementById(id));
+  mf.forEach((box, i) => box.addEventListener('change', () => {
+    if(box.checked) mf.slice(0, i).forEach(b => { b.checked = true; });
+    else mf.slice(i + 1).forEach(b => { b.checked = false; });
+  }));
   INFO_HUB_SECTIONS.forEach(s => {
     const v = document.querySelector(`[data-info-view="${s.key}"]`), e = document.querySelector(`[data-info-edit="${s.key}"]`);
     e.addEventListener('change', () => { if(e.checked) v.checked = true; });

@@ -649,6 +649,16 @@ async function buildHub(user){
   user.metrc_queue = metrcView ? 'TRUE' : 'FALSE';
   sessionStorage.setItem('2cw_metrc_access', metrcEdit ? 'edit' : metrcView ? 'view' : '');
 
+  // Material Flow (material_flow.html): view; change requests (make them,
+  // see the log, comment); manage (set a request's status and how it was
+  // implemented). Each implies the ones before;
+  // netlify/functions/flow-requests.js re-checks from the PIN.
+  const flowManage = (user['material flow manage'] || '').toUpperCase() === 'TRUE';
+  const flowRequest = flowManage || (user['material flow requests'] || '').toUpperCase() === 'TRUE';
+  const flowView = flowRequest || (user['material_flow'] || '').toUpperCase() === 'TRUE';
+  user.material_flow = flowView ? 'TRUE' : 'FALSE';
+  sessionStorage.setItem('2cw_flow_access', flowManage ? 'manage' : flowRequest ? 'request' : flowView ? 'view' : '');
+
   // Information Hub: a View/Edit pair per section (INFO_HUB_SECTIONS in
   // hub_config.js), edit implying view. The card shows if any section is
   // viewable; information_hub.html reads the map to pick its tabs.

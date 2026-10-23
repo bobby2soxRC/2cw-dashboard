@@ -235,6 +235,19 @@ const CARD_DEFS = [
     href: '/metrc.html'
   },
   {
+    key: 'material_flow',
+    color: 'gold',
+    label: 'Operations',
+    dept: 'operations',
+    // Gated by the admin panel's "Material Flow" View / Change requests /
+    // Manage checkboxes ('material_flow' / 'material flow requests' /
+    // 'material flow manage' — each implies the ones before; see buildHub in
+    // index.html).
+    title: 'Material Flow',
+    desc: 'How material moves from farm to customer — every form, what it records and the math it does — with change requests on any step.',
+    href: '/material_flow.html'
+  },
+  {
     key: 'information_hub',
     color: 'green',
     label: 'Operations',
@@ -380,6 +393,7 @@ const CARD_ES = {
   work_orders:         { title: 'Órdenes de Trabajo', desc: 'Las filas de trabajo en un solo lugar — desvarado, corte a mano y prerolls y flor molida — en el orden de trabajo, con Empezar o Abrir para cada uno.' },
   harvest_intakes:     { title: 'Recepciones de Cosecha', desc: 'Todas las recepciones de cosecha húmeda — abre una para ver el registro completo, o corrígela y registra el ajuste en Metrc si tienes acceso de edición.' },
   metrc_queue:         { title: 'Cola de Metrc', desc: 'Cada recepción húmeda, bajada, desvarado, corte a mano, recorte mixto, preroll y transferencia de salida enviado que espera en Metrc — ábralo, copie sus valores y marque en qué va.' },
+  material_flow:       { title: 'Flujo de Material', desc: 'Cómo se mueve el material del rancho al cliente — cada formulario, lo que registra y sus cálculos — con solicitudes de cambio en cualquier paso.' },
   information_hub:     { title: 'Centro de Información', desc: 'Las listas de referencia que usa el resto de la app — variedades, instalaciones de Canix, pronósticos de rendimiento, licencias de ranchos e IDs de clientes.' },
   production_today:    { title: 'Hoy — En Vivo', desc: 'Cada formulario en progreso o terminado hoy, actualizado en vivo — para quien tenga acceso de vista, pueda editarlo o no.' },
   brand_assets:        { title: 'Recursos de Marca', desc: 'Logotipos, fotografía y guías de marca de 2CW y marcas socias — carpeta compartida de Drive.' },

@@ -196,6 +196,19 @@ for matching; the Canix sync now puts item/strain/sales order on
 `canix_transfers_recent.json` (`label_transfer`). No SQL. Details: "Needs
 form" in `docs/OPERATIONS_APP.md`.
 
+### Material Flow page and change requests (started 2026-10-23)
+
+`material_flow.html` (Operations card): a chart of the forms farm to
+customer, a description of each with its math, and change requests —
+right-click a box or ✎ on a description, edit its text, submit; the Change
+requests tab is the log with diffs, comments and "how it was implemented".
+Admin → Material Flow: View / Change requests / Manage. Requests in the
+`flow_change_requests` table (no anon access) through
+`netlify/functions/flow-requests.js` — needs the table from
+`supabase/schema.sql` run first. The descriptions are hand-written, not
+generated from `operations_stations.js`: update them when a form changes.
+Details: "Material Flow" in `docs/OPERATIONS_APP.md`.
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)
