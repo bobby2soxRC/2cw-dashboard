@@ -155,12 +155,18 @@
     .filters input{flex:1 1 220px;min-width:0;min-height:40px}
     .reqs{display:grid;gap:14px}
     .rq{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--red);border-radius:12px;padding:16px 18px;display:grid;gap:12px;scroll-margin-top:70px}
+.rq.pending,.rq.open{border-left-color:var(--purple)} .rq.approved{border-left-color:var(--blue)}
     .rq.in_progress{border-left-color:var(--gold)} .rq.implemented{border-left-color:var(--green)} .rq.declined{border-left-color:var(--muted)}
     .rq-head{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline}
     .rq-head h4{font-size:1.05rem;font-weight:700}
     .rq-head .who{font:12px 'DM Mono',monospace;color:var(--subtext)}
     .st{font:700 10px/1 'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase;padding:5px 8px;border-radius:999px;color:#000;background:var(--red)}
+    .st.pending,.st.open{background:var(--purple)} .st.approved{background:var(--blue)}
     .st.in_progress{background:var(--gold)} .st.implemented{background:var(--green)} .st.declined{background:var(--muted);color:var(--text)}
+    .appr{font:12px 'DM Mono',monospace;color:var(--subtext)}
+    .appr b{color:var(--blue);font-weight:500}
+    .appr p{white-space:pre-wrap;font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--text);margin-top:4px}
+    .filters .c{opacity:.7;margin-left:4px}
     .rq-note{white-space:pre-wrap}
     .rq h5{font:500 11px 'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
     .diff{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 0;font:12.5px/1.6 'DM Mono',monospace;overflow-x:auto;max-height:420px;overflow-y:auto}
@@ -637,13 +643,22 @@ totalValue  = Σ (weight × price per lb)</pre></div>
     sending:   { en: 'Sending…', es: 'Enviando…' },
     sent:      { en: 'Change request sent ✓', es: 'Solicitud enviada ✓' },
     noChange:  { en: 'Change the text or say what should change.', es: 'Cambie el texto o diga qué debe cambiar.' },
-    reqLede:   { en: 'Every change request on this page: who asked, when, the change, and how it was implemented.', es: 'Cada solicitud de cambio de esta página: quién pidió, cuándo, el cambio y cómo se implementó.' },
-    fOpen:     { en: 'Open', es: 'Abiertas' },
+    reqLede:   { en: 'Every change request on this page: who asked, when, the change, and how it was implemented. New requests wait for approval; only approved ones get worked on.', es: 'Cada solicitud de cambio de esta página: quién pidió, cuándo, el cambio y cómo se implementó. Las nuevas esperan aprobación; solo se trabajan las aprobadas.' },
+    fPend:     { en: 'Waiting for approval', es: 'Esperando aprobación' },
+    fAppr:     { en: 'Approved', es: 'Aprobadas' },
     fImpl:     { en: 'Implemented', es: 'Implementadas' },
     fDecl:     { en: 'Declined', es: 'Rechazadas' },
     fAll:      { en: 'All', es: 'Todas' },
     search:    { en: 'Search box, person, text…', es: 'Buscar caja, persona, texto…' },
-    open:      { en: 'Open', es: 'Abierta' },
+    open:      { en: 'Waiting for approval', es: 'Esperando aprobación' },
+    pending:   { en: 'Waiting for approval', es: 'Esperando aprobación' },
+    approved:  { en: 'Approved', es: 'Aprobada' },
+    approve:   { en: 'Approve', es: 'Aprobar' },
+    decline:   { en: 'Decline', es: 'Rechazar' },
+    approvedBy:{ en: 'Approved by', es: 'Aprobada por' },
+    apprNote:  { en: 'Note (optional for Approve; say why to Decline)', es: 'Nota (opcional para Aprobar; diga por qué para Rechazar)' },
+    needWhy:   { en: 'Say why it’s declined.', es: 'Diga por qué se rechaza.' },
+    toPending: { en: 'Back to waiting for approval', es: 'Volver a esperar aprobación' },
     in_progress:{ en: 'In progress', es: 'En curso' },
     implemented:{ en: 'Implemented', es: 'Implementada' },
     declined:  { en: 'Declined', es: 'Rechazada' },
@@ -1004,8 +1019,13 @@ totalValue  = Σ (weight × price per lb)</pre></div>
   }
 
   // ── Change requests log ──────────────────────────────────────────────────
-  let rows = [], loaded = false, loadErr = '', filter = 'open', query = '', targetFilter = null;
-  const isOpen = (r) => r.status === 'open' || r.status === 'in_progress';
+  let rows = [], loaded = false, loadErr = '', filter = 'pending', query = '', targetFilter = null;
+  // Not finished: waiting for approval ('open' is its old name), approved,
+  // in progress.
+  const isPending = (r) => r.status === 'pending' || r.status === 'open';
+  const isOpen = (r) => isPending(r) || r.status === 'approved' || r.status === 'in_progress';
+  const FILTERS = { pending: isPending, approved: (r) => r.status === 'approved' || r.status === 'in_progress',
+                    implemented: (r) => r.status === 'implemented', declined: (r) => r.status === 'declined', all: () => true };
   const openCount = (target) => rows.filter((r) => r.target === target && isOpen(r)).length;
 
   if (canRequest) {
@@ -1014,8 +1034,8 @@ totalValue  = Σ (weight × price per lb)</pre></div>
     $('tabs').querySelectorAll('button').forEach((b) => { b.onclick = () => showTab(b.dataset.tab); });
     $('req-lede').textContent = t(L.reqLede);
     const fl = $('req-filters');
-    fl.innerHTML = [['open', L.fOpen], ['implemented', L.fImpl], ['declined', L.fDecl], ['all', L.fAll]]
-      .map(([k, l]) => `<button type="button" data-f="${k}" class="${k === filter ? 'on' : ''}">${esc(t(l))}</button>`).join('') +
+    fl.innerHTML = [['pending', L.fPend], ['approved', L.fAppr], ['implemented', L.fImpl], ['declined', L.fDecl], ['all', L.fAll]]
+      .map(([k, l]) => `<button type="button" data-f="${k}" class="${k === filter ? 'on' : ''}">${esc(t(l))}<span class="c" data-c="${k}"></span></button>`).join('') +
       `<input type="search" id="req-q" placeholder="${esc(t(L.search))}">`;
     fl.querySelectorAll('button').forEach((b) => {
       b.onclick = () => { filter = b.dataset.f; fl.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); renderRequests(); };
@@ -1053,6 +1073,10 @@ totalValue  = Σ (weight × price per lb)</pre></div>
   function refreshCounts() {
     const open = rows.filter(isOpen).length;
     $('tab-req').innerHTML = esc(t(L.tabReq)) + (open ? `<span class="n">${open}</span>` : '');
+    document.querySelectorAll('#req-filters [data-c]').forEach((c) => {
+      const n = c.dataset.c === 'all' ? 0 : rows.filter(FILTERS[c.dataset.c]).length;
+      c.textContent = n ? `(${n})` : '';
+    });
     Object.entries(CARDS).forEach(([id, card]) => {
       const n = openCount(id), b = card.querySelector('.req-count');
       b.hidden = !n;
@@ -1119,8 +1143,7 @@ totalValue  = Σ (weight × price per lb)</pre></div>
     } else tf.hidden = true;
     const list = rows.filter((r) => {
       if (targetFilter && r.target !== targetFilter) return false;
-      if (filter === 'open' && !isOpen(r)) return false;
-      if ((filter === 'implemented' || filter === 'declined') && r.status !== filter) return false;
+      if (!FILTERS[filter](r)) return false;
       if (!query) return true;
       const hay = [r.target_title, r.created_by, r.note, r.proposed_text, r.implementation, ...(r.comments || []).map((c) => c.by + ' ' + c.text)].join(' ').toLowerCase();
       return query.split(/\s+/).every((w) => hay.includes(w));
@@ -1135,6 +1158,24 @@ totalValue  = Σ (weight × price per lb)</pre></div>
     const diff = changed ? diffHtml(diffLines(r.original_text, r.proposed_text)) : '';
     const doneLog = [...(r.log || [])].reverse().find((x) => x.status === r.status);
     const implHd = r.status === 'declined' ? L.declNote : L.howImpl;
+    // The latest approval, while it still stands.
+    const apprLog = ['approved', 'in_progress', 'implemented'].includes(r.status)
+      ? [...(r.log || [])].reverse().find((x) => x.status === 'approved') : null;
+    const pending = isPending(r);
+    const manageHtml = !canManage ? '' : pending || r.status === 'declined' ? `<div class="manage">
+        <label for="an-${esc(r.id)}" class="hint">${esc(t(L.apprNote))}</label>
+        <textarea id="an-${esc(r.id)}" rows="2">${r.status === 'declined' ? esc(r.implementation || '') : ''}</textarea>
+        <div class="row end"><span class="err" data-err="st" hidden></span>
+          ${r.status === 'declined' ? `<button type="button" class="btn small" data-act="set" data-s="pending">${esc(t(L.toPending))}</button>`
+            : `<button type="button" class="btn small" data-act="set" data-s="declined">${esc(t(L.decline))}</button>`}
+          <button type="button" class="btn small primary" data-act="set" data-s="approved">${esc(t(L.approve))}</button></div>
+      </div>` : `<div class="manage">
+        <label for="st-${esc(r.id)}" class="hint">${esc(t(L.status))}</label>
+        <select id="st-${esc(r.id)}">${['approved', 'in_progress', 'implemented', 'declined', 'pending'].map((s) => `<option value="${s}" ${s === r.status ? 'selected' : ''}>${esc(t(s === 'pending' ? L.toPending : L[s]))}</option>`).join('')}</select>
+        <label for="im-${esc(r.id)}" class="hint">${esc(t(L.implField))}</label>
+        <textarea id="im-${esc(r.id)}" rows="3">${esc(r.implementation || '')}</textarea>
+        <div class="row end"><span class="err" data-err="st" hidden></span><button type="button" class="btn small primary" data-act="status">${esc(t(L.save))}</button></div>
+      </div>`;
     return `<article class="rq ${esc(r.status)}" id="rq-${esc(r.id)}">
       <div class="rq-head">
         <h4>${esc(r.target_title)}</h4>
@@ -1144,15 +1185,10 @@ totalValue  = Σ (weight × price per lb)</pre></div>
       </div>
       ${r.note ? `<div><h5>${esc(t(L.why))}</h5><p class="rq-note">${esc(r.note)}</p></div>` : ''}
       <div><h5>${esc(t(L.change))}</h5>${changed ? `<div class="diff">${diff}</div>` : `<p class="hint">${esc(t(L.noTextChg))}</p>`}</div>
+      ${apprLog ? `<div class="appr">✓ ${esc(t(L.approvedBy))} <b>${esc(apprLog.by)}</b> · ${esc(when(apprLog.at))}${apprLog.note ? `<p>${esc(apprLog.note)}</p>` : ''}</div>` : ''}
       ${r.implementation && (r.status === 'implemented' || r.status === 'declined') ? `<div class="impl"><h5>${esc(t(implHd))}</h5><p>${esc(r.implementation)}</p>
         ${doneLog ? `<div class="who">${esc(doneLog.by)} · ${esc(when(doneLog.at))}</div>` : ''}</div>` : ''}
-      ${canManage ? `<div class="manage">
-        <label for="st-${esc(r.id)}" class="hint">${esc(t(L.status))}</label>
-        <select id="st-${esc(r.id)}">${['open', 'in_progress', 'implemented', 'declined'].map((s) => `<option value="${s}" ${s === r.status ? 'selected' : ''}>${esc(t(L[s]))}</option>`).join('')}</select>
-        <label for="im-${esc(r.id)}" class="hint">${esc(t(L.implField))}</label>
-        <textarea id="im-${esc(r.id)}" rows="3">${esc(r.implementation || '')}</textarea>
-        <div class="row end"><span class="err" data-err="st" hidden></span><button type="button" class="btn small primary" data-act="status">${esc(t(L.save))}</button></div>
-      </div>` : ''}
+      ${manageHtml}
       <div class="comments"><h5>${esc(t(L.comments))} (${(r.comments || []).length})</h5>
         ${(r.comments || []).map((c) => `<div class="cm"><div class="who">${esc(c.by)} · ${esc(when(c.at))}</div><p>${esc(c.text)}</p></div>`).join('') || `<p class="hint">${esc(t(L.noComments))}</p>`}
         <textarea id="cm-${esc(r.id)}" rows="2" placeholder="${esc(t(L.addCm))}"></textarea>
@@ -1183,6 +1219,18 @@ totalValue  = Σ (weight × price per lb)</pre></div>
       try { replace((await api('comment', { id: r.id, text: ta.value })).row); }
       catch (ex) { err.textContent = t(L.saveFail) + ' ' + ex.message; err.hidden = false; post.disabled = false; }
     };
+    // Approve / Decline / Back to waiting, on a request not approved yet.
+    card.querySelectorAll('[data-act="set"]').forEach((bt) => {
+      bt.onclick = async () => {
+        const err = card.querySelector('[data-err="st"]'), note = $('an-' + r.id).value.trim(), s = bt.dataset.s;
+        if (s === 'declined' && !note) { err.textContent = t(L.needWhy); err.hidden = false; return; }
+        bt.disabled = true;
+        try {
+          replace((await api('status', s === 'declined' ? { id: r.id, status: s, implementation: note } : { id: r.id, status: s, note })).row);
+          toast(t(L.saved));
+        } catch (ex) { err.textContent = t(L.saveFail) + ' ' + ex.message; err.hidden = false; bt.disabled = false; }
+      };
+    });
     const save = card.querySelector('[data-act="status"]');
     if (save) save.onclick = async () => {
       const err = card.querySelector('[data-err="st"]');

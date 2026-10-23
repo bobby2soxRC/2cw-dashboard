@@ -9,17 +9,29 @@
 //   list                                   -> {rows, me: {name, manage}}
 //   create  {target, targetTitle, original, proposed, note} -> {row}
 //   comment {id, text}                     -> {row}
-//   status  {id, status, implementation}   -> {row}   (Manage only)
-//     status: open | in_progress | implemented | declined. Implemented
-//     needs `implementation` — how it was done. Each change is appended to
-//     the row's log with who and when.
+//   status  {id, status, implementation, note} -> {row}   (Manage only)
+//     New requests are `pending` (waiting for approval). Only Manage moves
+//     them on: approved (note optional) or declined (`implementation` holds
+//     why — required); once approved, in_progress and implemented (needs
+//     `implementation` — how it was done). Work starts only on approved
+//     requests. Back to pending undoes an approval or decline. Each change is
+//     appended to the row's log with who and when. ('open' is the old name
+//     for pending.)
 //
 // Required env vars (Netlify site config), same as admin.js:
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
 const REQUEST_COL = 'material flow requests';
 const MANAGE_COL = 'material flow manage';
-const STATUSES = new Set(['open', 'in_progress', 'implemented', 'declined']);
+const STATUSES = new Set(['pending', 'approved', 'in_progress', 'implemented', 'declined']);
+// Where each status may be set from.
+const FROM = {
+  pending: ['approved', 'declined'],
+  approved: ['pending', 'open', 'declined', 'in_progress'],
+  declined: ['pending', 'open', 'approved', 'in_progress'],
+  in_progress: ['approved', 'implemented'],
+  implemented: ['approved', 'in_progress']
+};
 const MAX_TEXT = 20000;
 
 function json(statusCode, body) {
@@ -107,8 +119,8 @@ exports.handler = async (event) => {
         method: 'POST', headers: { Prefer: 'return=representation' },
         body: JSON.stringify({
           target, target_title: targetTitle, original_text: original, proposed_text: proposed, note: note || null,
-          status: 'open', created_by: user.name, created_at: now, updated_by: user.name, updated_at: now,
-          log: [{ status: 'open', by: user.name, at: now }]
+          status: 'pending', created_by: user.name, created_at: now, updated_by: user.name, updated_at: now,
+          log: [{ status: 'pending', by: user.name, at: now }]
         })
       });
       if (!res.ok) throw new Error(`save failed: ${res.status} ${await res.text()}`);
@@ -134,12 +146,19 @@ exports.handler = async (event) => {
       const status = String(body.status || '');
       if (!STATUSES.has(status)) return json(400, { ok: false, error: 'Unknown status' });
       const implementation = text(body.implementation, 8000);
+      const note = text(body.note, 4000);
       if (status === 'implemented' && !implementation) return json(400, { ok: false, error: 'Say how it was implemented.' });
+      if (status === 'declined' && !implementation) return json(400, { ok: false, error: 'Say why it’s declined.' });
       const cur = await getRow(supaUrl, serviceKey, id);
       if (!cur) return json(404, { ok: false, error: 'That change request is gone.' });
+      if (status !== cur.status && !FROM[status].includes(cur.status)) {
+        return json(409, { ok: false, error: (status === 'in_progress' || status === 'implemented')
+          ? 'Approve the request first.' : `Can’t go from ${cur.status} to ${status}.` });
+      }
+      const keepText = status === 'implemented' || status === 'declined' || status === 'in_progress';
       const row = await patchRow(supaUrl, serviceKey, id, {
-        status, implementation: implementation || null, updated_by: user.name, updated_at: now,
-        log: [...(cur.log || []), { status, ...(implementation ? { implementation } : {}), by: user.name, at: now }]
+        status, implementation: keepText ? implementation || null : null, updated_by: user.name, updated_at: now,
+        log: [...(cur.log || []), { status, ...(keepText && implementation ? { implementation } : {}), ...(note ? { note } : {}), by: user.name, at: now }]
       });
       return json(200, { ok: true, row });
     }

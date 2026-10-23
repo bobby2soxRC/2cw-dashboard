@@ -821,11 +821,16 @@ page's buttons and labels are EN/ES.
 **Change requests.** With Change requests access, right-clicking a box on
 the chart (press and hold on a phone; tapping a material box works too) or
 ✎ Request a change on a description opens the box's whole text in an
-editor: edit it the way it should read, say why, Submit. The Change
-requests tab is the log — Open / Implemented / Declined / All, search — each
+editor: edit it the way it should read, say why, Submit. A new request
+**waits for approval**: someone with Manage approves it (note optional) or
+declines it (with why), and only approved requests get worked on — In
+progress, then Implemented with how. The server refuses In progress or
+Implemented on a request that isn't approved. The Change
+requests tab is the log — Waiting for approval / Approved / Implemented /
+Declined / All, with counts, search — each
 request with who asked and when, the change as a line diff against the text
 it was made on, comments, a history, and, once someone with Manage marks it
-Implemented, **How it was implemented**. Boxes and descriptions with open
+Implemented, **How it was implemented**; approved ones show who approved them. Boxes and descriptions with open
 requests show a red count; clicking it lists that box's requests. Requests
 are in `flow_change_requests` (`supabase/schema.sql`; `target` is the
 description card's id, e.g. `st-buck`, or `node-<id>` for a material box),
