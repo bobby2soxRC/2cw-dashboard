@@ -17,6 +17,7 @@ the existing Operations Hub — same login, same Netlify deploy.
 | `master_schedule.html` | Master Schedule — projects, their responsibilities and people, UIDs, and the day/week work schedule (replaced `schedule.html`) — see below |
 | `crew_checkin.html` | Crew Check-In — a lead checks in the people on their Master Schedule projects once a shift and moves people between stations during the day — see "Crew Check-In" below |
 | `metrc.html` | Metrc Queue — every submitted Wet Intake, Take Down, Bucking, Hand Trim, Mixed Trim Package, Pre-Roll, Ground Flower Pouches and Outgoing Transfer form, with its Metrc status — see below |
+| `material_flow.html` | Material Flow — a chart of how material moves through the forms, farm to customer, a description of each form with its math, and change requests on any box — see below |
 | `raw_inventory.html` | Raw Materials Inventory — what's on hand at each stage from the station forms, tabbed, searchable, CSV export, plus a History view tracing every record from intake to customer — see below |
 | `operations_today.html` | Live board — every form in progress or finished today, for anyone with view access; the date picker (or `?date=YYYY-MM-DD`) shows any earlier day the same way; **Range** shows several days at once (`?date=FROM&to=TO`; it starts as the day before through the day showing, for overnight work like a green harvest, and ◀ ▶ step the whole range), with the Daily Summary table hidden. With Wet Intakes showing, a **Wet Intake by farm** table sits above the forms (and in the PDF): net wet lbs per farm (a license's name, so a farm's licenses add up), split into dry rooms vs freezers — freezer when Fresh Frozen is ticked or the Drying / Freezer Location is one of `reference.json`'s `freezers` — and each intake card shows farm → location (❄ for freezer). 📄 Share PDF prints the day or range as a report. People with `labor log costs` also get a **Labor $** box next to it (off each time the page opens): ticked, the PDF adds a Labor section — Labor Log hours and $ by station (only the picked station's with a filter), and, for all stations, Connecteam clocked hours and $ by activity (the shifts file holds the last 14 days) — at each person's rate from Labor Rates via `labor-rates.js`. A page with day tabs (Bucking, Hand Trim, Pre-Roll) is on every day something was logged on it, not only its start date, with that day's amount (the headline calc on that day's rows; label from `dayTabs.headline`, else "— that day") |
 | `operations_dashboard.html` | Pipeline, yields, biomass, labor, requests, exceptions (finished forms only) |
@@ -784,6 +785,34 @@ Wet Intake → Take Down (`matchTakeDowns`) → Bucking lot and Bucking trim
 allocated (a Smalls Hand Trim or Mixed Trim Package links to the rows it
 made). Status says where it ended: Taken down, Bucked, Trimmed, Shipped,
 Used up, or the On hand status if some is left. CSV adds Came From / Went To.
+
+**Material Flow** (`material_flow.html`, hub card `material_flow` directly
+under Operations, since 2026-10-23) is the process map: a chart of every
+form in the order material passes through them (forms as tan boxes, material
+as rounded ones with their Raw Inventory tab, **M** on forms that land in the
+Metrc Queue, numbered circles for material that can ship as is on a Product
+Transfer — the type code), then a card per form — what's on it, its math
+(the `calc` fields here in `operations_stations.js`) and where its output
+goes — and the rules every form shares. The chart is drawn by the page from
+the `N` (boxes) and `E` (arrows) lists in its script; the descriptions are
+plain HTML in the page. **They aren't generated from the station
+definitions**, so a change to a form's fields or math means updating the
+page by hand (bump `CACHE_VERSION`). Process text is English only; the
+page's buttons and labels are EN/ES.
+
+**Change requests.** With Change requests access, right-clicking a box on
+the chart (press and hold on a phone; tapping a material box works too) or
+✎ Request a change on a description opens the box's whole text in an
+editor: edit it the way it should read, say why, Submit. The Change
+requests tab is the log — Open / Implemented / Declined / All, search — each
+request with who asked and when, the change as a line diff against the text
+it was made on, comments, a history, and, once someone with Manage marks it
+Implemented, **How it was implemented**. Boxes and descriptions with open
+requests show a red count; clicking it lists that box's requests. Requests
+are in `flow_change_requests` (`supabase/schema.sql`; `target` is the
+description card's id, e.g. `st-buck`, or `node-<id>` for a material box),
+read and written only through `netlify/functions/flow-requests.js`. Access:
+see "Material Flow" in `USER_ADMIN.md`.
 
 **Information Hub** (`information_hub.html`, hub card `information_hub`
 under Operations) holds the reference lists the rest of the app runs on, one

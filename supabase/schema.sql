@@ -1458,3 +1458,39 @@ begin
     alter publication supabase_realtime add table metrc_queue;
   end if;
 end $$;
+
+-- ── Material Flow change requests (material_flow.html) ─────────────────────
+-- A request to change a box on the Material Flow page: the box (`target`, e.g.
+-- 'st-buck' for the Bucking description), its text when the request was made
+-- (`original_text`) and the text the person wants (`proposed_text`), plus why.
+-- Managers set the status and, when it's done, how it was implemented.
+--
+-- status: open | in_progress | implemented | declined.
+-- comments: [{by, at, text}], oldest first. log: every status change,
+-- [{status, implementation?, by, at}].
+--
+-- No anon access at all: the log is only for people with Material Flow →
+-- Change requests or Manage, so everything goes through
+-- netlify/functions/flow-requests.js, which checks those columns from the PIN
+-- with the service role.
+create table if not exists flow_change_requests (
+  id              uuid primary key default gen_random_uuid(),
+  target          text not null,
+  target_title    text not null,
+  original_text   text,
+  proposed_text   text,
+  note            text,
+  status          text not null default 'open' check (status in ('open', 'in_progress', 'implemented', 'declined')),
+  implementation  text,
+  comments        jsonb not null default '[]'::jsonb,
+  log             jsonb not null default '[]'::jsonb,
+  created_by      text not null,
+  created_at      timestamptz not null default now(),
+  updated_by      text,
+  updated_at      timestamptz not null default now()
+);
+create index if not exists idx_flow_change_requests_target on flow_change_requests (target);
+
+alter table flow_change_requests enable row level security;
+revoke all on public.flow_change_requests from anon;
+grant select, insert, update, delete on public.flow_change_requests to service_role;
