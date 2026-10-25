@@ -82,7 +82,7 @@
   const DEFAULTS = {
     brand: 'Soma Rosa Farms', kicker: 'Licensed Cannabis · Wholesale', title: 'Bulk Menu', place: 'Santa Rosa, California',
     blurb: 'Bulk cannabis from our licensed Santa Rosa facility, priced per pound and ready to move.',
-    contact: 'Bobby McGowan', phone: '', email: 'bobby@somarosafarms.com', web: 'somarosafarms.com',
+    contact: 'Jonathan', phone: '+1 (707) 349-2384', email: 'jonathan@2cwproductions.com', web: 'somarosafarms.com',
     notes: 'Prices per pound. Subject to availability. COAs available on request.',
     showBatch: true, showFarm: false, prices: {}, batches: {}
   };
