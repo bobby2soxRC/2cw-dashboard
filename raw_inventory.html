@@ -149,6 +149,7 @@
 <script src="/operations_stations.js"></script>
 <script src="/ops_common.js"></script>
 <script src="/ops_data.js"></script>
+<script src="/bulk_menu.js"></script>
 <script>
 // Raw Materials Inventory — what's on hand at each stage, built from the
 // station forms (not Canix): Drying (Wet Intakes with no Take Down), On-Stem
@@ -184,6 +185,7 @@
     search:   { en: 'Search strain, UID, license, farm name or code, CID, location…', es: 'Buscar variedad, UID, licencia, rancho o código, CID, ubicación…' },
     showUsed: { en: 'Show used up', es: 'Mostrar agotados' },
     csv:      { en: '⇩ Export CSV', es: '⇩ Exportar CSV' },
+    menu:     { en: '☰ Bulk menu', es: '☰ Menú a granel' },
     pkgs:     { en: 'packages', es: 'paquetes' },
     pkg:      { en: 'package', es: 'paquete' },
     total:    { en: 'Total', es: 'Total' },
@@ -695,10 +697,15 @@
   const filtersEl = document.getElementById('filters');
   filtersEl.innerHTML = `<input type="search" id="q" placeholder="${esc(t(L.search))}" value="${esc(query)}">
     <label class="chk" id="usedWrap"><input type="checkbox" id="used"> ${esc(t(L.showUsed))}</label>
+    <button type="button" class="btn" id="menuBtn">${esc(t(L.menu))}</button>
     <button type="button" class="btn btn-blue" id="csv">${esc(t(L.csv))}</button>`;
   document.getElementById('q').addEventListener('input', (e) => { query = e.target.value.trim(); syncUrl(); render(); });
   document.getElementById('used').onchange = (e) => { showUsed = e.target.checked; render(); };
   document.getElementById('csv').onclick = exportCsv;
+  // Bulk menu (bulk_menu.js): a priced PDF of what's on hand, starting from this tab.
+  document.getElementById('menuBtn').onclick = () => BulkMenu.open({
+    rows: rows.filter((r) => !isUsed(r)), tab, client, who, typeLabel
+  });
   function syncUrl() {
     const u = new URL(location.href);
     if (H()) u.searchParams.set('view', 'history'); else u.searchParams.delete('view');
@@ -719,6 +726,7 @@
     renderViews();
     renderTabs();
     document.getElementById('usedWrap').style.display = H() ? 'none' : '';
+    document.getElementById('menuBtn').style.display = H() ? 'none' : '';
     document.getElementById('note').textContent = t(H() ? L.histNote : L.note);
     const list = current();
     document.getElementById('sub').textContent = `${H() ? t(L.vHistory) + ' · ' : ''}${t(L[tab])} · ${list.length} ${
@@ -923,7 +931,7 @@
   client.channel('raw_inventory_page')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'operations_forms' }, (p) => {
       const row = p.new || p.old || {};
-      if (!row.station_key || !['labor_entry', 'work_project', 'work_schedule'].includes(row.station_key)) reloadSoon();
+      if (!row.station_key || !['labor_entry', 'work_project', 'work_schedule', 'raw_inventory_menu'].includes(row.station_key)) reloadSoon();
     })
     .subscribe();
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reloadSoon(); });
