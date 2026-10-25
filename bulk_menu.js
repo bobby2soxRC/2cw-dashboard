@@ -40,7 +40,6 @@
     contact:  { en: 'Contact', es: 'Contacto' },
     phone:    { en: 'Phone', es: 'Teléfono' },
     email:    { en: 'Email', es: 'Correo' },
-    web:      { en: 'Website', es: 'Sitio web' },
     notes:    { en: 'Fine print', es: 'Letra pequeña' },
     showBatch:{ en: 'Show batch # (end of the UID)', es: 'Mostrar # de lote (final del UID)' },
     showFarm: { en: 'Show farm', es: 'Mostrar rancho' },
@@ -82,7 +81,7 @@
   const DEFAULTS = {
     brand: 'Soma Rosa Farms', kicker: 'Licensed Cannabis · Wholesale', title: 'Bulk Menu', place: 'Santa Rosa, California',
     blurb: 'Bulk cannabis from our licensed Santa Rosa facility, priced per pound and ready to move.',
-    contact: 'Jonathan', phone: '+1 (707) 349-2384', email: 'jonathan@2cwproductions.com', web: 'somarosafarms.com',
+    contact: 'Jonathan', phone: '+1 (707) 349-2384', email: 'jonathan@2cwproductions.com',
     notes: 'Prices per pound. Subject to availability. COAs available on request.',
     showBatch: true, showFarm: false, prices: {}, batches: {}
   };
@@ -223,8 +222,7 @@
   const ICON = {
     contact: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/>',
     phone: '<path d="M7 3h3l1.6 4.3-2.1 1.5a11 11 0 0 0 5.7 5.7l1.5-2.1L21 14v3a2.5 2.5 0 0 1-2.6 2.5C10.2 19 5 13.8 4.5 5.6A2.5 2.5 0 0 1 7 3z"/>',
-    email: '<rect x="3" y="6" width="18" height="13" rx="2" fill="none" stroke="#1a1d33" stroke-width="2.2"/><path d="M4 7.5l8 6 8-6" fill="none" stroke="#1a1d33" stroke-width="2.2"/>',
-    web: '<circle cx="12" cy="12" r="8.5" fill="none" stroke="#1a1d33" stroke-width="2"/><ellipse cx="12" cy="12" rx="3.8" ry="8.5" fill="none" stroke="#1a1d33" stroke-width="2"/><path d="M3.5 12h17M5 7.5h14M5 16.5h14" stroke="#1a1d33" stroke-width="1.8"/>'
+    email: '<rect x="3" y="6" width="18" height="13" rx="2" fill="none" stroke="#1a1d33" stroke-width="2.2"/><path d="M4 7.5l8 6 8-6" fill="none" stroke="#1a1d33" stroke-width="2.2"/>'
   };
   const icon = (k) => `<div class="bm-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="#1a1d33">${ICON[k]}</svg></div>`;
   const rivets = '<i class="bm-rv a"></i><i class="bm-rv b"></i><i class="bm-rv c"></i><i class="bm-rv d"></i>';
@@ -342,7 +340,7 @@
       ${groups.length ? `<div><div class="bm-h">${esc(t(L.prices))}</div><div class="bm-hint">${esc(t(L.pricesHint))}</div><div class="bm-prices">${prices}</div></div>` : ''}
       <div><div class="bm-h">${esc(t(L.batches))}</div>${secs ? `<div class="bm-hint">${esc(t(L.batchHint))}</div>${secs}` : `<div class="bm-hint">${esc(t(L.nothing))}</div>`}</div>
       <div><div class="bm-h">${esc(t(L.details))}</div><div class="bm-form">
-        ${field('brand')}${field('title')}${field('kicker', true)}${field('place')}${field('contact')}${field('phone')}${field('email')}${field('web')}
+        ${field('brand')}${field('title')}${field('kicker', true)}${field('place')}${field('contact')}${field('phone')}${field('email')}
         ${field('blurb', true, true)}${field('notes', true, true)}
         <label class="bm-opt"><input type="checkbox" data-o="showBatch" ${s.showBatch ? 'checked' : ''}> ${esc(t(L.showBatch))}</label>
         <label class="bm-opt"><input type="checkbox" data-o="showFarm" ${s.showFarm ? 'checked' : ''}> ${esc(t(L.showFarm))}</label>
@@ -398,7 +396,7 @@
         }).join('')}</tbody></table></div>`;
     }).join('');
     const cats = secs.map((v) => v.x.menu).join(' · ');
-    const contact = [['contact', 'Contact', s.contact], ['phone', 'Phone', s.phone], ['email', 'Email', s.email], ['web', 'Web', s.web]]
+    const contact = [['contact', 'Contact', s.contact], ['phone', 'Phone', s.phone], ['email', 'Email', s.email]]
       .filter(([, , v]) => String(v || '').trim())
       .map(([k, l, v]) => `<div class="bm-ci">${icon(k)}<div><b>${l}</b><span>${esc(v)}</span></div></div>`).join('');
     return `<div class="bm-menu"><div class="bm-frame">

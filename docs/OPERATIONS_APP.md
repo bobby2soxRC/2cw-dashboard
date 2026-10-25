@@ -813,7 +813,7 @@ trim, A+, Sugar, Shake); then in **Batches** untick any batch to leave off,
 or change a batch's **Available** lbs (starts at what's on hand) or its own
 **$/lb** (starts at the category price). A batch with no price shows
 "Call"; one set to 0 lb drops off. **Menu text** edits the brand, title,
-location, description, contact (name, phone, email, web), fine print, and
+location, description, contact (name, phone, email), fine print, and
 whether to show the batch # (last 6 of the UID) and farm. The preview
 updates as you type; **Generate PDF** draws one tall page (html2canvas +
 jsPDF, like `menu.html`) — the share sheet on phones, a download elsewhere.
