@@ -50,6 +50,7 @@ const APP_SHELL = [
   '/day_plan.js',
   '/metrc_transfers.js',
   '/bulk_menu.js',
+  '/flower_yield.js',
   '/ops_data.js',
   '/preroll_queue.js',
   '/drying_services.js',

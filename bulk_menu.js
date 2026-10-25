@@ -2,7 +2,9 @@
 // Inventory (☰ Bulk menu). Pick the sections, untick batches to leave out,
 // change a batch's pounds, set a price per pound for each category (Flower,
 // Smalls, each kind of trim…) or for one batch, and Generate PDF draws the
-// menu in the Soma Rosa Farms flyer style.
+// menu in the Soma Rosa Farms flyer style. "Flower — 5-day lead" offers the
+// A flower the bucked and on-stem stock should trim out to (Raw Inventory's
+// estimate, flower_yield.js), for material trimmed to order.
 //
 // The prices, batch changes and menu text are shared: one operations_forms
 // row (station_key 'raw_inventory_menu', fixed id), saved as you type, so the
@@ -42,6 +44,10 @@
     email:    { en: 'Email', es: 'Correo' },
     notes:    { en: 'Fine print', es: 'Letra pequeña' },
     showFarm: { en: 'Show farm', es: 'Mostrar rancho' },
+    leadDays: { en: 'Lead time (days)', es: 'Tiempo de entrega (días)' },
+    estA:     { en: 'Est. A flower', es: 'Flor A est.' },
+    held:     { en: 'On hold — left off unless ticked', es: 'En espera — fuera a menos que se marque' },
+    leadHint: { en: 'Available starts at the estimated A flower; change it to what you want to offer.', es: 'Disponible empieza con la flor A estimada; cámbielo a lo que quiera ofrecer.' },
     preview:  { en: 'Preview', es: 'Vista previa' },
     saving:   { en: 'Saving…', es: 'Guardando…' },
     saved:    { en: 'Saved — shared with everyone who makes a menu', es: 'Guardado — compartido con todos los que hacen un menú' },
@@ -56,6 +62,8 @@
   // are what the customer reads, so English only.
   const SECTIONS = [
     { k: 'flower', l: { en: 'Flower', es: 'Flor' }, menu: 'Flower', desc: 'Finished flower, priced per pound' },
+    { k: 'lead', l: { en: 'Flower — 5-day lead', es: 'Flor — 5 días' }, menu: 'Flower · {d}-Day Lead',
+      desc: 'Estimated A flower, trimmed to order from bucked and on-stem stock and ready in about {d} days. Final weight confirmed at trim.' },
     { k: 'smalls', l: { en: 'Smalls', es: 'Smalls' }, menu: 'Smalls', desc: 'Small buds, trimmed' },
     { k: 'trim', l: { en: 'Trim', es: 'Recorte' }, menu: 'Trim & Shake', desc: 'Trim, sugar trim and shake' },
     { k: 'bucked', l: { en: 'Bucked', es: 'Desvarado' }, menu: 'Bucked Flower', desc: 'Bucked off the stem, untrimmed' },
@@ -73,16 +81,19 @@
     'trim:sugar_trim': { l: { en: 'Sugar trim', es: 'Recorte azucarado' }, menu: 'Sugar Trim' },
     'trim:shake': { l: { en: 'Shake', es: 'Shake' }, menu: 'Shake' }
   };
+  const leadDays = () => (Number(s.leadDays) > 0 ? Number(s.leadDays) : 5);
+  const secMenu = (x) => x.menu.replace('{d}', leadDays());
+  const secDesc = (x) => x.desc.replace('{d}', leadDays());
   const groupOf = (r) => (r.tab !== 'trim' ? r.tab : r.type === 'tBuck' ? 'trim:bucking' : `trim:${r.cat || 'trim'}`);
   const groupLabel = (g) => (GROUPS[g] ? t(GROUPS[g].l) : SECTION[g] ? t(SECTION[g].l) : g.replace(/^trim:/, '').replace(/_/g, ' '));
-  const groupMenu = (g) => (GROUPS[g] ? GROUPS[g].menu : SECTION[g] ? SECTION[g].menu : g.replace(/^trim:/, '').replace(/_/g, ' '));
+  const groupMenu = (g) => (GROUPS[g] ? GROUPS[g].menu : SECTION[g] ? secMenu(SECTION[g]) : g.replace(/^trim:/, '').replace(/_/g, ' '));
 
   const DEFAULTS = {
     brand: 'Soma Rosa Farms', kicker: 'Licensed Cannabis · Wholesale', title: 'Bulk Menu', place: 'Santa Rosa, California',
     blurb: 'Bulk cannabis from our licensed Santa Rosa facility, priced per pound and ready to move.',
     contact: 'Jonathan', phone: '+1 (707) 349-2384', email: 'jonathan@2cwproductions.com',
     notes: 'Prices per pound. Subject to availability. COAs available on request.',
-    showFarm: false, prices: {}, batches: {}
+    showFarm: false, leadDays: 5, prices: {}, batches: {}
   };
 
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -245,10 +256,11 @@
     clearTimeout(saveTimer);
     saveTimer = null;
     // Batches that aren't on hand any more drop out.
-    const live = new Set(opts.rows.map((r) => r.key));
+    const byKey = new Map(opts.rows.map((r) => [r.key, r]));
     Object.keys(s.batches).forEach((k) => {
       const b = s.batches[k];
-      if (!live.has(k) || (!b.off && b.lb == null && b.price == null)) delete s.batches[k];
+      const r = byKey.get(k);
+      if (!r || ((b.off == null || b.off === !!r.defaultOff) && b.lb == null && b.price == null)) delete s.batches[k];
     });
     const now = new Date().toISOString();
     const { error } = await opts.client.from('operations_forms').upsert({
@@ -271,7 +283,9 @@
   const priceOf = (r) => { const b = batch(r.key); return b.price != null ? b.price : s.prices[groupOf(r)] != null ? s.prices[groupOf(r)] : null; };
   const rowsIn = (k) => opts.rows.filter((r) => r.tab === k)
     .sort((a, b) => groupMenu(groupOf(a)).localeCompare(groupMenu(groupOf(b))) || (a.strain || '').localeCompare(b.strain || '') || a.date.localeCompare(b.date));
-  const onMenu = (r) => !batch(r.key).off && availOf(r) > 0.005;
+  // Held stock (quality or an order) starts off the menu.
+  const isOff = (r) => { const b = batch(r.key); return b.off != null ? b.off : !!r.defaultOff; };
+  const onMenu = (r) => !isOff(r) && availOf(r) > 0.005;
   // The menu's lines: a section's batches added up by strain and type (and
   // price, when batches of one strain are priced differently).
   function menuLines(list) {
@@ -289,11 +303,20 @@
 
   // ── Builder ───────────────────────────────────────────────────────────────
   async function open(o) {
-    opts = o;
+    // Held stock (for quality or an order) starts off the menu. Lead-time
+    // flower: each bucked / on-stem batch as its estimated A flower.
+    const held = (r) => r.status === 'sHoldQ' || r.status === 'sHoldO';
+    const rows = o.rows.map((r) => (held(r) ? { ...r, defaultOff: true } : r));
+    const lead = rows.filter((r) => (r.tab === 'onstem' || r.tab === 'bucked') && r.est && r.est.lb > 0.005).map((r) => ({
+      ...r, key: `lead:${r.key}`, tab: 'lead', from: r.tab, srcLb: r.lb, lb: r.est.lb, wet: false }));
+    opts = { ...o, rows: [...rows, ...lead] };
+    o = opts;
     injectAssets();
-    // From a tab, that section; from All, every section with stock but Drying.
+    // From a tab, that section (On-Stem / Bucked add their lead-time flower);
+    // from All, every section with stock but Drying, and the lead-time flower
+    // instead of the On-Stem and Bucked it's made from, so nothing's offered twice.
     const has = (k) => o.rows.some((r) => r.tab === k);
-    sel = new Set(SECTION[o.tab] ? [o.tab] : SECTIONS.filter((x) => x.k !== 'drying' && has(x.k)).map((x) => x.k));
+    sel = new Set(o.tab === 'onstem' || o.tab === 'bucked' ? [o.tab, 'lead'] : SECTION[o.tab] ? [o.tab] : SECTIONS.filter((x) => !['drying', 'onstem', 'bucked'].includes(x.k) && has(x.k)).map((x) => x.k));
     ov = document.createElement('div');
     ov.className = 'bm-ov';
     ov.innerHTML = `<div class="bm-bar"><h2>${esc(t(L.head))}</h2>
@@ -334,13 +357,16 @@
       if (!list.length) return '';
       return `<div class="bm-sec"><div class="bm-sech"><b>${esc(t(x.l))}</b>
           <button type="button" class="mini" data-all="${x.k}">${esc(t(L.all))}</button><button type="button" class="mini" data-none="${x.k}">${esc(t(L.none))}</button></div>
-        <table class="bm-tbl"><thead><tr><th></th><th>${esc(t(L.batch))}</th><th class="num">${esc(t(L.onHand))}</th><th>${esc(t(L.avail))}</th><th>${esc(t(L.perLb))}</th></tr></thead><tbody>${
+        ${x.k === 'lead' ? `<div class="bm-hint" style="margin:8px 10px">${esc(t(L.leadHint))}</div>` : ''}<table class="bm-tbl"><thead><tr><th></th><th>${esc(t(L.batch))}</th><th class="num">${esc(t(L.onHand))}</th><th>${esc(t(L.avail))}</th><th>${esc(t(L.perLb))}</th></tr></thead><tbody>${
         list.map((r) => {
           const b = batch(r.key), gp = s.prices[groupOf(r)];
-          return `<tr class="${b.off ? 'off' : ''}" data-row="${esc(r.key)}"><td><input type="checkbox" data-inc="${esc(r.key)}" ${b.off ? '' : 'checked'}></td>
-            <td><b>${esc(r.strain || '—')}</b><div class="sm">${esc(r.uid || '—')}</div><div class="sm">${esc([opts.typeLabel(r), r.farm].filter(Boolean).join(' · '))}</div></td>
-            <td class="num">${fmtNum(r.lb)}${r.wet ? ` <span class="sm">${esc(t(L.wet))}</span>` : ''}</td>
-            <td><input class="bm-in" type="number" inputmode="decimal" min="0" step="any" data-lb="${esc(r.key)}" placeholder="${esc(fmtNum(r.lb))}" value="${b.lb != null ? b.lb : ''}"></td>
+          const off = isOff(r), lead = r.tab === 'lead';
+          return `<tr class="${off ? 'off' : ''}" data-row="${esc(r.key)}"><td><input type="checkbox" data-inc="${esc(r.key)}" ${off ? '' : 'checked'}></td>
+            <td><b>${esc(r.strain || '—')}</b><div class="sm">${esc(r.uid || '—')}</div><div class="sm">${esc([lead ? t(SECTION[r.from].l) : '', opts.typeLabel(r), r.farm].filter(Boolean).join(' · '))}</div>${
+              lead ? `<div class="sm">${esc(t(L.estA))} ≈ ${fmtNum(r.lb, 1)} lb · ${esc(opts.estNote(r.est, r.strain))}</div>` : ''}${
+              r.defaultOff ? `<div class="sm" style="color:var(--gold)">${esc(t(L.held))}</div>` : ''}</td>
+            <td class="num">${fmtNum(lead ? r.srcLb : r.lb)}${r.wet ? ` <span class="sm">${esc(t(L.wet))}</span>` : ''}</td>
+            <td><input class="bm-in" type="number" inputmode="decimal" min="0" step="any" data-lb="${esc(r.key)}" placeholder="${esc(fmtNum(r.lb, lead ? 1 : 2))}" value="${b.lb != null ? b.lb : ''}"></td>
             <td><span class="bm-money"><input class="bm-in" type="number" inputmode="decimal" min="0" step="any" data-price="${esc(r.key)}" placeholder="${gp != null ? esc(gp) : ''}" value="${b.price != null ? b.price : ''}"></span></td></tr>`;
         }).join('')}</tbody></table></div>`;
     }).join('');
@@ -353,6 +379,7 @@
       <div><div class="bm-h">${esc(t(L.details))}</div><div class="bm-form">
         ${field('brand')}${field('title')}${field('kicker', true)}${field('place')}${field('contact')}${field('phone')}${field('email')}
         ${field('blurb', true, true)}${field('notes', true, true)}
+        <label>${esc(t(L.leadDays))}<input class="bm-in" type="number" inputmode="numeric" min="1" step="1" data-f="leadDays" value="${esc(s.leadDays)}"></label>
         <label class="bm-opt"><input type="checkbox" data-o="showFarm" ${s.showFarm ? 'checked' : ''}> ${esc(t(L.showFarm))}</label>
       </div></div>`;
 
@@ -389,24 +416,24 @@
     const date = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     const secs = SECTIONS.filter((x) => sel.has(x.k)).map((x) => ({ x, list: rowsIn(x.k).filter(onMenu) })).filter((v) => v.list.length);
     const body = secs.map(({ x, list }) => {
-      const multi = new Set(list.map(groupOf)).size > 1 || x.k === 'trim';
+      const multi = new Set(list.map(groupOf)).size > 1 || x.k === 'trim', lead = x.k === 'lead';
       const wet = list.some((r) => r.wet);
       const total = list.reduce((a, r) => a + availOf(r), 0);
       const lines = menuLines(list), strains = new Set(lines.map((x) => x.strain.toLowerCase())).size;
       return `<div class="bm-pnl bm-secp">${rivets}
-        <div class="bm-sh"><div class="bm-ban"><i class="bm-rv a"></i><i class="bm-rv b"></i>${esc(x.menu)}</div>
-          <div class="bm-tag">${lbs(total)} lb${wet ? ' wet' : ''} · ${strains} ${strains === 1 ? 'strain' : 'strains'}</div></div>
-        <div class="bm-desc">${esc(x.desc)}</div>
+        <div class="bm-sh"><div class="bm-ban"><i class="bm-rv a"></i><i class="bm-rv b"></i>${esc(secMenu(x))}</div>
+          <div class="bm-tag">${lead ? '≈ ' : ''}${lbs(total)} lb${wet ? ' wet' : ''}${lead ? ' est.' : ''} · ${strains} ${strains === 1 ? 'strain' : 'strains'}</div></div>
+        <div class="bm-desc">${esc(secDesc(x))}</div>
         <table class="bm-t"><thead><tr><th></th><th>Strain</th>${multi ? '<th>Type</th>' : ''}${s.showFarm ? '<th>Farm</th>' : ''}
           <th class="r">Available</th><th class="r">Price / lb</th></tr></thead><tbody>${lines.map((x) => {
           const p = x.price;
           return `<tr><td class="ck">✓</td><td class="st">${esc(x.strain)}</td>${multi ? `<td class="ty">${esc(groupMenu(x.g))}</td>` : ''}${
             s.showFarm ? `<td class="fm">${esc(x.farms.join(', ') || '—')}</td>` : ''}
-            <td class="r lb">${lbs(x.lb)} <small>lb${x.wet ? ' wet' : ''}</small></td>
+            <td class="r lb">${lead ? '≈ ' : ''}${lbs(x.lb)} <small>lb${x.wet ? ' wet' : ''}${lead ? ' est.' : ''}</small></td>
             <td class="r pr${p == null ? ' call' : ''}">${p == null ? 'Call' : `${money(p)}<small> /lb</small>`}</td></tr>`;
         }).join('')}</tbody></table></div>`;
     }).join('');
-    const cats = secs.map((v) => v.x.menu).join(' · ');
+    const cats = secs.map((v) => (v.x.k === 'lead' ? `${leadDays()}-Day Flower` : v.x.menu)).join(' · ');
     const contact = [['contact', 'Contact', s.contact], ['phone', 'Phone', s.phone], ['email', 'Email', s.email]]
       .filter(([, , v]) => String(v || '').trim())
       .map(([k, l, v]) => `<div class="bm-ci">${icon(k)}<div><b>${l}</b><span>${esc(v)}</span></div></div>`).join('');
