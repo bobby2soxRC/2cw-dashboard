@@ -149,6 +149,7 @@
 <script src="/operations_stations.js"></script>
 <script src="/ops_common.js"></script>
 <script src="/ops_data.js"></script>
+<script src="/flower_yield.js"></script>
 <script src="/bulk_menu.js"></script>
 <script>
 // Raw Materials Inventory — what's on hand at each stage, built from the
@@ -232,6 +233,16 @@
     tBuck:    { en: 'Bucking', es: 'Desvarado' },
     tMixed:   { en: 'Mixed Trim Package', es: 'Paquete de recorte mixto' },
     tTake:    { en: 'Take Down', es: 'Bajada' },
+    // A-flower estimates (flower_yield.js)
+    colEst:   { en: 'Est. A Flower', es: 'Flor A est.' },
+    estBuck:  { en: 'Bucking', es: 'Desvarado' },
+    estTrim:  { en: 'Trim', es: 'Corte' },
+    estBatch: { en: 'this lot', es: 'este lote' },
+    estLots:  { en: 'lots', es: 'lotes' },
+    estLot:   { en: 'lot', es: 'lote' },
+    estAll:   { en: 'all lots', es: 'todos los lotes' },
+    estDef:   { en: 'standard, no data yet', es: 'estándar, sin datos aún' },
+    estDone:  { en: 'already weighed', es: 'ya pesado' },
     // History view
     vOnHand:  { en: 'On hand', es: 'Disponible' },
     vHistory: { en: 'History', es: 'Historial' },
@@ -345,7 +356,7 @@
   // ever had, linked to what it came from and where it went.
   let rows = [], hist = [], marks = {}, recs = new Map();
   async function load() {
-    const [intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, pouches, mfg, biomass, mixed, shipped, bq, tq, codes, fac, mk, paper] = await Promise.all([
+    const [intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, pouches, mfg, biomass, mixed, shipped, bq, tq, codes, fac, mk, paper, handPast, ref] = await Promise.all([
       loadSubmitted('intake_wet'), loadSubmitted('dry_check'), loadSubmitted('buck'), loadSubmitted('hand_trim'),
       loadSubmitted('machine_trim'), loadSubmitted('smalls_trim'), loadSubmitted('fresh_frozen'),
       loadSubmitted('preroll_production'), loadSubmitted('pouch_production'), loadSubmitted('mfg_output'), loadSubmitted('biomass_request'),
@@ -353,7 +364,8 @@
       loadBuckingQueue(), loadTrimQueue(), getRefCodes(),
       client.from('canix_facilities').select('license_number,farm_group').then((r) => r.data || []),
       getMarks(),
-      client.from('operations_forms').select('id').eq('owner_user', 'paper_import').limit(10000).then((r) => r.data || [])
+      client.from('operations_forms').select('id').eq('owner_user', 'paper_import').limit(10000).then((r) => r.data || []),
+      loadSubmitted('hand_trim_history'), loadReference()
     ]);
     pidCodes = (codes || []).filter((r) => r.kind === 'pid');
     facilities = fac;
@@ -364,6 +376,13 @@
     // 'paper_import') still trace lots, but their output isn't stock any more.
     const paperIds = new Set(paper.map((r) => r.id));
     rows = build(d).filter((r) => !paperIds.has(r.recId));
+    // Estimated A flower from what's on-stem or bucked, from every Bucking
+    // and Hand Trim so far (paper and Past Records included).
+    const model = FlowerYield.buildModel({ bucks, trims: [...hand, ...handPast], strains: (ref && ref.strains) || [] });
+    rows.filter((r) => r.tab === 'onstem' || r.tab === 'bucked').forEach((r) => {
+      r.est = FlowerYield.estimate(model, { stage: r.tab, strain: r.strain, uid: r.lotUid || r.uid, lb: r.lb,
+        startLb: r.tab === 'bucked' ? r.buckedLb : null, doneLb: r.tab === 'bucked' ? r.doneLb : 0 });
+    });
     hist = buildHistory(d, rows, paperIds);
   }
 
@@ -530,7 +549,7 @@
       const lb = Number(l.buckedFlowerLb || 0) - Number(l.trimmedLb || 0);
       // A lot held as bucked flower is under its own bucked tag once it has one.
       add('bucked', l, { key: `${l.buckDraftId || l.id}:bucked`, recId: l.buckDraftId || l.id, uid: normUid(l.newBuckedUid || l.sourceUid),
-        lotUid: normUid(l.sourceUid), lb, status: l.inProgress ? 'sBucking' : l.draftId ? 'sTrimming' : 'sToTrim', pill: l.inProgress || l.draftId ? 'work' : 'go',
+        lotUid: normUid(l.sourceUid), lb, buckedLb: Number(l.buckedFlowerLb || 0), doneLb: Number(l.trimmedLb || 0), status: l.inProgress ? 'sBucking' : l.draftId ? 'sTrimming' : 'sToTrim', pill: l.inProgress || l.draftId ? 'work' : 'go',
         type: 'tBuck', ...origin(l, l.sourceUid) });
     });
 
@@ -633,6 +652,13 @@
     const x = e.key && histByKey(e.key);
     return `${x ? t(L[x.tab]) : e.customer || e.what} ${fmtNum(e.lb)} lb`;
   }).join(', ');
+  // How an estimate was made: "Bucking 55% (Zoap, 2 lots) × Trim 64% (all lots, 16)".
+  function estNote(est, strain) {
+    if (!est) return '';
+    const basis = (x) => x.basis === 'batch' ? t(L.estBatch) : x.basis === 'strain' ? `${strain}, ${x.lots} ${t(x.lots === 1 ? L.estLot : L.estLots)}`
+      : x.basis === 'all' ? `${t(L.estAll)}, ${x.lots}` : t(L.estDef);
+    return est.steps.map((x) => `${t(x.stage === 'buck' ? L.estBuck : L.estTrim)} ${Math.round(x.pct * 100)}% (${basis(x)})`).join(' × ');
+  }
   const visible = (r) => H() || showUsed || !isUsed(r);
   function matches(r) {
     if (!query) return true;
@@ -663,7 +689,10 @@
     { k: 'date', l: L.colSince, v: (r) => r.date },
     { k: 'days', l: L.colDays, v: days, num: true, onhand: true }
   ];
-  const colsFor = () => COLS.filter((c) => (!c.allOnly || tab === 'all') && !(c.onhand && H()) && !(c.hist && !H()));
+  // Est. A Flower right after Lbs, on the tabs it applies to.
+  COLS.splice(COLS.findIndex((c) => c.k === 'lb') + 1, 0, { k: 'est', l: L.colEst, v: (r) => (r.est ? r.est.lb : null), num: true, onhand: true, estTabs: true });
+  const colsFor = () => COLS.filter((c) => (!c.allOnly || tab === 'all') && !(c.onhand && H()) && !(c.hist && !H()) &&
+    !(c.estTabs && !['all', 'onstem', 'bucked'].includes(tab)));
 
   function current() {
     const col = colsFor().find((c) => c.k === sortKey) || COLS.find((c) => c.k === 'date');
@@ -704,7 +733,7 @@
   document.getElementById('csv').onclick = exportCsv;
   // Bulk menu (bulk_menu.js): a priced PDF of what's on hand, starting from this tab.
   document.getElementById('menuBtn').onclick = () => BulkMenu.open({
-    rows: rows.filter((r) => !isUsed(r)), tab, client, who, typeLabel
+    rows: rows.filter((r) => !isUsed(r)), tab, client, who, typeLabel, estNote
   });
   function syncUrl() {
     const u = new URL(location.href);
@@ -754,7 +783,7 @@
       tr.onclick = () => { const k = tr.dataset.farm; if (closedFarms.has(k)) closedFarms.delete(k); else closedFarms.add(k); render(); };
     });
     board.querySelectorAll('th[data-k]').forEach((th) => {
-      th.onclick = () => { if (sortKey === th.dataset.k) sortDir = -sortDir; else { sortKey = th.dataset.k; sortDir = ['lb', 'startLb', 'left', 'days', 'date'].includes(th.dataset.k) ? -1 : 1; } render(); };
+      th.onclick = () => { if (sortKey === th.dataset.k) sortDir = -sortDir; else { sortKey = th.dataset.k; sortDir = ['lb', 'startLb', 'left', 'days', 'date'].includes(th.dataset.k) || th.dataset.k === 'est' ? -1 : 1; } render(); };
     });
     board.querySelectorAll('.mini[data-key]').forEach((b) => { b.onclick = () => toggleMark(b); });
     board.querySelectorAll('tr[data-row]').forEach((tr) => {
@@ -812,7 +841,7 @@
       date: esc(fmtDate(r.date))
     };
   }
-  const CLS = { uid: 'mono uid', strain: 'strain', code: 'mono', license: 'mono', cid: 'mono', lb: 'num', startLb: 'num', left: 'num', date: 'mono', days: 'num', to: 'to' };
+  const CLS = { uid: 'mono uid', strain: 'strain', code: 'mono', license: 'mono', cid: 'mono', lb: 'num', est: 'num', startLb: 'num', left: 'num', date: 'mono', days: 'num', to: 'to' };
 
   function rowHtml(r) {
     const used = isUsed(r), dd = days(r);
@@ -820,7 +849,8 @@
       ...baseCells(r),
       status: `<span class="pill ${used ? 'used' : r.pill}">${esc(statusLabel(r))}</span>${r.used.length ? `<div class="small" title="${esc(r.used.map(usedText).join('\n'))}">${fmtNum(r.startLb)} lb − ${esc(t(L.took))}</div>` : ''}`,
       lb: `${fmtNum(r.lb)}${r.wet ? ` <span class="small">${esc(t(L.wet))}</span>` : ''}`,
-      days: dd == null ? '—' : `<span class="age ${dd >= 30 ? 'old' : ''}">${dd}</span>`
+      days: dd == null ? '—' : `<span class="age ${dd >= 30 ? 'old' : ''}">${dd}</span>`,
+      est: r.est ? `<span title="${esc(estNote(r.est, r.strain) + (r.doneLb > 0.005 ? ` − ${fmtNum(r.doneLb)} lb ${t(L.estDone)}` : ''))}">≈ ${fmtNum(r.est.lb, 1)}</span> <span class="small">${Math.round(r.est.pct * 100)}%</span>` : ''
     };
     const mark = canMark ? `<td>${marks[r.key]
       ? `<button type="button" class="mini" data-key="${esc(r.key)}" data-on="1" title="${esc(`${marks[r.key].by || ''} · ${marks[r.key].at ? new Date(marks[r.key].at).toLocaleString() : ''}`)}">${esc(t(L.restore))}</button>`
@@ -904,9 +934,10 @@
           r.from.map((k) => { const x = histByKey(k); return x ? `${t(L[x.tab])} ${x.uid}` : ''; }).join('; '), r.to.map(edge).join('; '),
           typeLabel(r), r.location, r.date])]
       : [['Category', 'Status', 'UID', 'UID is', 'Farm UID(s)', 'Strain', 'Farm', 'Farm Code', 'License', 'CID',
-          'Lbs', 'Weight', 'Started Lbs', 'Taken By', 'Type', 'Location', 'Since', 'Days'],
+          'Lbs', 'Weight', 'Est A Flower Lbs', 'Est Basis', 'Started Lbs', 'Taken By', 'Type', 'Location', 'Since', 'Days'],
         ...list.map((r) => [t(L[r.tab]), statusLabel(r), r.uid, r.ownUid ? 'package' : 'lot', (r.farmUids || []).join(' '),
-          r.strain, r.farm, r.code, r.license, r.cid, r.lb.toFixed(2), r.wet ? 'wet' : 'dry', r.startLb.toFixed(2), r.used.map(usedText).join('; '),
+          r.strain, r.farm, r.code, r.license, r.cid, r.lb.toFixed(2), r.wet ? 'wet' : 'dry',
+          r.est ? r.est.lb.toFixed(1) : '', estNote(r.est, r.strain), r.startLb.toFixed(2), r.used.map(usedText).join('; '),
           typeLabel(r), r.location, r.date, days(r) == null ? '' : days(r)])];
     const lines = table.map((row) => row.map(cell).join(','));
     const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });

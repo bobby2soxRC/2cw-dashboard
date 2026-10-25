@@ -234,7 +234,11 @@ leave out batches, change a batch's lbs, set $/lb per category (trim by
 kind) or per batch, and Generate PDF draws a menu in the Soma Rosa Farms
 flyer style. Prices and batch changes are shared in the `operations_forms`
 row `raw_inventory_menu`. No SQL. Details: "Bulk menu" in
-`docs/OPERATIONS_APP.md`.
+`docs/OPERATIONS_APP.md`. Since 2026-10-25 it has a **Flower — 5-day lead**
+section: bucked / on-stem stock as estimated A flower, from Raw Inventory's
+new Est. A Flower column (`flower_yield.js`: yields learned per lot, strain
+and overall from submitted Bucking and Hand Trim; tests:
+`node scripts/test_flower_yield.js`).
 
 ## Parked work
 

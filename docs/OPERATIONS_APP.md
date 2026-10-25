@@ -814,7 +814,37 @@ or change a batch's **Available** lbs (starts at what's on hand) or its own
 **$/lb** (starts at the category price). A batch with no price shows
 "Call"; one set to 0 lb drops off. **Menu text** edits the brand, title,
 location, description, contact (name, phone, email), fine print, and
-whether to show the batch # (last 6 of the UID) and farm. The preview
+whether to show the farm. The menu adds batches up: one line per strain and
+type (e.g. Toad Venom under Fresh Frozen, all its batches' lbs), split only
+when its batches are priced differently.
+
+**Flower — 5-day lead** (a bulk menu section) offers the A flower the
+bucked and on-stem stock should trim out to, for material trimmed to order:
+each On-Stem and Bucked row's **Est. A Flower** (below), combined per
+strain as "≈ 225 lb est.", with its own $/lb category. The lead time is a
+Menu text setting (default 5 days). Stock on hold (quality or order) starts
+unticked here and in the On-Stem section. From All the menu starts with this
+section instead of On-Stem and Bucked, so the same stock isn't offered
+twice; tick them to add them anyway. Available starts at the estimate and
+can be changed per batch.
+
+**Est. A Flower** (`flower_yield.js`, column on the All / On-Stem / Bucked
+tabs and in the CSV) is the finished A flower a batch should give. Two
+yields are learned from every submitted Bucking (`buckedFlowerLb ÷
+startingDryLb`) and Hand Trim / Hand Trim — Past Records
+(`finishedFlowerLb ÷ startingBuckedLb`), paper imports included; on-stem
+gets both, bucked just trim (from the bucked weight, less flower already
+weighed on an open Hand Trim page). Records are added up per lot first
+(strain + the UID's last 4 digits — paper records often split one lot over
+several forms or repeat one) and a lot only counts with both weights and a
+believable yield (bucking 20–90 %, trim 25–95 %). Each yield starts from the
+all-lots average (pooled by pounds), moves toward the strain's own lots as
+they add up (its lbs vs 100 lb of the average; Strain Library aliases
+match), and toward this very lot's earlier records when part of it was
+already bucked or trimmed (its lbs vs 20 lb of the strain figure). Hover the
+number for how it was worked out. With October 2026's data: bucking ≈ 55 %
+(22 lots), trim ≈ 64 % (16 lots), so ≈ 35 lb of A flower per 100 lb
+on-stem. Tests: `node scripts/test_flower_yield.js`. The preview
 updates as you type; **Generate PDF** draws one tall page (html2canvas +
 jsPDF, like `menu.html`) — the share sheet on phones, a download elsewhere.
 Everything but the sections is saved as you type to one shared
