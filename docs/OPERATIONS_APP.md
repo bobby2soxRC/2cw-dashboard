@@ -814,7 +814,9 @@ or change a batch's **Available** lbs (starts at what's on hand) or its own
 **$/lb** (starts at the category price). A batch with no price shows
 "Call"; one set to 0 lb drops off. **Menu text** edits the brand, title,
 location, description, contact (name, phone, email), fine print, and
-whether to show the batch # (last 6 of the UID) and farm. The preview
+whether to show the farm. The menu adds batches up: one line per strain and
+type (e.g. Toad Venom under Fresh Frozen, all its batches' lbs), split only
+when its batches are priced differently. The preview
 updates as you type; **Generate PDF** draws one tall page (html2canvas +
 jsPDF, like `menu.html`) — the share sheet on phones, a download elsewhere.
 Everything but the sections is saved as you type to one shared

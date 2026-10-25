@@ -41,7 +41,6 @@
     phone:    { en: 'Phone', es: 'Teléfono' },
     email:    { en: 'Email', es: 'Correo' },
     notes:    { en: 'Fine print', es: 'Letra pequeña' },
-    showBatch:{ en: 'Show batch # (end of the UID)', es: 'Mostrar # de lote (final del UID)' },
     showFarm: { en: 'Show farm', es: 'Mostrar rancho' },
     preview:  { en: 'Preview', es: 'Vista previa' },
     saving:   { en: 'Saving…', es: 'Guardando…' },
@@ -83,14 +82,13 @@
     blurb: 'Bulk cannabis from our licensed Santa Rosa facility, priced per pound and ready to move.',
     contact: 'Jonathan', phone: '+1 (707) 349-2384', email: 'jonathan@2cwproductions.com',
     notes: 'Prices per pound. Subject to availability. COAs available on request.',
-    showBatch: true, showFarm: false, prices: {}, batches: {}
+    showFarm: false, prices: {}, batches: {}
   };
 
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const numOrNull = (v) => { const s = String(v == null ? '' : v).trim(); if (!s) return null; const n = Number(s); return Number.isFinite(n) && n >= 0 ? n : null; };
   const lbs = (n) => Number(n).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 1 });
   const money = (n) => '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
-  const batchNo = (u) => { const s = String(u || '').replace(/\s+/g, ''); return s ? s.slice(-6) : '—'; };
 
   let ov = null, opts = null, s = null, sel = null, saveTimer = null;
 
@@ -185,7 +183,6 @@
     .bm-t .ck{color:#ec3f9e;font-weight:700;width:26px;padding-right:0;font-size:22px}
     .bm-t .st{font-weight:700;color:#fff}
     .bm-t .ty{font-size:17px;color:#cdd3e6}
-    .bm-t .bn{font-size:16px;color:#9fb0d8;letter-spacing:.06em}
     .bm-t .fm{font-size:17px;color:#cdd3e6}
     .bm-t .lb{font-weight:700}
     .bm-t .lb small{font-size:14px;color:#9fb0d8;font-weight:400}
@@ -195,7 +192,7 @@
     .bm-foot{display:grid;grid-template-columns:1.05fr 1.2fr .6fr;gap:10px}
     .bm-foot .bm-pnl{padding:24px 26px;display:flex;flex-direction:column;justify-content:center}
     .bm-quote{display:inline-block;align-self:flex-start;background:linear-gradient(90deg,#d0287f 0%,#ef6f45 55%,#eab84f 100%);border:2px solid #f3d488;color:#151933;
-      font-family:'Rubik',sans-serif;font-weight:900;font-size:36px;letter-spacing:.02em;text-transform:uppercase;padding:6px 20px}
+      font-family:'Rubik',sans-serif;font-weight:900;font-size:32px;letter-spacing:.02em;text-transform:uppercase;padding:6px 18px;white-space:nowrap}
     .bm-quote-t{margin-top:12px;font-size:21px;line-height:1.3;color:#eef0f7}
     .bm-ct{display:grid;gap:12px}
     .bm-ci{display:flex;align-items:center;gap:12px}
@@ -275,6 +272,20 @@
   const rowsIn = (k) => opts.rows.filter((r) => r.tab === k)
     .sort((a, b) => groupMenu(groupOf(a)).localeCompare(groupMenu(groupOf(b))) || (a.strain || '').localeCompare(b.strain || '') || a.date.localeCompare(b.date));
   const onMenu = (r) => !batch(r.key).off && availOf(r) > 0.005;
+  // The menu's lines: a section's batches added up by strain and type (and
+  // price, when batches of one strain are priced differently).
+  function menuLines(list) {
+    const lines = new Map();
+    list.forEach((r) => {
+      const strain = (r.strain || '—').trim(), g = groupOf(r), p = priceOf(r);
+      const k = [strain.toLowerCase(), g, p].join('|');
+      if (!lines.has(k)) lines.set(k, { strain, g, price: p, lb: 0, wet: false, farms: [] });
+      const x = lines.get(k);
+      x.lb += availOf(r); x.wet = x.wet || !!r.wet;
+      if (r.farm && !x.farms.includes(r.farm)) x.farms.push(r.farm);
+    });
+    return [...lines.values()];
+  }
 
   // ── Builder ───────────────────────────────────────────────────────────────
   async function open(o) {
@@ -342,7 +353,6 @@
       <div><div class="bm-h">${esc(t(L.details))}</div><div class="bm-form">
         ${field('brand')}${field('title')}${field('kicker', true)}${field('place')}${field('contact')}${field('phone')}${field('email')}
         ${field('blurb', true, true)}${field('notes', true, true)}
-        <label class="bm-opt"><input type="checkbox" data-o="showBatch" ${s.showBatch ? 'checked' : ''}> ${esc(t(L.showBatch))}</label>
         <label class="bm-opt"><input type="checkbox" data-o="showFarm" ${s.showFarm ? 'checked' : ''}> ${esc(t(L.showFarm))}</label>
       </div></div>`;
 
@@ -382,16 +392,17 @@
       const multi = new Set(list.map(groupOf)).size > 1 || x.k === 'trim';
       const wet = list.some((r) => r.wet);
       const total = list.reduce((a, r) => a + availOf(r), 0);
+      const lines = menuLines(list), strains = new Set(lines.map((x) => x.strain.toLowerCase())).size;
       return `<div class="bm-pnl bm-secp">${rivets}
         <div class="bm-sh"><div class="bm-ban"><i class="bm-rv a"></i><i class="bm-rv b"></i>${esc(x.menu)}</div>
-          <div class="bm-tag">${lbs(total)} lb${wet ? ' wet' : ''} · ${list.length} ${list.length === 1 ? 'batch' : 'batches'}</div></div>
+          <div class="bm-tag">${lbs(total)} lb${wet ? ' wet' : ''} · ${strains} ${strains === 1 ? 'strain' : 'strains'}</div></div>
         <div class="bm-desc">${esc(x.desc)}</div>
-        <table class="bm-t"><thead><tr><th></th><th>Strain</th>${multi ? '<th>Type</th>' : ''}${s.showBatch ? '<th>Batch</th>' : ''}${s.showFarm ? '<th>Farm</th>' : ''}
-          <th class="r">Available</th><th class="r">Price / lb</th></tr></thead><tbody>${list.map((r) => {
-          const p = priceOf(r);
-          return `<tr><td class="ck">✓</td><td class="st">${esc(r.strain || '—')}</td>${multi ? `<td class="ty">${esc(groupMenu(groupOf(r)))}</td>` : ''}${
-            s.showBatch ? `<td class="bn">${esc(batchNo(r.uid))}</td>` : ''}${s.showFarm ? `<td class="fm">${esc(r.farm || '—')}</td>` : ''}
-            <td class="r lb">${lbs(availOf(r))} <small>lb${r.wet ? ' wet' : ''}</small></td>
+        <table class="bm-t"><thead><tr><th></th><th>Strain</th>${multi ? '<th>Type</th>' : ''}${s.showFarm ? '<th>Farm</th>' : ''}
+          <th class="r">Available</th><th class="r">Price / lb</th></tr></thead><tbody>${lines.map((x) => {
+          const p = x.price;
+          return `<tr><td class="ck">✓</td><td class="st">${esc(x.strain)}</td>${multi ? `<td class="ty">${esc(groupMenu(x.g))}</td>` : ''}${
+            s.showFarm ? `<td class="fm">${esc(x.farms.join(', ') || '—')}</td>` : ''}
+            <td class="r lb">${lbs(x.lb)} <small>lb${x.wet ? ' wet' : ''}</small></td>
             <td class="r pr${p == null ? ' call' : ''}">${p == null ? 'Call' : `${money(p)}<small> /lb</small>`}</td></tr>`;
         }).join('')}</tbody></table></div>`;
     }).join('');
