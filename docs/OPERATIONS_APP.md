@@ -804,6 +804,24 @@ allocated (a Smalls Hand Trim or Mixed Trim Package links to the rows it
 made). Status says where it ended: Taken down, Bucked, Trimmed, Shipped,
 Used up, or the On hand status if some is left. CSV adds Came From / Went To.
 
+**Bulk menu** (☰ Bulk menu on the On hand view, `bulk_menu.js`) makes a
+priced PDF menu of what's on hand in the Soma Rosa Farms flyer style. It
+opens on the tab you're on (from All: every section with stock but Drying).
+Pick the **sections**; set a **price per lb by category** (Flower, Smalls,
+Bucked, On-Stem, Fresh Frozen, Drying, and trim by kind: Normal, Bucking
+trim, A+, Sugar, Shake); then in **Batches** untick any batch to leave off,
+or change a batch's **Available** lbs (starts at what's on hand) or its own
+**$/lb** (starts at the category price). A batch with no price shows
+"Call"; one set to 0 lb drops off. **Menu text** edits the brand, title,
+location, description, contact (name, phone, email, web), fine print, and
+whether to show the batch # (last 6 of the UID) and farm. The preview
+updates as you type; **Generate PDF** draws one tall page (html2canvas +
+jsPDF, like `menu.html`) — the share sheet on phones, a download elsewhere.
+Everything but the sections is saved as you type to one shared
+`operations_forms` row (`station_key 'raw_inventory_menu'`, fixed id
+`…0002`), keyed by the inventory row key, so the next person starts from
+the same prices; batches no longer on hand drop out on save. No SQL.
+
 **Material Flow** (`material_flow.html`, hub card `material_flow` directly
 under Operations, since 2026-10-23) is the process map: a chart of every
 form in the order material passes through them (forms as tan boxes, material

@@ -227,6 +227,15 @@ on the form as `fields.weightsConfirmed`; `weightCheckState` /
 back to waiting. No SQL. Details: "Weight sign-off" in
 `docs/OPERATIONS_APP.md`.
 
+### Raw Inventory bulk menu (started 2026-10-25)
+
+**☰ Bulk menu** on `raw_inventory.html` (`bulk_menu.js`): pick sections,
+leave out batches, change a batch's lbs, set $/lb per category (trim by
+kind) or per batch, and Generate PDF draws a menu in the Soma Rosa Farms
+flyer style. Prices and batch changes are shared in the `operations_forms`
+row `raw_inventory_menu`. No SQL. Details: "Bulk menu" in
+`docs/OPERATIONS_APP.md`.
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)
