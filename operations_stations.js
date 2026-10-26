@@ -538,23 +538,23 @@ const OPERATIONS_STATIONS = [
         l: { en: 'Storage Location(s)', es: 'Ubicación(es) de almacenamiento' } },
       { k: 'boxes', t: 'lineitems', req: true,
         l: { en: 'Boxes', es: 'Cajas' },
-        hint: { en: 'One row per box. Weight is the scale reading; the box tare is subtracted for you.',
-                es: 'Una fila por caja. El peso es la lectura de la báscula; la tara de la caja se resta automáticamente.' },
+        hint: { en: 'One row per box. Weight is the net reading — the scale already tares the box.',
+                es: 'Una fila por caja. El peso es la lectura neta — la báscula ya resta la tara de la caja.' },
+        // No tare column since 2026-10-26 (the scale tares each box). Rows
+        // saved before then may carry a `tareLb`; dryWeightLb still takes it
+        // off so those records keep their dry weight if edited.
         cols: [
           { k: 'boxNo', t: 'rownum', l: { en: 'Box #', es: 'Caja #' } },
-          { k: 'tareLb', t: 'number', l: { en: 'Tare (lbs)', es: 'Tara (lbs)' }, min: 0, step: 0.01 },
           { k: 'weight', t: 'number', l: { en: 'Weight (lbs)', es: 'Peso (lbs)' }, min: 0, step: 0.01 }
         ],
         totalCol: 'weight' },
       { k: 'boxCount', t: 'calc', dp: 0,
         calc: (v) => (v.boxes || []).filter((r) => num(r.weight) > 0).length,
         l: { en: 'Total Boxes', es: 'Cajas totales' } },
-      { k: 'totalTareLb', t: 'calc', calc: (v) => (v.boxes || []).reduce((a, r) => a + num(r.tareLb), 0),
-        l: { en: 'Total Tare (lbs)', es: 'Tara total (lbs)' } },
       { k: 'dryWeightLb', t: 'calc',
         calc: (v) => (v.boxes || []).reduce((a, r) => a + num(r.weight) - num(r.tareLb), 0),
         l: { en: 'Total Dry Weight (lbs)', es: 'Peso seco total (lbs)' },
-        hint: { en: 'Scale weight minus box tare.', es: 'Peso de báscula menos la tara de las cajas.' } },
+        hint: { en: 'Sum of the box weights.', es: 'Suma de los pesos de las cajas.' } },
       { k: 'wetIntakeLb', t: 'number', min: 0, step: 0.01, prefill: 'lookup',
         l: { en: 'Wet Intake Weight (lbs)', es: 'Peso húmedo de entrada (lbs)' },
         hint: { en: 'Filled in from Wet Intake when the farm UID matches.',

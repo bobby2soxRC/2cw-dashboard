@@ -108,7 +108,11 @@ another package replaces those, and
 lot. Bucking's page for a lot starts from that on-stem UID.
 Its Boxes worksheet numbers the boxes itself (Box # is a `rownum` column:
 1, 2, 3… down the rows, renumbered when a row is removed, and on submit
-counted over the filled-in rows only, so there are no gaps).
+counted over the filled-in rows only, so there are no gaps). Weight is the
+net reading — the scale tares each box — so there's no tare column and
+`dryWeightLb` = Σ box weight (since 2026-10-26, from a Material Flow change
+request; boxes saved earlier with a `tareLb` still have it taken off, so
+those records keep their dry weight).
 
 **Currently drying** means a submitted Wet Intake with no submitted Take Down
 for its farm UID (`currentlyDrying` / `matchTakeDowns` in `ops_common.js`;

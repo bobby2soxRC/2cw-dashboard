@@ -308,11 +308,11 @@ binCount    = Σ bins</pre></div>
       <div class="cols">
         <div><h4>On the form</h4><ul>
           <li>Drying room, package (shows its Intake UID), New Dry UID</li>
-          <li>Boxes worksheet: box # (numbers itself), weight, tare</li>
+          <li>Boxes worksheet: box # (numbers itself), weight (net — the scale tares the box)</li>
           <li>Release: to bucking (default), hold for quality, or hold for an order</li>
         </ul></div>
         <div><h4>Math</h4>
-<pre class="math">dryWeightLb     = Σ (box weight − tare)
+<pre class="math">dryWeightLb     = Σ (box weight)
 moistureLossLb  = wetIntakeLb − dryWeightLb
 moistureLossPct = moistureLossLb ÷ wetIntakeLb</pre></div>
         <div><h4>Then</h4><ul>
@@ -752,7 +752,7 @@ totalValue  = Σ (weight × price per lb)</pre></div>
     { p: [[460, 320], [250, 320], [250, 410], [200, 410]], d: 1, l: ['or intake to a freezer', 355, 312, 'middle'] },
     { p: [[110, 167], [110, 387]], l: ['bags · totes', 118, 280, 'start'] },
     { p: [[560, 433], [560, 473]], l: ['5–10 days later', 548, 457] },
-    { p: [[560, 527], [560, 567]], l: ['dry = Σ (box − tare)', 548, 551] },
+    { p: [[560, 527], [560, 567]], l: ['dry = Σ box weight', 548, 551] },
     { p: [[650, 582], [740, 582]], d: 1 },
     { p: [[740, 598], [650, 598]], d: 1 },
     { p: [[560, 613], [560, 653]], l: ['bucking queue order', 548, 637] },
