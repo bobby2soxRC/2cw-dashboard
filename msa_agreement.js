@@ -263,7 +263,8 @@
 
       { t: 'page' },
       { t: 'center', text: 'EXHIBIT A' },
-      { t: 'center', text: 'PRICING SHEET' },
+      { t: 'center', text: 'STANDARD PRICING SHEET' },
+      { t: 'p', text: 'These are Company’s standard rates. **See Exhibit B for Customer’s agreed pricing.**' },
       { t: 'p', text: '**Drying Services**' },
       B('$3.00 per wet pound'),
       B('Typical drying time: 7–10 days'),
