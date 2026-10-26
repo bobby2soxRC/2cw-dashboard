@@ -106,6 +106,8 @@
   .wm-soma .wm-case-price{background:#0d6e61}
   .wm-mendo .wm-case-price{background:#495c2a}
   .wm-case-price span{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:.02em}
+  .wm-was{font-weight:400;opacity:.6}
+  .wm-promo{display:inline-block;background:#c8102e;color:#fff;font-family:'DM Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.08em;padding:2px 6px;border-radius:3px;margin:-2px 0 6px}
   .wm-flavors-hdr{font-family:'DM Mono',monospace;font-size:8.5px;font-weight:700;letter-spacing:.18em;color:#999;margin-bottom:6px}
   .wm-flavors{flex:1}
   .wm-fgroup{margin-bottom:6px}
@@ -270,6 +272,32 @@ async function probeAllAssets(){
   await Promise.all(urls.map(async url => { ASSET_OK[url] = await probeImage(url); }));
 }
 
+// Time-limited discounts off the DATAV list price, live menu only (the KSS
+// spreadsheet source already carries KSS's own sale prices). A card whose
+// title starts with `title` gets pctOff taken off its unit and case price
+// through `until`, shown with the list price crossed out; after that date
+// it drops off by itself.
+const MENU_PROMOS = [
+  // Niki, 2026-10-26: all indoor flower 20% off for the rest of the year.
+  { brand: 'Mendo', title: 'Indoor Flower', pctOff: 20, until: '2026-12-31' },
+];
+
+function applyPromos(menu){
+  const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD, local
+  for(const b of menu.brands){
+    for(const c of b.cards){
+      const p = MENU_PROMOS.find(p => p.brand === b.brand && c.title.startsWith(p.title) && today <= p.until);
+      if(!p || c.unitPrice == null) continue;
+      const k = 1 - p.pctOff / 100;
+      c.listUnitPrice = c.unitPrice;
+      c.listCasePrice = c.casePrice;
+      c.unitPrice = Math.round(c.unitPrice * k * 100) / 100;
+      if(c.casePrice != null) c.casePrice = Math.round(c.casePrice * k * 100) / 100;
+      c.promo = `${p.pctOff}% OFF THRU ${p.until.slice(5).replace('-', '/')}`;
+    }
+  }
+}
+
 // Brands render in this fixed order regardless of what order menu.json lists them in.
 const BRAND_ORDER = ['Soma Rosa Farms', 'Howie Roll', 'Mendo'];
 
@@ -295,6 +323,7 @@ async function loadAll(){
         if(!res.ok) throw new Error('HTTP ' + res.status);
         LIVE_MENU = await res.json();
         LIVE_MENU.brands.sort((a, b) => BRAND_ORDER.indexOf(a.brand) - BRAND_ORDER.indexOf(b.brand));
+        applyPromos(LIVE_MENU);
       }catch(err){
         if(menuSource === 'live') throw err; // spreadsheet mode can still render without it
       }
@@ -548,8 +577,9 @@ function renderCard(card, cls, brandName){
 
   if(!groupsHtml.trim()) return '';
 
-  const unitPrice = card.unitPrice != null ? `$${card.unitPrice.toFixed(2)}` : '—';
-  const casePrice = card.casePrice != null ? `$${card.casePrice.toFixed(2)}` : '—';
+  const was = v => v != null ? `<s class="wm-was">$${v.toFixed(2)}</s> ` : '';
+  const unitPrice = card.unitPrice != null ? `${was(card.listUnitPrice)}$${card.unitPrice.toFixed(2)}` : '—';
+  const casePrice = card.casePrice != null ? `${was(card.listCasePrice)}$${card.casePrice.toFixed(2)}` : '—';
   const imgUrl = CARD_IMAGES[(card.imageTitle || card.title) + '|' + brandName];
   const imgHtml = imgUrl && ASSET_OK[imgUrl] ? `<div class="wm-card-img" style="background-image:url('${imgUrl}')"></div>` : '';
 
@@ -557,6 +587,7 @@ function renderCard(card, cls, brandName){
     ${imgHtml}
     <div class="wm-card-accent"></div>
     <div class="wm-card-title">${esc(card.title.toUpperCase())}</div>
+    ${card.promo ? `<div class="wm-promo">${esc(card.promo)}</div>` : ''}
     <div class="wm-specs">
       <div class="wm-spec"><span>SIZE</span><b>${esc(card.size)}</b></div>
       <div class="wm-spec"><span>WHOLESALE</span><b>${unitPrice}/unit</b></div>
@@ -632,7 +663,7 @@ function sheetCardTitle(brand, category, format, kind, size){
   }
   if(category === 'Flower'){
     if(brand === 'Howie Roll') return 'Premium Smalls';
-    if(brand === 'Mendo') return 'Indoor Flower';
+    if(brand === 'Mendo') return k.includes('greenhouse') ? 'Greenhouse Flower' : 'Indoor Flower';
     // collab packs: "Soma Rosa" + "Farms x Nameless Flower"
     if(k.includes(' x ')) return `${brand.replace(/ Farms$/, '')} ${kind.replace(/\s*flower$/i, '')}`;
     return 'Flower';

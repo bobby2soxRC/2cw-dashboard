@@ -389,6 +389,12 @@ _NAME_RULES = [
     (r"\bmendo\b.*(?:preroll|pre-roll)",
         "Mendo", "Preroll", "10pk", "5g"),
 
+    # Mendo Greenhouse Flower — new line 2026-10 ($8.80/unit list, per Niki).
+    # Must come before the indoor catch-all below. Its BSKU and price come
+    # from DATAV rows with Category "Greenhouse Flower" / Subcategory "Bigs".
+    (r"\bmendo\b.*green\s*house.*flower",
+        "Mendo", "Greenhouse Flower", "Bigs", None),
+
     # Mendo Flower (1g, 3.5g, 14g). All current Mendo flower is grown indoors —
     # KSS product names inconsistently include "Indoor", so every current
     # Mendo flower product is treated as Indoor Flower here regardless of
@@ -527,6 +533,7 @@ _SECTION_TITLES = {
     ("Flower", "Smalls"):              "Premium Smalls",
     ("Flower", "Bigs"):                "Flower",
     ("Indoor Flower", "Bigs"):         "Indoor Flower",
+    ("Greenhouse Flower", "Bigs"):     "Greenhouse Flower",
     ("Preroll", "Single"):             "Pre-Rolls — Single 1g",
     ("Preroll", "28pk"):               "Pre-Roll Party Packs — 28ct",
     ("Preroll", "6pk"):                "Pre-Rolls — 6-Pack",
