@@ -11,6 +11,8 @@
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
 const COST_COL = 'labor log costs';
+const REPORTS_COL = 'ops reports';
+const REPORT_COST_COL = 'report labor cost';
 
 function json(statusCode, body) {
   return { statusCode, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
@@ -50,7 +52,8 @@ exports.handler = async (event) => {
   try {
     const user = await userForPin(supaUrl, serviceKey, pin);
     if (!user) return json(401, { ok: false, error: 'PIN not recognized — log in again.' });
-    if (String((user.columns || {})[COST_COL] || '').toUpperCase() !== 'TRUE') {
+    const on = (col) => String((user.columns || {})[col] || '').toUpperCase() === 'TRUE';
+    if (!on(COST_COL) && !(on(REPORTS_COL) && on(REPORT_COST_COL))) {
       return json(403, { ok: false, error: 'You don’t have permission to see labor costs.' });
     }
     const res = await supaFetch(supaUrl, serviceKey, 'labor_rates?select=employee_id,rate,effective_from&order=effective_from.asc');

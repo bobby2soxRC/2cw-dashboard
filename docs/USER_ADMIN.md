@@ -537,6 +537,25 @@ from their PIN and re-checks the columns. The `flow_change_requests` table
 has no anon access, so people with only View can't read the log. Needs the
 table from `supabase/schema.sql` run first.
 
+## Reports (section + a yes/no per report)
+
+The admin user editor's **Reports** section: **Reports section** (column
+`ops reports`) turns on the Reports card, then a checkbox per report
+(columns `report uid flow`, `report lot yield`, … — `col` on each
+`OPS_REPORTS` entry in `hub_config.js`), with **All reports** to tick them
+all. With the section off, the report boxes are greyed out and kept but
+count for nothing. The card shows with the section and at least one report;
+hub login turns them into `2cw_reports` (the report keys), and
+`reports.html` lists only those.
+
+That only shows or hides reports — most read the same anon-readable
+`operations_forms` as the rest of the app. **Labor Cost per Pound** uses pay
+rates: `netlify/functions/labor-rates.js` hands them over for `labor log
+costs`, or for the Reports section with `report labor cost`, checked from
+the PIN. Trimmer Pay uses each Hand Trim page's own $/lb, which is on the
+form. To add a report, add it to `OPS_REPORTS` and a builder in
+`ops_reports.js` (see "Reports" in `docs/OPERATIONS_APP.md`).
+
 ## Why `app_users` isn't as open as `operations_forms`
 
 `operations_forms`' RLS intentionally allows anonymous read/write — see the

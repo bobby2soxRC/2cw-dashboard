@@ -674,6 +674,14 @@ async function buildHub(user){
   user.information_hub = Object.keys(infoAccess).length ? 'TRUE' : 'FALSE';
   sessionStorage.setItem('2cw_info_access', JSON.stringify(infoAccess));
 
+  // Reports (reports.html): the 'ops reports' section, then a yes/no per
+  // report (OPS_REPORTS in hub_config.js). The card shows with the section
+  // and at least one report; reports.html lists only those in 2cw_reports.
+  const reportKeys = (user[OPS_REPORTS_SECTION_COL] || '').toUpperCase() === 'TRUE'
+    ? OPS_REPORTS.filter(r => (user[r.col] || '').toUpperCase() === 'TRUE').map(r => r.key) : [];
+  user.ops_reports = reportKeys.length ? 'TRUE' : 'FALSE';
+  sessionStorage.setItem('2cw_reports', JSON.stringify(reportKeys));
+
   // Standard cards this user is authorized for (per-user order override applied, if any)
   const orderOverride = CARD_ORDER_OVERRIDES[userName.trim().toLowerCase()];
   const orderedDefs = orderOverride
@@ -1162,6 +1170,7 @@ function doLogout(){
   sessionStorage.removeItem('2cw_intake_delete');
   sessionStorage.removeItem('2cw_intake_history');
   sessionStorage.removeItem('2cw_info_access');
+  sessionStorage.removeItem('2cw_reports');
   sessionStorage.removeItem(LAST_FOLDER_KEY);
   document.getElementById('pin-input').value = '';
   for(let i = 0; i < 4; i++) document.getElementById('dot'+i).classList.remove('filled');

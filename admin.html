@@ -368,7 +368,8 @@ const TOKEN_KEY = '2cw_admin_token';
 // View / Change requests / Manage, and information_hub a View/Edit
 // pair per INFO_HUB_SECTIONS entry (hub_config.js), in the
 // editor instead.
-const DERIVED_CARD_KEYS = ['production_dashboard', 'production_today', 'field_forms', 'harvest_intakes', 'metrc_queue', 'material_flow', 'information_hub', 'crew_checkin'];
+// ops_reports comes from the Reports section (OPS_REPORTS).
+const DERIVED_CARD_KEYS = ['production_dashboard', 'production_today', 'field_forms', 'harvest_intakes', 'metrc_queue', 'material_flow', 'information_hub', 'crew_checkin', 'ops_reports'];
 const TOGGLE_CARDS = CARD_DEFS.filter(d => !DERIVED_CARD_KEYS.includes(d.key));
 
 // The Responsibilities tab talks to Supabase directly with the anon key,
@@ -519,6 +520,10 @@ function cardSummary(u){
   const infoEdit = INFO_HUB_SECTIONS.filter(s => (cols[s.edit]||'').toUpperCase()==='TRUE').length;
   const infoView = INFO_HUB_SECTIONS.filter(s => (cols[s.edit]||'').toUpperCase()!=='TRUE' && (cols[s.view]||'').toUpperCase()==='TRUE').length;
   if(infoEdit || infoView) pills.push('Info Hub: ' + [infoEdit ? infoEdit+' edit' : '', infoView ? infoView+' view' : ''].filter(Boolean).join(', '));
+  if((cols[OPS_REPORTS_SECTION_COL]||'').toUpperCase()==='TRUE'){
+    const n = OPS_REPORTS.filter(r => (cols[r.col]||'').toUpperCase()==='TRUE').length;
+    pills.push(n === OPS_REPORTS.length ? 'Reports: all' : 'Reports: ' + n);
+  }
   return pills;
 }
 
@@ -1607,6 +1612,16 @@ function openEditor(id){
       </div>`;
     }).join('')}
 
+    <div class="section-hd">Reports</div>
+    <label class="check-item" style="margin-bottom:10px"><input type="checkbox" data-card="${esc(OPS_REPORTS_SECTION_COL)}" id="rp-section" ${(cols[OPS_REPORTS_SECTION_COL]||'').toUpperCase()==='TRUE'?'checked':''}/> Reports section (the Reports card — then pick which reports below)</label>
+    <div id="rp-list">
+      <label class="check-item" style="margin-bottom:6px"><input type="checkbox" id="rp-all"/> All reports</label>
+      ${OPS_REPORT_GROUPS.map(g => `<div class="dept-block">
+        <div class="dept-name">${esc(g.title.en)}</div>
+        ${OPS_REPORTS.filter(r => r.group === g.key).map(r => `<label class="check-item" style="padding:2px 0"><input type="checkbox" data-card="${esc(r.col)}" data-report="${r.key}" ${(cols[r.col]||'').toUpperCase()==='TRUE'?'checked':''}/> ${esc(r.title.en)}${r.costs ? ' (shows pay-based labor costs)' : ''}</label>`).join('')}
+      </div>`).join('')}
+    </div>
+
     <div class="section-hd">Processing — edit access</div>
     <label class="check-item" style="margin-bottom:10px"><input type="checkbox" id="ed-all" ${editAll?'checked':''}/> All stations</label>
     <label class="check-item" style="margin-bottom:10px"><input type="checkbox" data-card="ops fix submitted" ${(cols['ops fix submitted']||'').toUpperCase()==='TRUE'?'checked':''}/> Fix submitted forms (Edit button on the Today board, for the stations checked below)</label>
@@ -1658,6 +1673,20 @@ function openEditor(id){
     e.addEventListener('change', () => { if(e.checked) v.checked = true; });
     v.addEventListener('change', () => { if(!v.checked) e.checked = false; });
   });
+  // Reports: each report is a yes/no under the section; with the section
+  // off they're kept but greyed out (and don't count at login).
+  const rpBoxes = [...document.querySelectorAll('[data-report]')];
+  const rpAll = document.getElementById('rp-all');
+  const syncReports = () => {
+    const on = document.getElementById('rp-section').checked;
+    document.getElementById('rp-list').style.opacity = on ? '' : '.45';
+    [rpAll, ...rpBoxes].forEach(cb => cb.disabled = !on);
+    rpAll.checked = rpBoxes.every(cb => cb.checked);
+  };
+  rpAll.addEventListener('change', () => { rpBoxes.forEach(cb => cb.checked = rpAll.checked); syncReports(); });
+  rpBoxes.forEach(cb => cb.addEventListener('change', syncReports));
+  document.getElementById('rp-section').addEventListener('change', syncReports);
+  syncReports();
   document.getElementById('view-all').addEventListener('change', syncViewListDisabled);
   syncStationListDisabled();
   syncViewListDisabled();

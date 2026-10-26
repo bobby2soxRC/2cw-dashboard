@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Reports — 2CW Operations</title>
+  <script>
+    (function(){ if (!sessionStorage.getItem('2cw_pin')) window.location.replace('/index.html'); })();
+  </script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0c0d0f">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0c0d0f;--surface:#13151a;--surface2:#181b21;--border:#1e2129;
+      --green:#3db87a;--gold:#d4a843;--blue:#5a9fd4;--purple:#9b7fd4;--red:#ef5350;--cyan:#4fc3d9;--brown:#c48b5a;
+      --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;
+    }
+    html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-text-size-adjust:100%}
+
+    .hdr{min-height:calc(54px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:12px;position:sticky;top:0;z-index:20}
+    .hdr-back{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
+    .hdr-div{width:1px;height:18px;background:var(--border)}
+    .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--green);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .lang{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;flex:0 0 auto}
+    .lang button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:12px;font-weight:600;padding:8px 12px;cursor:pointer;min-height:36px}
+    .lang button.on{background:var(--blue);color:#000}
+
+    main{padding:28px 16px 60px;max-width:1700px;margin:0 auto}
+    .title{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,6vw,46px);letter-spacing:.04em;line-height:1}
+    .sub{margin-top:6px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+    .desc{margin-top:8px;color:var(--subtext);font-size:.92rem;max-width:900px;line-height:1.5}
+
+    /* Home: the reports this person can run, by group. */
+    .group{margin-top:28px}
+    .group-hd{font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+    .card{display:block;background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--c,var(--blue));border-radius:12px;padding:14px 16px;
+      text-decoration:none;color:inherit;min-height:104px}
+    .card:hover{border-color:var(--c,var(--blue));background:var(--surface2)}
+    .card .ct{font-weight:700;font-size:1rem}
+    .card .cd{margin-top:6px;color:var(--subtext);font-size:.84rem;line-height:1.45}
+
+    /* Report controls */
+    .controls{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;margin-top:20px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px}
+    .ctl{display:flex;flex-direction:column;gap:5px;min-width:0}
+    .ctl > span{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+    .ctl select,.ctl input[type=date],.ctl input[type=search],.ctl textarea{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:.5rem .7rem;
+      font:inherit;font-size:.9rem;min-height:42px;outline:none;max-width:100%}
+    .ctl select:focus,.ctl input:focus,.ctl textarea:focus{border-color:var(--blue)}
+    .ctl input[type=date]{color-scheme:dark}
+    .chk{display:flex;align-items:center;gap:7px;font-size:.86rem;color:var(--subtext);cursor:pointer;min-height:42px}
+    .spacer{flex:1 1 0}
+    .btn{padding:.6rem 1rem;border:1px solid var(--border);border-radius:10px;font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;
+      cursor:pointer;background:var(--surface2);color:var(--text);min-height:42px;white-space:nowrap}
+    .btn:hover{border-color:var(--blue)}
+    .btn:disabled{opacity:.5;cursor:default}
+    .btn-blue{background:var(--blue);border-color:var(--blue);color:#000}
+    .exports{display:flex;gap:8px;flex-wrap:wrap}
+
+    .status{margin-top:14px;font-family:'DM Mono',monospace;font-size:.75rem;color:var(--muted);min-height:1em}
+    .status.err{color:var(--red)}
+
+    .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:16px}
+    .tile{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+    .tile .l{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext)}
+    .tile .v{font-family:'Bebas Neue',sans-serif;font-size:28px;line-height:1.05;margin-top:4px}
+
+    .section{margin-top:26px}
+    .section-hd{display:flex;align-items:baseline;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+    .section-hd h3{font-size:1.05rem}
+    .section-hd .n{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted)}
+    .tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface);max-height:70vh;overflow-y:auto}
+    .tbl{width:100%;border-collapse:collapse;font-size:.83rem}
+    .tbl th{background:var(--surface2);color:var(--muted);font-family:'DM Mono',monospace;font-size:.62rem;font-weight:500;letter-spacing:.07em;text-transform:uppercase;
+      text-align:left;padding:9px 10px;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;position:sticky;top:0;z-index:1}
+    .tbl th:hover{color:var(--subtext)}
+    .tbl th.sorted{color:var(--blue)}
+    .tbl th.num{text-align:right}
+    .tbl td{padding:7px 10px;border-bottom:1px solid var(--border);white-space:nowrap;vertical-align:top}
+    .tbl tbody tr:hover{background:var(--surface2)}
+    .tbl .num{text-align:right;font-family:'DM Mono',monospace}
+    .tbl .mono{font-family:'DM Mono',monospace;font-size:.78rem}
+    .tbl .wrap{white-space:normal;min-width:180px;max-width:360px}
+    .tbl tfoot td{font-weight:700;background:var(--surface2);border-top:1px solid var(--border);border-bottom:none;position:sticky;bottom:0}
+    .more{margin-top:8px}
+    .empty{color:var(--muted);text-align:center;padding:40px 0;font-size:.9rem;line-height:1.6}
+    .notes{margin-top:22px;display:grid;gap:6px;font-size:.8rem;color:var(--muted);line-height:1.55;max-width:980px}
+
+    /* Material flow */
+    .flow-pick{display:grid;gap:12px;margin-top:12px;grid-template-columns:minmax(0,1fr)}
+    @media (min-width:1000px){ .flow-pick{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)} }
+    .pick-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;min-width:0}
+    .pick-box .ph{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+    .pick-list{max-height:280px;overflow:auto;border:1px solid var(--border);border-radius:9px;margin-top:8px}
+    .pick-row{display:flex;gap:10px;align-items:center;padding:7px 10px;border-bottom:1px solid var(--border);font-size:.83rem;cursor:pointer}
+    .pick-row:last-child{border-bottom:none}
+    .pick-row:hover{background:var(--surface2)}
+    .pick-row .m{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);margin-left:auto;white-space:nowrap}
+    .pick-row .ph-tag{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--c,var(--subtext));white-space:nowrap}
+    .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+    .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--blue);color:var(--text);border-radius:99px;padding:3px 4px 3px 10px;font-size:.78rem}
+    .chip button{background:transparent;border:none;color:var(--subtext);cursor:pointer;font-size:.9rem;padding:0 6px}
+    .seg{display:inline-flex;border:1px solid var(--border);border-radius:9px;overflow:hidden}
+    .seg button{background:var(--bg);border:none;color:var(--subtext);font:inherit;font-size:.84rem;padding:0 12px;min-height:42px;cursor:pointer}
+    .seg button.on{background:var(--blue);color:#000;font-weight:600}
+    .chart{margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 8px;overflow-x:auto}
+    .chart svg{display:block}
+    .legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:.78rem;color:var(--subtext)}
+    .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+
+    .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
+  </style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="/index.html" id="back">← Hub</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand" id="brand">Reports</div>
+  <div class="lang" id="lang"></div>
+</header>
+
+<main id="main"><div class="empty">Loading…</div></main>
+<footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/config/supabase_config.js"></script>
+<script src="/hub_config.js"></script>
+<script src="/operations_stations.js"></script>
+<script src="/ops_common.js"></script>
+<script src="/ops_data.js"></script>
+<script src="/ops_analytics.js"></script>
+<script src="/metrc_transfers.js"></script>
+<script src="/ops_flow.js"></script>
+<script src="/ops_reports.js"></script>
+<script>
+// Reports — the operations reports in OPS_REPORTS (hub_config.js), each for
+// any date range, with PDF, Excel and CSV export. The numbers come from
+// ops_reports.js (one builder per report) over the station forms and the
+// syncs; UID Flow draws a Sankey of ops_flow.js's graph with d3-sankey.
+//
+// Access: the admin panel's Reports section plus a yes/no per report,
+// turned into sessionStorage '2cw_reports' (the keys) at hub login. The
+// data under most reports is the same anon-readable operations_forms the
+// rest of the app reads; Labor Cost per Pound's pay rates come from
+// netlify/functions/labor-rates.js, which re-checks that report's column.
+//
+// ?r=<report>&from=YYYY-MM-DD&to=YYYY-MM-DD&preset=<preset> opens a report.
+(async function () {
+  mountLangToggle('lang');
+  const L = (en, es) => ({ en, es });
+  const T = {
+    title: L('Reports', 'Reportes'), back: L('← Hub', '← Inicio'), all: L('← All reports', '← Todos los reportes'),
+    none: L('You don’t have any reports yet — ask an admin to tick them under Reports in the admin panel.', 'Todavía no tiene reportes — pida a un admin que los marque en Reportes en el panel de administración.'),
+    range: L('Date range', 'Rango de fechas'), from: L('From', 'Desde'), to: L('To', 'Hasta'), run: L('Run', 'Generar'),
+    loading: L('Loading…', 'Cargando…'), building: L('Building the report…', 'Generando el reporte…'),
+    noRows: L('Nothing in this range.', 'Nada en este rango.'), rows: L('rows', 'filas'), showAll: L('Show all', 'Mostrar todo'),
+    pdf: L('PDF', 'PDF'), xlsx: L('Excel', 'Excel'), csv: L('CSV', 'CSV'), exporting: L('Preparing…', 'Preparando…'),
+    generated: L('Generated', 'Generado'), by: L('by', 'por'), loadErr: L('Couldn’t load the data:', 'No se pudieron cargar los datos:'),
+    noData: L('Supabase isn’t configured, so there’s no data to report on.', 'Supabase no está configurado; no hay datos.'),
+    uids: L('UIDs (full tag or last 4+, comma or space separated)', 'UIDs (etiqueta completa o últimos 4+, separados por coma o espacio)'),
+    pick: L('Or pick packages', 'O elija paquetes'), search: L('Search strain, UID, farm…', 'Buscar variedad, UID, rancho…'),
+    start: L('Start at', 'Empezar en'), direction: L('Show', 'Mostrar'), down: L('Downstream', 'Hacia abajo'), both: L('Upstream + downstream', 'Arriba + abajo'),
+    combine: L('Combine like outputs of several lots', 'Combinar productos iguales de varios lotes'),
+    pickHint: L('Packages at the starting stage dated in the range. Tick one or more, or type UIDs.', 'Paquetes en la etapa inicial con fecha en el rango. Marque uno o más, o escriba UIDs.'),
+    pickNone: L('No packages at this stage in the range.', 'No hay paquetes en esta etapa en el rango.'),
+    picked: L('Showing', 'Mostrando'), clear: L('Clear', 'Borrar'),
+    noSeed: L('Pick one or more packages, or type UIDs, to draw the flow.', 'Elija uno o más paquetes, o escriba UIDs, para dibujar el flujo.'),
+    noMatch: L('No package matches', 'Ningún paquete coincide con'),
+    legend: [['flow', L('Material moving on', 'Material que sigue')], ['product', L('Flower & smalls', 'Flor y smalls')], ['byproduct', L('Trim & by-products', 'Recorte y subproductos')],
+      ['water', L('Water lost drying', 'Agua perdida')], ['loss', L('Stems, waste, unweighed', 'Tallos, desecho, sin pesar')], ['onhand', L('Still here', 'Aún aquí')], ['use', L('Used / shipped', 'Usado / enviado')]],
+    presets: [['today', L('Today', 'Hoy')], ['yesterday', L('Yesterday', 'Ayer')], ['this_week', L('This week', 'Esta semana')], ['last_week', L('Last week', 'Semana pasada')],
+      ['this_month', L('This month', 'Este mes')], ['last_month', L('Last month', 'Mes pasado')], ['last_30', L('Last 30 days', 'Últimos 30 días')],
+      ['this_year', L('This year', 'Este año')], ['custom', L('Custom', 'Personalizado')]]
+  };
+  document.getElementById('back').textContent = t(T.back);
+  document.getElementById('brand').textContent = t(T.title);
+  document.title = `${t(T.title)} — 2CW`;
+  const main = document.getElementById('main');
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const num = (x) => { const v = parseFloat(x); return Number.isFinite(v) ? v : 0; };
+  const who = sessionStorage.getItem('2cw_user_name') || '';
+
+  let allowed = [];
+  try { allowed = JSON.parse(sessionStorage.getItem('2cw_reports') || '[]'); } catch (_) { allowed = []; }
+  const REPORTS = OPS_REPORTS.filter((r) => allowed.includes(r.key) && OpsReports.BUILDERS[r.key]);
+  const GROUP_COLOR = { production: 'var(--green)', people: 'var(--gold)', compliance: 'var(--blue)', inventory: 'var(--purple)', summary: 'var(--cyan)' };
+
+  // ── Dates (farm time) ─────────────────────────────────────────────────────
+  const localDay = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+  const addDays = (d, k) => { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + k); return x.toISOString().slice(0, 10); };
+  const TODAY = localDay(new Date());
+  function presetRange(p) {
+    const dow = (new Date(TODAY + 'T12:00:00Z').getUTCDay() + 6) % 7;   // Monday = 0
+    const monday = addDays(TODAY, -dow);
+    const [y, m] = TODAY.split('-').map(Number);
+    const first = (yy, mm) => `${yy}-${String(mm).padStart(2, '0')}-01`;
+    switch (p) {
+      case 'today': return [TODAY, TODAY];
+      case 'yesterday': return [addDays(TODAY, -1), addDays(TODAY, -1)];
+      case 'this_week': return [monday, TODAY];
+      case 'last_week': return [addDays(monday, -7), addDays(monday, -1)];
+      case 'last_month': { const pm = m === 1 ? [y - 1, 12] : [y, m - 1]; return [first(...pm), addDays(first(y, m), -1)]; }
+      case 'last_30': return [addDays(TODAY, -29), TODAY];
+      case 'this_year': return [`${y}-01-01`, TODAY];
+      default: return [first(y, m), TODAY];
+    }
+  }
+  const prettyDay = (d) => d ? new Date(d + 'T12:00:00Z').toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric' }) : '';
+  const rangeLabel = (a, b) => (a === b ? prettyDay(a) : `${prettyDay(a)} – ${prettyDay(b)}`);
+
+  // ── Formatting ────────────────────────────────────────────────────────────
+  const val = (v) => (v != null && typeof v === 'object' && 'en' in v ? t(v) : v);
+  const locale = () => (getLang() === 'es' ? 'es-MX' : 'en-US');
+  const NUMERIC = ['lb', 'int', 'num', 'pct', 'usd', 'g', 'hrs'];
+  function fmt(v, ty) {
+    v = val(v);
+    if (v === null || v === undefined || v === '') return NUMERIC.includes(ty) ? '—' : '';
+    if (!NUMERIC.includes(ty)) return ty === 'date' ? String(v) : String(v);
+    const x = Number(v);
+    if (!Number.isFinite(x)) return String(v);
+    const f = (dp) => x.toLocaleString(locale(), { minimumFractionDigits: dp, maximumFractionDigits: dp });
+    switch (ty) {
+      case 'lb': return f(2);
+      case 'g': return f(Math.abs(x) >= 1000 ? 0 : 1);
+      case 'int': return Math.round(x).toLocaleString(locale());
+      case 'hrs': return f(2);
+      case 'usd': return (x < 0 ? '−$' : '$') + Math.abs(x).toLocaleString(locale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      case 'pct': return `${(x * 100).toFixed(1)}%`;
+      default: return f(Math.abs(x) >= 100 ? 1 : 3).replace(/0+$/, '').replace(/[.,]$/, '');
+    }
+  }
+  const tileFmt = (v, ty) => (ty === 'lb' && v != null && v !== ''
+    ? `${Number(v).toLocaleString(locale(), { maximumFractionDigits: Math.abs(v) >= 1000 ? 0 : 2 })} lb` : fmt(v, ty));
+
+  // ── Data ──────────────────────────────────────────────────────────────────
+  // Station forms (submitted and open pages), loaded per station the first
+  // time a report needs it, 1,000 rows a page (PostgREST's cap per request).
+  const client = getClient();
+  const rowsBy = {};          // station → flattened rows, both statuses
+  const extra = {};           // metrc, canix, … once loaded
+  const flat = (row) => ({ ...(row.fields || {}), id: row.id, strain: row.strain || (row.fields || {}).strain, date: row.work_date,
+    submittedAt: row.submitted_at, createdAt: row.created_at, stationKey: row.station_key, status: row.status, owner: row.owner_user });
+  async function pageAll(build) {
+    const out = [];
+    for (let i = 0; i < 100; i++) {
+      const { data, error } = await build().range(i * 1000, i * 1000 + 999);
+      if (error) throw error;
+      out.push(...(data || []));
+      if (!data || data.length < 1000) break;
+    }
+    return out;
+  }
+  async function loadStations(keys) {
+    const need = keys.filter((k) => !rowsBy[k]);
+    if (!need.length) return;
+    const rows = await pageAll(() => client.from('operations_forms')
+      .select('id,station_key,status,strain,work_date,submitted_at,created_at,owner_user,fields')
+      .in('station_key', need).in('status', ['submitted', 'draft']).order('submitted_at', { ascending: true, nullsFirst: false }).order('id'));
+    need.forEach((k) => { rowsBy[k] = []; });
+    rows.forEach((r) => rowsBy[r.station_key].push(flat(r)));
+  }
+  const getJson = (f) => fetch(`/data/${f}?t=${Date.now()}`).then((r) => { if (!r.ok) throw new Error(`${f}: HTTP ${r.status}`); return r.json(); });
+  const EXTRA = {
+    metrc: async () => new Map((await pageAll(() => client.from('metrc_queue').select('*').order('form_id'))).map((r) => [r.form_id, r])),
+    canix: async () => { const [transfers, facilities] = await Promise.all([getJson('canix_transfers_recent.json'), getJson('canix_facilities.json')]); return { transfers, facilities }; },
+    shifts: () => getJson('connecteam_shifts.json').catch(() => ({ shifts: [] })),
+    names: () => loadBadgeNames(),
+    split: () => getTrimSplit(),
+    reference: () => loadReference(),
+    prerollQueue: async () => { const { data, error } = await client.from('preroll_queue_items').select('*').order('queue_no'); if (error) throw error; return data || []; },
+    rates: async () => {
+      const res = await fetch('/.netlify/functions/labor-rates', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: sessionStorage.getItem('2cw_pin') || '' }) });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || !j.ok) throw new Error(j.error || `HTTP ${res.status}`);
+      return j.rates || [];
+    },
+    codes: async () => (await getRefCodes()) || [],
+    facilities: async () => { const { data } = await client.from('canix_facilities').select('license_number,farm_group'); return data || []; }
+  };
+  async function loadExtra(k) {
+    if (!(k in extra)) extra[k] = EXTRA[k]();
+    return extra[k];
+  }
+  // Farm name for a form's Farm License: the Information Hub's name for the
+  // short code ("027", matching "27"), or for a full license (the Canix sync
+  // writes those) the code its number ends in, else its Canix facility's
+  // farm group — the same lookup as Raw Materials Inventory.
+  let codes = [], facilities = [];
+  const digits = (s) => String(s || '').replace(/\D/g, '');
+  const farmName = (pid) => {
+    const p = String(pid || '').trim();
+    if (!p) return '';
+    const pc = codes.filter((r) => r.kind === 'pid');
+    let hit = pc.find((r) => r.code === p || (/^\d+$/.test(r.code) && /^\d+$/.test(p) && Number(r.code) === Number(p)));
+    if (!hit && /\D/.test(p)) {
+      const d = digits(p.split('-').pop());
+      hit = pc.find((r) => /^\d+$/.test(r.code) && Number(r.code) === Number(d)) ||
+        pc.filter((r) => /^\d+$/.test(r.code) && d.endsWith(r.code)).sort((a, b) => b.code.length - a.code.length)[0];
+    }
+    if (hit && hit.name) return hit.name;
+    const fac = facilities.find((f) => f.license_number === p);
+    return (fac && fac.farm_group) || '';
+  };
+  async function loadFor(key) {
+    const need = OpsReports.NEEDS[key] || { stations: [] };
+    await Promise.all([loadStations([...new Set([...(need.stations || []), ...(need.drafts || [])])]),
+      loadExtra('codes').then((c) => { codes = c; }), loadExtra('facilities').then((f) => { facilities = f; }).catch(() => {}),
+      // An extra that fails (pay rates without access…) is reported below.
+      ...(need.extra || []).map((k) => loadExtra(k).catch(() => {}))]);
+    const D = { sub: {}, open: {} };
+    (need.stations || []).forEach((k) => { D.sub[k] = (rowsBy[k] || []).filter((r) => r.status === 'submitted'); });
+    (need.drafts || []).forEach((k) => { D.open[k] = (rowsBy[k] || []).filter((r) => r.status === 'draft'); });
+    const ex = {};
+    for (const k of need.extra || []) {
+      try { ex[k] = await extra[k]; } catch (e) { ex[k] = null; ex[k + 'Error'] = String(e.message || e); delete extra[k]; }
+    }
+    const names = ex.names || {};
+    return { D, ex, personName: (b) => names[OpsAnalytics.badgeKey(b)] || '' };
+  }
+
+  // ── Routing ───────────────────────────────────────────────────────────────
+  const params = new URLSearchParams(location.search);
+  const current = REPORTS.find((r) => r.key === params.get('r'));
+  if (!client) { main.innerHTML = `<div class="empty">${esc(t(T.noData))}</div>`; return; }
+  if (!current) { renderHome(); return; }
+
+  function renderHome() {
+    if (!REPORTS.length) { main.innerHTML = `<div class="title">${esc(t(T.title))}</div><div class="empty">${esc(t(T.none))}</div>`; return; }
+    main.innerHTML = `<div class="title">${esc(t(T.title))}</div>
+      <div class="sub">${esc(t(L('Operations · any date range · PDF, Excel, CSV', 'Operaciones · cualquier rango · PDF, Excel, CSV')))}</div>
+      ${OPS_REPORT_GROUPS.map((g) => {
+        const list = REPORTS.filter((r) => r.group === g.key);
+        if (!list.length) return '';
+        return `<div class="group"><div class="group-hd">${esc(t(g.title))}</div><div class="cards">
+          ${list.map((r) => `<a class="card" style="--c:${GROUP_COLOR[g.key]}" href="?r=${r.key}"><div class="ct">${esc(t(r.title))}</div><div class="cd">${esc(t(r.desc))}</div></a>`).join('')}
+        </div></div>`;
+      }).join('')}`;
+  }
+
+  // ── One report ────────────────────────────────────────────────────────────
+  const key = current.key;
+  const DEFAULT_PRESET = { trimmer_pay: 'last_week', bucker_output: 'last_week', uid_flow: 'last_30', ops_summary: 'yesterday', transfers: 'last_30' };
+  let preset = params.get('preset') || (params.get('from') ? 'custom' : DEFAULT_PRESET[key] || 'this_month');
+  let [from, to] = preset === 'custom' ? [params.get('from') || presetRange('this_month')[0], params.get('to') || TODAY] : presetRange(preset);
+  const opt = {};   // the report's own options
+  (OpsReports.PARAMS[key] || []).forEach((p) => { opt[p.k] = p.def; });
+  // UID Flow's picks.
+  // Open pages on by default: a lot's flow is wanted as it stands now, and
+  // a Bucking or Hand Trim page can stay open for days.
+  const flowOpt = { uids: [], nodes: [], direction: 'down', start: 1, combine: true, open: true };
+  if (key === 'uid_flow') {
+    const u = params.get('uids');
+    if (u) flowOpt.uids = u.split(/[\s,]+/).filter(Boolean);
+    if (params.get('dir') === 'both') flowOpt.direction = 'both';
+    if (params.get('start') != null && params.get('start') !== '') flowOpt.start = Number(params.get('start'));
+  }
+
+  main.innerHTML = `
+    <a class="hdr-back" href="?">${esc(t(T.all))}</a>
+    <div class="title" style="margin-top:12px">${esc(t(current.title))}</div>
+    <div class="desc">${esc(t(current.desc))}</div>
+    <div class="controls" id="controls"></div>
+    ${key === 'uid_flow' ? '<div class="flow-pick" id="flow-pick"></div>' : ''}
+    <div class="status" id="status"></div>
+    <div id="out"></div>`;
+  const statusEl = document.getElementById('status');
+  const out = document.getElementById('out');
+  const setStatus = (msg, err) => { statusEl.textContent = msg || ''; statusEl.classList.toggle('err', !!err); };
+
+  let loaded = null;     // {D, ex, personName}
+  let result = null;     // the builder's output
+  let ctxNow = null;
+
+  function renderControls() {
+    const el = document.getElementById('controls');
+    const paramsHtml = (OpsReports.PARAMS[key] || []).filter((p) => key !== 'uid_flow').map((p) => {
+      if (p.t === 'check') return `<label class="chk"><input type="checkbox" data-opt="${p.k}" ${opt[p.k] ? 'checked' : ''}/> ${esc(t(p.l))}</label>`;
+      const opts = typeof p.opts === 'function' ? (loaded ? p.opts(loaded.D, ctxNow || ctx()) : []) : p.opts;
+      return `<label class="ctl"><span>${esc(t(p.l))}</span><select data-opt="${p.k}">
+        ${p.k === 'who' ? `<option value="">—</option>` : ''}${opts.map((o) => `<option value="${esc(o.v)}" ${opt[p.k] === o.v ? 'selected' : ''}>${esc(t(o.l))}</option>`).join('')}
+      </select></label>`;
+    }).join('');
+    el.innerHTML = `
+      <label class="ctl"><span>${esc(t(T.range))}</span><select id="preset">${T.presets.map(([v, l]) => `<option value="${v}" ${v === preset ? 'selected' : ''}>${esc(t(l))}</option>`).join('')}</select></label>
+      <label class="ctl"><span>${esc(t(T.from))}</span><input type="date" id="from" value="${from}"/></label>
+      <label class="ctl"><span>${esc(t(T.to))}</span><input type="date" id="to" value="${to}"/></label>
+      ${paramsHtml}
+      <div class="spacer"></div>
+      <div class="exports">
+        <button class="btn" data-x="pdf">${esc(t(T.pdf))}</button>
+        <button class="btn" data-x="xlsx">${esc(t(T.xlsx))}</button>
+        <button class="btn" data-x="csv">${esc(t(T.csv))}</button>
+      </div>`;
+    el.querySelector('#preset').onchange = (e) => {
+      preset = e.target.value;
+      if (preset !== 'custom') [from, to] = presetRange(preset);
+      el.querySelector('#from').value = from; el.querySelector('#to').value = to;
+      run();
+    };
+    ['from', 'to'].forEach((id) => {
+      el.querySelector('#' + id).onchange = (e) => {
+        if (!e.target.value) return;
+        if (id === 'from') from = e.target.value; else to = e.target.value;
+        if (from > to) { if (id === 'from') to = from; else from = to; el.querySelector('#from').value = from; el.querySelector('#to').value = to; }
+        preset = 'custom'; el.querySelector('#preset').value = 'custom';
+        run();
+      };
+    });
+    el.querySelectorAll('[data-opt]').forEach((x) => {
+      x.onchange = () => { opt[x.dataset.opt] = x.type === 'checkbox' ? x.checked : x.value; run(); };
+    });
+    el.querySelectorAll('[data-x]').forEach((b) => { b.onclick = () => doExport(b.dataset.x, b); });
+  }
+
+  function syncUrl() {
+    const q = new URLSearchParams({ r: key });
+    if (preset === 'custom') { q.set('from', from); q.set('to', to); } else q.set('preset', preset);
+    if (key === 'uid_flow') {
+      const picks = [...flowOpt.uids, ...flowOpt.nodes.map((id) => (loaded && result && result.graph.nodes.get(id) || {}).uid).filter(Boolean)];
+      if (picks.length) q.set('uids', [...new Set(picks)].join(','));
+      if (flowOpt.direction === 'both') q.set('dir', 'both');
+      q.set('start', String(flowOpt.start));
+    }
+    history.replaceState(null, '', `?${q}`);
+  }
+
+  const ctx = () => ({
+    from, to, today: TODAY, params: key === 'uid_flow' ? flowOpt : opt, farmName,
+    personName: loaded ? loaded.personName : () => '',
+    rates: loaded && loaded.ex.rates, ratesError: loaded && loaded.ex.ratesError, split: loaded && loaded.ex.split, reference: loaded && loaded.ex.reference,
+    metrcQueue: loaded && loaded.ex.metrc, canix: loaded && loaded.ex.canix, shifts: loaded && loaded.ex.shifts,
+    prerollQueue: loaded && loaded.ex.prerollQueue
+  });
+
+  let runTimer = null;
+  function run() { clearTimeout(runTimer); runTimer = setTimeout(build, 60); }
+  async function build() {
+    syncUrl();
+    try {
+      if (!loaded) {
+        setStatus(t(T.loading));
+        loaded = await loadFor(key);
+        const errs = Object.keys(loaded.ex).filter((k) => k.endsWith('Error')).map((k) => `${k.replace(/Error$/, '')}: ${loaded.ex[k]}`);
+        if (errs.length) setStatus(`${t(T.loadErr)} ${errs.join(' · ')}`, true);
+        renderControls();   // lists built from the data (Farm or customer)
+      }
+      if (!statusEl.classList.contains('err')) setStatus(t(T.building));
+      ctxNow = ctx();
+      result = OpsReports.BUILDERS[key](loaded.D, ctxNow);
+      if (!statusEl.classList.contains('err')) setStatus(`${rangeLabel(from, to)}`);
+      if (key === 'uid_flow') renderFlowPick();
+      await renderResult();
+    } catch (e) {
+      console.error(e);
+      setStatus(`${t(T.loadErr)} ${e.message || e}`, true);
+    }
+  }
+
+  // ── Tables ────────────────────────────────────────────────────────────────
+  const sortState = {};
+  const LIMIT = 400;
+  const showAllSet = new Set();
+  const cellCls = (c) => (NUMERIC.includes(c.t) ? 'num' : c.t === 'uid' || c.t === 'date' ? 'mono' : ['flags', 'note', 'name'].includes(c.k) || c.k === 'from' || c.k === 'to' ? 'wrap' : '');
+  function sortedRows(s) {
+    const st = sortState[s.key];
+    if (!st) return s.rows;
+    const c = s.cols.find((x) => x.k === st.k);
+    const get = (r) => { const v = val(r[st.k]); return NUMERIC.includes(c.t) ? (v == null || v === '' ? -Infinity : Number(v)) : String(v || '').toLowerCase(); };
+    return [...s.rows].sort((a, b) => { const x = get(a), y = get(b); return (x < y ? -1 : x > y ? 1 : 0) * st.dir; });
+  }
+  function sectionHtml(s) {
+    const rows = sortedRows(s);
+    const show = showAllSet.has(s.key) ? rows : rows.slice(0, LIMIT);
+    const st = sortState[s.key];
+    return `<div class="section" data-sec="${s.key}">
+      <div class="section-hd"><h3>${esc(t(s.title))}</h3><span class="n">${rows.length} ${esc(t(T.rows))}</span></div>
+      ${rows.length ? `<div class="tbl-wrap"><table class="tbl">
+        <thead><tr>${s.cols.map((c) => `<th data-k="${c.k}" class="${NUMERIC.includes(c.t) ? 'num' : ''} ${st && st.k === c.k ? 'sorted' : ''}">${esc(t(c.l))}${st && st.k === c.k ? (st.dir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('')}</tr></thead>
+        <tbody>${show.map((r) => `<tr>${s.cols.map((c) => `<td class="${cellCls(c)}">${esc(fmt(r[c.k], c.t))}</td>`).join('')}</tr>`).join('')}</tbody>
+        ${s.total && rows.length > 1 ? `<tfoot><tr>${s.cols.map((c) => `<td class="${cellCls(c)}">${esc(fmt(s.total[c.k], c.t))}</td>`).join('')}</tr></tfoot>` : ''}
+      </table></div>${rows.length > show.length ? `<button class="btn more" data-more="${s.key}">${esc(t(T.showAll))} (${rows.length})</button>` : ''}`
+      : `<div class="tbl-wrap"><div class="empty">${esc(t(T.noRows))}</div></div>`}
+    </div>`;
+  }
+  async function renderResult() {
+    const r = result;
+    let html = '';
+    if (key === 'uid_flow') html += `<div class="chart" id="chart"></div><div class="legend">${T.legend.map(([k, l]) => `<span><i style="background:${PAL.dark[k]}"></i>${esc(t(l))}</span>`).join('')}</div>`;
+    if (r.tiles.length) html += `<div class="tiles">${r.tiles.map((x) => `<div class="tile"><div class="l">${esc(t(x.l))}</div><div class="v">${esc(tileFmt(x.v, x.t))}</div></div>`).join('')}</div>`;
+    html += r.sections.map(sectionHtml).join('');
+    if (r.notes && r.notes.length) html += `<div class="notes">${r.notes.map((x) => `<div>${esc(t(x))}</div>`).join('')}</div>`;
+    out.innerHTML = html;
+    out.querySelectorAll('.section').forEach((secEl) => {
+      const s = r.sections.find((x) => x.key === secEl.dataset.sec);
+      secEl.querySelectorAll('th').forEach((th) => {
+        th.onclick = () => {
+          const st = sortState[s.key];
+          const c = s.cols.find((x) => x.k === th.dataset.k);
+          sortState[s.key] = st && st.k === c.k ? { k: c.k, dir: -st.dir } : { k: c.k, dir: NUMERIC.includes(c.t) ? -1 : 1 };
+          renderResult();
+        };
+      });
+    });
+    out.querySelectorAll('[data-more]').forEach((b) => { b.onclick = () => { showAllSet.add(b.dataset.more); renderResult(); }; });
+    if (key === 'uid_flow') await drawChart();
+  }
+
+  // ── UID flow ─────────────────────────────────────────────────────────
+  const PAL = {
+    dark: { flow: '#5a9fd4', product: '#3db87a', byproduct: '#c48b5a', water: '#4fc3d9', loss: '#6b7282', onhand: '#d4a843', use: '#9b7fd4',
+            text: '#e8eaf0', sub: '#9aa0b0', bg: '#13151a' },
+    light: { flow: '#3f7fb8', product: '#2c9a63', byproduct: '#a86f40', water: '#3aa3bb', loss: '#9aa0ac', onhand: '#b88a22', use: '#7d5fc0',
+             text: '#1b2030', sub: '#5d6578', bg: '#ffffff' }
+  };
+  const PHASE_COLOR = ['var(--cyan)', 'var(--gold)', 'var(--purple)', 'var(--green)', 'var(--blue)'];
+  let pickQuery = '';
+  const tail5 = (u) => `…${String(u || '').slice(-5)}`;
+  const nodeLabel = (x) => {
+    const l = t(x.label);
+    if (x.combined) return x.members.length > 1 && !x.terminal ? `${l} (${x.members.length})` : l;
+    if (x.unit && x.kind !== 'flow') return `${l} · ${x.strain || ''} ${tail5(x.uid)}`;
+    return l;
+  };
+  function renderFlowPick() {
+    const el = document.getElementById('flow-pick');
+    const G = result.graph;
+    const units = OpsFlow.flowUnits(G).filter((x) => x.phase === flowOpt.start && x.date >= from && x.date <= to);
+    const q = pickQuery.trim().toLowerCase();
+    const shown = q ? units.filter((x) => [x.strain, x.uid, x.srcUid, farmName(x.pid), x.pid, x.cid, t(x.label)].join(' ').toLowerCase().includes(q)) : units;
+    const seedIds = new Set((result.seeds || []).map((x) => x.id));
+    const typedMiss = flowOpt.uids.filter((u) => !OpsFlow.findUnits(G, [u]).length);
+    el.innerHTML = `
+      <div class="pick-box">
+        <div class="controls" style="margin:0;padding:0;border:none;background:none">
+          <label class="ctl"><span>${esc(t(T.start))}</span><select id="f-start">${OpsFlow.PHASES.slice(0, 4).map((p, i) => `<option value="${i}" ${i === flowOpt.start ? 'selected' : ''}>${esc(t(p.l))}</option>`).join('')}</select></label>
+          <div class="ctl"><span>${esc(t(T.direction))}</span><div class="seg" id="f-dir">
+            <button type="button" data-d="down" class="${flowOpt.direction === 'down' ? 'on' : ''}">${esc(t(T.down))}</button>
+            <button type="button" data-d="both" class="${flowOpt.direction === 'both' ? 'on' : ''}">${esc(t(T.both))}</button></div></div>
+          <label class="chk"><input type="checkbox" id="f-combine" ${flowOpt.combine ? 'checked' : ''}/> ${esc(t(T.combine))}</label>
+          <label class="chk"><input type="checkbox" id="f-open" ${flowOpt.open ? 'checked' : ''}/> ${esc(t(OpsReports.PARAMS.lot_yield[1].l))}</label>
+        </div>
+        <label class="ctl" style="margin-top:10px"><span>${esc(t(T.uids))}</span><input type="search" id="f-uids" value="${esc(flowOpt.uids.join(', '))}" placeholder="1A40603000…, 10004"/></label>
+        ${typedMiss.length ? `<div class="status err">${esc(t(T.noMatch))}: ${esc(typedMiss.join(', '))}</div>` : ''}
+        ${seedIds.size ? `<div class="chips">${esc(t(T.picked))}: ${(result.seeds || []).map((x) => `<span class="chip">${esc(`${t(OpsFlow.PHASES[x.phase].l)} · ${x.strain || ''} ${tail5(x.uid)}`)}<button type="button" data-unseed="${esc(x.id)}" aria-label="remove">×</button></span>`).join('')}
+          <button type="button" class="btn" id="f-clear" style="min-height:30px;padding:4px 10px">${esc(t(T.clear))}</button></div>` : ''}
+      </div>
+      <div class="pick-box">
+        <div class="ph">${esc(t(T.pick))} — ${esc(t(OpsFlow.PHASES[flowOpt.start].l))} · ${units.length}</div>
+        <input type="search" id="f-q" placeholder="${esc(t(T.search))}" value="${esc(pickQuery)}" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:.5rem .7rem;min-height:40px;font:inherit"/>
+        <div class="pick-list">${shown.length ? shown.slice(0, 300).map((x) => `<label class="pick-row"><input type="checkbox" data-node="${esc(x.id)}" ${seedIds.has(x.id) ? 'checked' : ''}/>
+            <span><b>${esc(x.strain || '—')}</b> <span class="mono">${esc(tail5(x.uid))}</span>${x.kind !== 'flow' ? ` · ${esc(t(x.label))}` : ''}${farmName(x.pid) ? ` · ${esc(farmName(x.pid))}` : ''}</span>
+            <span class="m">${esc(x.date || '')} · ${esc(fmt(x.lb, 'lb'))} lb</span></label>`).join('')
+          : `<div class="empty" style="padding:20px">${esc(t(T.pickNone))}</div>`}</div>
+        <div class="status">${esc(t(T.pickHint))}</div>
+      </div>`;
+    el.querySelector('#f-start').onchange = (e) => { flowOpt.start = Number(e.target.value); run(); };
+    el.querySelectorAll('#f-dir button').forEach((b) => { b.onclick = () => { flowOpt.direction = b.dataset.d; run(); }; });
+    el.querySelector('#f-combine').onchange = (e) => { flowOpt.combine = e.target.checked; run(); };
+    el.querySelector('#f-open').onchange = (e) => { flowOpt.open = e.target.checked; run(); };
+    el.querySelector('#f-uids').onchange = (e) => { flowOpt.uids = e.target.value.split(/[\s,]+/).filter(Boolean); run(); };
+    el.querySelector('#f-q').oninput = (e) => { pickQuery = e.target.value; const pos = e.target.selectionStart; renderFlowPick(); const i = document.getElementById('f-q'); i.focus(); i.setSelectionRange(pos, pos); };
+    el.querySelectorAll('[data-node]').forEach((cb) => {
+      cb.onchange = () => {
+        const id = cb.dataset.node;
+        if (cb.checked) { if (!flowOpt.nodes.includes(id)) flowOpt.nodes.push(id); }
+        else {
+          flowOpt.nodes = flowOpt.nodes.filter((x) => x !== id);
+          const x = result.graph.nodes.get(id);
+          flowOpt.uids = flowOpt.uids.filter((u) => !OpsFlow.findUnits(result.graph, [u]).some((y) => y.id === x.id));
+        }
+        run();
+      };
+    });
+    el.querySelectorAll('[data-unseed]').forEach((b) => {
+      b.onclick = () => {
+        const id = b.dataset.unseed;
+        flowOpt.nodes = flowOpt.nodes.filter((x) => x !== id);
+        flowOpt.uids = flowOpt.uids.filter((u) => !OpsFlow.findUnits(result.graph, [u]).some((y) => y.id === id));
+        run();
+      };
+    });
+    const clr = el.querySelector('#f-clear');
+    if (clr) clr.onclick = () => { flowOpt.nodes = []; flowOpt.uids = []; run(); };
+  }
+
+  const loadScript = (src) => new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve; s.onerror = () => reject(new Error('Could not load ' + src));
+    document.head.appendChild(s);
+  });
+  let d3P = null;
+  const loadD3 = () => d3P || (d3P = (window.d3 && window.d3.sankey ? Promise.resolve()
+    : loadScript('https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js').then(() => loadScript('https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js'))));
+
+  // The Sankey as an SVG element, in the page's colors or the printed ones.
+  // forPage: at least the shape of a landscape page, so the PDF's diagram
+  // fills it instead of sitting in a strip.
+  function sankeySvg(flow, pal, forPage) {
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    const phases = [...new Set(flow.nodes.map((x) => x.phase))].sort((a, b) => a - b);
+    const col = new Map(phases.map((p, i) => [p, i]));
+    const perCol = Math.max(1, ...phases.map((p) => flow.nodes.filter((x) => x.phase === p).length));
+    const W = Math.max(960, phases.length * 250 + 120), H = Math.max(forPage ? Math.round(W * 0.55) : 380, perCol * 36 + 50);
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.setAttribute('width', W); svg.setAttribute('height', H);
+    svg.setAttribute('xmlns', ns);
+    const sk = d3.sankey().nodeId((d) => d.id).nodeAlign((d) => col.get(d.phase)).nodeWidth(12).nodePadding(Math.max(8, Math.min(22, 300 / perCol)))
+      .nodeSort((a, b) => (a.terminal - b.terminal) || (b.value - a.value)).extent([[8, 30], [W - 210, H - 10]]);
+    const g = sk({ nodes: flow.nodes.map((x) => ({ ...x })), links: flow.links.map((l) => ({ ...l })) });
+    const S = d3.select(svg);
+    S.append('rect').attr('width', W).attr('height', H).attr('fill', pal.bg);
+    phases.forEach((p) => {
+      const xs = g.nodes.filter((n) => n.phase === p).map((n) => n.x0);
+      if (xs.length) S.append('text').attr('x', Math.min(...xs)).attr('y', 16).attr('fill', pal.sub)
+        .attr('style', 'font:500 10.5px "DM Mono",monospace;letter-spacing:.08em;text-transform:uppercase').text(t(OpsFlow.PHASES[p].l).toUpperCase());
+    });
+    const color = (k) => pal[k] || pal.flow;
+    S.append('g').attr('fill', 'none').selectAll('path').data(g.links).join('path')
+      .attr('d', d3.sankeyLinkHorizontal()).attr('stroke', (d) => color(d.target.kind)).attr('stroke-opacity', 0.42)
+      .attr('stroke-width', (d) => Math.max(1, d.width))
+      .append('title').text((d) => `${nodeLabel(d.source)} → ${nodeLabel(d.target)}: ${fmt(d.value, 'lb')} lb`);
+    const node = S.append('g').selectAll('g').data(g.nodes).join('g');
+    node.append('rect').attr('x', (d) => d.x0).attr('y', (d) => d.y0).attr('width', (d) => d.x1 - d.x0)
+      .attr('height', (d) => Math.max(2, d.y1 - d.y0)).attr('rx', 2).attr('fill', (d) => color(d.kind))
+      .append('title').text((d) => [nodeLabel(d), d.uid && !d.combined ? d.uid : '', d.date && !d.combined ? d.date : '', `${fmt(d.value, 'lb')} lb`].filter(Boolean).join('\n'));
+    const lab = node.append('text').attr('x', (d) => d.x1 + 6).attr('y', (d) => (d.y0 + d.y1) / 2).attr('dy', '0.35em')
+      .attr('fill', pal.text).attr('style', 'font:12px "DM Sans",Arial,sans-serif');
+    lab.append('tspan').text((d) => nodeLabel(d));
+    lab.append('tspan').attr('dx', 6).attr('fill', pal.sub).attr('style', 'font:11px "DM Mono",monospace').text((d) => `${fmt(d.value, 'lb')} lb`);
+    return { svg, W, H };
+  }
+  async function drawChart() {
+    const el = document.getElementById('chart');
+    if (!el) return;
+    if (!result.seeds.length || !result.flow.nodes.length) { el.innerHTML = `<div class="empty">${esc(t(T.noSeed))}</div>`; return; }
+    el.innerHTML = `<div class="empty">${esc(t(T.loading))}</div>`;
+    await loadD3();
+    const { svg } = sankeySvg(result.flow, PAL.dark);
+    el.innerHTML = '';
+    el.appendChild(svg);
+  }
+  async function sankeyPng() {
+    await loadD3();
+    const { svg, W, H } = sankeySvg(result.flow, PAL.light, true);
+    const xml = new XMLSerializer().serializeToString(svg);
+    const img = new Image();
+    const url = URL.createObjectURL(new Blob([xml], { type: 'image/svg+xml;charset=utf-8' }));
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
+    const scale = 2;
+    const c = document.createElement('canvas');
+    c.width = W * scale; c.height = H * scale;
+    const cx = c.getContext('2d');
+    cx.fillStyle = '#fff'; cx.fillRect(0, 0, c.width, c.height);
+    cx.drawImage(img, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(url);
+    // JPEG: a PNG of a wide diagram makes a PDF of several MB.
+    return { data: c.toDataURL('image/jpeg', 0.92), W, H };
+  }
+
+  // ── Export ────────────────────────────────────────────────────────────────
+  const fileBase = () => `${t(current.title).replace(/[^\w]+/g, '_').replace(/^_|_$/g, '')}_${from}${from === to ? '' : '_to_' + to}`;
+  const download = (blob, name) => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  };
+  const generatedLine = () => `${t(T.generated)} ${new Date().toLocaleString(locale(), { timeZone: 'America/Los_Angeles' })}${who ? ` ${t(T.by)} ${who}` : ''}`;
+  const rowsOf = (s) => {
+    const rows = sortedRows(s);
+    return s.total && rows.length > 1 ? [...rows, s.total] : rows;
+  };
+  // A raw value for a spreadsheet: numbers stay numbers.
+  const rawOf = (v, ty) => {
+    v = val(v);
+    if (v === null || v === undefined || v === '') return '';
+    if (NUMERIC.includes(ty)) { const x = Number(v); return Number.isFinite(x) ? x : v; }
+    return String(v);
+  };
+  async function doExport(kind, btn) {
+    if (!result) return;
+    const label = btn.textContent;
+    btn.disabled = true; btn.textContent = t(T.exporting);
+    try {
+      if (kind === 'csv') exportCsv();
+      else if (kind === 'xlsx') await exportXlsx();
+      else await exportPdf();
+    } catch (e) { console.error(e); alert(`Export failed: ${e.message || e}`); }
+    btn.disabled = false; btn.textContent = label;
+  }
+  function exportCsv() {
+    const q = (s) => { s = String(s == null ? '' : s); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+    const lines = [[t(current.title)], [rangeLabel(from, to)], [generatedLine()], []];
+    if (result.tiles.length) { result.tiles.forEach((x) => lines.push([t(x.l), x.t === 'pct' ? fmt(x.v, 'pct') : rawOf(x.v, x.t)])); lines.push([]); }
+    result.sections.forEach((s) => {
+      lines.push([t(s.title)]);
+      lines.push(s.cols.map((c) => t(c.l)));
+      rowsOf(s).forEach((r) => lines.push(s.cols.map((c) => c.t === 'pct' ? (val(r[c.k]) == null ? '' : fmt(r[c.k], 'pct')) : rawOf(r[c.k], c.t))));
+      lines.push([]);
+    });
+    (result.notes || []).forEach((x) => lines.push([t(x)]));
+    download(new Blob(['﻿' + lines.map((l) => l.map(q).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' }), `${fileBase()}.csv`);
+  }
+  let xlsxP = null;
+  async function exportXlsx() {
+    await (xlsxP || (xlsxP = window.XLSX ? Promise.resolve() : loadScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js')));
+    const wb = XLSX.utils.book_new();
+    const used = new Set();
+    const sheetName = (s) => {
+      let n = String(s).replace(/[\\/?*[\]:]/g, ' ').slice(0, 31).trim() || 'Sheet';
+      let k = n, i = 2;
+      while (used.has(k)) k = `${n.slice(0, 28)} ${i++}`;
+      used.add(k); return k;
+    };
+    const Z = { pct: '0.0%', usd: '$#,##0.00', lb: '#,##0.00', g: '#,##0.0', hrs: '0.00', int: '#,##0', num: '0.000' };
+    const summary = [[t(current.title)], [rangeLabel(from, to)], [generatedLine()], [],
+      ...result.tiles.map((x) => [t(x.l), rawOf(x.v, x.t)]), [], ...(result.notes || []).map((x) => [t(x)])];
+    const ws0 = XLSX.utils.aoa_to_sheet(summary);
+    result.tiles.forEach((x, i) => { const c = ws0[XLSX.utils.encode_cell({ r: 4 + i, c: 1 })]; if (c && typeof c.v === 'number' && Z[x.t]) c.z = Z[x.t]; });
+    ws0['!cols'] = [{ wch: 34 }, { wch: 16 }];
+    XLSX.utils.book_append_sheet(wb, ws0, sheetName(t(L('Summary', 'Resumen'))));
+    result.sections.forEach((s) => {
+      const aoa = [s.cols.map((c) => t(c.l)), ...rowsOf(s).map((r) => s.cols.map((c) => rawOf(r[c.k], c.t)))];
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+      for (let r = 1; r < aoa.length; r++) s.cols.forEach((c, ci) => {
+        const cell = ws[XLSX.utils.encode_cell({ r, c: ci })];
+        if (cell && typeof cell.v === 'number' && Z[c.t]) cell.z = Z[c.t];
+      });
+      ws['!cols'] = s.cols.map((c, ci) => ({ wch: Math.min(48, Math.max(10, String(t(c.l)).length + 2, ...aoa.slice(1, 200).map((r) => String(r[ci] == null ? '' : r[ci]).length + 1))) }));
+      ws['!freeze'] = { xSplit: 0, ySplit: 1 };
+      XLSX.utils.book_append_sheet(wb, ws, sheetName(t(s.title)));
+    });
+    XLSX.writeFile(wb, `${fileBase()}.xlsx`);
+  }
+  let pdfP = null;
+  // jsPDF's built-in fonts are Windows-1252, so arrows and math signs are
+  // spelled out.
+  const pdfText = (s) => String(s == null ? '' : s).replace(/→/g, '->').replace(/←/g, '<-').replace(/≠/g, '!=').replace(/≈/g, '~').replace(/−/g, '-')
+    .replace(/[▲▼]/g, '').replace(/[^\x00-\xFF€‘’“”–—…•]/g, '');
+  async function exportPdf() {
+    await (pdfP || (pdfP = (window.jspdf ? Promise.resolve() : loadScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js'))
+      .then(() => loadScript('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js'))));
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'letter' });
+    const PW = doc.internal.pageSize.getWidth(), PH = doc.internal.pageSize.getHeight(), M = 36;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(18);
+    doc.text(pdfText(t(current.title)), M, M + 6);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(90);
+    doc.text(pdfText(`${rangeLabel(from, to)}  ·  ${generatedLine()}  ·  2CW Enterprises — Confidential`), M, M + 24);
+    doc.setTextColor(0);
+    let y = M + 40;
+    if (result.tiles.length) {
+      doc.autoTable({ startY: y, margin: { left: M, right: M }, theme: 'grid', styles: { fontSize: 8.5, cellPadding: 4, halign: 'center' },
+        headStyles: { fillColor: [235, 238, 244], textColor: 60, fontStyle: 'normal', fontSize: 7.5 },
+        head: [result.tiles.map((x) => pdfText(t(x.l)))], body: [result.tiles.map((x) => pdfText(tileFmt(x.v, x.t)))] });
+      y = doc.lastAutoTable.finalY + 14;
+    }
+    if (key === 'uid_flow' && result.seeds.length && result.flow.nodes.length) {
+      // Full width when it fits under the tiles; otherwise on its own page,
+      // shrunk to the page if it's taller than one.
+      const img = await sankeyPng();
+      let w = PW - 2 * M, h = w * img.H / img.W;
+      if (h > PH - y - M && PH - y - M < 220) { doc.addPage(); y = M; }
+      if (h > PH - y - M) { w *= (PH - y - M) / h; h = PH - y - M; }
+      doc.addImage(img.data, 'JPEG', M, y, w, h);
+      doc.addPage(); y = M;
+    }
+    result.sections.forEach((s) => {
+      const rows = rowsOf(s);
+      if (y > PH - 90) { doc.addPage(); y = M; }
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+      doc.text(pdfText(`${t(s.title)} (${s.rows.length})`), M, y + 4);
+      const fs = s.cols.length > 16 ? 6 : s.cols.length > 12 ? 6.8 : s.cols.length > 8 ? 7.5 : 8.5;
+      doc.autoTable({
+        startY: y + 10, margin: { left: M, right: M }, theme: 'striped',
+        styles: { fontSize: fs, cellPadding: 2.5, overflow: 'linebreak' },
+        headStyles: { fillColor: [40, 46, 60], textColor: 255, fontSize: fs, fontStyle: 'bold' },
+        columnStyles: Object.fromEntries(s.cols.map((c, i) => [i, { halign: NUMERIC.includes(c.t) ? 'right' : 'left' }])),
+        head: [s.cols.map((c) => pdfText(t(c.l)))],
+        body: rows.length ? rows.map((r) => s.cols.map((c) => pdfText(fmt(r[c.k], c.t)))) : [[{ content: pdfText(t(T.noRows)), colSpan: s.cols.length }]],
+        didParseCell: (d) => { if (s.total && rows.length > 1 && d.section === 'body' && d.row.index === rows.length - 1) { d.cell.styles.fontStyle = 'bold'; d.cell.styles.fillColor = [228, 232, 240]; } }
+      });
+      y = doc.lastAutoTable.finalY + 22;
+    });
+    if (result.notes && result.notes.length) {
+      if (y > PH - 80) { doc.addPage(); y = M; }
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(100);
+      result.notes.forEach((x) => {
+        const lines = doc.splitTextToSize(pdfText(t(x)), PW - 2 * M);
+        if (y + lines.length * 10 > PH - M) { doc.addPage(); y = M; }
+        doc.text(lines, M, y); y += lines.length * 10 + 4;
+      });
+    }
+    const pages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pages; i++) {
+      doc.setPage(i); doc.setFontSize(8); doc.setTextColor(140);
+      doc.text(`${i} / ${pages}`, PW - M, PH - 16, { align: 'right' });
+    }
+    doc.save(`${fileBase()}.pdf`);
+  }
+
+  renderControls();
+  build();
+})();
+</script>
+<script src="/sw_register.js"></script>
+</body>
+</html>

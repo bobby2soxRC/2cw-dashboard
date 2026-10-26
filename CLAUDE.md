@@ -240,6 +240,21 @@ new Est. A Flower column (`flower_yield.js`: yields learned per lot, strain
 and overall from submitted Bucking and Hand Trim; tests:
 `node scripts/test_flower_yield.js`).
 
+### Reports (started 2026-10-26)
+
+`reports.html` (Operations card `ops_reports`): 16 reports for any date
+range, each exportable as PDF, Excel or CSV — yield & loss by lot,
+throughput, yield by strain, pre-roll & pouch production, drying, fresh
+frozen, trimmer pay, bucker output, labor cost per lb, wet intake log, Metrc
+tag activity, transfers, waste, customer / farm summary, operations
+summary, and a **UID Flow** Sankey (`ops_flow.js`: pick UIDs, starting
+stage, downstream or both). List and access columns: `OPS_REPORTS` in
+`hub_config.js` (admin → Reports: the section, then yes/no per report);
+builders: `ops_reports.js`; tests: `node scripts/test_ops_reports.js`.
+Labor Cost per Pound gets pay rates from `labor-rates.js`, which now also
+accepts `report labor cost`. No SQL. Details: "Reports" in
+`docs/OPERATIONS_APP.md` and `docs/USER_ADMIN.md`.
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)

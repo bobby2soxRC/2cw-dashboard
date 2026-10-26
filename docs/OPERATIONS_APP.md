@@ -20,11 +20,14 @@ the existing Operations Hub — same login, same Netlify deploy.
 | `material_flow.html` | Material Flow — a chart of how material moves through the forms, farm to customer, a description of each form with its math, and change requests on any box — see below |
 | `raw_inventory.html` | Raw Materials Inventory — what's on hand at each stage from the station forms, tabbed, searchable, CSV export, plus a History view tracing every record from intake to customer — see below |
 | `operations_today.html` | Live board — every form in progress or finished today, for anyone with view access; the date picker (or `?date=YYYY-MM-DD`) shows any earlier day the same way; **Range** shows several days at once (`?date=FROM&to=TO`; it starts as the day before through the day showing, for overnight work like a green harvest, and ◀ ▶ step the whole range), with the Daily Summary table hidden. With Wet Intakes showing, a **Wet Intake by farm** table sits above the forms (and in the PDF): net wet lbs per farm (a license's name, so a farm's licenses add up), split into dry rooms vs freezers — freezer when Fresh Frozen is ticked or the Drying / Freezer Location is one of `reference.json`'s `freezers` — and each intake card shows farm → location (❄ for freezer). 📄 Share PDF prints the day or range as a report. People with `labor log costs` also get a **Labor $** box next to it (off each time the page opens): ticked, the PDF adds a Labor section — Labor Log hours and $ by station (only the picked station's with a filter), and, for all stations, Connecteam clocked hours and $ by activity (the shifts file holds the last 14 days) — at each person's rate from Labor Rates via `labor-rates.js`. A page with day tabs (Bucking, Hand Trim, Pre-Roll) is on every day something was logged on it, not only its start date, with that day's amount (the headline calc on that day's rows; label from `dayTabs.headline`, else "— that day") |
+| `reports.html` | Reports — operations reports for any date range (yield, throughput, trimmer pay, labor cost, Metrc, transfers, waste, a UID Flow Sankey…) with PDF, Excel and CSV export — see "Reports" below |
 | `operations_dashboard.html` | Pipeline, yields, biomass, labor, requests, exceptions (finished forms only) |
 | `operations_stations.js` | **The schema.** Station and field definitions, EN + ES |
 | `ops_common.js` | Language, reference-data loading, the legacy offline queue |
 | `ops_data.js` | Supabase-backed drafts, autosave, live "Today" queries |
 | `ops_analytics.js` | Lot tracking, yields, biomass ledger, labor, exceptions |
+| `ops_reports.js` | The Reports page's report builders (`OpsReports`) |
+| `ops_flow.js` | UID Flow's package-to-package graph (`OpsFlow`) |
 | `supabase/schema.sql` | Run once in a new Supabase project — see setup below |
 | `config/supabase_config.js` | Your project's URL + anon key go here |
 | `netlify/functions/upload-operations-photo.js` | Photo storage (stays in GitHub, alongside the field-form photos) |
@@ -32,6 +35,7 @@ the existing Operations Hub — same login, same Netlify deploy.
 | `data/operations/reference.json` | Farms, dry rooms, machines, brands; fallback strain list (the live one is the Strain Library) |
 | `data/operations/<station>.json` | Fallback data source when Supabase isn't configured; otherwise unused |
 | `scripts/test_ops_analytics.js` | `node scripts/test_ops_analytics.js` |
+| `scripts/test_ops_reports.js` | `node scripts/test_ops_reports.js` |
 | `scripts/seed_demo_operations.js` | Demo data for the static-fallback dashboard; `--clear` to empty |
 
 ## Stations
@@ -1238,6 +1242,83 @@ the station's `flow`, so those records still balance. The earlier
 four-tab Bucking page (`buck_station.html`, `buck_data.js`, station keys
 `buck_submission` / `buck_box` / `buck_batch_close`) was removed on
 2026-10-13; it had no live rows. Its On hold list moved to `buck_hold.html`.
+
+## Reports
+
+**Reports** (`reports.html`, hub card `ops_reports` under Operations) runs
+operations reports for any date range and exports each one as **PDF**,
+**Excel** or **CSV**. Access is per report (admin panel → Reports; see
+"Reports" in `docs/USER_ADMIN.md`); the page lists only the ones a person
+has. The list, titles and access columns are `OPS_REPORTS` in
+`hub_config.js`; each report's numbers are a builder in `ops_reports.js`
+(what it loads is `NEEDS`, its own options `PARAMS`); the UID Flow graph is
+`ops_flow.js`. Tests: `node scripts/test_ops_reports.js`. No SQL.
+
+Date range: presets (Today, Yesterday, This / Last week — Monday to Sunday,
+This / Last month, Last 30 days, This year) or Custom from / to, in farm
+time. `?r=<report>&preset=…` or `&from=…&to=…` opens a report directly.
+Tables sort by clicking a header; totals are at the bottom. Excel has a
+Summary sheet (the tiles and notes) and a sheet per table with real numbers;
+CSV is every table one after another; PDF is landscape with the tiles, the
+diagram (UID Flow) and every table. Exports load SheetJS / jsPDF from the
+CDN the first time they're used.
+
+The data is the station forms (`operations_forms`, submitted rows and open
+pages, read in pages of 1,000), plus per report: the Metrc Queue's statuses,
+the Canix sync's transfers (`data/canix_transfers_recent.json`, last 30
+days), Connecteam shifts (`data/connecteam_shifts.json`, last 14 days), badge
+names (`badge-names.js`), the trim cost split (Labor Log → Cost / lb) and,
+for Labor Cost per Pound only, pay rates from `labor-rates.js`. Farm names
+come from the Information Hub's Farm Licenses (a full license, as the Canix
+sync writes it, matched by its number, else the Canix facility's farm group).
+
+| Report | Key | What it is |
+|---|---|---|
+| UID Flow (Sankey) | `uid_flow` | Where every pound of one or more packages went — below |
+| Yield & Loss by Lot | `lot_yield` | `buildLots` lots: wet, dry, water lost %, bucked, stems, waste, bucking trim, into trim, flower / smalls / trim, flower % of trim in, finished % of wet, where it is. Lots that came in, were trimmed, or had any form in the range; open pages optional |
+| Throughput by Station | `station_throughput` | Per station: forms submitted, open pages, pounds in / out / product, unweighed loss, pounds weighed in the range on the Daily Summary tally (open pages included), units; and a by-day table |
+| Yield by Strain | `strain_yield` | The lot rows rolled up by strain; each % only over lots that have both weights |
+| Pre-Roll & Pouch Production | `preroll_pouch` | Runs (open and done) with units on the days they were logged, grams in, waste, actual g/unit against the unit size; by product; and the work orders (`preroll_queue_items`, PQ-n matched to a run's PR / batch) |
+| Drying Report | `drying` | Wet Intakes in the range matched to their Take Down (`matchTakeDowns`): days drying, dry share, % lost; by farm |
+| Fresh Frozen & Biomass | `fresh_frozen` | Fresh-frozen intakes (`isFreshFrozen`) and Fresh Frozen forms; Biomass Requests |
+| Trimmer Pay & Output | `trimmer_pay` | Every bag on a Hand Trim page on its day × the page's Trimmer Rate; Smalls Hand Trim pounds (no rate) |
+| Bucker Output | `bucker_output` | Bucking's by-person log by day; recovered from leaf by day |
+| Labor Cost per Pound | `labor_cost` | Labor Log time in the range by station at each person's rate (`laborAllocations`) plus trimmer piece pay, over pounds; and by lot, all its labor, with `carryCost`'s $/lb for flower, smalls and trim |
+| Wet Intake Log | `intake_log` | Every intake with farm, license, CID, manifest #, driver, truck, bins, scale vs Metrc lb, and flags: waiting for the Metrc sync, no manifest, check strain, scale ≠ Metrc by more than 2% |
+| Metrc Tag Activity | `metrc_activity` | Metrc Queue statuses by form, what's pending with days waiting, and the new tags each form needed (made / missing) |
+| Transfers | `transfers` | Outgoing transfer forms by customer and product; incoming transfers to our licenses from Canix. Canix has no accept time, so "hours" run from departure to Canix's last update of the accepted packages; "Maybe late" means check Metrc |
+| Waste Log | `waste_log` | Weighed waste, mold, floor waste, stems, big leaf and production waste; input not weighed out (shrink), which isn't Metrc waste |
+| Customer / Farm Summary | `customer_summary` | For one farm license or CID: its lots, what was received and shipped |
+| Operations Summary | `ops_summary` | The emailed report's numbers for any range, plus Connecteam hours by activity and site |
+
+### UID Flow (Sankey)
+
+`ops_flow.js` `buildFlow` links every package stage to stage: Wet Intake →
+the on-stem package its Take Down made (several farm packages can merge into
+one; an on-stem's dry weight is split back over them by wet weight) → the
+Bucking page for it, or a part released off it → the Hand / Machine Trim
+runs on the bucked lot → whatever named an output's new tag or its lot UID
+(pre-roll / pouch / manufacturing runs, Smalls Hand Trim, Mixed Trim
+Package, biomass transfers, outgoing transfers), oldest stock first. What
+leaves along the way gets its own node: water lost drying, stems, mold &
+floor waste, unweighed / shrink, trim waste, trim loss; and so does what's
+still there: still drying, on stem — not bucked, bucked — not trimmed (or
+held as bucked flower), on hand. Every package in the middle balances
+in = out.
+
+On the page: type UIDs (full tag or the last 4+) or tick packages from the
+list (packages at the starting stage dated in the range), then **Start at**
+(Wet intake, Dry / on-stem, Bucked, Trimmed) and **Downstream** or
+**Upstream + downstream** (upstream packages' other branches show one step,
+so they still balance). **Combine like outputs** merges several lots'
+flower, water lost, etc. into one node each. Open pages are included by
+default — a lot's flow is wanted as it stands — and can be turned off. A
+typed UID that matches a lot at several stages keeps the earliest. The
+tables under the diagram (every flow, every node) are what Excel and CSV
+export; the PDF has the diagram in print colors too.
+
+Not the same thing as Material Flow (`material_flow.html`), which charts
+the forms themselves.
 
 ## Things the forms do that the paper doesn't
 

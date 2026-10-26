@@ -83,6 +83,17 @@ const CARD_DEFS = [
     href: '/raw_inventory.html'
   },
   {
+    key: 'ops_reports',
+    color: 'blue',
+    label: 'Operations',
+    dept: 'operations',
+    // Shown with 'ops reports' (the section) ticked and at least one of the
+    // OPS_REPORTS below (admin panel → Reports; see buildHub in index.html).
+    title: 'Reports',
+    desc: 'Operations reports for any date range — yield and loss, throughput, trimmer pay, labor cost, Metrc, transfers, waste and a pound-by-pound flow diagram — with PDF, Excel and CSV export.',
+    href: '/reports.html'
+  },
+  {
     key: 'sales',
     color: 'green',
     label: 'Sales',
@@ -378,6 +389,7 @@ const CARD_ES = {
   twocw_dashboard:     { title: 'Clasificación de Ventas', desc: 'Rendimiento por vendedor, estado de cuentas, oportunidades de venta adicional y cobertura en todas las cuentas de 2CW.' },
   pipeline:            { title: 'Producción en Curso', desc: 'Vista en vivo de lo que está en producción — por etapa, marca y cepa. Actualizado desde la hoja de producción.' },
   inventory:           { title: 'Inventario y Producción', desc: 'Niveles de inventario actuales, días de suministro y recomendaciones de producción por grupo de producto.' },
+  ops_reports:         { title: 'Reportes', desc: 'Reportes de operaciones para cualquier rango de fechas — rendimiento y pérdida, producción, pago de cortadores, costo laboral, Metrc, transferencias, desecho y un diagrama del flujo libra por libra — con exportación a PDF, Excel y CSV.' },
   raw_inventory:       { title: 'Inventario de Materia Prima', desc: 'Lo disponible según los formularios de estación — secando, en tallo, desvarado, flor, smalls, recorte y fresco congelado — con búsqueda por variedad, UID, licencia, rancho o CID, y exportación CSV.' },
   canix_inventory:     { title: 'Inventario Canix', desc: 'Inventario en vivo de cultivo/manufactura/distribución en las 16 licencias de Canix, por granja y etapa.' },
   sales:               { title: 'Panel de Ventas', desc: 'Ingresos mensuales por marca, ritmo y tendencia del mes, mezcla de productos y análisis de 12 meses.' },
@@ -455,6 +467,85 @@ const INFO_HUB_SECTIONS = [
   { key: 'custdocs', view: 'customer documents', edit: 'customer documents edit', tab: false,
     title: { en: 'Customer Documents', es: 'Documentos de Clientes' }, editNote: 'upload and remove MSA, licenses, W-9' }
 ];
+
+// The reports on reports.html. Access is the 'ops reports' column (the
+// section) plus a yes/no column per report (`col`) in app_users.columns;
+// index.html turns them into sessionStorage '2cw_reports' (the keys this
+// person can run) and admin.html draws the checkboxes from this list.
+// `costs` reports use pay rates, which netlify/functions/labor-rates.js
+// re-checks from the PIN before handing them over.
+const OPS_REPORT_GROUPS = [
+  { key: 'production', title: { en: 'Production & yield', es: 'Producción y rendimiento' } },
+  { key: 'people',     title: { en: 'People & labor', es: 'Personal y mano de obra' } },
+  { key: 'compliance', title: { en: 'Compliance & Metrc', es: 'Cumplimiento y Metrc' } },
+  { key: 'inventory',  title: { en: 'Inventory & customers', es: 'Inventario y clientes' } },
+  { key: 'summary',    title: { en: 'Summary', es: 'Resumen' } }
+];
+const OPS_REPORTS = [
+  { key: 'uid_flow', group: 'production', col: 'report uid flow',
+    title: { en: 'UID Flow (Sankey)', es: 'Flujo por UID (Sankey)' },
+    desc: { en: 'Where every pound of one or more UIDs went, stage by stage — pick the starting stage and upstream / downstream.',
+            es: 'A dónde fue cada libra de uno o varios UIDs, etapa por etapa — elija la etapa inicial y hacia arriba / abajo.' } },
+  { key: 'lot_yield', group: 'production', col: 'report lot yield',
+    title: { en: 'Yield & Loss by Lot', es: 'Rendimiento y pérdida por lote' },
+    desc: { en: 'Each lot from Wet Intake through Take Down, Bucking and Trim: weight at each stage, % lost and the finished split.',
+            es: 'Cada lote desde la recepción húmeda, bajada, desvarado y corte: peso en cada etapa, % perdido y el reparto final.' } },
+  { key: 'station_throughput', group: 'production', col: 'report station throughput',
+    title: { en: 'Throughput by Station', es: 'Producción por estación' },
+    desc: { en: 'Pounds in and out of each station, forms submitted and still open, by day.',
+            es: 'Libras que entran y salen de cada estación, formularios enviados y abiertos, por día.' } },
+  { key: 'strain_yield', group: 'production', col: 'report strain yield',
+    title: { en: 'Yield by Strain', es: 'Rendimiento por variedad' },
+    desc: { en: 'Dry %, bucked % and the flower / smalls / trim split per strain.',
+            es: 'Seco %, desvarado % y el reparto de flor / smalls / recorte por variedad.' } },
+  { key: 'preroll_pouch', group: 'production', col: 'report preroll pouch',
+    title: { en: 'Pre-Roll & Pouch Production', es: 'Producción de prerolls y bolsas' },
+    desc: { en: 'Units made by brand and strain, grams in, grams per unit against target, and the work orders.',
+            es: 'Unidades hechas por marca y variedad, gramos usados, gramos por unidad contra la meta y las órdenes de trabajo.' } },
+  { key: 'drying', group: 'production', col: 'report drying',
+    title: { en: 'Drying Report', es: 'Reporte de secado' },
+    desc: { en: 'Lots into drying, days on the rack and % weight lost, by farm.',
+            es: 'Lotes a secado, días colgados y % de peso perdido, por rancho.' } },
+  { key: 'fresh_frozen', group: 'production', col: 'report fresh frozen',
+    title: { en: 'Fresh Frozen & Biomass', es: 'Fresco congelado y biomasa' },
+    desc: { en: 'Pounds frozen and biomass requested or transferred, by strain and farm.',
+            es: 'Libras congeladas y biomasa solicitada o transferida, por variedad y rancho.' } },
+  { key: 'trimmer_pay', group: 'people', col: 'report trimmer pay',
+    title: { en: 'Trimmer Pay & Output', es: 'Pago y producción de cortadores' },
+    desc: { en: 'Each trimmer’s finished pounds × the lot’s $/lb, totaled for the pay period.',
+            es: 'Las libras terminadas de cada cortador × el $/lb del lote, sumado por periodo de pago.' } },
+  { key: 'bucker_output', group: 'people', col: 'report bucker output',
+    title: { en: 'Bucker Output', es: 'Producción de desvaradores' },
+    desc: { en: 'Pounds bucked per person per day.', es: 'Libras desvaradas por persona por día.' } },
+  { key: 'labor_cost', group: 'people', col: 'report labor cost', costs: true,
+    title: { en: 'Labor Cost per Pound', es: 'Costo laboral por libra' },
+    desc: { en: 'Labor $ (hourly and trimmer piece pay) over pounds, by lot and by station. Uses pay rates.',
+            es: 'Mano de obra $ (por hora y pago por pieza) entre libras, por lote y por estación. Usa las tarifas de pago.' } },
+  { key: 'intake_log', group: 'compliance', col: 'report intake log',
+    title: { en: 'Wet Intake Log', es: 'Registro de recepciones húmedas' },
+    desc: { en: 'Every intake with farm, license, manifest #, UID, scale and Metrc weight, and what still needs checking.',
+            es: 'Cada recepción con rancho, licencia, n.º de manifiesto, UID, peso de báscula y de Metrc, y lo que falta revisar.' } },
+  { key: 'metrc_activity', group: 'compliance', col: 'report metrc activity',
+    title: { en: 'Metrc Tag Activity', es: 'Actividad de etiquetas Metrc' },
+    desc: { en: 'Forms in the Metrc Queue by status, new tags made, and what’s still pending.',
+            es: 'Formularios en la Cola de Metrc por estado, etiquetas nuevas y lo pendiente.' } },
+  { key: 'transfers', group: 'compliance', col: 'report transfers',
+    title: { en: 'Transfers', es: 'Transferencias' },
+    desc: { en: 'Incoming transfers and how fast they were accepted; outgoing transfers by customer and product.',
+            es: 'Transferencias de entrada y qué tan rápido se aceptaron; de salida por cliente y producto.' } },
+  { key: 'waste_log', group: 'compliance', col: 'report waste log',
+    title: { en: 'Waste Log', es: 'Registro de desecho' },
+    desc: { en: 'Waste, mold and stems by station, lot and reason.', es: 'Desecho, moho y tallos por estación, lote y motivo.' } },
+  { key: 'customer_summary', group: 'inventory', col: 'report customer summary',
+    title: { en: 'Customer / Farm Summary', es: 'Resumen por cliente / rancho' },
+    desc: { en: 'For one farm or CID: everything received, processed and shipped.',
+            es: 'Para un rancho o CID: todo lo recibido, procesado y enviado.' } },
+  { key: 'ops_summary', group: 'summary', col: 'report ops summary',
+    title: { en: 'Operations Summary', es: 'Resumen de operaciones' },
+    desc: { en: 'The daily / weekly email report for any date range: pounds by station, runs, transfers and staff hours.',
+            es: 'El reporte diario / semanal del correo para cualquier rango: libras por estación, corridas, transferencias y horas.' } }
+];
+const OPS_REPORTS_SECTION_COL = 'ops reports';
 
 // Card keys whose sheet column name doesn't match the key verbatim (e.g. has
 // spaces). Card keys not listed here are looked up as-is.
