@@ -149,6 +149,13 @@
     .li-table input[type=date]{min-width:150px}
     .li-table input[type=time]{min-width:120px}
     .li-calc{font-family:'DM Mono',monospace;color:var(--subtext);white-space:nowrap}
+    .li-stock{min-width:220px}
+    /* Many columns (Product Transfer): scroll sideways rather than squash each cell. */
+    .li-wide input,.li-wide select{min-width:120px}
+    .li-wide select.li-stock{min-width:240px}
+    .li-wide input.uid{min-width:210px}
+    .li-note{font-size:.72rem;color:var(--muted);margin-top:4px;white-space:normal}
+    .li-note.over{color:var(--red);font-weight:600}
     .li-num{display:inline-block;min-width:3ch;text-align:center;color:var(--text);font-size:1.05rem}
     .li-del{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;width:100%;min-height:48px;font-size:20px;line-height:1;cursor:pointer}
     .li-del:hover{border-color:var(--red);color:var(--red)}
@@ -317,6 +324,7 @@
 <script src="/operations_stations.js"></script>
 <script src="/ops_common.js"></script>
 <script src="/ops_data.js"></script>
+<script src="/raw_stock.js"></script>
 <script src="/preroll_queue.js"></script>
 <script>
 (async function () {
@@ -560,11 +568,43 @@
   // The weighing worksheet: a repeating employee-# / weight grid with a live
   // sub-total, mirroring the paper work order it replaces. Exposes addRow()
   // so hydrate() can rebuild saved rows on resume.
+  // ── Batch picker (`t: 'stock'` column — Product Transfer — Outgoing) ──
+  // The packages Raw Inventory has on hand (raw_stock.js, the same numbers
+  // as raw_inventory.html, used-up marks left out) on the tab the row's
+  // product type says (`c.stock(row)` → { tab, cat }). Picking one fills the
+  // row (`c.fills`: column → stock row property); the `stockAvail` column
+  // shows its lbs less what this form's other rows take off the same batch.
+  // A form being fixed doesn't count against itself (skipId).
+  const SK = {
+    pick:    { en: 'Pick a batch…', es: 'Elija un lote…' },
+    none:    { en: 'Nothing on hand', es: 'Nada disponible' },
+    typeFirst:{ en: '— pick the product type —', es: '— elija el tipo de producto —' },
+    typeUid: { en: '— type the UID —', es: '— escriba el UID —' },
+    loading: { en: 'Loading inventory…', es: 'Cargando inventario…' },
+    failed:  { en: 'Inventory didn’t load — type the UID', es: 'No cargó el inventario — escriba el UID' },
+    gone:    { en: 'saved batch — not on hand now', es: 'lote guardado — ya no disponible' },
+    over:    { en: 'More than the {n} lb available', es: 'Más de las {n} lb disponibles' }
+  };
+  let stockP = null, stockList;   // stockList: undefined loading, null failed, else the on-hand rows
+  function loadStock(then) {
+    if (!stockP) {
+      stockP = Promise.resolve().then(() => RawStock.load(getClient(), { skipId: editMode ? editId : null }))
+        .then((r) => r.rows.filter((x) => x.lb > 0.005 && !r.marks[x.key])
+          .sort((a, b) => String(a.strain).localeCompare(String(b.strain)) || a.date.localeCompare(b.date)))
+        .catch((ex) => { console.error('raw stock', ex); return null; })
+        .then((list) => { stockList = list; return list; });
+    }
+    stockP.then(then);
+  }
+  const stockFits = (x, ty) => x.tab === ty.tab && (!ty.cat || !x.cat || x.cat === ty.cat || ty.tab === 'trim');
+  const stockLabel = (x, lb) => [x.strain || '—', `…${normUid(x.uid).slice(-6)}`, `${fmtNum(lb)} lb`,
+    x.farm || x.code, x.cid ? `CID ${x.cid}` : ''].filter(Boolean).join(' · ');
+
   function buildLineItems(f, wrap) {
     values[f.k] = [];
     wrap.innerHTML = labelHtml(f) +
       (f.hint ? `<div class="hint" style="margin-top:0;margin-bottom:10px">${t(f.hint)}</div>` : '') +
-      `<div class="li-scroll"><table class="li-table"><thead><tr>` +
+      `<div class="li-scroll"><table class="li-table${f.cols.length > 8 ? ' li-wide' : ''}"><thead><tr>` +
       f.cols.map((c) => `<th${c.t === 'rownum' ? ' style="white-space:nowrap"' : ''}>${t(c.l)}${c.req ? '<span class="req">*</span>' : ''}</th>`).join('') + `<th></th></tr></thead><tbody id="li_${f.k}"></tbody></table></div>` +
       `<button type="button" class="li-add" id="add_${f.k}">${t(UI.addRow)}</button>` +
       `<div class="li-total"><span class="k">${t(UI.subtotal)}</span><span class="v" id="lit_${f.k}">0</span></div>`;
@@ -572,6 +612,11 @@
     setTimeout(() => {
       const tbody = wrap.querySelector(`#li_${f.k}`);
       const numCols = f.cols.filter((c) => c.t === 'rownum');
+      // Each row's batch picker refresh: any change can move what's available.
+      // (Held while a picked batch fills its row, so a half-filled row isn't read.)
+      const stockRefresh = new Set();
+      let filling = false;
+      const refreshStock = () => { if (!filling) stockRefresh.forEach((fn) => fn()); };
       const renumber = () => {
         if (!numCols.length) return;
         const spans = tbody.querySelectorAll('.li-num');
@@ -596,6 +641,7 @@
         // than one picked on this row.
         const setCell = {};
         const carried = new Set();
+        const availEl = {};   // stock column key -> its `stockAvail` cell
         const recalcRow = () => calcCells.forEach(({ c, el }) => {
           let out = null;
           try { out = c.calc(row); } catch { out = null; }
@@ -617,6 +663,75 @@
             el.className = 'li-calc';
             calcCells.push({ c, el });
             td.appendChild(el); tr.appendChild(td);
+            return;
+          }
+          if (c.t === 'stockAvail') {
+            const el = document.createElement('span');
+            el.className = 'li-calc';
+            el.textContent = '—';
+            availEl[c.stockCol] = { el, k: c.k };
+            td.appendChild(el); tr.appendChild(td);
+            return;
+          }
+          if (c.t === 'stock') {
+            const sel = document.createElement('select');
+            sel.className = 'li-stock';
+            const note = document.createElement('div');
+            note.className = 'li-note';
+            td.appendChild(sel); td.appendChild(note); tr.appendChild(td);
+            if (prefill && prefill[c.k]) row[c.k] = prefill[c.k];
+            const others = (key) => values[f.k].filter((r) => r !== row && r[c.k] === key).reduce((a, r) => a + num(r[c.weightCol]), 0);
+            let shown = '';
+            const refresh = () => {
+              if (!tr.isConnected) { stockRefresh.delete(refresh); return; }
+              const ty = c.stock(row);
+              const av = availEl[c.k];
+              let opts, hit = null;
+              if (!ty || !ty.tab) {
+                // Seeds, pre-rolls: not in Raw Inventory, the UID is typed.
+                row[c.k] = '';
+                opts = [['', t(ty ? SK.typeUid : SK.typeFirst)]];
+              } else if (stockList === undefined) {
+                opts = [['', t(SK.loading)]];
+              } else if (stockList === null) {
+                opts = [['', t(SK.failed)]];
+              } else {
+                const fits = stockList.filter((x) => stockFits(x, ty));
+                const ofUid = (x) => uidTailMatch(x.uid, row.sourceUid) || uidTailMatch(x.lotUid, row.sourceUid);
+                // A UID typed over the picked batch's unpicks it.
+                const cur = stockList.find((x) => x.key === row[c.k]);
+                if (cur && row.sourceUid && !ofUid(cur)) row[c.k] = '';
+                // A row with a UID but no batch yet (a Needs form link, an
+                // older form) gets the batch with that UID.
+                if (!row[c.k] && row.sourceUid) {
+                  const m = fits.find((x) => uidTailMatch(x.uid, row.sourceUid)) || fits.find(ofUid);
+                  if (m) row[c.k] = m.key;
+                }
+                // A batch from another tab doesn't stay picked when the type changes.
+                if (row[c.k] && !fits.some((x) => x.key === row[c.k]) && stockList.some((x) => x.key === row[c.k])) row[c.k] = '';
+                hit = fits.find((x) => x.key === row[c.k]) || null;
+                opts = [['', t(fits.length ? SK.pick : SK.none)], ...fits.map((x) => [x.key, stockLabel(x, Math.max(0, x.lb - others(x.key)))])];
+                if (row[c.k] && !hit) opts.push([row[c.k], `${row.sourceUid ? '…' + normUid(row.sourceUid).slice(-6) + ' · ' : ''}${t(SK.gone)}`]);
+              }
+              const html = opts.map(([v, l]) => `<option value="${escapeAttr(v)}">${escapeHtml(l)}</option>`).join('');
+              if (html !== shown) { sel.innerHTML = html; shown = html; }
+              sel.value = row[c.k] || '';
+              sel.disabled = opts.length < 2;
+              const avail = hit ? Math.round((hit.lb - others(hit.key)) * 100) / 100 : null;
+              if (av) { av.el.textContent = avail === null ? '—' : fmtNum(avail); row[av.k] = avail; }
+              const over = avail !== null && num(row[c.weightCol]) > avail + 0.005;
+              note.className = 'li-note' + (over ? ' over' : '');
+              note.textContent = over ? t(SK.over).replace('{n}', fmtNum(Math.max(0, avail))) : '';
+            };
+            stockRefresh.add(refresh);
+            sel.addEventListener('change', () => {
+              row[c.k] = sel.value;
+              const x = (stockList || []).find((s) => s.key === sel.value);
+              filling = true;
+              try { if (x) Object.entries(c.fills || {}).forEach(([col, prop]) => setCell[col] && setCell[col](x[prop], true)); } finally { filling = false; }
+              refreshStock(); recompute(); updateVisibility(); markDirty();
+            });
+            loadStock(refreshStock);
             return;
           }
           let inp, other = null;
@@ -673,6 +788,7 @@
             if (other) other.style.display = inp.value === '__other__' ? 'block' : 'none';
             row[c.k] = read();
             recalcRow();
+            refreshStock();
             recompute();
             updateVisibility();
             markDirty();
@@ -692,14 +808,23 @@
             });
           };
           const onUserChange = () => { carried.delete(c.k); onCellChange(); if (c.canixStrain) lookupStrain(); };
-          if (c.t === 'select') {
-            setCell[c.k] = (v) => {
-              inp.value = v;
-              if (inp.value !== v) return;
-              carried.delete(c.k);
-              onCellChange();
-            };
-          }
+          // Filled from code: the Canix strain (a select only takes a value on
+          // its list), or a picked batch (`force`: a value not on the list
+          // goes in as Other, or as its own option).
+          setCell[c.k] = (v, force) => {
+            v = v === undefined || v === null ? '' : String(v);
+            inp.value = v;
+            if (c.t === 'select' && inp.value !== v) {
+              if (!force) return;
+              if (other) { inp.value = '__other__'; other.value = v; } else {
+                const opt = document.createElement('option');
+                opt.value = opt.textContent = v;
+                inp.appendChild(opt); inp.value = v;
+              }
+            }
+            carried.delete(c.k);
+            onCellChange();
+          };
           inp.addEventListener('input', onUserChange);
           inp.addEventListener('change', onUserChange);
           if (other) other.addEventListener('input', onUserChange);
@@ -714,12 +839,13 @@
         del.onclick = () => {
           const i = values[f.k].indexOf(row);
           if (i > -1) values[f.k].splice(i, 1);
-          tr.remove(); renumber(); recompute(); updateVisibility(); markDirty();
+          tr.remove(); renumber(); refreshStock(); recompute(); updateVisibility(); markDirty();
         };
         tdDel.appendChild(del); tr.appendChild(tdDel);
         tbody.appendChild(tr);
         renumber();
         recalcRow();
+        refreshStock();
         if (!prefill) { const first = tr.querySelector('input, select'); if (first) first.focus(); }
       };
       lineitemAdders[f.k] = addRow;
@@ -1517,7 +1643,7 @@
   // (UID, strain, tare) or a calc result alone doesn't make it real.
   function rowHasData(f, r) {
     return f.cols.some((c) => {
-      if (c.t === 'calc' || c.t === 'rownum' || c.carry) return false;
+      if (c.t === 'calc' || c.t === 'rownum' || c.t === 'stockAvail' || c.carry) return false;
       const x = r[c.k];
       if (x === '' || x === null || x === undefined) return false;
       return !(c.def !== undefined && String(x) === String(c.def)) && !(c.t === 'date' && c.today);

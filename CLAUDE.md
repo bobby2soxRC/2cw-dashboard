@@ -161,6 +161,11 @@ SQL. Users need the new stations ticked in Admin to see them. Details in
 `docs/OPERATIONS_APP.md` ("Holding as bucked flower", "Mixed Trim Package",
 "Product Transfer — Outgoing").
 
+Since 2026-10-27 each transfer row has a **Batch** dropdown: the on-hand
+packages for its product type, from Raw Inventory's math (moved into
+`raw_stock.js`, shared with `raw_inventory.html`); picking one fills strain,
+PID, CID and UID and shows Available (lbs).
+
 ### Ground Flower Pouches (started 2026-10-20)
 
 New Manufacturing form `pouch_production` (`operations_stations.js`), a copy

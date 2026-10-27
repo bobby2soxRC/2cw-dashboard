@@ -771,6 +771,8 @@
   });
   let openId = null;
 
+  // A table's columns that only help fill the form in (the transfer's batch picker).
+  const shownCols = (f) => f.cols.filter((c) => !c.formOnly);
   function fieldHtml(f, r) {
     if (f.showIf && !f.showIf(r.fields || {})) return '';
     const v = f.projectPicker && val(r, f.k) ? val(r, 'projectName') || val(r, f.k) : val(r, f.k);
@@ -778,8 +780,8 @@
       const items = Array.isArray(v) ? v : [];
       if (!items.length) return `<div class="d-row"><div class="k">${esc(t(f.l))}</div><div class="v">—</div></div>`;
       return `<div class="d-row" style="grid-template-columns:1fr"><div class="k">${esc(t(f.l))}</div>
-        <div style="overflow-x:auto"><table class="d-table"><thead><tr>${f.cols.map((c) => `<th>${esc(t(c.l))}</th>`).join('')}</tr></thead>
-        <tbody>${items.map((it) => `<tr>${f.cols.map((c) => `<td>${esc(display(c, it[c.k]))}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;
+        <div style="overflow-x:auto"><table class="d-table"><thead><tr>${shownCols(f).map((c) => `<th>${esc(t(c.l))}</th>`).join('')}</tr></thead>
+        <tbody>${items.map((it) => `<tr>${shownCols(f).map((c) => `<td>${esc(display(c, it[c.k]))}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;
     }
     if (f.t === 'photo') {
       return `<div class="d-row"><div class="k">${esc(t(f.l))}</div><div class="v">${isUrl(v) ? `<button type="button" class="d-photo-btn" data-k="${esc(f.k)}"><img class="d-photo" src="${esc(v)}" alt=""></button>` : '—'}</div></div>`;

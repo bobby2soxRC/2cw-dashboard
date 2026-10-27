@@ -1564,18 +1564,26 @@ const OPERATIONS_STATIONS = [
 
       { k: 'lines', t: 'lineitems', req: true,
         l: { en: 'Products Going Out', es: 'Productos que salen' },
-        hint: { en: 'One row per package. Weight in lbs — pieces for pre-rolls. Transfer Package UID is the new tag on the package going out, if it gets one.',
-                es: 'Una fila por paquete. Peso en lbs — piezas para prerolls. El UID del paquete de transferencia es la etiqueta nueva del paquete que sale, si la lleva.' },
+        hint: { en: 'One row per package. Pick the product type, then the batch it comes off — that fills in strain, PID, CID and source UID and shows what’s available; type the weight going out. Weight in lbs — pieces for pre-rolls. Transfer Package UID is the new tag on the package going out, if it gets one.',
+                es: 'Una fila por paquete. Elija el tipo de producto y luego el lote de donde sale — eso llena variedad, PID, CID y UID de origen y muestra lo disponible; escriba el peso que sale. Peso en lbs — piezas para prerolls. El UID del paquete de transferencia es la etiqueta nueva del paquete que sale, si la lleva.' },
         cols: [
           { k: 'productType', t: 'select', req: true, carry: true, l: { en: 'Product Type', es: 'Tipo de producto' },
             opts: [
               { v: '', l: { en: '', es: '' } },
               ...Object.entries(TRANSFER_TYPES).map(([v, x]) => ({ v, l: { en: `${v} — ${x.l.en}`, es: `${v} — ${x.l.es}` } }))
             ] },
+          // The batches Raw Inventory has on hand for the product type (its
+          // TRANSFER_TYPES tab / cat; ops_form.html, raw_stock.js). Picking
+          // one fills `fills` (column → stock row property); `stockAvail`
+          // shows its lbs less what this form's other rows take off it.
+          { k: 'stockKey', t: 'stock', formOnly: true, stock: (r) => TRANSFER_TYPES[r.productType] || null,
+            fills: { strain: 'strain', pid: 'code', cid: 'cid', sourceUid: 'uid' }, weightCol: 'weight',
+            l: { en: 'Batch', es: 'Lote' } },
           { k: 'strain', t: 'select', ref: 'strains', allowOther: true, l: { en: 'Strain', es: 'Variedad' } },
           { k: 'pid', t: 'select', ref: 'properties', allowOther: true, l: { en: 'PID', es: 'PID' } },
           { k: 'cid', t: 'select', ref: 'customers', allowOther: true, l: { en: 'CID', es: 'CID' } },
           { k: 'sourceUid', t: 'uid', req: true, canixStrain: 'strain', l: { en: '2CW Source Package UID', es: 'UID del paquete de origen 2CW' } },
+          { k: 'availableLb', t: 'stockAvail', formOnly: true, stockCol: 'stockKey', l: { en: 'Available (lbs)', es: 'Disponible (lbs)' } },
           { k: 'weight', t: 'number', req: true, min: 0, step: 0.01, l: { en: 'Weight (lbs) / pieces', es: 'Peso (lbs) / piezas' } },
           { k: 'transferUid', t: 'uid', l: { en: '2CW Transfer Package UID', es: 'UID del paquete de transferencia 2CW' } },
           { k: 'pricePerLb', t: 'number', min: 0, step: 0.01, l: { en: 'Price per lb ($)', es: 'Precio por lb ($)' } }

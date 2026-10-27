@@ -429,6 +429,21 @@ Raw Inventory takes each row off its source package on the tab its product
 type says (1 On-Stem, 2 Bucked, 3 Flower, 4 Smalls, 5 Trim, 6 Fresh Frozen;
 seeds and pre-rolls aren't tracked there). No SQL.
 
+Each row's **Batch** dropdown (column `stockKey`, `t: 'stock'`) lists what
+Raw Inventory has on hand on the tab the row's product type says — strain,
+UID tail, lbs left, farm, CID — and picking one fills strain, PID (farm
+code), CID and source UID (`fills`); **Available (lbs)** (`availableLb`,
+`t: 'stockAvail'`) shows that batch's lbs less what the form's other rows
+take off it, and a weight over it is flagged in red (not blocked — the
+inventory can lag a form). Seeds and pre-rolls have no batch list: type the
+UID. A row that has a UID but no batch (a Needs form link, an older form)
+picks the batch with that UID; typing a different UID unpicks it. The
+numbers are Raw Inventory's own: its build moved to `raw_stock.js`
+(`RawStock.load`), shared by `raw_inventory.html` and `ops_form.html`, used-up
+marks left out; a form opened with Fix form doesn't count its own rows
+against itself (`skipId`). Both columns are `formOnly`, so the Metrc Queue's
+detail doesn't show them.
+
 **Work Orders** (`work_orders.html`, hub card `work_orders` directly
 under Operations) puts the work queues on one page, a tab each (`?tab=buck|trim|preroll`):
 - **Bucking** — `loadBuckingQueue`, the same list and order as the On-Stem
