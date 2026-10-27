@@ -66,6 +66,41 @@ check('name from the badge', ana.name, 'Ana');
 check('pay = 298 g ÷ 454 × $23', ana.pay, Math.round(298 / 454 * 23 * 100) / 100);
 check('total pay', tp.sections[0].total.pay, Math.round(986 / 454 * 23 * 100) / 100, 0.02);
 
+console.log('\nhand trim — metrc reconciliation');
+{
+  const ht = (x) => ({ id: 'h', date: '2026-08-29', status: 'submitted', stationKey: 'hand_trim', sourceUid: DRY_UID, strain: 'Lemon Cherry Gelato', trimRatePerLb: 20,
+    weights: [{ employeeNo: '79', grams: 4540, day: '2026-08-28' }, { employeeNo: '125', grams: 4540, day: '2026-08-29' }], smallsLb: 3, ...x });
+  const pk = (tag, item, lb, src) => ({ tag, item: { name: item }, original_weight: lb, weight: 1, weight_unit: 'Pounds', packaged_date: '2026-08-30T00:00:00.000Z', source_packages: [{ tag: src }], status: 'Active' });
+  const Dr = { sub: { hand_trim: [
+    ht({ id: 'a', newFinishedUid: 'TAGFLOWER0001', newSmallsUid: 'TAGSMALLS0001' }),
+    ht({ id: 'b', sourceUid: 'LOTB00000002', newFinishedUid: 'TAGFLOWER0002' }),
+    ht({ id: 'c', sourceUid: 'LOTC00000003' }),
+    ht({ id: 'd', sourceUid: 'LOTD00000004' }),
+    ht({ id: 'e', sourceUid: 'LOTE00000005', owner: 'paper_import' })] },
+    open: { hand_trim: [ht({ id: 'o', status: 'draft', sourceUid: 'LOTO00000009' })] } };
+  const packages = [pk('TAGFLOWER0001', 'Flower - Lemon Cherry Gelato', 20.1, DRY_UID), pk('TAGSMALLS0001', 'Smalls - LCG', 3.5, DRY_UID),
+    pk('TAGFLOWER0002', 'Flower - B', 18, 'LOTB00000002'), pk('TAGFLOWER0003', 'Flower - C', 20, 'LOTC00000003'), pk('TAGBUCKED0004', 'Bucked Flower - D', 50, 'LOTD00000004')];
+  const rr = OpsReports.BUILDERS.trim_metrc_recon(Dr, ctx({ packages, params: { open: true, tol: '1' } }));
+  const lot = (id) => rr.sections[0].rows.find((r) => r.id === id);
+  check('paper imports left out, open page in', rr.sections[0].rows.map((r) => r.id).sort(), ['a', 'b', 'c', 'd', 'o']);
+  check('trimmer lb = every bag', lot('a').trimmerLb, 20);
+  check('Metrc lb is the created weight, not what’s left', lot('a').metrcLb, 20.1);
+  check('0.5% off matches at 1%', lot('a').res, 'ok');
+  check('smalls Metrc − form', lot('a').smallsDiffLb, 0.5);
+  check('10% short is over tolerance', lot('b').res, 'over');
+  check('no tag entered: found from the lot UID', [lot('c').res, lot('c').flowerTag], ['found', 'TAGFLOWER0003']);
+  check('a bucked package isn’t finished flower', lot('d').res, 'nopkg');
+  check('open page is still trimming', lot('o').res, 'open');
+  check('Not needed in the queue with no package', OpsReports.BUILDERS.trim_metrc_recon(Dr, ctx({ packages, metrcQueue: new Map([['d', { status: 'not_needed' }]]) })).sections[0].rows.find((r) => r.id === 'd').res, 'notNeeded');
+  const ana = rr.sections[3].rows.find((r) => r.badge === '79');
+  check('trimmer pay 10 lb × $20 on each lot', ana.pay, 5 * 10 * 20);
+  check('share of Metrc lb: 10 lb × 20.1 / 20 on lot a', rr.sections[4].rows.find((r) => r.badge === '79' && r.uid === normUid(DRY_UID)).metrcShare, 10.05);
+  const one = OpsReports.BUILDERS.trim_metrc_recon(Dr, ctx({ packages, from: '2026-08-29', to: '2026-08-29' }));
+  check('by date counts only bags in the range', one.sections[1].rows.find((r) => r.day === '2026-08-29').lb, 50);
+  check('… but the lot still reconciles all its bags', one.sections[0].rows.find((r) => r.id === 'a').trimmerLb, 20);
+  check('packages list both of lot a’s', rr.sections[2].rows.filter((r) => r.uid === normUid(DRY_UID)).length, 2);
+}
+
 console.log('\nbucker output');
 const bo = OpsReports.BUILDERS.bucker_output(D, ctx());
 check('two buckers', bo.sections[0].rows.length, 2);

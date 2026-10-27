@@ -1266,7 +1266,7 @@ CDN the first time they're used.
 The data is the station forms (`operations_forms`, submitted rows and open
 pages, read in pages of 1,000), plus per report: the Metrc Queue's statuses,
 the Canix sync's transfers (`data/canix_transfers_recent.json`, last 30
-days), Connecteam shifts (`data/connecteam_shifts.json`, last 14 days), badge
+days) and packages (`data/canix_packages_recent.json` + `canix_inventory.json`), Connecteam shifts (`data/connecteam_shifts.json`, last 14 days), badge
 names (`badge-names.js`), the trim cost split (Labor Log → Cost / lb) and,
 for Labor Cost per Pound only, pay rates from `labor-rates.js`. Farm names
 come from the Information Hub's Farm Licenses (a full license, as the Canix
@@ -1282,6 +1282,7 @@ sync writes it, matched by its number, else the Canix facility's farm group).
 | Drying Report | `drying` | Wet Intakes in the range matched to their Take Down (`matchTakeDowns`): days drying, dry share, % lost; by farm |
 | Fresh Frozen & Biomass | `fresh_frozen` | Fresh-frozen intakes (`isFreshFrozen`) and Fresh Frozen forms; Biomass Requests |
 | Trimmer Pay & Output | `trimmer_pay` | Every bag on a Hand Trim page on its day × the page's Trimmer Rate; Smalls Hand Trim pounds (no rate) |
+| Hand Trim — Metrc Reconciliation | `trim_metrc_recon` | Trimmers' weighed pounds against the finished packages made in Metrc — below |
 | Bucker Output | `bucker_output` | Bucking's by-person log by day; recovered from leaf by day |
 | Labor Cost per Pound | `labor_cost` | Labor Log time in the range by station at each person's rate (`laborAllocations`) plus trimmer piece pay, over pounds; and by lot, all its labor, with `carryCost`'s $/lb for flower, smalls and trim |
 | Wet Intake Log | `intake_log` | Every intake with farm, license, CID, manifest #, driver, truck, bins, scale vs Metrc lb, and flags: waiting for the Metrc sync, no manifest, check strain, scale ≠ Metrc by more than 2% |
@@ -1290,6 +1291,32 @@ sync writes it, matched by its number, else the Canix facility's farm group).
 | Waste Log | `waste_log` | Weighed waste, mold, floor waste, stems, big leaf and production waste; input not weighed out (shrink), which isn't Metrc waste |
 | Customer / Farm Summary | `customer_summary` | For one farm license or CID: its lots, what was received and shipped |
 | Operations Summary | `ops_summary` | The emailed report's numbers for any range, plus Connecteam hours by activity and site |
+
+### Hand Trim — Metrc Reconciliation
+
+For reconciling trimming payroll against what was packaged in Metrc (asked
+for by accounting, October 2026). Lots are Hand Trim pages with a bag weighed
+in the range (open pages optional, on by default; paper-sheet imports left
+out). Per lot: the trimmers' pounds (every bag on the lot, what they're paid
+on), $/lb and pay, the weight sign-off (`weightCheckState`, who / when, the
+signed-off flower lb), the Metrc Queue status, and the finished flower and
+smalls packages: the tag the Metrc Queue entered (`newFinishedUid` /
+`newSmallsUid`), looked up in the Canix packages at the weight it was
+**created** with (`original_weight`, so later sales don't move it). With no
+tag entered, a Canix package whose item starts "Flower" / "Smalls" and whose
+source package is the lot's UID is shown as found. Result: Matches (within
+the "Matches within" %, default 1%), Weights differ, No Metrc package yet,
+Marked "Not needed" in the Metrc Queue with no package, Package in Canix but
+tag not entered, Tag entered but not in Canix, Still trimming. Other tables:
+by date (pounds weighed and pay that day; flower packages made in Metrc that
+day from these lots), every matched package, by trimmer, and by trimmer ×
+day × lot with **Share of Metrc lb** — the lot's Metrc pounds split over its
+trimmers by what each weighed.
+
+Packages come from `data/canix_inventory.json` (on hand) plus
+`data/canix_packages_recent.json` — every package packaged in the last 180
+days, sold or not, slimmed (`recent_packages` in `scripts/canix_sync.py`), so
+a package that's been sold still reconciles.
 
 ### UID Flow (Sankey)
 

@@ -53,6 +53,7 @@ Usage:
 Output:
     data/canix_facilities.json
     data/canix_inventory.json           (current on-hand packages — derived)
+    data/canix_packages_recent.json     (packages from the last 180 days, slimmed — committed)
     data/canix_packages_history.json    (every package, all statuses, ever)
     data/canix_plant_batches.json       (cumulative history)
     data/canix_harvests.json            (cumulative history)
@@ -127,6 +128,13 @@ FORCE_FULL_BACKFILL = bool(os.environ.get("CANIX_FULL_BACKFILL"))
 # by slim_record() so it stays small. It's how we see when a manifest was made
 # and when its truck left/arrived.
 RECENT_TRANSFER_DAYS = 30
+
+# The same for packages: canix_packages_recent.json is every package (active
+# or not) packaged in the last RECENT_PACKAGE_DAYS, cut down to what the
+# Reports page's Hand Trim — Metrc Reconciliation needs (tag, item, weights,
+# date, source tags). canix_inventory.json only has what's still on hand, so
+# a finished-flower package that's been sold would otherwise vanish from it.
+RECENT_PACKAGE_DAYS = 180
 
 # ── HTTP HELPERS ─────────────────────────────────────────────────────────────
 
@@ -238,6 +246,25 @@ def recent_transfers(transfers, now, packages=(), sales_orders=()):
     pkg_by_tag = {norm_tag(p.get("tag")): p for p in packages if p.get("tag")}
     so_by_id = {str(o.get("id")): o for o in sales_orders if o.get("id") is not None}
     return [slim_record(label_transfer(t, pkg_by_tag, so_by_id)) for t in recent]
+
+
+def recent_packages(packages, now):
+    since = (now - timedelta(days=RECENT_PACKAGE_DAYS)).strftime("%Y-%m-%d")
+    out = []
+    for p in packages:
+        if str(p.get("packaged_date") or "")[:10] < since:
+            continue
+        item = p.get("item") if isinstance(p.get("item"), dict) else {}
+        out.append({
+            "tag": p.get("tag"), "status": p.get("status"), "is_active": p.get("is_active"),
+            "item": {"name": item.get("name")},
+            "weight": p.get("weight"), "original_weight": p.get("original_weight"), "weight_unit": p.get("weight_unit"),
+            "packaged_date": p.get("packaged_date"), "updated_at": p.get("updated_at"),
+            "source_packages": [{"tag": s.get("tag")} for s in (p.get("source_packages") or []) if isinstance(s, dict)],
+            "_facility_name": p.get("_facility_name"), "_facility_license_number": p.get("_facility_license_number"),
+        })
+    out.sort(key=lambda p: str(p.get("packaged_date") or ""), reverse=True)
+    return out
 
 
 def package_sources(tag, pkg_by_tag, depth=4):
@@ -710,6 +737,7 @@ def main():
 
     current_inventory = [r for r in histories["packages"].values() if r.get("is_active")]
     save("canix_inventory.json", current_inventory)
+    save("canix_packages_recent.json", recent_packages(histories["packages"].values(), started))
 
     transfers_recent = recent_transfers(histories["transfers"].values(), started,
                                         list(histories["packages"].values()), list(histories["sales_orders"].values()))

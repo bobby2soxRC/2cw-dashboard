@@ -255,6 +255,13 @@ Labor Cost per Pound gets pay rates from `labor-rates.js`, which now also
 accepts `report labor cost`. No SQL. Details: "Reports" in
 `docs/OPERATIONS_APP.md` and `docs/USER_ADMIN.md`.
 
+Since 2026-10-27: **Hand Trim — Metrc Reconciliation** (`trim_metrc_recon`,
+access column `report trim metrc recon`), for accounting to reconcile
+trimming payroll: trimmers' weighed lb per lot / date / trimmer against the
+finished flower and smalls packages created in Metrc (Canix
+`original_weight`). The Canix sync now also writes
+`data/canix_packages_recent.json` (last 180 days of packages, sold too).
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)

@@ -22,7 +22,7 @@
 //   farmName(pid)   farm for a Farm License code, personName(badge)
 //   rates, split    pay rates (labor_cost only) and the trim cost split
 //   reference, metrcQueue (Map form id → row), canix {transfers,
-//   facilities}, shifts (connecteam_shifts.json), prerollQueue (rows)
+//   facilities}, packages (Canix package rows), shifts (connecteam_shifts.json), prerollQueue (rows)
 //
 // Plain browser script over the operations_stations.js / ops_common.js /
 // ops_analytics.js / ops_flow.js globals. Tests:
@@ -70,6 +70,7 @@
     preroll_pouch:      { stations: ['preroll_production', 'pouch_production'], drafts: ['preroll_production', 'pouch_production'], extra: ['reference', 'prerollQueue'] },
     drying:             { stations: ['intake_wet', 'dry_check'] },
     fresh_frozen:       { stations: ['intake_wet', 'fresh_frozen', 'biomass_request'] },
+    trim_metrc_recon:   { stations: ['hand_trim'], drafts: ['hand_trim'], extra: ['metrc', 'packages', 'names'] },
     trimmer_pay:        { stations: ['hand_trim', 'smalls_trim'], drafts: ['hand_trim', 'smalls_trim'], extra: ['names'] },
     bucker_output:      { stations: ['buck'], drafts: ['buck'], extra: ['names'] },
     labor_cost:         { stations: [...PIPE, 'labor_entry', 'work_project', 'smalls_trim', 'preroll_production', 'pouch_production'], drafts: ['hand_trim'], extra: ['rates', 'split'] },
@@ -92,6 +93,8 @@
     lot_yield: [LOT_BASIS, OPEN_PAGES],
     strain_yield: [LOT_BASIS, OPEN_PAGES],
     labor_cost: [LOT_BASIS],
+    trim_metrc_recon: [{ k: 'open', t: 'check', def: true, l: L('Include open pages (lots still being trimmed)', 'Incluir hojas abiertas (lotes aún en corte)') },
+      { k: 'tol', t: 'select', def: '1', l: L('Matches within', 'Cuadra dentro de'), opts: ['0.5', '1', '2', '5'].map((v) => ({ v, l: L(`${v}%`) })) }],
     customer_summary: [{ k: 'who', t: 'select', l: L('Farm or customer', 'Rancho o cliente'), opts: (D, ctx) => customerOptions(D, ctx) }, OPEN_PAGES]
   };
 
@@ -769,6 +772,200 @@
       ],
       notes: [L('Forms submitted in the range on the Metrc Queue’s stations (paper-sheet imports left out), with their status now. A tag is missing when the form made that output and the Metrc Queue hasn’t had its new tag entered.',
                 'Formularios del rango en las estaciones de la Cola de Metrc, con su estado actual. Falta una etiqueta cuando el formulario hizo ese producto y no se ha ingresado su etiqueta nueva.')]
+    };
+  };
+
+  // ── Hand Trim — Metrc reconciliation ────────────────────────────────────
+  // What the trimmers weighed (and are paid on) against the finished flower
+  // and smalls packages made in Metrc from the same lot: the tag the Metrc
+  // Queue entered (newFinishedUid / newSmallsUid) looked up in the Canix
+  // packages, at the weight the package was created with. With no tag
+  // entered, a Canix Flower / Smalls package made from the lot's UID is
+  // shown as found. ctx.packages: canix_packages_recent.json +
+  // canix_inventory.json rows.
+  const TO_LB = { pounds: 1, lb: 1, lbs: 1, kilograms: 2.20462, kg: 2.20462, grams: 1 / G_PER_LB, g: 1 / G_PER_LB, ounces: 0.0625, oz: 0.0625 };
+  const pkgLb = (p, w) => n(p[w]) * (TO_LB[String(p.weight_unit || 'pounds').toLowerCase()] || 1);
+  const pkgItem = (p) => String((p.item && p.item.name) || '');
+  const PKG_KIND = { flower: (p) => /^\s*flower\b/i.test(pkgItem(p)), smalls: (p) => /^\s*smalls\b/i.test(pkgItem(p)) };
+  const RECON = {
+    open: L('Still trimming (page open)', 'Aún cortando (hoja abierta)'),
+    nobags: L('No bags weighed', 'Sin bolsas pesadas'),
+    notNeeded: L('Marked “Not needed” in Metrc Queue — no package', 'Marcado “No necesario” en la Cola de Metrc — sin paquete'),
+    nopkg: L('No Metrc package yet', 'Sin paquete en Metrc'),
+    found: L('Package in Canix, tag not entered in Metrc Queue', 'Paquete en Canix, etiqueta sin ingresar'),
+    notInCanix: L('Tag entered, not in Canix data', 'Etiqueta ingresada, no está en Canix'),
+    over: L('Weights differ — over tolerance', 'Pesos no cuadran — fuera de tolerancia'),
+    ok: L('Matches', 'Cuadra')
+  };
+  const SIGNOFF = { waiting: L('Not signed off', 'Sin confirmar'), changed: L('Changed after sign-off', 'Cambió después de confirmar'), confirmed: L('Signed off', 'Confirmado') };
+  R.trim_metrc_recon = (D, ctx) => {
+    const p = ctx.params || {};
+    const tol = (p.tol != null && p.tol !== '' ? Number(p.tol) : 1) / 100;
+    const q = ctx.metrcQueue || new Map();
+    const pkgs = new Map();
+    (ctx.packages || []).forEach((x) => { const t = normUid(x.tag); if (t && !pkgs.has(t)) pkgs.set(t, x); });
+    const pkgList = [...pkgs.values()];
+    const findTag = (tag) => {
+      const t = normUid(tag);
+      if (!t) return null;
+      if (pkgs.has(t)) return pkgs.get(t);
+      return t.length >= 4 && t.length < 24 ? pkgList.find((x) => normUid(x.tag).endsWith(t)) || null : null;
+    };
+    const fromLot = (uid, kind) => {
+      const u = normUid(uid);
+      if (u.length < 4) return [];
+      return pkgList.filter((x) => PKG_KIND[kind](x) && (x.source_packages || []).some((s) => {
+        const t = normUid(s && s.tag);
+        return t && (t === u || (Math.min(t.length, u.length) >= 4 && (t.endsWith(u) || u.endsWith(t))));
+      }));
+    };
+    const station = STATION_BY_KEY.hand_trim;
+    const recs = (p.open === false ? sub(D, 'hand_trim') : both(D, 'hand_trim')).filter((r) => r.owner !== 'paper_import');
+    const name = (b) => (ctx.personName && ctx.personName(b)) || '';
+    const lots = [];
+    const bagLines = [];
+    recs.forEach((r) => {
+      const bags = (r.weights || []).map((w) => ({ day: String(w.day || day(r)), badge: A.badgeKey(w.employeeNo), lb: n(w.grams) / G_PER_LB }));
+      const inR = bags.filter((b) => inRange(b.day, ctx));
+      const isOpen = r.status === 'draft';
+      if (!inR.length && !(bags.length === 0 && !isOpen && inRange(day(r), ctx))) return;
+      const trimmerLb = sum(bags, 'lb');
+      const rate = n(r.trimRatePerLb) || null;
+      const days = uniq(bags.map((b) => b.day)).sort();
+      const out = (kind, tagField, formLb) => {
+        const tag = String(r[tagField] || '').trim();
+        let list = [], how = '';
+        if (tag) { const hit = findTag(tag); if (hit) list = [hit]; how = hit ? 'tag' : 'missing'; }
+        else { list = isOpen ? [] : fromLot(r.sourceUid, kind); how = list.length ? 'found' : 'none'; }
+        const created = list.length ? sum(list, (x) => pkgLb(x, x.original_weight != null && x.original_weight !== '' ? 'original_weight' : 'weight')) : null;
+        return { tag: tag || list.map((x) => x.tag).join(', '), how, list, metrcLb: created != null ? r2(created) : null,
+          nowLb: list.length ? r2(sum(list, (x) => pkgLb(x, 'weight'))) : null,
+          diff: created != null ? r2(created - formLb) : null, diffPct: created != null && formLb > 0 ? (created - formLb) / formLb : null,
+          date: uniq(list.map((x) => String(x.packaged_date || '').slice(0, 10))).sort().join(', ') };
+      };
+      const fl = out('flower', 'newFinishedUid', trimmerLb);
+      const sm = out('smalls', 'newSmallsUid', n(r.smallsLb));
+      const qs = (q.get(r.id) || {}).status || (isOpen ? '' : 'todo');
+      const sign = weightCheckState(station, r);
+      const c = r.weightsConfirmed || {};
+      let res;
+      if (isOpen) res = 'open';
+      else if (!bags.length) res = 'nobags';
+      else if (fl.how === 'missing') res = 'notInCanix';
+      else if (fl.how === 'none') res = qs === 'not_needed' ? 'notNeeded' : 'nopkg';
+      else if (fl.diffPct != null && Math.abs(fl.diffPct) > tol) res = 'over';
+      else if (fl.how === 'found') res = 'found';
+      else res = 'ok';
+      const lot = {
+        id: r.id, uid: normUid(r.sourceUid), strain: r.strain || '', cid: r.cid || '',
+        trimmed: days.length ? (days[0] === days[days.length - 1] ? days[0] : `${days[0]} – ${days[days.length - 1]}`) : day(r),
+        lastDay: days[days.length - 1] || day(r), submitted: isOpen ? '' : String(r.submittedAt || '').slice(0, 10),
+        trimmers: uniq(bags.map((b) => b.badge)).length, bags: bags.length, trimmerLb: r2(trimmerLb) || null,
+        rangeLb: r2(sum(inR, 'lb')) || null, rate, pay: rate != null ? r2(trimmerLb * rate) : null,
+        signoff: sign && !isOpen ? SIGNOFF[sign] : '', signedBy: c.by ? `${c.by}${c.at ? ' · ' + String(c.at).slice(0, 10) : ''}` : '',
+        confirmedLb: c.lbs && c.lbs.finishedFlowerLb != null ? r2(n(c.lbs.finishedFlowerLb)) : null,
+        queue: qs ? MQ[qs] || qs : '',
+        flowerTag: fl.tag, flowerDate: fl.date, metrcLb: fl.metrcLb, metrcNowLb: fl.nowLb, diffLb: fl.diff, diffPct: fl.diffPct,
+        smallsLb: r2(n(r.smallsLb)) || null, smallsTag: sm.tag, smallsMetrcLb: sm.metrcLb, smallsDiffLb: sm.diff,
+        result: RECON[res], res, isOpen, flPkgs: fl.list, smPkgs: sm.list, flHow: fl.how, smHow: sm.how,
+        ratio: fl.metrcLb != null && trimmerLb > 0 ? fl.metrcLb / trimmerLb : null
+      };
+      lots.push(lot);
+      inR.forEach((b) => bagLines.push({ ...b, lot }));
+    });
+    lots.sort((a, b) => String(b.lastDay).localeCompare(String(a.lastDay)) || a.strain.localeCompare(b.strain));
+    const lcols = [C('trimmed', 'Trimmed', 'Cortado'), C('submitted', 'Submitted', 'Enviado', 'date'), C('strain', 'Strain', 'Variedad'),
+      C('uid', 'Lot UID (batch)', 'UID del lote', 'uid'), C('trimmers', 'Trimmers', 'Cortadores', 'int'), C('bags', 'Bags', 'Bolsas', 'int'),
+      C('trimmerLb', 'Trimmer flower lb', 'Flor de cortadores lb', 'lb'), C('rate', '$/lb', '$/lb', 'usd'), C('pay', 'Trimmer pay', 'Pago', 'usd'),
+      C('signoff', 'Weight sign-off', 'Confirmación de peso'), C('signedBy', 'Signed off by', 'Confirmado por'), C('confirmedLb', 'Signed-off flower lb', 'Flor confirmada lb', 'lb'),
+      C('queue', 'Metrc Queue', 'Cola de Metrc'), C('flowerTag', 'Finished flower tag', 'Etiqueta flor terminada', 'uid'), C('flowerDate', 'Packaged in Metrc', 'Empacado en Metrc'),
+      C('metrcLb', 'Metrc flower lb (created)', 'Flor Metrc lb (al crear)', 'lb'), C('diffLb', 'Metrc − trimmers lb', 'Metrc − cortadores lb', 'lb'),
+      C('diffPct', 'Difference %', 'Diferencia %', 'pct'), C('smallsLb', 'Smalls on form lb', 'Smalls en hoja lb', 'lb'), C('smallsTag', 'Smalls tag', 'Etiqueta smalls', 'uid'),
+      C('smallsMetrcLb', 'Metrc smalls lb', 'Smalls Metrc lb', 'lb'), C('smallsDiffLb', 'Smalls Metrc − form lb', 'Smalls Metrc − hoja lb', 'lb'), C('result', 'Result', 'Resultado')];
+    const lt = totalOf(lots, lcols, L(`Total — ${lots.length} lots`, `Total — ${lots.length} lotes`));
+    ['diffLb', 'smallsDiffLb'].forEach((k) => { lt[k] = r2(sum(lots, k)); });
+    const packed = lots.filter((x) => x.metrcLb != null);
+    lt.diffPct = div(sum(packed, 'metrcLb') - sum(packed, 'trimmerLb'), sum(packed, 'trimmerLb'));
+
+    // By date: what was weighed (paid) that day, and what was packaged in
+    // Metrc that day from these lots.
+    const pkgRows = [];
+    lots.forEach((x) => [['flPkgs', L('Finished flower', 'Flor terminada')], ['smPkgs', L('Smalls', 'Smalls')]].forEach(([k, what]) => x[k].forEach((pk) => {
+      pkgRows.push({ date: String(pk.packaged_date || '').slice(0, 10), tag: normUid(pk.tag), what, item: pkgItem(pk), metrcLb: r2(pkgLb(pk, pk.original_weight != null && pk.original_weight !== '' ? 'original_weight' : 'weight')),
+        nowLb: r2(pkgLb(pk, 'weight')), status: pk.status || '', facility: pk._facility_name || '', uid: x.uid, strain: x.strain,
+        formLb: k === 'flPkgs' ? x.trimmerLb : x.smallsLb,
+        entered: x[k === 'flPkgs' ? 'flHow' : 'smHow'] === 'tag' ? L('Tag entered in Metrc Queue', 'Etiqueta ingresada en la Cola') : L('Found from the lot UID', 'Encontrada por el UID del lote') });
+    })));
+    pkgRows.sort((a, b) => String(b.date).localeCompare(String(a.date)) || a.uid.localeCompare(b.uid));
+    const kcols = [C('date', 'Packaged', 'Empacado', 'date'), C('tag', 'Metrc package tag', 'Etiqueta Metrc', 'uid'), C('what', 'Output', 'Producto'), C('item', 'Metrc item', 'Artículo Metrc'),
+      C('strain', 'Strain', 'Variedad'), C('uid', 'From lot UID', 'Del lote UID', 'uid'), C('metrcLb', 'Created lb', 'Lb al crear', 'lb'), C('nowLb', 'On hand now lb', 'Disponible lb', 'lb'),
+      C('formLb', 'Hand Trim form lb', 'Hoja de corte lb', 'lb'), C('status', 'Metrc status', 'Estado Metrc'), C('facility', 'License', 'Licencia'), C('entered', 'How matched', 'Cómo se encontró')];
+    const daily = [...groupBy(bagLines, (b) => b.day)].map(([d, xs]) => {
+      const pk = pkgRows.filter((x) => x.date === d && x.what.en === 'Finished flower');
+      const paid = xs.filter((b) => b.lot.rate != null);
+      return { day: d, lots: uniq(xs.map((b) => b.lot.id)).length, trimmers: uniq(xs.map((b) => b.badge)).length, bags: xs.length,
+        lb: r2(sum(xs, 'lb')), pay: paid.length ? r2(sum(paid, (b) => b.lb * b.lot.rate)) : null,
+        pkgs: pk.length || null, metrcLb: pk.length ? r2(sum(pk, 'metrcLb')) : null };
+    });
+    // Package days with no trimming that day still show.
+    uniq(pkgRows.filter((x) => x.what.en === 'Finished flower' && inRange(x.date, ctx)).map((x) => x.date)).forEach((d) => {
+      if (daily.some((x) => x.day === d)) return;
+      const pk = pkgRows.filter((x) => x.date === d && x.what.en === 'Finished flower');
+      daily.push({ day: d, lots: null, trimmers: null, bags: null, lb: null, pay: null, pkgs: pk.length, metrcLb: r2(sum(pk, 'metrcLb')) });
+    });
+    daily.sort((a, b) => a.day.localeCompare(b.day));
+    const ycols = [C('day', 'Day', 'Día', 'date'), C('lots', 'Lots trimmed', 'Lotes cortados', 'int'), C('trimmers', 'Trimmers', 'Cortadores', 'int'), C('bags', 'Bags', 'Bolsas', 'int'),
+      C('lb', 'Trimmer flower lb weighed', 'Flor pesada lb', 'lb'), C('pay', 'Trimmer pay', 'Pago', 'usd'),
+      C('pkgs', 'Flower packages made in Metrc', 'Paquetes de flor en Metrc', 'int'), C('metrcLb', 'Metrc flower lb packaged', 'Flor empacada en Metrc lb', 'lb')];
+
+    // By trimmer: each person's pounds, and the share of the lot's Metrc
+    // package those pounds stand for (their lb × Metrc lb ÷ trimmers' lb).
+    const detail = [...groupBy(bagLines, (b) => [b.badge, b.day, b.lot.id].join('|'))].map(([, xs]) => {
+      const x = xs[0], lot = x.lot, lb = sum(xs, 'lb');
+      return { day: x.day, badge: x.badge, name: name(x.badge), strain: lot.strain, uid: lot.uid, bags: xs.length, lb: r2(lb),
+        rate: lot.rate, pay: lot.rate != null ? r2(lb * lot.rate) : null,
+        metrcShare: lot.ratio != null ? r2(lb * lot.ratio) : null, result: lot.result, _ok: lot.ratio != null };
+    }).sort((a, b) => a.day.localeCompare(b.day) || String(a.name || a.badge).localeCompare(String(b.name || b.badge)));
+    const dcols = [C('day', 'Day', 'Día', 'date'), C('badge', 'Badge #', 'N.º'), C('name', 'Name', 'Nombre'), C('strain', 'Strain', 'Variedad'),
+      C('uid', 'Lot UID', 'UID', 'uid'), C('bags', 'Bags', 'Bolsas', 'int'), C('lb', 'Lb weighed', 'Lb pesadas', 'lb'), C('rate', '$/lb', '$/lb', 'usd'),
+      C('pay', 'Pay', 'Pago', 'usd'), C('metrcShare', 'Share of Metrc lb', 'Parte de lb Metrc', 'lb'), C('result', 'Lot result', 'Resultado del lote')];
+    const people = [...groupBy(detail, (x) => x.badge)].map(([badge, xs]) => {
+      const ok = xs.filter((x) => x._ok);
+      return { badge, name: name(badge), days: uniq(xs.map((x) => x.day)).length, lots: uniq(xs.map((x) => x.uid)).length,
+        lb: r2(sum(xs, 'lb')), pay: r2(sum(xs, 'pay')) || null, okLb: r2(sum(ok, 'lb')) || null, metrcShare: r2(sum(ok, 'metrcShare')) || null,
+        diffLb: ok.length ? r2(sum(ok, 'metrcShare') - sum(ok, 'lb')) : null, waitLb: r2(sum(xs.filter((x) => !x._ok), 'lb')) || null };
+    }).sort((a, b) => n(b.lb) - n(a.lb));
+    const pcols = [C('badge', 'Badge #', 'N.º'), C('name', 'Name', 'Nombre'), C('days', 'Days', 'Días', 'int'), C('lots', 'Lots', 'Lotes', 'int'),
+      C('lb', 'Lb weighed (paid)', 'Lb pesadas (pagadas)', 'lb'), C('pay', 'Pay', 'Pago', 'usd'), C('okLb', 'Lb on lots packaged in Metrc', 'Lb en lotes empacados', 'lb'),
+      C('metrcShare', 'Share of Metrc lb', 'Parte de lb Metrc', 'lb'), C('diffLb', 'Metrc share − weighed', 'Parte Metrc − pesado', 'lb'),
+      C('waitLb', 'Lb not in Metrc yet', 'Lb aún no en Metrc', 'lb')];
+    const pt = totalOf(people, pcols);
+    pt.diffLb = r2(sum(people, 'diffLb'));
+
+    const attention = lots.filter((x) => !['ok', 'open'].includes(x.res) || (x.res === 'ok' && x.signoff && x.signoff.en !== 'Signed off'));
+    return {
+      tiles: [{ l: L('Lots', 'Lotes'), v: lots.length, t: 'int' },
+        { l: L('Trimmer flower weighed', 'Flor pesada por cortadores'), v: r2(sum(bagLines, 'lb')), t: 'lb' },
+        { l: L('Trimmer pay', 'Pago a cortadores'), v: r2(sum(detail, 'pay')), t: 'usd' },
+        { l: L('Lots packaged in Metrc', 'Lotes empacados en Metrc'), v: packed.length, t: 'int' },
+        { l: L('Metrc flower lb (packaged lots)', 'Flor Metrc lb (lotes empacados)'), v: r2(sum(packed, 'metrcLb')), t: 'lb' },
+        { l: L('Metrc − trimmers (packaged lots)', 'Metrc − cortadores (lotes empacados)'), v: r2(sum(packed, 'metrcLb') - sum(packed, 'trimmerLb')), t: 'lb' },
+        { l: L('Lots needing attention', 'Lotes por revisar'), v: attention.length, t: 'int' }],
+      sections: [
+        { key: 'lots', title: L('By lot (batch / UID) — trimmers vs Metrc', 'Por lote (UID) — cortadores contra Metrc'), cols: lcols, rows: lots, total: lt },
+        { key: 'daily', title: L('By date', 'Por fecha'), cols: ycols, rows: daily, total: totalOf(daily, ycols) },
+        { key: 'packages', title: L('Finished packages made in Metrc from these lots', 'Paquetes terminados creados en Metrc de estos lotes'), cols: kcols, rows: pkgRows },
+        { key: 'people', title: L('By trimmer', 'Por cortador'), cols: pcols, rows: people, total: pt },
+        { key: 'detail', title: L('By trimmer, day and lot', 'Por cortador, día y lote'), cols: dcols, rows: detail, total: totalOf(detail, dcols) }
+      ],
+      notes: [
+        L(`Hand Trim lots with a bag weighed in the range (open pages included unless unticked; paper-sheet imports left out). Trimmer lb is every bag on the lot — what the trimmers are paid on; By date and By trimmer count only the bags weighed in the range.`,
+          'Lotes de corte a mano con una bolsa pesada en el rango (con hojas abiertas salvo que se desmarque). Lb de cortadores es cada bolsa del lote — lo que se paga; Por fecha y Por cortador cuentan solo las bolsas del rango.'),
+        L(`Metrc lb is the weight the package was created with in Metrc (Canix sync), so later sales don’t change it. The package is the tag entered in the Metrc Queue; with none, a Canix “Flower …” / “Smalls …” package made from the lot’s UID. A lot matches when Metrc is within ${(tol * 100).toFixed(1)}% of the trimmers’ weight.`,
+          `Lb de Metrc es el peso con que se creó el paquete en Metrc (sincronización de Canix). Un lote cuadra cuando Metrc está dentro del ${(tol * 100).toFixed(1)}% del peso de los cortadores.`),
+        L('Share of Metrc lb splits a lot’s Metrc package across its trimmers by the pounds each weighed, to check payroll against what was packaged.',
+          'Parte de lb Metrc reparte el paquete de Metrc del lote entre sus cortadores según lo que pesó cada uno, para cotejar la nómina con lo empacado.')
+      ]
     };
   };
 

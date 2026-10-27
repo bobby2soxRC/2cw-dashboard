@@ -266,6 +266,11 @@
   const EXTRA = {
     metrc: async () => new Map((await pageAll(() => client.from('metrc_queue').select('*').order('form_id'))).map((r) => [r.form_id, r])),
     canix: async () => { const [transfers, facilities] = await Promise.all([getJson('canix_transfers_recent.json'), getJson('canix_facilities.json')]); return { transfers, facilities }; },
+    // Canix packages: the last 180 days, sold or not, plus what's on hand now.
+    packages: async () => {
+      const [recent, onHand] = await Promise.all([getJson('canix_packages_recent.json').catch(() => []), getJson('canix_inventory.json')]);
+      return [...onHand, ...recent];
+    },
     shifts: () => getJson('connecteam_shifts.json').catch(() => ({ shifts: [] })),
     names: () => loadBadgeNames(),
     split: () => getTrimSplit(),
@@ -343,7 +348,7 @@
 
   // ── One report ────────────────────────────────────────────────────────────
   const key = current.key;
-  const DEFAULT_PRESET = { trimmer_pay: 'last_week', bucker_output: 'last_week', uid_flow: 'last_30', ops_summary: 'yesterday', transfers: 'last_30' };
+  const DEFAULT_PRESET = { trimmer_pay: 'last_week', trim_metrc_recon: 'last_week', bucker_output: 'last_week', uid_flow: 'last_30', ops_summary: 'yesterday', transfers: 'last_30' };
   let preset = params.get('preset') || (params.get('from') ? 'custom' : DEFAULT_PRESET[key] || 'this_month');
   let [from, to] = preset === 'custom' ? [params.get('from') || presetRange('this_month')[0], params.get('to') || TODAY] : presetRange(preset);
   const opt = {};   // the report's own options
@@ -432,7 +437,7 @@
     from, to, today: TODAY, params: key === 'uid_flow' ? flowOpt : opt, farmName,
     personName: loaded ? loaded.personName : () => '',
     rates: loaded && loaded.ex.rates, ratesError: loaded && loaded.ex.ratesError, split: loaded && loaded.ex.split, reference: loaded && loaded.ex.reference,
-    metrcQueue: loaded && loaded.ex.metrc, canix: loaded && loaded.ex.canix, shifts: loaded && loaded.ex.shifts,
+    metrcQueue: loaded && loaded.ex.metrc, canix: loaded && loaded.ex.canix, packages: loaded && loaded.ex.packages, shifts: loaded && loaded.ex.shifts,
     prerollQueue: loaded && loaded.ex.prerollQueue
   });
 
