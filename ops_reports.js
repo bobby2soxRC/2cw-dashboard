@@ -781,11 +781,82 @@
   // Queue entered (newFinishedUid / newSmallsUid) looked up in the Canix
   // packages, at the weight the package was created with. With no tag
   // entered, a Canix Flower / Smalls package made from the lot's UID is
-  // shown as found. ctx.packages: canix_packages_recent.json +
-  // canix_inventory.json rows.
+  // shown as found. Then where each package's created weight went
+  // (tracePackage): still on hand, shipped on a transfer, made into another
+  // product, or unaccounted (Metrc adjustments / waste, which Canix doesn't
+  // give us).
+  // ctx.packages: Canix package rows {tag, item_name, status, is_active,
+  // weight, original_weight, weight_unit, packaged_date, facility_name,
+  // source: [{tag, pulled_weight, pulled_weight_unit}]} — Supabase's
+  // canix_packages, or canix_inventory.json. ctx.transferItems: one row per
+  // package on a transfer (canix_transfer_items). ctx.facilities: Canix
+  // facilities {license_number, name}.
   const TO_LB = { pounds: 1, lb: 1, lbs: 1, kilograms: 2.20462, kg: 2.20462, grams: 1 / G_PER_LB, g: 1 / G_PER_LB, ounces: 0.0625, oz: 0.0625 };
   const pkgLb = (p, w) => n(p[w]) * (TO_LB[String(p.weight_unit || 'pounds').toLowerCase()] || 1);
-  const pkgItem = (p) => String((p.item && p.item.name) || '');
+  const pkgItem = (p) => String(p.item_name || (p.item && p.item.name) || '');
+  const pkgSources = (p) => p.source || p.source_packages || [];
+  const unitLb = (w, unit) => n(w) * (TO_LB[String(unit || 'pounds').toLowerCase()] || 1);
+  const createdLb = (p) => pkgLb(p, p.original_weight != null && p.original_weight !== '' ? 'original_weight' : 'weight');
+  const isFinished = (p) => /^\s*(flower|smalls)\b/i.test(pkgItem(p));
+  // Canix packages as a tree: children (packages made from a package, with
+  // the pounds pulled from it) and each package's first transfer out.
+  function packageGraph(packages, items) {
+    const byTag = new Map(), children = new Map(), ships = new Map();
+    (packages || []).forEach((x) => { const t = normUid(x.tag); if (t && !byTag.has(t)) byTag.set(t, x); });
+    byTag.forEach((x, t) => pkgSources(x).forEach((s) => {
+      const st = normUid(s && s.tag);
+      if (!st || st === t) return;
+      if (!children.has(st)) children.set(st, []);
+      children.get(st).push({ tag: t, lb: s.pulled_weight != null && s.pulled_weight !== '' ? unitLb(s.pulled_weight, s.pulled_weight_unit) : null });
+    }));
+    (items || []).forEach((x) => {
+      const t = normUid(x.package_tag);
+      if (!t || /reject|cancel|void/i.test(String(x.status || '')) || (x.from_license && x.from_license === x.destination_license)) return;
+      const cur = ships.get(t);
+      if (!cur || String(x.departure_time || '') < String(cur.departure_time || '')) ships.set(t, x);
+    });
+    return { byTag, children, ships };
+  }
+  // Where a package's created weight went. Each package down the tree counts
+  // for the share of it that came from the root (pulled lb ÷ its created lb),
+  // so a package mixed from several lots isn't counted whole. A shipped
+  // package ends there (what the receiver does with it is theirs); a child
+  // that isn't Flower / Smalls is a product it was made into.
+  function tracePackage(G, rootTag) {
+    const out = { onHand: 0, shipped: 0, made: 0, lost: 0, moves: [] };
+    const seen = new Set();
+    const visit = (tag, share, depth) => {
+      const x = G.byTag.get(tag);
+      if (!x || seen.has(tag) || depth > 8) return;
+      seen.add(tag);
+      const made = createdLb(x);
+      const ship = G.ships.get(tag);
+      if (ship) {
+        const lb = ship.shipped_weight != null && ship.shipped_weight !== '' ? unitLb(ship.shipped_weight, ship.shipped_weight_unit) : n(x.weight);
+        out.shipped += lb * share;
+        out.lost += Math.max(0, made - lb) * share;
+        out.moves.push({ kind: 'ship', tag, pkg: x, ship, lb: lb * share });
+        return;
+      }
+      const onHand = x.is_active === true || x.is_active === 'true' ? pkgLb(x, 'weight') : 0;
+      out.onHand += onHand * share;
+      if (onHand > 0) out.moves.push({ kind: 'hand', tag, pkg: x, lb: onHand * share });
+      let pulled = 0;
+      (G.children.get(tag) || []).forEach((c) => {
+        const child = G.byTag.get(c.tag);
+        if (!child) return;
+        const lb = c.lb != null ? c.lb : createdLb(child);
+        pulled += lb;
+        const cm = createdLb(child);
+        if (isFinished(child)) visit(c.tag, cm > 0 ? Math.min(1, (lb * share) / cm) : share, depth + 1);
+        else { out.made += lb * share; out.moves.push({ kind: 'made', tag: c.tag, pkg: child, lb: lb * share }); }
+      });
+      out.lost += (made - pulled - onHand) * share;
+    };
+    visit(normUid(rootTag), 1, 0);
+    ['onHand', 'shipped', 'made', 'lost'].forEach((k) => { out[k] = r2(out[k]); });
+    return out;
+  }
   const PKG_KIND = { flower: (p) => /^\s*flower\b/i.test(pkgItem(p)), smalls: (p) => /^\s*smalls\b/i.test(pkgItem(p)) };
   const RECON = {
     open: L('Still trimming (page open)', 'Aún cortando (hoja abierta)'),
@@ -814,11 +885,13 @@
     const fromLot = (uid, kind) => {
       const u = normUid(uid);
       if (u.length < 4) return [];
-      return pkgList.filter((x) => PKG_KIND[kind](x) && (x.source_packages || []).some((s) => {
+      return pkgList.filter((x) => PKG_KIND[kind](x) && pkgSources(x).some((s) => {
         const t = normUid(s && s.tag);
         return t && (t === u || (Math.min(t.length, u.length) >= 4 && (t.endsWith(u) || u.endsWith(t))));
       }));
     };
+    const G = packageGraph(pkgList, ctx.transferItems);
+    const facName = (lic) => { const f = (ctx.facilities || []).find((x) => x.license_number === lic); return f ? f.name || f.canix_name || '' : ''; };
     const station = STATION_BY_KEY.hand_trim;
     const recs = (p.open === false ? sub(D, 'hand_trim') : both(D, 'hand_trim')).filter((r) => r.owner !== 'paper_import');
     const name = (b) => (ctx.personName && ctx.personName(b)) || '';
@@ -837,9 +910,11 @@
         let list = [], how = '';
         if (tag) { const hit = findTag(tag); if (hit) list = [hit]; how = hit ? 'tag' : 'missing'; }
         else { list = isOpen ? [] : fromLot(r.sourceUid, kind); how = list.length ? 'found' : 'none'; }
-        const created = list.length ? sum(list, (x) => pkgLb(x, x.original_weight != null && x.original_weight !== '' ? 'original_weight' : 'weight')) : null;
+        const created = list.length ? sum(list, createdLb) : null;
+        const traces = list.map((x) => ({ pkg: x, t: tracePackage(G, x.tag) }));
+        const tsum = (k) => (list.length ? r2(sum(traces, (y) => y.t[k])) : null);
         return { tag: tag || list.map((x) => x.tag).join(', '), how, list, metrcLb: created != null ? r2(created) : null,
-          nowLb: list.length ? r2(sum(list, (x) => pkgLb(x, 'weight'))) : null,
+          traces, onHand: tsum('onHand'), shipped: tsum('shipped'), made: tsum('made'), lost: tsum('lost'),
           diff: created != null ? r2(created - formLb) : null, diffPct: created != null && formLb > 0 ? (created - formLb) / formLb : null,
           date: uniq(list.map((x) => String(x.packaged_date || '').slice(0, 10))).sort().join(', ') };
       };
@@ -865,9 +940,10 @@
         signoff: sign && !isOpen ? SIGNOFF[sign] : '', signedBy: c.by ? `${c.by}${c.at ? ' · ' + String(c.at).slice(0, 10) : ''}` : '',
         confirmedLb: c.lbs && c.lbs.finishedFlowerLb != null ? r2(n(c.lbs.finishedFlowerLb)) : null,
         queue: qs ? MQ[qs] || qs : '',
-        flowerTag: fl.tag, flowerDate: fl.date, metrcLb: fl.metrcLb, metrcNowLb: fl.nowLb, diffLb: fl.diff, diffPct: fl.diffPct,
+        flowerTag: fl.tag, flowerDate: fl.date, metrcLb: fl.metrcLb, diffLb: fl.diff, diffPct: fl.diffPct,
+        onHandLb: fl.onHand, shippedLb: fl.shipped, madeLb: fl.made, lostLb: fl.lost,
         smallsLb: r2(n(r.smallsLb)) || null, smallsTag: sm.tag, smallsMetrcLb: sm.metrcLb, smallsDiffLb: sm.diff,
-        result: RECON[res], res, isOpen, flPkgs: fl.list, smPkgs: sm.list, flHow: fl.how, smHow: sm.how,
+        result: RECON[res], res, isOpen, flPkgs: fl.traces, smPkgs: sm.traces, flHow: fl.how, smHow: sm.how,
         ratio: fl.metrcLb != null && trimmerLb > 0 ? fl.metrcLb / trimmerLb : null
       };
       lots.push(lot);
@@ -880,26 +956,44 @@
       C('signoff', 'Weight sign-off', 'Confirmación de peso'), C('signedBy', 'Signed off by', 'Confirmado por'), C('confirmedLb', 'Signed-off flower lb', 'Flor confirmada lb', 'lb'),
       C('queue', 'Metrc Queue', 'Cola de Metrc'), C('flowerTag', 'Finished flower tag', 'Etiqueta flor terminada', 'uid'), C('flowerDate', 'Packaged in Metrc', 'Empacado en Metrc'),
       C('metrcLb', 'Metrc flower lb (created)', 'Flor Metrc lb (al crear)', 'lb'), C('diffLb', 'Metrc − trimmers lb', 'Metrc − cortadores lb', 'lb'),
-      C('diffPct', 'Difference %', 'Diferencia %', 'pct'), C('smallsLb', 'Smalls on form lb', 'Smalls en hoja lb', 'lb'), C('smallsTag', 'Smalls tag', 'Etiqueta smalls', 'uid'),
+      C('diffPct', 'Difference %', 'Diferencia %', 'pct'),
+      C('onHandLb', 'Flower on hand now lb', 'Flor disponible lb', 'lb'), C('shippedLb', 'Flower shipped lb', 'Flor enviada lb', 'lb'),
+      C('madeLb', 'Made into products lb', 'Hecho en productos lb', 'lb'), C('lostLb', 'Unaccounted lb', 'Sin explicar lb', 'lb'), C('smallsLb', 'Smalls on form lb', 'Smalls en hoja lb', 'lb'), C('smallsTag', 'Smalls tag', 'Etiqueta smalls', 'uid'),
       C('smallsMetrcLb', 'Metrc smalls lb', 'Smalls Metrc lb', 'lb'), C('smallsDiffLb', 'Smalls Metrc − form lb', 'Smalls Metrc − hoja lb', 'lb'), C('result', 'Result', 'Resultado')];
     const lt = totalOf(lots, lcols, L(`Total — ${lots.length} lots`, `Total — ${lots.length} lotes`));
-    ['diffLb', 'smallsDiffLb'].forEach((k) => { lt[k] = r2(sum(lots, k)); });
+    ['diffLb', 'smallsDiffLb', 'lostLb'].forEach((k) => { lt[k] = r2(sum(lots, k)); });
     const packed = lots.filter((x) => x.metrcLb != null);
     lt.diffPct = div(sum(packed, 'metrcLb') - sum(packed, 'trimmerLb'), sum(packed, 'trimmerLb'));
 
     // By date: what was weighed (paid) that day, and what was packaged in
     // Metrc that day from these lots.
     const pkgRows = [];
-    lots.forEach((x) => [['flPkgs', L('Finished flower', 'Flor terminada')], ['smPkgs', L('Smalls', 'Smalls')]].forEach(([k, what]) => x[k].forEach((pk) => {
-      pkgRows.push({ date: String(pk.packaged_date || '').slice(0, 10), tag: normUid(pk.tag), what, item: pkgItem(pk), metrcLb: r2(pkgLb(pk, pk.original_weight != null && pk.original_weight !== '' ? 'original_weight' : 'weight')),
-        nowLb: r2(pkgLb(pk, 'weight')), status: pk.status || '', facility: pk._facility_name || '', uid: x.uid, strain: x.strain,
+    const moves = [];
+    const MOVE = { ship: L('Shipped', 'Enviado'), made: L('Made into product', 'Hecho en producto'), hand: L('On hand', 'Disponible') };
+    lots.forEach((x) => [['flPkgs', L('Finished flower', 'Flor terminada')], ['smPkgs', L('Smalls', 'Smalls')]].forEach(([k, what]) => x[k].forEach(({ pkg: pk, t: tr }) => {
+      pkgRows.push({ date: String(pk.packaged_date || '').slice(0, 10), tag: normUid(pk.tag), what, item: pkgItem(pk), metrcLb: r2(createdLb(pk)),
+        onHand: tr.onHand || null, shipped: tr.shipped || null, made: tr.made || null, lost: tr.lost, status: pk.status || '',
+        facility: pk.facility_name || pk._facility_name || '', uid: x.uid, strain: x.strain,
         formLb: k === 'flPkgs' ? x.trimmerLb : x.smallsLb,
         entered: x[k === 'flPkgs' ? 'flHow' : 'smHow'] === 'tag' ? L('Tag entered in Metrc Queue', 'Etiqueta ingresada en la Cola') : L('Found from the lot UID', 'Encontrada por el UID del lote') });
+      tr.moves.forEach((m) => moves.push({
+        date: m.kind === 'ship' ? String(m.ship.departure_time || '').slice(0, 10) : String(m.pkg.packaged_date || '').slice(0, 10),
+        uid: x.uid, strain: x.strain, what, from: normUid(pk.tag), kind: MOVE[m.kind], tag: normUid(m.tag), item: pkgItem(m.pkg),
+        manifest: m.kind === 'ship' ? m.ship.manifest_number || '' : '',
+        to: m.kind === 'ship' ? [m.ship.destination_license, facName(m.ship.destination_license)].filter(Boolean).join(' · ') : '',
+        status: m.kind === 'ship' ? m.ship.status || '' : m.pkg.status || '', lb: r2(m.lb) }));
     })));
     pkgRows.sort((a, b) => String(b.date).localeCompare(String(a.date)) || a.uid.localeCompare(b.uid));
     const kcols = [C('date', 'Packaged', 'Empacado', 'date'), C('tag', 'Metrc package tag', 'Etiqueta Metrc', 'uid'), C('what', 'Output', 'Producto'), C('item', 'Metrc item', 'Artículo Metrc'),
-      C('strain', 'Strain', 'Variedad'), C('uid', 'From lot UID', 'Del lote UID', 'uid'), C('metrcLb', 'Created lb', 'Lb al crear', 'lb'), C('nowLb', 'On hand now lb', 'Disponible lb', 'lb'),
+      C('strain', 'Strain', 'Variedad'), C('uid', 'From lot UID', 'Del lote UID', 'uid'), C('metrcLb', 'Created lb', 'Lb al crear', 'lb'),
+      C('onHand', 'On hand now lb', 'Disponible lb', 'lb'), C('shipped', 'Shipped lb', 'Enviado lb', 'lb'), C('made', 'Made into products lb', 'Hecho en productos lb', 'lb'),
+      C('lost', 'Unaccounted lb', 'Sin explicar lb', 'lb'),
       C('formLb', 'Hand Trim form lb', 'Hoja de corte lb', 'lb'), C('status', 'Metrc status', 'Estado Metrc'), C('facility', 'License', 'Licencia'), C('entered', 'How matched', 'Cómo se encontró')];
+    moves.sort((a, b) => String(b.date).localeCompare(String(a.date)) || a.uid.localeCompare(b.uid));
+    const mcols = [C('date', 'Date', 'Fecha', 'date'), C('strain', 'Strain', 'Variedad'), C('uid', 'Lot UID', 'UID del lote', 'uid'), C('what', 'Output', 'Producto'),
+      C('from', 'Package made from the lot', 'Paquete del lote', 'uid'), C('kind', 'What happened', 'Qué pasó'), C('tag', 'Package', 'Paquete', 'uid'),
+      C('item', 'Metrc item', 'Artículo Metrc'), C('manifest', 'Manifest #', 'Manifiesto', 'uid'), C('to', 'To license', 'A licencia'),
+      C('status', 'Status', 'Estado'), C('lb', 'Lb', 'Lb', 'lb')];
     const daily = [...groupBy(bagLines, (b) => b.day)].map(([d, xs]) => {
       const pk = pkgRows.filter((x) => x.date === d && x.what.en === 'Finished flower');
       const paid = xs.filter((b) => b.lot.rate != null);
@@ -950,11 +1044,15 @@
         { l: L('Lots packaged in Metrc', 'Lotes empacados en Metrc'), v: packed.length, t: 'int' },
         { l: L('Metrc flower lb (packaged lots)', 'Flor Metrc lb (lotes empacados)'), v: r2(sum(packed, 'metrcLb')), t: 'lb' },
         { l: L('Metrc − trimmers (packaged lots)', 'Metrc − cortadores (lotes empacados)'), v: r2(sum(packed, 'metrcLb') - sum(packed, 'trimmerLb')), t: 'lb' },
+        { l: L('Flower shipped', 'Flor enviada'), v: r2(sum(packed, 'shippedLb')), t: 'lb' },
+        { l: L('Flower on hand', 'Flor disponible'), v: r2(sum(packed, 'onHandLb')), t: 'lb' },
+        { l: L('Flower unaccounted', 'Flor sin explicar'), v: r2(sum(packed, 'lostLb')), t: 'lb' },
         { l: L('Lots needing attention', 'Lotes por revisar'), v: attention.length, t: 'int' }],
       sections: [
         { key: 'lots', title: L('By lot (batch / UID) — trimmers vs Metrc', 'Por lote (UID) — cortadores contra Metrc'), cols: lcols, rows: lots, total: lt },
         { key: 'daily', title: L('By date', 'Por fecha'), cols: ycols, rows: daily, total: totalOf(daily, ycols) },
-        { key: 'packages', title: L('Finished packages made in Metrc from these lots', 'Paquetes terminados creados en Metrc de estos lotes'), cols: kcols, rows: pkgRows },
+        { key: 'packages', title: L('Finished packages made in Metrc from these lots', 'Paquetes terminados creados en Metrc de estos lotes'), cols: kcols, rows: pkgRows, total: totalOf(pkgRows, kcols) },
+        { key: 'moves', title: L('Where the Metrc packages went', 'A dónde fueron los paquetes de Metrc'), cols: mcols, rows: moves, total: totalOf(moves, mcols) },
         { key: 'people', title: L('By trimmer', 'Por cortador'), cols: pcols, rows: people, total: pt },
         { key: 'detail', title: L('By trimmer, day and lot', 'Por cortador, día y lote'), cols: dcols, rows: detail, total: totalOf(detail, dcols) }
       ],
@@ -963,6 +1061,8 @@
           'Lotes de corte a mano con una bolsa pesada en el rango (con hojas abiertas salvo que se desmarque). Lb de cortadores es cada bolsa del lote — lo que se paga; Por fecha y Por cortador cuentan solo las bolsas del rango.'),
         L(`Metrc lb is the weight the package was created with in Metrc (Canix sync), so later sales don’t change it. The package is the tag entered in the Metrc Queue; with none, a Canix “Flower …” / “Smalls …” package made from the lot’s UID. A lot matches when Metrc is within ${(tol * 100).toFixed(1)}% of the trimmers’ weight.`,
           `Lb de Metrc es el peso con que se creó el paquete en Metrc (sincronización de Canix). Un lote cuadra cuando Metrc está dentro del ${(tol * 100).toFixed(1)}% del peso de los cortadores.`),
+        L('Where it went follows each package down Canix: packages split from it (followed on), products made from it (pre-rolls etc.), its first transfer out (where it ends — what the receiving license does with it is theirs) and what’s still on hand. Unaccounted is created weight minus all of that: Metrc adjustments, waste and moisture loss, which Canix doesn’t give us. Packages and transfers come from the Canix history kept in Supabase (packaged / shipped in the last year).',
+          'A dónde fue sigue cada paquete en Canix: paquetes divididos de él, productos hechos con él, su primera transferencia de salida y lo que sigue disponible. Sin explicar es el peso al crear menos todo eso: ajustes de Metrc, desecho y pérdida de humedad.'),
         L('Share of Metrc lb splits a lot’s Metrc package across its trimmers by the pounds each weighed, to check payroll against what was packaged.',
           'Parte de lb Metrc reparte el paquete de Metrc del lote entre sus cortadores según lo que pesó cada uno, para cotejar la nómina con lo empacado.')
       ]

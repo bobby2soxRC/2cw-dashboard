@@ -1266,7 +1266,7 @@ CDN the first time they're used.
 The data is the station forms (`operations_forms`, submitted rows and open
 pages, read in pages of 1,000), plus per report: the Metrc Queue's statuses,
 the Canix sync's transfers (`data/canix_transfers_recent.json`, last 30
-days) and packages (`data/canix_packages_recent.json` + `canix_inventory.json`), Connecteam shifts (`data/connecteam_shifts.json`, last 14 days), badge
+days) and the Canix package / transfer history in Supabase, Connecteam shifts (`data/connecteam_shifts.json`, last 14 days), badge
 names (`badge-names.js`), the trim cost split (Labor Log → Cost / lb) and,
 for Labor Cost per Pound only, pay rates from `labor-rates.js`. Farm names
 come from the Information Hub's Farm Licenses (a full license, as the Canix
@@ -1313,10 +1313,40 @@ day from these lots), every matched package, by trimmer, and by trimmer ×
 day × lot with **Share of Metrc lb** — the lot's Metrc pounds split over its
 trimmers by what each weighed.
 
-Packages come from `data/canix_inventory.json` (on hand) plus
-`data/canix_packages_recent.json` — every package packaged in the last 180
-days, sold or not, slimmed (`recent_packages` in `scripts/canix_sync.py`), so
-a package that's been sold still reconciles.
+**Where it went** (`tracePackage`): each finished package's created weight
+followed down Canix — packages split off it (followed on, each counted for
+the share of it that came from the lot), products made from it (a child that
+isn't Flower / Smalls, at the pounds pulled), its first transfer out (where
+it ends; rejected transfers and moves within one license don't count) and
+what's still on hand. **Unaccounted** = created − on hand − shipped − made:
+Metrc adjustments, waste and moisture loss, which Canix doesn't give us. The
+lot table has flower on hand / shipped / made / unaccounted; the packages
+table has them per package; **Where the Metrc packages went** lists each
+shipment (manifest #, license) and product.
+
+Packages and transfer lines come from the Canix history in Supabase
+(`canix_packages`, `canix_transfer_items` — see "Canix history in Supabase"
+below), packaged / departed in the last year, topped up from
+`data/canix_inventory.json` (and the packages its on-hand packages list as
+split off them) and `data/canix_transfers_recent.json` for anything not saved
+yet.
+
+### Canix history in Supabase
+
+The Canix sync's full history (every package and transfer) lives in the
+GitHub Actions cache, which GitHub can evict after ~7 days unused, and the
+committed files only hold on-hand packages and 30 days of transfers. So
+`scripts/canix_sync.py` (`sync_history_to_supabase`) also upserts every
+package (`canix_packages`, one row per Canix package id: tag, item, weights
+now / created, packaged date, license, `source` — what it was made from with
+the pounds pulled) and every transfer line (`canix_transfer_items`, one row
+per package per destination: manifest #, from / to license, departure,
+status, shipped / received weight) into Supabase. Each run sends what
+changed since the last run; the first run after the tables exist (or after a
+failed upload, or a full backfill) sends everything —
+`supabase_history_synced` in `data/canix_meta.json`. Anon can read (the same
+data is public in `data/canix_*.json`); only the sync writes. Tables in
+`supabase/schema.sql`.
 
 ### UID Flow (Sankey)
 

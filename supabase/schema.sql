@@ -1503,3 +1503,68 @@ update flow_change_requests set status = 'pending' where status = 'open';
 alter table flow_change_requests enable row level security;
 revoke all on public.flow_change_requests from anon;
 grant select, insert, update, delete on public.flow_change_requests to service_role;
+
+-- ── Canix history: packages and transfer lines (2026-10-27) ──────────────
+-- The Canix sync's full history otherwise lives only in the GitHub Actions
+-- cache (canix_packages_history.json / canix_transfers.json, too big for
+-- git), and the app's committed files only have on-hand packages and 30
+-- days of transfers. scripts/canix_sync.py upserts every package and every
+-- transfer line here each run (the ones changed since the last run; all of
+-- them the first time), so nothing ages out of the app's reach. Read by
+-- reports.html (Hand Trim — Metrc Reconciliation: where each package went).
+-- The same data is already public in data/canix_*.json, so anon can read;
+-- only the sync (service role) writes.
+create table if not exists canix_packages (
+  id                bigint primary key,      -- Canix's package id
+  tag               text not null,
+  item_name         text,
+  status            text,
+  is_active         boolean,
+  weight            numeric,                 -- now
+  original_weight   numeric,                 -- when the package was made
+  weight_unit       text,
+  packaged_date     date,
+  facility_id       bigint,
+  facility_license  text,
+  facility_name     text,
+  source            jsonb not null default '[]'::jsonb,  -- [{tag, pulled_weight, pulled_weight_unit}] — what it was made from
+  updated_at        timestamptz,             -- Canix's
+  synced_at         timestamptz not null default now()
+);
+create index if not exists canix_packages_tag on canix_packages (tag);
+create index if not exists canix_packages_packaged on canix_packages (packaged_date);
+
+-- One row per package on a transfer destination (a manifest can go to
+-- several licenses, each with several packages).
+create table if not exists canix_transfer_items (
+  key                  text primary key,     -- '<destination id>:<package id>'
+  transfer_id          bigint,
+  manifest_number      text,
+  from_license         text,
+  from_name            text,
+  destination_license  text,
+  transfer_type        text,
+  departure_time       timestamptz,
+  package_id           bigint,
+  package_tag          text,
+  item_name            text,
+  status               text,                 -- Shipped / Accepted / Rejected …
+  shipped_weight       numeric,
+  shipped_weight_unit  text,
+  received_weight      numeric,
+  received_weight_unit text,
+  created_at           timestamptz,
+  updated_at           timestamptz,
+  synced_at            timestamptz not null default now()
+);
+create index if not exists canix_transfer_items_tag on canix_transfer_items (package_tag);
+create index if not exists canix_transfer_items_departure on canix_transfer_items (departure_time);
+
+alter table canix_packages enable row level security;
+alter table canix_transfer_items enable row level security;
+drop policy if exists "anon read" on canix_packages;
+create policy "anon read" on canix_packages for select using (true);
+drop policy if exists "anon read" on canix_transfer_items;
+create policy "anon read" on canix_transfer_items for select using (true);
+grant select, insert, update, delete on public.canix_packages, public.canix_transfer_items to service_role;
+grant select on public.canix_packages, public.canix_transfer_items to anon;

@@ -266,10 +266,33 @@
   const EXTRA = {
     metrc: async () => new Map((await pageAll(() => client.from('metrc_queue').select('*').order('form_id'))).map((r) => [r.form_id, r])),
     canix: async () => { const [transfers, facilities] = await Promise.all([getJson('canix_transfers_recent.json'), getJson('canix_facilities.json')]); return { transfers, facilities }; },
-    // Canix packages: the last 180 days, sold or not, plus what's on hand now.
+    // Canix packages and transfer lines from the history the Canix sync keeps
+    // in Supabase (the last year), topped up from the committed files (on
+    // hand now, 30 days of transfers) for anything not saved there yet.
     packages: async () => {
-      const [recent, onHand] = await Promise.all([getJson('canix_packages_recent.json').catch(() => []), getJson('canix_inventory.json')]);
-      return [...onHand, ...recent];
+      const since = new Date(Date.now() - 365 * 86400000).toISOString().slice(0, 10);
+      const [pk, ti, onHand, recent, facs] = await Promise.all([
+        pageAll(() => client.from('canix_packages').select('tag,item_name,status,is_active,weight,original_weight,weight_unit,packaged_date,facility_name,source').gte('packaged_date', since).order('id')).catch(() => []),
+        pageAll(() => client.from('canix_transfer_items').select('key,manifest_number,from_license,destination_license,departure_time,package_tag,status,shipped_weight,shipped_weight_unit').gte('departure_time', since).order('key')).catch(() => []),
+        getJson('canix_inventory.json').catch(() => []), getJson('canix_transfers_recent.json').catch(() => []), getJson('canix_facilities.json').catch(() => [])]);
+      const tags = new Set(pk.map((x) => x.tag));
+      onHand.forEach((x) => { if (!tags.has(x.tag)) pk.push({ tag: x.tag, item_name: (x.item || {}).name, status: x.status, is_active: x.is_active, weight: x.weight,
+        original_weight: x.original_weight, weight_unit: x.weight_unit, packaged_date: x.packaged_date, facility_name: x._facility_name, source: x.source_packages || [] }); });
+      // Packages split off an on-hand one that aren't saved yet: the parent
+      // lists them (destination_packages), with their weight.
+      onHand.forEach((x) => (x.destination_packages || []).forEach((d) => {
+        if (!d || !d.tag || tags.has(d.tag) || pk.some((y) => y.tag === d.tag)) return;
+        pk.push({ tag: d.tag, item_name: (d.item || {}).name, status: '', is_active: false, weight: d.weight, original_weight: d.weight, weight_unit: d.weight_unit,
+          packaged_date: '', facility_name: x._facility_name, source: [{ tag: x.tag, pulled_weight: d.weight, pulled_weight_unit: d.weight_unit }] });
+      }));
+      const keys = new Set(ti.map((x) => x.key));
+      recent.forEach((t) => (t.destinations || []).forEach((d) => (d.contents || []).forEach((c) => {
+        const p = c.package || {}, key = `${d.id}:${p.id}`;
+        if (p.id == null || keys.has(key)) return;
+        ti.push({ key, manifest_number: t.manifest_number, from_license: t._facility_license_number, destination_license: d.destination_facility,
+          departure_time: d.departure_time, package_tag: p.tag, status: c.status, shipped_weight: c.shipped_weight, shipped_weight_unit: c.shipped_weight_unit });
+      })));
+      return { packages: pk, transferItems: ti, facilities: facs };
     },
     shifts: () => getJson('connecteam_shifts.json').catch(() => ({ shifts: [] })),
     names: () => loadBadgeNames(),
@@ -437,7 +460,8 @@
     from, to, today: TODAY, params: key === 'uid_flow' ? flowOpt : opt, farmName,
     personName: loaded ? loaded.personName : () => '',
     rates: loaded && loaded.ex.rates, ratesError: loaded && loaded.ex.ratesError, split: loaded && loaded.ex.split, reference: loaded && loaded.ex.reference,
-    metrcQueue: loaded && loaded.ex.metrc, canix: loaded && loaded.ex.canix, packages: loaded && loaded.ex.packages, shifts: loaded && loaded.ex.shifts,
+    metrcQueue: loaded && loaded.ex.metrc, canix: loaded && loaded.ex.canix, packages: loaded && loaded.ex.packages && loaded.ex.packages.packages, transferItems: loaded && loaded.ex.packages && loaded.ex.packages.transferItems,
+    facilities: loaded && loaded.ex.packages && loaded.ex.packages.facilities, shifts: loaded && loaded.ex.shifts,
     prerollQueue: loaded && loaded.ex.prerollQueue
   });
 

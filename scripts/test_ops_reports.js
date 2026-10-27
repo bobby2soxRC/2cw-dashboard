@@ -81,8 +81,9 @@ console.log('\nhand trim — metrc reconciliation');
   const packages = [pk('TAGFLOWER0001', 'Flower - Lemon Cherry Gelato', 20.1, DRY_UID), pk('TAGSMALLS0001', 'Smalls - LCG', 3.5, DRY_UID),
     pk('TAGFLOWER0002', 'Flower - B', 18, 'LOTB00000002'), pk('TAGFLOWER0003', 'Flower - C', 20, 'LOTC00000003'), pk('TAGBUCKED0004', 'Bucked Flower - D', 50, 'LOTD00000004')];
   const rr = OpsReports.BUILDERS.trim_metrc_recon(Dr, ctx({ packages, params: { open: true, tol: '1' } }));
-  const lot = (id) => rr.sections[0].rows.find((r) => r.id === id);
-  check('paper imports left out, open page in', rr.sections[0].rows.map((r) => r.id).sort(), ['a', 'b', 'c', 'd', 'o']);
+  const sec = (out, k) => out.sections.find((x) => x.key === k);
+  const lot = (id) => sec(rr, 'lots').rows.find((r) => r.id === id);
+  check('paper imports left out, open page in', sec(rr, 'lots').rows.map((r) => r.id).sort(), ['a', 'b', 'c', 'd', 'o']);
   check('trimmer lb = every bag', lot('a').trimmerLb, 20);
   check('Metrc lb is the created weight, not what’s left', lot('a').metrcLb, 20.1);
   check('0.5% off matches at 1%', lot('a').res, 'ok');
@@ -92,13 +93,35 @@ console.log('\nhand trim — metrc reconciliation');
   check('a bucked package isn’t finished flower', lot('d').res, 'nopkg');
   check('open page is still trimming', lot('o').res, 'open');
   check('Not needed in the queue with no package', OpsReports.BUILDERS.trim_metrc_recon(Dr, ctx({ packages, metrcQueue: new Map([['d', { status: 'not_needed' }]]) })).sections[0].rows.find((r) => r.id === 'd').res, 'notNeeded');
-  const ana = rr.sections[3].rows.find((r) => r.badge === '79');
+  const ana = sec(rr, 'people').rows.find((r) => r.badge === '79');
   check('trimmer pay 10 lb × $20 on each lot', ana.pay, 5 * 10 * 20);
-  check('share of Metrc lb: 10 lb × 20.1 / 20 on lot a', rr.sections[4].rows.find((r) => r.badge === '79' && r.uid === normUid(DRY_UID)).metrcShare, 10.05);
+  check('share of Metrc lb: 10 lb × 20.1 / 20 on lot a', sec(rr, 'detail').rows.find((r) => r.badge === '79' && r.uid === normUid(DRY_UID)).metrcShare, 10.05);
   const one = OpsReports.BUILDERS.trim_metrc_recon(Dr, ctx({ packages, from: '2026-08-29', to: '2026-08-29' }));
-  check('by date counts only bags in the range', one.sections[1].rows.find((r) => r.day === '2026-08-29').lb, 50);
-  check('… but the lot still reconciles all its bags', one.sections[0].rows.find((r) => r.id === 'a').trimmerLb, 20);
-  check('packages list both of lot a’s', rr.sections[2].rows.filter((r) => r.uid === normUid(DRY_UID)).length, 2);
+  check('by date counts only bags in the range', sec(one, 'daily').rows.find((r) => r.day === '2026-08-29').lb, 50);
+  check('… but the lot still reconciles all its bags', sec(one, 'lots').rows.find((r) => r.id === 'a').trimmerLb, 20);
+  check('packages list both of lot a’s', sec(rr, 'packages').rows.filter((r) => r.uid === normUid(DRY_UID)).length, 2);
+
+  // Where it went: lot a's 20.1 lb flower package → 5 lb split off and
+  // shipped, a 10 lb split of which 4 lb went into pre-rolls and 6 is on
+  // hand, 5 lb still in the package, 0.1 lb unaccounted.
+  const kid = (tag, item, lb, from, pulled, active, now) => ({ tag, item_name: item, original_weight: lb, weight: now != null ? now : lb, weight_unit: 'Pounds',
+    is_active: active, packaged_date: '2026-08-31', source: [{ tag: from, pulled_weight: pulled, pulled_weight_unit: 'Pounds' }] });
+  const tree = [{ ...packages[0], weight: 5, is_active: true },
+    kid('KIDSHIP', 'Flower - LCG', 5, 'TAGFLOWER0001', 5, false), kid('KIDHAND', 'Flower - LCG', 10, 'TAGFLOWER0001', 10, true, 6),
+    { ...kid('PREROLL1', 'Howie Roll 1g', 4, 'KIDHAND', 4, true), source: [{ tag: 'KIDHAND', pulled_weight: 4, pulled_weight_unit: 'Pounds' }, { tag: 'OTHERLOT', pulled_weight: 4, pulled_weight_unit: 'Pounds' }] },
+    ...packages.slice(1)];
+  const transferItems = [{ key: '1:1', manifest_number: 'M-1', from_license: 'CCL22-0001284', destination_license: 'C11-0001652-LIC', departure_time: '2026-09-01T18:00:00Z',
+    package_tag: 'KIDSHIP', status: 'Accepted', shipped_weight: 5, shipped_weight_unit: 'Pounds' }];
+  const tw = OpsReports.BUILDERS.trim_metrc_recon(Dr, ctx({ packages: tree, transferItems, facilities: [{ license_number: 'C11-0001652-LIC', name: 'Airway' }], params: { open: true, tol: '1' } }));
+  const ta = sec(tw, 'lots').rows.find((r) => r.id === 'a');
+  check('shipped 5 lb', ta.shippedLb, 5);
+  check('on hand: 5 in the package + 6 in the split', ta.onHandLb, 11);
+  check('made into pre-rolls 4 lb', ta.madeLb, 4);
+  check('unaccounted 0.1 lb', ta.lostLb, 0.1);
+  check('created = shipped + on hand + made + unaccounted', Math.round((ta.shippedLb + ta.onHandLb + ta.madeLb + ta.lostLb) * 100) / 100, ta.metrcLb);
+  const ship = sec(tw, 'moves').rows.find((r) => r.tag === 'KIDSHIP');
+  check('the shipment names the manifest and license', [ship.manifest, ship.to, ship.lb], ['M-1', 'C11-0001652-LIC · Airway', 5]);
+  check('a rejected transfer isn’t shipped', sec(OpsReports.BUILDERS.trim_metrc_recon(Dr, ctx({ packages: tree, transferItems: [{ ...transferItems[0], status: 'Rejected' }] })), 'lots').rows.find((r) => r.id === 'a').shippedLb, 0);
 }
 
 console.log('\nbucker output');

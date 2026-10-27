@@ -259,8 +259,12 @@ Since 2026-10-27: **Hand Trim — Metrc Reconciliation** (`trim_metrc_recon`,
 access column `report trim metrc recon`), for accounting to reconcile
 trimming payroll: trimmers' weighed lb per lot / date / trimmer against the
 finished flower and smalls packages created in Metrc (Canix
-`original_weight`). The Canix sync now also writes
-`data/canix_packages_recent.json` (last 180 days of packages, sold too).
+`original_weight`), and where each package went (on hand, shipped with
+manifest / license, made into products, unaccounted). The Canix sync now
+also upserts every package and transfer line into Supabase
+(`canix_packages`, `canix_transfer_items`), so history older than the 30-day
+files isn't out of the app's reach. Details: "Hand Trim — Metrc
+Reconciliation" and "Canix history in Supabase" in `docs/OPERATIONS_APP.md`.
 
 ## Parked work
 

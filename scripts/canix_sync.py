@@ -33,6 +33,16 @@ data/canix_inventory.json (current on-hand stock) is derived each run from
 the packages history by filtering is_active=true — no separate API call
 needed for it.
 
+Package and transfer history in Supabase
+----------------------------------------
+The full packages / transfers history only lives in the Actions cache (too
+big for git) and the committed files only hold on-hand packages and 30 days
+of transfers, so every run also upserts the packages and transfer lines
+changed since the last run into Supabase's canix_packages and
+canix_transfer_items (all of them on a full backfill, or until canix_meta's
+supabase_history_synced says a full upload went through). That's the
+permanent copy the app reads for anything older (sync_history_to_supabase).
+
 Facility roster sync
 ---------------------
 Every facility this run's API key(s) can see gets upserted into Supabase's
@@ -53,7 +63,6 @@ Usage:
 Output:
     data/canix_facilities.json
     data/canix_inventory.json           (current on-hand packages — derived)
-    data/canix_packages_recent.json     (packages from the last 180 days, slimmed — committed)
     data/canix_packages_history.json    (every package, all statuses, ever)
     data/canix_plant_batches.json       (cumulative history)
     data/canix_harvests.json            (cumulative history)
@@ -128,13 +137,6 @@ FORCE_FULL_BACKFILL = bool(os.environ.get("CANIX_FULL_BACKFILL"))
 # by slim_record() so it stays small. It's how we see when a manifest was made
 # and when its truck left/arrived.
 RECENT_TRANSFER_DAYS = 30
-
-# The same for packages: canix_packages_recent.json is every package (active
-# or not) packaged in the last RECENT_PACKAGE_DAYS, cut down to what the
-# Reports page's Hand Trim — Metrc Reconciliation needs (tag, item, weights,
-# date, source tags). canix_inventory.json only has what's still on hand, so
-# a finished-flower package that's been sold would otherwise vanish from it.
-RECENT_PACKAGE_DAYS = 180
 
 # ── HTTP HELPERS ─────────────────────────────────────────────────────────────
 
@@ -248,25 +250,6 @@ def recent_transfers(transfers, now, packages=(), sales_orders=()):
     return [slim_record(label_transfer(t, pkg_by_tag, so_by_id)) for t in recent]
 
 
-def recent_packages(packages, now):
-    since = (now - timedelta(days=RECENT_PACKAGE_DAYS)).strftime("%Y-%m-%d")
-    out = []
-    for p in packages:
-        if str(p.get("packaged_date") or "")[:10] < since:
-            continue
-        item = p.get("item") if isinstance(p.get("item"), dict) else {}
-        out.append({
-            "tag": p.get("tag"), "status": p.get("status"), "is_active": p.get("is_active"),
-            "item": {"name": item.get("name")},
-            "weight": p.get("weight"), "original_weight": p.get("original_weight"), "weight_unit": p.get("weight_unit"),
-            "packaged_date": p.get("packaged_date"), "updated_at": p.get("updated_at"),
-            "source_packages": [{"tag": s.get("tag")} for s in (p.get("source_packages") or []) if isinstance(s, dict)],
-            "_facility_name": p.get("_facility_name"), "_facility_license_number": p.get("_facility_license_number"),
-        })
-    out.sort(key=lambda p: str(p.get("packaged_date") or ""), reverse=True)
-    return out
-
-
 def package_sources(tag, pkg_by_tag, depth=4):
     """The tags a package was made from — its source packages, theirs, and so
     on, nearest first, up to `depth` steps back. A package shipped out is
@@ -326,6 +309,73 @@ def label_transfer(t, pkg_by_tag, so_by_id):
 
 
 # ── SUPABASE FACILITY ROSTER SYNC ───────────────────────────────────────────
+
+
+def package_row(p):
+    item = p.get("item") if isinstance(p.get("item"), dict) else {}
+    return {
+        "id": p["id"], "tag": p.get("tag") or "", "item_name": item.get("name"), "status": p.get("status"),
+        "is_active": p.get("is_active"), "weight": p.get("weight"), "original_weight": p.get("original_weight"),
+        "weight_unit": p.get("weight_unit"), "packaged_date": str(p.get("packaged_date") or "")[:10] or None,
+        "facility_id": p.get("facility_id"), "facility_license": p.get("_facility_license_number"),
+        "facility_name": p.get("_facility_name"),
+        "source": [{"tag": s.get("tag"), "pulled_weight": s.get("pulled_weight"), "pulled_weight_unit": s.get("pulled_weight_unit")}
+                   for s in (p.get("source_packages") or []) if isinstance(s, dict) and s.get("tag")],
+        "updated_at": p.get("updated_at"),
+    }
+
+
+def transfer_item_rows(t):
+    rows = []
+    for d in t.get("destinations") or []:
+        for c in d.get("contents") or []:
+            pkg = c.get("package") or {}
+            if pkg.get("id") is None:
+                continue
+            item = c.get("item") if isinstance(c.get("item"), dict) else (pkg.get("item") if isinstance(pkg.get("item"), dict) else {})
+            rows.append({
+                "key": f"{d.get('id')}:{pkg.get('id')}", "transfer_id": t.get("id"), "manifest_number": t.get("manifest_number"),
+                "from_license": t.get("_facility_license_number"), "from_name": t.get("_facility_name"),
+                "destination_license": d.get("destination_facility"), "transfer_type": d.get("transfer_type"),
+                "departure_time": d.get("departure_time"), "package_id": pkg.get("id"), "package_tag": pkg.get("tag"),
+                "item_name": item.get("name") or c.get("_item"), "status": c.get("status"),
+                "shipped_weight": c.get("shipped_weight"), "shipped_weight_unit": c.get("shipped_weight_unit"),
+                "received_weight": c.get("received_weight"), "received_weight_unit": c.get("received_weight_unit"),
+                "created_at": t.get("created_at"), "updated_at": c.get("updated_at") or d.get("updated_at") or t.get("updated_at"),
+            })
+    return rows
+
+
+def upsert_rows(table, key, rows, headers):
+    # One row per key: Postgres refuses a batch that hits the same row twice.
+    rows = list({r[key]: r for r in rows}.values())
+    sent = 0
+    for i in range(0, len(rows), 500):
+        batch = rows[i:i + 500]
+        resp = requests.post(f"{SUPABASE_URL}/rest/v1/{table}?on_conflict={key}",
+                             headers={**headers, "Prefer": "resolution=merge-duplicates,return=minimal"}, json=batch, timeout=60)
+        if resp.status_code >= 300:
+            raise RuntimeError(f"{table} upsert failed: {resp.status_code} {resp.text[:300]}")
+        sent += len(batch)
+    return sent
+
+
+def sync_history_to_supabase(packages, transfers, since):
+    """Upserts packages and transfer lines updated at or after `since` (all
+    of them when None) into canix_packages / canix_transfer_items. Returns
+    True when it went through."""
+    if not SUPABASE_SERVICE_ROLE_KEY:
+        print("\n  [skip] SUPABASE_SERVICE_ROLE_KEY not set — not saving Canix history to Supabase")
+        return False
+    headers = {"apikey": SUPABASE_SERVICE_ROLE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+               "Content-Type": "application/json"}
+    changed = lambda r: since is None or str(r.get("updated_at") or "") >= since
+    pkg_rows = [package_row(p) for p in packages if p.get("id") is not None and changed(p)]
+    item_rows = [row for t in transfers if changed(t) for row in transfer_item_rows(t)]
+    n_pkg = upsert_rows("canix_packages", "id", pkg_rows, headers)
+    n_items = upsert_rows("canix_transfer_items", "key", item_rows, headers)
+    print(f"  Saved to Supabase: {n_pkg} packages, {n_items} transfer lines" + (f" (changed since {since})" if since else " (full upload)"))
+    return True
 
 
 def sync_facility_roster_to_supabase(facilities):
@@ -737,11 +787,21 @@ def main():
 
     current_inventory = [r for r in histories["packages"].values() if r.get("is_active")]
     save("canix_inventory.json", current_inventory)
-    save("canix_packages_recent.json", recent_packages(histories["packages"].values(), started))
 
     transfers_recent = recent_transfers(histories["transfers"].values(), started,
                                         list(histories["packages"].values()), list(histories["sales_orders"].values()))
     save("canix_transfers_recent.json", transfers_recent)
+
+    # The permanent copy of the history. A full upload until one has gone
+    # through; after that what changed since the last run's cutoff (less the
+    # safety buffer already in it). Never fails the sync.
+    history_synced = bool(meta.get("supabase_history_synced")) and not is_backfill
+    try:
+        history_synced = sync_history_to_supabase(histories["packages"].values(), histories["transfers"].values(),
+                                                  previous_cutoff if history_synced else None) or history_synced
+    except Exception as e:  # noqa: BLE001
+        print(f"  [warn] Saving Canix history to Supabase failed: {e}")
+        history_synced = False
 
     # Never fails the sync — the data files above still get committed.
     try:
@@ -754,6 +814,7 @@ def main():
     meta = {
         "last_sync": started.isoformat(),
         "last_incremental_cutoff": next_cutoff,
+        "supabase_history_synced": history_synced,
         "base_url": BASE_URL,
         "license_keys_used": [label for label, _ in LICENSE_API_KEYS],
         "record_counts": {
