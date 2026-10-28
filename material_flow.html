@@ -275,24 +275,25 @@ lb / plant  = wetWeightLb ÷ plantCount</pre></div>
 
     <article class="card" id="st-intake_wet">
       <div class="card-head"><h3>Harvest Intake — Wet</h3><span class="k">intake_wet</span><span class="pill metrc">Metrc Queue</span></div>
-      <p>One form per truck at our door. The crew scans each package UID and weighs the bins; Metrc paperwork is filled in later by the Canix sync.</p>
+      <p>One form per package at our door. The crew picks the package from what's on its way to us in Canix (or scans it if it isn't listed) and weighs its bins; Metrc paperwork is filled in later by the Canix sync.</p>
       <div class="cols">
         <div><h4>On the form</h4><ul>
-          <li>Drying / freezer location, Fresh Frozen checkbox, completed by, weighmaster</li>
-          <li>Per row: package UID (strain fills from Canix), strain, # bins, tare each, weight</li>
-          <li>Manifest photo</li>
-          <li>Not asked: farm license, CID, manifest #, driver. The Canix sync fills those (every 3 h)</li>
+          <li>Top: package (dropdown of incoming packages from Canix, or Not listed → scan / last 5). Strain fills from Canix and is locked</li>
+          <li>Truck #: automatic per day — first manifest is Truck 1, the next new one Truck 2, across all farms; packages on the same manifest share it. A package with no manifest in Canix is put on a truck by hand</li>
+          <li>Weighmaster (dropdown of the facility's certified weighmasters), drying / freezer location</li>
+          <li>Bottom: rows of # bins, tare (Macro-Bin 55.5 lb, Cardboard Box 16.5 lb, or Other — saved for next time), weight</li>
+          <li>Manifest photo — optional, only for a paper manifest</li>
+          <li>Not asked: farm license, CID, manifest #, driver (the Canix sync fills those, every 3 h); person completing (whoever submits); project (intake labor stays facility cost); Fresh Frozen (from the location)</li>
         </ul></div>
         <div><h4>Math</h4>
-<pre class="math">totalTareLb = Σ (bins × tare each)
-totalWetLb  = Σ (weight − bins × tare each)
+<pre class="math">totalTareLb = Σ (bins × tare)
+totalWetLb  = Σ (weight − bins × tare)
 binCount    = Σ bins</pre></div>
         <div><h4>Then</h4><ul>
-          <li>Split into one record per UID on submit</li>
-          <li>Freezer location or Fresh Frozen ticked → Fresh Frozen tab; otherwise → <b>Drying</b></li>
+          <li>Freezer location → Fresh Frozen tab; otherwise → <b>Drying</b></li>
           <li>Shows <b>Waiting for Metrc sync</b> until Canix fills it, and <b>Check strain</b> when Canix's strain differs (aliases count as a match)</li>
           <li>Incoming transfer must be accepted in Metrc within 24 h of departure. Urgent at ≤ 8 h left</li>
-          <li>Metrc adjustment (yes / lbs) is added afterwards from Harvest Intakes</li>
+          <li>Metrc adjustment (yes / lbs) is added afterwards from Harvest Intakes (Edit) — not on the form at the door</li>
         </ul></div>
       </div>
     </article>
@@ -531,7 +532,7 @@ packYieldPct = packedLb ÷ inputLb</pre></div>
 
     <article class="card" id="st-transfer_out">
       <div class="card-head"><h3>Product Transfer — Outgoing</h3><span class="k">transfer_out</span><span class="pill metrc">Metrc Queue</span></div>
-      <p>The paper "Product Transfer Form (OUTGOING)" v7. Material often ships as is, without becoming finished goods: on-stem flower back to the farm customer, or bucked flower, flower, smalls and trim to a buyer. The product type code says which Raw Inventory tab it comes off.</p>
+      <p>The paper "Product Transfer Form (OUTGOING)" v7. Material often ships as is, without becoming finished goods: on-stem flower back to the farm customer, or bucked flower, flower, smalls and trim to a buyer. The product type code says which Raw Inventory tab it comes off. Weights entered on a Hand Trim that's still open count as stock right away, so product picked up before the trim form is submitted can still go on a transfer.</p>
       <div class="cols">
         <div><h4>On the form</h4><ul>
           <li>Customer, DCC license #, destination, SO / invoice #, terms, dates, driver, plate, Metrc manifest #</li>

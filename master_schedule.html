@@ -1971,6 +1971,9 @@
     if (r.station_key === 'intake_wet') {
       const seen = new Map();
       (f.lines || []).forEach((ln) => { const u = ln && normUid(ln.sourceUid); if (u && !seen.has(u)) seen.set(u, { uid: u, strain: ln.strain || strain }); });
+      // One package per form since 2026-10-28: the UID is at the top.
+      const top = normUid(f.sourceUid);
+      if (top && !seen.has(top)) seen.set(top, { uid: top, strain });
       return [...seen.values()];
     }
     const uid = normUid(r.station_key === 'dry_check' ? (f.incomingUid || f.sourceUid) : (f.sourceUid || f.batchTag));

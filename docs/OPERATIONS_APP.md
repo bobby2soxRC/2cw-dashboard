@@ -48,21 +48,44 @@ the existing Operations Hub — same login, same Netlify deploy.
 **Shipping** — Product Transfer — Outgoing (directly under Operations on the hub)
 
 Wet Intake and Take Down are the two halves of the paper "Harvest Intake &
-Take Down Log", 5–10 days apart: Wet Intake is one form per truck, with the
-farm package UID and strain on each bin weigh-in row (bins weighed net of
-tare). On submit it's split into one record per UID (`splitBy: 'lines'` on
-the station; `splitRecords` in `ops_form.html`), each holding only its own
-rows and totals, so everything downstream still sees one package per
-record. With more than one UID on the form the Metrc-adjustment fields hide;
-they're filled in per intake afterwards from Harvest Intakes.
+Take Down Log", 5–10 days apart. Wet Intake is **one form per package**
+(since 2026-10-28, from Kevin's Material Flow change request; it was one
+form per truck, split per UID on submit — the records look the same):
+
+- **Package** at the top: a dropdown of the packages on their way to us in
+  Canix (`incomingPackages` in `metrc_transfers.js`: Shipped or Accepted
+  on a transfer to one of our licenses that left in the last 3 days, less
+  the ones a submitted intake already has), grouped by farm; **Not listed**
+  scans it or takes the last 5. Its **strain** comes from Canix and is
+  locked (`lockStrain` in `ops_form.html`; mapped to the Strain Library
+  name by alias). A package Canix doesn't know leaves the strain to pick.
+  Not locked on Edit.
+- **Truck #** (`truckPicker`): numbered per day across all farms, one truck
+  per manifest — the first manifest is Truck 1, the next new one Truck 2.
+  A picked package's manifest (kept as `incomingManifest`; `manifestNo`
+  stays blank for the Canix sync) puts it on its truck or the next number;
+  a package with no manifest is put on a truck by hand. The day's trucks
+  come from the submitted intakes and the ones open on other tablets, and
+  Submit checks again (`resolveTruckNo`).
+- **Weighmaster**: a dropdown of `weighmasters` in
+  `data/operations/reference.json` — the facility's certified weighmasters.
+- **Bins** at the bottom: # bins, **tare** (a dropdown: Macro-Bin 55.5 lb,
+  Cardboard Box 16.5 lb — `TARE_PRESETS` — or Other, a name and weight saved
+  in the shared `operations_forms` row `intake_tares` for next time; rows
+  keep `tareEachLb` and `tareName`), weight (net of tare in the totals).
+- Gone from the form: **Fresh Frozen** (a freezer location is Fresh Frozen —
+  `isFreshFrozen`), **Project** (intake labor isn't charged to a package;
+  it's facility cost), **Person Completing Form** (whoever submits — the
+  field is `editOnly`), the **Metrc adjustment** (only possible after the
+  form is in; set from Harvest Intakes → Edit, `editOnly`). The manifest
+  photo is optional, for a paper manifest.
+
+A draft started before the change keeps its first row's package as the
+form's package when it's reopened.
 
 **Wet Intake: Metrc details come from the Canix sync.** The form doesn't ask
 for the farm license, CID, manifest # or driver (fields marked `fromCanix` in
-`operations_stations.js`, hidden by `ops_form.html` except on Edit) — the
-crew scans the package UID and weighs. Scanning a UID Canix knows also picks
-the row's strain (`canixStrainForUid` in `ops_common.js`, from
-`data/canix_inventory.json`; only when that strain is in the Strain Library,
-by name or alias). Every Canix sync (`scripts/canix_sync.py`,
+`operations_stations.js`, hidden by `ops_form.html` except on Edit). Every Canix sync (`scripts/canix_sync.py`,
 `fill_intakes_from_canix`, every 3 hours) takes each submitted intake from the
 last 45 days with no manifest # and no `canixSyncedAt`, finds its package —
 the full tag, or a tail that only one package fits (shipped up to 10 days
@@ -86,7 +109,7 @@ intake, Harvest Intakes and the Metrc Queue show **Waiting for Metrc sync**
 needed** (`canixNoManifest`) — type it in with Edit from the manifest photo.
 Canix has no driver name; it's on the manifest photo.
 
-**Check strain.** Scanning fills the strain only when the package was already
+**Check strain.** The form takes Canix's strain only when the package was already
 in the last sync; otherwise the crew picks it (or types a new one under
 Other). The sync saves Canix's strain for the package (`canixSync.strain`),
 and Harvest Intakes (with a **Check strain** filter) and the Today board show

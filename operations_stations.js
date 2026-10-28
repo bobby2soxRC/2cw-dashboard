@@ -64,6 +64,18 @@
 //          with a panel to add a new driver (name, ID #, photo of the ID)
 //          through netlify/functions/drivers.js. Sets driver (the name),
 //          driverIdNumber and driverId.
+//   picker { list: 'incoming' } (uid) Wet Intake's package: the packages on
+//          their way to us in Canix (incomingPackages in metrc_transfers.js),
+//          plus "Not listed — type the UID". Picking one fills and locks
+//          the `strain` field (see wireIncoming in ops_form.html).
+//   truckPicker (select) Wet Intake's Truck #: numbered per day, one per
+//          manifest — today's trucks plus the next new one (ops_form.html)
+//   tare   (lineitems column) a dropdown of bin tares (TARE_PRESETS plus the
+//          ones added with Other — the shared intake_tares row); stores the
+//          weight in the column's key and the name in `tareName`
+//   editOnly hidden on a new form, shown when a submitted record is opened
+//          with Edit (like `fromCanix`). A PERSON_FIELDS key (completedBy)
+//          with it is filled with the logged-in user on submit.
 //
 // Station options:
 //   share    after submit, a window to send a picture of the load and a CSV
@@ -98,6 +110,13 @@ const BIOMASS = {
   waste:           { en: 'Waste',             es: 'Desecho' },
   fresh_frozen:    { en: 'Fresh Frozen',      es: 'Fresco congelado' }
 };
+
+// Wet Intake's bin tares (a `tare` column). Ones added with Other are kept
+// in the shared operations_forms row 'intake_tares' (getTares in ops_data.js).
+const TARE_PRESETS = [
+  { name: 'Macro-Bin', lb: 55.5 },
+  { name: 'Cardboard Box', lb: 16.5 }
+];
 
 // Categories that are sellable / usable biomass (the rest is waste or an
 // intermediate that gets consumed by the next stage).
@@ -398,66 +417,81 @@ const OPERATIONS_STATIONS = [
   // the day the truck is unloaded. The take-down half happens 5–10 days
   // later, once the material is dry, and is its own form (dry_check, below).
   //
-  // One form covers the whole truck: each weigh-in row carries its own farm
-  // package UID and strain, and on submit the form is split into one record
-  // per UID (`splitBy`), each with that UID's rows and its own totals — so
-  // every record downstream is still one package, one strain.
+  // One form per package (since 2026-10-28, Kevin's Material Flow change
+  // request; before that one form per truck, split per UID on submit — the
+  // records it made look the same). The package is picked from what Canix
+  // shows on its way to us, or scanned when it isn't listed; its strain comes
+  // from Canix and is locked. Truck # groups the day's forms: numbered 1, 2…
+  // per day by manifest across all farms (truckPicker).
   //
   // Each weigh-in row is a group of bins on the scale: the row's Weight is the
-  // gross scale reading, and # of Bins × Tare Each comes off it, so the Total
+  // gross scale reading, and # of Bins × the tare comes off it, so the Total
   // Wet Weight Received is net of the bins.
+  //
+  // Fresh Frozen isn't a checkbox any more: a freezer location is Fresh
+  // Frozen (isFreshFrozen in ops_common.js). No project question either —
+  // intake labor isn't charged to a package; it stays facility cost. Person
+  // Completing Form is whoever submits it, and the Metrc adjustment is made
+  // afterwards from Harvest Intakes (`editOnly`).
   //
   // `fromCanix` fields (farm license, CID, manifest #, driver) are what the
   // Metrc manifest already says, so they're left off the form while the
-  // truck is being weighed — scan the package UID and go. The Canix sync
+  // truck is being weighed. The Canix sync
   // (scripts/canix_sync.py, fill_intakes_from_canix) finds each submitted
   // intake's package on its Metrc transfer and fills them in; until then the
   // intake shows "Waiting for Metrc sync" (awaitingCanix in ops_common.js).
   // They still show when a submitted intake is reopened with Edit, to type
   // them in by hand for a farm Canix doesn't see. Canix has no driver name —
-  // that one stays on the manifest photo unless it's typed in on Edit.
+  // that one stays on the manifest unless it's typed in on Edit. The
+  // manifest # a picked package came on is kept as `incomingManifest` (for
+  // the Truck #) — manifestNo stays for the sync to fill.
   {
     key: 'intake_wet',
     dept: { en: 'Processing', es: 'Procesamiento' },
     title: { en: 'Harvest Intake — Wet', es: 'Recepción de cosecha — húmeda' },
-    desc: { en: 'Receive fresh/wet material off a farm truck — one form per truck, weighed in bins as it’s unloaded, with the package UID and strain on each row.',
-            es: 'Reciba material fresco/húmedo de un camión del rancho — un formulario por camión, pesado en bins al descargar, con el UID del paquete y la variedad en cada fila.' },
+    desc: { en: 'Receive fresh/wet material off a farm truck — one form per package: pick or scan the package, then weigh its bins as they’re unloaded.',
+            es: 'Reciba material fresco/húmedo de un camión del rancho — un formulario por paquete: elija o escanee el paquete y pese sus bins al descargar.' },
     color: 'blue',
     headline: 'totalWetLb',
-    splitBy: 'lines',
     fields: [
       F.date(),
-      F.project(),
+      { k: 'sourceUid', t: 'uid', req: true, picker: { list: 'incoming' },
+        l: { en: 'Package', es: 'Paquete' },
+        pickedLabel: { en: 'Package UID', es: 'UID del paquete' },
+        hint: { en: 'Packages on their way to us in Metrc (from Canix, every 3 h). Not on the list? Pick “Not listed” and scan it or type the last 5.',
+                es: 'Paquetes en camino a nosotros en Metrc (desde Canix, cada 3 h). ¿No aparece? Elija “No aparece” y escanéelo o escriba los últimos 5.' } },
+      { k: 'strain', t: 'select', ref: 'strains', allowOther: true, req: true,
+        l: { en: 'Strain', es: 'Variedad (cepa)' } },
+      { k: 'truckNo', t: 'select', truckPicker: true, req: true,
+        l: { en: 'Truck #', es: 'N.º de camión' },
+        hint: { en: 'Numbered for the day: the first manifest is Truck 1, the next one Truck 2, across all farms. A package on a manifest already in is put on its truck.',
+                es: 'Numerado por día: el primer manifiesto es el Camión 1, el siguiente el Camión 2, de todos los ranchos. Un paquete de un manifiesto ya recibido va en su camión.' } },
       { k: 'pid', t: 'select', ref: 'properties', allowOther: true, fromCanix: true,
         l: { en: 'Farm License', es: 'Licencia del rancho' } },
       { k: 'cid', t: 'select', ref: 'customers', allowOther: true, fromCanix: true, l: { en: 'Customer ID (CID)', es: 'ID de cliente (CID)' } },
       // All digits in Metrc; oToZero turns a typed letter O into 0 as it's typed.
       { k: 'manifestNo', t: 'text', inputmode: 'numeric', oToZero: true, fromCanix: true, l: { en: 'Manifest #', es: 'N.º de manifiesto' } },
-      { k: 'truckNo', t: 'text', l: { en: 'Truck #', es: 'N.º de camión' } },
       { k: 'driver', t: 'text', fromCanix: true, l: { en: 'Driver', es: 'Conductor' } },
-      { k: 'completedBy', t: 'text', req: true,
+      { k: 'completedBy', t: 'text', req: true, editOnly: true,
         l: { en: 'Person Completing Form', es: 'Persona que llena el formulario' } },
-      { k: 'weighmaster', t: 'text', req: true,
+      // The facility's certified weighmasters (reference.json `weighmasters`).
+      { k: 'weighmaster', t: 'select', ref: 'weighmasters', req: true,
         l: { en: '2CW Deputy Weighmaster', es: 'Pesador oficial adjunto de 2CW' } },
+      // A freezer here makes it Fresh Frozen (isFreshFrozen).
       { k: 'dryRoom', t: 'select', ref: ['dryRooms', 'freezers'], allowOther: true, req: true,
-        l: { en: 'Drying / Freezer Location(s)', es: 'Ubicación(es) de secado / congelador' } },
-      // Some material goes straight into a freezer instead of a drying room.
-      { k: 'freshFrozen', t: 'check',
-        l: { en: 'Fresh Frozen', es: 'Fresco congelado' } },
+        l: { en: 'Drying / Freezer Location(s)', es: 'Ubicación(es) de secado / congelador' },
+        hint: { en: 'A freezer means Fresh Frozen.', es: 'Un congelador significa Fresco congelado.' } },
       { k: 'lines', t: 'lineitems', req: true,
         l: { en: 'Weigh-In — Bins', es: 'Pesaje — bins' },
-        hint: { en: 'One row per group of bins on the scale: scan the farm package UID (or type the last 5) and weigh. The strain fills in from Canix when it knows the package. Weight is the scale reading; the bins’ tare is subtracted for you. Each UID is saved as its own intake. Farm license, CID and manifest # fill in from Metrc on the next Canix sync.',
-                es: 'Una fila por cada grupo de bins en la báscula: escanee el UID del paquete del rancho (o escriba los últimos 5) y pese. La variedad se llena desde Canix cuando conoce el paquete. El peso es la lectura de la báscula; la tara de los bins se resta automáticamente. Cada UID se guarda como su propia recepción. La licencia, el CID y el n.º de manifiesto se llenan desde Metrc en la próxima sincronización de Canix.' },
-        // `carry` columns copy down into a new row from the one above (most
-        // trucks are several bin groups per package) and don't by themselves
-        // make a row count as filled in; `req` columns must be filled on any
-        // row that does count.
+        hint: { en: 'One row per group of bins on the scale. Weight is the scale reading; the bins’ tare is subtracted for you.',
+                es: 'Una fila por cada grupo de bins en la báscula. El peso es la lectura de la báscula; la tara de los bins se resta automáticamente.' },
+        // `carry` columns copy down into a new row from the one above and
+        // don't by themselves make a row count as filled in; `req` columns
+        // must be filled on any row that does count.
         cols: [
-          { k: 'sourceUid', t: 'uid', req: true, carry: true, canixStrain: 'strain', l: { en: 'Package UID', es: 'UID del paquete' } },
-          { k: 'strain', t: 'select', ref: 'strains', allowOther: true, req: true, carry: true, l: { en: 'Strain', es: 'Variedad' } },
-          { k: 'binCount', t: 'number', l: { en: '# of Bins', es: 'N.º de bins' }, min: 0, step: 1, inputmode: 'numeric' },
-          { k: 'tareEachLb', t: 'number', carry: true, l: { en: 'Tare Each (lbs)', es: 'Tara c/u (lbs)' }, min: 0, step: 0.01 },
-          { k: 'weight', t: 'number', l: { en: 'Weight (lbs)', es: 'Peso (lbs)' }, min: 0, step: 0.01 }
+          { k: 'binCount', t: 'number', req: true, l: { en: '# of Bins', es: 'N.º de bins' }, min: 0, step: 1, inputmode: 'numeric' },
+          { k: 'tareEachLb', t: 'tare', req: true, carry: true, l: { en: 'Tare (each bin)', es: 'Tara (c/u)' } },
+          { k: 'weight', t: 'number', req: true, l: { en: 'Weight (lbs)', es: 'Peso (lbs)' }, min: 0, step: 0.01 }
         ],
         totalCol: 'weight' },
       { k: 'binCount', t: 'calc', dp: 0, calc: (v) => (v.lines || []).reduce((a, r) => a + num(r.binCount), 0),
@@ -468,24 +502,25 @@ const OPERATIONS_STATIONS = [
         calc: (v) => (v.lines || []).reduce((a, r) => a + num(r.weight) - num(r.binCount) * num(r.tareEachLb), 0),
         l: { en: 'Total Wet Weight Received (lbs)', es: 'Peso húmedo total recibido (lbs)' },
         hint: { en: 'Scale weight minus bin tare.', es: 'Peso de báscula menos la tara de los bins.' } },
-      // A Metrc adjustment is per package, so with more than one UID on the
-      // form it's recorded on each intake afterwards (Harvest Intakes → Edit).
-      { k: 'metrcAdjusted', t: 'select',
-        showIf: (v) => new Set((v.lines || []).map((r) => r.sourceUid).filter(Boolean)).size <= 1,
+      // The weight can only be adjusted in Metrc after this form is in, so
+      // it's recorded afterwards (Harvest Intakes → Edit), not at the door.
+      { k: 'metrcAdjusted', t: 'select', editOnly: true,
         l: { en: 'Weight Adjusted in METRC', es: 'Peso ajustado en METRC' },
         opts: [
           { v: 'yes', l: { en: 'Yes — done', es: 'Sí — hecho' } },
           { v: 'no', l: { en: 'Not yet', es: 'Todavía no' } }
         ] },
-      { k: 'metrcAdjustedLb', t: 'number', step: 0.01,
-        showIf: (v) => v.metrcAdjusted === 'yes' && new Set((v.lines || []).map((r) => r.sourceUid).filter(Boolean)).size <= 1,
+      { k: 'metrcAdjustedLb', t: 'number', step: 0.01, editOnly: true,
+        showIf: (v) => v.metrcAdjusted === 'yes',
         l: { en: 'Total Pounds Adjusted in METRC (lbs)', es: 'Libras totales ajustadas en METRC (lbs)' },
         hint: { en: 'The adjustment amount entered in Metrc — use a minus sign if the weight went down.',
                 es: 'La cantidad del ajuste ingresada en Metrc — use un signo de menos si el peso bajó.' } },
+      // Manifests come digitally now (the e-manifest in Metrc is the record),
+      // so the photo is only for a paper one.
       { k: 'manifestPhoto', t: 'photo',
-        l: { en: 'Metrc Manifest Photo', es: 'Foto del manifiesto de Metrc' },
-        hint: { en: 'Photo of the manifest that came with this truck.',
-                es: 'Foto del manifiesto que llegó con este camión.' } },
+        l: { en: 'Manifest Photo (optional)', es: 'Foto del manifiesto (opcional)' },
+        hint: { en: 'Only if a paper manifest came with the truck.',
+                es: 'Solo si llegó un manifiesto en papel con el camión.' } },
       F.notes()
     ],
     flow: { outputs: [{ field: 'totalWetLb', category: 'wet_whole_plant', pending: true }] }

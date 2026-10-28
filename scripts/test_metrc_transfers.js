@@ -124,5 +124,20 @@ check('the sync’s _sources / _source win', M.outgoingNeedingForm([out('0011742
   [{ ...pkg('1A406030005E0B2000010999', 'Accepted', 5), _sources: ['1A406030005E0B2000010888', '1A406030005E0B2000010777'], _source: '1A406030005E0B2000010888' }])],
   facilities, [{ id: 'y', uids: ['10777'] }], []).length, 0);
 
+// Wet Intake's package dropdown.
+const incNow = M.pacificTime('2026-10-28T12:00:00.000Z');
+const incTr = [
+  tr('0011759639', 'CCL22-0001284', '2026-10-27T18:00:00.000Z', [
+    { ...pkg('1A4060300089ABD000000158', 'Shipped', 2192), _strain: 'AJ Sour Diesel' },
+    { ...pkg('1A4060300089ABD000000159', 'Accepted', 800), _strain: 'Blue Dream' },
+    { ...pkg('1A4060300089ABD000000160', 'Voided', 10) }]),
+  tr('0011700000', 'CCL22-0001284', '2026-10-20T18:00:00.000Z', [pkg('1A4060300089ABD000000001', 'Shipped', 5)]),
+  tr('0011759640', 'C11-0000001-LIC', '2026-10-27T18:00:00.000Z', [pkg('1A4060300089ABD000000170', 'Shipped', 5)])
+];
+const inc = M.incomingPackages(incTr, facilities, [], incNow);
+check('incoming: shipped and accepted to us, recent only', inc.map((p) => p.sourceUid.slice(-3)), ['158', '159']);
+check('incoming: strain, manifest, farm, lb', [inc[0].strain, inc[0].manifest, inc[0].fromLicense, inc[0].lb], ['AJ Sour Diesel', '0011759639', 'CCL26-0000027', 2192]);
+check('incoming: a package already on an intake (typed tail) drops off', M.incomingPackages(incTr, facilities, ['00158'], incNow).map((p) => p.sourceUid.slice(-3)), ['159']);
+
 if (failures) { console.log(`\n${failures} failed`); process.exit(1); }
 console.log('\nAll passed');

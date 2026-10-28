@@ -326,6 +326,37 @@ async function saveBuckQueue(order, who) {
   return error ? { ok: false, reason: error.message } : { ok: true };
 }
 
+// ── Bin tares (Wet Intake's Tare dropdown) ─────────────────────────────────
+// TARE_PRESETS plus the ones added there with Other, kept in one shared
+// operations_forms row (station_key 'intake_tares', fixed id) like the
+// bucking queue: fields.tares = [{ name, lb }].
+const TARES_ID = '74617265-7300-4000-8000-000000000001';
+async function getTares() {
+  const client = getClient();
+  let added = [];
+  if (client) {
+    const { data } = await client.from(TABLE).select('fields').eq('id', TARES_ID).maybeSingle();
+    added = ((data && data.fields) || {}).tares || [];
+  }
+  const out = TARE_PRESETS.slice();
+  added.forEach((x) => { if (x && x.name && !out.some((y) => y.name.toLowerCase() === String(x.name).toLowerCase())) out.push({ name: x.name, lb: Number(x.lb) }); });
+  return out;
+}
+// Re-reads before writing, so two tablets adding at once both keep theirs.
+async function addTare(name, lb, who) {
+  const client = getClient();
+  if (!client) return { ok: false, reason: 'not-configured' };
+  const { data } = await client.from(TABLE).select('fields').eq('id', TARES_ID).maybeSingle();
+  const tares = (((data && data.fields) || {}).tares || []).filter((x) => String(x.name).toLowerCase() !== name.toLowerCase());
+  tares.push({ name, lb });
+  const { error } = await client.from(TABLE).upsert({
+    id: TARES_ID, station_key: 'intake_tares', status: 'submitted', owner_user: who || null, updated_by: who || null,
+    submitted_at: new Date().toISOString(),
+    fields: { tares, updatedBy: who || '', updatedAt: new Date().toISOString() }
+  });
+  return error ? { ok: false, reason: error.message } : { ok: true };
+}
+
 // The bucking queue as both pages show it: what's ready to buck, in queue
 // order, each marked with the bucking page it's open on (`draftId`), if any,
 // and the pounds pulled off it so far (`pulledLb`: the boxes logged on that

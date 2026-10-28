@@ -326,6 +326,7 @@
 <script src="/ops_data.js"></script>
 <script src="/raw_stock.js"></script>
 <script src="/preroll_queue.js"></script>
+<script src="/metrc_transfers.js"></script>
 <script>
 (async function () {
   const params = new URLSearchParams(location.search);
@@ -452,7 +453,87 @@
     existed: { en: 'A driver with that ID number is already on the list — they’ve been picked.', es: 'Ya hay un conductor con ese número en la lista — quedó seleccionado.' },
     offline: { en: 'Adding a driver needs a connection — try again with signal.', es: 'Agregar un conductor necesita conexión — intente de nuevo con señal.' }
   };
-  const pkLoading = (f) => t(f.picker.list === 'buckable' ? PK.loadingBuck : f.picker.list === 'bucked' ? PK.loadingBucked : PK.loading);
+  // Wet Intake: the incoming-package dropdown, Truck # and the tares.
+  const WI = {
+    loading:  { en: 'Loading packages on their way…', es: 'Cargando paquetes en camino…' },
+    choose:   { en: 'Choose the package…', es: 'Elija el paquete…' },
+    none:     { en: 'Nothing on its way in Canix — pick Not listed', es: 'Nada en camino en Canix — elija No aparece' },
+    locked:   { en: '🔒 From Canix — can’t be changed here.', es: '🔒 Desde Canix — no se puede cambiar aquí.' },
+    truckLoading: { en: 'Loading today’s trucks…', es: 'Cargando los camiones de hoy…' },
+    truckChoose:  { en: 'Choose the truck…', es: 'Elija el camión…' },
+    truck:    { en: 'Truck {n}', es: 'Camión {n}' },
+    truckNew: { en: 'Truck {n} — a new truck', es: 'Camión {n} — un camión nuevo' },
+    pkgs:     { en: '{n} pkg', es: '{n} paq.' },
+    manifest: { en: 'manifest …{m}', es: 'manifiesto …{m}' },
+    tareChoose: { en: 'Tare…', es: 'Tara…' },
+    tareOther:  { en: 'Other — add a tare', es: 'Otra — agregar una tara' },
+    tareTitle:  { en: 'New tare', es: 'Tara nueva' },
+    tareName:   { en: 'Name (e.g. Tote)', es: 'Nombre (p. ej. Tote)' },
+    tareLb:     { en: 'Weight each (lbs)', es: 'Peso c/u (lbs)' },
+    tareNeed:   { en: 'Enter a name and a weight.', es: 'Escriba un nombre y un peso.' },
+    tareTaken:  { en: 'That name is already {w} — use another name.', es: 'Ese nombre ya es {w} — use otro nombre.' },
+    tareSave:   { en: 'Save tare', es: 'Guardar tara' },
+    cancel:     { en: 'Cancel', es: 'Cancelar' }
+  };
+  const pkLoading = (f) => t(f.picker.list === 'buckable' ? PK.loadingBuck : f.picker.list === 'bucked' ? PK.loadingBucked
+    : f.picker.list === 'incoming' ? WI.loading : PK.loading);
+
+  // ── Tares (a `tare` column) ───────────────────────────────────────────────
+  // TARE_PRESETS until the shared list loads (getTares in ops_data.js); every
+  // tare dropdown on the page is redrawn when it does or one is added.
+  const hasTare = station.fields.some((f) => f.t === 'lineitems' && f.cols.some((c) => c.t === 'tare'));
+  let tareList = TARE_PRESETS.slice();
+  const tareSelects = new Set();
+  const tareLabel = (x) => `${x.name} — ${fmtNum(x.lb, 1)} lb`;
+  // An older row has only the weight: the tare that weighs that, else "55.5 lb".
+  const tareNameFor = (lb) => ((tareList.find((x) => Number(x.lb) === Number(lb)) || {}).name) || `${fmtNum(lb, 2)} lb`;
+  function fillTareSelect(sel, name) {
+    const list = tareList.slice();
+    if (name && !list.some((x) => x.name === name)) list.push({ name, lb: null, saved: true });
+    sel.innerHTML = `<option value="">${escapeHtml(t(WI.tareChoose))}</option>` +
+      list.map((x) => `<option value="${escapeAttr(x.name)}">${escapeHtml(x.saved ? x.name : tareLabel(x))}</option>`).join('') +
+      `<option value="__other__">${escapeHtml(t(WI.tareOther))}</option>`;
+    sel.value = name || '';
+  }
+  if (hasTare && draftsOn) {
+    getTares().then((list) => { tareList = list; tareSelects.forEach((draw) => draw()); })
+      .catch((err) => console.error('tares', err));
+  }
+  // Other: a name and a weight, saved to the shared list so it's there next time.
+  function openTarePopup(onSave) {
+    const back = document.createElement('div');
+    back.className = 'pop-back';
+    back.innerHTML = `<div class="pop" role="dialog" aria-modal="true">` +
+      `<h3>${escapeHtml(t(WI.tareTitle))}</h3>` +
+      `<label class="lbl" for="tare_name">${escapeHtml(t(WI.tareName))}<span class="req">*</span></label>` +
+      `<input type="text" id="tare_name" autocomplete="off">` +
+      `<label class="lbl" for="tare_lb" style="margin-top:16px">${escapeHtml(t(WI.tareLb))}<span class="req">*</span></label>` +
+      `<input type="number" id="tare_lb" inputmode="decimal" min="0" step="0.01">` +
+      `<div class="pop-msg"></div>` +
+      `<div class="pop-btns"><button type="button" class="pop-cancel">${escapeHtml(t(WI.cancel))}</button>` +
+      `<button type="button" class="pop-ok">${escapeHtml(t(WI.tareSave))}</button></div></div>`;
+    document.body.appendChild(back);
+    const nIn = back.querySelector('#tare_name'), wIn = back.querySelector('#tare_lb'), msg = back.querySelector('.pop-msg');
+    nIn.focus();
+    back.querySelector('.pop-cancel').addEventListener('click', () => back.remove());
+    back.querySelector('.pop-ok').addEventListener('click', async (e) => {
+      const name = nIn.value.trim(), lb = Number(wIn.value);
+      if (!name || wIn.value === '' || !(lb >= 0)) { msg.textContent = t(WI.tareNeed); return; }
+      // A name already on the list is that tare; a new weight needs a new name.
+      const known = tareList.find((x) => x.name.toLowerCase() === name.toLowerCase());
+      if (known && Number(known.lb) !== lb) { msg.textContent = t(WI.tareTaken).replace('{w}', tareLabel(known)); return; }
+      const x = known || { name, lb };
+      if (!known) {
+        e.currentTarget.disabled = true;
+        const res = await addTare(name, lb, owner);
+        if (!res.ok) { e.currentTarget.disabled = false; msg.textContent = res.reason || t(UI.failed); return; }
+        tareList = tareList.concat(x);
+      }
+      back.remove();
+      onSave(x);
+      tareSelects.forEach((draw) => draw());
+    });
+  }
   const reference = await loadReference();
   const form = document.getElementById('form');
   const values = {};          // live form state, keyed by field key
@@ -521,6 +602,9 @@
       // Filled once the projects load (wireProjectPicker below).
       control = `<select id="f_${f.k}"><option value="">${escapeHtml(t(PJ.loading))}</option></select>` +
                 `<div class="match" id="m_${f.k}"></div>`;
+    } else if (f.truckPicker) {
+      // Filled once the day's intakes load (fillTruckPicker below).
+      control = `<select id="f_${f.k}"><option value="">${escapeHtml(t(WI.truckLoading))}</option></select>`;
     } else if (f.t === 'select') {
       const opts = optionsFor(f);
       control = `<select id="f_${f.k}">` +
@@ -732,6 +816,37 @@
               refreshStock(); recompute(); updateVisibility(); markDirty();
             });
             loadStock(refreshStock);
+            return;
+          }
+          // A tare (Wet Intake): picked from the tare list by name; the row
+          // keeps the weight in c.k and the name in `tareName`. Other adds a
+          // new tare to the shared list (openTarePopup).
+          if (c.t === 'tare') {
+            const sel = document.createElement('select');
+            const from = prefill || (!prefill && c.carry && above && above[c.k] !== undefined && above[c.k] !== null && above[c.k] !== '' ? above : null);
+            if (from && from[c.k] !== undefined && from[c.k] !== null && from[c.k] !== '') {
+              row[c.k] = Number(from[c.k]);
+              row.tareName = from.tareName || tareNameFor(row[c.k]);
+              if (!prefill) carried.add(c.k);
+            }
+            const draw = () => fillTareSelect(sel, row.tareName);
+            draw();
+            tareSelects.add(draw);
+            let prev = sel.value;
+            sel.addEventListener('change', () => {
+              if (sel.value === '__other__') {
+                sel.value = prev;
+                openTarePopup((x) => { row.tareName = x.name; row[c.k] = x.lb; carried.delete(c.k); draw(); prev = sel.value; recompute(); markDirty(); });
+                return;
+              }
+              const x = tareList.find((y) => y.name === sel.value);
+              row.tareName = x ? x.name : '';
+              row[c.k] = x ? x.lb : null;
+              prev = sel.value;
+              carried.delete(c.k);
+              recompute(); updateVisibility(); markDirty();
+            });
+            td.appendChild(sel); tr.appendChild(td);
             return;
           }
           let inp, other = null;
@@ -1719,7 +1834,9 @@
     // Filled in later by the Canix sync (Wet Intake's farm license, CID,
     // manifest #…), so not asked for while the truck is weighed — only when
     // a submitted record is reopened with Edit, to fix or type them in.
-    if (f.fromCanix && !editMode) wrap.style.display = 'none';
+    // `editOnly`: likewise only on Edit (Wet Intake's Metrc adjustment, and
+    // Person Completing Form, which is whoever submits).
+    if ((f.fromCanix || f.editOnly) && !editMode) wrap.style.display = 'none';
     form.appendChild(wrap);
     els[f.k] = wrap;
   });
@@ -2505,8 +2622,18 @@
   const typing = {};      // field key -> true while "Not listed" is chosen
   const buckPick = pickerFields.some((f) => f.picker.list === 'buckable');
   const buckedPick = pickerFields.some((f) => f.picker.list === 'bucked');
+  const incomingPick = pickerFields.some((f) => f.picker.list === 'incoming');
   let pickPool = [], pickReady = false, queueItems = null;
   const pickLoaded = pickerFields.length ? (async () => {
+    if (incomingPick) {
+      // Wet Intake: what Canix shows on its way to us, less what's in already.
+      const get = (n) => fetch(`/data/${n}`).then((r) => (r.ok ? r.json() : [])).catch(() => []);
+      const [tr, fac, intakes] = await Promise.all([get('canix_transfers_recent.json'), get('canix_facilities.json'),
+        draftsOn ? loadSubmitted(station.key).catch(() => []) : []]);
+      const taken = (intakes || []).filter((i) => !editMode || i.id !== editId).map((i) => i.sourceUid);
+      pickPool = MetrcTransfers.incomingPackages(tr, fac, taken, Date.now());
+      return;
+    }
     if (buckedPick) {
       // The trimming queue's lots first, in its order, then the rest of
       // what's been bucked (already hand trimmed), newest first.
@@ -2537,6 +2664,7 @@
     if (!sel) return;
     const lots = f.picker.list === 'bucked';
     const buck = f.picker.list === 'buckable' || lots;
+    if (f.picker.list === 'incoming') return fillIncoming(f, sel, inp);
     const room = f.picker.room ? values[f.picker.room] : null;
     const list = buck ? pickPool.slice()
       : (room ? pickPool.filter((i) => inDryRoom(i.dryRoom, room)) : [])
@@ -2563,6 +2691,164 @@
     else sel.value = '';
     inp.style.display = typing[f.k] ? 'block' : 'none';
     showPicked(f);
+  }
+
+  // Wet Intake's package: "AJ Sour Diesel - 0158 · Comstock · 2,192 lb",
+  // grouped by the farm it's coming from.
+  function fillIncoming(f, sel, inp) {
+    const list = pickPool.slice().sort((a, b) => String(a.fromName).localeCompare(String(b.fromName)) ||
+      String(a.strain).localeCompare(String(b.strain)));
+    pickLists[f.k] = list;
+    const farm = (i) => String(i.fromName || '').split(':')[0].trim() || i.fromLicense || '—';
+    const label = (i) => [`${i.strain || i.item || '—'} - ${normUid(i.sourceUid).slice(-4)}`,
+      i.lb ? `${fmtNum(i.lb, 0)} lb` : ''].filter(Boolean).join(' · ');
+    const first = !pickReady ? t(WI.loading) : list.length ? t(WI.choose) : t(WI.none);
+    const farms = [...new Set(list.map(farm))];
+    sel.innerHTML = `<option value="">${escapeHtml(first)}</option>` +
+      farms.map((fm) => `<optgroup label="${escapeAttr(fm)}">` +
+        list.map((i, ix) => (farm(i) === fm ? `<option value="${ix}">${escapeHtml(label(i))}</option>` : '')).join('') + `</optgroup>`).join('') +
+      `<option value="__type__">${escapeHtml(t(PK.typed))}</option>`;
+    const cur = values[f.k];
+    const ix = cur ? list.findIndex((i) => normUid(i.sourceUid) === normUid(cur)) : -1;
+    if (ix >= 0 && !typing[f.k]) sel.value = String(ix);
+    else if (cur || typing[f.k]) { typing[f.k] = true; sel.value = '__type__'; }
+    else sel.value = '';
+    inp.style.display = typing[f.k] ? 'block' : 'none';
+    showPicked(f);
+  }
+
+  // The package's strain from Canix, locked (`WI.locked` under it), and the
+  // manifest it came on (for the Truck #). A package Canix has no strain
+  // for leaves the strain open to pick. Not locked on Edit (office fixes).
+  const strainField = station.fields.find((x) => x.k === 'strain');
+  function lockStrain(name) {
+    const sel = document.getElementById('f_strain');
+    if (!sel || !strainField) return;
+    let note = document.getElementById('lk_strain');
+    if (!note) {
+      note = document.createElement('div');
+      note.className = 'hint'; note.id = 'lk_strain';
+      els.strain.appendChild(note);
+    }
+    const on = !!name && !editMode;
+    if (name) {
+      const lc = name.trim().toLowerCase();
+      const hit = (reference.strains || []).find((x) => x.active !== false &&
+        [x.name, ...(x.aliases || [])].some((n) => String(n || '').trim().toLowerCase() === lc));
+      setFieldValue(strainField, hit ? hit.name : name.trim());
+      touched.add('strain');
+      els.strain.classList.remove('invalid');
+    }
+    sel.disabled = on;
+    const other = document.getElementById('o_strain');
+    if (other && on) other.style.display = 'none';
+    note.textContent = on ? t(WI.locked) : '';
+    note.style.display = on ? 'block' : 'none';
+  }
+  // A package picked from the list, or typed: its Canix strain and manifest.
+  function incomingChosen(f, rec) {
+    values.incomingManifest = rec ? rec.manifest : '';
+    values.incomingFrom = rec ? rec.fromName : '';
+    if (rec && rec.strain) { lockStrain(rec.strain); afterIncoming(); return; }
+    lockStrain(null);
+    const uid = values[f.k];
+    if (!uid) { afterIncoming(); return; }
+    canixStrainForUid(uid).then((name) => {
+      if (values[f.k] !== uid) return;
+      if (name) lockStrain(name);
+      afterIncoming();
+    });
+    afterIncoming();
+  }
+  function afterIncoming() { fillTruckPickers(); recompute(); updateVisibility(); markDirty(); }
+
+  // ── Truck # (truckPicker — Wet Intake) ────────────────────────────────────
+  // Numbered per day across all farms, one truck per manifest: the day's
+  // other intakes (submitted, or open on another tablet) give the trucks so
+  // far — "Truck 1 — Comstock · manifest …9639 · 2 pkg" — and the next number
+  // is a new truck. A package whose manifest is already in goes on that
+  // truck; a new manifest gets the next number. A package with no manifest
+  // (typed, not in Canix) is picked by hand. Submit checks again
+  // (resolveTruckNo), in case another tablet took the new number meanwhile.
+  const truckFields = station.fields.filter((f) => f.truckPicker);
+  let dayIntakes = null;   // [{ id, date, truckNo, manifest, from }] — null while loading
+  const intakeRow = (id, date, f) => ({ id, date, truckNo: String(f.truckNo || '').trim(),
+    manifest: String(f.incomingManifest || f.manifestNo || '').trim(),
+    // The farm: the transfer's, else the Farm License the Canix sync filled ("Comstock").
+    from: String(f.incomingFrom || '').split(':')[0].trim() ||
+      String(((refOptions(reference, 'properties').find((o) => o.v === f.pid)) || {}).label || '').split(/[:(—-]/)[0].trim() });
+  async function loadDayIntakes() {
+    const [subs, open] = await Promise.all([loadSubmitted(station.key), listOpenDrafts(station.key)]);
+    return [...(subs || []).map((r) => intakeRow(r.id, r.date, r)), ...(open || []).map((r) => intakeRow(r.id, r.work_date, r.fields || {}))]
+      .filter((r) => r.id !== draftId && r.id !== editId);
+  }
+  // The day's trucks as Map(number → { manifests, n, from }) and the next number.
+  function dayTrucks(list, date) {
+    const trucks = new Map();
+    (list || []).filter((r) => r.date === date && /^\d+$/.test(r.truckNo)).forEach((r) => {
+      const x = trucks.get(r.truckNo) || { manifests: new Set(), n: 0, from: '' };
+      if (r.manifest) x.manifests.add(r.manifest);
+      x.n += 1; x.from = x.from || r.from;
+      trucks.set(r.truckNo, x);
+    });
+    const next = String(Math.max(0, ...[...trucks.keys()].map(Number)) + 1);
+    return { trucks, next };
+  }
+  function truckFor(list, date, manifest) {
+    const { trucks, next } = dayTrucks(list, date);
+    const hit = manifest && [...trucks].find(([, x]) => x.manifests.has(manifest));
+    return hit ? { no: hit[0], isNew: false } : { no: next, isNew: true };
+  }
+  function fillTruckPickers() {
+    truckFields.forEach((f) => {
+      const sel = document.getElementById(`f_${f.k}`);
+      if (!sel) return;
+      if (!dayIntakes) { sel.innerHTML = `<option value="">${escapeHtml(t(WI.truckLoading))}</option>`; return; }
+      const date = values.date || todayStr();
+      const { trucks, next } = dayTrucks(dayIntakes, date);
+      // A known manifest decides the truck (not on Edit — that's a correction).
+      // One it set goes again when the package changes to one with no manifest.
+      if (values.incomingManifest && !editMode) {
+        const x = truckFor(dayIntakes, date, values.incomingManifest);
+        values[f.k] = x.no; values.truckIsNew = x.isNew; values.truckAuto = true;
+      } else if (values.truckAuto && !editMode) {
+        values[f.k] = ''; values.truckAuto = false;
+      }
+      const cur = String(values[f.k] || '');
+      const opts = [...trucks].sort((a, b) => Number(a[0]) - Number(b[0])).map(([no, x]) => ({ v: no,
+        label: [t(WI.truck).replace('{n}', no), x.from,
+          x.manifests.size ? t(WI.manifest).replace('{m}', [...x.manifests].map((m) => m.slice(-4)).join(', …')) : '',
+          t(WI.pkgs).replace('{n}', x.n)].filter(Boolean).join(' · ') }));
+      opts.push({ v: next, label: t(WI.truckNew).replace('{n}', next) });
+      // A saved value that isn't one of these (an old typed one) still shows.
+      if (cur && !opts.some((o) => o.v === cur)) opts.push({ v: cur, label: cur });
+      sel.innerHTML = `<option value="">${escapeHtml(t(WI.truckChoose))}</option>` +
+        opts.map((o) => `<option value="${escapeAttr(o.v)}">${escapeHtml(o.label)}</option>`).join('');
+      sel.value = cur;
+      if (cur) els[f.k].classList.remove('invalid');
+    });
+  }
+  // Submit: the number again from what's in now.
+  async function resolveTruckNo() {
+    if (!truckFields.length || editMode || !draftsOn) return;
+    try { dayIntakes = await loadDayIntakes(); } catch (err) { console.error('trucks', err); return; }
+    const date = values.date || todayStr();
+    truckFields.forEach((f) => {
+      if (values.incomingManifest) { const x = truckFor(dayIntakes, date, values.incomingManifest); values[f.k] = x.no; return; }
+      // A new truck picked by hand whose number another tablet has used since.
+      if (values.truckIsNew && dayTrucks(dayIntakes, date).trucks.has(String(values[f.k]))) values[f.k] = dayTrucks(dayIntakes, date).next;
+    });
+  }
+  if (truckFields.length) {
+    (draftsOn ? loadDayIntakes() : Promise.resolve([]))
+      .then((list) => { dayIntakes = list; }).catch((err) => { console.error('trucks', err); dayIntakes = []; })
+      .finally(fillTruckPickers);
+    truckFields.forEach((f) => {
+      const sel = document.getElementById(`f_${f.k}`);
+      sel.addEventListener('change', () => { values.truckIsNew = sel.value === dayTrucks(dayIntakes, values.date || todayStr()).next; values.truckAuto = false; });
+    });
+    const dateEl = document.getElementById('f_date');
+    if (dateEl) dateEl.addEventListener('change', () => fillTruckPickers());
   }
 
   // The picked package's full UID, read-only under the dropdown.
@@ -2621,12 +2907,22 @@
       typing[f.k] = false;
       inp.style.display = 'none';
       const rec = sel.value === '' ? null : pickLists[f.k][Number(sel.value)];
-      if (!rec) { setUid(''); clearPrefill(f.k); }
+      if (f.picker.list === 'incoming') { setUid(rec ? normUid(rec.sourceUid) : ''); incomingChosen(f, rec); }
+      else if (!rec) { setUid(''); clearPrefill(f.k); }
       else { setUid(normUid(rec.sourceUid)); tryPrefill(values[f.k], f.k, rec); }
       showPicked(f);
       recompute();
       markDirty();
     });
+    // A typed / scanned package: the listed one it's the tail of, if any.
+    if (f.picker.list === 'incoming') {
+      inp.addEventListener('change', () => {
+        const uid = normUid(inp.value);
+        const hits = uid.length >= 4 ? pickPool.filter((i) => normUid(i.sourceUid).endsWith(uid)) : [];
+        if (hits.length === 1) setUid(normUid(hits[0].sourceUid));   // the full tag for a typed tail
+        incomingChosen(f, hits.length === 1 ? hits[0] : null);
+      });
+    }
     // A new room means a new list — a package picked from the old one goes.
     if (!f.picker.room) return;
     const roomEl = document.getElementById(`f_${f.picker.room}`);
@@ -2721,6 +3017,12 @@
     // like Pre-Roll's Workforce Log on runs already open) rides along, so
     // the next autosave doesn't drop it.
     const onForm = new Set(station.fields.map((f) => f.k));
+    // A Wet Intake started when the package was on each row (before one
+    // package per form): the first row's package goes to the top.
+    if (!station.splitBy && onForm.has('sourceUid') && !fields.sourceUid && Array.isArray(fields.lines)) {
+      const r = fields.lines.find((x) => x && x.sourceUid);
+      if (r) fields = { ...fields, sourceUid: r.sourceUid, strain: fields.strain || r.strain };
+    }
     Object.keys(fields).forEach((k) => { if (!onForm.has(k) && !(k in values)) values[k] = fields[k]; });
     station.fields.forEach((f) => {
       if (f.t === 'calc' || f.t === 'photo') return;
@@ -2805,7 +3107,7 @@
 
   function updateVisibility() {
     station.fields.forEach((f) => {
-      if (!f.showIf) return;
+      if (!f.showIf || (f.editOnly && !editMode)) return;
       const wrap = els[f.k];
       if (wrap) wrap.style.display = f.showIf(values) ? '' : 'none';
     });
@@ -3116,8 +3418,10 @@
     // field made required since, or left empty then, doesn't block the save.
     const isEmpty = (f, v) => (f.t === 'lineitems' ? !(v || []).some((r) => rowHasData(f, r))
                                                    : v === undefined || v === null || v === '');
+    // An `editOnly` person field is whoever submits.
+    if (!editMode) station.fields.filter((f) => f.editOnly && PERSON_FIELDS.has(f.k) && owner).forEach((f) => { values[f.k] = owner; });
     const missing = station.fields.filter((f) => {
-      if (!f.req || f.t === 'calc') return false;
+      if (!f.req || f.t === 'calc' || (f.editOnly && !editMode)) return false;
       if (f.showIf && !f.showIf(values)) return false;
       if (f.t === 'lineitems' && lineProblem(f)) return true;
       if (editMode && isEmpty(f, (editRec && editRec.fields || {})[f.k])) return false;
@@ -3156,10 +3460,13 @@
     // when it goes through).
     await syncProjectLink(true);
     await syncCrewToSchedule(true);
+    await resolveTruckNo();
     // Drop empty worksheet rows before sending.
     syncProjectName();
     const payload = { ...values };
     delete payload._deleted;
+    delete payload.truckIsNew;
+    delete payload.truckAuto;
     // Row numbers count only the rows that are kept: 1, 2, 3… with no gaps.
     station.fields.filter((f) => f.t === 'lineitems').forEach((f) => {
       const nums = f.cols.filter((c) => c.t === 'rownum');
@@ -3802,6 +4109,14 @@
       if (f.picker.room) countRooms(f);
       fillPicker(f);
       const rec = (pickLists[f.k] || []).find((i) => values[f.k] && normUid(i.sourceUid) === normUid(values[f.k]));
+      // A resumed Wet Intake: lock its strain again (no save — nothing changed).
+      if (f.picker.list === 'incoming' && values[f.k]) {
+        values.incomingManifest = values.incomingManifest || (rec && rec.manifest) || '';
+        if (rec && rec.strain) lockStrain(rec.strain);
+        else { const uid = values[f.k]; canixStrainForUid(uid).then((name) => { if (name && values[f.k] === uid) lockStrain(name); }); }
+        fillTruckPickers();
+        return;
+      }
       if (rec && linkPicked.has(f.k)) { tryPrefill(values[f.k], f.k, rec); return; }
       if (rec && spec) Object.entries(spec.map).forEach(([here, there]) => {
         if (!isBlank(values[here]) && String(values[here]) === String(rec[there])) lastPrefill[here] = values[here];

@@ -253,7 +253,44 @@
     return out.sort((a, b) => (a.departure || 0) - (b.departure || 0));
   }
 
-  const api = { ACCEPT_WITHIN_H, URGENT_H, INTAKE_DAYS, NEEDS_FORM_SINCE, OUTGOING_FROM, pacificTime, incomingTransfers, unacceptedIntakes, productTypeOf, outgoingNeedingForm };
+  // ── Packages on their way to us (Wet Intake's package dropdown) ─────────
+  // Every package on a transfer to one of our licenses that left in the last
+  // INCOMING_DAYS — still Shipped, or already Accepted (the crew may accept
+  // in Metrc before the form is in) — less the ones a submitted Wet Intake
+  // already has (`taken`: their UIDs; a typed tail counts). Newest
+  // departure first. Like incomingTransfers, only transfers sent from a
+  // license we have Canix for are here.
+  const INCOMING_DAYS = 3;
+  function incomingPackages(transfers, facilities, taken, now) {
+    const ours = new Set((facilities || []).map((f) => f && f.license_number).filter(Boolean));
+    const done = (taken || []).map(normTag).filter((u) => u.length >= 4);
+    const out = [];
+    const seen = new Set();
+    for (const t of transfers || []) {
+      const manifest = String((t && t.manifest_number) || '').trim();
+      if (!manifest) continue;
+      for (const d of t.destinations || []) {
+        if (!ours.has(d.destination_facility)) continue;
+        const left = pacificTime(d.departure_time);
+        if (left !== null && now - left > INCOMING_DAYS * 86400000) continue;
+        for (const c of d.contents || []) {
+          if (!c || !['Shipped', 'Accepted'].includes(c.status)) continue;
+          const tag = normTag((c.package || {}).tag);
+          if (!tag || seen.has(tag) || done.some((u) => tag === u || tag.endsWith(u))) continue;
+          seen.add(tag);
+          out.push({
+            sourceUid: tag, strain: c._strain || '', item: c._item || '', manifest,
+            fromLicense: t._facility_license_number || '', fromName: t._facility_name || t._facility_license_number || '',
+            departure: left, accepted: c.status === 'Accepted',
+            lb: String(c.shipped_weight_unit || 'Pounds').toLowerCase().startsWith('pound') ? Number(c.shipped_weight) || null : null
+          });
+        }
+      }
+    }
+    return out.sort((a, b) => (b.departure || 0) - (a.departure || 0));
+  }
+
+  const api = { ACCEPT_WITHIN_H, URGENT_H, INTAKE_DAYS, INCOMING_DAYS, NEEDS_FORM_SINCE, OUTGOING_FROM, pacificTime, incomingTransfers, unacceptedIntakes, incomingPackages, productTypeOf, outgoingNeedingForm };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.MetrcTransfers = api;
 })(this);

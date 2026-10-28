@@ -267,6 +267,17 @@ finished flower and smalls packages created in Metrc (Canix
 `original_weight`). The Canix sync now also writes
 `data/canix_packages_recent.json` (last 180 days of packages, sold too).
 
+### Wet Intake: one package per form (started 2026-10-28)
+
+From Kevin's Material Flow change request. Harvest Intake — Wet is one form
+per package: picked from a dropdown of packages on their way to us in Canix
+(`incomingPackages` in `metrc_transfers.js`) or scanned, strain locked from
+Canix; automatic daily Truck # per manifest (`truckPicker`); Weighmaster
+dropdown (`weighmasters` in `data/operations/reference.json`); tare dropdown with presets + Other (`intake_tares`
+shared row). No Fresh Frozen checkbox (location decides), no Project, no
+Completed by (submitter), no Metrc adjustment at the door (`editOnly`). No
+SQL. Details: "Stations" in `docs/OPERATIONS_APP.md`.
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)

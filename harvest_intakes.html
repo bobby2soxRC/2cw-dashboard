@@ -464,7 +464,7 @@
   const COLS = [
     { k: 'date', l: L.date, html: (r) => esc(fmtDate(r.work_date)) + (fmtTime(r) ? `<div class="row-time">${esc(fmtTime(r))}</div>` : ''),
       sort: (r) => (r.work_date || '') + savedAt(r), cls: 'mono' },
-    { k: 'strain', l: fieldByKey.lines.cols.find((c) => c.k === 'strain').l, html: (r) => esc(r.strain || val(r, 'strain') || '—'), cls: 'strain' },
+    { k: 'strain', l: fieldByKey.strain.l, html: (r) => esc(r.strain || val(r, 'strain') || '—'), cls: 'strain' },
     { k: 'uid', l: { en: 'UID', es: 'UID' }, html: (r) => esc(uids(r) || '—'), cls: 'mono clip' },
     { k: 'pid', l: L.license, html: (r) => esc(shown(r, 'pid')), cls: 'clip' },
     { k: 'cid', l: { en: 'CID', es: 'CID' }, html: (r) => esc(shown(r, 'cid')) },
@@ -553,7 +553,7 @@
     const f = r.fields || {};
     const items = [
       ['UID', uids(r)],
-      [t(fieldByKey.lines.cols.find((c) => c.k === 'strain').l), r.strain || f.strain],
+      [t(fieldByKey.strain.l), r.strain || f.strain],
       [t(L.date), r.work_date]
     ];
     for (const k of ['pid', 'cid', 'manifestNo', 'truckNo', 'driver', 'completedBy', 'weighmaster', 'dryRoom', 'freshFrozen',
