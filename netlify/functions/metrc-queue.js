@@ -15,7 +15,8 @@
 //
 // POST {pin, id, action: 'confirm_weights'} -> {ok, row, fields}
 //   A manager's sign-off on a form's output weights (stations with
-//   `weightCheck` — Hand Trim), needing the admin panel's Metrc Queue →
+//   `weightCheck` — Hand Trim's weights; Pre-Roll's and Ground Flower
+//   Pouches' counts, checkKind 'count'), needing the admin panel's Metrc Queue →
 //   Confirm weights ('metrc confirm weights'). Saves
 //   fields.weightsConfirmed = {by, at, lbs} on the form record and logs it.
 //   Until the weights are confirmed (weightCheckState in
@@ -85,7 +86,7 @@ exports.handler = async (event) => {
     if (!user) return json(401, { ok: false, error: 'PIN not recognized — log in again.' });
     const hasCol = (col) => String((user.columns || {})[col] || '').toUpperCase() === 'TRUE';
     if (!hasCol(confirming ? CONFIRM_COL : EDIT_COL)) {
-      return json(403, { ok: false, error: confirming ? 'You can’t confirm weights in the Metrc queue.' : 'You don’t have edit access to the Metrc queue.' });
+      return json(403, { ok: false, error: confirming ? 'You can’t confirm weights or verify counts in the Metrc queue.' : 'You don’t have edit access to the Metrc queue.' });
     }
 
     const formRes = await supaFetch(supaUrl, serviceKey, `operations_forms?id=eq.${id}&select=station_key,status,owner_user,fields`);
@@ -99,7 +100,7 @@ exports.handler = async (event) => {
     const weightState = weightCheckState(station, form.fields);
 
     if (confirming) {
-      if (!weightState) return json(400, { ok: false, error: 'This form has no weights to confirm.' });
+      if (!weightState) return json(400, { ok: false, error: 'This form has nothing to confirm.' });
       const now = new Date().toISOString();
       const lbs = weightSnapshot(station, form.fields);
       const fields = { ...(form.fields || {}), weightsConfirmed: { by: user.name, at: now, lbs } };
@@ -125,7 +126,9 @@ exports.handler = async (event) => {
     if (weightState && weightState !== 'confirmed') {
       const tagging = tagsIn && Object.values(tagsIn).some((v) => normTag(v));
       if (status === 'done' || tagging) {
-        return json(409, { ok: false, error: 'A manager has to confirm this form’s weights before it can get tags or be marked Done.' });
+        return json(409, { ok: false, error: station.checkKind === 'count'
+          ? 'A second person has to verify this run’s counts before it can be marked Done.'
+          : 'A manager has to confirm this form’s weights before it can get tags or be marked Done.' });
       }
     }
 

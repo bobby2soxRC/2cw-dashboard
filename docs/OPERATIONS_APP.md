@@ -244,8 +244,9 @@ Pre-Roll Production (`preroll_production`) follows the paper pre-roll sheet
 and, since October 2026, runs like Hand Trim: one page per **run**
 (`sharedDay`, with `switcher` labels "Runs open" / "+ New run"), so several
 runs can be open at once and a new one started before the last is closed;
-each stays open across days until QC and the secondary verification are done
-and it's submitted. Delete this page (`canDelete`) is there for a run started
+each stays open across days until the operator submits it at the end of the
+run (no verifier needed on the form — the second-person count check is in
+the Metrc Queue since 2026-10-28, see "Weight sign-off"). Delete this page (`canDelete`) is there for a run started
 by mistake. Under the run tabs are **day tabs** (`dayTabs: { lines:
 ['output', 'attendance'] }` — several logs share the tabs; the chips total
 the first): the Pre-Roll Output log and the Crew show the picked day and
@@ -308,7 +309,8 @@ already open on another run.
 Howie Roll 14 g. Same team, same page: runs (`sharedDay`, Runs open / + New
 run), day tabs over the **Pouch Output** log (pouches each + waste g) and the
 Crew check, Delete this page, Queue tab, and End of Run (`newPouchUid`,
-`newWasteUid`, finish date, QC, secondary verification). Pouch Size
+`newWasteUid`, finish date, optional QC; the count check is in the Metrc
+Queue). Pouch Size
 (`unitSizeG`) starts at 14 g and drives the "Starting Weight Accounted For"
 check ((pouches × size + waste) ÷ starting weight); the total is
 `totalPouches`. No Pack Type. What goes in is a table, **Material Going In**
@@ -780,6 +782,18 @@ so a Fix form that changes one puts the form back to waiting (**Weights
 changed — confirm again**). The server refuses Done and tags while it's not
 confirmed. Forms already Done stay Done. No SQL. From a Material Flow change
 request.
+
+**Count verification (Pre-Roll, Ground Flower Pouches; since 2026-10-28).**
+The same check on a run's counts: these stations have `weightCheck`
+(`totalPrerolls` / `totalPouches` and `totalWasteG`) with `checkKind:
+'count'`, so the queue words it **Needs count verification** / **Verify
+counts** / **Count verified** / **Counts changed — verify again**, with the
+counts in their own units. The floor form no longer has Secondary
+Verification — Name / Date, and Q.C. Complete is optional, so the operator
+can submit the run on their own; the second person signs off in the queue
+(same `metrc confirm weights` access). Runs submitted before this with
+`verifiedBy` filled in count as verified (`weightCheckState`). Until verified
+the run can't be marked Done (refused by `metrc-queue.js` too).
 
 Statuses live in the `metrc_queue` table, one row per form, created the
 first time its status is set (no row = To do; deleting the form deletes the

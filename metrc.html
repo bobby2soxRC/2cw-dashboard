@@ -243,7 +243,8 @@
   const access = sessionStorage.getItem('2cw_metrc_access') || '';
   const canEdit = access === 'edit';
   // Metrc Queue → Confirm weights: a manager's sign-off on a form's output
-  // weights (stations with `weightCheck` — Hand Trim). Until then its tags
+  // weights (stations with `weightCheck` — Hand Trim), or verification of a
+  // run's counts (checkKind 'count' — Pre-Roll, Ground Flower Pouches). Until then its tags
   // and Done are locked here and refused by metrc-queue.js.
   const canConfirm = sessionStorage.getItem('2cw_metrc_confirm') === 'true';
 
@@ -307,6 +308,16 @@
     wFirst:    { en: 'A manager confirms these weights before the new tags go in or it’s marked Done.', es: 'Un gerente confirma estos pesos antes de poner las etiquetas nuevas o marcarlo Hecho.' },
     wBy:       { en: 'Confirmed by', es: 'Confirmado por' },
     wLog:      { en: 'Weights confirmed', es: 'Pesos confirmados' },
+    // The same check on a run's counts (stations with checkKind 'count' —
+    // Pre-Roll, Ground Flower Pouches).
+    wWaitC:    { en: 'Needs count verification', es: 'Falta verificar conteo' },
+    wChangedC: { en: 'Counts changed — verify again', es: 'Conteos cambiados — verifique de nuevo' },
+    wOkC:      { en: 'Count verified', es: 'Conteo verificado' },
+    wHdC:      { en: 'Count verification', es: 'Verificación de conteo' },
+    wBtnC:     { en: 'Verify counts', es: 'Verificar conteos' },
+    wFirstC:   { en: 'A second person checks these counts before the new tags go in or it’s marked Done.', es: 'Una segunda persona revisa estos conteos antes de poner las etiquetas nuevas o marcarlo Hecho.' },
+    wByC:      { en: 'Verified by', es: 'Verificado por' },
+    wLogC:     { en: 'Counts verified', es: 'Conteos verificados' },
     copyHint:  { en: 'Tap a value to copy it.', es: 'Toque un valor para copiarlo.' },
     copied:    { en: 'Copied ✓', es: 'Copiado ✓' },
     viewOnly:  { en: 'You can see this queue but not change it.', es: 'Puede ver esta cola pero no cambiarla.' },
@@ -474,10 +485,12 @@
   const newTags = (r) => tagDefs(r).map((x) => val(r, x.k)).filter(Boolean);
   const weightState = (r) => weightCheckState(stationOf(r), r.fields);
   const weightBlocked = (r) => { const w = weightState(r); return !!w && w !== 'confirmed'; };
+  // A sign-off label, in its count wording for checkKind 'count' stations.
+  const wL = (r, k) => (stationOf(r) || {}).checkKind === 'count' ? L[k + 'C'] : L[k];
   const weightPill = (r) => {
     const w = weightState(r);
     if (!w) return '';
-    return w === 'confirmed' ? `<span class="pill wok">✓ ${t(L.wOk)}</span>` : `<span class="pill wwait">${t(w === 'changed' ? L.wChanged : L.wWait)}</span>`;
+    return w === 'confirmed' ? `<span class="pill wok">✓ ${t(wL(r, 'wOk'))}</span>` : `<span class="pill wwait">${t(wL(r, w === 'changed' ? 'wChanged' : 'wWait'))}</span>`;
   };
   const fmtDate = (d) => d ? new Date(`${d}T12:00:00`).toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
   const fmtWhen = (ts) => ts ? new Date(ts).toLocaleString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
@@ -820,14 +833,18 @@
   function weightHtml(r) {
     const w = weightState(r);
     if (!w) return '';
-    const st = stationOf(r), c = val(r, 'weightsConfirmed') || {};
-    const label = (k) => { const f = st.fields.find((x) => x.k === k); return f ? t(f.l) : k; };
-    const lbs = st.weightCheck.filter((k) => Number(val(r, k)) > 0 || k === 'finishedFlowerLb')
-      .map((k) => `<span>${esc(label(k))}: <b>${esc(fmtNum(val(r, k), 2))} lb</b></span>`).join('');
-    return `<div class="w-box ${w === 'confirmed' ? 'ok' : ''}"><div class="st-hd">${t(L.wHd)} ${weightPill(r)}</div>
+    const st = stationOf(r), count = st.checkKind === 'count';
+    // Older runs were signed on the form (verifiedBy / verifiedDate).
+    const c = val(r, 'weightsConfirmed') || (count && val(r, 'verifiedBy') ? { by: val(r, 'verifiedBy'), date: val(r, 'verifiedDate') } : {});
+    const fieldOf = (k) => st.fields.find((x) => x.k === k);
+    // Count fields carry their unit in the label ("Total Waste (grams)").
+    const lbs = st.weightCheck.filter((k, i) => Number(val(r, k)) > 0 || i === 0)
+      .map((k) => { const f = fieldOf(k);
+        return `<span>${esc(f ? t(f.l) : k)}: <b>${esc(fmtNum(val(r, k), count ? (f && f.dp != null ? f.dp : 0) : 2))}${count ? '' : ' lb'}</b></span>`; }).join('');
+    return `<div class="w-box ${w === 'confirmed' ? 'ok' : ''}"><div class="st-hd">${t(wL(r, 'wHd'))} ${weightPill(r)}</div>
       <div class="w-lbs">${lbs}</div>
-      ${w === 'confirmed' ? `<div class="muted-note">${t(L.wBy)} ${esc(c.by || '—')} · ${esc(fmtWhen(c.at))}</div>`
-        : `<div class="muted-note">${t(L.wFirst)}</div>${canConfirm ? `<div><button type="button" class="btn btn-blue" id="w-confirm">${t(L.wBtn)}</button> <span class="st-msg" id="w-msg"></span></div>` : ''}`}
+      ${w === 'confirmed' ? `<div class="muted-note">${t(wL(r, 'wBy'))} ${esc(c.by || '—')} · ${esc(c.at ? fmtWhen(c.at) : fmtDate(c.date))}</div>`
+        : `<div class="muted-note">${t(wL(r, 'wFirst'))}</div>${canConfirm ? `<div><button type="button" class="btn btn-blue" id="w-confirm">${t(wL(r, 'wBtn'))}</button> <span class="st-msg" id="w-msg"></span></div>` : ''}`}
     </div>`;
   }
 
@@ -858,7 +875,7 @@
   function logHtml(r) {
     const log = (queue.get(r.id) || {}).log || [];
     const items = log.slice().reverse().map((h) =>
-      `<li><span class="pill ${esc(h.status)}">${t(L[h.status] || { en: h.status })}</span> <b>${esc(h.by || '—')}</b> · ${esc(fmtWhen(h.at))}${h.note ? `<div style="margin-top:3px">${esc(h.note)}</div>` : ''}${h.tags ? `<div class="tags">${tagLog(r, h.tags)}</div>` : ''}${h.weights ? `<div class="tags">✓ ${t(L.wLog)}</div>` : ''}</li>`);
+      `<li><span class="pill ${esc(h.status)}">${t(L[h.status] || { en: h.status })}</span> <b>${esc(h.by || '—')}</b> · ${esc(fmtWhen(h.at))}${h.note ? `<div style="margin-top:3px">${esc(h.note)}</div>` : ''}${h.tags ? `<div class="tags">${tagLog(r, h.tags)}</div>` : ''}${h.weights ? `<div class="tags">✓ ${t(wL(r, 'wLog'))}</div>` : ''}</li>`);
     return `<div class="d-section"><div class="d-section-hd">${t(L.log)}</div>${
       items.length ? `<ul class="hist">${items.join('')}</ul>` : `<div class="muted-note">${t(L.logNone)}</div>`}</div>`;
   }

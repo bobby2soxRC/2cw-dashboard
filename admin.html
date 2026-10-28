@@ -1589,7 +1589,7 @@ function openEditor(id){
     <div class="check-grid">
       <label class="check-item"><input type="checkbox" data-card="metrc_queue" id="mq-view" ${['metrc_queue','metrc queue edit','metrc confirm weights'].some(c => (cols[c]||'').toUpperCase()==='TRUE') ?'checked':''}/> View</label>
       <label class="check-item"><input type="checkbox" data-card="metrc queue edit" id="mq-edit" ${(cols['metrc queue edit']||'').toUpperCase()==='TRUE'?'checked':''}/> Edit (set each form's Metrc status and note)</label>
-      <label class="check-item"><input type="checkbox" data-card="metrc confirm weights" id="mq-confirm" ${(cols['metrc confirm weights']||'').toUpperCase()==='TRUE'?'checked':''}/> Confirm weights (manager sign-off on Hand Trim weights; its tags and Done wait for it)</label>
+      <label class="check-item"><input type="checkbox" data-card="metrc confirm weights" id="mq-confirm" ${(cols['metrc confirm weights']||'').toUpperCase()==='TRUE'?'checked':''}/> Confirm weights / verify counts (sign-off on Hand Trim weights and on Pre-Roll and Ground Flower Pouch run counts; their tags and Done wait for it)</label>
     </div>
 
     <div class="section-hd">Material Flow</div>

@@ -217,7 +217,9 @@ const buckedLb = (v) => [...(v.bucked || []), ...(v.recovered || [])].reduce((a,
 // Metrc work — tags, Done — can go ahead). The sign-off is
 // fields.weightsConfirmed = {by, at, lbs: {field: value}}; it only counts
 // while the weights still match what was confirmed, so a Fix form that
-// changes one puts the form back to waiting.
+// changes one puts the form back to waiting. `checkKind: 'count'` (Pre-Roll,
+// Ground Flower Pouches) is the same check on the run's counts — the
+// Metrc Queue words it as count verification.
 //   null       — the station has no weight check
 //   'waiting'  — not confirmed yet
 //   'changed'  — confirmed, but a weight has changed since
@@ -227,7 +229,8 @@ const weightSnapshot = (station, fields) =>
 function weightCheckState(station, fields) {
   if (!station || !station.weightCheck) return null;
   const c = (fields || {}).weightsConfirmed;
-  if (!c || !c.lbs) return 'waiting';
+  // Runs from before the queue check were signed on the form itself.
+  if (!c || !c.lbs) return station.checkKind === 'count' && (fields || {}).verifiedBy ? 'confirmed' : 'waiting';
   const now = weightSnapshot(station, fields);
   return Object.keys(now).every((k) => num(c.lbs[k]) === now[k]) ? 'confirmed' : 'changed';
 }
@@ -1379,19 +1382,18 @@ const OPERATIONS_STATIONS = [
       { k: 'newPrerollUid', t: 'uid', l: { en: 'New UID — Pre-Rolls', es: 'UID nuevo — prerolls' } },
       { k: 'newWasteUid', t: 'uid', l: { en: 'New UID — Waste', es: 'UID nuevo — desecho' } },
       { k: 'finishDate', t: 'date', today: false, l: { en: 'Finish Date', es: 'Fecha de terminación' } },
-      { k: 'qcComplete', t: 'select', req: true,
+      { k: 'qcComplete', t: 'select',
         l: { en: 'Q.C. Complete', es: 'Control de calidad completo' },
         opts: [
           { v: 'yes', l: { en: 'Yes', es: 'Sí' } },
           { v: 'no', l: { en: 'Not yet', es: 'Todavía no' } }
         ] },
-      { k: 'verifiedBy', t: 'text', req: true,
-        l: { en: 'Secondary Verification — Name', es: 'Verificación secundaria — nombre' },
-        hint: { en: 'The second person who checked the counts. Typing your name here is your sign-off.',
-                es: 'La segunda persona que revisó los conteos. Escribir su nombre aquí es su firma.' } },
-      { k: 'verifiedDate', t: 'date', today: false, l: { en: 'Verification Date', es: 'Fecha de verificación' } },
       F.notes(), F.photo()
     ],
+    // The second-person count check happens after submit, in the Metrc
+    // Queue (weightCheckState; Verify counts), not on the floor form.
+    weightCheck: ['totalPrerolls', 'totalWasteG'],
+    checkKind: 'count',
     // Pre-rolls are made from material already moved to manufacturing (a
     // Biomass Request), so the input comes off the manufacturing side of the
     // ledger, like a Manufacturing Run.
@@ -1495,19 +1497,17 @@ const OPERATIONS_STATIONS = [
       { k: 'newPouchUid', t: 'uid', l: { en: 'New UID — Pouches', es: 'UID nuevo — bolsas' } },
       { k: 'newWasteUid', t: 'uid', l: { en: 'New UID — Waste', es: 'UID nuevo — desecho' } },
       { k: 'finishDate', t: 'date', today: false, l: { en: 'Finish Date', es: 'Fecha de terminación' } },
-      { k: 'qcComplete', t: 'select', req: true,
+      { k: 'qcComplete', t: 'select',
         l: { en: 'Q.C. Complete', es: 'Control de calidad completo' },
         opts: [
           { v: 'yes', l: { en: 'Yes', es: 'Sí' } },
           { v: 'no', l: { en: 'Not yet', es: 'Todavía no' } }
         ] },
-      { k: 'verifiedBy', t: 'text', req: true,
-        l: { en: 'Secondary Verification — Name', es: 'Verificación secundaria — nombre' },
-        hint: { en: 'The second person who checked the counts. Typing your name here is your sign-off.',
-                es: 'La segunda persona que revisó los conteos. Escribir su nombre aquí es su firma.' } },
-      { k: 'verifiedDate', t: 'date', today: false, l: { en: 'Verification Date', es: 'Fecha de verificación' } },
       F.notes(), F.photo()
     ],
+    // As Pre-Roll Production: the count check is in the Metrc Queue.
+    weightCheck: ['totalPouches', 'totalWasteG'],
+    checkKind: 'count',
     // Each row comes off its own category (lines: biomassLedger in
     // ops_analytics.js).
     flow: { lossKind: 'transform', input: { field: 'startingLb', lines: { field: 'lines', categoryCol: 'material', gramsCol: 'weightG' } }, outputs: [] }

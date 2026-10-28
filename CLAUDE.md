@@ -230,7 +230,10 @@ until then its tags and Done are locked (page and `metrc-queue.js`). Stored
 on the form as `fields.weightsConfirmed`; `weightCheckState` /
 `weightCheck` in `operations_stations.js` — a weight changed later puts it
 back to waiting. No SQL. Details: "Weight sign-off" in
-`docs/OPERATIONS_APP.md`.
+`docs/OPERATIONS_APP.md`. Since 2026-10-28 Pre-Roll and Ground Flower
+Pouches use the same check on their counts (`checkKind: 'count'`: **Needs
+count verification** / **Verify counts**); their floor forms dropped the
+required Secondary Verification, so operators submit runs themselves.
 
 ### Raw Inventory bulk menu (started 2026-10-25)
 

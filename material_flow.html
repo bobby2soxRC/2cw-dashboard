@@ -462,14 +462,14 @@ packageCount = distinct source UIDs</pre></div>
 
     <article class="card" id="st-preroll_production">
       <div class="card-head"><h3>Pre-Roll Production</h3><span class="k">preroll_production</span><span class="pill metrc">Metrc Queue</span><span class="pill state">transform</span></div>
-      <p>One page per run, started from the Pre-Roll &amp; Ground Flower Queue (a Sheet request PR# or a hand-added PQ-#). Open across days until QC and secondary verification are done.</p>
+      <p>One page per run, started from the Pre-Roll &amp; Ground Flower Queue (a Sheet request PR# or a hand-added PQ-#). Open across days until the operator submits it at the end of the run; the second-person count check happens after that, in the Metrc Queue.</p>
       <div class="cols">
         <div><h4>On the form</h4><ul>
           <li>Production Request (fills Batch ID, brand, pack type, strain, source UID, size)</li>
           <li>Starting weight (g), input category, pre-roll size</li>
           <li>Output log per day: pre-rolls, waste g</li>
           <li>Crew check against the Master Schedule</li>
-          <li>End of run: new UIDs, finish date, QC, verification</li>
+          <li>End of run: new UIDs, finish date, QC (optional)</li>
         </ul></div>
         <div><h4>Math</h4>
 <pre class="math">startingLb    = startingWtG ÷ 454
@@ -484,6 +484,7 @@ labor $ / pre-roll = run's Labor Log share
           <li>Input leaves the biomass ledger as finished goods (transform, not loss)</li>
           <li>Takes the input off Raw Inventory by UID and category</li>
           <li>Work order counts as done when a submitted run carries its ref</li>
+          <li>Count verification: in the Metrc Queue it shows <b>Needs count verification</b> until a second person (Metrc Queue → Confirm weights / verify counts) checks the pre-roll and waste totals and taps <b>Verify counts</b>; until then it can't be marked Done. Changing a count afterwards (Fix form) puts it back</li>
         </ul></div>
       </div>
     </article>
@@ -496,7 +497,7 @@ labor $ / pre-roll = run's Labor Log share
           <li>Material Going In: material (flower, smalls, trim A / A+ / Normal), source UID, grams</li>
           <li>Pouch size (starts at 14 g)</li>
           <li>Pouch Output log: pouches, waste g</li>
-          <li>End of run: <code>newPouchUid</code>, <code>newWasteUid</code>, QC</li>
+          <li>End of run: <code>newPouchUid</code>, <code>newWasteUid</code>, QC (optional) — the operator submits without a verifier</li>
         </ul></div>
         <div><h4>Math</h4>
 <pre class="math">startingWtG  = Σ input grams
@@ -507,6 +508,7 @@ accountedPct = (pouches × 14 + waste g)
 <span class="c">flagged outside 95%–105%</span></pre></div>
         <div><h4>Then</h4><ul>
           <li>Each input row comes off its own UID and category in Raw Inventory</li>
+          <li>Count verification: shows <b>Needs count verification</b> in the Metrc Queue until a second person checks the pouch and waste totals and taps <b>Verify counts</b>; until then it can't be marked Done</li>
         </ul></div>
       </div>
     </article>

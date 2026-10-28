@@ -507,8 +507,10 @@ release itself is a direct Supabase update with the anon key.
 
 The admin user editor's **Metrc Queue** section has a third checkbox,
 **Confirm weights** (`metrc confirm weights`, implies View): the manager
-sign-off on a Hand Trim's output weights. Until someone with it taps
-**Confirm weights** on the form in the Metrc Queue, its new tags can't be
+sign-off on a Hand Trim's output weights, and (since 2026-10-28) the
+second-person **Verify counts** on Pre-Roll and Ground Flower Pouch runs —
+the admin label is "Confirm weights / verify counts". Until someone with it taps
+**Confirm weights** (or **Verify counts**) on the form in the Metrc Queue, its new tags can't be
 entered and it can't be marked Done. `netlify/functions/metrc-queue.js`
 re-checks the column from the PIN. Details: "Weight sign-off" in
 `docs/OPERATIONS_APP.md`.
