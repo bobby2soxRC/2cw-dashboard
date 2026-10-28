@@ -798,8 +798,9 @@ the page from the submitted station forms, no table of its own. Tabs: **All**,
 **Drying** (`currentlyDrying` — submitted Wet Intakes with no Take Down, wet
 lbs, drying room), **On-Stem** (the bucking queue's packages, less boxes
 pulled on an open Bucking page, plus Take Downs on hold — `loadBuckingQueue`),
-**Bucked** (the trimming queue — `loadTrimQueue` — less flower already weighed
-on an open Hand Trim page, and lots with a Machine Trim left out), **Flower**,
+**Bucked** (the trimming queue — `loadTrimQueue` — less what's already weighed
+on an open Hand Trim page: flower, and any smalls, trim and waste; lots with a
+Machine Trim left out), **Flower**,
 **Smalls** and **Trim** (each Hand Trim, Machine Trim and Smalls Hand Trim's
 outputs, and Bucking's trim; trim shows its type — Normal, A+, Sugar, Shake,
 Bucking trim) and **Fresh Frozen** (fresh-frozen Wet Intakes and Fresh Frozen
@@ -809,6 +810,14 @@ the Wet Intake; the full license is the Canix sync's shipper license, else the
 Canix facility whose license number ends in the farm code. A finished output
 is listed under its own new tag (Hand Trim's `metrcTags`, Smalls Hand Trim's
 `newFinishedUid`) once it has one, else under its lot's UID ("lot UID").
+
+Weighed before submit (since 2026-10-28, a Material Flow change request from
+Harley): an open Hand Trim page's outputs are stock already — the finished
+flower bagged so far and any smalls / trim entered — listed under the lot UID
+as **Weighed — trim page open** (`handDrafts` in `raw_stock.js`, `wip` rows; so they're in the transfer form's Batch dropdown too). So product picked
+up mid-run can go on a Product Transfer — Outgoing (or any downstream form)
+and comes off right away. On submit the page keeps its id, so the rows (and a
+Used up mark) carry over to the submitted record.
 
 Drying (both views) is grouped by farm (`byFarmHtml`): a header per farm —
 name, code, license, packages and wet lbs (History: In and Left) — biggest

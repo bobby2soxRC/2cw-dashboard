@@ -102,11 +102,22 @@ const RawStock = (function () {
     ownUid: true, used: [], ...x, lb: r2(Number(x.lb) || 0), startLb: r2(Number(x.lb) || 0)
   });
 
+  const HAND_OUT = [
+    ['finishedFlowerLb', 'flower_a'], ['smallsLb', 'smalls_b'], ['normTrimLb', 'trim', { en: 'Normal', es: 'Normal' }],
+    ['aPlusTrimLb', 'trim_a_plus', { en: 'A+', es: 'A+' }], ['sugarTrimLb', 'sugar_trim', { en: 'Sugar', es: 'Azucarada' }]];
+  // Open Hand Trim pages, shaped like submitted records (finished flower from
+  // the bags weighed so far).
+  const handDrafts = (d) => ((d.tq && d.tq.openTrims) || []).filter((x) => x.fields && x.fields.sourceUid).map((x) => {
+    const r = flattenRecord(x);
+    return { ...r, finishedFlowerLb: (r.weights || []).reduce((a, w) => a + (Number(w.grams) || 0), 0) / G_PER_LB };
+  });
+
   // Flower / Smalls / Trim — what each finishing form made. `lotUid` is the
   // lot it came off: a form downstream may name that instead of the new tag.
   function finishedRows(d, tr, add) {
-    // ownTag: output field -> the field holding its own new tag.
-    const outputs = (rec, typeKey, list, ownTag) => {
+    // ownTag: output field -> the field holding its own new tag. wip: weighed
+    // on a Hand Trim page that's still open.
+    const outputs = (rec, typeKey, list, ownTag, wip) => {
       const lotUid = normUid(rec.sourceUid);
       const o = tr.origin(rec, rec.sourceUid);
       list.forEach(([field, cat, label]) => {
@@ -114,13 +125,17 @@ const RawStock = (function () {
         if (!(lb > 0.005)) return;
         const tagged = ownTag && ownTag[field] && rec[ownTag[field]];
         add(CAT_TAB[cat], rec, { key: `${rec.id}:${field}`, uid: tagged ? normUid(tagged) : lotUid, lotUid, ownUid: !!tagged,
-          lb, cat, catLabel: label, type: typeKey, ...o });
+          lb, cat, catLabel: label, type: typeKey, ...(wip ? { wip: true } : {}), ...o });
       });
     };
-    d.hand.forEach((r) => outputs(r, 'tHand', [
-      ['finishedFlowerLb', 'flower_a'], ['smallsLb', 'smalls_b'], ['normTrimLb', 'trim', { en: 'Normal', es: 'Normal' }],
-      ['aPlusTrimLb', 'trim_a_plus', { en: 'A+', es: 'A+' }], ['sugarTrimLb', 'sugar_trim', { en: 'Sugar', es: 'Azucarada' }]],
+    d.hand.forEach((r) => outputs(r, 'tHand', HAND_OUT,
       Object.fromEntries(STATION_BY_KEY.hand_trim.metrcTags.map((x) => [x.from, x.k]))));
+    // An open Hand Trim page's weighed outputs are stock already, under the
+    // lot UID: product picked up mid-run can go on an outgoing transfer before
+    // the page is submitted (Material Flow change request from Harley,
+    // 2026-10-28). The page keeps its id when it's submitted, so its rows keep
+    // their keys (and any Used up mark).
+    handDrafts(d).forEach((r) => outputs(r, 'tHand', HAND_OUT, null, true));
     d.machine.forEach((r) => outputs(r, 'tMachine', [
       ['flowerALb', 'flower_a'], ['smallsBLb', 'smalls_b'], ['sugarTrimLb', 'sugar_trim', { en: 'Sugar', es: 'Azucarada' }],
       ['machineShakeLb', 'shake', { en: 'Shake', es: 'Shake' }]]));
@@ -210,10 +225,14 @@ const RawStock = (function () {
     }));
 
     // Bucked — lots with no Hand Trim (or Machine Trim) submitted yet, less
-    // the finished flower already weighed on an open Hand Trim page.
+    // what's already weighed on an open Hand Trim page: the finished flower,
+    // and any smalls, trim and waste put in before it's submitted.
+    const drafts = handDrafts(d);
     d.tq.items.forEach((l) => {
       if (d.machine.some((m) => uidTailMatch(m.sourceUid, l.sourceUid))) return;
-      const lb = Number(l.buckedFlowerLb || 0) - Number(l.trimmedLb || 0);
+      const dr = l.draftId && drafts.find((x) => x.id === l.draftId);
+      const rest = dr ? ['smallsLb', 'normTrimLb', 'aPlusTrimLb', 'sugarTrimLb', 'wasteLb'].reduce((a, k) => a + (Number(dr[k]) || 0), 0) : 0;
+      const lb = Number(l.buckedFlowerLb || 0) - Number(l.trimmedLb || 0) - rest;
       // A lot held as bucked flower is under its own bucked tag once it has one.
       add('bucked', l, { key: `${l.buckDraftId || l.id}:bucked`, recId: l.buckDraftId || l.id, uid: normUid(l.newBuckedUid || l.sourceUid),
         lotUid: normUid(l.sourceUid), lb, buckedLb: Number(l.buckedFlowerLb || 0), doneLb: Number(l.trimmedLb || 0), status: l.inProgress ? 'sBucking' : l.draftId ? 'sTrimming' : 'sToTrim', pill: l.inProgress || l.draftId ? 'work' : 'go',
@@ -224,8 +243,8 @@ const RawStock = (function () {
     applyTakers(out, takersOf(d));
     out.forEach((r) => {
       if (r.status) return;
-      r.status = r.lb <= 0.005 ? 'usedUp' : r.used.length ? 'sPart' : 'sOnHand';
-      r.pill = r.lb <= 0.005 ? 'used' : 'go';
+      r.status = r.lb <= 0.005 ? 'usedUp' : r.wip ? 'sWeighed' : r.used.length ? 'sPart' : 'sOnHand';
+      r.pill = r.lb <= 0.005 ? 'used' : r.wip ? 'work' : 'go';
     });
     return out;
   }
