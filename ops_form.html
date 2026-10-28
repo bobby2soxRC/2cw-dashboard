@@ -3127,14 +3127,16 @@
       missing.forEach((f) => els[f.k] && els[f.k].classList.add('invalid'));
       const lp = missing.map((f) => f.t === 'lineitems' && lineProblem(f)).find(Boolean);
       // An open page saves itself as it's typed in (notes included), so
-      // Submit isn't needed to keep a change — say so rather than just
-      // listing what's missing, and save now.
+      // Submit isn't needed to keep a change — save now, but say plainly it
+      // was NOT submitted and name what's missing (crews read "saved" as
+      // "submitted", and those runs never reached the Metrc Queue).
       if (!lp && !editMode && draftsOn && !isClosed) {
         clearTimeout(autosaveTimer);
         doAutosave();
+        const names = missing.map((f) => t(f.l)).join(', ');
         banner.className = 'banner warn';
-        banner.textContent = t({ en: 'Your changes are saved — this page stays open. Fill in the fields marked in red only when you’re ready to submit and close it out.',
-                                 es: 'Sus cambios están guardados — la hoja sigue abierta. Complete los campos marcados en rojo solo cuando esté listo para enviarla y cerrarla.' });
+        banner.textContent = t({ en: `Not submitted yet — still missing: ${names}. Your changes are saved and this page stays open; fill in the fields marked in red, then press Submit again to close it out.`,
+                                 es: `Todavía no se envió — falta: ${names}. Sus cambios están guardados y la hoja sigue abierta; complete los campos marcados en rojo y presione Enviar otra vez para cerrarla.` });
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
