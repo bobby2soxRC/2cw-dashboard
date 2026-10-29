@@ -532,7 +532,10 @@ under Operations) puts the work queues on one page, a tab each (`?tab=buck|trim|
   exactly as on the dashboard, which keeps its queue too.
 
 Bucking and Hand Trim are reordered by 'buck release' managers; others see
-the order. Tabs show by access: Bucking / Hand Trim to their station's edit
+the order. Since 2026-10-29 both tabs have an **Open** table at the top —
+packages / lots with a page open on that station (`draftId`), Open → goes to
+that page — and below it **Up next**, the rest, which is all ▲ ▼ / Top
+ranks. Saving the order keeps the open ones first. Tabs show by access: Bucking / Hand Trim to their station's edit
 access or 'buck release', Pre-Roll & Ground Flower to `preroll_production` or `pouch_production` edit access or the
 Pre-Roll Dashboard card (`2cw_preroll_dash`, set at login). The card is
 `ambient`, so someone with only one station still lands straight on it.

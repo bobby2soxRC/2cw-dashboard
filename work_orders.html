@@ -69,6 +69,11 @@
   .q-go{flex:0 0 auto;background:var(--tc);color:#000;border-radius:10px;padding:12px 14px;font-weight:700;font-size:.85rem;text-decoration:none;white-space:nowrap}
   .q-go.open{background:transparent;color:var(--tc);border:1px solid var(--tc)}
   @media (max-width:640px){ .q-row{flex-wrap:wrap} .q-lbs{flex:1 0 100%;justify-content:flex-end} .q-move{margin-left:auto} }
+  .q-head{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--subtext);margin:20px 0 8px}
+  .q-head:first-child{margin-top:0}
+  .q-head.open{color:var(--tc)}
+  .q-head span{color:var(--muted);margin-left:4px}
+  .empty-note.small{padding:14px;font-size:.85rem}
   .empty-note{color:var(--subtext);font-size:.9rem;padding:24px;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:12px}
   iframe.embed{width:100%;height:calc(100vh - 260px);min-height:480px;border:none;background:transparent;display:block}
 </style>
@@ -105,7 +110,8 @@
 //               flower pouches, ranked together), embedded (?embed=queue), so
 //               ordering, adding and Start batch work exactly as they do there.
 // Bucking and Hand Trim are reordered with ▲ ▼ / Top by managers ('buck
-// release'); everyone else sees the order. Start opens a new form page for
+// release'); everyone else sees the order. Packages / lots with a page open
+// on that station are in an Open table at the top, out of the ranking. Start opens a new form page for
 // that package; Open goes to the page it's already open on.
 // ─────────────────────────────────────────────────────────────────────────────
 (async function () {
@@ -141,6 +147,9 @@
     bNone: { en: 'Nothing is ready to buck.', es: 'No hay nada listo para desvarar.' },
     bHold: { en: 'On-Stem Flower (on hold) →', es: 'Flor en tallo (en espera) →' },
     bForm: { en: 'Bucking form →', es: 'Formulario de desvarado →' },
+    openHead: { en: 'Open — being bucked now', es: 'Abiertos — desvarándose ahora' },
+    openNone: { en: 'Nothing open — Start one from the list below.', es: 'Nada abierto — empiece uno de la lista de abajo.' },
+    nextHead: { en: 'Up next', es: 'Siguientes' },
     initLb: { en: 'Starting weight', es: 'Peso inicial' }, pulledLb: { en: 'Pulled', es: 'Sacado' }, leftLb: { en: 'Remaining', es: 'Restante' },
     partOf: { en: 'part of …{uid}', es: 'parte de …{uid}' },
     merged: { en: '{n} intakes combined', es: '{n} recepciones combinadas' },
@@ -149,6 +158,8 @@
              es: 'Cada lote desvarado que aún no se corta a mano — incluso los que se siguen desvarando.' },
     tNone: { en: 'Nothing waiting — every bucked lot has been hand trimmed.', es: 'Nada en espera — todos los lotes desvarados ya se cortaron a mano.' },
     tForm: { en: 'Hand Trim form →', es: 'Formulario de corte →' },
+    tOpenHead: { en: 'Open — being trimmed now', es: 'Abiertos — cortándose ahora' },
+    tNoneNext: { en: 'Nothing else waiting.', es: 'Nada más en espera.' },
     bucking: { en: 'bucking', es: 'desvarándose' },
     buckedLb: { en: 'Bucked', es: 'Desvarado' }, trimmedLb: { en: 'Trimmed', es: 'Cortado' },
     // Pre-Roll
@@ -218,14 +229,25 @@
     const box = document.getElementById('q');
     if (!box) return;
     const buck = tab === 'buck';
-    const station = buck ? 'buck' : 'hand_trim';
     if (!items.length) { box.innerHTML = `<div class="empty-note">${esc(t(buck ? L.bNone : L.tNone))}</div>`; return; }
-    box.innerHTML = `<div class="q-list">` + items.map((p, i) => {
+    // Packages / lots with a page open on this station go in an Open table
+    // at the top; the ranking (▲ ▼ / Top) is only for the rest.
+    const open = items.filter((p) => p.draftId);
+    const next = items.filter((p) => !p.draftId);
+    box.innerHTML = `<div class="q-head open">${esc(t(buck ? L.openHead : L.tOpenHead))} <span>${open.length}</span></div>` +
+      (open.length ? list(open, false) : `<div class="empty-note small">${esc(t(L.openNone))}</div>`) +
+      `<div class="q-head">${esc(t(L.nextHead))} <span>${next.length}</span></div>` +
+      (next.length ? list(next, true) : `<div class="empty-note small">${esc(t(buck ? L.bNone : L.tNoneNext))}</div>`);
+  }
+  function list(rows, ranked) {
+    const buck = tab === 'buck';
+    const station = buck ? 'buck' : 'hand_trim';
+    return `<div class="q-list">` + rows.map((p, i) => {
       const abbr = strainAbbr(reference, p.strain);
-      const move = !manager ? '' : `<div class="q-move">
+      const move = !manager || !ranked ? '' : `<div class="q-move">
           <button type="button" data-move="top" data-i="${i}" ${i === 0 || savingOrder ? 'disabled' : ''}>${esc(t(L.top))}</button>
           <button type="button" data-move="up" data-i="${i}" aria-label="${esc(t(L.up))}" ${i === 0 || savingOrder ? 'disabled' : ''}>▲</button>
-          <button type="button" data-move="down" data-i="${i}" aria-label="${esc(t(L.down))}" ${i === items.length - 1 || savingOrder ? 'disabled' : ''}>▼</button>
+          <button type="button" data-move="down" data-i="${i}" aria-label="${esc(t(L.down))}" ${i === rows.length - 1 || savingOrder ? 'disabled' : ''}>▼</button>
         </div>`;
       const go = p.draftId
         ? `<a class="q-go open" href="/ops_form.html?station=${station}&draft=${encodeURIComponent(p.draftId)}">${esc(t(L.open))}</a>`
@@ -241,7 +263,7 @@
            <div class="q-lb left${p.leftLb != null && p.leftLb < 0 ? ' neg' : ''}"><span class="k">${esc(t(L.leftLb))}</span>${p.leftLb == null ? '—' : lbTxt(p.leftLb)}</div>`
         : `<div class="q-lb"><span class="k">${esc(t(L.buckedLb))}</span>${p.buckedFlowerLb == null ? '—' : lbTxt(p.buckedFlowerLb)}</div>
            <div class="q-lb left"><span class="k">${esc(t(L.trimmedLb))}</span>${lbTxt(p.trimmedLb || 0)}</div>`;
-      return `<div class="q-row"><div class="q-n">${i + 1}</div>
+      return `<div class="q-row"><div class="q-n">${ranked ? i + 1 : '●'}</div>
         <div class="q-main"><div class="q-strain">${esc(p.strain || '—')}${abbr ? ` · ${esc(abbr)}` : ''}${tags}</div>
           <div class="q-uid">${sub}</div></div>
         <div class="q-lbs">${lbs}</div>
@@ -251,11 +273,15 @@
   panel.addEventListener('click', async (e) => {
     const b = e.target.closest('[data-move]');
     if (!b || !manager || savingOrder) return;
+    // Indexes are within the ranked list; the open ones stay first.
+    const open = items.filter((p) => p.draftId);
+    const ranked = items.filter((p) => !p.draftId);
     const i = Number(b.dataset.i);
     const to = b.dataset.move === 'top' ? 0 : b.dataset.move === 'up' ? i - 1 : i + 1;
-    if (to < 0 || to >= items.length || to === i) return;
-    const [item] = items.splice(i, 1);
-    items.splice(to, 0, item);
+    if (to < 0 || to >= ranked.length || to === i) return;
+    const [item] = ranked.splice(i, 1);
+    ranked.splice(to, 0, item);
+    items = open.concat(ranked);
     savingOrder = true;
     render();
     const order = items.map((p) => normUid(p.sourceUid));
