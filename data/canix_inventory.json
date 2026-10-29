@@ -156495,240 +156495,21 @@
     "_facility_license_number": "CCL22-0001284"
   },
   {
-    "id": 35091242,
-    "tag": "1A406030005E0B2000010198",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3079744,
-      "name": "Trim - Shake",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119089,
-        "name": "Shake",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": null,
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-10-29T01:09:22.915Z"
-    },
-    "facility_id": 4923,
-    "weight": 368.73,
-    "original_weight": 368.73,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-10-28T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 35005072,
-        "tag": "1A406030005E0B2000010041",
-        "weight": 368.73,
-        "weight_unit": "Pounds",
-        "pulled_weight": 368.73,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3501136,
-          "name": "Unbucked Flower - Papaya Punch",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "PP_10.13.26",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-10-29T01:15:35.233Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35091241,
-    "tag": "1A406030005E0B2000010197",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3506778,
-      "name": "Bucked Flower - Papaya Punch",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119074,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 738528,
-        "name": "Papaya Punch"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-10-29T01:09:22.835Z"
-    },
-    "facility_id": 4923,
-    "weight": 617.65,
-    "original_weight": 617.65,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-10-28T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 35005072,
-        "tag": "1A406030005E0B2000010041",
-        "weight": 617.65,
-        "weight_unit": "Pounds",
-        "pulled_weight": 617.65,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3501136,
-          "name": "Unbucked Flower - Papaya Punch",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "PP_10.13.26",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-10-29T01:15:34.898Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35091120,
-    "tag": "1A4060300047D39000015586",
+    "id": 35090543,
+    "tag": "1A4060300047D39000015582",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "Available To Sell",
     "item": {
-      "id": 2980522,
-      "name": "Soma Rosa .5g Pre-Roll 28pk - Gelato 41",
+      "id": 2980277,
+      "name": "Soma Rosa | Flower Banana Punch 1/8 th",
       "sku": null,
       "is_active": true,
       "facility_id": 4929,
       "type": {
-        "id": 119342,
-        "name": "Pre-Roll Flower",
+        "id": 119333,
+        "name": "Flower (packaged eighth - each)",
         "quantity_type": "CountBased",
         "product_category": "Buds"
       },
@@ -156741,11 +156522,11 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 650633,
-        "name": "Gelato 41"
+        "id": 650551,
+        "name": "Banana Punch"
       },
       "weight_unit": "Each",
-      "unit_weight": 14.0,
+      "unit_weight": 3.5,
       "unit_weight_unit": "Grams",
       "case_quantity": null,
       "case_quantity_unit": null,
@@ -156757,17 +156538,17 @@
       "dutchie_product": null,
       "bills_of_materials": [],
       "phenotype": null,
-      "total_for_sale": 353.0,
+      "total_for_sale": 287.0,
       "ordered": 0.0,
       "backordered": 0.0,
-      "unordered": 353.0,
-      "updated_at": "2026-10-29T00:22:22.460Z"
+      "unordered": 287.0,
+      "updated_at": "2026-10-28T23:04:01.203Z"
     },
     "facility_id": 4929,
-    "weight": 9.0,
-    "original_weight": 9.0,
+    "weight": 240.0,
+    "original_weight": 287.0,
     "weight_unit": "Each",
-    "implied_weight": "126.0",
+    "implied_weight": "840.0",
     "packaged_date": "2026-10-28T00:00:00.000Z",
     "expiration_date": null,
     "location": null,
@@ -156780,21 +156561,33 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": 34741518,
-        "tag": "1A4060300047D39000015535",
-        "weight": 9.0,
+        "id": 33034216,
+        "tag": "1A4060300047D39000015077",
+        "weight": 287.0,
         "weight_unit": "Each",
-        "pulled_weight": 9.0,
+        "pulled_weight": 287.0,
         "pulled_weight_unit": "Each",
         "item": {
-          "id": 2980522,
-          "name": "Soma Rosa .5g Pre-Roll 28pk - Gelato 41",
+          "id": 3399573,
+          "name": "AGP Flower - Banana Punch Large",
           "sku": null
         }
       }
     ],
-    "destination_packages": [],
-    "source_harvests": "AF-071-Galactic Warheadz-224-T2., AF-071-Grape Gas-224-T2, AF-073-Glitter Bomb-232-T2, AF-073-Grape Gas-231-T1, AF-073-Grape Gas-232-T2, AF-073-Obama Runtz-224-T1-8-21-26, AF-073-Tahiti Twist-224-T5-8-25-26, AF-073-Tahiti Twist-224-T6-8-25-26, AF-075-Grape Gas-224-T6., AF-075-Lemon Cherry Gelato-233-T5, AF-075-Tahiti Twist-224-T3-09-01-26, AF-075-Zoap-237-T1, AHD-2180-PackMule#4[HVN]-AGP-196-T2, BG-0309-Itz Pluto-217-T1, BG-0309-Zoap-216-T4, BG-0540-Gelato 33-216-T3, HSR-0540-Super Bluff Cherry-224-T1",
+    "destination_packages": [
+      {
+        "id": 35090611,
+        "tag": "1A4060300047D39000015583",
+        "weight": 47.0,
+        "weight_unit": "Each",
+        "item": {
+          "id": 2980277,
+          "name": "Soma Rosa | Flower Banana Punch 1/8 th",
+          "sku": null
+        }
+      }
+    ],
+    "source_harvests": "101025, 2024-10-12-KPF-24-Flower 1-GGS-SGW-G3C, 2024-10-12-KPF-24-Flower 1-J3N-CYS-63R, 2024-10-12-KPF-24-Flower 1-KCJ-Y5E-ENF, 2024-10-12-KPF-24-Flower 1-LHZ-XKA-DZG, 2024-10-12-KPF-24-Flower 1-ZTZ-NHR-527, 2024-12-02-RC_24-Main-PPG-X4J-D7Z, 449425 Almond Mochi MB1, 449425 Almond Mochi MB1.3, 449425 Banana MB1, 449425 G41 MB1, 449425 G41 MB1.2, 449425 Joker's MB3, 449425 Joker's MB4, 449425 LSL MB1, 449425 Pack Mule 3 MB1, 449425 Pack Mule MB1.3, 449425 Pink Certz MB1, AGP--1795-LSHNIZZ-HB2, AGP-1795- Pave #2-HB-FNT, AGP-1795-BBJ-FF-ESN, AGP-1795-BBJ-HB-ESN, AGP-1795-BBJ-HB2-ESN, AGP-1795-BH-HB-ESN, AGP-1795-Blue Dream-HBN, AGP-1795-Blue Zushi-HB, AGP-1795-Blue Zushi-HB-5D, AGP-1795-BRS-HB-6D, AGP-1795-BRS-HB-FNT, AGP-1795-BTxC-HB-ESN, AGP-1795-C.Runtz-HB-FNT, AGP-1795-C.Runtz-HB4, AGP-1795-C23-HB-5E, AGP-1795-C23-HB-FNT, AGP-1795-C23-HB2, AGP-1795-C23-HB2-FNT, AGP-1795-C23-HB3-FNT, AGP-1795-C23-HB3FNT, AGP-1795-C23-HB4-FNT, AGP-1795-C23-HB5-FNT, AGP-1795-CA7-HB2, AGP-1795-CA7-HB2-...",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -156812,7 +156605,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-10-29T00:22:21.851Z",
+    "updated_at": "2026-10-28T23:04:00.779Z",
     "test_results": {
       "thc": [
         {
@@ -156860,7 +156653,7 @@
       ],
       "thca": [
         {
-          "value": 273.246,
+          "value": 395.617,
           "measure": "mg/g"
         },
         {
@@ -156868,7 +156661,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 27.3246,
+          "value": 39.5617,
           "measure": "percent"
         },
         {
@@ -156882,7 +156675,7 @@
       ],
       "cbda": [
         {
-          "value": 0.833,
+          "value": 1.579,
           "measure": "mg/g"
         },
         {
@@ -156890,7 +156683,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 0.0833,
+          "value": 0.1579,
           "measure": "percent"
         },
         {
@@ -157030,7 +156823,7 @@
       ],
       "delta_9_thc": [
         {
-          "value": 9.685,
+          "value": 5.457,
           "measure": "mg/g"
         },
         {
@@ -157038,7 +156831,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 0.9685,
+          "value": 0.5457,
           "measure": "percent"
         },
         {
@@ -157116,7 +156909,7 @@
       ],
       "total_cbd": [
         {
-          "value": 0.731,
+          "value": 1.385,
           "measure": "mg/g"
         },
         {
@@ -157124,7 +156917,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 0.0731,
+          "value": 0.1385,
           "measure": "percent"
         },
         {
@@ -157148,7 +156941,7 @@
       ],
       "total_delta_9_thc": [
         {
-          "value": 249.322,
+          "value": 352.413,
           "measure": "mg/g"
         },
         {
@@ -157156,7 +156949,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 24.9322,
+          "value": 35.2413,
           "measure": "percent"
         },
         {
@@ -157166,7 +156959,7 @@
       ],
       "total_thc": [
         {
-          "value": 249.321742,
+          "value": 352.413109,
           "measure": "mg/g"
         },
         {
@@ -157174,7 +156967,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 24.9321742,
+          "value": 35.241310899999995,
           "measure": "percent"
         },
         {
@@ -157192,7 +156985,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 28.3764,
+          "value": 40.2653,
           "measure": "percent"
         },
         {
@@ -157241,8 +157034,8 @@
         }
       ],
       "test_status": "TestPassed",
-      "tested_package_tag": "1A4060300047D39000015538",
-      "test_date": "2026-10-19",
+      "tested_package_tag": "1A4060300047D39000015258",
+      "test_date": "2026-09-09",
       "terpenes": {
         "measure": "percent",
         "top_three": {},
@@ -157250,7 +157043,7 @@
       }
     },
     "lab_test_url": null,
-    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/8fbf98f4/Package5538_COAfromMetrc_8fbf98f4.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261029%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261029T061641Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=6107c0456e1209cd77997ba500e316356fee5f62a41cc78fb4bf62d0a620b447",
+    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/7b2ddb14/Package5258_COAfromMetrc_7b2ddb14.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261029%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261029T061641Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=a5f32345b9edc4bf2535c74ffa5d6cf549b83b719467a5dad37fc55a9b4cc36d",
     "lab_test_info": {
       "testing_facility_name": "SC LABORATORIES CALIFORNIA, LLC",
       "testing_facility_license": "C8-0000013-LIC"
@@ -157260,212 +157053,8 @@
     "_facility_license_number": "C11-0001652-LIC"
   },
   {
-    "id": 35091115,
-    "tag": "1A4060300089ABD000000177",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3486259,
-      "name": "Wet Flower - S/N",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 5095,
-      "type": {
-        "id": 123268,
-        "name": "Fresh Cannabis Plant",
-        "quantity_type": "WeightBased",
-        "product_category": "Plants"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 713648,
-        "name": "S/N"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-10-29T00:21:48.592Z"
-    },
-    "facility_id": 5095,
-    "weight": 63.0,
-    "original_weight": 63.0,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-10-28T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [],
-    "destination_packages": [],
-    "source_harvests": "AGP0027-SN-T8-10-28-2026",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [
-      {
-        "id": 361584,
-        "name": "AGP0027-SN-T8-10-28-2026"
-      }
-    ],
-    "updated_at": "2026-10-29T00:24:41.236Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
-    "_facility_license_number": "CCL26-0000027"
-  },
-  {
-    "id": 35091114,
-    "tag": "1A4060300089ABD000000176",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3506770,
-      "name": "Wet Flower - Motor Breath 15",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 5095,
-      "type": {
-        "id": 123268,
-        "name": "Fresh Cannabis Plant",
-        "quantity_type": "WeightBased",
-        "product_category": "Plants"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 708437,
-        "name": "Motor Breath 15"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-10-29T00:21:48.059Z"
-    },
-    "facility_id": 5095,
-    "weight": 1421.0,
-    "original_weight": 1421.0,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-10-28T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [],
-    "destination_packages": [],
-    "source_harvests": "AGP0027-MB-T8-10-28-2026",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [
-      {
-        "id": 361583,
-        "name": "AGP0027-MB-T8-10-28-2026"
-      }
-    ],
-    "updated_at": "2026-10-29T00:24:40.350Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
-    "_facility_license_number": "CCL26-0000027"
-  },
-  {
-    "id": 35091113,
-    "tag": "1A4060300089ABD000000175",
+    "id": 35090551,
+    "tag": "1A4060300089ABD000000174",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
@@ -157514,8 +157103,8 @@
       "updated_at": "2026-10-29T00:21:47.312Z"
     },
     "facility_id": 5095,
-    "weight": 295.0,
-    "original_weight": 295.0,
+    "weight": 1669.0,
+    "original_weight": 1669.0,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-10-28T00:00:00.000Z",
@@ -157530,7 +157119,7 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [],
     "destination_packages": [],
-    "source_harvests": "AGP0027-SD-T8-10-28-2026",
+    "source_harvests": "AGP0027-AJSD-T7-10-28-2026",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -157549,11 +157138,11 @@
     },
     "harvests": [
       {
-        "id": 361582,
-        "name": "AGP0027-SD-T8-10-28-2026"
+        "id": 361581,
+        "name": "AGP0027-AJSD-T7-10-28-2026"
       }
     ],
-    "updated_at": "2026-10-29T00:24:39.627Z",
+    "updated_at": "2026-10-28T22:57:31.647Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -157566,15 +157155,15 @@
     "_facility_license_number": "CCL26-0000027"
   },
   {
-    "id": 35090857,
-    "tag": "1A4060300047D39000015850",
+    "id": 35090586,
+    "tag": "1A4060300047D39000015581",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "Available To Sell",
     "item": {
-      "id": 2980539,
-      "name": "Soma Rosa | Flower Dutch Treat 1/8 th",
+      "id": 2980023,
+      "name": "Soma Rosa | Flower Zoap 1/8 th",
       "sku": null,
       "is_active": true,
       "facility_id": 4929,
@@ -157593,8 +157182,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 650558,
-        "name": "Dutch Treat"
+        "id": 650546,
+        "name": "The Zoap"
       },
       "weight_unit": "Each",
       "unit_weight": 3.5,
@@ -157609,17 +157198,17 @@
       "dutchie_product": null,
       "bills_of_materials": [],
       "phenotype": null,
-      "total_for_sale": 338.0,
+      "total_for_sale": 427.0,
       "ordered": 0.0,
       "backordered": 0.0,
-      "unordered": 338.0,
-      "updated_at": "2026-10-28T23:27:58.952Z"
+      "unordered": 427.0,
+      "updated_at": "2026-10-28T23:02:22.689Z"
     },
     "facility_id": 4929,
-    "weight": 34.0,
-    "original_weight": 34.0,
+    "weight": 27.0,
+    "original_weight": 27.0,
     "weight_unit": "Each",
-    "implied_weight": "119.0",
+    "implied_weight": "94.5",
     "packaged_date": "2026-10-28T00:00:00.000Z",
     "expiration_date": null,
     "location": null,
@@ -157632,21 +157221,21 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": 35090792,
-        "tag": "1A4060300047D39000015584",
-        "weight": 34.0,
+        "id": 35090199,
+        "tag": "1A4060300047D39000015580",
+        "weight": 27.0,
         "weight_unit": "Each",
-        "pulled_weight": 34.0,
+        "pulled_weight": 27.0,
         "pulled_weight_unit": "Each",
         "item": {
-          "id": 2980539,
-          "name": "Soma Rosa | Flower Dutch Treat 1/8 th",
+          "id": 2980023,
+          "name": "Soma Rosa | Flower Zoap 1/8 th",
           "sku": null
         }
       }
     ],
     "destination_packages": [],
-    "source_harvests": "BG-540-Nimbus Snacks-227-T1",
+    "source_harvests": "AF-075-Zoap-224-T3-8-22-26",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -157664,7 +157253,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-10-28T23:27:59.077Z",
+    "updated_at": "2026-10-28T23:02:22.728Z",
     "test_results": {
       "thc": [
         {
@@ -157712,7 +157301,7 @@
       ],
       "thca": [
         {
-          "value": 281.23,
+          "value": 338.074,
           "measure": "mg/g"
         },
         {
@@ -157720,7 +157309,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 28.123,
+          "value": 33.8074,
           "measure": "percent"
         },
         {
@@ -157734,7 +157323,7 @@
       ],
       "cbda": [
         {
-          "value": 1.117,
+          "value": 1.48,
           "measure": "mg/g"
         },
         {
@@ -157742,7 +157331,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 0.1117,
+          "value": 0.148,
           "measure": "percent"
         },
         {
@@ -157882,7 +157471,7 @@
       ],
       "delta_9_thc": [
         {
-          "value": 4.896,
+          "value": 4.733,
           "measure": "mg/g"
         },
         {
@@ -157890,7 +157479,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 0.4896,
+          "value": 0.4733,
           "measure": "percent"
         },
         {
@@ -157968,7 +157557,7 @@
       ],
       "total_cbd": [
         {
-          "value": 0.98,
+          "value": 1.298,
           "measure": "mg/g"
         },
         {
@@ -157976,7 +157565,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 0.098,
+          "value": 0.1298,
           "measure": "percent"
         },
         {
@@ -158000,7 +157589,7 @@
       ],
       "total_delta_9_thc": [
         {
-          "value": 251.535,
+          "value": 301.224,
           "measure": "mg/g"
         },
         {
@@ -158008,7 +157597,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 25.1535,
+          "value": 30.1224,
           "measure": "percent"
         },
         {
@@ -158018,7 +157607,7 @@
       ],
       "total_thc": [
         {
-          "value": 251.53471,
+          "value": 301.223898,
           "measure": "mg/g"
         },
         {
@@ -158026,7 +157615,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 25.153471,
+          "value": 30.1223898,
           "measure": "percent"
         },
         {
@@ -158044,7 +157633,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 28.7243,
+          "value": 34.428700000000006,
           "measure": "percent"
         },
         {
@@ -158093,7 +157682,553 @@
         }
       ],
       "test_status": "TestPassed",
-      "tested_package_tag": "1A4060300047D39000015268",
+      "tested_package_tag": "1A4060300047D39000015320",
+      "test_date": "2026-09-20",
+      "terpenes": {
+        "measure": "percent",
+        "top_three": {},
+        "values": {}
+      }
+    },
+    "lab_test_url": null,
+    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/b8a59c99/Package5320_COAfromMetrc_b8a59c99.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261029%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261029T061641Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=341fd8a38d6c1bff17c0fc55db7ff5721af6a7bd0f60bde85bd31a9b069cb837",
+    "lab_test_info": {
+      "testing_facility_name": "SC LABORATORIES CALIFORNIA, LLC",
+      "testing_facility_license": "C8-0000013-LIC"
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
+  },
+  {
+    "id": 35090611,
+    "tag": "1A4060300047D39000015583",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "Available To Sell",
+    "item": {
+      "id": 2980277,
+      "name": "Soma Rosa | Flower Banana Punch 1/8 th",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4929,
+      "type": {
+        "id": 119333,
+        "name": "Flower (packaged eighth - each)",
+        "quantity_type": "CountBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "CountBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 650551,
+        "name": "Banana Punch"
+      },
+      "weight_unit": "Each",
+      "unit_weight": 3.5,
+      "unit_weight_unit": "Grams",
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 287.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 287.0,
+      "updated_at": "2026-10-28T23:04:01.203Z"
+    },
+    "facility_id": 4929,
+    "weight": 47.0,
+    "original_weight": 47.0,
+    "weight_unit": "Each",
+    "implied_weight": "164.5",
+    "packaged_date": "2026-10-28T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": true,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": 35090543,
+        "tag": "1A4060300047D39000015582",
+        "weight": 47.0,
+        "weight_unit": "Each",
+        "pulled_weight": 47.0,
+        "pulled_weight_unit": "Each",
+        "item": {
+          "id": 2980277,
+          "name": "Soma Rosa | Flower Banana Punch 1/8 th",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "101025, 2024-10-12-KPF-24-Flower 1-GGS-SGW-G3C, 2024-10-12-KPF-24-Flower 1-J3N-CYS-63R, 2024-10-12-KPF-24-Flower 1-KCJ-Y5E-ENF, 2024-10-12-KPF-24-Flower 1-LHZ-XKA-DZG, 2024-10-12-KPF-24-Flower 1-ZTZ-NHR-527, 2024-12-02-RC_24-Main-PPG-X4J-D7Z, 449425 Almond Mochi MB1, 449425 Almond Mochi MB1.3, 449425 Banana MB1, 449425 G41 MB1, 449425 G41 MB1.2, 449425 Joker's MB3, 449425 Joker's MB4, 449425 LSL MB1, 449425 Pack Mule 3 MB1, 449425 Pack Mule MB1.3, 449425 Pink Certz MB1, AGP--1795-LSHNIZZ-HB2, AGP-1795- Pave #2-HB-FNT, AGP-1795-BBJ-FF-ESN, AGP-1795-BBJ-HB-ESN, AGP-1795-BBJ-HB2-ESN, AGP-1795-BH-HB-ESN, AGP-1795-Blue Dream-HBN, AGP-1795-Blue Zushi-HB, AGP-1795-Blue Zushi-HB-5D, AGP-1795-BRS-HB-6D, AGP-1795-BRS-HB-FNT, AGP-1795-BTxC-HB-ESN, AGP-1795-C.Runtz-HB-FNT, AGP-1795-C.Runtz-HB4, AGP-1795-C23-HB-5E, AGP-1795-C23-HB-FNT, AGP-1795-C23-HB2, AGP-1795-C23-HB2-FNT, AGP-1795-C23-HB3-FNT, AGP-1795-C23-HB3FNT, AGP-1795-C23-HB4-FNT, AGP-1795-C23-HB5-FNT, AGP-1795-CA7-HB2, AGP-1795-CA7-HB2-...",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-10-28T23:04:01.174Z",
+    "test_results": {
+      "thc": [
+        {
+          "value": null,
+          "measure": "mg"
+        },
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "cbd": [
+        {
+          "value": null,
+          "measure": "mg"
+        },
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 0.0,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "thca": [
+        {
+          "value": 395.617,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 39.5617,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbda": [
+        {
+          "value": 1.579,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 0.1579,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbn": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbg": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbc": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        }
+      ],
+      "cbca": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        }
+      ],
+      "cbga": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "delta_8_thc": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "delta_8_thca": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "delta_9_thc": [
+        {
+          "value": 5.457,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 0.5457,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "delta_9_thca": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "delta_10_thc": [
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "thcv": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "thcva": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "total_cbd": [
+        {
+          "value": 1.385,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 0.1385,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "total_cbg": [
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        }
+      ],
+      "total_delta_9_thc": [
+        {
+          "value": 352.413,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 35.2413,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "total_thc": [
+        {
+          "value": 352.413109,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 35.241310899999995,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "total_cannabinoid": [
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 40.2653,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbdv": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "cbdva": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "test_status": "TestPassed",
+      "tested_package_tag": "1A4060300047D39000015258",
       "test_date": "2026-09-09",
       "terpenes": {
         "measure": "percent",
@@ -158102,7 +158237,7 @@
       }
     },
     "lab_test_url": null,
-    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/84fdf792/Package5268_COAfromMetrc_84fdf792.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261029%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261029T061641Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=144f597d18982eb0f5825b0b7b242ae047f0ebf4d4bc09664c5a52b6dd83ac72",
+    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/7b2ddb14/Package5258_COAfromMetrc_7b2ddb14.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261029%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261029T061641Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=a5f32345b9edc4bf2535c74ffa5d6cf549b83b719467a5dad37fc55a9b4cc36d",
     "lab_test_info": {
       "testing_facility_name": "SC LABORATORIES CALIFORNIA, LLC",
       "testing_facility_license": "C8-0000013-LIC"
@@ -158670,15 +158805,15 @@
     "_facility_license_number": "C11-0001652-LIC"
   },
   {
-    "id": 35090611,
-    "tag": "1A4060300047D39000015583",
+    "id": 35090857,
+    "tag": "1A4060300047D39000015850",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "Available To Sell",
     "item": {
-      "id": 2980277,
-      "name": "Soma Rosa | Flower Banana Punch 1/8 th",
+      "id": 2980539,
+      "name": "Soma Rosa | Flower Dutch Treat 1/8 th",
       "sku": null,
       "is_active": true,
       "facility_id": 4929,
@@ -158697,8 +158832,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 650551,
-        "name": "Banana Punch"
+        "id": 650558,
+        "name": "Dutch Treat"
       },
       "weight_unit": "Each",
       "unit_weight": 3.5,
@@ -158713,17 +158848,17 @@
       "dutchie_product": null,
       "bills_of_materials": [],
       "phenotype": null,
-      "total_for_sale": 287.0,
+      "total_for_sale": 338.0,
       "ordered": 0.0,
       "backordered": 0.0,
-      "unordered": 287.0,
-      "updated_at": "2026-10-28T23:04:01.203Z"
+      "unordered": 338.0,
+      "updated_at": "2026-10-28T23:27:58.952Z"
     },
     "facility_id": 4929,
-    "weight": 47.0,
-    "original_weight": 47.0,
+    "weight": 34.0,
+    "original_weight": 34.0,
     "weight_unit": "Each",
-    "implied_weight": "164.5",
+    "implied_weight": "119.0",
     "packaged_date": "2026-10-28T00:00:00.000Z",
     "expiration_date": null,
     "location": null,
@@ -158736,21 +158871,21 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": 35090543,
-        "tag": "1A4060300047D39000015582",
-        "weight": 47.0,
+        "id": 35090792,
+        "tag": "1A4060300047D39000015584",
+        "weight": 34.0,
         "weight_unit": "Each",
-        "pulled_weight": 47.0,
+        "pulled_weight": 34.0,
         "pulled_weight_unit": "Each",
         "item": {
-          "id": 2980277,
-          "name": "Soma Rosa | Flower Banana Punch 1/8 th",
+          "id": 2980539,
+          "name": "Soma Rosa | Flower Dutch Treat 1/8 th",
           "sku": null
         }
       }
     ],
     "destination_packages": [],
-    "source_harvests": "101025, 2024-10-12-KPF-24-Flower 1-GGS-SGW-G3C, 2024-10-12-KPF-24-Flower 1-J3N-CYS-63R, 2024-10-12-KPF-24-Flower 1-KCJ-Y5E-ENF, 2024-10-12-KPF-24-Flower 1-LHZ-XKA-DZG, 2024-10-12-KPF-24-Flower 1-ZTZ-NHR-527, 2024-12-02-RC_24-Main-PPG-X4J-D7Z, 449425 Almond Mochi MB1, 449425 Almond Mochi MB1.3, 449425 Banana MB1, 449425 G41 MB1, 449425 G41 MB1.2, 449425 Joker's MB3, 449425 Joker's MB4, 449425 LSL MB1, 449425 Pack Mule 3 MB1, 449425 Pack Mule MB1.3, 449425 Pink Certz MB1, AGP--1795-LSHNIZZ-HB2, AGP-1795- Pave #2-HB-FNT, AGP-1795-BBJ-FF-ESN, AGP-1795-BBJ-HB-ESN, AGP-1795-BBJ-HB2-ESN, AGP-1795-BH-HB-ESN, AGP-1795-Blue Dream-HBN, AGP-1795-Blue Zushi-HB, AGP-1795-Blue Zushi-HB-5D, AGP-1795-BRS-HB-6D, AGP-1795-BRS-HB-FNT, AGP-1795-BTxC-HB-ESN, AGP-1795-C.Runtz-HB-FNT, AGP-1795-C.Runtz-HB4, AGP-1795-C23-HB-5E, AGP-1795-C23-HB-FNT, AGP-1795-C23-HB2, AGP-1795-C23-HB2-FNT, AGP-1795-C23-HB3-FNT, AGP-1795-C23-HB3FNT, AGP-1795-C23-HB4-FNT, AGP-1795-C23-HB5-FNT, AGP-1795-CA7-HB2, AGP-1795-CA7-HB2-...",
+    "source_harvests": "BG-540-Nimbus Snacks-227-T1",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -158768,7 +158903,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-10-28T23:04:01.174Z",
+    "updated_at": "2026-10-28T23:27:59.077Z",
     "test_results": {
       "thc": [
         {
@@ -158816,7 +158951,7 @@
       ],
       "thca": [
         {
-          "value": 395.617,
+          "value": 281.23,
           "measure": "mg/g"
         },
         {
@@ -158824,7 +158959,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 39.5617,
+          "value": 28.123,
           "measure": "percent"
         },
         {
@@ -158838,7 +158973,7 @@
       ],
       "cbda": [
         {
-          "value": 1.579,
+          "value": 1.117,
           "measure": "mg/g"
         },
         {
@@ -158846,7 +158981,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 0.1579,
+          "value": 0.1117,
           "measure": "percent"
         },
         {
@@ -158986,7 +159121,7 @@
       ],
       "delta_9_thc": [
         {
-          "value": 5.457,
+          "value": 4.896,
           "measure": "mg/g"
         },
         {
@@ -158994,7 +159129,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 0.5457,
+          "value": 0.4896,
           "measure": "percent"
         },
         {
@@ -159072,7 +159207,7 @@
       ],
       "total_cbd": [
         {
-          "value": 1.385,
+          "value": 0.98,
           "measure": "mg/g"
         },
         {
@@ -159080,7 +159215,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 0.1385,
+          "value": 0.098,
           "measure": "percent"
         },
         {
@@ -159104,7 +159239,7 @@
       ],
       "total_delta_9_thc": [
         {
-          "value": 352.413,
+          "value": 251.535,
           "measure": "mg/g"
         },
         {
@@ -159112,7 +159247,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 35.2413,
+          "value": 25.1535,
           "measure": "percent"
         },
         {
@@ -159122,7 +159257,7 @@
       ],
       "total_thc": [
         {
-          "value": 352.413109,
+          "value": 251.53471,
           "measure": "mg/g"
         },
         {
@@ -159130,7 +159265,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 35.241310899999995,
+          "value": 25.153471,
           "measure": "percent"
         },
         {
@@ -159148,7 +159283,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 40.2653,
+          "value": 28.7243,
           "measure": "percent"
         },
         {
@@ -159197,7 +159332,7 @@
         }
       ],
       "test_status": "TestPassed",
-      "tested_package_tag": "1A4060300047D39000015258",
+      "tested_package_tag": "1A4060300047D39000015268",
       "test_date": "2026-09-09",
       "terpenes": {
         "measure": "percent",
@@ -159206,7 +159341,7 @@
       }
     },
     "lab_test_url": null,
-    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/7b2ddb14/Package5258_COAfromMetrc_7b2ddb14.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261029%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261029T061641Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=a5f32345b9edc4bf2535c74ffa5d6cf549b83b719467a5dad37fc55a9b4cc36d",
+    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/84fdf792/Package5268_COAfromMetrc_84fdf792.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261029%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261029T061641Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=144f597d18982eb0f5825b0b7b242ae047f0ebf4d4bc09664c5a52b6dd83ac72",
     "lab_test_info": {
       "testing_facility_name": "SC LABORATORIES CALIFORNIA, LLC",
       "testing_facility_license": "C8-0000013-LIC"
@@ -159216,554 +159351,8 @@
     "_facility_license_number": "C11-0001652-LIC"
   },
   {
-    "id": 35090586,
-    "tag": "1A4060300047D39000015581",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "Available To Sell",
-    "item": {
-      "id": 2980023,
-      "name": "Soma Rosa | Flower Zoap 1/8 th",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4929,
-      "type": {
-        "id": 119333,
-        "name": "Flower (packaged eighth - each)",
-        "quantity_type": "CountBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "CountBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 650546,
-        "name": "The Zoap"
-      },
-      "weight_unit": "Each",
-      "unit_weight": 3.5,
-      "unit_weight_unit": "Grams",
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 427.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 427.0,
-      "updated_at": "2026-10-28T23:02:22.689Z"
-    },
-    "facility_id": 4929,
-    "weight": 27.0,
-    "original_weight": 27.0,
-    "weight_unit": "Each",
-    "implied_weight": "94.5",
-    "packaged_date": "2026-10-28T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": true,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 35090199,
-        "tag": "1A4060300047D39000015580",
-        "weight": 27.0,
-        "weight_unit": "Each",
-        "pulled_weight": 27.0,
-        "pulled_weight_unit": "Each",
-        "item": {
-          "id": 2980023,
-          "name": "Soma Rosa | Flower Zoap 1/8 th",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "AF-075-Zoap-224-T3-8-22-26",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-10-28T23:02:22.728Z",
-    "test_results": {
-      "thc": [
-        {
-          "value": null,
-          "measure": "mg"
-        },
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "cbd": [
-        {
-          "value": null,
-          "measure": "mg"
-        },
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 0.0,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "thca": [
-        {
-          "value": 338.074,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 33.8074,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "cbda": [
-        {
-          "value": 1.48,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 0.148,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "cbn": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "cbg": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "cbc": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        }
-      ],
-      "cbca": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        }
-      ],
-      "cbga": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "delta_8_thc": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "delta_8_thca": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "delta_9_thc": [
-        {
-          "value": 4.733,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 0.4733,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "delta_9_thca": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "delta_10_thc": [
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "thcv": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "thcva": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "total_cbd": [
-        {
-          "value": 1.298,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 0.1298,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "total_cbg": [
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        }
-      ],
-      "total_delta_9_thc": [
-        {
-          "value": 301.224,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 30.1224,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "total_thc": [
-        {
-          "value": 301.223898,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 30.1223898,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "total_cannabinoid": [
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 34.428700000000006,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "cbdv": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "cbdva": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "test_status": "TestPassed",
-      "tested_package_tag": "1A4060300047D39000015320",
-      "test_date": "2026-09-20",
-      "terpenes": {
-        "measure": "percent",
-        "top_three": {},
-        "values": {}
-      }
-    },
-    "lab_test_url": null,
-    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/b8a59c99/Package5320_COAfromMetrc_b8a59c99.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261029%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261029T061641Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=341fd8a38d6c1bff17c0fc55db7ff5721af6a7bd0f60bde85bd31a9b069cb837",
-    "lab_test_info": {
-      "testing_facility_name": "SC LABORATORIES CALIFORNIA, LLC",
-      "testing_facility_license": "C8-0000013-LIC"
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Airway: C11-0001652-LIC",
-    "_facility_license_number": "C11-0001652-LIC"
-  },
-  {
-    "id": 35090551,
-    "tag": "1A4060300089ABD000000174",
+    "id": 35091113,
+    "tag": "1A4060300089ABD000000175",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
@@ -159812,8 +159401,8 @@
       "updated_at": "2026-10-29T00:21:47.312Z"
     },
     "facility_id": 5095,
-    "weight": 1669.0,
-    "original_weight": 1669.0,
+    "weight": 295.0,
+    "original_weight": 295.0,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-10-28T00:00:00.000Z",
@@ -159828,7 +159417,7 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [],
     "destination_packages": [],
-    "source_harvests": "AGP0027-AJSD-T7-10-28-2026",
+    "source_harvests": "AGP0027-SD-T8-10-28-2026",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -159847,11 +159436,11 @@
     },
     "harvests": [
       {
-        "id": 361581,
-        "name": "AGP0027-AJSD-T7-10-28-2026"
+        "id": 361582,
+        "name": "AGP0027-SD-T8-10-28-2026"
       }
     ],
-    "updated_at": "2026-10-28T22:57:31.647Z",
+    "updated_at": "2026-10-29T00:24:39.627Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -159864,21 +159453,225 @@
     "_facility_license_number": "CCL26-0000027"
   },
   {
-    "id": 35090543,
-    "tag": "1A4060300047D39000015582",
+    "id": 35091114,
+    "tag": "1A4060300089ABD000000176",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Transit",
+    "item": {
+      "id": 3506770,
+      "name": "Wet Flower - Motor Breath 15",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 5095,
+      "type": {
+        "id": 123268,
+        "name": "Fresh Cannabis Plant",
+        "quantity_type": "WeightBased",
+        "product_category": "Plants"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 708437,
+        "name": "Motor Breath 15"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-29T00:21:48.059Z"
+    },
+    "facility_id": 5095,
+    "weight": 1421.0,
+    "original_weight": 1421.0,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-28T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [],
+    "destination_packages": [],
+    "source_harvests": "AGP0027-MB-T8-10-28-2026",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [
+      {
+        "id": 361583,
+        "name": "AGP0027-MB-T8-10-28-2026"
+      }
+    ],
+    "updated_at": "2026-10-29T00:24:40.350Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
+    "_facility_license_number": "CCL26-0000027"
+  },
+  {
+    "id": 35091115,
+    "tag": "1A4060300089ABD000000177",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Transit",
+    "item": {
+      "id": 3486259,
+      "name": "Wet Flower - S/N",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 5095,
+      "type": {
+        "id": 123268,
+        "name": "Fresh Cannabis Plant",
+        "quantity_type": "WeightBased",
+        "product_category": "Plants"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 713648,
+        "name": "S/N"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-29T00:21:48.592Z"
+    },
+    "facility_id": 5095,
+    "weight": 63.0,
+    "original_weight": 63.0,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-28T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [],
+    "destination_packages": [],
+    "source_harvests": "AGP0027-SN-T8-10-28-2026",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [
+      {
+        "id": 361584,
+        "name": "AGP0027-SN-T8-10-28-2026"
+      }
+    ],
+    "updated_at": "2026-10-29T00:24:41.236Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
+    "_facility_license_number": "CCL26-0000027"
+  },
+  {
+    "id": 35091120,
+    "tag": "1A4060300047D39000015586",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "Available To Sell",
     "item": {
-      "id": 2980277,
-      "name": "Soma Rosa | Flower Banana Punch 1/8 th",
+      "id": 2980522,
+      "name": "Soma Rosa .5g Pre-Roll 28pk - Gelato 41",
       "sku": null,
       "is_active": true,
       "facility_id": 4929,
       "type": {
-        "id": 119333,
-        "name": "Flower (packaged eighth - each)",
+        "id": 119342,
+        "name": "Pre-Roll Flower",
         "quantity_type": "CountBased",
         "product_category": "Buds"
       },
@@ -159891,11 +159684,11 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 650551,
-        "name": "Banana Punch"
+        "id": 650633,
+        "name": "Gelato 41"
       },
       "weight_unit": "Each",
-      "unit_weight": 3.5,
+      "unit_weight": 14.0,
       "unit_weight_unit": "Grams",
       "case_quantity": null,
       "case_quantity_unit": null,
@@ -159907,17 +159700,17 @@
       "dutchie_product": null,
       "bills_of_materials": [],
       "phenotype": null,
-      "total_for_sale": 287.0,
+      "total_for_sale": 353.0,
       "ordered": 0.0,
       "backordered": 0.0,
-      "unordered": 287.0,
-      "updated_at": "2026-10-28T23:04:01.203Z"
+      "unordered": 353.0,
+      "updated_at": "2026-10-29T00:22:22.460Z"
     },
     "facility_id": 4929,
-    "weight": 240.0,
-    "original_weight": 287.0,
+    "weight": 9.0,
+    "original_weight": 9.0,
     "weight_unit": "Each",
-    "implied_weight": "840.0",
+    "implied_weight": "126.0",
     "packaged_date": "2026-10-28T00:00:00.000Z",
     "expiration_date": null,
     "location": null,
@@ -159930,33 +159723,21 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": 33034216,
-        "tag": "1A4060300047D39000015077",
-        "weight": 287.0,
+        "id": 34741518,
+        "tag": "1A4060300047D39000015535",
+        "weight": 9.0,
         "weight_unit": "Each",
-        "pulled_weight": 287.0,
+        "pulled_weight": 9.0,
         "pulled_weight_unit": "Each",
         "item": {
-          "id": 3399573,
-          "name": "AGP Flower - Banana Punch Large",
+          "id": 2980522,
+          "name": "Soma Rosa .5g Pre-Roll 28pk - Gelato 41",
           "sku": null
         }
       }
     ],
-    "destination_packages": [
-      {
-        "id": 35090611,
-        "tag": "1A4060300047D39000015583",
-        "weight": 47.0,
-        "weight_unit": "Each",
-        "item": {
-          "id": 2980277,
-          "name": "Soma Rosa | Flower Banana Punch 1/8 th",
-          "sku": null
-        }
-      }
-    ],
-    "source_harvests": "101025, 2024-10-12-KPF-24-Flower 1-GGS-SGW-G3C, 2024-10-12-KPF-24-Flower 1-J3N-CYS-63R, 2024-10-12-KPF-24-Flower 1-KCJ-Y5E-ENF, 2024-10-12-KPF-24-Flower 1-LHZ-XKA-DZG, 2024-10-12-KPF-24-Flower 1-ZTZ-NHR-527, 2024-12-02-RC_24-Main-PPG-X4J-D7Z, 449425 Almond Mochi MB1, 449425 Almond Mochi MB1.3, 449425 Banana MB1, 449425 G41 MB1, 449425 G41 MB1.2, 449425 Joker's MB3, 449425 Joker's MB4, 449425 LSL MB1, 449425 Pack Mule 3 MB1, 449425 Pack Mule MB1.3, 449425 Pink Certz MB1, AGP--1795-LSHNIZZ-HB2, AGP-1795- Pave #2-HB-FNT, AGP-1795-BBJ-FF-ESN, AGP-1795-BBJ-HB-ESN, AGP-1795-BBJ-HB2-ESN, AGP-1795-BH-HB-ESN, AGP-1795-Blue Dream-HBN, AGP-1795-Blue Zushi-HB, AGP-1795-Blue Zushi-HB-5D, AGP-1795-BRS-HB-6D, AGP-1795-BRS-HB-FNT, AGP-1795-BTxC-HB-ESN, AGP-1795-C.Runtz-HB-FNT, AGP-1795-C.Runtz-HB4, AGP-1795-C23-HB-5E, AGP-1795-C23-HB-FNT, AGP-1795-C23-HB2, AGP-1795-C23-HB2-FNT, AGP-1795-C23-HB3-FNT, AGP-1795-C23-HB3FNT, AGP-1795-C23-HB4-FNT, AGP-1795-C23-HB5-FNT, AGP-1795-CA7-HB2, AGP-1795-CA7-HB2-...",
+    "destination_packages": [],
+    "source_harvests": "AF-071-Galactic Warheadz-224-T2., AF-071-Grape Gas-224-T2, AF-073-Glitter Bomb-232-T2, AF-073-Grape Gas-231-T1, AF-073-Grape Gas-232-T2, AF-073-Obama Runtz-224-T1-8-21-26, AF-073-Tahiti Twist-224-T5-8-25-26, AF-073-Tahiti Twist-224-T6-8-25-26, AF-075-Grape Gas-224-T6., AF-075-Lemon Cherry Gelato-233-T5, AF-075-Tahiti Twist-224-T3-09-01-26, AF-075-Zoap-237-T1, AHD-2180-PackMule#4[HVN]-AGP-196-T2, BG-0309-Itz Pluto-217-T1, BG-0309-Zoap-216-T4, BG-0540-Gelato 33-216-T3, HSR-0540-Super Bluff Cherry-224-T1",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -159974,7 +159755,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-10-28T23:04:00.779Z",
+    "updated_at": "2026-10-29T00:22:21.851Z",
     "test_results": {
       "thc": [
         {
@@ -160022,7 +159803,7 @@
       ],
       "thca": [
         {
-          "value": 395.617,
+          "value": 273.246,
           "measure": "mg/g"
         },
         {
@@ -160030,7 +159811,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 39.5617,
+          "value": 27.3246,
           "measure": "percent"
         },
         {
@@ -160044,7 +159825,7 @@
       ],
       "cbda": [
         {
-          "value": 1.579,
+          "value": 0.833,
           "measure": "mg/g"
         },
         {
@@ -160052,7 +159833,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 0.1579,
+          "value": 0.0833,
           "measure": "percent"
         },
         {
@@ -160192,7 +159973,7 @@
       ],
       "delta_9_thc": [
         {
-          "value": 5.457,
+          "value": 9.685,
           "measure": "mg/g"
         },
         {
@@ -160200,7 +159981,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 0.5457,
+          "value": 0.9685,
           "measure": "percent"
         },
         {
@@ -160278,7 +160059,7 @@
       ],
       "total_cbd": [
         {
-          "value": 1.385,
+          "value": 0.731,
           "measure": "mg/g"
         },
         {
@@ -160286,7 +160067,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 0.1385,
+          "value": 0.0731,
           "measure": "percent"
         },
         {
@@ -160310,7 +160091,7 @@
       ],
       "total_delta_9_thc": [
         {
-          "value": 352.413,
+          "value": 249.322,
           "measure": "mg/g"
         },
         {
@@ -160318,7 +160099,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 35.2413,
+          "value": 24.9322,
           "measure": "percent"
         },
         {
@@ -160328,7 +160109,7 @@
       ],
       "total_thc": [
         {
-          "value": 352.413109,
+          "value": 249.321742,
           "measure": "mg/g"
         },
         {
@@ -160336,7 +160117,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 35.241310899999995,
+          "value": 24.9321742,
           "measure": "percent"
         },
         {
@@ -160354,7 +160135,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 40.2653,
+          "value": 28.3764,
           "measure": "percent"
         },
         {
@@ -160403,8 +160184,8 @@
         }
       ],
       "test_status": "TestPassed",
-      "tested_package_tag": "1A4060300047D39000015258",
-      "test_date": "2026-09-09",
+      "tested_package_tag": "1A4060300047D39000015538",
+      "test_date": "2026-10-19",
       "terpenes": {
         "measure": "percent",
         "top_three": {},
@@ -160412,7 +160193,7 @@
       }
     },
     "lab_test_url": null,
-    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/7b2ddb14/Package5258_COAfromMetrc_7b2ddb14.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261029%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261029T061641Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=a5f32345b9edc4bf2535c74ffa5d6cf549b83b719467a5dad37fc55a9b4cc36d",
+    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/8fbf98f4/Package5538_COAfromMetrc_8fbf98f4.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261029%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261029T061641Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=6107c0456e1209cd77997ba500e316356fee5f62a41cc78fb4bf62d0a620b447",
     "lab_test_info": {
       "testing_facility_name": "SC LABORATORIES CALIFORNIA, LLC",
       "testing_facility_license": "C8-0000013-LIC"
@@ -160420,5 +160201,224 @@
     "_license_key_label": "All Facilities",
     "_facility_name": "Airway: C11-0001652-LIC",
     "_facility_license_number": "C11-0001652-LIC"
+  },
+  {
+    "id": 35091241,
+    "tag": "1A406030005E0B2000010197",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Transit",
+    "item": {
+      "id": 3506778,
+      "name": "Bucked Flower - Papaya Punch",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4923,
+      "type": {
+        "id": 119074,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 738528,
+        "name": "Papaya Punch"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-29T01:09:22.835Z"
+    },
+    "facility_id": 4923,
+    "weight": 617.65,
+    "original_weight": 617.65,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-28T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": 35005072,
+        "tag": "1A406030005E0B2000010041",
+        "weight": 617.65,
+        "weight_unit": "Pounds",
+        "pulled_weight": 617.65,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3501136,
+          "name": "Unbucked Flower - Papaya Punch",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "PP_10.13.26",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-10-29T01:15:34.898Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 35091242,
+    "tag": "1A406030005E0B2000010198",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Transit",
+    "item": {
+      "id": 3079744,
+      "name": "Trim - Shake",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4923,
+      "type": {
+        "id": 119089,
+        "name": "Shake",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": null,
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-10-29T01:09:22.915Z"
+    },
+    "facility_id": 4923,
+    "weight": 368.73,
+    "original_weight": 368.73,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-10-28T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": 35005072,
+        "tag": "1A406030005E0B2000010041",
+        "weight": 368.73,
+        "weight_unit": "Pounds",
+        "pulled_weight": 368.73,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3501136,
+          "name": "Unbucked Flower - Papaya Punch",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "PP_10.13.26",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-10-29T01:15:35.233Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
   }
 ]
