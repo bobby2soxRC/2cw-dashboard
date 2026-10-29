@@ -538,7 +538,7 @@ packYieldPct = packedLb ÷ inputLb</pre></div>
       <div class="cols">
         <div><h4>On the form</h4><ul>
           <li>Customer, dates, driver, plate</li>
-          <li>Per package: type 1–8, then the batch (the on-hand packages on that type's Raw Inventory tab — fills strain, PID, CID, source UID and shows the lbs available), weight (pieces for pre-rolls), transfer UID, $/lb</li>
+          <li>Per package: type 1–9, then the batch (the on-hand packages on that type's Raw Inventory tab — fills strain, PID, CID, source UID and shows what's available), weight (units for pre-rolls and pouches), transfer UID, $/lb</li>
           <li>Manifest #, their license, destination, sales order # and manifest initiated / accepted come from Canix onto the record (Metrc Queue, Transfers report); invoice #, customer order #, terms and the office checklist only with Fix form</li>
         </ul></div>
         <div><h4>Math</h4>
@@ -549,7 +549,7 @@ totalValue  = Σ (weight × price per lb)</pre></div>
           <li>1 Unbucked → On-Stem · 2 Bucked → Bucked</li>
           <li>3 Trimmed flower → Flower · 4 Smalls → Smalls</li>
           <li>5 Trim / biomass → Trim · 6 → Fresh Frozen</li>
-          <li>7 Seeds, 8 Pre-rolls: not tracked in Raw Inventory — pre-roll batches come from Canix's pre-roll packages and new Pre-Roll runs</li>
+          <li>8 Pre-rolls, 9 Ground flower pouches → Pre-Rolls &amp; Pouches, in units (Adobe's packages in Canix, plus runs not in Metrc yet) · 7 Seeds: not tracked</li>
           <li>A Metrc manifest from Adobe (CCL22-0001284) with no form shows as <b>Needs form</b>, prefilled from Canix</li>
         </ul></div>
       </div>

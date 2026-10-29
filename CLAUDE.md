@@ -173,6 +173,12 @@ Transfers report show manifest, license, sales order and accepted status
 from the form's Canix manifest (`outgoingTransfers` / `transferForForm` in
 `metrc_transfers.js`).
 
+Since 2026-10-29 Raw Inventory has a **Pre-Rolls & Pouches** tab
+(`finished`, units as Metrc counts them — not in All or the pound totals):
+Adobe's pre-roll / pouch packages from Canix plus submitted runs not in
+Metrc yet (`finishedGoodsRows` in `raw_stock.js`). The outgoing form has type
+9 Ground Flower Pouches; types 8 / 9 pick batches from that tab.
+
 ### Ground Flower Pouches (started 2026-10-20)
 
 New Manufacturing form `pouch_production` (`operations_stations.js`), a copy

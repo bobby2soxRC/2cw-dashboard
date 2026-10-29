@@ -122,7 +122,7 @@
   // A manifest made in Metrc from Adobe (OUTGOING_FROM) to someone else's
   // license, carrying raw material (weighed in pounds or kilograms) or
   // pre-rolls (counted by the piece — an "Each" package whose Canix item is a
-  // pre-roll, or whose item we can't see), with no submitted transfer_out
+  // pre-roll or ground flower pouch, or whose item we can't see), with no submitted transfer_out
   // form for it: the Metrc Queue lists it as "Needs form", and its link opens
   // the form filled in from the transfer. Lab samples (grams) and other
   // finished goods are left out.
@@ -153,6 +153,7 @@
     const s = String(name || '').toLowerCase();
     if (!s) return '';
     if (/fresh\s*frozen|\bff\b/.test(s)) return '6';
+    if (/pouch|ground\s*flower/.test(s)) return '9';
     if (/pre-?\s?roll/.test(s)) return '8';
     if (/seed/.test(s)) return '7';
     if (/whole\s*plant|wet|unbucked|on[\s-]?stem/.test(s)) return '1';
@@ -207,7 +208,8 @@
           const name = c._item || item.name || '';
           const lb = toLb(c.shipped_weight, c.shipped_weight_unit);
           const sources = sourcesOf(c);
-          const pieces = isEach(c.shipped_weight_unit) && (!name || productTypeOf(name) === '8') && Number.isFinite(Number(c.shipped_weight));
+          const unitType = productTypeOf(name) === '9' ? '9' : '8';
+          const pieces = isEach(c.shipped_weight_unit) && (!name || ['8', '9'].includes(productTypeOf(name))) && Number.isFinite(Number(c.shipped_weight));
           if (lb === null && !pieces) return null;
           return {
             tag,
@@ -220,7 +222,7 @@
             lb: pieces ? 0 : Math.round(lb * 100) / 100,
             item: name,
             strain: c._strain || (item.strain || {}).name || '',
-            productType: pieces ? '8' : productTypeOf(name)
+            productType: pieces ? unitType : productTypeOf(name)
           };
         }).filter(Boolean);
         if (!packages.length) continue;

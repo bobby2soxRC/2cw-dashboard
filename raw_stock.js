@@ -166,6 +166,66 @@ const RawStock = (function () {
     }));
   }
 
+  // ── Pre-Rolls & Pouches (tab 'finished') ──────────────────────────────────
+  // Finished units waiting to ship, counted as Metrc counts them ("Each": a
+  // 28-pack is one). Metrc is the record here, so mostly Canix: the pre-roll
+  // and ground flower pouch packages at an OUTGOING_FROM license (Adobe) that
+  // are active and not In Transit (already on a manifest). A submitted
+  // Pre-Roll or Pouch run with no package in Canix yet — none whose tag is its
+  // New UID, or of the same kind and strain packaged at Adobe on or after
+  // the run — is listed too, in pre-rolls / pouches, until its package is
+  // made. Submitted outgoing transfers take units off a package by its UID
+  // until Canix has their manifest (then the package has left or shrunk on
+  // its own). `cat` is the kind: 'preroll' or 'pouch' (TRANSFER_TYPES 8 / 9).
+  const ADOBE = ['CCL22-0001284'];
+  const kindOf = (name) => { const s = String(name || '').toLowerCase(); return /pouch|ground/.test(s) ? 'pouch' : /pre-?\s?roll/.test(s) ? 'preroll' : ''; };
+  const strainKey = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const pkgStrain = (p) => ((p.item || {}).strain || {}).name || String((p.item || {}).name || '').split(' - ').pop();
+  const PACK_OF = { '10pk': 10, '28pk': 28 };
+  const FG_LABEL = { preroll: { en: 'Pre-Rolls', es: 'Prerolls' }, pouch: { en: 'Ground Flower Pouches', es: 'Bolsas de flor molida' } };
+  function finishedGoodsRows(d, add) {
+    const cx = d.canix || {};
+    const from = (typeof MetrcTransfers !== 'undefined' && MetrcTransfers.OUTGOING_FROM) || ADOBE;
+    const each = (p) => /^each$/i.test(String(p.weight_unit || ''));
+    const inv = (cx.inventory || []).filter((p) => p && p.tag && each(p) && kindOf((p.item || {}).name));
+    // Where a run's package would be: made at Adobe (other licenses — Airway —
+    // have the same strains after they're shipped and repacked).
+    const all = [...inv, ...(cx.recent || []).filter((p) => p && p.tag && each(p) && kindOf((p.item || {}).name))]
+      .filter((p) => from.includes(p._facility_license_number));
+    const rows = [];
+    inv.filter((p) => p.is_active !== false && p.status !== 'In Transit' && from.includes(p._facility_license_number) && Number(p.weight) > 0)
+      .forEach((p) => {
+        const cat = kindOf(p.item.name);
+        const row = { id: `cx:${p.tag}`, stationKey: 'canix', strain: pkgStrain(p), date: String(p.packaged_date || '').slice(0, 10) };
+        add('finished', row, { key: `cx:${normUid(p.tag)}`, uid: normUid(p.tag), ownUid: true, lb: Number(p.weight), pieces: true,
+          cat, catLabel: { en: p.item.name, es: p.item.name }, type: 'tCanix', location: (p.location || {}).name || p.location || '',
+          farm: '', code: '', license: p._facility_license_number || '', cid: '', farmUids: [] });
+      });
+    [...(d.prerolls || []).map((r) => ['preroll', r, r.newPrerollUid, r.totalPrerolls]), ...(d.pouches || []).map((r) => ['pouch', r, r.newPouchUid, r.totalPouches])]
+      .forEach(([cat, r, tag, total]) => {
+        if (!(Number(total) > 0)) return;
+        const uid = normUid(tag);
+        const inMetrc = all.some((p) => (uid.length >= 4 && uidTailMatch(p.tag, uid)) ||
+          (kindOf(p.item.name) === cat && strainKey(pkgStrain(p)) === strainKey(r.strain) && String(p.packaged_date || '').slice(0, 10) >= String(r.date || '').slice(0, 10)));
+        if (inMetrc) return;
+        const pack = cat === 'preroll' && PACK_OF[r.packType];
+        add('finished', r, { key: `${r.id}:finished`, uid, ownUid: !!uid, lb: Number(total), pieces: true, cat,
+          catLabel: pack ? { en: `≈ ${Math.floor(total / pack)} × ${r.packType} + ${total % pack} singles`, es: `≈ ${Math.floor(total / pack)} × ${r.packType} + ${total % pack} sueltos` } : FG_LABEL[cat],
+          type: 'tRun', status: 'sNoTag', pill: 'work', farm: '', code: r.pid || '', license: '', cid: r.cid || '', farmUids: [] });
+      });
+    // Outgoing transfer rows (types 8 / 9) whose manifest Canix doesn't have yet.
+    const out = (typeof MetrcTransfers !== 'undefined' && cx.transfers) ? MetrcTransfers.outgoingTransfers(cx.transfers, cx.facilities, []) : null;
+    const takers = [];
+    (d.shipped || []).forEach((r) => {
+      const lines = (r.lines || []).filter((x) => (TRANSFER_TYPES[x.productType] || {}).stockTab === 'finished');
+      if (!lines.length) return;
+      if (out && MetrcTransfers.transferForForm({ manifest: r.manifestNo, uids: lines.map((x) => x.sourceUid) }, out)) return;
+      lines.forEach((x) => takers.push({ id: r.id, station: 'transfer_out', what: t(STATION_BY_KEY.transfer_out.title), uid: x.sourceUid, cat: TRANSFER_TYPES[x.productType].cat,
+        tab: 'finished', lb: x.weight, date: String(r.actualDate || r.date || '').slice(0, 10), customer: r.customer || '', sale: true }));
+    });
+    return takers;
+  }
+
   // What downstream forms took, and off which UID. A Smalls Hand Trim doesn't
   // take from its own output.
   function takersOf(d) {
@@ -252,7 +312,7 @@ const RawStock = (function () {
     });
 
     finishedRows(d, tr, add);
-    applyTakers(out, takersOf(d));
+    applyTakers(out, [...takersOf(d), ...finishedGoodsRows(d, add)]);
     out.forEach((r) => {
       if (r.status) return;
       r.status = r.lb <= 0.005 ? 'usedUp' : r.wip ? 'sWeighed' : r.used.length ? 'sPart' : 'sOnHand';
@@ -261,8 +321,16 @@ const RawStock = (function () {
     return out;
   }
 
+  // The Canix sync's files Pre-Rolls & Pouches needs; a missing one is empty.
+  async function loadCanix() {
+    const get = (f) => fetch(`/data/${f}?t=${Date.now()}`).then((r) => (r.ok ? r.json() : [])).catch(() => []);
+    const [inventory, recent, transfers, facilities] = await Promise.all(['canix_inventory.json', 'canix_packages_recent.json', 'canix_transfers_recent.json', 'canix_facilities.json'].map(get));
+    const arr = (x) => (Array.isArray(x) ? x : []);
+    return { inventory: arr(inventory), recent: arr(recent), transfers: arr(transfers), facilities: arr(facilities) };
+  }
+
   async function load(client, opts = {}) {
-    const [intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, pouches, mfg, biomass, mixed, shipped, received, bq, tq, codes, fac, marks, paper, handPast, ref] = await Promise.all([
+    const [intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, pouches, mfg, biomass, mixed, shipped, received, bq, tq, codes, fac, marks, paper, handPast, ref, canix] = await Promise.all([
       loadSubmitted('intake_wet'), loadSubmitted('dry_check'), loadSubmitted('buck'), loadSubmitted('hand_trim'),
       loadSubmitted('machine_trim'), loadSubmitted('smalls_trim'), loadSubmitted('fresh_frozen'),
       loadSubmitted('preroll_production'), loadSubmitted('pouch_production'), loadSubmitted('mfg_output'), loadSubmitted('biomass_request'),
@@ -271,12 +339,12 @@ const RawStock = (function () {
       client.from('canix_facilities').select('license_number,farm_group').then((r) => r.data || []),
       getMarks(client),
       client.from('operations_forms').select('id').eq('owner_user', 'paper_import').limit(10000).then((r) => r.data || []),
-      loadSubmitted('hand_trim_history'), loadReference()
+      loadSubmitted('hand_trim_history'), loadReference(), loadCanix()
     ]);
     pidCodes = (codes || []).filter((r) => r.kind === 'pid');
     facilities = fac;
     const d = { intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, pouches, mfg, biomass, mixed,
-      shipped: shipped.filter((r) => r.id !== opts.skipId), received, bq, tq };
+      shipped: shipped.filter((r) => r.id !== opts.skipId), received, bq, tq, canix };
     // Records loaded from the old paper sheets (Aug–Sep 2026, owner_user
     // 'paper_import') still trace lots, but their output isn't stock any more.
     const paperIds = new Set(paper.map((r) => r.id));
@@ -284,6 +352,6 @@ const RawStock = (function () {
     return { d, rows, marks, paperIds, handPast, ref };
   }
 
-  return { CAT_TAB, MARKS_ID, getMarks, load, build, tracer, adder, finishedRows, takersOf, applyTakers };
+  return { CAT_TAB, MARKS_ID, getMarks, load, build, tracer, adder, finishedRows, finishedGoodsRows, takersOf, applyTakers };
 })();
 if (typeof module !== 'undefined') module.exports = RawStock;

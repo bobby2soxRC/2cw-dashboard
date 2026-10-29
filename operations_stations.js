@@ -246,9 +246,11 @@ const TRANSFER_TYPES = {
   5: { l: { en: 'Trim / Biomass', es: 'Recorte / biomasa' }, tab: 'trim' },
   6: { l: { en: 'Fresh Frozen', es: 'Fresco congelado' }, tab: 'frozen', cat: 'fresh_frozen' },
   7: { l: { en: 'Seeds', es: 'Semillas' } },
-  // Not in Raw Inventory: the outgoing form's Batch list for pre-rolls is
-  // Canix's pre-roll packages and new runs (`stockTab`, ops_form.html).
-  8: { l: { en: 'Pre-Rolls', es: 'Prerolls' }, pieces: true, stockTab: 'preroll' }
+  // Counted in units (Metrc's "Each"), on Raw Inventory's Pre-Rolls &
+  // Pouches tab (`stockTab`, not `tab`: the pound-based stock code leaves
+  // them alone; raw_stock.js finishedGoodsRows), `cat` the kind.
+  8: { l: { en: 'Pre-Rolls', es: 'Prerolls' }, pieces: true, stockTab: 'finished', cat: 'preroll' },
+  9: { l: { en: 'Ground Flower Pouches', es: 'Bolsas de flor molida' }, pieces: true, stockTab: 'finished', cat: 'pouch' }
 };
 // The ones Product Transfer — Incoming takes: dry finished material Raw
 // Inventory can hold on its own (on-stem and bucked stock come from the
@@ -1610,8 +1612,8 @@ const OPERATIONS_STATIONS = [
 
       { k: 'lines', t: 'lineitems', req: true,
         l: { en: 'Products Going Out', es: 'Productos que salen' },
-        hint: { en: 'One row per package. Pick the product type, then the batch it comes off — that fills in strain, PID, CID and source UID and shows what’s available; type the weight going out. Weight in lbs — pieces for pre-rolls. Transfer Package UID is the new tag on the package going out, if it gets one.',
-                es: 'Una fila por paquete. Elija el tipo de producto y luego el lote de donde sale — eso llena variedad, PID, CID y UID de origen y muestra lo disponible; escriba el peso que sale. Peso en lbs — piezas para prerolls. El UID del paquete de transferencia es la etiqueta nueva del paquete que sale, si la lleva.' },
+        hint: { en: 'One row per package. Pick the product type, then the batch it comes off — that fills in strain, PID, CID and source UID and shows what’s available; type the weight going out. Weight in lbs — units for pre-rolls and pouches (as Metrc counts them: a 28-pack is 1). Transfer Package UID is the new tag on the package going out, if it gets one.',
+                es: 'Una fila por paquete. Elija el tipo de producto y luego el lote de donde sale — eso llena variedad, PID, CID y UID de origen y muestra lo disponible; escriba el peso que sale. Peso en lbs — unidades para prerolls y bolsas (como las cuenta Metrc: un paquete de 28 es 1). El UID del paquete de transferencia es la etiqueta nueva del paquete que sale, si la lleva.' },
         cols: [
           { k: 'productType', t: 'select', req: true, carry: true, l: { en: 'Product Type', es: 'Tipo de producto' },
             opts: [
@@ -1630,7 +1632,7 @@ const OPERATIONS_STATIONS = [
           { k: 'cid', t: 'select', ref: 'customers', allowOther: true, l: { en: 'CID', es: 'CID' } },
           { k: 'sourceUid', t: 'uid', req: true, canixStrain: 'strain', l: { en: '2CW Source Package UID', es: 'UID del paquete de origen 2CW' } },
           { k: 'availableLb', t: 'stockAvail', formOnly: true, stockCol: 'stockKey', l: { en: 'Available (lbs)', es: 'Disponible (lbs)' } },
-          { k: 'weight', t: 'number', req: true, min: 0, step: 0.01, l: { en: 'Weight (lbs) / pieces', es: 'Peso (lbs) / piezas' } },
+          { k: 'weight', t: 'number', req: true, min: 0, step: 0.01, l: { en: 'Weight (lbs) / units', es: 'Peso (lbs) / unidades' } },
           { k: 'transferUid', t: 'uid', l: { en: '2CW Transfer Package UID', es: 'UID del paquete de transferencia 2CW' } },
           { k: 'pricePerLb', t: 'number', min: 0, step: 0.01, l: { en: 'Price per lb ($)', es: 'Precio por lb ($)' } }
         ],
@@ -1638,10 +1640,10 @@ const OPERATIONS_STATIONS = [
       { k: 'totalLb', t: 'calc',
         calc: (v) => (v.lines || []).filter((r) => !(TRANSFER_TYPES[r.productType] || {}).pieces).reduce((a, r) => a + num(r.weight), 0),
         l: { en: 'Subtotal (lbs)', es: 'Subtotal (lbs)' },
-        hint: { en: 'Everything but pre-rolls.', es: 'Todo menos prerolls.' } },
+        hint: { en: 'Everything but pre-rolls and pouches.', es: 'Todo menos prerolls y bolsas.' } },
       { k: 'totalPieces', t: 'calc', dp: 0,
         calc: (v) => { const p = (v.lines || []).filter((r) => (TRANSFER_TYPES[r.productType] || {}).pieces); return p.length ? p.reduce((a, r) => a + num(r.weight), 0) : null; },
-        l: { en: 'Pre-Rolls (pieces)', es: 'Prerolls (piezas)' } },
+        l: { en: 'Pre-Rolls & Pouches (units)', es: 'Prerolls y bolsas (unidades)' } },
       { k: 'totalValue', t: 'calc',
         calc: (v) => { const p = (v.lines || []).filter((r) => num(r.pricePerLb) > 0); return p.length ? p.reduce((a, r) => a + num(r.weight) * num(r.pricePerLb), 0) : null; },
         l: { en: 'Total ($)', es: 'Total ($)' },

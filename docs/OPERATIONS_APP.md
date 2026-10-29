@@ -442,9 +442,10 @@ a folder there) is the paper "Product Transfer Form (OUTGOING)", version 7:
 person completing it (`completedBy`), date of request, requestor, customer,
 proposed and actual transfer dates, Driver and Vehicle Plate (the
 same `driverPicker` / `platePicker` as Harvest), then a row per package
-(`lines`: product type code 1–8 from `TRANSFER_TYPES` in
+(`lines`: product type code 1–9 from `TRANSFER_TYPES` in
 `operations_stations.js`, strain, PID, CID, source package UID, weight —
-pieces for pre-rolls — transfer package UID, price per lb). Subtotal lbs
+units for pre-rolls (8) and ground flower pouches (9, since 2026-10-29) —
+transfer package UID, price per lb). Subtotal lbs
 (pre-rolls left out), pre-roll pieces and total $ are worked out.
 
 Since 2026-10-29 the floor form doesn't ask for DCC license #, destination,
@@ -475,13 +476,8 @@ code), CID and source UID (`fills`); **Available (lbs)** (`availableLb`,
 `t: 'stockAvail'`) shows that batch's lbs less what the form's other rows
 take off it, and a weight over it is flagged in red (not blocked — the
 inventory can lag a form). Seeds have no batch list: type the UID.
-Pre-rolls aren't in Raw Inventory, so their list (`stockTab: 'preroll'` on
-type 8, `prerollStock` in `ops_form.html`) is Adobe's pre-roll packages in
-Canix (`canix_inventory.json`, counted in pieces, less ones In Transit —
-already on a manifest), plus submitted Pre-Roll Production runs whose New
-UID — Pre-Rolls isn't in Canix yet (not in the inventory or
-`canix_packages_recent.json`), at their total pre-rolls less what submitted
-transfers took off that UID; Available shows pieces. A row that has a UID but no batch (a Needs form link, an older form)
+Pre-rolls and pouches (`stockTab: 'finished'`, `cat` preroll / pouch) list
+Raw Inventory's **Pre-Rolls & Pouches** tab, in units; Available shows units. A row that has a UID but no batch (a Needs form link, an older form)
 picks the batch with that UID; typing a different UID unpicks it. The
 numbers are Raw Inventory's own: its build moved to `raw_stock.js`
 (`RawStock.load`), shared by `raw_inventory.html` and `ops_form.html`, used-up
@@ -865,8 +861,27 @@ Machine Trim left out), **Flower**,
 **Smalls** and **Trim** (each Hand Trim, Machine Trim and Smalls Hand Trim's
 outputs, Bucking's trim, and packages received on a Product Transfer —
 Incoming; trim shows its type — Normal, A+, Sugar, Shake,
-Bucking trim) and **Fresh Frozen** (fresh-frozen Wet Intakes and Fresh Frozen
-forms). Each tab shows its packages and pounds. Farm license, farm name,
+Bucking trim), **Fresh Frozen** (fresh-frozen Wet Intakes and Fresh Frozen
+forms) and **Pre-Rolls & Pouches**. Each tab shows its packages and pounds.
+
+**Pre-Rolls & Pouches** (tab `finished`, since 2026-10-29; `finishedGoodsRows`
+in `raw_stock.js`) is finished units waiting to ship to Airway, counted as
+Metrc counts them ("Each": a 28-pack is 1), so it's on its own: not in All,
+the pound totals or the bulk menu, and not in History. Metrc is the record
+here, so the rows are mostly Canix's: pre-roll and ground flower pouch
+packages at Adobe (`canix_inventory.json`, active, not In Transit — on a
+manifest already). A submitted Pre-Roll Production or Ground Flower Pouches
+run with no Adobe package yet — none whose tag is its New UID, and none of
+the same kind and strain packaged on or after the run date, in the
+inventory or `canix_packages_recent.json` — shows as **Run — no Metrc
+package yet** in pre-rolls / pouches (a 28-pack run shows ≈ packs +
+singles) until Canix has it. (Airway, C11-0001652, has the same strains
+after they're shipped and repacked, so only Adobe counts.) A submitted
+Product Transfer — Outgoing row of type 8 / 9 takes units off a package by
+its UID until Canix has the form's manifest (`transferForForm`); after that
+the package has left or shrunk in Canix by itself. Used up marks work as on
+the other tabs. `RawStock.load` now also reads the Canix sync's inventory,
+packages, transfers and facilities files (`loadCanix`). Farm license, farm name,
 farm code and CID come from the record or are traced back through Take Down to
 the Wet Intake; the full license is the Canix sync's shipper license, else the
 Canix facility whose license number ends in the farm code. A finished output

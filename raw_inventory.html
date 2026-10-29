@@ -149,6 +149,7 @@
 <script src="/operations_stations.js"></script>
 <script src="/ops_common.js"></script>
 <script src="/ops_data.js"></script>
+<script src="/metrc_transfers.js"></script>
 <script src="/raw_stock.js"></script>
 <script src="/flower_yield.js"></script>
 <script src="/bulk_menu.js"></script>
@@ -184,6 +185,14 @@
     smalls:   { en: 'Smalls', es: 'Smalls' },
     trim:     { en: 'Trim', es: 'Recorte' },
     frozen:   { en: 'Fresh Frozen', es: 'Fresco congelado' },
+    finished: { en: 'Pre-Rolls & Pouches', es: 'Prerolls y bolsas' },
+    units:    { en: 'units', es: 'unidades' },
+    colUnits: { en: 'Units', es: 'Unidades' },
+    sNoTag:   { en: 'Run — no Metrc package yet', es: 'Corrida — aún sin paquete en Metrc' },
+    tCanix:   { en: 'Metrc package', es: 'Paquete de Metrc' },
+    tRun:     { en: 'Run', es: 'Corrida' },
+    fgNote:   { en: 'Pre-rolls and ground flower pouches waiting to ship, in units as Metrc counts them (a 28-pack is 1). From Canix: the packages at Adobe that aren’t on a manifest yet (In Transit ones have left). A submitted Pre-Roll or Pouch run whose package isn’t in Canix yet shows as a run, in pre-rolls / pouches, until it is. An Outgoing Transfer that names a package takes it off until Canix has its manifest. Not in the All tab or the pound totals.',
+                es: 'Prerolls y bolsas de flor molida por enviar, en unidades como las cuenta Metrc (un paquete de 28 es 1). De Canix: los paquetes en Adobe que aún no están en un manifiesto. Una corrida enviada cuyo paquete aún no está en Canix aparece como corrida hasta que esté. No están en Todo ni en los totales de libras.' },
     search:   { en: 'Search strain, UID, license, farm name or code, CID, location…', es: 'Buscar variedad, UID, licencia, rancho o código, CID, ubicación…' },
     showUsed: { en: 'Show used up', es: 'Mostrar agotados' },
     csv:      { en: '⇩ Export CSV', es: '⇩ Exportar CSV' },
@@ -284,8 +293,11 @@
   const TABS = [
     { k: 'all', c: 'var(--text)' }, { k: 'drying', c: 'var(--blue)' }, { k: 'onstem', c: 'var(--gold)' },
     { k: 'bucked', c: 'var(--purple)' }, { k: 'flower', c: 'var(--green)' }, { k: 'smalls', c: '#8bc34a' },
-    { k: 'trim', c: '#c48b5a' }, { k: 'frozen', c: 'var(--cyan)' }
+    { k: 'trim', c: '#c48b5a' }, { k: 'frozen', c: 'var(--cyan)' }, { k: 'finished', c: '#e0864a' }
   ];
+  // Pre-Rolls & Pouches is counted in units, not pounds (raw_stock.js
+  // finishedGoodsRows): its own tab only, on hand only.
+  const UNIT_TAB = 'finished';
   const TAB_COLOR = Object.fromEntries(TABS.map((x) => [x.k, x.c]));
 
   document.getElementById('title').textContent = t(L.title);
@@ -338,7 +350,7 @@
     hist = buildHistory(d, rows, paperIds);
   }
 
-  const usedText = (u) => `${[u.what, u.customer].filter(Boolean).join(' · ')}: ${fmtNum(u.lb)} lb`;
+  const usedText = (u) => `${[u.what, u.customer].filter(Boolean).join(' · ')}: ${fmtNum(u.lb)} ${u.tab === 'finished' ? t(L.units) : 'lb'}`;
 
   // History: each Wet Intake, on-stem package (all its Take Downs), bucked
   // lot and finished output ever, with `from` (row keys) and `to` (the next
@@ -444,7 +456,8 @@
     // Every word has to be there: "agp gelato" finds AGP's Gelato.
     return query.toLowerCase().split(/\s+/).filter(Boolean).every((w) => hay.includes(w) || normUid(hay).includes(normUid(w)) && normUid(w).length >= 4);
   }
-  const inTab = (r, k) => k === 'all' || r.tab === k;
+  const inTab = (r, k) => (k === 'all' ? r.tab !== UNIT_TAB : r.tab === k);
+  const units = () => tab === UNIT_TAB;
   const sumLb = (list, f = 'lb') => r2(list.reduce((a, r) => a + r[f], 0));
 
   // onhand / hist: only in that view.
@@ -457,7 +470,7 @@
     { k: 'code', l: L.colCode, v: (r) => r.code },
     { k: 'license', l: L.colLic, v: (r) => r.license },
     { k: 'cid', l: { en: 'CID', es: 'CID' }, v: (r) => r.cid },
-    { k: 'lb', l: L.colLb, v: (r) => r.lb, num: true, onhand: true },
+    { k: 'lb', l: L.colLb, lUnits: L.colUnits, v: (r) => r.lb, num: true, onhand: true },
     { k: 'startLb', l: L.colIn, v: (r) => r.startLb, num: true, hist: true },
     { k: 'left', l: L.colLeft, v: leftOf, num: true, hist: true },
     { k: 'to', l: L.colTo, v: toText, hist: true },
@@ -485,16 +498,16 @@
     viewsEl.innerHTML = [['onhand', L.vOnHand], ['history', L.vHistory]]
       .map(([v, l]) => `<button type="button" class="${view === v ? 'on' : ''}" data-v="${v}">${esc(t(l))}</button>`).join('');
     viewsEl.querySelectorAll('button').forEach((b) => {
-      b.onclick = () => { if (view === b.dataset.v) return; view = b.dataset.v; sortKey = 'date'; sortDir = -1; syncUrl(); render(); toListTop(); };
+      b.onclick = () => { if (view === b.dataset.v) return; view = b.dataset.v; sortKey = 'date'; sortDir = -1; if (H() && tab === UNIT_TAB) tab = 'all'; syncUrl(); render(); toListTop(); };
     });
   }
 
   const tabsEl = document.getElementById('tabs');
   function renderTabs() {
-    tabsEl.innerHTML = TABS.map((x) => {
+    tabsEl.innerHTML = TABS.filter((x) => !(H() && x.k === UNIT_TAB)).map((x) => {
       const list = H() ? hist.filter((r) => inTab(r, x.k)) : rows.filter((r) => inTab(r, x.k) && !isUsed(r));
       return `<button type="button" class="tab ${tab === x.k ? 'on' : ''}" data-k="${x.k}" style="--c:${x.c}">
-        <div class="l">${esc(t(L[x.k]))}</div><div class="n">${fmtNum(sumLb(list, H() ? 'startLb' : 'lb'), 0)} lb</div>
+        <div class="l">${esc(t(L[x.k]))}</div><div class="n">${fmtNum(sumLb(list, H() ? 'startLb' : 'lb'), 0)} ${x.k === UNIT_TAB ? esc(t(L.units)) : 'lb'}</div>
         <div class="s">${list.length} ${H() ? t(list.length === 1 ? L.rec : L.recs) : list.length === 1 ? t(L.pkg) : t(L.pkgs)}</div></button>`;
     }).join('');
     tabsEl.querySelectorAll('.tab').forEach((b) => { b.onclick = () => { tab = b.dataset.k; syncUrl(); render(); toListTop(); }; });
@@ -510,7 +523,7 @@
   document.getElementById('csv').onclick = exportCsv;
   // Bulk menu (bulk_menu.js): a priced PDF of what's on hand, starting from this tab.
   document.getElementById('menuBtn').onclick = () => BulkMenu.open({
-    rows: rows.filter((r) => !isUsed(r)), tab, client, who, typeLabel, estNote
+    rows: rows.filter((r) => !isUsed(r) && r.tab !== UNIT_TAB), tab: units() ? 'all' : tab, client, who, typeLabel, estNote
   });
   function syncUrl() {
     const u = new URL(location.href);
@@ -533,7 +546,7 @@
     renderTabs();
     document.getElementById('usedWrap').style.display = H() ? 'none' : '';
     document.getElementById('menuBtn').style.display = H() ? 'none' : '';
-    document.getElementById('note').textContent = t(H() ? L.histNote : L.note);
+    document.getElementById('note').textContent = t(H() ? L.histNote : units() ? L.fgNote : L.note);
     const list = current();
     document.getElementById('sub').textContent = `${H() ? t(L.vHistory) + ' · ' : ''}${t(L[tab])} · ${list.length} ${
       H() ? t(list.length === 1 ? L.rec : L.recs) : list.length === 1 ? t(L.pkg) : t(L.pkgs)}`;
@@ -546,14 +559,15 @@
     } else {
       const onHand = list.filter((r) => !isUsed(r));
       const wet = sumLb(onHand.filter((r) => r.wet)), dry = sumLb(onHand.filter((r) => !r.wet));
-      totalsEl.innerHTML = list.length
+      totalsEl.innerHTML = list.length && units() ? `<span>${esc(t(L.total))}: <b>${fmtNum(dry + wet, 0)} ${esc(t(L.units))}</b></span>`
+        : list.length
         ? `<span>${esc(t(L.total))}: <b>${fmtNum(dry + wet)} lb</b></span>${wet && dry ? `<span>${esc(t(L.wet))}: <b>${fmtNum(wet)} lb</b></span>` : ''}`
         : '';
     }
     if (!list.length) { board.innerHTML = `<div class="empty">${esc(t(L.empty))}</div>`; return; }
     const cols = colsFor();
     board.innerHTML = `<div class="tbl-wrap"><table class="tbl ${H() ? 'hist' : ''}"><thead><tr>
-        ${cols.map((c) => `<th data-k="${c.k}" class="${c.num ? 'num' : ''} ${sortKey === c.k ? 'sorted' : ''}">${esc(t(c.l))}${sortKey === c.k ? (sortDir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('')}
+        ${cols.map((c) => `<th data-k="${c.k}" class="${c.num ? 'num' : ''} ${sortKey === c.k ? 'sorted' : ''}">${esc(t(units() && c.lUnits ? c.lUnits : c.l))}${sortKey === c.k ? (sortDir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('')}
         ${canMark && !H() ? '<th></th>' : ''}
       </tr></thead><tbody>${tab === 'drying' ? byFarmHtml(list, cols.length + (canMark && !H() ? 1 : 0)) : list.map(H() ? histRowHtml : rowHtml).join('')}</tbody></table></div>`;
     board.querySelectorAll('tr.grp').forEach((tr) => {
@@ -624,8 +638,8 @@
     const used = isUsed(r), dd = days(r);
     const cells = {
       ...baseCells(r),
-      status: `<span class="pill ${used ? 'used' : r.pill}">${esc(statusLabel(r))}</span>${r.used.length ? `<div class="small" title="${esc(r.used.map(usedText).join('\n'))}">${fmtNum(r.startLb)} lb − ${esc(t(L.took))}</div>` : ''}`,
-      lb: `${fmtNum(r.lb)}${r.wet ? ` <span class="small">${esc(t(L.wet))}</span>` : ''}`,
+      status: `<span class="pill ${used ? 'used' : r.pill}">${esc(statusLabel(r))}</span>${r.used.length ? `<div class="small" title="${esc(r.used.map(usedText).join('\n'))}">${fmtNum(r.startLb, r.pieces ? 0 : 2)} ${r.pieces ? esc(t(L.units)) : 'lb'} − ${esc(t(L.took))}</div>` : ''}`,
+      lb: `${fmtNum(r.lb, r.pieces ? 0 : 2)}${r.wet ? ` <span class="small">${esc(t(L.wet))}</span>` : ''}`,
       days: dd == null ? '—' : `<span class="age ${dd >= 30 ? 'old' : ''}">${dd}</span>`,
       est: r.est ? `<span title="${esc(estNote(r.est, r.strain) + (r.doneLb > 0.005 ? ` − ${fmtNum(r.doneLb)} lb ${t(L.estDone)}` : ''))}">≈ ${fmtNum(r.est.lb, 1)}</span> <span class="small">${Math.round(r.est.pct * 100)}%</span>` : ''
     };
