@@ -90,12 +90,13 @@
     .pill.ship{border-color:var(--purple);color:var(--purple)}
 
     /* On hand / History */
-    .views{display:inline-flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:18px}
+    .viewrow{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+    .views{display:inline-flex;border:1px solid var(--border);border-radius:10px;overflow:hidden}
     .views button{background:var(--surface);border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;
       text-transform:uppercase;font-weight:700;padding:10px 18px;cursor:pointer;min-height:40px}
     .views button.on{background:var(--blue);color:#000}
-    .pin.stuck .views{margin-top:10px}
-    .views + .tabs{margin-top:12px}
+    .pin.stuck .viewrow{margin-top:10px}
+    .viewrow + .tabs{margin-top:12px}
     .tbl.hist tbody tr.hrow{cursor:pointer}
     .tbl.hist tbody tr.hrow.open{background:var(--surface2)}
     .tbl .caret{color:var(--muted);font-size:.7rem}
@@ -134,7 +135,7 @@
   <div class="title" id="title">Raw Materials Inventory</div>
   <div class="sub" id="sub">—</div>
   <div class="pin" id="pin">
-    <div class="views" id="views"></div>
+    <div class="viewrow"><div class="views" id="views"></div><div class="views" id="owners"></div></div>
     <div class="tabs" id="tabs"></div>
     <div class="filters" id="filters"></div>
     <div class="totals" id="totals"></div>
@@ -167,6 +168,13 @@
 // operations_forms row (station_key 'raw_inventory_marks', fixed id), like
 // the bucking queue; the edit history trigger logs each change. Marking is
 // for people with 'buck release' or Metrc Queue edit.
+//
+// 2CW / Client / All: whose material a row is (RawStock.isClientRow: CID
+// AGP is 2CW, another CID a client; no CID, a farm license that isn't ours
+// in Canix). When a farm can't pay for its services, → 2CW on a
+// client row takes ownership of it (with a reason) and of everything traced
+// from it; Return undoes it. Saved in one shared operations_forms row
+// (station_key 'raw_inventory_ownership', raw_stock.js), same people as marking.
 //
 // History (?view=history) lists every record each stage ever had — every
 // Wet Intake, on-stem package, bucked lot and finished output — linked to
@@ -222,6 +230,13 @@
     restore:  { en: 'Restore', es: 'Restaurar' },
     markAsk:  { en: 'Mark this as used up? It drops off the inventory (Show used up brings it back).', es: '¿Marcar como agotado? Sale del inventario (Mostrar agotados lo regresa).' },
     saveFail: { en: 'Could not save:', es: 'No se pudo guardar:' },
+    takeBtn:  { en: '→ 2CW', es: '→ 2CW' },
+    takeTip:  { en: 'Take ownership: the farm couldn’t pay for our services', es: 'Tomar propiedad: la granja no pudo pagar nuestros servicios' },
+    takeAsk:  { en: 'Take ownership of this client material for 2CW? It and everything made from it count as 2CW’s from now on. Why (e.g. unpaid invoice #)?',
+                es: '¿Tomar propiedad de este material del cliente para 2CW? Este y todo lo que se haga con él cuenta como de 2CW desde ahora. ¿Por qué (p. ej. factura # sin pagar)?' },
+    giveBack: { en: 'Return', es: 'Devolver' },
+    giveAsk:  { en: 'Give this back to the client? It counts as their material again.', es: '¿Devolverlo al cliente? Vuelve a contar como material suyo.' },
+    takenBy:  { en: 'Taken over by 2CW', es: 'Tomado por 2CW' },
     took:     { en: 'taken', es: 'usado' },
     // statuses
     sDrying:  { en: 'Drying', es: 'Secando' },
@@ -258,6 +273,10 @@
     // History view
     vOnHand:  { en: 'On hand', es: 'Disponible' },
     vHistory: { en: 'History', es: 'Historial' },
+    // Whose material: a Customer ID (CID, traced back to the Wet Intake) is a client's.
+    own2cw:   { en: '2CW', es: '2CW' },
+    ownClient:{ en: 'Client', es: 'Cliente' },
+    ownAll:   { en: 'All', es: 'Todo' },
     rec:      { en: 'record', es: 'registro' },
     noFarm:   { en: 'No farm on record', es: 'Sin rancho registrado' },
     recs:     { en: 'records', es: 'registros' },
@@ -328,16 +347,29 @@
     return marks;
   }
 
+  // ── Ownership takeovers ───────────────────────────────────────────────────
+  async function setTakeover(uid, entry) {
+    const all = await RawStock.getTakeovers(client);
+    if (entry) all[uid] = entry; else delete all[uid];
+    const { error } = await client.from('operations_forms').upsert({
+      id: RawStock.OWNERSHIP_ID, station_key: 'raw_inventory_ownership', status: 'submitted', owner_user: who || null, updated_by: who || null,
+      submitted_at: new Date().toISOString(), fields: { takeovers: all, updatedBy: who, updatedAt: new Date().toISOString() }
+    });
+    if (error) throw error;
+    return all;
+  }
+
   // ── Load ──────────────────────────────────────────────────────────────────
   // rows: what's on hand (raw_stock.js). hist: the History view — every
   // package each stage ever had, linked to what it came from and where it went.
   const { CAT_TAB, adder, tracer, finishedRows, takersOf, applyTakers } = RawStock;
-  let rows = [], hist = [], marks = {}, recs = new Map();
+  let rows = [], hist = [], marks = {}, takeovers = {}, recs = new Map();
   async function load() {
     const res = await RawStock.load(client);
     const { d, paperIds, handPast, ref } = res;
     rows = res.rows;
     marks = res.marks;
+    takeovers = res.takeovers || {};
     recs = new Map(['intakes', 'downs', 'bucks', 'hand', 'machine', 'smallsT', 'frozen', 'prerolls', 'pouches', 'mfg', 'biomass', 'mixed', 'shipped', 'received']
       .flatMap((k) => d[k]).map((r) => [r.id, r]));
     // Estimated A flower from what's on-stem or bucked, from every Bucking
@@ -415,6 +447,7 @@
   let view = params.get('view') === 'history' ? 'history' : 'onhand';
   let tab = TABS.some((x) => x.k === params.get('tab')) ? params.get('tab') : 'all';
   let query = params.get('q') || '';
+  let owner = ['2cw', 'client'].includes(params.get('own')) ? params.get('own') : 'all';
   let showUsed = false;
   let sortKey = 'date', sortDir = -1;
   const openRows = new Set();   // History rows opened to show their trail
@@ -457,6 +490,10 @@
     return query.toLowerCase().split(/\s+/).filter(Boolean).every((w) => hay.includes(w) || normUid(hay).includes(normUid(w)) && normUid(w).length >= 4);
   }
   const inTab = (r, k) => (k === 'all' ? r.tab !== UNIT_TAB : r.tab === k);
+  // 2CW / Client / All (RawStock.isClientRow), less what 2CW took over.
+  const takenOf = (r) => (RawStock.isClientRow(r) ? RawStock.takeoverOf(r, takeovers) : null);
+  const isClient = (r) => RawStock.isClientRow(r) && !takenOf(r);
+  const ownerOk = (r) => owner === 'all' || (owner === 'client') === isClient(r);
   const units = () => tab === UNIT_TAB;
   const sumLb = (list, f = 'lb') => r2(list.reduce((a, r) => a + r[f], 0));
 
@@ -486,7 +523,7 @@
 
   function current() {
     const col = colsFor().find((c) => c.k === sortKey) || COLS.find((c) => c.k === 'date');
-    return (H() ? hist : rows).filter((r) => inTab(r, tab) && visible(r) && matches(r)).sort((a, b) => {
+    return (H() ? hist : rows).filter((r) => inTab(r, tab) && ownerOk(r) && visible(r) && matches(r)).sort((a, b) => {
       const x = col.v(a), y = col.v(b);
       const cmp = col.num ? (Number(x) || 0) - (Number(y) || 0) : String(x || '').localeCompare(String(y || ''), undefined, { numeric: true });
       return cmp * sortDir || a.strain.localeCompare(b.strain);
@@ -502,10 +539,19 @@
     });
   }
 
+  const ownersEl = document.getElementById('owners');
+  function renderOwners() {
+    ownersEl.innerHTML = [['2cw', L.own2cw], ['client', L.ownClient], ['all', L.ownAll]]
+      .map(([v, l]) => `<button type="button" class="${owner === v ? 'on' : ''}" data-o="${v}">${esc(t(l))}</button>`).join('');
+    ownersEl.querySelectorAll('button').forEach((b) => {
+      b.onclick = () => { if (owner === b.dataset.o) return; owner = b.dataset.o; syncUrl(); render(); toListTop(); };
+    });
+  }
+
   const tabsEl = document.getElementById('tabs');
   function renderTabs() {
     tabsEl.innerHTML = TABS.filter((x) => !(H() && x.k === UNIT_TAB)).map((x) => {
-      const list = H() ? hist.filter((r) => inTab(r, x.k)) : rows.filter((r) => inTab(r, x.k) && !isUsed(r));
+      const list = H() ? hist.filter((r) => inTab(r, x.k) && ownerOk(r)) : rows.filter((r) => inTab(r, x.k) && ownerOk(r) && !isUsed(r));
       return `<button type="button" class="tab ${tab === x.k ? 'on' : ''}" data-k="${x.k}" style="--c:${x.c}">
         <div class="l">${esc(t(L[x.k]))}</div><div class="n">${fmtNum(sumLb(list, H() ? 'startLb' : 'lb'), 0)} ${x.k === UNIT_TAB ? esc(t(L.units)) : 'lb'}</div>
         <div class="s">${list.length} ${H() ? t(list.length === 1 ? L.rec : L.recs) : list.length === 1 ? t(L.pkg) : t(L.pkgs)}</div></button>`;
@@ -523,13 +569,14 @@
   document.getElementById('csv').onclick = exportCsv;
   // Bulk menu (bulk_menu.js): a priced PDF of what's on hand, starting from this tab.
   document.getElementById('menuBtn').onclick = () => BulkMenu.open({
-    rows: rows.filter((r) => !isUsed(r) && r.tab !== UNIT_TAB), tab: units() ? 'all' : tab, client, who, typeLabel, estNote
+    rows: rows.filter((r) => !isUsed(r) && ownerOk(r) && r.tab !== UNIT_TAB), tab: units() ? 'all' : tab, client, who, typeLabel, estNote
   });
   function syncUrl() {
     const u = new URL(location.href);
     if (H()) u.searchParams.set('view', 'history'); else u.searchParams.delete('view');
     if (tab === 'all') u.searchParams.delete('tab'); else u.searchParams.set('tab', tab);
     if (query) u.searchParams.set('q', query); else u.searchParams.delete('q');
+    if (owner === 'all') u.searchParams.delete('own'); else u.searchParams.set('own', owner);
     history.replaceState(null, '', u);
   }
 
@@ -543,12 +590,13 @@
 
   function render() {
     renderViews();
+    renderOwners();
     renderTabs();
     document.getElementById('usedWrap').style.display = H() ? 'none' : '';
     document.getElementById('menuBtn').style.display = H() ? 'none' : '';
     document.getElementById('note').textContent = t(H() ? L.histNote : units() ? L.fgNote : L.note);
     const list = current();
-    document.getElementById('sub').textContent = `${H() ? t(L.vHistory) + ' · ' : ''}${t(L[tab])} · ${list.length} ${
+    document.getElementById('sub').textContent = `${H() ? t(L.vHistory) + ' · ' : ''}${owner === 'all' ? '' : t(owner === 'client' ? L.ownClient : L.own2cw) + ' · '}${t(L[tab])} · ${list.length} ${
       H() ? t(list.length === 1 ? L.rec : L.recs) : list.length === 1 ? t(L.pkg) : t(L.pkgs)}`;
     const totalsEl = document.getElementById('totals');
     if (H()) {
@@ -577,6 +625,7 @@
       th.onclick = () => { if (sortKey === th.dataset.k) sortDir = -sortDir; else { sortKey = th.dataset.k; sortDir = ['lb', 'startLb', 'left', 'days', 'date'].includes(th.dataset.k) || th.dataset.k === 'est' ? -1 : 1; } render(); };
     });
     board.querySelectorAll('.mini[data-key]').forEach((b) => { b.onclick = () => toggleMark(b); });
+    board.querySelectorAll('.mini[data-own]').forEach((b) => { b.onclick = () => toggleOwner(b); });
     board.querySelectorAll('tr[data-row]').forEach((tr) => {
       tr.onclick = () => { const k = tr.dataset.row; if (openRows.has(k)) openRows.delete(k); else openRows.add(k); render(); };
     });
@@ -619,6 +668,13 @@
     setTimeout(() => tr.classList.remove('flash'), 1800);
   }
 
+  function cidCell(r) {
+    const tk = takenOf(r);
+    if (!tk) return esc(r.cid || '—');
+    const tip = [t(L.takenBy), tk.reason, tk.by, tk.at ? new Date(tk.at).toLocaleString() : ''].filter(Boolean).join(' · ');
+    return `${r.cid ? `<s class="small">${esc(r.cid)}</s> ` : ''}<b title="${esc(tip)}">2CW</b>`;
+  }
+
   function baseCells(r) {
     return {
       tab: `<span class="cat" style="--c:${TAB_COLOR[r.tab]}">${esc(t(L[r.tab]))}</span>`,
@@ -626,13 +682,20 @@
         r.ownUid && r.lotUid && !uidTailMatch(r.lotUid, r.uid) ? `<div class="small" title="${esc(r.lotUid)}">${esc(t(L.lot))}: ${esc(shortUid(r.lotUid))}</div>` : ''}${
         r.farmUids && r.farmUids.length && !r.farmUids.every((u) => uidTailMatch(u, r.uid)) ? `<div class="small" title="${esc(r.farmUids.join(', '))}">${esc(t(L.farmUid))}: ${esc(r.farmUids.map(shortUid).join(', '))}</div>` : ''}`,
       strain: esc(r.strain || '—'),
-      farm: esc(r.farm || '—'), code: esc(r.code || '—'), license: esc(r.license || '—'), cid: esc(r.cid || '—'),
+      farm: esc(r.farm || '—'), code: esc(r.code || '—'), license: esc(r.license || '—'), cid: cidCell(r),
       type: `<span class="small">${esc(typeLabel(r))}</span>`,
       location: esc(r.location || '—'),
       date: esc(fmtDate(r.date))
     };
   }
   const CLS = { uid: 'mono uid', strain: 'strain', code: 'mono', license: 'mono', cid: 'mono', lb: 'num', est: 'num', startLb: 'num', left: 'num', date: 'mono', days: 'num', to: 'to' };
+
+  // → 2CW on a client row; Return on the row a takeover was saved on.
+  function ownBtn(r) {
+    const tk = takenOf(r), uid = RawStock.takeUid(r);
+    if (tk) return tk.uid === uid ? ` <button type="button" class="mini" data-own="${esc(uid)}" data-on="1">${esc(t(L.giveBack))}</button>` : '';
+    return isClient(r) && !isUsed(r) && uid ? ` <button type="button" class="mini" data-own="${esc(uid)}" data-row-key="${esc(r.key)}" title="${esc(t(L.takeTip))}">${esc(t(L.takeBtn))}</button>` : '';
+  }
 
   function rowHtml(r) {
     const used = isUsed(r), dd = days(r);
@@ -645,7 +708,7 @@
     };
     const mark = canMark ? `<td>${marks[r.key]
       ? `<button type="button" class="mini" data-key="${esc(r.key)}" data-on="1" title="${esc(`${marks[r.key].by || ''} · ${marks[r.key].at ? new Date(marks[r.key].at).toLocaleString() : ''}`)}">${esc(t(L.restore))}</button>`
-      : r.lb > 0.005 ? `<button type="button" class="mini" data-key="${esc(r.key)}">${esc(t(L.markUsed))}</button>` : ''}</td>` : '';
+      : r.lb > 0.005 ? `<button type="button" class="mini" data-key="${esc(r.key)}">${esc(t(L.markUsed))}</button>` : ''}${ownBtn(r)}</td>` : '';
     return `<tr class="${used ? 'used' : ''}" style="--c:${TAB_COLOR[r.tab]}">${colsFor().map((c) => `<td class="${CLS[c.k] || ''}">${cells[c.k]}</td>`).join('')}${mark}</tr>`;
   }
 
@@ -709,6 +772,27 @@
     }
   }
 
+  async function toggleOwner(b) {
+    const uid = b.dataset.own, on = b.dataset.on === '1';
+    const r = rows.find((x) => x.key === b.dataset.rowKey);
+    let entry = null;
+    if (on) {
+      if (!confirm(t(L.giveAsk))) return;
+    } else {
+      const reason = prompt(`${t(L.takeAsk)}\n\n${r ? `${r.cid || r.farm} · ${r.strain} · ${r.uid} · ${fmtNum(r.lb)} lb` : uid}`);
+      if (reason === null) return;
+      entry = { uid, cid: r ? r.cid : '', farm: r ? r.farm : '', reason: reason.trim(), by: who, at: new Date().toISOString(), lb: r ? r.lb : null };
+    }
+    b.disabled = true;
+    try {
+      takeovers = await setTakeover(uid, entry);
+      render();
+    } catch (ex) {
+      b.disabled = false;
+      alert(`${t(L.saveFail)} ${ex.message || ex}`);
+    }
+  }
+
   // The rows showing (this view and tab, search, used-up toggle), in the table's order.
   function exportCsv() {
     const list = current();
@@ -734,7 +818,7 @@
     const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `raw_inventory_${H() ? 'history_' : ''}${tab}${query ? '_' + query.replace(/[^\w-]+/g, '_').slice(0, 30) : ''}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `raw_inventory_${H() ? 'history_' : ''}${owner === 'all' ? '' : owner + '_'}${tab}${query ? '_' + query.replace(/[^\w-]+/g, '_').slice(0, 30) : ''}_${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }

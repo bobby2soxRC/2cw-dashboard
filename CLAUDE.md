@@ -94,6 +94,11 @@ Materials Inventory" in `docs/OPERATIONS_APP.md`. Since 2026-10-22 it also
 has a **History** view (`?view=history`, `buildHistory`): every record each
 stage ever had, linked stage to stage down to the transfer customer; and
 downstream forms match an output's lot UID as well as its new tag.
+Since 2026-10-29: a **2CW / Client / All** switch (CID AGP = 2CW, other CIDs and non-Canix
+farm licenses = client; `isClientRow` in `raw_stock.js`), and
+**→ 2CW** on a client row takes ownership when a farm can't pay (shared
+`operations_forms` row `raw_inventory_ownership`; covers everything traced
+from that UID). No SQL.
 
 ### Hourly people not in Connecteam (started 2026-10-19)
 

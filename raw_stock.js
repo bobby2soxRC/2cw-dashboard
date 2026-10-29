@@ -5,7 +5,7 @@
 // ops_data.js loaded first.
 //
 // RawStock.load(client, { skipId }) loads every form it needs and returns
-// { d, rows, marks, paperIds, handPast, ref }: `rows` is what's on hand
+// { d, rows, marks, takeovers, paperIds, handPast, ref }: `rows` is what's on hand
 // (paper-import records left out), one row per package with its tab, uid,
 // lb, strain, farm/code/license, cid, used… `skipId` leaves that form out of
 // what was taken (a transfer being fixed doesn't count against itself).
@@ -24,6 +24,38 @@ const RawStock = (function () {
     if (error) throw error;
     return ((data && data.fields) || {}).marks || {};
   }
+
+  // Client material 2CW took ownership of (a farm that couldn't pay for its
+  // services): one shared operations_forms row (station_key
+  // 'raw_inventory_ownership', fixed id), takeovers keyed by normUid ->
+  // { uid, cid, by, at, reason, lb }. A takeover covers the package and
+  // everything traced from it: any row whose UID, lot UID or farm UID is
+  // the taken UID. Raw Inventory writes them.
+  const OWNERSHIP_ID = '72617769-6e76-4000-8000-000000000003';
+  async function getTakeovers(client) {
+    const { data, error } = await client.from('operations_forms').select('fields').eq('id', OWNERSHIP_ID).maybeSingle();
+    if (error) throw error;
+    return ((data && data.fields) || {}).takeovers || {};
+  }
+  // Whose material a row is: a CID decides (AGP, All Good Properties, is
+  // 2CW; any other CID is a client); with no CID, a farm license that isn't
+  // one of our Canix facilities makes it a client's. Nothing traced at all
+  // counts as 2CW's. Needs load() first (facilities).
+  const OWN_CIDS = ['AGP'];
+  function isClientRow(r) {
+    const split = (s) => uniq(String(s || '').split(','));
+    const cids = split(r.cid);
+    if (cids.length) return cids.some((c) => !OWN_CIDS.includes(c.toUpperCase()));
+    const tail = (l) => Number(digits(String(l || '').split('-').pop()));
+    const lics = split(r.license), codes = split(r.code);
+    if (lics.length) return lics.some((l) => !facilities.some((f) => f.license_number === l));
+    return codes.some((c) => !/^\d+$/.test(c) || !facilities.some((f) => tail(f.license_number) === Number(c)));
+  }
+  // The UID a takeover is saved under: a bucked lot's on-stem tag (what its
+  // trim outputs trace to), else the package's own UID.
+  const takeUid = (r) => normUid(r.tab === 'bucked' ? (r.lotUid || r.uid) : r.uid);
+  const takeoverOf = (r, takeovers) => [r.uid, r.lotUid, ...(r.farmUids || [])]
+    .map((u) => normUid(u)).filter(Boolean).map((u) => takeovers[u]).find(Boolean) || null;
 
   // ── Farm names, codes and licenses ────────────────────────────────────────
   // A form's Farm License (`pid`) is usually the short code from the
@@ -330,7 +362,7 @@ const RawStock = (function () {
   }
 
   async function load(client, opts = {}) {
-    const [intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, pouches, mfg, biomass, mixed, shipped, received, bq, tq, codes, fac, marks, paper, handPast, ref, canix] = await Promise.all([
+    const [intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, pouches, mfg, biomass, mixed, shipped, received, bq, tq, codes, fac, marks, paper, handPast, ref, canix, takeovers] = await Promise.all([
       loadSubmitted('intake_wet'), loadSubmitted('dry_check'), loadSubmitted('buck'), loadSubmitted('hand_trim'),
       loadSubmitted('machine_trim'), loadSubmitted('smalls_trim'), loadSubmitted('fresh_frozen'),
       loadSubmitted('preroll_production'), loadSubmitted('pouch_production'), loadSubmitted('mfg_output'), loadSubmitted('biomass_request'),
@@ -339,7 +371,8 @@ const RawStock = (function () {
       client.from('canix_facilities').select('license_number,farm_group').then((r) => r.data || []),
       getMarks(client),
       client.from('operations_forms').select('id').eq('owner_user', 'paper_import').limit(10000).then((r) => r.data || []),
-      loadSubmitted('hand_trim_history'), loadReference(), loadCanix()
+      loadSubmitted('hand_trim_history'), loadReference(), loadCanix(),
+      getTakeovers(client).catch(() => ({}))
     ]);
     pidCodes = (codes || []).filter((r) => r.kind === 'pid');
     facilities = fac;
@@ -349,9 +382,9 @@ const RawStock = (function () {
     // 'paper_import') still trace lots, but their output isn't stock any more.
     const paperIds = new Set(paper.map((r) => r.id));
     const rows = build(d).filter((r) => !paperIds.has(r.recId));
-    return { d, rows, marks, paperIds, handPast, ref };
+    return { d, rows, marks, takeovers, paperIds, handPast, ref };
   }
 
-  return { CAT_TAB, MARKS_ID, getMarks, load, build, tracer, adder, finishedRows, finishedGoodsRows, takersOf, applyTakers };
+  return { CAT_TAB, MARKS_ID, getMarks, OWN_CIDS, isClientRow, OWNERSHIP_ID, getTakeovers, takeUid, takeoverOf, load, build, tracer, adder, finishedRows, finishedGoodsRows, takersOf, applyTakers };
 })();
 if (typeof module !== 'undefined') module.exports = RawStock;

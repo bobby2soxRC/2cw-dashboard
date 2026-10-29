@@ -901,6 +901,29 @@ name, code, license, packages and wet lbs (History: In and Left) — biggest
 first, rows under it in the table's sort; clicking a header folds it.
 Intakes with no farm traced sit under "No farm on record".
 
+**2CW / Client / All** (since 2026-10-29), beside On hand / History, filters
+both views, the tab totals, the CSV (file name gets `2cw_` / `client_`) and
+the bulk menu by whose material it is (`isClientRow` in `raw_stock.js`): a
+CID decides — **AGP** (All Good Properties) is 2CW, any other CID is a
+client (`OWN_CIDS`); with no CID, a farm license that isn't one of our Canix
+facilities (`canix_facilities`: Comstock, Highland Springs, Lucern, Sulphur
+Bank, Wildcat, Adobe, Airway) makes it a client's (AutoCanna, Wildwood …).
+Rows with no farm or CID traced at all count as 2CW. Kept in the URL as
+`?own=2cw` / `?own=client`.
+
+**Taking ownership of client material** (a farm that can't pay for our
+services): on an on-hand client row, people who can mark Used up get
+**→ 2CW**, which asks why (e.g. the unpaid invoice #) and saves a takeover
+— `{ uid, cid, farm, reason, by, at, lb }` keyed by UID in one shared
+`operations_forms` row (station_key `raw_inventory_ownership`, fixed id
+`…0003`; `getTakeovers` / `takeoverOf` / `takeUid` in `raw_stock.js`). It's
+saved under the package's UID (a bucked lot's on-stem tag), and covers every
+row, now and later, whose UID, lot UID or farm UID is that UID — so taking
+over a Wet Intake or on-stem package takes what's made from it too. Those
+rows count as 2CW; the CID column shows the CID (if any) struck through and **2CW**
+(hover: reason, who, when). **Return** on the row it was saved on undoes it.
+No SQL.
+
 Search matches every word against strain, UID (the farm UIDs behind it too),
 license, farm name, farm code, CID and location (FRZ, 3A…). Column headers sort. **Export CSV**
 downloads exactly the rows showing (tab, search, Show used up). The tab and
