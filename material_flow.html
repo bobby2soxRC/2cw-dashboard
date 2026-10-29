@@ -419,12 +419,12 @@ trimmer pay      = pounds × trimRatePerLb</pre></div>
 
     <article class="card" id="st-smalls_trim">
       <div class="card-head"><h3>Smalls Hand Trim</h3><span class="k">smalls_trim</span><span class="pill state">conserving</span></div>
-      <p>The paper "Work Order Form (Smalls | By the Hourly)": one page per flavor per day, with a daily employee × flavor tally under the form.</p>
+      <p>The paper "Work Order Form (Smalls | By the Hourly)": one page per smalls package, open across days (a tab per day) until it's submitted, like Hand Trim, with a daily employee × flavor tally (lbs) under the form.</p>
       <div class="cols">
         <div><h4>On the form</h4><ul>
-          <li>Package UID, strain, starting lbs</li>
-          <li>Worksheet: employee #, grams per bag</li>
-          <li>Shake, waste, new UID for finished smalls, back-of-form initials</li>
+          <li>Project; package picked from Raw Inventory's Smalls (fills strain, starting lbs)</li>
+          <li>Worksheet: employee #, bags × grams each, stamped with the day</li>
+          <li>End of run: shake, waste, new UID for finished smalls, back-of-form initials, team lead, labor hours</li>
         </ul></div>
         <div><h4>Math</h4>
 <pre class="math">finishedSmallsLb = Σ grams ÷ 454

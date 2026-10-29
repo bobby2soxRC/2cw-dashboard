@@ -1053,41 +1053,60 @@ const OPERATIONS_STATIONS = [
   },
 
   // ── PROCESSING: SMALLS HAND TRIM (BY THE HOURLY) ──────────────────────────
-  // The paper "Work Order Form (Smalls | By the Hourly)": one page per flavor
-  // per day. Several flavors run at once, so `sharedDay` puts every open
-  // smalls page in the switcher at the top (anyone's, not just yours) to jump
-  // between flavors, and `dailySummary` draws the notebook tally under the
-  // form — employee # × flavor, grams, for the day.
+  // The paper "Work Order Form (Smalls | By the Hourly)", built like Hand
+  // Trim: one page per smalls package (flavor). Several run at once, so
+  // `sharedDay` puts every open smalls page in the switcher at the top
+  // (anyone's, not just yours) to jump between them, and a page stays open
+  // across days until it's submitted (`dayTabs`). `dailySummary` draws the
+  // notebook tally under the form — employee # × flavor, lbs, for the day.
   {
     key: 'smalls_trim',
     dept: { en: 'Processing', es: 'Procesamiento' },
     title: { en: 'Smalls Hand Trim', es: 'Corte a mano — smalls' },
-    desc: { en: 'Smalls work order, by the hourly — one page per flavor per day. Weigh each trimmer’s finished smalls.',
-            es: 'Orden de trabajo de smalls, por hora — una hoja por sabor por día. Pese los smalls terminados de cada persona.' },
+    desc: { en: 'Smalls work order, by the hourly — one page per package, open across days. Weigh each trimmer’s finished smalls.',
+            es: 'Orden de trabajo de smalls, por hora — una hoja por paquete, abierta varios días. Pese los smalls terminados de cada persona.' },
     color: 'blue',
     headline: 'finishedSmallsLb',
     sharedDay: true,
-    dailySummary: { lines: 'weights', empCol: 'employeeNo', valueCol: 'grams' },
+    canDelete: true,
+    // A package is often trimmed over several days: a tab per day under the
+    // flavor tabs; the weighing log shows the picked day and stamps new bags
+    // with it.
+    dayTabs: { lines: 'weights', fromGrams: true },
+    dailySummary: { lines: 'weights', empCol: 'employeeNo', valueCol: 'grams', dateCol: 'day', unit: 'lb', fromGrams: true,
+                    title: { en: 'Daily Summary — Pounds by Person', es: 'Resumen del día — libras por persona' },
+                    hint: { en: 'Finished smalls weighed that day on every smalls page, in pounds. Open pages included.',
+                            es: 'Smalls terminados pesados ese día en todas las hojas de smalls, en libras. Incluye hojas abiertas.' } },
     fields: [
       F.date(),
-      { k: 'sourceUid', t: 'uid', req: true,
-        l: { en: 'Package UID', es: 'UID del paquete' },
-        hint: { en: 'Metrc tag on the smalls package — the last 4 is enough.',
-                es: 'Etiqueta Metrc del paquete de smalls — basta con los últimos 4.' } },
+      F.project(),
+      // Picked from Raw Inventory's Smalls tab (`picker`: list 'smalls' in
+      // ops_form.html). "Other" is for smalls from somewhere else: a popup
+      // asks for the strain and the package UID.
+      { k: 'sourceUid', t: 'uid', req: true, picker: { list: 'smalls', otherPopup: true },
+        l: { en: 'Smalls Package', es: 'Paquete de smalls' },
+        pickedLabel: { en: 'Package UID', es: 'UID del paquete' },
+        hint: { en: 'Smalls on hand in Raw Inventory. Picking one fills in the strain and starting weight. Not listed: pick Other.',
+                es: 'Smalls disponibles en el Inventario. Al elegir uno se llenan la variedad y el peso inicial. Si no aparece: elija Otro.' } },
       { k: 'strain', t: 'select', ref: 'strains', allowOther: true, req: true,
         l: { en: 'Strain (flavor)', es: 'Variedad (sabor)' } },
       { k: 'startingLb', t: 'number', req: true, min: 0, step: 0.01,
         l: { en: 'Total Starting Weight (lbs)', es: 'Peso inicial total (lbs)' } },
 
-      // Finished Smalls — Weighing Worksheet: one row per bag weighed out.
-      { k: 'weights', t: 'lineitems', req: true,
+      // Finished Smalls — Weighing Worksheet, as a running log (like Hand
+      // Trim's) so two tablets on one package merge their bags.
+      { k: 'weights', t: 'lineitems', entry: true, req: true,
         l: { en: 'Finished Smalls — Weighing Worksheet', es: 'Smalls terminados — hoja de pesaje' },
-        hint: { en: 'One row per bag weighed out. The same employee # can appear on several rows.',
-                es: 'Una fila por bolsa pesada. El mismo n.º de empleado puede aparecer en varias filas.' },
+        hint: { en: 'Employee #, how many full bags and their grams each (454 = 1 lb), plus any partial bag — Add logs a line for each bag.',
+                es: 'N.º de empleado, cuántas bolsas llenas y sus gramos c/u (454 = 1 lb), más una bolsa parcial — Agregar registra una línea por bolsa.' },
         cols: [
           { k: 'employeeNo', t: 'text', l: { en: 'Employee #', es: 'N.º de empleado' }, inputmode: 'numeric', req: true },
-          { k: 'grams', t: 'number', l: { en: 'Weight (gm)', es: 'Peso (gm)' }, min: 0, step: 1, req: true }
+          { k: 'grams', t: 'number', l: { en: 'Weight (gm)', es: 'Peso (gm)' }, min: 0, step: 1, req: true, dp: 0 }
         ],
+        multi: { col: 'grams', def: 454,
+                 qty: { en: 'Bags', es: 'Bolsas' },
+                 each: { en: 'Grams each', es: 'Gramos c/u' },
+                 partial: { en: 'Partial (gm)', es: 'Parcial (gm)' } },
         totalCol: 'grams' },
 
       { k: 'totalGrams', t: 'calc', dp: 0,
@@ -1101,6 +1120,11 @@ const OPERATIONS_STATIONS = [
         calc: (v) => new Set((v.weights || []).map((r) => String(r.employeeNo || '').trim()).filter(Boolean)).size,
         l: { en: 'Trimmers on this Page', es: 'Personas en esta hoja' } },
 
+      // Weighed once, when the whole package is done.
+      { k: 'endOfRun', t: 'heading',
+        l: { en: 'End of Run', es: 'Fin de la corrida' },
+        hint: { en: 'Fill these in on the last day of the run, then submit.',
+                es: 'Llene esto el último día de la corrida y luego envíe.' } },
       { k: 'shakeLb', t: 'number', min: 0, step: 0.01,
         l: { en: 'Shake (lbs)', es: 'Shake (lbs)' } },
       F.waste(),
@@ -1112,6 +1136,7 @@ const OPERATIONS_STATIONS = [
       // Back of the paper form: who did the follow-up paperwork.
       { k: 'wasteAdjustedBy', t: 'text', l: { en: 'Waste Adjusted (starting package UID) — initials', es: 'Desecho ajustado (UID inicial) — iniciales' } },
       { k: 'inventoryUpdatedBy', t: 'text', l: { en: '2CW Processor Inventory Updated — initials', es: 'Inventario del procesador 2CW actualizado — iniciales' } },
+      F.teamLead(), F.laborHours(),
       { k: 'notes', t: 'textarea', l: { en: 'Smalls Manager Notes', es: 'Notas del encargado de smalls' } },
       F.photo()
     ],
@@ -1801,7 +1826,10 @@ const PREFILL_MAP = {
                  warn: (up) => (up.inProgress
                    ? { en: 'Still being bucked — the starting weight is what’s been bucked so far. Update it if more comes over.',
                        es: 'Todavía se está desvarando — el peso inicial es lo desvarado hasta ahora. Actualícelo si llega más.' }
-                   : null) }
+                   : null) },
+  // Smalls Hand Trim only fills from a package picked off Raw Inventory's
+  // Smalls tab (its `lb` is what's left on it); nothing is looked up by a typed UID.
+  smalls_trim: { from: null,           map: { strain: 'strain', startingLb: 'lb' } }
 };
 
 // Order of the pipeline, for the dashboard's stage funnel.

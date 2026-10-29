@@ -404,7 +404,9 @@
     noneBucked: { en: 'No bucked flower yet — pick Other', es: 'Aún no hay flor desvarada — elija Otro' },
     chooseLot: { en: 'Choose the lot…', es: 'Elija el lote…' },
     otherLot:  { en: 'Other — not on the list', es: 'Otro — no aparece' },
-    bucking:   { en: 'bucking in progress', es: 'desvarándose' }
+    bucking:   { en: 'bucking in progress', es: 'desvarándose' },
+    loadingSmalls: { en: 'Loading smalls on hand…', es: 'Cargando smalls disponibles…' },
+    noneSmalls: { en: 'No smalls on hand — pick Other', es: 'No hay smalls disponibles — elija Otro' }
   };
   // The pre-roll queue dropdown (prPicker — Pre-Roll Production's and Ground
   // Flower Pouches' request).
@@ -476,7 +478,7 @@
     cancel:     { en: 'Cancel', es: 'Cancelar' }
   };
   const pkLoading = (f) => t(f.picker.list === 'buckable' ? PK.loadingBuck : f.picker.list === 'bucked' ? PK.loadingBucked
-    : f.picker.list === 'incoming' ? WI.loading : PK.loading);
+    : f.picker.list === 'incoming' ? WI.loading : f.picker.list === 'smalls' ? PK.loadingSmalls : PK.loading);
 
   // ── Tares (a `tare` column) ───────────────────────────────────────────────
   // TARE_PRESETS until the shared list loads (getTares in ops_data.js); every
@@ -2617,6 +2619,8 @@
   //     4", less any package another bucking page already has open.
   //   Hand Trim's lot (`list: 'bucked'`) — every lot that's been bucked
   //     (buckedLots in ops_common.js), newest first, same labels as Bucking.
+  //   Smalls Hand Trim's package (`list: 'smalls'`) — Raw Inventory's Smalls
+  //     tab (raw_stock.js), less what another smalls page has open.
   // Picking one fills the UID and its upstream details (strain, …).
   // `otherPopup`: "Other" opens a popup for the strain and package UID
   // instead of just showing the UID box.
@@ -2627,8 +2631,23 @@
   const buckPick = pickerFields.some((f) => f.picker.list === 'buckable');
   const buckedPick = pickerFields.some((f) => f.picker.list === 'bucked');
   const incomingPick = pickerFields.some((f) => f.picker.list === 'incoming');
+  const smallsPick = pickerFields.some((f) => f.picker.list === 'smalls');
   let pickPool = [], pickReady = false, queueItems = null;
   const pickLoaded = pickerFields.length ? (async () => {
+    if (smallsPick) {
+      // Smalls on hand, as Raw Inventory has them (submitted smalls pages
+      // already taken off). Finished smalls from an earlier smalls run aren't
+      // trimmed again, and a package open on another page is in the switcher.
+      const [stock, open] = await Promise.all([
+        RawStock.load(getClient(), { skipId: editMode ? editId : null }),
+        draftsOn ? listOpenDrafts(station.key).catch(() => []) : []]);
+      const elsewhere = (open || []).filter((d) => d.id !== draftId && d.fields && d.fields.sourceUid).map((d) => d.fields.sourceUid);
+      pickPool = stock.rows.filter((x) => x.tab === 'smalls' && x.lb > 0.005 && !stock.marks[x.key] && x.station !== 'smalls_trim' && x.uid)
+        .filter((x) => !elsewhere.some((u) => uidTailMatch(u, x.uid)))
+        .map((x) => ({ ...x, sourceUid: x.uid }))
+        .sort((a, b) => String(a.strain).localeCompare(String(b.strain)) || String(a.date).localeCompare(String(b.date)));
+      return;
+    }
     if (incomingPick) {
       // Wet Intake: what Canix shows on its way to us, less what's in already.
       const get = (n) => fetch(`/data/${n}`).then((r) => (r.ok ? r.json() : [])).catch(() => []);
@@ -2669,6 +2688,7 @@
     const lots = f.picker.list === 'bucked';
     const buck = f.picker.list === 'buckable' || lots;
     if (f.picker.list === 'incoming') return fillIncoming(f, sel, inp);
+    if (f.picker.list === 'smalls') return fillSmalls(f, sel, inp);
     const room = f.picker.room ? values[f.picker.room] : null;
     const list = buck ? pickPool.slice()
       : (room ? pickPool.filter((i) => inDryRoom(i.dryRoom, room)) : [])
@@ -2685,6 +2705,25 @@
       (lots && i.inProgress ? ` — ${t(PK.bucking)}` : '');
     const first = !pickReady ? pkLoading(f) : (f.picker.room && !room) ? t(PK.roomFirst)
       : list.length ? t(lots ? PK.chooseLot : PK.choose) : t(lots ? PK.noneBucked : buck ? PK.noneBuck : PK.none);
+    sel.innerHTML = `<option value="">${escapeHtml(first)}</option>` +
+      list.map((i, ix) => `<option value="${ix}">${escapeHtml(label(i))}</option>`).join('') +
+      `<option value="__type__">${escapeHtml(t(f.picker.otherPopup ? PK.otherLot : PK.typed))}</option>`;
+    const cur = values[f.k];
+    const ix = cur ? list.findIndex((i) => normUid(i.sourceUid) === normUid(cur)) : -1;
+    if (ix >= 0 && !typing[f.k]) sel.value = String(ix);
+    else if (cur || typing[f.k]) { typing[f.k] = true; sel.value = '__type__'; }
+    else sel.value = '';
+    inp.style.display = typing[f.k] ? 'block' : 'none';
+    showPicked(f);
+  }
+
+  // Smalls Hand Trim's package: "Lemon Cherry - 0158 · 12.4 lb · Comstock".
+  function fillSmalls(f, sel, inp) {
+    const list = pickPool.slice();
+    pickLists[f.k] = list;
+    const label = (i) => [`${i.strain || '—'} - ${normUid(i.sourceUid).slice(-4)}`, `${fmtNum(i.lb)} lb`, i.farm || i.code,
+      i.cid ? `CID ${i.cid}` : ''].filter(Boolean).join(' · ');
+    const first = !pickReady ? t(PK.loadingSmalls) : list.length ? t(PK.choose) : t(PK.noneSmalls);
     sel.innerHTML = `<option value="">${escapeHtml(first)}</option>` +
       list.map((i, ix) => `<option value="${ix}">${escapeHtml(label(i))}</option>`).join('') +
       `<option value="__type__">${escapeHtml(t(f.picker.otherPopup ? PK.otherLot : PK.typed))}</option>`;

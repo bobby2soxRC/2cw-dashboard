@@ -599,15 +599,16 @@ function mountQueueBanner(elId) {
 // pounds — `fromGrams`). Used by the form's Daily Summary and the Today
 // board's.
 function dailySummaryGrid(cfg, pages, date, keep) {
-  const onDay = (r) => !cfg.dateCol || String(r[cfg.dateCol] || '') === date;
+  // A row with no day of its own (logged before the station had day tabs) is the page's date.
+  const onDay = (p) => (r) => !cfg.dateCol || String(r[cfg.dateCol] || p.f.date || '') === date;
   const inLb = cfg.unit === 'lb';
   const scale = cfg.fromGrams ? 1 / G_PER_LB : 1;
   const X = cfg.extra || null;
-  const extraOf = (p) => (X ? (p.f[X.lines] || []).filter(onDay).reduce((a, r) => a + num(r[X.valueCol]), 0) * scale : 0);
-  const used = pages.filter((p) => (p.f[cfg.lines] || []).some((r) => onDay(r) && num(r[cfg.valueCol]) > 0) || extraOf(p) > 0 || (keep && keep(p)));
+  const extraOf = (p) => (X ? (p.f[X.lines] || []).filter(onDay(p)).reduce((a, r) => a + num(r[X.valueCol]), 0) * scale : 0);
+  const used = pages.filter((p) => (p.f[cfg.lines] || []).some((r) => onDay(p)(r) && num(r[cfg.valueCol]) > 0) || extraOf(p) > 0 || (keep && keep(p)));
   used.sort((a, b) => String(a.strain || '').localeCompare(String(b.strain || '')));
   const grid = {};   // emp -> page id -> grams (or lbs)
-  used.forEach((p) => (p.f[cfg.lines] || []).filter(onDay).forEach((r) => {
+  used.forEach((p) => (p.f[cfg.lines] || []).filter(onDay(p)).forEach((r) => {
     const emp = String(r[cfg.empCol] || '').trim();
     const g = num(r[cfg.valueCol]) * scale;
     if (!emp || !g) return;

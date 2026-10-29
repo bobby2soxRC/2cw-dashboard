@@ -538,24 +538,33 @@ Pre-Roll Dashboard card (`2cw_preroll_dash`, set at login). The card is
 `ambient`, so someone with only one station still lands straight on it.
 
 **Smalls Hand Trim** (`smalls_trim`) is the paper "Work Order Form (Smalls |
-By the Hourly)": one page per flavor per day — package UID, strain, starting
-lbs, then the weighing worksheet (employee #, grams, one row per bag), with
-grams → lbs worked out (÷ 454, `G_PER_LB`), shake, waste and
-variance, and the back-of-form initials (waste adjusted, processor inventory)
-plus manager notes. No farm license, CID or grade — those come from the UID.
-A page is filled in over the whole day and autosaves; someone who closes it
-and reopens the station gets a blank page with a note pointing at the open
-flavor pages in the switcher. Two station
-options drive it, both handled in `ops_form.html`:
+By the Hourly)". Since 2026-10-29 it's built like Hand Trim: one page per
+smalls package (flavor) that stays open across days until it's submitted —
+project, the package (picked from Raw Inventory's **Smalls** tab, which fills
+strain and starting lbs; Other opens a popup for strain + UID), then the
+weighing worksheet as a running log (employee #, Bags × Grams each + Partial,
+a row per bag, stamped with its day), grams → lbs worked out (÷ 454,
+`G_PER_LB`), and at the End of Run shake, waste and variance, the
+back-of-form initials (waste adjusted, processor inventory), team lead, labor
+hours and manager notes. No farm license, CID or grade — those come from the
+UID. The package list (`picker: { list: 'smalls' }`, `fillSmalls` in
+`ops_form.html`) is `RawStock.load`'s smalls rows with lbs left, less
+finished smalls from earlier smalls runs and packages open on another smalls
+page. Someone who closes a page and reopens the station gets a blank page
+with a note pointing at the open pages in the switcher. Open pages can be
+deleted (`canDelete`). The station options, all handled in `ops_form.html`:
 - `sharedDay: true` — the switcher at the top ("Flavors open") lists every
   open smalls page from anyone, not just your own, plus "+ New flavor", so
-  the room can jump between the flavors running that day. Older pages still
-  open show their date.
-- `dailySummary: { lines, empCol, valueCol }` — a panel under the form that
-  replaces the notebook tally: employee # down the side, each flavor page
-  across the top, grams in each cell, totals both ways and lbs per person.
-  Built from every form on the station for the picked date (drafts and
-  submitted), with the page you're on using its live values.
+  the room can jump between the packages running. Pages started another day
+  show their date.
+- `dayTabs: { lines: 'weights', fromGrams: true }` — a tab per day under the
+  flavor tabs, as on Hand Trim; the log shows the picked day's bags.
+- `dailySummary: { lines, empCol, valueCol, dateCol: 'day', unit: 'lb' }` — a
+  panel under the form that replaces the notebook tally: employee # down the
+  side, each flavor page across the top, lbs weighed that day in each cell,
+  totals both ways. Built from every form on the station (drafts and
+  submitted) with bags on the picked day, with the page you're on using its
+  live values. Bags logged before day tabs count on their page's date.
 Its flow is smalls in → finished smalls + shake + waste, and
 its worksheet rows feed the Labor tab the same way Hand Trim's do.
 
