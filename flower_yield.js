@@ -1,9 +1,11 @@
 // A-flower estimates for material not trimmed yet — what the bulk menu's
 // "Flower — 5-day lead" section offers and Raw Inventory's Est. A Flower
-// column shows. Two yields, each learned from the submitted forms:
+// column shows. Three yields, each learned from the submitted forms:
+//   dry:  Take Down's dryWeightLb ÷ wetIntakeLb       (drying → on-stem)
 //   buck: Bucking's buckedFlowerLb ÷ startingDryLb   (on-stem → bucked)
 //   trim: Hand Trim's finishedFlowerLb ÷ startingBuckedLb (bucked → A flower)
-// On-stem material gets both (buck × trim), bucked material just trim.
+// Drying material gets all three (dry × buck × trim), on-stem buck × trim,
+// bucked just trim. Take Downs are keyed by their farm UID (incomingUid).
 //
 // The forms (paper imports especially) often split one lot over several
 // records — inputs on one, outputs on another — or repeat one, so records
@@ -18,11 +20,11 @@
 // of it was already bucked or trimmed. Strains match through the Strain
 // Library's names and aliases ("Gelato #41" = "Gelato 41" = "G41").
 (function (root) {
-  const DEFAULT = { buck: 0.55, trim: 0.65 };   // until there's any data at all
-  const OK = { buck: [0.2, 0.9], trim: [0.25, 0.95] };
+  const DEFAULT = { dry: 0.25, buck: 0.55, trim: 0.65 };   // until there's any data at all
+  const OK = { dry: [0.1, 0.6], buck: [0.2, 0.9], trim: [0.25, 0.95] };
   const PRIOR_LB = 100;
   const BATCH_PRIOR_LB = 20;
-  const FIELDS = { buck: ['startingDryLb', 'buckedFlowerLb'], trim: ['startingBuckedLb', 'finishedFlowerLb'] };
+  const FIELDS = { dry: ['wetIntakeLb', 'dryWeightLb'], buck: ['startingDryLb', 'buckedFlowerLb'], trim: ['startingBuckedLb', 'finishedFlowerLb'] };
 
   const num = (x) => { const n = Number(x); return Number.isFinite(n) ? n : 0; };
   // "Gelato #41 (grade noted …)" → "gelato41"
@@ -47,7 +49,7 @@
       const inLb = num(r[inF]), outLb = num(r[outF]);
       if (!(inLb > 0) && !(outLb > 0)) return;
       const strain = keyOf.strain(r.strain);
-      const tail = lotTail(r.sourceUid);
+      const tail = lotTail(stage === 'dry' ? r.incomingUid : r.sourceUid);
       const key = tail ? `${strain}|${tail}` : `#${i}`;
       if (!lots.has(key)) lots.set(key, { key, strain, in: 0, out: 0, seen: new Set() });
       const lot = lots.get(key);
@@ -73,13 +75,14 @@
     return { all: tot.in > 0 ? tot.out / tot.in : DEFAULT[stage], allLots: lots.length, allLb: tot.in, strains, byLot };
   }
 
-  // records: { bucks, trims } (submitted Bucking and Hand Trim records),
-  // strains: the Strain Library (loadReference().strains).
-  function buildModel({ bucks, trims, strains }) {
+  // records: { downs, bucks, trims } (submitted Take Down, Bucking and Hand
+  // Trim records), strains: the Strain Library (loadReference().strains).
+  function buildModel({ downs, bucks, trims, strains }) {
     const aliases = aliasMap(strains);
     const keyOf = { strain: (s) => { const k = squash(s); return aliases.get(k) || k; } };
     return {
       keyOf,
+      dry: stageModel(lotsOf(downs, 'dry', keyOf), 'dry'),
       buck: stageModel(lotsOf(bucks, 'buck', keyOf), 'buck'),
       trim: stageModel(lotsOf(trims, 'trim', keyOf), 'trim')
     };
@@ -97,12 +100,13 @@
     return { pct, basis, lots, lb };
   }
 
-  // Estimated A flower from `lb` of on-stem (stage 'onstem') or bucked
-  // ('bucked') material. `doneLb`: A flower already weighed off it (an open
+  // Estimated A flower from `lb` of drying (stage 'drying', wet lb), on-stem
+  // ('onstem') or bucked ('bucked') material. `doneLb`: A flower already weighed off it (an open
   // Hand Trim page), taken off the estimate. → { lb, pct, steps }
   function estimate(model, { stage, strain, uid, lb, startLb, doneLb }) {
     const steps = [];
-    if (stage === 'onstem') steps.push({ stage: 'buck', ...rate(model, 'buck', strain, uid) });
+    if (stage === 'drying') steps.push({ stage: 'dry', ...rate(model, 'dry', strain, uid) });
+    if (stage === 'onstem' || stage === 'drying') steps.push({ stage: 'buck', ...rate(model, 'buck', strain, uid) });
     steps.push({ stage: 'trim', ...rate(model, 'trim', strain, uid) });
     const pct = steps.reduce((a, x) => a * x.pct, 1);
     const base = startLb != null ? num(startLb) : num(lb);

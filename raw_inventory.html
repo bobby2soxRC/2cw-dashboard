@@ -39,6 +39,9 @@
     .tab .l{font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--subtext)}
     .tab .n{font-family:'Bebas Neue',sans-serif;font-size:28px;line-height:1;margin-top:4px;color:var(--c,var(--text))}
     .tab .s{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--muted);margin-top:2px}
+    .tab .e{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--green);margin-top:6px;padding-top:6px;border-top:1px solid var(--border)}
+    .tab .e b{font-weight:500}
+    .pin.stuck .tab .e{margin-top:3px;padding-top:3px}
 
     .filters{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0 14px;align-items:center}
     .filters input[type=search]{flex:1 1 280px;min-width:0;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .9rem;font-size:.95rem;min-height:44px;outline:none}
@@ -199,8 +202,8 @@
     sNoTag:   { en: 'Run — no Metrc package yet', es: 'Corrida — aún sin paquete en Metrc' },
     tCanix:   { en: 'Metrc package', es: 'Paquete de Metrc' },
     tRun:     { en: 'Run', es: 'Corrida' },
-    fgNote:   { en: 'Pre-rolls and ground flower pouches waiting to ship, in units as Metrc counts them (a 28-pack is 1). From Canix: the packages at Adobe that aren’t on a manifest yet (In Transit ones have left). A submitted Pre-Roll or Pouch run whose package isn’t in Canix yet shows as a run, in pre-rolls / pouches, until it is. An Outgoing Transfer that names a package takes it off until Canix has its manifest. Not in the All tab or the pound totals.',
-                es: 'Prerolls y bolsas de flor molida por enviar, en unidades como las cuenta Metrc (un paquete de 28 es 1). De Canix: los paquetes en Adobe que aún no están en un manifiesto. Una corrida enviada cuyo paquete aún no está en Canix aparece como corrida hasta que esté. No están en Todo ni en los totales de libras.' },
+    fgNote:   { en: 'Pre-rolls and ground flower pouches waiting to ship, in units as Metrc counts them (a 28-pack is 1). From Canix: the packages at Adobe that aren’t on a manifest yet (In Transit ones have left). A submitted Pre-Roll or Pouch run whose package isn’t in Canix yet shows as a run, in pre-rolls / pouches, until it is. An Outgoing Transfer that names a package takes it off until Canix has its manifest. Not in the pound totals.',
+                es: 'Prerolls y bolsas de flor molida por enviar, en unidades como las cuenta Metrc (un paquete de 28 es 1). De Canix: los paquetes en Adobe que aún no están en un manifiesto. Una corrida enviada cuyo paquete aún no está en Canix aparece como corrida hasta que esté. No están en los totales de libras.' },
     search:   { en: 'Search strain, UID, license, farm name or code, CID, location…', es: 'Buscar variedad, UID, licencia, rancho o código, CID, ubicación…' },
     showUsed: { en: 'Show used up', es: 'Mostrar agotados' },
     csv:      { en: '⇩ Export CSV', es: '⇩ Exportar CSV' },
@@ -262,6 +265,7 @@
     tTake:    { en: 'Take Down', es: 'Bajada' },
     // A-flower estimates (flower_yield.js)
     colEst:   { en: 'Est. A Flower', es: 'Flor A est.' },
+    estDry:   { en: 'Drying', es: 'Secado' },
     estBuck:  { en: 'Bucking', es: 'Desvarado' },
     estTrim:  { en: 'Trim', es: 'Corte' },
     estBatch: { en: 'this lot', es: 'este lote' },
@@ -270,6 +274,10 @@
     estAll:   { en: 'all lots', es: 'todos los lotes' },
     estDef:   { en: 'standard, no data yet', es: 'estándar, sin datos aún' },
     estDone:  { en: 'already weighed', es: 'ya pesado' },
+    estCard:  { en: 'Est. A flower', es: 'Flor A est.' },
+    estPot:   { en: 'If all processed', es: 'Si se procesa todo' },
+    estPotT:  { en: 'Flower on hand plus the estimated A flower from everything drying, on-stem and bucked.',
+                es: 'Flor disponible más la flor A estimada de todo lo que se está secando, en tallo y desvarado.' },
     // History view
     vOnHand:  { en: 'On hand', es: 'Disponible' },
     vHistory: { en: 'History', es: 'Historial' },
@@ -310,13 +318,15 @@
                 es: 'Hecho con los formularios de estación, no con Canix. Secando, En tallo y Desvarado se vacían solos al enviar el siguiente formulario. Flor, Smalls, Recorte y Fresco congelado bajan cuando una corrida de prerolls, de bolsas de flor molida, de manufactura, una solicitud de biomasa (transferida), un corte de smalls, un paquete de recorte mixto o una transferencia de salida usa su UID; lo vendido o movido de otra forma hay que marcarlo como Agotado. Lo del corte a mano sin UID nuevo aparece bajo el UID del lote. Secando y fresco congelado son peso húmedo; lo demás es seco.' }
   };
   const TABS = [
-    { k: 'all', c: 'var(--text)' }, { k: 'drying', c: 'var(--blue)' }, { k: 'onstem', c: 'var(--gold)' },
+    { k: 'drying', c: 'var(--blue)' }, { k: 'onstem', c: 'var(--gold)' },
     { k: 'bucked', c: 'var(--purple)' }, { k: 'flower', c: 'var(--green)' }, { k: 'smalls', c: '#8bc34a' },
     { k: 'trim', c: '#c48b5a' }, { k: 'frozen', c: 'var(--cyan)' }, { k: 'finished', c: '#e0864a' }
   ];
   // Pre-Rolls & Pouches is counted in units, not pounds (raw_stock.js
   // finishedGoodsRows): its own tab only, on hand only.
   const UNIT_TAB = 'finished';
+  // The tabs with an Est. A Flower: material not trimmed yet.
+  const EST_TABS = ['drying', 'onstem', 'bucked'];
   const TAB_COLOR = Object.fromEntries(TABS.map((x) => [x.k, x.c]));
 
   document.getElementById('title').textContent = t(L.title);
@@ -372,10 +382,10 @@
     takeovers = res.takeovers || {};
     recs = new Map(['intakes', 'downs', 'bucks', 'hand', 'machine', 'smallsT', 'frozen', 'prerolls', 'pouches', 'mfg', 'biomass', 'mixed', 'shipped', 'received']
       .flatMap((k) => d[k]).map((r) => [r.id, r]));
-    // Estimated A flower from what's on-stem or bucked, from every Bucking
-    // and Hand Trim so far (paper and Past Records included).
-    const model = FlowerYield.buildModel({ bucks: d.bucks, trims: [...d.hand, ...handPast], strains: (ref && ref.strains) || [] });
-    rows.filter((r) => r.tab === 'onstem' || r.tab === 'bucked').forEach((r) => {
+    // Estimated A flower from what's drying, on-stem or bucked, from every
+    // Take Down, Bucking and Hand Trim so far (paper and Past Records included).
+    const model = FlowerYield.buildModel({ downs: d.downs, bucks: d.bucks, trims: [...d.hand, ...handPast], strains: (ref && ref.strains) || [] });
+    rows.filter((r) => EST_TABS.includes(r.tab)).forEach((r) => {
       r.est = FlowerYield.estimate(model, { stage: r.tab, strain: r.strain, uid: r.lotUid || r.uid, lb: r.lb,
         startLb: r.tab === 'bucked' ? r.buckedLb : null, doneLb: r.tab === 'bucked' ? r.doneLb : 0 });
     });
@@ -445,7 +455,7 @@
   // ── View ──────────────────────────────────────────────────────────────────
   const params = new URLSearchParams(location.search);
   let view = params.get('view') === 'history' ? 'history' : 'onhand';
-  let tab = TABS.some((x) => x.k === params.get('tab')) ? params.get('tab') : 'all';
+  let tab = TABS.some((x) => x.k === params.get('tab')) ? params.get('tab') : 'drying';
   let query = params.get('q') || '';
   let owner = ['2cw', 'client'].includes(params.get('own')) ? params.get('own') : 'all';
   let showUsed = false;
@@ -479,7 +489,7 @@
     if (!est) return '';
     const basis = (x) => x.basis === 'batch' ? t(L.estBatch) : x.basis === 'strain' ? `${strain}, ${x.lots} ${t(x.lots === 1 ? L.estLot : L.estLots)}`
       : x.basis === 'all' ? `${t(L.estAll)}, ${x.lots}` : t(L.estDef);
-    return est.steps.map((x) => `${t(x.stage === 'buck' ? L.estBuck : L.estTrim)} ${Math.round(x.pct * 100)}% (${basis(x)})`).join(' × ');
+    return est.steps.map((x) => `${t(x.stage === 'dry' ? L.estDry : x.stage === 'buck' ? L.estBuck : L.estTrim)} ${Math.round(x.pct * 100)}% (${basis(x)})`).join(' × ');
   }
   const visible = (r) => H() || showUsed || !isUsed(r);
   function matches(r) {
@@ -519,7 +529,7 @@
   // Est. A Flower right after Lbs, on the tabs it applies to.
   COLS.splice(COLS.findIndex((c) => c.k === 'lb') + 1, 0, { k: 'est', l: L.colEst, v: (r) => (r.est ? r.est.lb : null), num: true, onhand: true, estTabs: true });
   const colsFor = () => COLS.filter((c) => (!c.allOnly || tab === 'all') && !(c.onhand && H()) && !(c.hist && !H()) &&
-    !(c.estTabs && !['all', 'onstem', 'bucked'].includes(tab)));
+    !(c.estTabs && !EST_TABS.includes(tab)));
 
   function current() {
     const col = colsFor().find((c) => c.k === sortKey) || COLS.find((c) => c.k === 'date');
@@ -535,7 +545,7 @@
     viewsEl.innerHTML = [['onhand', L.vOnHand], ['history', L.vHistory]]
       .map(([v, l]) => `<button type="button" class="${view === v ? 'on' : ''}" data-v="${v}">${esc(t(l))}</button>`).join('');
     viewsEl.querySelectorAll('button').forEach((b) => {
-      b.onclick = () => { if (view === b.dataset.v) return; view = b.dataset.v; sortKey = 'date'; sortDir = -1; if (H() && tab === UNIT_TAB) tab = 'all'; syncUrl(); render(); toListTop(); };
+      b.onclick = () => { if (view === b.dataset.v) return; view = b.dataset.v; sortKey = 'date'; sortDir = -1; if (H() && tab === UNIT_TAB) tab = 'drying'; syncUrl(); render(); toListTop(); };
     });
   }
 
@@ -549,12 +559,19 @@
   }
 
   const tabsEl = document.getElementById('tabs');
+  // On hand, Drying / On-Stem / Bucked show the A flower they should trim out
+  // to, and Flower what there'd be if all of it were processed.
   function renderTabs() {
+    const onHand = (k) => rows.filter((r) => inTab(r, k) && ownerOk(r) && !isUsed(r));
+    const estOf = (k) => r2(onHand(k).reduce((a, r) => a + (r.est ? r.est.lb : 0), 0));
+    const estSum = EST_TABS.reduce((a, k) => a + estOf(k), 0);
     tabsEl.innerHTML = TABS.filter((x) => !(H() && x.k === UNIT_TAB)).map((x) => {
-      const list = H() ? hist.filter((r) => inTab(r, x.k) && ownerOk(r)) : rows.filter((r) => inTab(r, x.k) && ownerOk(r) && !isUsed(r));
+      const list = H() ? hist.filter((r) => inTab(r, x.k) && ownerOk(r)) : onHand(x.k);
+      const est = H() ? '' : EST_TABS.includes(x.k) ? `<div class="e">${esc(t(L.estCard))} ≈ <b>${fmtNum(estOf(x.k), 0)} lb</b></div>`
+        : x.k === 'flower' ? `<div class="e" title="${esc(t(L.estPotT))}">${esc(t(L.estPot))} ≈ <b>${fmtNum(sumLb(list) + estSum, 0)} lb</b></div>` : '';
       return `<button type="button" class="tab ${tab === x.k ? 'on' : ''}" data-k="${x.k}" style="--c:${x.c}">
         <div class="l">${esc(t(L[x.k]))}</div><div class="n">${fmtNum(sumLb(list, H() ? 'startLb' : 'lb'), 0)} ${x.k === UNIT_TAB ? esc(t(L.units)) : 'lb'}</div>
-        <div class="s">${list.length} ${H() ? t(list.length === 1 ? L.rec : L.recs) : list.length === 1 ? t(L.pkg) : t(L.pkgs)}</div></button>`;
+        <div class="s">${list.length} ${H() ? t(list.length === 1 ? L.rec : L.recs) : list.length === 1 ? t(L.pkg) : t(L.pkgs)}</div>${est}</button>`;
     }).join('');
     tabsEl.querySelectorAll('.tab').forEach((b) => { b.onclick = () => { tab = b.dataset.k; syncUrl(); render(); toListTop(); }; });
   }
@@ -574,7 +591,7 @@
   function syncUrl() {
     const u = new URL(location.href);
     if (H()) u.searchParams.set('view', 'history'); else u.searchParams.delete('view');
-    if (tab === 'all') u.searchParams.delete('tab'); else u.searchParams.set('tab', tab);
+    if (tab === 'drying') u.searchParams.delete('tab'); else u.searchParams.set('tab', tab);
     if (query) u.searchParams.set('q', query); else u.searchParams.delete('q');
     if (owner === 'all') u.searchParams.delete('own'); else u.searchParams.set('own', owner);
     history.replaceState(null, '', u);

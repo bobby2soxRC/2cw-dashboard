@@ -58,6 +58,18 @@ const e2 = Y.estimate(model, { stage: 'bucked', strain: 'Never Seen', lb: 80, st
 check('bucked estimate from the start weight less weighed', Math.abs(e2.lb - (100 * 255 / 400 - 20)) <= 0.05, true);
 check('never below zero', Y.estimate(model, { stage: 'bucked', strain: 'x', lb: 10, doneLb: 50 }).lb, 0);
 
+// Drying (wet lb): dry × buck × trim; Take Downs keyed by the farm UID, an
+// impossible dry-down left out, the default until there's any data.
+const dm = Y.buildModel({ downs: [
+  { strain: 'Zoap', incomingUid: '1A40000000001111', wetIntakeLb: 1000, dryWeightLb: 220 },
+  { strain: 'Zoap', incomingUid: '2222', wetIntakeLb: 500, dryWeightLb: 900 }
+], bucks: [{ strain: 'Zoap', sourceUid: '1579', startingDryLb: 400, buckedFlowerLb: 200 }],
+trims: [{ strain: 'Zoap', sourceUid: '1', startingBuckedLb: 100, finishedFlowerLb: 60 }] });
+check('dry-down yield', [r3(dm.dry.all), dm.dry.allLots], [0.22, 1]);
+const e3 = Y.estimate(dm, { stage: 'drying', strain: 'Zoap', uid: '9999', lb: 1000 });
+check('drying estimate = wet × dry × buck × trim', [e3.steps.map((x) => x.stage), e3.lb], [['dry', 'buck', 'trim'], 66]);
+check('no Take Downs → default dry-down', Y.buildModel({ bucks: [], trims: [] }).dry.all, Y.DEFAULT.dry);
+
 // No data at all → the defaults.
 const empty = Y.buildModel({ bucks: [], trims: [], strains: [] });
 check('no data → defaults', [Y.rate(empty, 'buck', 'a').basis, Y.rate(empty, 'trim', 'a').pct], ['default', Y.DEFAULT.trim]);

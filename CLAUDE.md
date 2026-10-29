@@ -99,6 +99,10 @@ farm licenses = client; `isClientRow` in `raw_stock.js`), and
 **→ 2CW** on a client row takes ownership when a farm can't pay (shared
 `operations_forms` row `raw_inventory_ownership`; covers everything traced
 from that UID). No SQL.
+Since 2026-10-29 there's no All card (Drying is the default tab); the Drying,
+On-Stem and Bucked cards show their **Est. A flower** (drying now estimated
+too, from Take Down dry-down yields in `flower_yield.js`) and Flower shows
+**If all processed** (flower on hand + those three).
 
 ### Hourly people not in Connecteam (started 2026-10-19)
 

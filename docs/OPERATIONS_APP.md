@@ -1010,12 +1010,13 @@ section instead of On-Stem and Bucked, so the same stock isn't offered
 twice; tick them to add them anyway. Available starts at the estimate and
 can be changed per batch.
 
-**Est. A Flower** (`flower_yield.js`, column on the All / On-Stem / Bucked
-tabs and in the CSV) is the finished A flower a batch should give. Two
-yields are learned from every submitted Bucking (`buckedFlowerLb ÷
-startingDryLb`) and Hand Trim / Hand Trim — Past Records
-(`finishedFlowerLb ÷ startingBuckedLb`), paper imports included; on-stem
-gets both, bucked just trim (from the bucked weight, less flower already
+**Est. A Flower** (`flower_yield.js`, column on the Drying / On-Stem /
+Bucked tabs and in the CSV) is the finished A flower a batch should give.
+Three yields are learned from every submitted Take Down (`dryWeightLb ÷
+wetIntakeLb`, keyed by the farm UID; believable at 10–60 %, 25 % until there's
+data), Bucking (`buckedFlowerLb ÷ startingDryLb`) and Hand Trim / Hand Trim —
+Past Records (`finishedFlowerLb ÷ startingBuckedLb`), paper imports included;
+drying (wet lb) gets all three, on-stem buck × trim, bucked just trim (from the bucked weight, less flower already
 weighed on an open Hand Trim page). Records are added up per lot first
 (strain + the UID's last 4 digits — paper records often split one lot over
 several forms or repeat one) and a lot only counts with both weights and a
