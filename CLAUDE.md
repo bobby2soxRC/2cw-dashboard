@@ -39,6 +39,10 @@ Operations & Staff Hours report: daily, weekly (Mondays) and on demand
 Code is done; it sends nothing until the Gmail app password and the
 `OPS_REPORT_*_TO` recipient env vars are set in Netlify. Setup and how to
 add more reports: `docs/EMAIL_REPORTS.md`.
+Since 2026-10-29 (from a review with the owners): hourly vs trimmer piece
+pay split out at the top, $/lb per process (Connecteam activity → station,
+`PROCESS_RULES`; farm-site hours = Harvest), a Trimming & bucking box, and
+overtime with week-to-date hours and who's heading past 40.
 
 ### Metrc Queue (started 2026-10-16)
 
