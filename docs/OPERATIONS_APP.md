@@ -45,7 +45,7 @@ the existing Operations Hub — same login, same Netlify deploy.
 **Drying** — Harvest Intake — Wet · Take Down — Dry
 **Processing** — Bucking · Machine Trim · Hand Trim / Hand Touch · Smalls Hand Trim · Mixed Trim Package
 **Manufacturing** — Biomass Request · Pre-Roll Production · Ground Flower Pouches · Manufacturing Run
-**Shipping** — Product Transfer — Outgoing (directly under Operations on the hub)
+**Shipping** — Product Transfer — Outgoing · Product Transfer — Incoming (directly under Operations on the hub)
 
 Wet Intake and Take Down are the two halves of the paper "Harvest Intake &
 Take Down Log", 5–10 days apart. Wet Intake is **one form per package**
@@ -469,6 +469,33 @@ marks left out; a form opened with Fix form doesn't count its own rows
 against itself (`skipId`). Both columns are `formOnly`, so the Metrc Queue's
 detail doesn't show them.
 
+**Product Transfer — Incoming** (`transfer_in`, dept Shipping, since
+2026-10-29) is for dry or finished material that comes in from another
+facility without one of our forms having made it: a return (smalls sent
+back), product we trimmed at another site, a purchase. Before it, that stock
+never showed in Raw Inventory, since every tab there is built from our own
+forms. One form per manifest: person completing it, date received (`date`),
+why it's coming in (`reason`: return / processed at another site / purchase
+/ other), from (`fromFacility`), their DCC license (`fromLicense`), Metrc
+manifest #, driver and plate (the same pickers as the outgoing form), then a
+row per package (`lines`: product type — 3 Trimmed flower, 4 Smalls, 5 Trim /
+biomass, 6 Fresh Frozen, `TRANSFER_INTAKE_TYPES` in `operations_stations.js`
+— package `uid` (strain fills in from Canix), strain, `trimType` for trim,
+PID, CID, `weight` lbs, `location`), totalled in `totalLb`.
+
+Raw Inventory (`finishedRows` in `raw_stock.js`, `d.received`) lists each
+row on its type's tab under the package's own UID, source **Incoming
+transfer** (`tIn`), farm from the PID, else the facility it came from; trim
+rows carry their trim type as the category. From there it's like any other
+batch: it's in the outgoing transfer's Batch dropdown and the Bulk menu, and
+Pre-Roll, Pouches, Manufacturing, Biomass Request, Smalls Hand Trim, Mixed
+Trim Package and outgoing transfers that name its UID take it off. History
+shows it too. Unbucked / bucked flower aren't offered: On-Stem and Bucked
+come from the bucking and trim queues, which Bucking and Hand Trim work
+from, and an incoming package isn't in them. Not in the Metrc Queue
+(accepting the manifest is its Incoming transfers list) and not in the
+Reports or UID Flow yet. No SQL. Users need the station ticked in Admin.
+
 **Work Orders** (`work_orders.html`, hub card `work_orders` directly
 under Operations) puts the work queues on one page, a tab each (`?tab=buck|trim|preroll`):
 - **Bucking** — `loadBuckingQueue`, the same list and order as the On-Stem
@@ -816,7 +843,8 @@ pulled on an open Bucking page, plus Take Downs on hold — `loadBuckingQueue`),
 on an open Hand Trim page: flower, and any smalls, trim and waste; lots with a
 Machine Trim left out), **Flower**,
 **Smalls** and **Trim** (each Hand Trim, Machine Trim and Smalls Hand Trim's
-outputs, and Bucking's trim; trim shows its type — Normal, A+, Sugar, Shake,
+outputs, Bucking's trim, and packages received on a Product Transfer —
+Incoming; trim shows its type — Normal, A+, Sugar, Shake,
 Bucking trim) and **Fresh Frozen** (fresh-frozen Wet Intakes and Fresh Frozen
 forms). Each tab shows its packages and pounds. Farm license, farm name,
 farm code and CID come from the record or are traced back through Take Down to

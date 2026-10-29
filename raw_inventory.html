@@ -234,6 +234,7 @@
     tSmalls:  { en: 'Smalls Hand Trim', es: 'Corte de smalls' },
     tBuck:    { en: 'Bucking', es: 'Desvarado' },
     tMixed:   { en: 'Mixed Trim Package', es: 'Paquete de recorte mixto' },
+    tIn:      { en: 'Incoming transfer', es: 'Transferencia de entrada' },
     tTake:    { en: 'Take Down', es: 'Bajada' },
     // A-flower estimates (flower_yield.js)
     colEst:   { en: 'Est. A Flower', es: 'Flor A est.' },
@@ -325,7 +326,7 @@
     const { d, paperIds, handPast, ref } = res;
     rows = res.rows;
     marks = res.marks;
-    recs = new Map(['intakes', 'downs', 'bucks', 'hand', 'machine', 'smallsT', 'frozen', 'prerolls', 'pouches', 'mfg', 'biomass', 'mixed', 'shipped']
+    recs = new Map(['intakes', 'downs', 'bucks', 'hand', 'machine', 'smallsT', 'frozen', 'prerolls', 'pouches', 'mfg', 'biomass', 'mixed', 'shipped', 'received']
       .flatMap((k) => d[k]).map((r) => [r.id, r]));
     // Estimated A flower from what's on-stem or bucked, from every Bucking
     // and Hand Trim so far (paper and Past Records included).

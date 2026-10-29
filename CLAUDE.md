@@ -281,6 +281,17 @@ shared row). No Fresh Frozen checkbox (location decides), no Project, no
 Completed by (submitter), no Metrc adjustment at the door (`editOnly`). No
 SQL. Details: "Stations" in `docs/OPERATIONS_APP.md`.
 
+### Product Transfer — Incoming (started 2026-10-29)
+
+New Shipping form `transfer_in` (`operations_stations.js`) for dry / finished
+material from another facility (returned smalls, product trimmed at another
+site): one form per manifest, a row per package (types 3–6,
+`TRANSFER_INTAKE_TYPES`). Raw Inventory lists each row as stock under its
+UID (`d.received` in `raw_stock.js`, source "Incoming transfer"), so
+downstream forms and outgoing transfers take it off. Not in the Metrc Queue,
+Reports or UID Flow. No SQL. Users need the station ticked in Admin.
+Details: "Product Transfer — Incoming" in `docs/OPERATIONS_APP.md`.
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)

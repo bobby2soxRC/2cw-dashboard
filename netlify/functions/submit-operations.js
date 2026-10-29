@@ -33,7 +33,8 @@ const KNOWN_STATIONS = new Set([
   'pouch_production',
   'mfg_output',
   'trim_package',
-  'transfer_out'
+  'transfer_out',
+  'transfer_in'
 ]);
 
 // Guards against a runaway tablet filling the repo with junk.

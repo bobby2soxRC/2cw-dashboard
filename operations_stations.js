@@ -248,6 +248,10 @@ const TRANSFER_TYPES = {
   7: { l: { en: 'Seeds', es: 'Semillas' } },
   8: { l: { en: 'Pre-Rolls', es: 'Prerolls' }, pieces: true }
 };
+// The ones Product Transfer — Incoming takes: dry finished material Raw
+// Inventory can hold on its own (on-stem and bucked stock come from the
+// Bucking and trim queues, which an incoming package isn't in).
+const TRANSFER_INTAKE_TYPES = [3, 4, 5, 6];
 
 const OPERATIONS_STATIONS = [
   // ── CULTIVATION (PLACEHOLDER) ────────────────────────────────────────────
@@ -1649,6 +1653,71 @@ const OPERATIONS_STATIONS = [
       { k: 'ckInventoryUpdated', t: 'check', l: { en: '2CW Processor Inventory Updated', es: 'Inventario del procesador 2CW actualizado' } },
       F.notes(), F.photo()
     ]
+  },
+
+  // ── SHIPPING: PRODUCT TRANSFER — INCOMING ─────────────────────────────────
+  // Finished or dry material coming in from another facility — a return
+  // (smalls sent back), product we trimmed at another site — that no station
+  // form made here. One form per manifest, a row per package; Raw Inventory
+  // lists each row as stock on the tab its product type says
+  // (TRANSFER_INTAKE_TYPES), under the package's UID, so downstream forms and
+  // outgoing transfers take it off like any other batch. Not in the Metrc
+  // Queue: accepting the manifest is the Metrc Queue's Incoming transfers list.
+  {
+    key: 'transfer_in',
+    dept: { en: 'Shipping', es: 'Envíos' },
+    title: { en: 'Product Transfer — Incoming', es: 'Transferencia de producto — entrada' },
+    desc: { en: 'Material coming in from another facility — a return, or product trimmed at another site — so it shows in Raw Inventory.',
+            es: 'Material que llega de otra instalación — una devolución, o producto cortado en otro sitio — para que aparezca en el inventario.' },
+    color: 'blue',
+    headline: 'totalLb',
+    fields: [
+      { k: 'completedBy', t: 'text', req: true, l: { en: 'Person Completing Form', es: 'Persona que llena el formulario' } },
+      { ...F.date(), l: { en: 'Date Received', es: 'Fecha de recepción' } },
+      { k: 'reason', t: 'select', req: true, l: { en: 'Why It’s Coming In', es: 'Por qué llega' },
+        opts: [
+          { v: '', l: { en: '', es: '' } },
+          { v: 'return', l: { en: 'Return', es: 'Devolución' } },
+          { v: 'processed_offsite', l: { en: 'Processed at another site', es: 'Procesado en otro sitio' } },
+          { v: 'purchase', l: { en: 'Purchase', es: 'Compra' } },
+          { v: 'other', l: { en: 'Other', es: 'Otro' } }
+        ] },
+      { k: 'fromFacility', t: 'text', req: true, l: { en: 'From (facility / customer)', es: 'De (instalación / cliente)' } },
+      { k: 'fromLicense', t: 'text', l: { en: 'From DCC License #', es: 'N.º de licencia DCC de origen' } },
+      { k: 'manifestNo', t: 'text', inputmode: 'numeric', l: { en: 'Metrc Manifest #', es: 'N.º de manifiesto de Metrc' } },
+      { k: 'driver', t: 'select', driverPicker: true, l: { en: 'Driver', es: 'Conductor' } },
+      { k: 'licensePlate', t: 'select', platePicker: true, allowOther: true, l: { en: 'Vehicle Plate #', es: 'Placa del vehículo' } },
+
+      { k: 'lines', t: 'lineitems', req: true,
+        l: { en: 'Products Coming In', es: 'Productos que llegan' },
+        hint: { en: 'One row per package, as it is on the manifest. Package UID is the Metrc tag on the package we received — the strain fills in from Canix once the sync has it. Pick the trim type for trim.',
+                es: 'Una fila por paquete, como viene en el manifiesto. El UID del paquete es la etiqueta de Metrc del paquete recibido — la variedad se llena desde Canix cuando la sincronización lo tenga. Elija el tipo de recorte para el recorte.' },
+        cols: [
+          { k: 'productType', t: 'select', req: true, carry: true, l: { en: 'Product Type', es: 'Tipo de producto' },
+            opts: [
+              { v: '', l: { en: '', es: '' } },
+              ...TRANSFER_INTAKE_TYPES.map((v) => ({ v: String(v), l: { en: `${v} — ${TRANSFER_TYPES[v].l.en}`, es: `${v} — ${TRANSFER_TYPES[v].l.es}` } }))
+            ] },
+          { k: 'uid', t: 'uid', req: true, canixStrain: 'strain', l: { en: 'Package UID', es: 'UID del paquete' } },
+          { k: 'strain', t: 'select', ref: 'strains', allowOther: true, l: { en: 'Strain', es: 'Variedad' } },
+          { k: 'trimType', t: 'select', l: { en: 'Trim Type', es: 'Tipo de recorte' },
+            opts: [
+              { v: '', l: { en: '', es: '' } },
+              { v: 'trim', l: { en: 'Normal', es: 'Normal' } },
+              { v: 'trim_a_plus', l: { en: 'A+', es: 'A+' } },
+              { v: 'sugar_trim', l: { en: 'Sugar', es: 'Azucarado' } },
+              { v: 'shake', l: { en: 'Shake', es: 'Shake' } }
+            ] },
+          { k: 'pid', t: 'select', ref: 'properties', allowOther: true, l: { en: 'PID', es: 'PID' } },
+          { k: 'cid', t: 'select', ref: 'customers', allowOther: true, l: { en: 'CID', es: 'CID' } },
+          { k: 'weight', t: 'number', req: true, min: 0, step: 0.01, l: { en: 'Weight (lbs)', es: 'Peso (lbs)' } },
+          { k: 'location', t: 'text', l: { en: 'Stored At', es: 'Guardado en' } }
+        ],
+        totalCol: 'weight' },
+      { k: 'totalLb', t: 'calc', calc: (v) => (v.lines || []).reduce((a, r) => a + num(r.weight), 0),
+        l: { en: 'Total (lbs)', es: 'Total (lbs)' } },
+      F.notes(), F.photo()
+    ]
   }
 ];
 
@@ -1832,5 +1901,5 @@ const crewOnRun = (rows) => new Set([...crewLatest(rows).values()].filter((r) =>
 const processTitle = (k) => (STATION_BY_KEY[k] && STATION_BY_KEY[k].title) || LABOR_PROCESSES[k] || { en: k || '—', es: k || '—' };
 
 if (typeof module !== 'undefined') {
-  module.exports = { weightCheckState, weightSnapshot, TRANSFER_TYPES, crewLatest, crewOnRun, OPERATIONS_STATIONS, STATION_BY_KEY, STANDALONE_STATIONS, ALL_STATIONS, ALL_STATION_BY_KEY, BIOMASS, SELLABLE, PREFILL_MAP, PIPELINE_ORDER, G_PER_LB, LABOR_PROCESSES, WORK_LOCATIONS, projectRunsOn, projectHours, projectRoles, shiftMin, personSpans, hasOwnTimes, processTitle, buckedLb };
+  module.exports = { weightCheckState, weightSnapshot, TRANSFER_TYPES, TRANSFER_INTAKE_TYPES, crewLatest, crewOnRun, OPERATIONS_STATIONS, STATION_BY_KEY, STANDALONE_STATIONS, ALL_STATIONS, ALL_STATION_BY_KEY, BIOMASS, SELLABLE, PREFILL_MAP, PIPELINE_ORDER, G_PER_LB, LABOR_PROCESSES, WORK_LOCATIONS, projectRunsOn, projectHours, projectRoles, shiftMin, personSpans, hasOwnTimes, processTitle, buckedLb };
 }

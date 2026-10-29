@@ -152,6 +152,18 @@ const RawStock = (function () {
         strain: t({ en: 'Mixed', es: 'Mixto' }), cat, catLabel: opt ? opt.l : null, type: 'tMixed',
         farm: '', code: '', license: '', cid: '', farmUids: [] });
     });
+    // Product Transfer — Incoming: each package received from another
+    // facility (a return, product trimmed at another site), under its own UID.
+    const trimOpts = STATION_BY_KEY.transfer_in.fields.find((f) => f.k === 'lines').cols.find((c) => c.k === 'trimType').opts;
+    (d.received || []).forEach((r) => (r.lines || []).forEach((x, i) => {
+      const ty = TRANSFER_TYPES[x.productType] || {};
+      if (!ty.tab || ty.pieces || !(Number(x.weight) > 0.005)) return;
+      const cat = ty.tab === 'trim' ? (x.trimType || null) : ty.cat;
+      const opt = ty.tab === 'trim' && trimOpts.find((t) => t.v === cat);
+      const o = tr.origin({ pid: x.pid, cid: x.cid }, null, []);
+      add(ty.tab, r, { key: `${r.id}:in:${i}`, uid: normUid(x.uid), lb: x.weight, strain: x.strain || '', cat, catLabel: opt ? opt.l : null, type: 'tIn',
+        location: x.location || '', ...(ty.tab === 'frozen' ? { wet: true } : {}), ...o, farm: o.farm || r.fromFacility || '' });
+    }));
   }
 
   // What downstream forms took, and off which UID. A Smalls Hand Trim doesn't
@@ -250,11 +262,11 @@ const RawStock = (function () {
   }
 
   async function load(client, opts = {}) {
-    const [intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, pouches, mfg, biomass, mixed, shipped, bq, tq, codes, fac, marks, paper, handPast, ref] = await Promise.all([
+    const [intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, pouches, mfg, biomass, mixed, shipped, received, bq, tq, codes, fac, marks, paper, handPast, ref] = await Promise.all([
       loadSubmitted('intake_wet'), loadSubmitted('dry_check'), loadSubmitted('buck'), loadSubmitted('hand_trim'),
       loadSubmitted('machine_trim'), loadSubmitted('smalls_trim'), loadSubmitted('fresh_frozen'),
       loadSubmitted('preroll_production'), loadSubmitted('pouch_production'), loadSubmitted('mfg_output'), loadSubmitted('biomass_request'),
-      loadSubmitted('trim_package'), loadSubmitted('transfer_out'),
+      loadSubmitted('trim_package'), loadSubmitted('transfer_out'), loadSubmitted('transfer_in'),
       loadBuckingQueue(), loadTrimQueue(), getRefCodes(),
       client.from('canix_facilities').select('license_number,farm_group').then((r) => r.data || []),
       getMarks(client),
@@ -264,7 +276,7 @@ const RawStock = (function () {
     pidCodes = (codes || []).filter((r) => r.kind === 'pid');
     facilities = fac;
     const d = { intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, pouches, mfg, biomass, mixed,
-      shipped: shipped.filter((r) => r.id !== opts.skipId), bq, tq };
+      shipped: shipped.filter((r) => r.id !== opts.skipId), received, bq, tq };
     // Records loaded from the old paper sheets (Aug–Sep 2026, owner_user
     // 'paper_import') still trace lots, but their output isn't stock any more.
     const paperIds = new Set(paper.map((r) => r.id));

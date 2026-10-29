@@ -556,6 +556,30 @@ totalValue  = Σ (weight × price per lb)</pre></div>
     </article>
   </section>
 
+  <section class="dept" id="d-shipin">
+    <h2>Receiving <small>material comes back in</small></h2>
+
+    <article class="card" id="st-transfer_in">
+      <div class="card-head"><h3>Product Transfer — Incoming</h3><span class="k">transfer_in</span></div>
+      <p>Dry or finished material that comes in from another facility without one of our forms having made it: a return (smalls sent back), product we trimmed at another site, a purchase. One form per manifest, a row per package. Each row becomes stock on the Raw Inventory tab its product type says, under the package's own UID, so the downstream forms and outgoing transfers take it off like any other batch. Wet whole plant still comes in on Wet Intake, and accepting the manifest is still the Metrc Queue's Incoming transfers list.</p>
+      <div class="cols">
+        <div><h4>On the form</h4><ul>
+          <li>Person completing it, date received, why it's coming in (return / processed at another site / purchase / other), from (facility or customer), their DCC license #, Metrc manifest #, driver, plate</li>
+          <li>Per package: type 3–6, package UID (strain fills in from Canix), strain, trim type for trim, PID, CID, lbs, where it's stored</li>
+        </ul></div>
+        <div><h4>Math</h4>
+<pre class="math">totalLb = Σ weight
+on hand = weight − what later forms took</pre></div>
+        <div><h4>Type → goes on</h4><ul>
+          <li>3 Trimmed flower → Flower · 4 Smalls → Smalls</li>
+          <li>5 Trim / biomass → Trim (with its trim type) · 6 → Fresh Frozen</li>
+          <li>Unbucked / bucked flower, seeds and pre-rolls aren't taken: Bucking and Hand Trim only work from our own queues</li>
+          <li>Source shows as "Incoming transfer", farm as the PID's farm, else the facility it came from</li>
+        </ul></div>
+      </div>
+    </article>
+  </section>
+
   <section class="dept" id="d-rules">
     <h2>Rules that run through every form</h2>
     <div class="rules">
@@ -742,7 +766,9 @@ totalValue  = Σ (weight × price per lb)</pre></div>
     ['mfg', 'form', 830, 1260, 'Manufacturing Run', 'mfg_output · biomass_request', { href: 'st-mfg_output', w: 224 }],
     ['goods', 'fin', 560, 1350, 'Finished goods', 'Pre-rolls (pieces) · pouches · packaged units', { w: 560 }],
     ['transfer', 'form', 560, 1450, 'Product Transfer — Outgoing', 'transfer_out', { href: 'st-transfer_out', m: 1, w: 250 }],
-    ['customer', 'src', 560, 1540, 'Customer', 'DCC license · Metrc manifest']
+    ['customer', 'src', 560, 1540, 'Customer', 'DCC license · Metrc manifest'],
+    ['otherfac', 'src', 1015, 1060, 'Other facility', 'Return · trimmed off-site', { w: 140 }],
+    ['transferin', 'form', 1015, 1150, 'Incoming Transfer', 'transfer_in', { href: 'st-transfer_in', w: 140 }]
   ];
   // Edges: points, optional label [text, x, y, anchor], dashed, noArrow.
   const E = [
@@ -785,7 +811,10 @@ totalValue  = Σ (weight × price per lb)</pre></div>
     { p: [[560, 1373], [560, 1423]], l: ['type 8 · pieces', 548, 1402] },
     { p: [[110, 433], [110, 1450], [433, 1450]], l: ['type 6', 270, 1442, 'middle'] },
     { p: [[960, 1450], [687, 1450]], d: 1, l: ['ships direct, as is', 840, 1428, 'middle'] },
-    { p: [[560, 1477], [560, 1517]], l: ['Metrc manifest', 548, 1501] }
+    { p: [[560, 1477], [560, 1517]], l: ['Metrc manifest', 548, 1501] },
+    { p: [[1015, 1083], [1015, 1123]] },
+    { p: [[1015, 1177], [1015, 1205], [830, 1205]], n: 1 },
+    { p: [[1015, 1205], [1015, 1450], [960, 1450]], d: 1, n: 1 }
   ];
   const NOTES = [
     ['off Raw Inventory by UID', 695, 1197, 'middle'],
