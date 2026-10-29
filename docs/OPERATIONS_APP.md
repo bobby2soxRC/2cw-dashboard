@@ -474,8 +474,14 @@ UID tail, lbs left, farm, CID — and picking one fills strain, PID (farm
 code), CID and source UID (`fills`); **Available (lbs)** (`availableLb`,
 `t: 'stockAvail'`) shows that batch's lbs less what the form's other rows
 take off it, and a weight over it is flagged in red (not blocked — the
-inventory can lag a form). Seeds and pre-rolls have no batch list: type the
-UID. A row that has a UID but no batch (a Needs form link, an older form)
+inventory can lag a form). Seeds have no batch list: type the UID.
+Pre-rolls aren't in Raw Inventory, so their list (`stockTab: 'preroll'` on
+type 8, `prerollStock` in `ops_form.html`) is Adobe's pre-roll packages in
+Canix (`canix_inventory.json`, counted in pieces, less ones In Transit —
+already on a manifest), plus submitted Pre-Roll Production runs whose New
+UID — Pre-Rolls isn't in Canix yet (not in the inventory or
+`canix_packages_recent.json`), at their total pre-rolls less what submitted
+transfers took off that UID; Available shows pieces. A row that has a UID but no batch (a Needs form link, an older form)
 picks the batch with that UID; typing a different UID unpicks it. The
 numbers are Raw Inventory's own: its build moved to `raw_stock.js`
 (`RawStock.load`), shared by `raw_inventory.html` and `ops_form.html`, used-up

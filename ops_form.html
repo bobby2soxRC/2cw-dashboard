@@ -659,6 +659,11 @@
   // row (`c.fills`: column → stock row property); the `stockAvail` column
   // shows its lbs less what this form's other rows take off the same batch.
   // A form being fixed doesn't count against itself (skipId).
+  // Pre-rolls aren't in Raw Inventory (`stockTab: 'preroll'`): their batches
+  // are Adobe's pre-roll packages in Canix (counted in pieces, less the ones
+  // already on a manifest — In Transit), plus submitted Pre-Roll Production
+  // runs whose new tag Canix hasn't synced yet, less what submitted transfers
+  // took off them.
   const SK = {
     pick:    { en: 'Pick a batch…', es: 'Elija un lote…' },
     none:    { en: 'Nothing on hand', es: 'Nada disponible' },
@@ -667,21 +672,44 @@
     loading: { en: 'Loading inventory…', es: 'Cargando inventario…' },
     failed:  { en: 'Inventory didn’t load — type the UID', es: 'No cargó el inventario — escriba el UID' },
     gone:    { en: 'saved batch — not on hand now', es: 'lote guardado — ya no disponible' },
-    over:    { en: 'More than the {n} lb available', es: 'Más de las {n} lb disponibles' }
+    over:    { en: 'More than the {n} lb available', es: 'Más de las {n} lb disponibles' },
+    overPcs: { en: 'More than the {n} pieces available', es: 'Más de las {n} piezas disponibles' },
+    run:     { en: 'pre-roll run, not in Canix yet', es: 'corrida de prerolls, aún no en Canix' }
   };
+  async function prerollStock(d) {
+    const inv = await fetch(`/data/canix_inventory.json?t=${Date.now()}`).then((r) => r.ok ? r.json() : []).catch(() => []);
+    const recent = await fetch('/data/canix_packages_recent.json').then((r) => r.ok ? r.json() : []).catch(() => []);
+    const from = MetrcTransfers.OUTGOING_FROM;
+    const out = (inv || []).filter((p) => p && p.tag && p.is_active !== false && p.status !== 'In Transit' && from.includes(p._facility_license_number) &&
+        /^each$/i.test(String(p.weight_unit || '')) && MetrcTransfers.productTypeOf((p.item || {}).name) === '8' && Number(p.weight) > 0)
+      .map((p) => ({ key: `pr:${normUid(p.tag)}`, tab: 'preroll', pieces: true, uid: normUid(p.tag), lb: Number(p.weight),
+        strain: ((p.item || {}).strain || {}).name || '', code: '', cid: '', farm: (p.item || {}).name || '', date: String(p.packaged_date || '').slice(0, 10) }));
+    const known = [...(inv || []), ...(recent || [])].map((p) => normUid(p && p.tag)).filter(Boolean);
+    (d.prerolls || []).forEach((r) => {
+      const uid = normUid(r.newPrerollUid);
+      if (uid.length < 4 || known.some((tg) => uidTailMatch(tg, uid))) return;
+      const took = (d.shipped || []).flatMap((x) => x.lines || []).filter((x) => (TRANSFER_TYPES[x.productType] || {}).pieces && uidTailMatch(x.sourceUid, uid))
+        .reduce((a, x) => a + num(x.weight), 0);
+      const left = num(r.totalPrerolls) - took;
+      if (left > 0) out.push({ key: `pr:${uid}`, tab: 'preroll', pieces: true, uid, lb: left, strain: r.strain || '', code: r.pid || '', cid: r.cid || '',
+        farm: t(SK.run), date: String(r.date || '').slice(0, 10) });
+    });
+    return out;
+  }
   let stockP = null, stockList;   // stockList: undefined loading, null failed, else the on-hand rows
   function loadStock(then) {
     if (!stockP) {
       stockP = Promise.resolve().then(() => RawStock.load(getClient(), { skipId: editMode ? editId : null }))
-        .then((r) => r.rows.filter((x) => x.lb > 0.005 && !r.marks[x.key])
+        .then(async (r) => [...r.rows.filter((x) => x.lb > 0.005 && !r.marks[x.key]), ...await prerollStock(r.d)]
           .sort((a, b) => String(a.strain).localeCompare(String(b.strain)) || a.date.localeCompare(b.date)))
         .catch((ex) => { console.error('raw stock', ex); return null; })
         .then((list) => { stockList = list; return list; });
     }
     stockP.then(then);
   }
-  const stockFits = (x, ty) => x.tab === ty.tab && (!ty.cat || !x.cat || x.cat === ty.cat || ty.tab === 'trim');
-  const stockLabel = (x, lb) => [x.strain || '—', `…${normUid(x.uid).slice(-6)}`, `${fmtNum(lb)} lb`,
+  const stockTab = (ty) => ty && (ty.tab || ty.stockTab);
+  const stockFits = (x, ty) => x.tab === stockTab(ty) && (!ty.cat || !x.cat || x.cat === ty.cat || ty.tab === 'trim');
+  const stockLabel = (x, lb) => [x.strain || '—', `…${normUid(x.uid).slice(-6)}`, x.pieces ? `${fmtNum(lb, 0)} ${t({ en: 'pcs', es: 'pzas' })}` : `${fmtNum(lb)} lb`,
     x.farm || x.code, x.cid ? `CID ${x.cid}` : ''].filter(Boolean).join(' · ');
 
   function buildLineItems(f, wrap) {
@@ -771,8 +799,8 @@
               const ty = c.stock(row);
               const av = availEl[c.k];
               let opts, hit = null;
-              if (!ty || !ty.tab) {
-                // Seeds, pre-rolls: not in Raw Inventory, the UID is typed.
+              if (!stockTab(ty)) {
+                // Seeds: not tracked anywhere, the UID is typed.
                 row[c.k] = '';
                 opts = [['', t(ty ? SK.typeUid : SK.typeFirst)]];
               } else if (stockList === undefined) {
@@ -802,10 +830,10 @@
               sel.value = row[c.k] || '';
               sel.disabled = opts.length < 2;
               const avail = hit ? Math.round((hit.lb - others(hit.key)) * 100) / 100 : null;
-              if (av) { av.el.textContent = avail === null ? '—' : fmtNum(avail); row[av.k] = avail; }
+              if (av) { av.el.textContent = avail === null ? '—' : fmtNum(avail, hit && hit.pieces ? 0 : 2); row[av.k] = avail; }
               const over = avail !== null && num(row[c.weightCol]) > avail + 0.005;
               note.className = 'li-note' + (over ? ' over' : '');
-              note.textContent = over ? t(SK.over).replace('{n}', fmtNum(Math.max(0, avail))) : '';
+              note.textContent = over ? t(hit.pieces ? SK.overPcs : SK.over).replace('{n}', fmtNum(Math.max(0, avail), hit.pieces ? 0 : 2)) : '';
             };
             stockRefresh.add(refresh);
             sel.addEventListener('change', () => {

@@ -246,7 +246,9 @@ const TRANSFER_TYPES = {
   5: { l: { en: 'Trim / Biomass', es: 'Recorte / biomasa' }, tab: 'trim' },
   6: { l: { en: 'Fresh Frozen', es: 'Fresco congelado' }, tab: 'frozen', cat: 'fresh_frozen' },
   7: { l: { en: 'Seeds', es: 'Semillas' } },
-  8: { l: { en: 'Pre-Rolls', es: 'Prerolls' }, pieces: true }
+  // Not in Raw Inventory: the outgoing form's Batch list for pre-rolls is
+  // Canix's pre-roll packages and new runs (`stockTab`, ops_form.html).
+  8: { l: { en: 'Pre-Rolls', es: 'Prerolls' }, pieces: true, stockTab: 'preroll' }
 };
 // The ones Product Transfer — Incoming takes: dry finished material Raw
 // Inventory can hold on its own (on-stem and bucked stock come from the
