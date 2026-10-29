@@ -51,6 +51,25 @@ Built in `netlify/lib/ops_report.js`:
   row's own `day` (the forms' Daily Summary numbers) plus people. Other
   stations: lbs out on submitted forms (`dailyOutput`, as the operations
   dashboard). Also forms submitted and pages open right now.
+- **Labor cost** box at the top: hourly staff (Connecteam hours × rate)
+  and **trimmer piece pay** (each Hand Trim bag weighed in the period × its
+  lot's Trimmer Rate $/lb; trimmers aren't in Connecteam) on separate lines,
+  then the total. The overtime premium (½ rate past 8 hrs a day, 1× past 12;
+  weekly also past 40) is shown on its own line, not in the total.
+- **Cost per pound by process**: each clock-in's hours put on a station by
+  its Connecteam activity (`PROCESS_RULES`: Hanging → Wet intake, Take down,
+  Bucking, Trimming → Hand trim, Smalls, Twister → Machine trim, Pre-rolls);
+  any hours at a farm site (not Adobe / Airway / Customer, not Packaging) are
+  **Harvest**, since crews often clock in there as Maintenance. Hourly $ (+
+  piece pay on Hand trim) ÷ the station's pounds; Harvest uses Wet Intake
+  pounds when there's no Harvest form. Maintenance, Deleafing, Packaging etc.
+  at Adobe aren't in a process. Without cost access it shows lbs / hr.
+- **Trimming & bucking**: finished flower trimmed and trimmers weighed in,
+  trimming $/lb, unfinished smalls pulled (end-of-run `smallsLb` on Hand Trim
+  lots submitted in the period), bucked flower produced.
+- **Overtime**: count and OT hours; the daily report names everyone over 10
+  hrs with OT hrs, their week so far (Mon on) and OT premium, and lists
+  everyone already at 32+ hrs this week (**Heading past 40**).
 
 | When | Function | Covers | Goes to |
 |---|---|---|---|
