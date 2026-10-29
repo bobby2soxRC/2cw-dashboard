@@ -728,6 +728,14 @@ const OPERATIONS_STATIONS = [
       { k: 'dryLeftLb', t: 'calc', flag: (x) => x < 0,
         calc: (v) => (num(v.dryUnbuckedLb) > 0 ? num(v.dryUnbuckedLb) - (v.boxes || []).reduce((a, r) => a + num(r.weightLb), 0) : null),
         l: { en: 'Dry Unbucked Left (lbs)', es: 'Peso seco restante (lbs)' } },
+      // Bucking only part of the package (a work order's amount): submitting
+      // leaves Dry Unbucked Left in the bucking queue and On-Stem inventory
+      // under the same tag, for a later round (buckablePackages). Each round
+      // goes to Hand Trim on its own (buckedLots `chain`).
+      { k: 'restOnStem', t: 'check',
+        l: { en: 'Bucking only part — the rest stays on stem', es: 'Solo se desvara una parte — el resto se queda en tallo' },
+        hint: { en: 'Tick when you stop before the package is done. Submitting puts Dry Unbucked Left back in the bucking queue under the same tag.',
+                es: 'Marque cuando pare antes de terminar el paquete. Al enviar, el peso seco restante vuelve a la fila de desvarado con la misma etiqueta.' } },
 
       { k: 'bucked', t: 'lineitems', entry: true, req: true,
         l: { en: 'Bucked Flower — by Person', es: 'Flor desvarada — por persona' },
@@ -1818,6 +1826,10 @@ const PREFILL_MAP = {
                  warn: (up) => (up.result && up.result !== 'pass'
                    ? { en: 'This package is on hold at Take Down. A manager has to release it (On-Stem Flower page) before it’s bucked.',
                        es: 'Este paquete está en espera en la bajada. Un gerente tiene que liberarlo (página Flor en tallo) antes de desvararlo.' }
+                   // The work order's amount (Work Orders page), when it's less than all of it.
+                   : up.targetLb && !(up.unbuckedLb != null && up.targetLb >= up.unbuckedLb - 0.05)
+                   ? { en: `Work order: buck ${up.targetLb} lb of this, then tick “Bucking only part” and submit.`,
+                       es: `Orden de trabajo: desvare ${up.targetLb} lb de este, luego marque “Solo se desvara una parte” y envíe.` }
                    : null) },
   machine_trim:{ from: 'buck',         map: { strain: 'strain', inputBuckedLb: 'buckedFlowerLb' } },
   // Hand Trim starts from bucked flower; `cid` only comes with a lot picked

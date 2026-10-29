@@ -246,7 +246,9 @@ const RawStock = (function () {
           type: 'tRun', status: 'sNoTag', pill: 'work', farm: '', code: r.pid || '', license: '', cid: r.cid || '', farmUids: [] });
       });
     // Outgoing transfer rows (types 8 / 9) whose manifest Canix doesn't have yet.
-    const out = (typeof MetrcTransfers !== 'undefined' && cx.transfers) ? MetrcTransfers.outgoingTransfers(cx.transfers, cx.facilities, []) : null;
+    // Every Adobe manifest counts, ones to our own licenses (Airway) too: the
+    // package has shrunk in Canix either way.
+    const out = (typeof MetrcTransfers !== 'undefined' && cx.transfers) ? MetrcTransfers.outgoingTransfers(cx.transfers, [], []) : null;
     const takers = [];
     (d.shipped || []).forEach((r) => {
       const lines = (r.lines || []).filter((x) => (TRANSFER_TYPES[x.productType] || {}).stockTab === 'finished');
@@ -333,7 +335,8 @@ const RawStock = (function () {
     // and any smalls, trim and waste put in before it's submitted.
     const drafts = handDrafts(d);
     d.tq.items.forEach((l) => {
-      if (d.machine.some((m) => uidTailMatch(m.sourceUid, l.sourceUid))) return;
+      // (A package bucked in rounds already left out what's been trimmed.)
+      if (!l.chain && d.machine.some((m) => uidTailMatch(m.sourceUid, l.sourceUid))) return;
       const dr = l.draftId && drafts.find((x) => x.id === l.draftId);
       const rest = dr ? ['smallsLb', 'normTrimLb', 'aPlusTrimLb', 'sugarTrimLb', 'wasteLb'].reduce((a, k) => a + (Number(dr[k]) || 0), 0) : 0;
       const lb = Number(l.buckedFlowerLb || 0) - Number(l.trimmedLb || 0) - rest;

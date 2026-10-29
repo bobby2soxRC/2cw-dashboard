@@ -313,17 +313,42 @@ async function getBuckQueue() {
   if (!client) return { order: [] };
   const { data } = await client.from(TABLE).select('fields').eq('id', BUCK_QUEUE_ID).maybeSingle();
   const f = (data && data.fields) || {};
-  return { order: Array.isArray(f.order) ? f.order : [], updatedBy: f.updatedBy || '', updatedAt: f.updatedAt || '' };
+  return { order: Array.isArray(f.order) ? f.order : [], targets: (f.targets && typeof f.targets === 'object') ? f.targets : {},
+    updatedBy: f.updatedBy || '', updatedAt: f.updatedAt || '' };
 }
-async function saveBuckQueue(order, who) {
+// Both re-read the row and keep the other part (order / targets), so a
+// reorder and a target set at once don't wipe each other.
+async function writeBuckQueue(change, who) {
   const client = getClient();
   if (!client) return { ok: false, reason: 'not-configured' };
+  const cur = await getBuckQueue();
   const { error } = await client.from(TABLE).upsert({
     id: BUCK_QUEUE_ID, station_key: 'buck_queue', status: 'submitted', owner_user: who || null, updated_by: who || null,
     submitted_at: new Date().toISOString(),
-    fields: { order, updatedBy: who || '', updatedAt: new Date().toISOString() }
+    fields: { order: cur.order, targets: cur.targets, ...change, updatedBy: who || '', updatedAt: new Date().toISOString() }
   });
   return error ? { ok: false, reason: error.message } : { ok: true };
+}
+async function saveBuckQueue(order, who) {
+  return writeBuckQueue({ order }, who);
+}
+// The work order's amount to buck off a package (lbs; null / 0 = all of
+// it), `targets[uid] = { lb, by, at }`. A Bucking round submitted on the
+// package after it was set uses it up (buckTargetFor).
+async function saveBuckTarget(uid, lb, who) {
+  const cur = await getBuckQueue();
+  const targets = { ...cur.targets };
+  const k = normUid(uid);
+  if (lb > 0) targets[k] = { lb: Math.round(lb * 100) / 100, by: who || '', at: new Date().toISOString() };
+  else delete targets[k];
+  return writeBuckQueue({ targets }, who);
+}
+function buckTargetFor(queue, uid, bucked) {
+  const k = Object.keys((queue && queue.targets) || {}).find((u) => uidTailMatch(u, uid));
+  const x = k && queue.targets[k];
+  if (!x || !(Number(x.lb) > 0)) return null;
+  const usedUp = (bucked || []).some((b) => b.sourceUid && uidTailMatch(b.sourceUid, uid) && String(b.submittedAt || '') > String(x.at || ''));
+  return usedUp ? null : Number(x.lb);
 }
 
 // ── Bin tares (Wet Intake's Tare dropdown) ─────────────────────────────────
@@ -373,9 +398,10 @@ async function loadBuckingQueue() {
     const d = drafts.find((x) => uidTailMatch(x.fields.sourceUid, p.sourceUid));
     const farm = (p.farmUids || []).length ? p.farmUids : [p.incomingUid];
     const cid = [...new Set([p.cid, ...farm.map(intakeCid)].map((c) => String(c || '').trim()).filter(Boolean))].join(', ');
-    return withPulled({ ...p, cid, ...(d ? { draftId: d.id } : {}) }, d ? d.fields.boxes : []);
+    const targetLb = buckTargetFor(queue, p.sourceUid, bucked);
+    return withPulled({ ...p, cid, ...(d ? { draftId: d.id } : {}), ...(targetLb ? { targetLb } : {}) }, d ? d.fields.boxes : []);
   });
-  return { items, queue, downs: downs || [] };
+  return { items, queue, downs: downs || [], bucked: bucked || [] };
 }
 
 // The trimming queue: one shared row like the bucking queue (station_key
@@ -406,13 +432,15 @@ async function saveTrimQueue(order, who) {
 // page it's open on (`draftId`) and the finished flower weighed there so far
 // (`trimmedLb`). `all` is every bucked lot, for Hand Trim's dropdown.
 async function loadTrimQueue() {
-  const [bucks, openBucks, downs, intakes, trimmed, openTrims, queue] = await Promise.all([
+  const [bucks, openBucks, downs, intakes, trimmed, machine, openTrims, queue] = await Promise.all([
     loadSubmitted('buck'), listOpenDrafts('buck'), loadSubmitted('dry_check'), loadSubmitted('intake_wet'),
-    loadSubmitted('hand_trim'), listOpenDrafts('hand_trim'), getTrimQueue()]);
-  const all = buckedLots(bucks || [], downs || [], intakes || [], openBucks || []);
+    loadSubmitted('hand_trim'), loadSubmitted('machine_trim'), listOpenDrafts('hand_trim'), getTrimQueue()]);
+  const all = buckedLots(bucks || [], downs || [], intakes || [], openBucks || [], [...(trimmed || []), ...(machine || [])]);
   const done = (trimmed || []).map((r) => r.sourceUid).filter(Boolean);
   const drafts = (openTrims || []).filter((d) => d.fields && d.fields.sourceUid);
-  const items = orderTrimQueue(all.filter((l) => !done.some((u) => uidTailMatch(u, l.sourceUid))), queue).map((l) => {
+  // A package bucked in rounds is waiting while it has a round not trimmed yet.
+  const waiting = (l) => (l.chain ? l.pending : !done.some((u) => uidTailMatch(u, l.sourceUid)));
+  const items = orderTrimQueue(all.filter(waiting), queue).map((l) => {
     const d = drafts.find((x) => uidTailMatch(x.fields.sourceUid, l.sourceUid));
     return withTrimmed(d ? { ...l, draftId: d.id } : l, d ? d.fields.weights : []);
   });

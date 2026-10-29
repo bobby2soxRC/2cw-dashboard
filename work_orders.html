@@ -60,6 +60,15 @@
   .q-lb .k{display:block;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
   .q-lb.left{color:var(--tc)}
   .q-lb.neg{color:var(--red)}
+  .q-lb.amt input{width:84px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:1rem;padding:8px;text-align:right;min-height:40px}
+  .q-lb.amt input:focus{outline:none;border-color:var(--tc)}
+  .q-est{margin-top:4px;font-size:.82rem;color:var(--text)}
+  .q-est b{font-family:'DM Mono',monospace;color:var(--green)}
+  .q-est .est-of{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--subtext)}
+  .est-basis{display:inline-block;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;border-radius:99px;padding:2px 7px;border:1px solid;vertical-align:middle;margin-left:4px}
+  .est-basis.data{color:var(--green);border-color:var(--green)}
+  .est-basis.avg{color:var(--muted);border-color:var(--muted)}
+  .est-basis.mixed{color:var(--gold);border-color:var(--gold)}
   .q-tag{display:inline-block;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--tc);border:1px solid var(--tc);border-radius:99px;padding:2px 7px;margin-left:6px;vertical-align:middle}
   .q-tag.gold{color:var(--gold);border-color:var(--gold)}
   .q-move{display:flex;gap:6px;flex:0 0 auto}
@@ -98,6 +107,7 @@
 <script src="/operations_stations.js"></script>
 <script src="/ops_common.js"></script>
 <script src="/ops_data.js"></script>
+<script src="/flower_yield.js"></script>
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
 // Work Orders: Processing's work queues in one place, one tab each.
@@ -150,6 +160,15 @@
     openHead: { en: 'Open — being bucked now', es: 'Abiertos — desvarándose ahora' },
     openNone: { en: 'Nothing open — Start one from the list below.', es: 'Nada abierto — empiece uno de la lista de abajo.' },
     nextHead: { en: 'Up next', es: 'Siguientes' },
+    toBuck: { en: 'To buck', es: 'A desvarar' }, all: { en: 'All', es: 'Todo' },
+    estA: { en: 'Est. A flower', es: 'Flor A est.' },
+    estOf: { en: 'from {lb}', es: 'de {lb}' },
+    bLot: { en: 'Data: this lot', es: 'Datos: este lote' },
+    bStrain: { en: 'Data: strain · {n} lots', es: 'Datos: variedad · {n} lotes' },
+    bAvg: { en: 'Average — no data for this strain', es: 'Promedio — sin datos de esta variedad' },
+    bDef: { en: 'Standard guess — no data yet', es: 'Estimado estándar — sin datos aún' },
+    sBuck: { en: 'Bucking', es: 'Desvarado' }, sTrim: { en: 'Trim', es: 'Corte' },
+    shLot: { en: 'this lot', es: 'este lote' }, shStrain: { en: 'strain ({n})', es: 'variedad ({n})' }, shAvg: { en: 'average', es: 'promedio' },
     initLb: { en: 'Starting weight', es: 'Peso inicial' }, pulledLb: { en: 'Pulled', es: 'Sacado' }, leftLb: { en: 'Remaining', es: 'Restante' },
     partOf: { en: 'part of …{uid}', es: 'parte de …{uid}' },
     merged: { en: '{n} intakes combined', es: '{n} recepciones combinadas' },
@@ -194,6 +213,8 @@
 
   let items = [];          // the shown queue
   let savingOrder = false;
+  let savingTarget = false;
+  let model = null;        // FlowerYield model, for Bucking's A-flower estimates
   function show() {
     tabsEl.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
     panel.dataset.tab = tab;
@@ -217,7 +238,14 @@
   async function load() {
     const which = tab;
     try {
-      items = which === 'buck' ? (await loadBuckingQueue()).items : (await loadTrimQueue()).items;
+      if (which === 'buck') {
+        // A-flower estimates learn from every Bucking and Hand Trim so far
+        // (paper and Past Records included), like Raw Inventory's.
+        const [bq, hand, handPast] = await Promise.all([loadBuckingQueue(),
+          loadSubmitted('hand_trim'), loadSubmitted('hand_trim_history')]);
+        model = FlowerYield.buildModel({ bucks: bq.bucked, trims: [...(hand || []), ...(handPast || [])], strains: reference.strains || [] });
+        items = bq.items;
+      } else items = (await loadTrimQueue()).items;
     } catch (err) {
       console.error('work orders', err);
       if (tab === which) document.getElementById('q').innerHTML = `<div class="empty-note">${esc(t(L.offline))}</div>`;
@@ -259,17 +287,63 @@
         : `${esc(p.sourceUid)}${p.cid ? ' · CID ' + esc(p.cid) : ''}`;
       const lbs = buck
         ? `<div class="q-lb"><span class="k">${esc(t(L.initLb))}</span>${p.unbuckedLb == null ? '—' : lbTxt(p.unbuckedLb)}</div>
+           <div class="q-lb amt"><span class="k">${esc(t(L.toBuck))}</span>${manager
+             ? `<input type="number" inputmode="decimal" min="0" step="0.01" data-target="${esc(p.sourceUid)}" value="${p.targetLb || ''}" placeholder="${esc(t(L.all))}" ${savingTarget ? 'disabled' : ''}>`
+             : p.targetLb ? lbTxt(p.targetLb) : esc(t(L.all))}</div>
            <div class="q-lb"><span class="k">${esc(t(L.pulledLb))}</span>${lbTxt(p.pulledLb || 0)}</div>
            <div class="q-lb left${p.leftLb != null && p.leftLb < 0 ? ' neg' : ''}"><span class="k">${esc(t(L.leftLb))}</span>${p.leftLb == null ? '—' : lbTxt(p.leftLb)}</div>`
         : `<div class="q-lb"><span class="k">${esc(t(L.buckedLb))}</span>${p.buckedFlowerLb == null ? '—' : lbTxt(p.buckedFlowerLb)}</div>
            <div class="q-lb left"><span class="k">${esc(t(L.trimmedLb))}</span>${lbTxt(p.trimmedLb || 0)}</div>`;
       return `<div class="q-row"><div class="q-n">${ranked ? i + 1 : '●'}</div>
         <div class="q-main"><div class="q-strain">${esc(p.strain || '—')}${abbr ? ` · ${esc(abbr)}` : ''}${tags}</div>
-          <div class="q-uid">${sub}</div></div>
+          <div class="q-uid">${sub}</div>${buck ? estLine(p) : ''}</div>
         <div class="q-lbs">${lbs}</div>
         ${move}${go}</div>`;
     }).join('') + `</div>`;
   }
+  // Estimated A flower from the amount to buck (the work order's, or all
+  // that's left), and what it's based on: this lot's or the strain's own
+  // Bucking / Hand Trim records, or the all-lots average. The weaker of the
+  // two steps (bucking, trimming) names it.
+  const BASIS_RANK = { batch: 3, strain: 2, all: 1, default: 0 };
+  function estLine(p) {
+    const amt = p.targetLb || p.unbuckedLb;
+    if (!model || !(amt > 0)) return '';
+    const est = FlowerYield.estimate(model, { stage: 'onstem', strain: p.strain, uid: p.sourceUid, lb: amt });
+    const isData = (s) => s.basis === 'batch' || s.basis === 'strain';
+    const weak = est.steps.reduce((a, s) => (BASIS_RANK[s.basis] < BASIS_RANK[a.basis] ? s : a));
+    const stage = (s) => t(s.stage === 'buck' ? L.sBuck : L.sTrim);
+    const short = (s) => (s.basis === 'batch' ? t(L.shLot) : s.basis === 'strain' ? t(L.shStrain).replace('{n}', s.lots) : t(L.shAvg));
+    // All from data, all from the average, or some of each (named by step).
+    const kind = est.steps.every(isData) ? 'data' : est.steps.some(isData) ? 'mixed' : 'avg';
+    const label = kind === 'mixed' ? est.steps.map((s) => `${stage(s)}: ${short(s)}`).join(' · ')
+      : weak.basis === 'batch' ? t(L.bLot)
+      : weak.basis === 'strain' ? t(L.bStrain).replace('{n}', Math.min(...est.steps.map((s) => s.lots)))
+      : weak.basis === 'all' ? t(L.bAvg) : t(L.bDef);
+    const stepTxt = (s) => `${stage(s)} ${Math.round(s.pct * 100)}% (${
+      s.basis === 'batch' ? t(L.bLot) : s.basis === 'strain' ? t(L.bStrain).replace('{n}', s.lots) : s.basis === 'all' ? t(L.bAvg) : t(L.bDef)})`;
+    return `<div class="q-est" title="${esc(est.steps.map(stepTxt).join(' · '))}">${esc(t(L.estA))} ≈ <b>${est.lb.toFixed(1)} lb</b>` +
+      ` <span class="est-of">${esc(t(L.estOf).replace('{lb}', lbTxt(amt)))} · ${Math.round(est.pct * 100)}%</span>` +
+      ` <span class="est-basis ${kind}">${esc(label)}</span></div>`;
+  }
+
+  // The amount to buck: a manager types it (blank = all of it).
+  panel.addEventListener('change', async (e) => {
+    const inp = e.target.closest('[data-target]');
+    if (!inp || !manager || savingTarget) return;
+    const p = items.find((x) => x.sourceUid === inp.dataset.target);
+    if (!p) return;
+    let lb = Number(inp.value) || 0;
+    if (p.unbuckedLb != null && lb >= p.unbuckedLb - 0.05) lb = 0;   // all of it
+    savingTarget = true;
+    p.targetLb = lb || undefined;
+    render();
+    const res = await saveBuckTarget(p.sourceUid, lb, sessionStorage.getItem('2cw_user_name'));
+    savingTarget = false;
+    if (!res.ok) { alert(t(L.saveFail)); await load(); return; }
+    render();
+  });
+
   panel.addEventListener('click', async (e) => {
     const b = e.target.closest('[data-move]');
     if (!b || !manager || savingOrder) return;

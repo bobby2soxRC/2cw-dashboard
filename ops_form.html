@@ -3960,6 +3960,7 @@
     none:    { en: 'Nothing in the queue — nothing is released to bucking right now.',
                es: 'No hay nada en la fila — nada está liberado a desvarado ahora.' },
     initLb:  { en: 'Starting weight', es: 'Peso inicial' },
+    toBuck:  { en: 'To buck', es: 'A desvarar' },
     pulledLb:{ en: 'Pulled', es: 'Sacado' },
     leftLb:  { en: 'Remaining', es: 'Restante' },
     start:   { en: 'Start →', es: 'Empezar →' },
@@ -4062,6 +4063,7 @@
         `<div class="q-uid">${escapeHtml(p.sourceUid)}${p.cid ? ' · CID ' + escapeHtml(p.cid) : ''}${p.releasedFrom ? ' · ' + escapeHtml(t(QT.part).replace('{uid}', String(p.releasedFrom).slice(-4))) : ''}${(p.farmUids || []).length > 1 ? ' · ' + escapeHtml(t(QT.merged).replace('{n}', p.farmUids.length)) : ''}</div></div>` +
         `<div class="q-lbs">` +
         `<div class="q-lb"><span class="k">${escapeHtml(t(QT.initLb))}</span>${p.unbuckedLb == null ? '—' : fmtNum(p.unbuckedLb, 2) + ' lb'}</div>` +
+        (p.targetLb ? `<div class="q-lb left"><span class="k">${escapeHtml(t(QT.toBuck))}</span>${fmtNum(p.targetLb, 2)} lb</div>` : '') +
         `<div class="q-lb"><span class="k">${escapeHtml(t(QT.pulledLb))}</span>${fmtNum(p.pulledLb || 0, 2)} lb</div>` +
         `<div class="q-lb left${p.leftLb != null && p.leftLb < 0 ? ' neg' : ''}"><span class="k">${escapeHtml(t(QT.leftLb))}</span>${p.leftLb == null ? '—' : fmtNum(p.leftLb, 2) + ' lb'}</div>` +
         `</div>` +
@@ -4161,6 +4163,8 @@
         return;
       }
       if (rec && linkPicked.has(f.k)) { tryPrefill(values[f.k], f.k, rec); return; }
+      // Bucking's package not in the list (open on another page): a plain lookup.
+      if (linkPicked.has(f.k) && f.picker.list === 'buckable') { tryPrefill(values[f.k], f.k); return; }
       if (rec && spec) Object.entries(spec.map).forEach(([here, there]) => {
         if (!isBlank(values[here]) && String(values[here]) === String(rec[there])) lastPrefill[here] = values[here];
       });
@@ -4211,9 +4215,11 @@
     markDirty();
     // A UID handed over this way still pulls in its upstream details —
     // Hand Trim's from the lot list once it's loaded (it has the customer
-    // ID and lots still being bucked, which a plain lookup doesn't).
+    // ID and lots still being bucked, which a plain lookup doesn't), and
+    // Bucking's from the queue (what's left after an earlier round, and the
+    // work order's amount).
     station.fields.filter((f) => f.t === 'uid' && f.prefill === 'lookup' && fields[f.k]).forEach((f) => {
-      if (f.picker && f.picker.list === 'bucked') linkPicked.add(f.k);
+      if (f.picker && (f.picker.list === 'bucked' || f.picker.list === 'buckable')) linkPicked.add(f.k);
       else tryPrefill(String(fields[f.k]).trim(), f.k);
     });
   }

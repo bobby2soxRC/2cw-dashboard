@@ -346,19 +346,34 @@ function combineTakeDowns(uid, members) {
 // any UID that already has a submitted Bucking record. Same shape
 // findUpstream returns (sourceUid, strain, unbuckedLb), so picking one fills
 // the form the way typing its UID would.
+// A Bucking submitted with `restOnStem` ticked (only part of the package
+// bucked) leaves the rest: the package stays, `unbuckedLb` its Dry Unbucked
+// Left, `buckedBeforeLb` the boxes taken on the earlier rounds.
 function buckablePackages(downs, bucked) {
-  const done = (bucked || []).map((b) => b.sourceUid).filter(Boolean);
-  const isDone = (uid) => done.some((d) => uidTailMatch(d, uid));
   const lb = (x) => (x === undefined || x === null || x === '' ? null : Number(x));
+  const r2 = (x) => Math.round(x * 100) / 100;
+  // null: never bucked; else { left, before } — left 0 means done.
+  const buckState = (uid) => {
+    const recs = (bucked || []).filter((b) => b.sourceUid && uidTailMatch(b.sourceUid, uid));
+    if (!recs.length) return null;
+    const last = recs.reduce((a, b) => (String(b.submittedAt || '') > String(a.submittedAt || '') ? b : a));
+    const left = last.restOnStem ? Math.max(0, Number(last.dryLeftLb) || 0) : 0;
+    return { left: left > 0.05 ? r2(left) : 0, before: r2(recs.reduce((a, b) => a + (Number(b.startingDryLb) || 0), 0)) };
+  };
   const out = [];
+  const push = (pkg, uid) => {
+    const s = buckState(uid);
+    if (!s) out.push(pkg);
+    else if (s.left > 0) out.push({ ...pkg, unbuckedLb: s.left, buckedBeforeLb: s.before });
+  };
   takeDownGroups(downs).forEach((members, uid) => {
     members.forEach((r) => (r.releases || []).forEach((x) => {
       const p = normUid(x.uid);
-      if (p && !isDone(p)) out.push({ ...r, sourceUid: p, dryWeightLb: lb(x.lb), unbuckedLb: lb(x.lb), result: 'pass',
-        releasedFrom: uid, date: String(x.at || r.date || '').slice(0, 10) });
+      if (p) push({ ...r, sourceUid: p, dryWeightLb: lb(x.lb), unbuckedLb: lb(x.lb), result: 'pass',
+        releasedFrom: uid, date: String(x.at || r.date || '').slice(0, 10) }, p);
     }));
     const pass = members.filter((r) => r.result === 'pass');
-    if (pass.length && !isDone(uid)) out.push({ ...combineTakeDowns(uid, pass), date: pass[pass.length - 1].date });
+    if (pass.length) push({ ...combineTakeDowns(uid, pass), date: pass[pass.length - 1].date }, uid);
   });
   return out;
 }
@@ -369,7 +384,14 @@ function buckablePackages(downs, bucked) {
 // didn't carry it. `openBucks` (Bucking pages still open) adds the lots
 // still being bucked that have some flower logged, `inProgress: true`, with
 // `buckedFlowerLb` what's been bucked so far and `buckDraftId` the page.
-function buckedLots(bucks, downs, intakes, openBucks) {
+//
+// A package bucked in rounds (a Bucking with `restOnStem`) has several
+// Bucking records under one UID. Without `trims`, each record is its own
+// lot (invoicing bills every round). With `trims` (submitted Hand Trim and
+// Machine Trim records), it's one lot, `chain: true`: the rounds submitted
+// since the last trim on that UID, added up, plus an open page; `pending`
+// says whether there's anything in it left to trim.
+function buckedLots(bucks, downs, intakes, openBucks, trims) {
   const groups = takeDownGroups(downs);
   const takeDownFor = (uid) => {
     for (const [u, members] of groups) {
@@ -394,10 +416,33 @@ function buckedLots(bucks, downs, intakes, openBucks) {
     // Nothing bucked yet means nothing to trim yet.
     .filter((l) => l.buckedFlowerLb > 0);
   const newest = (a, b) => String(b.date || '').localeCompare(String(a.date || '')) || String(b.submittedAt || '').localeCompare(String(a.submittedAt || ''));
+  // Packages bucked in rounds.
+  const chainUids = new Set((bucks || []).filter((r) => r.restOnStem).map((r) => normUid(r.sourceUid)).filter(Boolean));
+  const inChain = (uid) => [...chainUids].some((u) => uidTailMatch(u, uid));
+  const chains = [];
+  if (chainUids.size) {
+    chainUids.forEach((uid) => {
+      const recs = (bucks || []).filter((r) => r.sourceUid && uidTailMatch(r.sourceUid, uid))
+        .sort((a, b) => String(a.submittedAt || '').localeCompare(String(b.submittedAt || '')));
+      if (!trims) { chains.push(...recs); return; }
+      const lastTrim = (trims || []).filter((x) => x.sourceUid && uidTailMatch(x.sourceUid, uid))
+        .reduce((a, x) => (String(x.submittedAt || '') > a ? String(x.submittedAt || '') : a), '');
+      const page = open.find((d) => uidTailMatch(d.sourceUid, uid));
+      // All trimmed: the whole package's weights (Hand Trim's list of lots done).
+      const after = recs.filter((r) => String(r.submittedAt || '') > lastTrim);
+      const since = after.length || page ? after : recs;
+      const sum = (k) => r2(since.reduce((a, r) => a + (Number(r[k]) || 0), 0));
+      const last = since.length ? since[since.length - 1] : recs[recs.length - 1];
+      chains.push({ ...last, sourceUid: uid, chain: true, pending: after.length > 0 || !!page,
+        buckedFlowerLb: r2(sum('buckedFlowerLb') + (page ? page.buckedFlowerLb : 0)), startingDryLb: sum('startingDryLb'),
+        ...(page ? { inProgress: true, buckDraftId: page.buckDraftId, date: page.date } : {}) });
+    });
+  }
   const seen = new Set();
   // A submitted Bucking record wins over a page still open on the same UID.
-  return [...[...(bucks || [])].sort(newest), ...open.sort(newest)]
+  return [...[...(bucks || [])].filter((r) => !inChain(r.sourceUid)).sort(newest), ...open.filter((d) => !inChain(d.sourceUid)).sort(newest)]
     .filter((r) => { const u = normUid(r.sourceUid); if (!u || seen.has(u)) return false; seen.add(u); return true; })
+    .concat(chains)
     .sort(newest)
     .map((r) => ({ ...r, sourceUid: normUid(r.sourceUid), cid: r.cid || cidFor(r.sourceUid) }));
 }

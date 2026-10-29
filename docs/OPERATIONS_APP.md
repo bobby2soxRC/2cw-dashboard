@@ -535,7 +535,22 @@ Bucking and Hand Trim are reordered by 'buck release' managers; others see
 the order. Since 2026-10-29 both tabs have an **Open** table at the top —
 packages / lots with a page open on that station (`draftId`), Open → goes to
 that page — and below it **Up next**, the rest, which is all ▲ ▼ / Top
-ranks. Saving the order keeps the open ones first. Tabs show by access: Bucking / Hand Trim to their station's edit
+ranks. Saving the order keeps the open ones first.
+
+Bucking rows also have **To buck** — how much of the package this work
+order is for, typed by a 'buck release' manager (blank = all of it;
+`saveBuckTarget`, stored as `targets[uid] = { lb, by, at }` on the same
+`buck_queue` row as the order, each write re-reading the row so order and
+targets don't overwrite each other). A Bucking round submitted on the
+package after it was set uses it up (`buckTargetFor`). The Bucking form
+shows it when the package is picked ("Work order: buck X lb of this, then
+tick 'Bucking only part'") and its Queue tab has a To buck column. Under
+each row, **Est. A flower** from that amount (or all of it) — Raw
+Inventory's `FlowerYield.estimate`, on-stem → bucked → A flower — with a
+badge saying what it's based on: **Data: this lot** / **Data: strain · n
+lots** (green), **Average — no data for this strain** (grey), or, when one
+step has data and the other doesn't, both named ("Bucking: average · Trim:
+this lot", gold). Hover for each step's %. Tabs show by access: Bucking / Hand Trim to their station's edit
 access or 'buck release', Pre-Roll & Ground Flower to `preroll_production` or `pouch_production` edit access or the
 Pre-Roll Dashboard card (`2cw_preroll_dash`, set at login). The card is
 `ambient`, so someone with only one station still lands straight on it.
@@ -1262,8 +1277,8 @@ until it's submitted. The package is picked from a dropdown of what's **ready to
 (`picker: { list: 'buckable' }`; `buckablePackages` in `ops_common.js`):
 every Take Down released to bucking (newest per on-stem UID, with what's
 left after any parts) and every part released off a held one under its own
-tag, less any UID that already has a submitted Bucking record or is open on
-another bucking page. Each reads **Strain || abbreviation || last 4** (the
+tag, less any UID that already has a submitted Bucking record (unless that
+round left the rest on stem — below) or is open on another bucking page. Each reads **Strain || abbreviation || last 4** (the
 abbreviation is the strain library's `abbreviation`, "—" if none). Picking
 one fills the UID, strain and **dry unbucked weight** (`PREFILL_MAP.buck`).
 "Not listed — type the UID" still allows typing a tag; a typed UID still
@@ -1284,6 +1299,23 @@ totals, loss and yield below cover the whole batch. The Daily Summary
 follows the picked day, and each day can have its own Project
 (`projectDays`). Rows logged before the tabs already carry their `day`, so
 open pages split into tabs by themselves.
+
+**Bucking only part of a package** (since 2026-10-29). A work order can say
+how much of a package to buck (**To buck** on Work Orders, below); the
+crew stops there, ticks **Bucking only part — the rest stays on stem**
+(`restOnStem`) and submits. That record's **Dry Unbucked Left** (`dryLeftLb`)
+stays in the bucking queue and On-Stem inventory under the same tag
+(`buckablePackages`: a package whose latest Bucking has `restOnStem` is
+still buckable, `unbuckedLb` = what's left, `buckedBeforeLb` = boxes taken
+on earlier rounds). The next round starts a new page on it, filled with
+what's left. A package without `restOnStem` on its latest round is done, as
+before. Each round goes to Hand Trim on its own: `buckedLots(…, trims)`
+makes one lot per such package (`chain: true`) from the rounds submitted
+since its last Hand Trim / Machine Trim (by `submittedAt`), plus an open
+page, and the trim queue keeps it while `pending`. Without `trims`
+(invoicing) every round is its own lot, so each is billed. Yields and
+reports already add records up per lot. The UID Flow / History views show
+each round as its own record.
 
 **Holding as bucked flower.** Bucked flower normally goes straight to
 trimming on the on-stem tag — no new Metrc package (since 2026-10-20, so

@@ -310,6 +310,18 @@ downstream forms and outgoing transfers take it off. Not in the Metrc Queue,
 Reports or UID Flow. No SQL. Users need the station ticked in Admin.
 Details: "Product Transfer — Incoming" in `docs/OPERATIONS_APP.md`.
 
+### Partial bucking and work-order amounts (started 2026-10-29)
+
+Work Orders (`work_orders.html`) Bucking rows have **To buck** (manager
+sets lbs; `targets` on the `buck_queue` row) and an **Est. A flower** from
+it, badged as lot / strain data or the average (`flower_yield.js`). The
+Bucking form has **Bucking only part — the rest stays on stem**
+(`restOnStem`): submitting leaves Dry Unbucked Left in the queue under the
+same tag (`buckablePackages`), and Hand Trim gets each round
+(`buckedLots(…, trims)`, `chain`). Both Bucking and Hand Trim tabs have an
+Open table above the ranked Up next list. No SQL. Details: "Bucking only
+part of a package" and "Work Orders" in `docs/OPERATIONS_APP.md`.
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)
