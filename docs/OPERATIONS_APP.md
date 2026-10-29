@@ -440,16 +440,30 @@ tag. No SQL.
 directly under Operations on the hub, as `index.html` puts any dept without
 a folder there) is the paper "Product Transfer Form (OUTGOING)", version 7:
 person completing it (`completedBy`), date of request, requestor, customer,
-DCC license #, destination, customer order / sales order / invoice #, terms
-(DF / MC), proposed and actual transfer dates, Driver and Vehicle Plate (the
+proposed and actual transfer dates, Driver and Vehicle Plate (the
 same `driverPicker` / `platePicker` as Harvest), then a row per package
 (`lines`: product type code 1–8 from `TRANSFER_TYPES` in
 `operations_stations.js`, strain, PID, CID, source package UID, weight —
 pieces for pre-rolls — transfer package UID, price per lb). Subtotal lbs
-(pre-rolls left out), pre-roll pieces and total $ are worked out. The
-office checklist is seven checkboxes (transfer log, order tracker, sales
-tracker, manifest initiated / accepted, invoice sent, processor inventory),
-ticked later with Fix form. It's in the Metrc Queue for the manifest, and
+(pre-rolls left out), pre-roll pieces and total $ are worked out.
+
+Since 2026-10-29 the floor form doesn't ask for DCC license #, destination,
+customer order / sales order / invoice #, Metrc manifest #, terms or the
+office checklist (seven checkboxes) — they're `editOnly`, so the form is
+short enough to actually get done; the office can still fill them in with
+Fix form, and a **Needs form** link still prefills them. Instead the record
+shows them from Canix: `MetrcTransfers.outgoingTransfers` lists Adobe's
+outgoing manifests and `transferForForm` finds the form's (by Manifest #,
+else by package UID — the same match Needs form uses). The Metrc Queue's
+opened record has a **From Metrc (Canix sync)** box — manifest #, their
+license, customer and destination (`customers.json` by license), sales
+order #, departure, packages, manifest initiated, and accepted / in transit
+/ rejected — and its row shows the manifest and status; blank office-only
+fields are left out of the detail. The Transfers report fills manifest,
+license, customer and sales order the same way and has a Metrc status
+column. Customer order #, invoice # and terms aren't in Canix, so they only
+show when typed in. Canix keeps 30 days of transfers, so an older form
+with no typed manifest shows "No manifest found". It's in the Metrc Queue for the manifest, and
 Raw Inventory takes each row off its source package on the tab its product
 type says (1 On-Stem, 2 Bucked, 3 Flower, 4 Smalls, 5 Trim, 6 Fresh Frozen;
 seeds and pre-rolls aren't tracked there). No SQL.

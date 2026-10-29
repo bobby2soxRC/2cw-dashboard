@@ -265,7 +265,7 @@
   const getJson = (f) => fetch(`/data/${f}?t=${Date.now()}`).then((r) => { if (!r.ok) throw new Error(`${f}: HTTP ${r.status}`); return r.json(); });
   const EXTRA = {
     metrc: async () => new Map((await pageAll(() => client.from('metrc_queue').select('*').order('form_id'))).map((r) => [r.form_id, r])),
-    canix: async () => { const [transfers, facilities] = await Promise.all([getJson('canix_transfers_recent.json'), getJson('canix_facilities.json')]); return { transfers, facilities }; },
+    canix: async () => { const [transfers, facilities, customers] = await Promise.all([getJson('canix_transfers_recent.json'), getJson('canix_facilities.json'), getJson('customers.json').catch(() => [])]); return { transfers, facilities, customers: Array.isArray(customers) ? customers : [] }; },
     // Canix packages: the last 180 days, sold or not, plus what's on hand now.
     packages: async () => {
       const [recent, onHand] = await Promise.all([getJson('canix_packages_recent.json').catch(() => []), getJson('canix_inventory.json')]);

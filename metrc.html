@@ -349,7 +349,20 @@
     nfSub:     { en: 'Manifest made in Metrc — no form yet', es: 'Manifiesto hecho en Metrc — sin formulario' },
     nfGo:      { en: 'Fill out form →', es: 'Llenar formulario →' },
     nfTo:      { en: 'To', es: 'Para' },
-    pcs:       { en: 'pcs', es: 'pzas' }
+    pcs:       { en: 'pcs', es: 'pzas' },
+    cxHd:      { en: 'From Metrc (Canix sync)', es: 'De Metrc (sincronización de Canix)' },
+    cxNone:    { en: 'No Metrc manifest found for this form yet — it shows here once the manifest is made and Canix syncs.', es: 'Aún no se encontró manifiesto de Metrc para este formulario — aparece aquí cuando se haga el manifiesto y Canix sincronice.' },
+    cxLicense: { en: 'Their license', es: 'Su licencia' },
+    cxCust:    { en: 'Customer', es: 'Cliente' },
+    cxDest:    { en: 'Destination', es: 'Destino' },
+    cxSo:      { en: 'Sales order #', es: 'N.º de orden de venta' },
+    cxLeft:    { en: 'Departed', es: 'Salió' },
+    cxInit:    { en: 'Manifest initiated', es: 'Manifiesto iniciado' },
+    cxAcc:     { en: 'Manifest accepted', es: 'Manifiesto aceptado' },
+    cxPkgs:    { en: 'Packages on manifest', es: 'Paquetes en el manifiesto' },
+    accepted:  { en: 'Accepted', es: 'Aceptado' },
+    rejected:  { en: 'Rejected', es: 'Rechazado' },
+    shipped:   { en: 'In transit — not accepted yet', es: 'En tránsito — sin aceptar' }
   };
   const STATUSES = ['todo', 'in_progress', 'done', 'not_needed'];
   document.getElementById('title').textContent = t(L.title);
@@ -379,8 +392,9 @@
       incomingAt = Date.now();
       canixAt = meta.last_sync || null;
     } catch (ex) { console.error('canix transfers', ex); incoming = null; }
-    // The whole board: the Needs form rows come from Canix too.
-    if (incoming) render(); else renderIncoming();
+    // The whole board: the Needs form rows come from Canix too (and an open
+    // outgoing transfer's From Metrc box).
+    if (incoming) { render(); if (openId) openDetail(openId); } else renderIncoming();
   }
   function renderIncoming() {
     incEl.classList.toggle('closed', !incOpen);
@@ -555,13 +569,43 @@
   // in from the transfer (ops_form.html's ?set_<field>= link prefill).
   const editAccess = (() => { try { return JSON.parse(sessionStorage.getItem('2cw_ops_edit_access') || 'null'); } catch (_) { return null; } })();
   const canFillTransfer = !editAccess || editAccess === 'all' || (Array.isArray(editAccess) && editAccess.includes('transfer_out'));
+  const outFormOf = (r) => ({
+    id: r.id, manifest: val(r, 'manifestNo'),
+    uids: (val(r, 'lines') || []).flatMap((x) => [x.sourceUid, x.transferUid]).filter(Boolean)
+  });
   function needsForm() {
     if (!incoming) return [];
-    const outForms = forms.filter((r) => r.station_key === 'transfer_out').map((r) => ({
-      id: r.id, manifest: val(r, 'manifestNo'),
-      uids: (val(r, 'lines') || []).flatMap((x) => [x.sourceUid, x.transferUid]).filter(Boolean)
-    }));
+    const outForms = forms.filter((r) => r.station_key === 'transfer_out').map(outFormOf);
     return MetrcTransfers.outgoingNeedingForm(incoming.transfers, incoming.facilities, outForms, incoming.inventory);
+  }
+  // A submitted Product Transfer — Outgoing's manifest in Canix (or null):
+  // where its license, sales order and initiated / accepted come from, since
+  // the floor form doesn't ask for them.
+  let outgoingAll = null, outgoingFor = null;
+  function canixOut(r) {
+    if (!incoming || r.station_key !== 'transfer_out') return null;
+    if (outgoingFor !== incoming) { outgoingAll = MetrcTransfers.outgoingTransfers(incoming.transfers, incoming.facilities, incoming.inventory); outgoingFor = incoming; }
+    return MetrcTransfers.transferForForm(outFormOf(r), outgoingAll);
+  }
+  // The "From Metrc" box on an outgoing transfer's record.
+  function canixOutHtml(r) {
+    if (r.station_key !== 'transfer_out' || !incoming) return '';
+    const x = canixOut(r);
+    if (!x) return `<div class="st-box"><div class="st-hd">${t(L.cxHd)}</div><div class="muted-note">${t(L.cxNone)}</div></div>`;
+    const cust = customerOf(x);
+    const row = (l, v, copy) => `<div class="d-row"><div class="k">${esc(t(l))}</div><div class="v ${copy && v ? 'copyable' : ''}" ${copy && v ? `data-copy="${esc(v)}"` : ''}>${esc(v || '—')}</div></div>`;
+    const pill = `<span class="pill ${x.status === 'accepted' ? 'done' : x.status === 'rejected' ? 'not_needed' : 'sync'}">${t(L[x.status])}</span>`;
+    return `<div class="st-box"><div class="st-hd">${t(L.cxHd)}${canixAt ? ` <span class="muted-note">· ${esc(fmtAt(canixAt))}</span>` : ''}</div>
+      ${row(L.colManifest, x.manifest, true)}
+      ${row(L.cxLicense, x.toLicense, true)}
+      ${row(L.cxCust, x.customer || cust.CustomerName, true)}
+      ${row(L.cxDest, cust.Address, true)}
+      ${row(L.cxSo, x.salesOrderNo, true)}
+      ${row(L.cxLeft, x.departure ? fmtWhen(x.departure) : '')}
+      ${row(L.cxPkgs, `${x.packages.length} · ${[x.weightLb ? `${fmtNum(x.weightLb, 2)} lb` : '', x.pieces ? `${fmtNum(x.pieces, 0)} ${t(L.pcs)}` : ''].filter(Boolean).join(' · ')}`)}
+      <div class="d-row"><div class="k">${t(L.cxInit)}</div><div class="v">✓</div></div>
+      <div class="d-row"><div class="k">${t(L.cxAcc)}</div><div class="v">${pill}</div></div>
+    </div>`;
   }
   // A Canix strain as the Strain Library spells it, when it's there.
   const strainOpts = refOptions(reference, 'strains');
@@ -727,7 +771,9 @@
     const picked = pending.get(r.id) || s;
     const newUid = [...new Set([...newTags(r), val(r, 'newFinishedUid'), val(r, 'newPrerollUid'), val(r, 'newPouchUid')].filter(Boolean))].join(', ');
     const untagged = tagDefs(r).filter((x) => !val(r, x.k)).length;
-    const manifest = String(val(r, 'manifestNo') || '').trim();  // Wet Intake only
+    // Wet Intake's, or an outgoing transfer's (typed, else from Canix).
+    const cx = canixOut(r);
+    const manifest = String(val(r, 'manifestNo') || (cx && cx.manifest) || '').trim();
     const photos = photosOf(r);
     const statusCell = canEdit
       ? `<div class="st-cell"><select class="st-sel ${picked}" aria-label="${esc(t(L.colStatus))}">${STATUSES.map((k) =>
@@ -736,7 +782,7 @@
       : `<span class="pill ${s}">${t(L[s])}</span>`;
     return `<tr class="${s} ${pending.has(r.id) ? 'dirty' : ''}" data-id="${r.id}">
       <td>${statusCell}</td>
-      <td class="form-name">${esc(t(stationOf(r).title))}${productOf(r) ? `<div class="sub-line">${esc(productOf(r))}</div>` : ''}${weightPill(r) ? `<div class="sub-line">${weightPill(r)}</div>` : ''}</td>
+      <td class="form-name">${esc(t(stationOf(r).title))}${productOf(r) ? `<div class="sub-line">${esc(productOf(r))}</div>` : ''}${cx ? `<div class="sub-line">${esc(val(r, 'customer') || cx.customer || cx.toLicense)} · ${t(L[cx.status])}</div>` : ''}${weightPill(r) ? `<div class="sub-line">${weightPill(r)}</div>` : ''}</td>
       <td class="mono">${esc(fmtDate(r.work_date))}</td>
       <td class="strain">${esc(r.strain || val(r, 'strain') || '—')}</td>
       <td class="mono uid" title="${esc(uids(r))}">${esc(uids(r) || '—')}</td>
@@ -788,6 +834,9 @@
   const shownCols = (f) => f.cols.filter((c) => !c.formOnly);
   function fieldHtml(f, r) {
     if (f.showIf && !f.showIf(r.fields || {})) return '';
+    // Office-only fields (`editOnly`) left blank — an outgoing transfer's
+    // license, orders and checklist come from Canix in the box above.
+    if (f.editOnly && (f.t === 'heading' || [undefined, null, '', false, 'false'].includes(val(r, f.k)))) return '';
     const v = f.projectPicker && val(r, f.k) ? val(r, 'projectName') || val(r, f.k) : val(r, f.k);
     if (f.t === 'lineitems') {
       const items = Array.isArray(v) ? v : [];
@@ -942,6 +991,7 @@
       <div class="d-sub">${t(L.submitted)} ${r.submitted_at ? esc(new Date(r.submitted_at).toLocaleString()) : ''} ${r.owner_user ? t(L.by) + ' ' + esc(r.owner_user) : ''}</div>
       ${statusHtml(r)}
       <div class="muted-note" style="margin-bottom:6px">${t(L.copyHint)}</div>
+      ${canixOutHtml(r)}
       ${s.fields.map((fd) => fieldHtml(fd, r)).join('')}
       ${logHtml(r)}`;
     document.getElementById('d-close').onclick = closeDetail;

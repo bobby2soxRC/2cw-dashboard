@@ -1566,16 +1566,20 @@ const OPERATIONS_STATIONS = [
 
   // ── SHIPPING: PRODUCT TRANSFER — OUTGOING ─────────────────────────────────
   // The paper "Product Transfer Form (OUTGOING)", version 7: who it's for,
-  // the order numbers, driver and plate (the same pickers as Harvest), a row
-  // per package going out, and the office checklist. In the Metrc Queue for
-  // the manifest. Raw Inventory takes each row off its source package
-  // (TRANSFER_TYPES says which stock a product type code is).
+  // driver and plate (the same pickers as Harvest) and a row per package
+  // going out. In the Metrc Queue for the manifest. Raw Inventory takes each
+  // row off its source package (TRANSFER_TYPES says which stock a product
+  // type code is). The license, order numbers, manifest and office checklist
+  // are `editOnly` — not asked for on the floor, so the form gets done: the
+  // Metrc Queue shows the manifest, license, sales order and initiated /
+  // accepted from the Canix sync (MetrcTransfers.transferForForm), and the
+  // office can still type the rest in with Fix form.
   {
     key: 'transfer_out',
     dept: { en: 'Shipping', es: 'Envíos' },
     title: { en: 'Product Transfer — Outgoing', es: 'Transferencia de producto — salida' },
-    desc: { en: 'A transfer going out to a customer — customer, orders, driver and plate, each package and its weight, and the office checklist.',
-            es: 'Una transferencia que sale a un cliente — cliente, pedidos, conductor y placa, cada paquete y su peso, y la lista de verificación de oficina.' },
+    desc: { en: 'A transfer going out to a customer — customer, driver and plate, and each package and its weight. Manifest, license and sales order come from Metrc.',
+            es: 'Una transferencia que sale a un cliente — cliente, conductor y placa, y cada paquete y su peso. Manifiesto, licencia y orden de venta vienen de Metrc.' },
     color: 'blue',
     headline: 'totalLb',
     fields: [
@@ -1583,15 +1587,16 @@ const OPERATIONS_STATIONS = [
       { ...F.date(), l: { en: 'Date of Request', es: 'Fecha de la solicitud' } },
       { k: 'requestor', t: 'text', l: { en: 'Requestor’s Name', es: 'Nombre de quien solicita' } },
       { k: 'customer', t: 'text', req: true, l: { en: 'Customer Name', es: 'Nombre del cliente' } },
-      { k: 'dccLicense', t: 'text', l: { en: 'DCC License #', es: 'N.º de licencia DCC' } },
-      { k: 'destination', t: 'text', l: { en: 'Destination', es: 'Destino' } },
-      { k: 'customerOrderNo', t: 'text', l: { en: 'Customer Order #', es: 'N.º de pedido del cliente' } },
-      { k: 'salesOrderNo', t: 'text', l: { en: 'Sales Order #', es: 'N.º de orden de venta' } },
-      { k: 'invoiceNo', t: 'text', l: { en: 'Invoice #', es: 'N.º de factura' } },
+      { k: 'dccLicense', t: 'text', editOnly: true, l: { en: 'DCC License #', es: 'N.º de licencia DCC' } },
+      { k: 'destination', t: 'text', editOnly: true, l: { en: 'Destination', es: 'Destino' } },
+      { k: 'customerOrderNo', t: 'text', editOnly: true, l: { en: 'Customer Order #', es: 'N.º de pedido del cliente' } },
+      { k: 'salesOrderNo', t: 'text', editOnly: true, l: { en: 'Sales Order #', es: 'N.º de orden de venta' } },
+      { k: 'invoiceNo', t: 'text', editOnly: true, l: { en: 'Invoice #', es: 'N.º de factura' } },
       // The Metrc manifest this form is for — how the Metrc Queue knows a
       // manifest already has its form (otherwise it lists it as Needs form).
-      { k: 'manifestNo', t: 'text', inputmode: 'numeric', l: { en: 'Metrc Manifest #', es: 'N.º de manifiesto de Metrc' } },
-      { k: 'terms', t: 'select', l: { en: 'Terms', es: 'Términos' },
+      // Filled in by a Needs form link; else matched by package UID.
+      { k: 'manifestNo', t: 'text', editOnly: true, inputmode: 'numeric', l: { en: 'Metrc Manifest #', es: 'N.º de manifiesto de Metrc' } },
+      { k: 'terms', t: 'select', editOnly: true, l: { en: 'Terms', es: 'Términos' },
         opts: [
           { v: 'DF', l: { en: 'DF', es: 'DF' } },
           { v: 'MC', l: { en: 'MC', es: 'MC' } }
@@ -1640,17 +1645,17 @@ const OPERATIONS_STATIONS = [
         l: { en: 'Total ($)', es: 'Total ($)' },
         hint: { en: 'Weight × price per lb, on the rows with a price.', es: 'Peso × precio por lb, en las filas con precio.' } },
 
-      { k: 'checklist', t: 'heading',
+      { k: 'checklist', t: 'heading', editOnly: true,
         l: { en: 'Checklist', es: 'Lista de verificación' },
-        hint: { en: 'Tick each one as it’s done. Fix form in the Metrc Queue or Today board ticks the rest after submit.',
-                es: 'Marque cada uno al terminarlo. Corregir formulario en la Cola de Metrc o el tablero de Hoy marca el resto después de enviar.' } },
-      { k: 'ckTransferLog', t: 'check', l: { en: '2CW Transfer Log Updated', es: 'Registro de transferencias 2CW actualizado' } },
-      { k: 'ckOrderTracker', t: 'check', l: { en: '2CW Customer Order Tracker Updated', es: 'Seguimiento de pedidos de clientes 2CW actualizado' } },
-      { k: 'ckSalesTracker', t: 'check', l: { en: '2CW Sales Tracker Updated', es: 'Seguimiento de ventas 2CW actualizado' } },
-      { k: 'ckManifestInitiated', t: 'check', l: { en: 'Manifest Transfer Initiated', es: 'Transferencia de manifiesto iniciada' } },
-      { k: 'ckManifestAccepted', t: 'check', l: { en: 'Manifest Transfer Accepted', es: 'Transferencia de manifiesto aceptada' } },
-      { k: 'ckInvoiceSent', t: 'check', l: { en: '2CW Invoice Sent to Customer', es: 'Factura 2CW enviada al cliente' } },
-      { k: 'ckInventoryUpdated', t: 'check', l: { en: '2CW Processor Inventory Updated', es: 'Inventario del procesador 2CW actualizado' } },
+        hint: { en: 'Office only. Manifest initiated / accepted show in the Metrc Queue from Canix whether or not they’re ticked here.',
+                es: 'Solo oficina. Manifiesto iniciado / aceptado se ven en la Cola de Metrc desde Canix, estén marcados aquí o no.' } },
+      { k: 'ckTransferLog', t: 'check', editOnly: true, l: { en: '2CW Transfer Log Updated', es: 'Registro de transferencias 2CW actualizado' } },
+      { k: 'ckOrderTracker', t: 'check', editOnly: true, l: { en: '2CW Customer Order Tracker Updated', es: 'Seguimiento de pedidos de clientes 2CW actualizado' } },
+      { k: 'ckSalesTracker', t: 'check', editOnly: true, l: { en: '2CW Sales Tracker Updated', es: 'Seguimiento de ventas 2CW actualizado' } },
+      { k: 'ckManifestInitiated', t: 'check', editOnly: true, l: { en: 'Manifest Transfer Initiated', es: 'Transferencia de manifiesto iniciada' } },
+      { k: 'ckManifestAccepted', t: 'check', editOnly: true, l: { en: 'Manifest Transfer Accepted', es: 'Transferencia de manifiesto aceptada' } },
+      { k: 'ckInvoiceSent', t: 'check', editOnly: true, l: { en: '2CW Invoice Sent to Customer', es: 'Factura 2CW enviada al cliente' } },
+      { k: 'ckInventoryUpdated', t: 'check', editOnly: true, l: { en: '2CW Processor Inventory Updated', es: 'Inventario del procesador 2CW actualizado' } },
       F.notes(), F.photo()
     ]
   },

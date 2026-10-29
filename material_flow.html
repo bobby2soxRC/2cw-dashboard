@@ -537,9 +537,9 @@ packYieldPct = packedLb ÷ inputLb</pre></div>
       <p>The paper "Product Transfer Form (OUTGOING)" v7. Material often ships as is, without becoming finished goods: on-stem flower back to the farm customer, or bucked flower, flower, smalls and trim to a buyer. The product type code says which Raw Inventory tab it comes off. Weights entered on a Hand Trim that's still open count as stock right away, so product picked up before the trim form is submitted can still go on a transfer.</p>
       <div class="cols">
         <div><h4>On the form</h4><ul>
-          <li>Customer, DCC license #, destination, SO / invoice #, terms, dates, driver, plate, Metrc manifest #</li>
+          <li>Customer, dates, driver, plate</li>
           <li>Per package: type 1–8, then the batch (the on-hand packages on that type's Raw Inventory tab — fills strain, PID, CID, source UID and shows the lbs available), weight (pieces for pre-rolls), transfer UID, $/lb</li>
-          <li>Office checklist, ticked later with Fix form</li>
+          <li>Manifest #, their license, destination, sales order # and manifest initiated / accepted come from Canix onto the record (Metrc Queue, Transfers report); invoice #, customer order #, terms and the office checklist only with Fix form</li>
         </ul></div>
         <div><h4>Math</h4>
 <pre class="math">totalLb     = Σ weight  <span class="c">(pre-rolls left out)</span>

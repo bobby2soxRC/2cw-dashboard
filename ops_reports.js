@@ -972,19 +972,29 @@
   // ── Transfers ───────────────────────────────────────────────────────────
   R.transfers = (D, ctx) => {
     const out = [];
+    // The floor form doesn't ask for the manifest or license: they come from
+    // the form's manifest in the Canix sync (MetrcTransfers.transferForForm)
+    // when the office hasn't typed them in, with its Metrc status.
+    const canixOut = ctx.canix ? MetrcTransfers.outgoingTransfers(ctx.canix.transfers, ctx.canix.facilities, []) : [];
+    const custByLic = new Map(((ctx.canix || {}).customers || []).filter((c) => c && c.LicenseNum).map((c) => [c.LicenseNum, c.CustomerName]));
+    const ST = { accepted: L('Accepted', 'Aceptado'), rejected: L('Rejected', 'Rechazado'), shipped: L('In transit', 'En tránsito') };
     sub(D, 'transfer_out').forEach((r) => {
       const d = String(r.actualDate || r.date || '').slice(0, 10);
       if (!inRange(d, ctx)) return;
+      const cx = MetrcTransfers.transferForForm({ manifest: r.manifestNo, uids: (r.lines || []).flatMap((x) => [x.sourceUid, x.transferUid]).filter(Boolean) }, canixOut);
+      const license = r.dccLicense || (cx && cx.toLicense) || '';
       (r.lines || []).forEach((x) => {
         const ty = TRANSFER_TYPES[x.productType] || {};
-        out.push({ date: d, manifest: r.manifestNo || '', customer: r.customer || '', license: r.dccLicense || '', product: ty.l || L(String(x.productType || '')),
+        out.push({ date: d, manifest: r.manifestNo || (cx && cx.manifest) || '', customer: r.customer || (cx && cx.customer) || custByLic.get(license) || '', license,
+          salesOrder: r.salesOrderNo || (cx && cx.salesOrderNo) || '', status: cx ? ST[cx.status] : L('No manifest found', 'Sin manifiesto'),
+          product: ty.l || L(String(x.productType || '')),
           strain: x.strain || '', uid: normUid(x.sourceUid), cid: x.cid || '', farm: ctx.farmName(x.pid) || x.pid || '',
           lb: ty.pieces ? null : r2(n(x.weight)) || null, pieces: ty.pieces ? n(x.weight) || null : null });
       });
     });
     out.sort((a, b) => String(b.date).localeCompare(String(a.date)));
     const ocols = [C('date', 'Date', 'Fecha', 'date'), C('manifest', 'Manifest #', 'Manifiesto', 'uid'), C('customer', 'Customer', 'Cliente'), C('license', 'Their license', 'Su licencia'),
-      C('product', 'Product', 'Producto'), C('strain', 'Strain', 'Variedad'), C('uid', 'UID', 'UID', 'uid'), C('cid', 'CID', 'CID'), C('farm', 'Farm', 'Rancho'),
+      C('salesOrder', 'Sales order #', 'Orden de venta'), C('status', 'Metrc status', 'Estado en Metrc'), C('product', 'Product', 'Producto'), C('strain', 'Strain', 'Variedad'), C('uid', 'UID', 'UID', 'uid'), C('cid', 'CID', 'CID'), C('farm', 'Farm', 'Rancho'),
       C('lb', 'Lb', 'Lb', 'lb'), C('pieces', 'Pieces', 'Piezas', 'int')];
     const byCust = [...groupBy(out, (x) => x.customer || '—')].map(([customer, xs]) => ({ customer, transfers: uniq(xs.map((x) => x.date + x.manifest)).length,
       lines: xs.length, lb: r2(sum(xs, 'lb')) || null, pieces: sum(xs, 'pieces') || null })).sort((a, b) => n(b.lb) - n(a.lb));
@@ -1020,7 +1030,7 @@
     inc.sort((a, b) => String(b.date).localeCompare(String(a.date)));
     const icols = [C('date', 'Departed', 'Salió', 'date'), C('manifest', 'Manifest #', 'Manifiesto', 'uid'), C('from', 'From', 'De'), C('to', 'To (ours)', 'A (nuestra)'),
       C('packages', 'Packages', 'Paquetes', 'int'), C('lb', 'Lb', 'Lb', 'lb'), C('status', 'Status', 'Estado'), C('hours', 'Hours to Canix update (≈ accept)', 'Horas a la actualización de Canix (≈ aceptar)', 'hrs'), C('late', '24-hour rule', 'Regla de 24 h')];
-    const notes = [L('Outgoing: Product Transfer — Outgoing forms by their actual ship date. Incoming: transfers to our licenses from the Canix sync, which keeps the last 30 days; an outside farm’s transfer isn’t in Canix until it’s accepted. Canix doesn’t give the accept time, so the hours run from departure to when Canix last updated the accepted packages — that can be later than the accept. “Maybe late” means check the transfer in Metrc, not that it was late.',
+    const notes = [L('Outgoing: Product Transfer — Outgoing forms by their actual ship date; manifest, license, sales order and Metrc status from the form’s manifest in Canix when the form doesn’t have them (Canix keeps the last 30 days). Incoming: transfers to our licenses from the Canix sync, which keeps the last 30 days; an outside farm’s transfer isn’t in Canix until it’s accepted. Canix doesn’t give the accept time, so the hours run from departure to when Canix last updated the accepted packages — that can be later than the accept. “Maybe late” means check the transfer in Metrc, not that it was late.',
                    'Salida: formularios de transferencia por su fecha real. Entrada: transferencias a nuestras licencias de la sincronización de Canix (últimos 30 días). Las horas para aceptar van de la salida a la última actualización de Canix.')];
     if (earliest && ctx.from < earliest) notes.push(L(`Canix transfers on file start ${earliest}; earlier incoming transfers aren’t shown.`, `Las transferencias de Canix empiezan el ${earliest}.`));
     return {

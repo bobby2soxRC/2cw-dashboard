@@ -166,16 +166,13 @@
   const pacificDay = (s) => (/^(\d{4}-\d\d-\d\d)/.exec(String(s || '')) || [])[1] || '';
 
   const isEach = (unit) => /^each$/i.test(String(unit || '').trim());
-  function outgoingNeedingForm(transfers, facilities, forms, inventory, since = NEEDS_FORM_SINCE, from = OUTGOING_FROM) {
+  // Every outgoing manifest from `from` to someone else's license with raw
+  // material or pre-rolls on it, oldest first: its packages and, in `cover`,
+  // the tags a form's UID can name it by (the packages and what they were
+  // made from).
+  function outgoingTransfers(transfers, facilities, inventory, from = OUTGOING_FROM) {
     const ours = new Set((facilities || []).map((f) => f && f.license_number).filter(Boolean));
     const invByTag = new Map((inventory || []).filter((p) => p && p.tag).map((p) => [normTag(p.tag), p]));
-    const formManifests = new Set(), formUids = [];
-    for (const f of forms || []) {
-      const m = normManifest(f.manifest);
-      if (m) formManifests.add(m);
-      for (const u of f.uids || []) { const n = normTag(u); if (n.length >= 4) formUids.push(n); }
-    }
-    const covered = (tag) => formUids.some((u) => u === tag || tag.endsWith(u));
     // The one package it was cut from (none when it came from several).
     const directSource = (c) => {
       if (c._source !== undefined) return c._source || '';
@@ -203,8 +200,6 @@
       if (!manifest || !from.includes(t._facility_license_number)) continue;
       for (const d of t.destinations || []) {
         if (!d || ours.has(d.destination_facility)) continue;   // between our own licenses
-        const day = pacificDay(d.departure_time);
-        if (since && (!day || day < since)) continue;
         const live = (d.contents || []).filter((c) => c && c.status !== 'Voided');
         const packages = live.map((c) => {
           const tag = String((c.package || {}).tag || '');
@@ -229,21 +224,22 @@
           };
         }).filter(Boolean);
         if (!packages.length) continue;
-        if (formManifests.has(normManifest(manifest))) continue;
         const tags = live.map((c) => normTag((c.package || {}).tag)).filter(Boolean);
-        if (tags.some(covered) || packages.some((p) => p.sources.some(covered))) continue;
         out.push({
           manifest,
           fromLicense: t._facility_license_number || '',
           fromName: t._facility_name || t._facility_license_number || '',
           toLicense: d.destination_facility || '',
           departure: pacificTime(d.departure_time),
-          date: day,
+          date: pacificDay(d.departure_time),
           salesOrderNo: t._sales_order_no || '',
           customer: t._customer_name || '',
           accepted: live.every((c) => c.status === 'Accepted'),
+          // accepted · rejected · shipped (in transit, not accepted yet)
+          status: live.every((c) => c.status === 'Accepted') ? 'accepted' : live.some((c) => c.status === 'Rejected') ? 'rejected' : 'shipped',
           packages,
           tags: packages.map((p) => p.tag),
+          cover: [...new Set([...tags, ...packages.flatMap((p) => p.sources)])],
           strains: [...new Set(packages.map((p) => p.strain).filter(Boolean))],
           weightLb: Math.round(packages.reduce((s, p) => s + p.lb, 0) * 100) / 100,
           pieces: packages.reduce((s, p) => s + (p.pieces ? p.qty : 0), 0)
@@ -251,6 +247,33 @@
       }
     }
     return out.sort((a, b) => (a.departure || 0) - (b.departure || 0));
+  }
+
+  // Whether a form ({ manifest, uids }) is for this outgoing transfer: same
+  // Manifest #, or one of its UIDs names one of the transfer's tags or a tag
+  // one was made from (a typed tail of 4+ characters counts).
+  function formCovers(x, f) {
+    const m = normManifest(f.manifest);
+    if (m && m === normManifest(x.manifest)) return true;
+    const uids = (f.uids || []).map(normTag).filter((u) => u.length >= 4);
+    return uids.some((u) => x.cover.some((tg) => tg === u || tg.endsWith(u)));
+  }
+
+  // The outgoing transfer a submitted form is for — the Manifest # first,
+  // else the newest one its package UIDs match — or null. The Metrc Queue
+  // and the Transfers report show its Metrc details (license, sales order,
+  // initiated / accepted) from it, so the floor form doesn't ask for them.
+  function transferForForm(form, outgoing) {
+    const m = normManifest(form && form.manifest);
+    const list = outgoing || [];
+    return (m && list.find((x) => normManifest(x.manifest) === m))
+      || list.slice().reverse().find((x) => formCovers(x, { uids: (form && form.uids) || [] })) || null;
+  }
+
+  function outgoingNeedingForm(transfers, facilities, forms, inventory, since = NEEDS_FORM_SINCE, from = OUTGOING_FROM) {
+    return outgoingTransfers(transfers, facilities, inventory, from)
+      .filter((x) => !(since && (!x.date || x.date < since)))
+      .filter((x) => !(forms || []).some((f) => formCovers(x, f)));
   }
 
   // ── Packages on their way to us (Wet Intake's package dropdown) ─────────
@@ -290,7 +313,7 @@
     return out.sort((a, b) => (b.departure || 0) - (a.departure || 0));
   }
 
-  const api = { ACCEPT_WITHIN_H, URGENT_H, INTAKE_DAYS, INCOMING_DAYS, NEEDS_FORM_SINCE, OUTGOING_FROM, pacificTime, incomingTransfers, unacceptedIntakes, incomingPackages, productTypeOf, outgoingNeedingForm };
+  const api = { ACCEPT_WITHIN_H, URGENT_H, INTAKE_DAYS, INCOMING_DAYS, NEEDS_FORM_SINCE, OUTGOING_FROM, pacificTime, incomingTransfers, unacceptedIntakes, incomingPackages, productTypeOf, outgoingTransfers, transferForForm, outgoingNeedingForm };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.MetrcTransfers = api;
 })(this);

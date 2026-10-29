@@ -166,6 +166,13 @@ packages for its product type, from Raw Inventory's math (moved into
 `raw_stock.js`, shared with `raw_inventory.html`); picking one fills strain,
 PID, CID and UID and shows Available (lbs).
 
+Since 2026-10-29 the floor form no longer asks for DCC license, destination,
+order / invoice #, manifest #, terms or the office checklist (`editOnly`,
+still in Fix form): the Metrc Queue record ("From Metrc" box) and the
+Transfers report show manifest, license, sales order and accepted status
+from the form's Canix manifest (`outgoingTransfers` / `transferForForm` in
+`metrc_transfers.js`).
+
 ### Ground Flower Pouches (started 2026-10-20)
 
 New Manufacturing form `pouch_production` (`operations_stations.js`), a copy
