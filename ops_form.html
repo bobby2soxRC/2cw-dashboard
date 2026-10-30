@@ -3829,7 +3829,11 @@
     sub:     { en: 'Subtotal', es: 'Subtotal' },
     units:   { en: 'units', es: 'unidades' },
     value:   { en: 'Total', es: 'Total' },
-    notes:   { en: 'Notes', es: 'Notas' }
+    notes:   { en: 'Notes', es: 'Notas' },
+    colL:    { en: 'Type · Strain', es: 'Tipo · Variedad' },
+    colR:    { en: 'lbs / units', es: 'lbs / unidades' },
+    pkg:     { en: 'pkg', es: 'paq.' },
+    pieces:  { en: 'pre-rolls / pouches', es: 'prerolls / bolsas' }
   };
   const xNum = (v) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
   const xRows = (f) => (f.lines || []).filter((r) => xNum(r.weight) > 0 || r.sourceUid || r.strain);
@@ -3855,7 +3859,7 @@
     ].filter(([, v]) => v);
     const notes = f.notes ? String(f.notes) : '';
     const rowH = LH * 2.6;
-    const H = Math.ceil(PAD + LH * 3 + info.length * LH * 1.15 + LH * 1.5 + Math.max(rows.length, 1) * rowH + LH * 4.5 + (notes ? LH * 2.5 : 0) + PAD);
+    const H = Math.ceil(PAD + LH * 3 + info.length * LH * 1.15 + LH * 1.5 + Math.max(rows.length, 1) * rowH + LH * 2.4 + (rows.some((r) => (TRANSFER_TYPES[r.productType] || {}).pieces) ? LH * 1.1 : 0) + (rows.some((r) => xNum(r.pricePerLb) > 0) ? LH * 1.1 : 0) + (notes ? LH * 1.6 : 0) + PAD);
     const cv = document.createElement('canvas');
     cv.width = W; cv.height = H;
     const x = cv.getContext('2d');
@@ -3875,8 +3879,8 @@
     });
     y += LH * 0.3;
     x.fillStyle = '#e3f2fd'; x.fillRect(PAD - 10, y - 26, W - PAD * 2 + 20, LH * 1.1);
-    txt('Type · Strain', PAD, y, `bold 22px ${SANS}`, '#0d47a1');
-    txt('lbs / units', W - PAD, y, `bold 22px ${SANS}`, '#0d47a1', 'right');
+    txt(t(TX.colL), PAD, y, `bold 22px ${SANS}`, '#0d47a1');
+    txt(t(TX.colR), W - PAD, y, `bold 22px ${SANS}`, '#0d47a1', 'right');
     y += LH * 0.4;
     if (!rows.length) { y += LH; txt('—', PAD, y, `26px ${SANS}`, '#999'); y += LH; }
     rows.forEach((r) => {
@@ -3898,10 +3902,14 @@
     y += LH * 1.4;
     x.fillStyle = '#111'; x.fillRect(PAD, y - 30, W - PAD * 2, 3);
     txt(`${t(TX.sub)}: ${fmtNum(lb, 2)} lbs`, PAD, y + 4, `bold 32px ${SANS}`);
-    if (pcs) { y += LH * 1.1; txt(`${fmtNum(pcs, 0)} ${t(TX.units)} (pre-rolls / pouches)`, PAD, y + 4, `bold 26px ${SANS}`); }
+    if (pcs) { y += LH * 1.1; txt(`${fmtNum(pcs, 0)} ${t(TX.units)} (${t(TX.pieces)})`, PAD, y + 4, `bold 26px ${SANS}`); }
     if (val) { y += LH * 1.1; txt(`${t(TX.value)}: $${fmtNum(val, 2)}`, PAD, y + 4, `bold 26px ${SANS}`); }
     if (notes) { y += LH * 1.4; txt(`${t(TX.notes)}: ${clip(notes, `22px ${SANS}`, W - PAD * 2 - 120)}`, PAD, y, `22px ${SANS}`, '#444'); }
-    return new Promise((res) => cv.toBlob(res, 'image/png'));
+    // Trim the spare canvas below the last line.
+    const out = document.createElement('canvas');
+    out.width = W; out.height = Math.min(H, Math.ceil(y + PAD));
+    out.getContext('2d').drawImage(cv, 0, 0);
+    return new Promise((res) => out.toBlob(res, 'image/png'));
   }
   function openTransferPicture(f) {
     const imgP = transferImage(f);
@@ -3958,7 +3966,7 @@
       shown.forEach((r) => {
         const lb = (r.lines || []).filter((l) => !(TRANSFER_TYPES[l.productType] || {}).pieces).reduce((a, l) => a + xNum(l.weight), 0);
         const li = document.createElement('li');
-        li.innerHTML = `<div class="xh-main"><b>${escapeHtml(r.customer || '—')}</b><span>${escapeHtml(r.actualDate || r.date || '')} · ${escapeHtml(fmtNum(lb, 2))} lbs · ${(r.lines || []).length} pkg</span></div>` +
+        li.innerHTML = `<div class="xh-main"><b>${escapeHtml(r.customer || '—')}</b><span>${escapeHtml(r.actualDate || r.date || '')} · ${escapeHtml(fmtNum(lb, 2))} lbs · ${(r.lines || []).length} ${escapeHtml(t(TX.pkg))}</span></div>` +
           `<button type="button">${escapeHtml(t(TX.picBtn))}</button>`;
         li.querySelector('button').onclick = () => openTransferPicture(r);
         list.appendChild(li);
