@@ -1619,6 +1619,9 @@ const OPERATIONS_STATIONS = [
             es: 'Una transferencia que sale a un cliente — cliente, conductor y placa, y cada paquete y su peso. Manifiesto, licencia y orden de venta vienen de Metrc.' },
     color: 'blue',
     headline: 'totalLb',
+    // Picture of the form (to send on WhatsApp instead of a photo of the
+    // paper one) + a Past transfers list to make one for a submitted form.
+    transferImage: true,
     fields: [
       { k: 'completedBy', t: 'text', req: true, l: { en: 'Person Completing Form', es: 'Persona que llena el formulario' } },
       { ...F.date(), l: { en: 'Date of Request', es: 'Fecha de la solicitud' } },

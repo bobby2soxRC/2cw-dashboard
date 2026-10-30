@@ -168,6 +168,18 @@
     .li-group-del{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;width:40px;min-height:36px;font-size:18px;line-height:1;cursor:pointer}
     .li-group-del:hover{border-color:var(--red);color:var(--red)}
     .li-add-group{margin-top:0}
+    /* Transfer picture + past transfers (station.transferImage — Product Transfer — Outgoing) */
+    .xfer-tools{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+    .xfer-tools button{flex:1 1 200px;min-height:52px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer}
+    .xfer-tools button.primary{background:var(--accent);color:#000;border-color:transparent}
+    .xfer-hist{list-style:none;margin:8px 0;padding:0}
+    .xfer-hist li{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+    .xfer-hist .xh-main{flex:1;min-width:0}
+    .xfer-hist .xh-main b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .xfer-hist .xh-main span{color:var(--subtext);font-size:.82rem}
+    .xfer-hist button{flex:0 0 auto;min-height:44px;padding:0 14px;border-radius:10px;border:0;background:var(--accent);color:#000;font-family:inherit;font-weight:700;cursor:pointer}
+    .xfer-search{width:100%;min-height:46px;margin:6px 0;padding:0 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:inherit;font-size:1rem;box-sizing:border-box}
+    .share-alt{width:100%;min-height:48px;margin-top:8px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:12px;font-family:inherit;font-size:.95rem;font-weight:700;cursor:pointer}
     /* After-submit share window (station.share — Harvest) */
     .share-ov{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
     .share-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;width:100%;max-width:440px;max-height:100%;overflow:auto}
@@ -307,6 +319,7 @@
   <div class="ftabs" id="ftabs" style="display:none"></div>
   <section class="panel" id="queue-panel" style="display:none"></section>
   <form class="panel" id="form" autocomplete="off"></form>
+  <div class="xfer-tools" id="xfer-tools" style="display:none"></div>
   <button type="button" class="del-page" id="del-page" style="display:none"></button>
   <div class="banner" id="banner"></div>
   <section class="panel summary" id="summary" style="display:none"></section>
@@ -3778,6 +3791,197 @@
       ov.querySelector('.share-msg').textContent = t(SH.fallback);
       window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
     };
+  }
+
+
+  // ── Transfer picture + past transfers (station.transferImage) ────────────
+  // Product Transfer — Outgoing: the crew was photographing the paper form
+  // and texting it. **Picture of this transfer** draws the form as it stands
+  // (nothing has to be submitted first) and hands it to the share sheet /
+  // downloads it; **Past transfers** lists the submitted forms, newest first,
+  // so a picture can still be made after Submit if it was forgotten. Both use
+  // the same `transferImage` canvas, which lays the form out like the paper
+  // one: who and where, driver and plate, then a block per package.
+  const TX = {
+    pic:     { en: 'Picture of this transfer', es: 'Foto de esta transferencia' },
+    hist:    { en: 'Past transfers', es: 'Transferencias anteriores' },
+    empty:   { en: 'Add the customer and at least one package first.', es: 'Primero agregue el cliente y al menos un paquete.' },
+    title:   { en: 'Product Transfer — Outgoing', es: 'Transferencia de producto — salida' },
+    ready:   { en: 'Transfer picture', es: 'Foto de la transferencia' },
+    send:    { en: 'Send / share picture', es: 'Enviar / compartir foto' },
+    save:    { en: 'Save picture', es: 'Guardar foto' },
+    close:   { en: 'Close', es: 'Cerrar' },
+    fallback:{ en: 'This browser can’t share files — the picture was downloaded; attach it in WhatsApp.', es: 'Este navegador no puede compartir archivos — se descargó la foto; adjúntela en WhatsApp.' },
+    search:  { en: 'Search customer, driver, date or UID', es: 'Buscar cliente, conductor, fecha o UID' },
+    loading: { en: 'Loading…', es: 'Cargando…' },
+    none:    { en: 'No past transfers found.', es: 'No hay transferencias anteriores.' },
+    picBtn:  { en: 'Picture', es: 'Foto' },
+    cust:    { en: 'Customer', es: 'Cliente' },
+    req:     { en: 'Requestor', es: 'Solicita' },
+    by:      { en: 'Completed by', es: 'Llenó' },
+    driver:  { en: 'Driver', es: 'Conductor' },
+    plate:   { en: 'Plate', es: 'Placa' },
+    prop:    { en: 'Proposed', es: 'Propuesta' },
+    actual:  { en: 'Actual', es: 'Real' },
+    manif:   { en: 'Manifest', es: 'Manifiesto' },
+    srcUid:  { en: 'Source', es: 'Origen' },
+    xferUid: { en: 'Transfer', es: 'Transferencia' },
+    sub:     { en: 'Subtotal', es: 'Subtotal' },
+    units:   { en: 'units', es: 'unidades' },
+    value:   { en: 'Total', es: 'Total' },
+    notes:   { en: 'Notes', es: 'Notas' }
+  };
+  const xNum = (v) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
+  const xRows = (f) => (f.lines || []).filter((r) => xNum(r.weight) > 0 || r.sourceUid || r.strain);
+  const xTypeName = (code) => { const x = TRANSFER_TYPES[code]; return x ? t(x.l) : ''; };
+  const xFileBase = (f) => `transfer_${f.date || f.actualDate || todayStr()}_${String(f.customer || 'customer').replace(/[^A-Za-z0-9]+/g, '').slice(0, 24)}`;
+  const xSummary = (f) => {
+    const rows = xRows(f);
+    const lb = rows.filter((r) => !(TRANSFER_TYPES[r.productType] || {}).pieces).reduce((a, r) => a + xNum(r.weight), 0);
+    return [`${t(TX.title)} — ${f.actualDate || f.proposedDate || f.date || ''}`,
+      `${t(TX.cust)}: ${f.customer || '—'}`,
+      `${t(TX.driver)}: ${f.driver || '—'} · ${t(TX.plate)}: ${f.licensePlate || '—'}`,
+      ...rows.map((r) => `${r.strain || '—'}: ${fmtNum(r.weight, 2)} ${(TRANSFER_TYPES[r.productType] || {}).pieces ? t(TX.units) : 'lbs'}`),
+      `${t(TX.sub)}: ${fmtNum(lb, 2)} lbs`].join('\n');
+  };
+  function transferImage(f) {
+    const W = 1080, PAD = 40, LH = 34;
+    const rows = xRows(f);
+    const SANS = '-apple-system, Segoe UI, Roboto, sans-serif', MONO = 'ui-monospace, Menlo, Consolas, monospace';
+    const info = [
+      [t(TX.cust), f.customer], [t(TX.req), f.requestor], [t(TX.by), f.completedBy],
+      [t(TX.driver), f.driver], [t(TX.plate), f.licensePlate],
+      [t(TX.prop), f.proposedDate], [t(TX.actual), f.actualDate], [t(TX.manif), f.manifestNo]
+    ].filter(([, v]) => v);
+    const notes = f.notes ? String(f.notes) : '';
+    const rowH = LH * 2.6;
+    const H = Math.ceil(PAD + LH * 3 + info.length * LH * 1.15 + LH * 1.5 + Math.max(rows.length, 1) * rowH + LH * 4.5 + (notes ? LH * 2.5 : 0) + PAD);
+    const cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    const x = cv.getContext('2d');
+    x.fillStyle = '#ffffff'; x.fillRect(0, 0, W, H);
+    const txt = (s, X, Y, font, color = '#111', align = 'left') => { x.font = font; x.fillStyle = color; x.textAlign = align; x.fillText(String(s ?? ''), X, Y); };
+    const clip = (s, font, maxW) => { x.font = font; let o = String(s ?? ''); while (o.length > 1 && x.measureText(o).width > maxW) o = o.slice(0, -1); return o; };
+    let y = PAD + 30;
+    txt(t(TX.title), PAD, y, `bold 38px ${SANS}`);
+    txt(f.date || '', W - PAD, y, `26px ${SANS}`, '#555', 'right');
+    y += LH * 0.6;
+    x.fillStyle = '#0d47a1'; x.fillRect(PAD, y, W - PAD * 2, 4);
+    y += LH * 1.2;
+    info.forEach(([k, v]) => {
+      txt(k, PAD, y, `22px ${SANS}`, '#666');
+      txt(clip(v, `bold 26px ${SANS}`, W - PAD * 2 - 230), PAD + 230, y, `bold 26px ${SANS}`);
+      y += LH * 1.15;
+    });
+    y += LH * 0.3;
+    x.fillStyle = '#e3f2fd'; x.fillRect(PAD - 10, y - 26, W - PAD * 2 + 20, LH * 1.1);
+    txt('Type · Strain', PAD, y, `bold 22px ${SANS}`, '#0d47a1');
+    txt('lbs / units', W - PAD, y, `bold 22px ${SANS}`, '#0d47a1', 'right');
+    y += LH * 0.4;
+    if (!rows.length) { y += LH; txt('—', PAD, y, `26px ${SANS}`, '#999'); y += LH; }
+    rows.forEach((r) => {
+      const pieces = (TRANSFER_TYPES[r.productType] || {}).pieces;
+      y += LH * 1.1;
+      txt(clip(`${r.productType ? r.productType + ' · ' : ''}${r.strain || '—'}`, `bold 28px ${SANS}`, W - PAD * 2 - 220), PAD, y, `bold 28px ${SANS}`);
+      txt(`${fmtNum(r.weight, 2)}${pieces ? ' ' + t(TX.units) : ''}`, W - PAD, y, `bold 30px ${MONO}`, '#111', 'right');
+      y += LH * 0.85;
+      const bits = [xTypeName(r.productType), r.pid && `PID ${r.pid}`, r.cid && `CID ${r.cid}`,
+        r.sourceUid && `${t(TX.srcUid)} ${r.sourceUid}`, r.transferUid && `${t(TX.xferUid)} ${r.transferUid}`,
+        xNum(r.pricePerLb) > 0 && `$${fmtNum(r.pricePerLb, 2)}${pieces ? '' : '/lb'}`].filter(Boolean).join('  ·  ');
+      txt(clip(bits, `18px ${MONO}`, W - PAD * 2), PAD, y, `18px ${MONO}`, '#555');
+      y += LH * 0.5;
+      x.fillStyle = '#ddd'; x.fillRect(PAD, y, W - PAD * 2, 2);
+    });
+    const lb = rows.filter((r) => !(TRANSFER_TYPES[r.productType] || {}).pieces).reduce((a, r) => a + xNum(r.weight), 0);
+    const pcs = rows.filter((r) => (TRANSFER_TYPES[r.productType] || {}).pieces).reduce((a, r) => a + xNum(r.weight), 0);
+    const val = rows.filter((r) => xNum(r.pricePerLb) > 0).reduce((a, r) => a + xNum(r.weight) * xNum(r.pricePerLb), 0);
+    y += LH * 1.4;
+    x.fillStyle = '#111'; x.fillRect(PAD, y - 30, W - PAD * 2, 3);
+    txt(`${t(TX.sub)}: ${fmtNum(lb, 2)} lbs`, PAD, y + 4, `bold 32px ${SANS}`);
+    if (pcs) { y += LH * 1.1; txt(`${fmtNum(pcs, 0)} ${t(TX.units)} (pre-rolls / pouches)`, PAD, y + 4, `bold 26px ${SANS}`); }
+    if (val) { y += LH * 1.1; txt(`${t(TX.value)}: $${fmtNum(val, 2)}`, PAD, y + 4, `bold 26px ${SANS}`); }
+    if (notes) { y += LH * 1.4; txt(`${t(TX.notes)}: ${clip(notes, `22px ${SANS}`, W - PAD * 2 - 120)}`, PAD, y, `22px ${SANS}`, '#444'); }
+    return new Promise((res) => cv.toBlob(res, 'image/png'));
+  }
+  function openTransferPicture(f) {
+    const imgP = transferImage(f);
+    const base = xFileBase(f);
+    const ov = document.createElement('div');
+    ov.className = 'share-ov';
+    ov.style.zIndex = 1100;
+    ov.innerHTML = `<div class="share-box"><h2>${escapeHtml(t(TX.ready))}</h2><img class="share-prev" alt="">` +
+      `<button type="button" class="share-go">${escapeHtml(t(TX.send))}</button>` +
+      `<button type="button" class="share-alt">${escapeHtml(t(TX.save))}</button>` +
+      `<p class="share-note share-msg"></p>` +
+      `<button type="button" class="share-next">${escapeHtml(t(TX.close))}</button></div>`;
+    document.body.appendChild(ov);
+    imgP.then((blob) => { if (blob) ov.querySelector('.share-prev').src = URL.createObjectURL(blob); });
+    ov.querySelector('.share-next').onclick = () => ov.remove();
+    const download = (blob) => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = `${base}.png`;
+      document.body.appendChild(a); a.click(); a.remove();
+    };
+    ov.querySelector('.share-alt').onclick = async () => download(await imgP);
+    ov.querySelector('.share-go').onclick = async () => {
+      const blob = await imgP;
+      const file = new File([blob], `${base}.png`, { type: 'image/png' });
+      const text = xSummary(f);
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try { await navigator.share({ files: [file], title: t(TX.title), text }); } catch (err) { if (err.name !== 'AbortError') console.error('share', err); }
+        return;
+      }
+      download(blob);
+      ov.querySelector('.share-msg').textContent = t(TX.fallback);
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    };
+  }
+  async function openTransferHistory() {
+    const ov = document.createElement('div');
+    ov.className = 'share-ov';
+    ov.innerHTML = `<div class="share-box"><h2>${escapeHtml(t(TX.hist))}</h2>` +
+      `<input class="xfer-search" type="search" placeholder="${escapeHtml(t(TX.search))}">` +
+      `<ul class="xfer-hist"><li>${escapeHtml(t(TX.loading))}</li></ul>` +
+      `<button type="button" class="share-next">${escapeHtml(t(TX.close))}</button></div>`;
+    document.body.appendChild(ov);
+    ov.querySelector('.share-next').onclick = () => ov.remove();
+    let recs = [];
+    try { recs = await loadSubmitted('transfer_out'); } catch (err) { console.error('transfer history', err); }
+    recs.sort((a, b) => String(b.submittedAt || b.date || '').localeCompare(String(a.submittedAt || a.date || '')));
+    const list = ov.querySelector('.xfer-hist'), q = ov.querySelector('.xfer-search');
+    const draw = () => {
+      const needle = q.value.trim().toLowerCase();
+      const shown = recs.filter((r) => !needle || [r.customer, r.driver, r.date, r.actualDate, r.manifestNo,
+        ...(r.lines || []).flatMap((l) => [l.strain, l.sourceUid, l.transferUid])].join(' ').toLowerCase().includes(needle)).slice(0, 100);
+      list.innerHTML = '';
+      if (!shown.length) { list.innerHTML = `<li>${escapeHtml(t(TX.none))}</li>`; return; }
+      shown.forEach((r) => {
+        const lb = (r.lines || []).filter((l) => !(TRANSFER_TYPES[l.productType] || {}).pieces).reduce((a, l) => a + xNum(l.weight), 0);
+        const li = document.createElement('li');
+        li.innerHTML = `<div class="xh-main"><b>${escapeHtml(r.customer || '—')}</b><span>${escapeHtml(r.actualDate || r.date || '')} · ${escapeHtml(fmtNum(lb, 2))} lbs · ${(r.lines || []).length} pkg</span></div>` +
+          `<button type="button">${escapeHtml(t(TX.picBtn))}</button>`;
+        li.querySelector('button').onclick = () => openTransferPicture(r);
+        list.appendChild(li);
+      });
+    };
+    q.addEventListener('input', draw);
+    draw();
+  }
+  if (station.transferImage) {
+    const tools = document.getElementById('xfer-tools');
+    tools.style.display = '';
+    tools.innerHTML = `<button type="button" class="primary" id="xfer-pic">${escapeHtml(t(TX.pic))}</button>` +
+      `<button type="button" id="xfer-hist">${escapeHtml(t(TX.hist))}</button>`;
+    document.getElementById('xfer-pic').onclick = () => {
+      if (!values.customer || !xRows(values).length) {
+        banner.className = 'banner warn'; banner.textContent = t(TX.empty);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      banner.className = 'banner';
+      openTransferPicture({ ...values });
+    };
+    document.getElementById('xfer-hist').onclick = openTransferHistory;
   }
 
   async function attemptPendingSubmit() {

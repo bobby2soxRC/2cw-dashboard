@@ -469,6 +469,18 @@ Raw Inventory takes each row off its source package on the tab its product
 type says (1 On-Stem, 2 Bucked, 3 Flower, 4 Smalls, 5 Trim, 6 Fresh Frozen;
 seeds and pre-rolls aren't tracked there). No SQL.
 
+Since 2026-10-29 the form has **Picture of this transfer** and **Past
+transfers** buttons under it (`transferImage: true` on the station;
+`transferImage` / `openTransferPicture` / `openTransferHistory` in
+`ops_form.html`) so the crew can send a picture instead of a photo of the
+paper form. The picture is drawn from the form as it stands (customer, driver,
+plate, dates, a block per package with PID / CID / UIDs, subtotal lbs, units,
+total $) — no need to submit first — and goes to the phone's share sheet
+(WhatsApp), or downloads where the browser can't share files. **Past
+transfers** lists submitted forms newest first (search by customer, driver,
+date, UID or manifest) with a **Picture** button each, for a form submitted
+before its picture was sent. No SQL.
+
 Each row's **Batch** dropdown (column `stockKey`, `t: 'stock'`) lists what
 Raw Inventory has on hand on the tab the row's product type says — strain,
 UID tail, lbs left, farm, CID — and picking one fills strain, PID (farm
