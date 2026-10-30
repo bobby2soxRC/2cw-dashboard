@@ -60,6 +60,15 @@
     .filters button{background:var(--surface);border:1px solid var(--border);color:var(--subtext);border-radius:10px;padding:.6rem 1rem;
       font-family:'DM Mono',monospace;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;min-height:44px}
     .filters button.on{background:var(--green);border-color:var(--green);color:#000;font-weight:700}
+    .search{display:flex;align-items:center;gap:10px;margin:-8px 0 22px}
+    .search input{flex:1;max-width:520px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;
+      font-family:'DM Mono',monospace;font-size:.9rem;min-height:44px;padding:0 14px;outline:none}
+    .search input:focus{border-color:var(--green)}
+    .search button{background:transparent;border:1px solid var(--border);color:var(--subtext);border-radius:10px;min-height:44px;padding:0 14px;
+      font-family:'DM Mono',monospace;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+    .search button[hidden]{display:none}
+    .empty .wider{margin-top:14px;background:transparent;border:1px solid var(--green);color:var(--green);border-radius:10px;min-height:44px;padding:0 16px;
+      font-family:'DM Mono',monospace;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
 
     .board{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
     .row{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;transition:border-color .2s}
@@ -101,6 +110,7 @@
     .row-dest.frz{color:var(--blue)}
     .row-ids{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--muted);margin-top:4px;word-break:break-all}
     .row-ids b{font-weight:400;color:var(--text)}
+    .row-ids span{white-space:nowrap}
 
     /* Image preview (Send as image), as on the Master Schedule. */
     #img-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:80;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:calc(16px + env(safe-area-inset-top)) 12px 30px}
@@ -145,6 +155,7 @@
     </span>
   </div>
   <div class="filters" id="filters"></div>
+  <div class="search"><input type="text" id="search" enterkeyhint="search" autocomplete="off" spellcheck="false"/><button id="search-clear" hidden>✕</button></div>
   <div id="daysum" class="daysum" style="display:none"></div>
   <div id="wetsum" class="daysum" style="display:none"></div>
   <div id="board"></div>
@@ -181,6 +192,11 @@
     updated: { en: 'updated', es: 'actualizado' },
     edit: { en: 'Edit', es: 'Editar' },
     edited: { en: 'edited by', es: 'editado por' },
+    search: { en: 'Search strain, UID (or its last digits), CID, room, person…', es: 'Buscar variedad, UID (o sus últimos dígitos), CID, cuarto, persona…' },
+    noMatch: { en: 'No forms match “{q}” in these dates.', es: 'Ningún formulario coincide con “{q}” en estas fechas.' },
+    searchWider: { en: 'Search the last 14 days', es: 'Buscar en los últimos 14 días' },
+    wetUid: { en: 'Wet UID', es: 'UID húmedo' },
+    dryUid: { en: 'Dry UID', es: 'UID seco' },
     noAccess: { en: 'You don’t have view access to the operations board yet. Ask your manager to turn it on.',
                 es: 'Aún no tiene acceso de visualización al panel de producción. Pida a su gerente que lo active.' },
     empty: { en: 'Nothing logged yet today.', es: 'Nada registrado hoy todavía.' },
@@ -273,17 +289,32 @@
   document.getElementById('live').classList.add('on');
   document.getElementById('live-txt').textContent = t(L.live);
 
-  let stationFilter = null;
+  // The station picked and the search are kept for the tab (sessionStorage),
+  // so coming back from Edit (ops_form.html returns to this page) finds the
+  // same list.
+  const VIEW_KEY = '2cw_today_view';
+  const saved = (() => { try { return JSON.parse(sessionStorage.getItem(VIEW_KEY) || 'null') || {}; } catch (e) { return {}; } })();
+  let stationFilter = visibleStations.some((s) => s.key === saved.station) ? saved.station : null;
+  let query = typeof saved.q === 'string' ? saved.q : '';
+  const saveView = () => { try { sessionStorage.setItem(VIEW_KEY, JSON.stringify({ station: stationFilter, q: query })); } catch (e) {} };
   document.getElementById('filters').innerHTML =
-    `<button data-k="" class="on">${t(L.allStations)}</button>` +
-    visibleStations.map((s) => `<button data-k="${s.key}">${t(s.title)}</button>`).join('');
+    `<button data-k="" class="${stationFilter ? '' : 'on'}">${t(L.allStations)}</button>` +
+    visibleStations.map((s) => `<button data-k="${s.key}" class="${s.key === stationFilter ? 'on' : ''}">${t(s.title)}</button>`).join('');
   document.querySelectorAll('#filters button').forEach((b) => {
     b.onclick = () => {
       stationFilter = b.dataset.k || null;
       document.querySelectorAll('#filters button').forEach((x) => x.classList.toggle('on', x === b));
+      saveView();
       render();
     };
   });
+  const searchInput = document.getElementById('search');
+  const searchClear = document.getElementById('search-clear');
+  searchInput.placeholder = t(L.search);
+  searchInput.value = query;
+  searchClear.hidden = !query;
+  searchInput.oninput = () => { query = searchInput.value; searchClear.hidden = !query; saveView(); render(); };
+  searchClear.onclick = () => { searchInput.value = ''; searchInput.oninput(); searchInput.focus(); };
 
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const timeAgo = (iso) => {
@@ -495,21 +526,67 @@
     });
     return [...out];
   }
-  function idsLine(f) {
-    const uids = [...new Set(idsOf(f, 'sourceUid').map((u) => u.length > 5 ? `…${u.slice(-5)}` : u))], cids = idsOf(f, 'cid');
-    const part = (lbl, xs) => xs.length ? `${lbl} <b>${xs.map(esc).join(', ')}</b>` : '';
-    const parts = [part('UID', uids), part('CID', cids)].filter(Boolean);
+  // Take Down also shows the Wet UID it came from (`incomingUid`) and its
+  // drying room, so a take down can be found by its farm package.
+  const short = (u) => (u.length > 5 ? `…${u.slice(-5)}` : u);
+  function idsLine(r) {
+    const f = r.fields;
+    const uids = [...new Set(idsOf(f, 'sourceUid').map(short))], cids = idsOf(f, 'cid');
+    const part = (lbl, xs) => xs.length ? `<span>${lbl ? lbl + ' ' : ''}<b>${xs.map(esc).join(', ')}</b></span>` : '';
+    const takeDown = r.station_key === 'dry_check';
+    const parts = [
+      takeDown ? part(t(L.wetUid), f.incomingUid ? [short(String(f.incomingUid))] : []) : '',
+      part(takeDown ? t(L.dryUid) : 'UID', uids), part('CID', cids),
+      takeDown ? part('', locIds(f).map(locLabel)) : ''
+    ].filter(Boolean);
     return parts.length ? `<div class="row-ids">${parts.join(' · ')}</div>` : '';
   }
 
+  // Search: every word typed has to appear somewhere in the form's strain,
+  // station, who filled it in, or any UID / CID / license / room / batch
+  // on it (worksheet rows too) — so the last digits of a UID find it.
+  const SEARCH_KEY = /uid|cid|pid|strain|room|location|batch|lot/i;
+  function haystack(r) {
+    const f = r.fields || {}, out = [r.strain, r.owner_user, f.lastEditedBy];
+    const station = STATION_BY_KEY[r.station_key];
+    if (station) out.push(station.title.en, station.title.es);
+    const take = (k, v) => {
+      if (!SEARCH_KEY.test(k) || v == null || typeof v === 'object') return;
+      out.push(v);
+      if (/room|location/i.test(k)) out.push(locLabel(String(v)));
+    };
+    Object.entries(f).forEach(([k, v]) => {
+      if (Array.isArray(v)) v.forEach((x) => { if (x && typeof x === 'object') Object.entries(x).forEach(([k2, v2]) => take(k2, v2)); else take(k, x); });
+      else take(k, v);
+    });
+    return out.filter((x) => x != null && x !== '').join(' ').toLowerCase();
+  }
+  const matchesQuery = (r) => {
+    const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    if (!words.length) return true;
+    const h = haystack(r);
+    return words.every((w) => h.includes(w));
+  };
+  const shownRows = () => rows.filter((r) => (!stationFilter || r.station_key === stationFilter) && matchesQuery(r));
+
   function render() {
-    const filtered = stationFilter ? rows.filter((r) => r.station_key === stationFilter) : rows;
+    const filtered = shownRows();
     renderDaySum();
     renderWetSum(filtered);
     if (!pdfBusy) pdfBtn.disabled = !filtered.length;
     document.getElementById('sub').textContent =
       `${filtered.length} ${filtered.length === 1 ? 'form' : 'forms'}${!isRange() && from === todayStr() ? ' · ' + dayLabel(from) : ''}`;
     const board = document.getElementById('board');
+    if (!filtered.length && query.trim()) {
+      // Nothing here: offer the last two weeks, since the form to fix is
+      // often from an earlier day.
+      const wide = from === shiftDay(todayStr(), -13) && to === todayStr();
+      board.className = '';
+      board.innerHTML = `<div class="empty">${esc(t(L.noMatch).replace('{q}', query.trim()))}${wide ? '' : `<br><button class="wider" id="search-wider">${t(L.searchWider)}</button>`}</div>`;
+      const b = document.getElementById('search-wider');
+      if (b) b.onclick = () => { rangeMode = true; goTo(shiftDay(todayStr(), -13), todayStr()); };
+      return;
+    }
     if (!filtered.length) { board.className = ''; board.innerHTML = `<div class="empty">${t(isRange() ? L.emptyRange : from === todayStr() ? L.empty : L.emptyDay)}</div>`; return; }
 
     board.className = 'board';
@@ -522,7 +599,7 @@
           <div>
             <div class="row-station">${station ? t(station.title) : r.station_key}</div>
             <div class="row-strain">${esc(r.strain || r.fields.harvestBatchName || '—')}</div>${
-              r.station_key === 'intake_wet' && destOf(r.fields) ? `<div class="row-dest${toFreezer(r.fields) ? ' frz' : ''}">${toFreezer(r.fields) ? '❄ ' : ''}${esc(pidFarm(r.fields.pid))} → ${esc(destOf(r.fields))}</div>` : ''}${idsLine(r.fields)}
+              r.station_key === 'intake_wet' && destOf(r.fields) ? `<div class="row-dest${toFreezer(r.fields) ? ' frz' : ''}">${toFreezer(r.fields) ? '❄ ' : ''}${esc(pidFarm(r.fields.pid))} → ${esc(destOf(r.fields))}</div>` : ''}${idsLine(r)}
           </div>
           <div class="pills"><span class="pill ${r.status}">${r.status === 'draft' ? t(L.draftPill) : t(L.submittedPill)}</span>${
             // Canix has a different strain for this Wet Intake's package
@@ -806,7 +883,7 @@
     doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.setTextColor(20);
     doc.text(`2CW — ${t(isRange() ? L.reportTitleRange : L.reportTitle)}`, M, y + 14); y += 34;
     doc.setFont('helvetica', 'normal'); doc.setFontSize(12); doc.setTextColor(60);
-    doc.text(`${rangeLabel()}  ·  ${filterName}`, M, y); y += 16;
+    doc.text(fit(`${rangeLabel()}  ·  ${filterName}${query.trim() ? `  ·  “${query.trim()}”` : ''}`, W - 2 * M), M, y); y += 16;
     doc.setFontSize(9); doc.setTextColor(120);
     doc.text(`${t(L.generated)} ${new Date().toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}`, M, y); y += 10;
     doc.setDrawColor(61, 184, 122); doc.setLineWidth(2); doc.line(M, y, W - M, y); y += 22;
@@ -976,7 +1053,7 @@
   }
 
   async function sharePdf() {
-    const list = stationFilter ? rows.filter((r) => r.station_key === stationFilter) : rows;
+    const list = shownRows();
     if (!list.length) return;
     const withCost = canCost && costOn.checked;
     pdfBusy = pdfBtn.disabled = true;
