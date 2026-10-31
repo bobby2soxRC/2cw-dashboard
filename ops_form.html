@@ -2667,7 +2667,7 @@
       const get = (n) => fetch(`/data/${n}`).then((r) => (r.ok ? r.json() : [])).catch(() => []);
       const [tr, fac, intakes] = await Promise.all([get('canix_transfers_recent.json'), get('canix_facilities.json'),
         draftsOn ? loadSubmitted(station.key).catch(() => []) : []]);
-      const taken = (intakes || []).filter((i) => !editMode || i.id !== editId).map((i) => i.sourceUid);
+      const taken = (intakes || []).filter((i) => !editMode || i.id !== editId).map((i) => ({ uid: i.sourceUid, at: i.submittedAt }));
       pickPool = MetrcTransfers.incomingPackages(tr, fac, taken, Date.now());
       return;
     }
