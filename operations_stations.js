@@ -1018,7 +1018,7 @@ const OPERATIONS_STATIONS = [
                 es: 'Llene esto el último día de la corrida y luego envíe.' } },
       // Unfinished: they go on to Smalls Hand Trim to be finished.
       { k: 'smallsLb', t: 'number', min: 0, step: 0.01,
-        l: { en: 'Unfinished Smalls Pulled (lbs)', es: 'Smalls sin terminar separados (lbs)' },
+        l: { en: 'Unfinished Smalls (lbs)', es: 'Smalls sin terminar (lbs)' },
         hint: { en: 'Smalls pulled off this lot. They’re finished later on Smalls Hand Trim.',
                 es: 'Smalls separados de este lote. Se terminan después en Corte a mano — smalls.' } },
       { k: 'normTrimLb', t: 'number', min: 0, step: 0.01,

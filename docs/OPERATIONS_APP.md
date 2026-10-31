@@ -568,7 +568,7 @@ Pre-Roll Dashboard card (`2cw_preroll_dash`, set at login). The card is
 `ambient`, so someone with only one station still lands straight on it.
 
 **Unfinished smalls** (since 2026-10-31). Every small pulled on Hand Trim
-(`smallsLb`, "Unfinished Smalls Pulled") is unfinished: biomass category
+(`smallsLb`, "Unfinished Smalls (lbs)") is unfinished: biomass category
 `smalls_unfinished` (`BIOMASS` in `operations_stations.js`), Raw Inventory tab
 **Unfinished Smalls** (`smalls_unf`, `CAT_TAB` in `raw_stock.js`). Smalls Hand
 Trim is where they get finished: it takes its package off Unfinished Smalls
