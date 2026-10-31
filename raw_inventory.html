@@ -160,8 +160,9 @@
 <script>
 // Raw Materials Inventory — what's on hand at each stage, built from the
 // station forms (not Canix): Drying (Wet Intakes with no Take Down), On-Stem
-// (Take Downs not bucked yet), Bucked (lots not trimmed yet), Flower / Smalls
-// / Trim (what Hand Trim, Machine Trim, Smalls Hand Trim and Bucking made,
+// (Take Downs not bucked yet), Bucked (lots not trimmed yet), Flower /
+// Unfinished Smalls (Hand Trim's, until Smalls Hand Trim finishes them) /
+// Smalls / Trim (what Hand Trim, Machine Trim, Smalls Hand Trim and Bucking made,
 // less what a Pre-Roll run, Ground Flower Pouch run, Manufacturing Run,
 // Biomass Request or Smalls Hand Trim took off that UID) and Fresh Frozen. Farm license, CID and farm come
 // from the record or are traced back through Take Down to the Wet Intake.
@@ -193,6 +194,7 @@
     onstem:   { en: 'On-Stem', es: 'En tallo' },
     bucked:   { en: 'Bucked', es: 'Desvarado' },
     flower:   { en: 'Flower', es: 'Flor' },
+    smalls_unf: { en: 'Unfinished Smalls', es: 'Smalls sin terminar' },
     smalls:   { en: 'Smalls', es: 'Smalls' },
     trim:     { en: 'Trim', es: 'Recorte' },
     frozen:   { en: 'Fresh Frozen', es: 'Fresco congelado' },
@@ -314,12 +316,12 @@
     sPlate:   { en: 'Plate', es: 'Placa' },
     histNote: { en: 'Every record each stage ever had, from the station forms. Click a row to see where it came from and where it went; click a linked record to jump to it. In is what the record started with (Drying and Fresh Frozen intakes are wet weight); Left is what is still on hand now. Outgoing transfers show the customer, date, pounds and invoice / sales order.',
                 es: 'Cada registro que tuvo cada etapa, de los formularios de estación. Toque una fila para ver de dónde vino y a dónde se fue; toque un registro enlazado para ir a él. Entró es con lo que empezó (Secando y fresco congelado son peso húmedo); Queda es lo que sigue disponible. Las transferencias de salida muestran cliente, fecha, libras y factura / orden de venta.' },
-    note:     { en: 'Built from the station forms, not Canix. Drying, On-Stem and Bucked clear themselves as the next form is submitted. Flower, Smalls, Trim and Fresh Frozen come off when a Pre-Roll run, Ground Flower Pouch run, Manufacturing Run, Biomass Request (transferred), Smalls Hand Trim, Mixed Trim Package or Outgoing Transfer names their UID; anything sold or moved some other way has to be marked Used up. Hand Trim outputs without their own new UID are listed under the lot’s UID. Drying and fresh-frozen intakes are wet weight; the rest is dry.',
-                es: 'Hecho con los formularios de estación, no con Canix. Secando, En tallo y Desvarado se vacían solos al enviar el siguiente formulario. Flor, Smalls, Recorte y Fresco congelado bajan cuando una corrida de prerolls, de bolsas de flor molida, de manufactura, una solicitud de biomasa (transferida), un corte de smalls, un paquete de recorte mixto o una transferencia de salida usa su UID; lo vendido o movido de otra forma hay que marcarlo como Agotado. Lo del corte a mano sin UID nuevo aparece bajo el UID del lote. Secando y fresco congelado son peso húmedo; lo demás es seco.' }
+    note:     { en: 'Built from the station forms, not Canix. Drying, On-Stem and Bucked clear themselves as the next form is submitted. Flower, Smalls, Trim and Fresh Frozen come off when a Pre-Roll run, Ground Flower Pouch run, Manufacturing Run, Biomass Request (transferred), Smalls Hand Trim, Mixed Trim Package or Outgoing Transfer names their UID; anything sold or moved some other way has to be marked Used up. Hand Trim’s smalls are Unfinished Smalls until a Smalls Hand Trim finishes them. Hand Trim outputs without their own new UID are listed under the lot’s UID. Drying and fresh-frozen intakes are wet weight; the rest is dry.',
+                es: 'Hecho con los formularios de estación, no con Canix. Secando, En tallo y Desvarado se vacían solos al enviar el siguiente formulario. Flor, Smalls, Recorte y Fresco congelado bajan cuando una corrida de prerolls, de bolsas de flor molida, de manufactura, una solicitud de biomasa (transferida), un corte de smalls, un paquete de recorte mixto o una transferencia de salida usa su UID; lo vendido o movido de otra forma hay que marcarlo como Agotado. Los smalls del corte a mano quedan como Smalls sin terminar hasta que un corte de smalls los termine. Lo del corte a mano sin UID nuevo aparece bajo el UID del lote. Secando y fresco congelado son peso húmedo; lo demás es seco.' }
   };
   const TABS = [
     { k: 'drying', c: 'var(--blue)' }, { k: 'onstem', c: 'var(--gold)' },
-    { k: 'bucked', c: 'var(--purple)' }, { k: 'flower', c: 'var(--green)' }, { k: 'smalls', c: '#8bc34a' },
+    { k: 'bucked', c: 'var(--purple)' }, { k: 'flower', c: 'var(--green)' }, { k: 'smalls_unf', c: '#c0ca33' }, { k: 'smalls', c: '#8bc34a' },
     { k: 'trim', c: '#c48b5a' }, { k: 'frozen', c: 'var(--cyan)' }, { k: 'finished', c: '#e0864a' }
   ];
   // Pre-Rolls & Pouches is counted in units, not pounds (raw_stock.js

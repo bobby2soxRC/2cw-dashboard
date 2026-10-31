@@ -694,7 +694,7 @@ function laborCostByLot(stages, rates, allocs) {
 // (stages the lot hasn't reached are left out) and `untrimmedCost`, the part
 // of the bucked cost still sitting on bucked flower that hasn't gone
 // through a trim run.
-const TRIM_CATEGORY = { flower_a: 'a', smalls_b: 'smalls', sugar_trim: 'trim', trim: 'trim', shake: 'trim',
+const TRIM_CATEGORY = { flower_a: 'a', smalls_b: 'smalls', smalls_unfinished: 'smalls', sugar_trim: 'trim', trim: 'trim', shake: 'trim',
                         trim_a_plus: 'trim', trim_a: 'trim', trim_b: 'trim' };
 const DEFAULT_TRIM_SPLIT = { a: 70, smalls: 20, trim: 10 };
 function carryCost(lot, costs, split) {

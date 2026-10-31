@@ -330,6 +330,15 @@ same tag (`buckablePackages`), and Hand Trim gets each round
 Open table above the ranked Up next list. No SQL. Details: "Bucking only
 part of a package" and "Work Orders" in `docs/OPERATIONS_APP.md`.
 
+### Unfinished smalls (started 2026-10-31)
+
+Every small pulled on Hand Trim is unfinished: category `smalls_unfinished`,
+Raw Inventory tab **Unfinished Smalls** (`smalls_unf`). Smalls Hand Trim
+picks its package from that tab and its finished smalls go on **Smalls**
+(`smalls_b`, with Machine Trim's B-buds). Takers fall back between the two
+smalls tabs (`ALSO_TAB` in `raw_stock.js`) so older forms still balance. No
+SQL. Details: "Unfinished smalls" in `docs/OPERATIONS_APP.md`.
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)

@@ -418,8 +418,8 @@
     chooseLot: { en: 'Choose the lot…', es: 'Elija el lote…' },
     otherLot:  { en: 'Other — not on the list', es: 'Otro — no aparece' },
     bucking:   { en: 'bucking in progress', es: 'desvarándose' },
-    loadingSmalls: { en: 'Loading smalls on hand…', es: 'Cargando smalls disponibles…' },
-    noneSmalls: { en: 'No smalls on hand — pick Other', es: 'No hay smalls disponibles — elija Otro' }
+    loadingSmalls: { en: 'Loading unfinished smalls on hand…', es: 'Cargando smalls sin terminar disponibles…' },
+    noneSmalls: { en: 'No unfinished smalls on hand — pick Other', es: 'No hay smalls sin terminar disponibles — elija Otro' }
   };
   // The pre-roll queue dropdown (prPicker — Pre-Roll Production's and Ground
   // Flower Pouches' request).
@@ -2632,8 +2632,9 @@
   //     4", less any package another bucking page already has open.
   //   Hand Trim's lot (`list: 'bucked'`) — every lot that's been bucked
   //     (buckedLots in ops_common.js), newest first, same labels as Bucking.
-  //   Smalls Hand Trim's package (`list: 'smalls'`) — Raw Inventory's Smalls
-  //     tab (raw_stock.js), less what another smalls page has open.
+  //   Smalls Hand Trim's package (`list: 'smalls'`) — Raw Inventory's
+  //     Unfinished Smalls tab (raw_stock.js: Hand Trim's smalls), less what
+  //     another smalls page has open.
   // Picking one fills the UID and its upstream details (strain, …).
   // `otherPopup`: "Other" opens a popup for the strain and package UID
   // instead of just showing the UID box.
@@ -2648,14 +2649,14 @@
   let pickPool = [], pickReady = false, queueItems = null;
   const pickLoaded = pickerFields.length ? (async () => {
     if (smallsPick) {
-      // Smalls on hand, as Raw Inventory has them (submitted smalls pages
-      // already taken off). Finished smalls from an earlier smalls run aren't
-      // trimmed again, and a package open on another page is in the switcher.
+      // Unfinished smalls on hand, as Raw Inventory has them (submitted
+      // smalls pages already taken off). Finished smalls aren't trimmed
+      // again, and a package open on another page is in the switcher.
       const [stock, open] = await Promise.all([
         RawStock.load(getClient(), { skipId: editMode ? editId : null }),
         draftsOn ? listOpenDrafts(station.key).catch(() => []) : []]);
       const elsewhere = (open || []).filter((d) => d.id !== draftId && d.fields && d.fields.sourceUid).map((d) => d.fields.sourceUid);
-      pickPool = stock.rows.filter((x) => x.tab === 'smalls' && x.lb > 0.005 && !stock.marks[x.key] && x.station !== 'smalls_trim' && x.uid)
+      pickPool = stock.rows.filter((x) => x.tab === 'smalls_unf' && x.lb > 0.005 && !stock.marks[x.key] && x.uid)
         .filter((x) => !elsewhere.some((u) => uidTailMatch(u, x.uid)))
         .map((x) => ({ ...x, sourceUid: x.uid }))
         .sort((a, b) => String(a.strain).localeCompare(String(b.strain)) || String(a.date).localeCompare(String(b.date)));
