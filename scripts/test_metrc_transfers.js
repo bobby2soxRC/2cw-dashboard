@@ -139,5 +139,9 @@ check('incoming: shipped and accepted to us, recent only', inc.map((p) => p.sour
 check('incoming: strain, manifest, farm, lb', [inc[0].strain, inc[0].manifest, inc[0].fromLicense, inc[0].lb], ['AJ Sour Diesel', '0011759639', 'CCL26-0000027', 2192]);
 check('incoming: a package already on an intake (typed tail) drops off', M.incomingPackages(incTr, facilities, ['00158'], incNow).map((p) => p.sourceUid.slice(-3)), ['159']);
 
+check('incoming: an older intake\'s typed tail does not hide a newer package', M.incomingPackages(incTr, facilities, [{ uid: '00158', at: '2026-10-15T07:49:56Z' }], incNow).map((p) => p.sourceUid.slice(-3)), ['158', '159']);
+check('incoming: a tail typed after it left still hides it', M.incomingPackages(incTr, facilities, [{ uid: '00158', at: '2026-10-28T09:00:00Z' }], incNow).map((p) => p.sourceUid.slice(-3)), ['159']);
+check('incoming: a full UID hides it whenever', M.incomingPackages(incTr, facilities, [{ uid: '1A4060300089ABD000000158', at: '2026-10-01T00:00:00Z' }], incNow).map((p) => p.sourceUid.slice(-3)), ['159']);
+
 if (failures) { console.log(`\n${failures} failed`); process.exit(1); }
 console.log('\nAll passed');

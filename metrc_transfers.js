@@ -295,7 +295,16 @@
   const INCOMING_DAYS = 3;
   function incomingPackages(transfers, facilities, taken, now) {
     const ours = new Set((facilities || []).map((f) => f && f.license_number).filter(Boolean));
-    const done = (taken || []).map(normTag).filter((u) => u.length >= 4);
+    // taken: UIDs already on an intake — strings, or { uid, at } with the
+    // intake's submit time. A full tag always matches. A typed tail
+    // ("00075") only hides a package that had left the farm by then (a
+    // day's slack), so an old intake's short tail can't hide a new
+    // package from another farm that happens to end the same way.
+    const done = (taken || []).map((x) => (x && typeof x === 'object')
+      ? { u: normTag(x.uid), at: x.at ? Date.parse(String(x.at).replace(' ', 'T').replace(/([+-]\d\d)$/, '$1:00')) : null }
+      : { u: normTag(x), at: null }).filter((x) => x.u.length >= 4);
+    const isTaken = (tag, left) => done.some(({ u, at }) => tag === u
+      || (tag.endsWith(u) && (at === null || !Number.isFinite(at) || left === null || at >= left - 86400000)));
     const out = [];
     const seen = new Set();
     for (const t of transfers || []) {
@@ -308,7 +317,7 @@
         for (const c of d.contents || []) {
           if (!c || !['Shipped', 'Accepted'].includes(c.status)) continue;
           const tag = normTag((c.package || {}).tag);
-          if (!tag || seen.has(tag) || done.some((u) => tag === u || tag.endsWith(u))) continue;
+          if (!tag || seen.has(tag) || isTaken(tag, left)) continue;
           seen.add(tag);
           out.push({
             sourceUid: tag, strain: c._strain || '', item: c._item || '', manifest,
