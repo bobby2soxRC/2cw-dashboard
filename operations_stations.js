@@ -99,6 +99,9 @@ const BIOMASS = {
   bucked_flower:   { en: 'Bucked Flower',     es: 'Flor desvarada' },
   flower_a:        { en: 'Flower (A-Bud)',    es: 'Flor (Bud A)' },
   smalls_b:        { en: 'Smalls (B-Bud)',    es: 'Flor pequeña (Bud B)' },
+  // Smalls pulled on Hand Trim: not finished yet — Smalls Hand Trim cleans
+  // them into finished smalls (smalls_b).
+  smalls_unfinished: { en: 'Unfinished Smalls', es: 'Smalls sin terminar' },
   sugar_trim:      { en: 'Sugar Trim',        es: 'Hoja azucarada' },
   trim:            { en: 'Trim',              es: 'Recorte' },
   trim_a_plus:     { en: 'Trim (A+)',         es: 'Recorte (A+)' },
@@ -1013,8 +1016,11 @@ const OPERATIONS_STATIONS = [
         l: { en: 'End of Run', es: 'Fin de la corrida' },
         hint: { en: 'Fill these in on the last day of the run, then submit.',
                 es: 'Llene esto el último día de la corrida y luego envíe.' } },
+      // Unfinished: they go on to Smalls Hand Trim to be finished.
       { k: 'smallsLb', t: 'number', min: 0, step: 0.01,
-        l: { en: 'Smalls Pulled (lbs)', es: 'Smalls separados (lbs)' } },
+        l: { en: 'Unfinished Smalls (lbs)', es: 'Smalls sin terminar (lbs)' },
+        hint: { en: 'Smalls pulled off this lot. They’re finished later on Smalls Hand Trim.',
+                es: 'Smalls separados de este lote. Se terminan después en Corte a mano — smalls.' } },
       { k: 'normTrimLb', t: 'number', min: 0, step: 0.01,
         l: { en: 'Normal Trim (lbs)', es: 'Recorte normal (lbs)' } },
       { k: 'aPlusTrimLb', t: 'number', min: 0, step: 0.01,
@@ -1041,7 +1047,7 @@ const OPERATIONS_STATIONS = [
     // records that already have a tag, from before.
     metrcTags: [
       { k: 'newFinishedUid', from: 'finishedFlowerLb', l: { en: 'Finished Flower', es: 'Flor terminada' } },
-      { k: 'newSmallsUid', from: 'smallsLb', l: { en: 'Smalls', es: 'Smalls' } },
+      { k: 'newSmallsUid', from: 'smallsLb', l: { en: 'Unfinished Smalls', es: 'Smalls sin terminar' } },
       { k: 'newTrimUid', from: 'normTrimLb', when: () => false, l: { en: 'Normal Trim', es: 'Recorte normal' } },
       { k: 'newAPlusTrimUid', from: 'aPlusTrimLb', when: () => false, l: { en: 'A+ Trim', es: 'Recorte A+' } },
       { k: 'newSugarTrimUid', from: 'sugarTrimLb', when: () => false, l: { en: 'Sugar Trim', es: 'Recorte azucarado' } }
@@ -1052,7 +1058,7 @@ const OPERATIONS_STATIONS = [
             input: { field: 'startingBuckedLb', category: 'bucked_flower' },
             outputs: [
               { field: 'finishedFlowerLb', category: 'flower_a' },
-              { field: 'smallsLb', category: 'smalls_b' },
+              { field: 'smallsLb', category: 'smalls_unfinished' },
               { field: 'normTrimLb', category: 'trim' },
               { field: 'aPlusTrimLb', category: 'trim_a_plus' },
               { field: 'sugarTrimLb', category: 'sugar_trim' },
@@ -1071,8 +1077,8 @@ const OPERATIONS_STATIONS = [
     key: 'smalls_trim',
     dept: { en: 'Processing', es: 'Procesamiento' },
     title: { en: 'Smalls Hand Trim', es: 'Corte a mano — smalls' },
-    desc: { en: 'Smalls work order, by the hourly — one page per package, open across days. Weigh each trimmer’s finished smalls.',
-            es: 'Orden de trabajo de smalls, por hora — una hoja por paquete, abierta varios días. Pese los smalls terminados de cada persona.' },
+    desc: { en: 'Finishes the unfinished smalls pulled on Hand Trim, by the hourly — one page per package, open across days. Weigh each trimmer’s finished smalls.',
+            es: 'Termina los smalls sin terminar separados en el corte a mano, por hora — una hoja por paquete, abierta varios días. Pese los smalls terminados de cada persona.' },
     color: 'blue',
     headline: 'finishedSmallsLb',
     sharedDay: true,
@@ -1088,14 +1094,14 @@ const OPERATIONS_STATIONS = [
     fields: [
       F.date(),
       F.project(),
-      // Picked from Raw Inventory's Smalls tab (`picker`: list 'smalls' in
-      // ops_form.html). "Other" is for smalls from somewhere else: a popup
-      // asks for the strain and the package UID.
+      // Picked from Raw Inventory's Unfinished Smalls tab (`picker`: list
+      // 'smalls' in ops_form.html). "Other" is for smalls from somewhere
+      // else: a popup asks for the strain and the package UID.
       { k: 'sourceUid', t: 'uid', req: true, picker: { list: 'smalls', otherPopup: true },
-        l: { en: 'Smalls Package', es: 'Paquete de smalls' },
+        l: { en: 'Unfinished Smalls Package', es: 'Paquete de smalls sin terminar' },
         pickedLabel: { en: 'Package UID', es: 'UID del paquete' },
-        hint: { en: 'Smalls on hand in Raw Inventory. Picking one fills in the strain and starting weight. Not listed: pick Other.',
-                es: 'Smalls disponibles en el Inventario. Al elegir uno se llenan la variedad y el peso inicial. Si no aparece: elija Otro.' } },
+        hint: { en: 'Unfinished smalls on hand in Raw Inventory (pulled on Hand Trim). Picking one fills in the strain and starting weight. Not listed: pick Other.',
+                es: 'Smalls sin terminar disponibles en el Inventario (separados en el corte a mano). Al elegir uno se llenan la variedad y el peso inicial. Si no aparece: elija Otro.' } },
       { k: 'strain', t: 'select', ref: 'strains', allowOther: true, req: true,
         l: { en: 'Strain (flavor)', es: 'Variedad (sabor)' } },
       { k: 'startingLb', t: 'number', req: true, min: 0, step: 0.01,
@@ -1149,7 +1155,7 @@ const OPERATIONS_STATIONS = [
       F.photo()
     ],
     flow: { lossKind: 'conserving',
-            input: { field: 'startingLb', category: 'smalls_b' },
+            input: { field: 'startingLb', category: 'smalls_unfinished' },
             outputs: [
               { field: 'finishedSmallsLb', category: 'smalls_b' },
               { field: 'shakeLb', category: 'shake' },
@@ -1843,7 +1849,7 @@ const PREFILL_MAP = {
                        es: 'Todavía se está desvarando — el peso inicial es lo desvarado hasta ahora. Actualícelo si llega más.' }
                    : null) },
   // Smalls Hand Trim only fills from a package picked off Raw Inventory's
-  // Smalls tab (its `lb` is what's left on it); nothing is looked up by a typed UID.
+  // Unfinished Smalls tab (its `lb` is what's left on it); nothing is looked up by a typed UID.
   smalls_trim: { from: null,           map: { strain: 'strain', startingLb: 'lb' } }
 };
 

@@ -396,7 +396,7 @@ lbPerHour     = inputBuckedLb ÷ runHours</pre></div>
           <li>Lot, strain, grade, CID, starting bucked lbs, Machine / Hand</li>
           <li>Trimmer Rate $/lb (required to submit)</li>
           <li>Weighing worksheet: employee # and grams per bag (Bags × 454 + a partial)</li>
-          <li>End of run: smalls, Normal trim, A+ trim, waste, bag count</li>
+          <li>End of run: unfinished smalls, Normal trim, A+ trim, waste, bag count</li>
         </ul></div>
         <div><h4>Math</h4>
 <pre class="math">totalGrams       = Σ bag grams
@@ -409,20 +409,20 @@ lossPct          = (start − totalOutput) ÷ start
 trimmer pay      = pounds × trimRatePerLb</pre></div>
         <div><h4>Then</h4><ul>
           <li>Weight sign-off: in the Metrc Queue it shows <b>Waiting for weight validation</b> until a manager (Metrc Queue → Confirm weights) checks the weights and taps <b>Confirm weights</b>; then <b>Weight confirmed</b>. Until then its tags can't go in and it can't be marked Done. Changing a weight afterwards (Fix form) puts it back to waiting</li>
-          <li>Metrc Queue asks for the new tags: <code>newFinishedUid</code> (flower) and <code>newSmallsUid</code></li>
+          <li>Metrc Queue asks for the new tags: <code>newFinishedUid</code> (flower) and <code>newSmallsUid</code> (unfinished smalls)</li>
           <li>Trim gets no per-strain tag; it waits on the lot tag for a Mixed Trim Package</li>
           <li>Waste stays on the source tag and is wasted out there</li>
-          <li>Raw Inventory: <b>Flower</b>, <b>Smalls</b>, <b>Trim</b></li>
+          <li>Raw Inventory: <b>Flower</b>, <b>Unfinished Smalls</b> (finished later on Smalls Hand Trim), <b>Trim</b></li>
         </ul></div>
       </div>
     </article>
 
     <article class="card" id="st-smalls_trim">
       <div class="card-head"><h3>Smalls Hand Trim</h3><span class="k">smalls_trim</span><span class="pill state">conserving</span></div>
-      <p>The paper "Work Order Form (Smalls | By the Hourly)": one page per smalls package, open across days (a tab per day) until it's submitted, like Hand Trim, with a daily employee × flavor tally (lbs) under the form.</p>
+      <p>Where the unfinished smalls pulled on Hand Trim get finished. The paper "Work Order Form (Smalls | By the Hourly)": one page per smalls package, open across days (a tab per day) until it's submitted, like Hand Trim, with a daily employee × flavor tally (lbs) under the form.</p>
       <div class="cols">
         <div><h4>On the form</h4><ul>
-          <li>Project; package picked from Raw Inventory's Smalls (fills strain, starting lbs)</li>
+          <li>Project; package picked from Raw Inventory's Unfinished Smalls (fills strain, starting lbs)</li>
           <li>Worksheet: employee #, bags × grams each, stamped with the day</li>
           <li>End of run: shake, waste, new UID for finished smalls, back-of-form initials, team lead, labor hours</li>
         </ul></div>
@@ -432,8 +432,8 @@ totalOutputLb    = finished + shake + waste
 varianceLb       = totalOutputLb − startingLb
 lossPct          = (start − totalOutput) ÷ start</pre></div>
         <div><h4>Then</h4><ul>
-          <li>Takes its input off Smalls in Raw Inventory</li>
-          <li>Finished smalls listed under its new UID; shake → Trim</li>
+          <li>Takes its input off Unfinished Smalls in Raw Inventory</li>
+          <li>Finished smalls listed under its new UID on <b>Smalls</b>; shake → Trim</li>
         </ul></div>
       </div>
     </article>
@@ -754,12 +754,12 @@ on hand = weight − what later forms took</pre></div>
     ['handtrim', 'form', 560, 860, 'Hand Trim', 'hand_trim', { href: 'st-hand_trim', m: 1 }],
     ['machtrim', 'form', 330, 860, 'Machine Trim', 'machine_trim', { href: 'st-machine_trim' }],
     ['flower', 'fin', 330, 960, 'Flower (A-bud)', 'New tag · Raw Inv · Flower'],
-    ['smalls', 'fin', 560, 960, 'Smalls (B-bud)', 'New tag · Raw Inv · Smalls'],
+    ['smalls', 'fin', 560, 960, 'Unfinished smalls', 'New tag · Raw Inv · Unfinished Smalls'],
     ['trim', 'fin', 830, 960, 'Trim · Normal / A+', 'On lot tag · Raw Inv · Trim'],
     ['waste2', 'waste', 1015, 960, 'Waste', 'Stays on source tag', { w: 130 }],
     ['smallstrim', 'form', 560, 1060, 'Smalls Hand Trim', 'smalls_trim', { href: 'st-smalls_trim' }],
     ['mixtrim', 'form', 830, 1060, 'Mixed Trim Package', 'trim_package', { href: 'st-trim_package', m: 1 }],
-    ['fsmalls', 'fin', 560, 1150, 'Finished smalls', 'New UID · shake → Trim'],
+    ['fsmalls', 'fin', 560, 1150, 'Finished smalls', 'New UID · Raw Inv · Smalls'],
     ['mixpkg', 'fin', 830, 1150, 'Mixed trim', 'One new tag · strain "Mixed"'],
     ['preroll', 'form', 330, 1260, 'Pre-Roll Production', 'preroll_production', { href: 'st-preroll_production', m: 1 }],
     ['pouch', 'form', 560, 1260, 'Ground Flower Pouches', 'pouch_production', { href: 'st-pouch_production', m: 1 }],
@@ -796,7 +796,7 @@ on hand = weight − what later forms took</pre></div>
     { p: [[330, 915], [1015, 915], [1015, 937]], l: ['grams ÷ 454 = lbs', 695, 907, 'middle'] },
     { p: [[830, 915], [830, 937]] },
     { p: [[830, 793], [830, 915]], n: 1 },
-    { p: [[560, 983], [560, 1033]], l: ['re-trim', 548, 1012] },
+    { p: [[560, 983], [560, 1033]], l: ['finish', 548, 1012] },
     { p: [[830, 983], [830, 1033]] },
     { p: [[560, 1087], [560, 1127]] },
     { p: [[830, 1087], [830, 1127]] },

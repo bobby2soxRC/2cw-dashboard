@@ -76,11 +76,13 @@ const led = A.biomassLedger(stages);
 const byCat = Object.fromEntries(led.map((r) => [r.category, r]));
 // buck made 60 lb of bucked flower; machine trim took 36.35 and hand trim 23.65.
 check('bucked flower fully consumed downstream', byCat.bucked_flower.processingLb, 0);
-// 8 lb of smalls made, 9 lb transferred to manufacturing (an over-draw worth seeing).
-check('smalls left in processing', byCat.smalls_b.processingLb, 8 + 4 - 9);
+// 8 lb of smalls made (machine trim), 9 lb transferred to manufacturing (an
+// over-draw worth seeing). Hand Trim's 4 lb are unfinished smalls.
+check('smalls left in processing', byCat.smalls_b.processingLb, 8 - 9);
+check('hand trim smalls are unfinished smalls', byCat.smalls_unfinished.processingLb, 4);
 check('smalls sitting in manufacturing after the preroll run', byCat.smalls_b.manufacturingLb, 9 - 5);
 check('fresh frozen on hand', byCat.fresh_frozen.totalLb, 500);
-check('a transfer is not counted as a loss', byCat.smalls_b.totalLb, 8 + 4 - 5);
+check('a transfer is not counted as a loss', byCat.smalls_b.totalLb, 8 - 5);
 
 console.log('\ntrimmer productivity');
 const trimmers = A.trimmerStats(stages);

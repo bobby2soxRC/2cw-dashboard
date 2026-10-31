@@ -13,7 +13,9 @@ const RawStock = (function () {
   const r2 = (x) => Math.round(x * 100) / 100;
   const uniq = (a) => [...new Set(a.map((x) => String(x == null ? '' : x).trim()).filter(Boolean))];
   // Which tab a biomass category's stock sits on, for what a downstream form took.
-  const CAT_TAB = { flower_a: 'flower', smalls_b: 'smalls', trim: 'trim', trim_a_plus: 'trim', trim_a: 'trim', trim_b: 'trim',
+  // Hand Trim's smalls are unfinished (tab 'smalls_unf') until Smalls Hand
+  // Trim finishes them into Smalls.
+  const CAT_TAB = { flower_a: 'flower', smalls_b: 'smalls', smalls_unfinished: 'smalls_unf', trim: 'trim', trim_a_plus: 'trim', trim_a: 'trim', trim_b: 'trim',
                     sugar_trim: 'trim', shake: 'trim', fresh_frozen: 'frozen' };
 
   // Used-up marks: one shared operations_forms row (station_key
@@ -135,7 +137,7 @@ const RawStock = (function () {
   });
 
   const HAND_OUT = [
-    ['finishedFlowerLb', 'flower_a'], ['smallsLb', 'smalls_b'], ['normTrimLb', 'trim', { en: 'Normal', es: 'Normal' }],
+    ['finishedFlowerLb', 'flower_a'], ['smallsLb', 'smalls_unfinished'], ['normTrimLb', 'trim', { en: 'Normal', es: 'Normal' }],
     ['aPlusTrimLb', 'trim_a_plus', { en: 'A+', es: 'A+' }], ['sugarTrimLb', 'sugar_trim', { en: 'Sugar', es: 'Azucarada' }]];
   // Open Hand Trim pages, shaped like submitted records (finished flower from
   // the bags weighed so far).
@@ -270,7 +272,7 @@ const RawStock = (function () {
       ...d.pouches.flatMap((r) => (r.lines || []).map((x) => run('pouch_production', r, { uid: x.sourceUid, cat: x.material, lb: num(x.weightG) / G_PER_LB }))),
       ...d.mfg.map((r) => run('mfg_output', r, { uid: r.sourceUid, cat: r.inputCategory, lb: r.inputLb })),
       ...d.biomass.filter((r) => r.status === 'transferred').map((r) => run('biomass_request', r, { uid: r.sourceUid, cat: r.category, lb: r.transferredLb })),
-      ...d.smallsT.map((r) => run('smalls_trim', r, { uid: r.sourceUid, cat: 'smalls_b', lb: r.startingLb })),
+      ...d.smallsT.map((r) => run('smalls_trim', r, { uid: r.sourceUid, cat: 'smalls_unfinished', lb: r.startingLb })),
       // Each row of a Mixed Trim Package, and of an outgoing transfer (by its
       // product type code: TRANSFER_TYPES' tab, and category when it has one).
       ...d.mixed.flatMap((r) => (r.lines || []).map((x) => run('trim_package', r, { uid: x.sourceUid, cat: x.trimType || null, tab: 'trim', lb: x.weightLb }))),
@@ -279,15 +281,20 @@ const RawStock = (function () {
         date: String(r.actualDate || r.date || '').slice(0, 10), customer: r.customer || '', sale: true })))
     ];
   }
+  // Smalls are one pile with two tabs: a form taking smalls off a UID takes
+  // from its own tab first, then the other (forms from before Hand Trim's
+  // smalls were unfinished, a Smalls Hand Trim run on Machine Trim smalls).
+  const ALSO_TAB = { smalls: 'smalls_unf', smalls_unf: 'smalls' };
   // Takes each one off the rows with its UID (or their lot's), oldest stock first.
   function applyTakers(out, takers) {
     takers.forEach((c) => {
       let left = Number(c.lb) || 0;
       const tab = c.tab || CAT_TAB[c.cat];
       if (!(left > 0) || !tab || !c.uid) return;
-      out.filter((r) => r.tab === tab && r.recId !== c.id && r.lb > 0 && (uidTailMatch(r.uid, c.uid) || uidTailMatch(r.lotUid, c.uid)) &&
-          (!r.cat || !c.cat || r.cat === c.cat || tab !== 'trim'))
-        .sort((a, b) => a.date.localeCompare(b.date))
+      const fits = (r, tb) => r.tab === tb && r.recId !== c.id && r.lb > 0 && (uidTailMatch(r.uid, c.uid) || uidTailMatch(r.lotUid, c.uid)) &&
+        (!r.cat || !c.cat || r.cat === c.cat || tb !== 'trim') && !(c.station === 'smalls_trim' && r.station === 'smalls_trim');
+      const byDate = (a, b) => a.date.localeCompare(b.date);
+      [...out.filter((r) => fits(r, tab)).sort(byDate), ...(ALSO_TAB[tab] ? out.filter((r) => fits(r, ALSO_TAB[tab])).sort(byDate) : [])]
         .forEach((r) => {
           if (left <= 0) return;
           const take = Math.min(left, r.lb);

@@ -135,7 +135,7 @@
     const bucked = o('buck', 'bucked_flower');
     const trimIn = trimKeys.reduce((a, k) => a + n((st[k] || {}).inputLb), 0);
     const flower = trimKeys.reduce((a, k) => a + o(k, 'flower_a'), 0);
-    const smalls = trimKeys.reduce((a, k) => a + o(k, 'smalls_b'), 0);
+    const smalls = trimKeys.reduce((a, k) => a + o(k, 'smalls_b', 'smalls_unfinished'), 0);
     const trim = trimKeys.reduce((a, k) => a + o(k, 'trim', 'trim_a_plus', 'sugar_trim', 'shake'), 0);
     const pid = lot.pid || uniq(all.map((r) => r.pid))[0] || '';
     const STAGE = { harvest: L('Harvested', 'Cosechado'), intake_wet: L('Drying', 'Secando'), dry_check: L('On stem', 'En tallo'),

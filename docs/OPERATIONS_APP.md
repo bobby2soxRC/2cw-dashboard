@@ -567,20 +567,32 @@ access or 'buck release', Pre-Roll & Ground Flower to `preroll_production` or `p
 Pre-Roll Dashboard card (`2cw_preroll_dash`, set at login). The card is
 `ambient`, so someone with only one station still lands straight on it.
 
+**Unfinished smalls** (since 2026-10-31). Every small pulled on Hand Trim
+(`smallsLb`, "Unfinished Smalls (lbs)") is unfinished: biomass category
+`smalls_unfinished` (`BIOMASS` in `operations_stations.js`), Raw Inventory tab
+**Unfinished Smalls** (`smalls_unf`, `CAT_TAB` in `raw_stock.js`). Smalls Hand
+Trim is where they get finished: it takes its package off Unfinished Smalls
+and its finished smalls go on **Smalls** (`smalls_b`), as do Machine Trim's
+B-buds. A form that takes smalls off a UID tries its own tab first, then the
+other (`ALSO_TAB` in `raw_stock.js`, same in `ops_flow.js`), so forms from
+before the change — and a Smalls Hand Trim on Machine Trim smalls, picked with
+Other — still take the right stock off. The Metrc Queue's tag for Hand Trim's
+smalls (`newSmallsUid`) is labeled Unfinished Smalls. Reports count both kinds
+as smalls. No SQL.
+
 **Smalls Hand Trim** (`smalls_trim`) is the paper "Work Order Form (Smalls |
 By the Hourly)". Since 2026-10-29 it's built like Hand Trim: one page per
 smalls package (flavor) that stays open across days until it's submitted —
-project, the package (picked from Raw Inventory's **Smalls** tab, which fills
-strain and starting lbs; Other opens a popup for strain + UID), then the
+project, the package (picked from Raw Inventory's **Unfinished Smalls** tab,
+which fills strain and starting lbs; Other opens a popup for strain + UID), then the
 weighing worksheet as a running log (employee #, Bags × Grams each + Partial,
 a row per bag, stamped with its day), grams → lbs worked out (÷ 454,
 `G_PER_LB`), and at the End of Run shake, waste and variance, the
 back-of-form initials (waste adjusted, processor inventory), team lead, labor
 hours and manager notes. No farm license, CID or grade — those come from the
 UID. The package list (`picker: { list: 'smalls' }`, `fillSmalls` in
-`ops_form.html`) is `RawStock.load`'s smalls rows with lbs left, less
-finished smalls from earlier smalls runs and packages open on another smalls
-page. Someone who closes a page and reopens the station gets a blank page
+`ops_form.html`) is `RawStock.load`'s unfinished smalls rows (tab
+`smalls_unf`) with lbs left, less packages open on another smalls page. Someone who closes a page and reopens the station gets a blank page
 with a note pointing at the open pages in the switcher. Open pages can be
 deleted (`canDelete`). The station options, all handled in `ops_form.html`:
 - `sharedDay: true` — the switcher at the top ("Flavors open") lists every
@@ -896,7 +908,8 @@ lbs, drying room), **On-Stem** (the bucking queue's packages, less boxes
 pulled on an open Bucking page, plus Take Downs on hold — `loadBuckingQueue`),
 **Bucked** (the trimming queue — `loadTrimQueue` — less what's already weighed
 on an open Hand Trim page: flower, and any smalls, trim and waste; lots with a
-Machine Trim left out), **Flower**,
+Machine Trim left out), **Flower**, **Unfinished Smalls** (tab `smalls_unf`:
+Hand Trim's smalls, until a Smalls Hand Trim finishes them),
 **Smalls** and **Trim** (each Hand Trim, Machine Trim and Smalls Hand Trim's
 outputs, Bucking's trim, and packages received on a Product Transfer —
 Incoming; trim shows its type — Normal, A+, Sugar, Shake,

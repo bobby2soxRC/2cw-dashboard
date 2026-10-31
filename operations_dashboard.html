@@ -168,6 +168,7 @@
     kpiInProc: { en: 'Lots in processing', es: 'Lotes en proceso' },
     kpiFlower: { en: 'Flower on hand', es: 'Flor disponible' },
     kpiSmalls: { en: 'Smalls on hand', es: 'Smalls disponibles' },
+    kpiSmallsUnf: { en: 'Unfinished smalls', es: 'Smalls sin terminar' },
     kpiFF: { en: 'Fresh frozen', es: 'Fresco congelado' },
     kpiOpenReq: { en: 'Open requests', es: 'Solicitudes abiertas' },
     kpiExc: { en: 'Exceptions', es: 'Excepciones' },
@@ -311,6 +312,7 @@
         ${kpi('gold', t(L.kpiInProc), lots.length ? inProc : '—')}
         ${kpi('green', t(L.kpiFlower), fmtNum(cat('flower_a'), 1), 'lb')}
         ${kpi('green', t(L.kpiSmalls), fmtNum(cat('smalls_b'), 1), 'lb')}
+        ${kpi('green', t(L.kpiSmallsUnf), fmtNum(cat('smalls_unfinished'), 1), 'lb')}
         ${kpi('blue', t(L.kpiFF), fmtNum(cat('fresh_frozen'), 1), 'lb')}
         ${kpi('purple', t(L.kpiOpenReq), openReq)}
       </div>

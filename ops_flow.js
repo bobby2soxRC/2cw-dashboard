@@ -49,7 +49,7 @@
   // Trim run outputs: field, category, kind, label.
   const HAND_OUT = [
     ['finishedFlowerLb', 'flower_a', 'product', L('Flower', 'Flor')],
-    ['smallsLb', 'smalls_b', 'product', L('Smalls', 'Smalls')],
+    ['smallsLb', 'smalls_unfinished', 'product', L('Unfinished smalls', 'Smalls sin terminar')],
     ['normTrimLb', 'trim', 'byproduct', L('Normal trim', 'Recorte normal')],
     ['aPlusTrimLb', 'trim_a_plus', 'byproduct', L('A+ trim', 'Recorte A+')],
     ['sugarTrimLb', 'sugar_trim', 'byproduct', L('Sugar trim', 'Recorte azucarado')],
@@ -63,7 +63,7 @@
   ];
   // Which pile a category sits in, for what a downstream form took — the
   // same tabs Raw Materials Inventory uses.
-  const CAT_TAB = { flower_a: 'flower', smalls_b: 'smalls', trim: 'trim', trim_a_plus: 'trim', trim_a: 'trim', trim_b: 'trim',
+  const CAT_TAB = { flower_a: 'flower', smalls_b: 'smalls', smalls_unfinished: 'smalls_unf', trim: 'trim', trim_a_plus: 'trim', trim_a: 'trim', trim_b: 'trim',
                     sugar_trim: 'trim', shake: 'trim', kief: 'kief' };
 
   // S: {stationKey: [flat records]} — submitted, plus open pages when the
@@ -213,7 +213,7 @@
       label: L('Manufacturing run', 'Corrida de manufactura') }));
     get('biomass_request').filter((r) => r.status === 'transferred').forEach((r) => run('biomass_request', r, { uid: r.sourceUid, cat: r.category,
       lb: n(r.transferredLb), label: L('Biomass transfer', 'Transferencia de biomasa') }));
-    get('smalls_trim').forEach((r) => run('smalls_trim', r, { uid: r.sourceUid, cat: 'smalls_b', lb: n(r.startingLb),
+    get('smalls_trim').forEach((r) => run('smalls_trim', r, { uid: r.sourceUid, cat: 'smalls_unfinished', lb: n(r.startingLb),
       label: L('Smalls hand trim', 'Corte a mano de smalls') }));
     get('trim_package').forEach((r) => (r.lines || []).forEach((x) => run('trim_package', r, { uid: x.sourceUid, cat: x.trimType || null, tab: 'trim',
       lb: n(x.weightLb), label: L('Mixed trim package', 'Paquete de recorte mixto') })));
@@ -231,10 +231,12 @@
       const tab = c.tab || CAT_TAB[c.cat];
       if (!(left > 0) || !tab || !c.uid) return;
       const u = node(`u:${c.station}:${c.id}`, { phase: 4, kind: 'use', label: c.label, station: c.station, date: c.date, recIds: [c.id], terminal: true });
-      units.filter((x) => tabOf(x) === tab && !x.recIds.includes(c.id) && leftOf(x) > 0.004 &&
+      // Smalls: its own tab first, then the other (as in raw_stock.js).
+      const also = { smalls: 'smalls_unf', smalls_unf: 'smalls' }[tab];
+      units.filter((x) => (tabOf(x) === tab || (also && tabOf(x) === also)) && !x.recIds.includes(c.id) && leftOf(x) > 0.004 &&
           (uidTailMatch(x.uid, c.uid) || uidTailMatch(x.lotUid, c.uid) || uidTailMatch(x.srcUid, c.uid) || (x.parts || []).some((p) => uidTailMatch(p, c.uid))) &&
           (tab !== 'trim' || !x.cat || !c.cat || x.cat === c.cat))
-        .sort((a, b) => String(a.date).localeCompare(String(b.date)))
+        .sort((a, b) => (tabOf(a) === tab ? 0 : 1) - (tabOf(b) === tab ? 0 : 1) || String(a.date).localeCompare(String(b.date)))
         .forEach((x) => {
           if (left <= 0.004) return;
           const take = Math.min(left, leftOf(x));
