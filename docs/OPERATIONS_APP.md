@@ -789,7 +789,10 @@ one of our licenses (`data/canix_facilities.json`) with a package still
 recorded in Metrc within 24 hours (4 CCR § 15049(b)); Canix has no arrival
 time, so the clock starts at departure (the earlier, safe deadline). Each
 row shows hours left; **Urgent** at 8 h or less (`URGENT_H`), **Overdue**
-past 24 h, soonest first. Canix's `departure_time` is California wall-clock
+past 24 h, soonest first. Click a row to open it: each package on the
+manifest with its UID (Copy, or **Copy all UIDs**), item / strain and
+shipped weight (`items` on each entry), so the crew can tell which truck it
+is; open rows stay open while the page is up. Canix's `departure_time` is California wall-clock
 time with a "Z" on it, read as Pacific (`pacificTime`). Limits: it's only as
 fresh as the last Canix sync (every 3 hours; Admin → Data Syncs runs one
 now). **Outside farms** (a license we don't have in Canix) aren't in Canix

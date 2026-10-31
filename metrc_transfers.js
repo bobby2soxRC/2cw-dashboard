@@ -67,6 +67,12 @@
           level: hoursLeft === null ? 'urgent' : hoursLeft < 0 ? 'overdue' : hoursLeft <= URGENT_H ? 'urgent' : 'ok',
           packages: waiting.length,
           tags: waiting.map((c) => (c.package || {}).tag).filter(Boolean),
+          // Each package on the manifest, for the expandable row.
+          items: waiting.map((c) => ({
+            tag: (c.package || {}).tag || '', item: c._item || '', strain: c._strain || '',
+            weight: c.shipped_weight == null ? null : Number(c.shipped_weight),
+            unit: c.shipped_weight_unit || ''
+          })),
           weightLb: waiting.reduce((s, c) => s + (String(c.shipped_weight_unit || 'Pounds').toLowerCase().startsWith('pound') ? Number(c.shipped_weight) || 0 : 0), 0)
         });
       }
@@ -114,6 +120,7 @@
     return [...groups.values()].map((g) => {
       const due = g.startedAt + ACCEPT_WITHIN_H * 3600000, hoursLeft = (due - now) / 3600000;
       return { ...g, departure: g.startedAt, due, hoursLeft, packages: g.tags.length,
+        items: g.tags.map((tag) => ({ tag, item: '', strain: '', weight: null, unit: '' })),
         level: hoursLeft < 0 ? 'overdue' : hoursLeft <= URGENT_H ? 'urgent' : 'ok' };
     }).sort((a, b) => a.due - b.due);
   }

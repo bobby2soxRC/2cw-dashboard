@@ -126,6 +126,18 @@
     .inc-intake{color:var(--blue);text-decoration:none}
     .inc-intake:hover{text-decoration:underline}
     .inc-none{font-size:.85rem;color:var(--muted);padding:10px 0}
+    /* Click a transfer to see each package (UID) on the manifest */
+    .inc .tbl tbody tr.inc-row{cursor:pointer}
+    .inc .tbl tbody tr.inc-row:hover{background:rgba(255,255,255,.03)}
+    .inc-caret{display:inline-block;width:10px;margin-right:6px;color:var(--muted);font-size:10px;transition:transform .15s}
+    .inc-row.open .inc-caret{transform:rotate(90deg);color:var(--blue)}
+    .inc .tbl tbody tr.inc-pk td{background:rgba(0,0,0,.18);padding-top:4px;padding-bottom:10px}
+    .inc .tbl tbody tr.inc-pk td:first-child{border-left-color:transparent}
+    .inc-pkt{width:100%;border-collapse:collapse;font-size:.8rem}
+    .inc-pkt th{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 8px;font-weight:400}
+    .inc-pkt td{padding:5px 8px;border-top:1px solid var(--border)}
+    .inc-pkt .num{text-align:right}
+    .inc-pk-acts{display:flex;justify-content:flex-end;padding:6px 8px 0}
 
     .empty{color:var(--muted);text-align:center;padding:60px 0;font-size:.9rem;line-height:1.6}
     .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
@@ -343,6 +355,10 @@
     colLeft:   { en: 'Departed / received', es: 'Salió / recibido' },
     colDue:    { en: 'Accept by', es: 'Aceptar antes de' },
     colPkgs:   { en: 'Packages', es: 'Paquetes' },
+    colItem:   { en: 'Item / strain', es: 'Artículo / cepa' },
+    colWeight: { en: 'Shipped', es: 'Enviado' },
+    copyUids:  { en: 'Copy all UIDs', es: 'Copiar todos los UID' },
+    incExpand: { en: 'Show the packages (UIDs) on this manifest', es: 'Ver los paquetes (UID) de este manifiesto' },
     incIntake: { en: 'Wet Intake — not in Metrc yet', es: 'Recepción húmeda — aún no en Metrc' },
     outsideFarm:{ en: 'Outside farm', es: 'Granja externa' },
     needs_form:{ en: 'Needs form', es: 'Falta formulario' },
@@ -381,6 +397,7 @@
   let incoming = null, canixAt = null, incomingAt = 0;
   // Collapsed or open, remembered on this device.
   let incOpen = true;
+  const incExpanded = new Set();   // keys of transfers showing their packages
   try { incOpen = localStorage.getItem('metrc_inc_open') !== '0'; } catch (_) {}
   const fmtAt = (ms) => ms ? new Date(ms).toLocaleString(getLang() === 'es' ? 'es-MX' : 'en-US', { timeZone: 'America/Los_Angeles', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—';
   async function loadIncoming() {
@@ -395,6 +412,21 @@
     // The whole board: the Needs form rows come from Canix too (and an open
     // outgoing transfer's From Metrc box).
     if (incoming) { render(); if (openId) openDetail(openId); } else renderIncoming();
+  }
+  // A transfer's packages, shown under its row when it's clicked open.
+  const incKey = (x) => x.intake ? `i:${x.ids[0]}` : `m:${x.manifest}|${x.toLicense}`;
+  function pkgRow(x) {
+    const items = x.items || [];
+    const wt = (p) => p.weight == null ? '—' : `${fmtNum(p.weight, 2)} ${String(p.unit || '').toLowerCase().startsWith('pound') ? 'lb' : esc(p.unit)}`;
+    const copy = (v, label) => `<button type="button" class="copy-mini" data-copy="${esc(v)}">${label || t(L.copyBtn)}</button>`;
+    return `<tr class="inc-pk"><td colspan="8">
+      <table class="inc-pkt"><thead><tr><th>UID</th><th>${t(L.colItem)}</th><th class="num">${t(L.colWeight)}</th></tr></thead>
+      <tbody>${items.map((p) => `<tr>
+        <td class="mono"><div class="mf-cell"><span>${esc(p.tag)}</span>${copy(p.tag)}</div></td>
+        <td>${esc(p.item || p.strain || (x.strains || []).join(', ') || '—')}</td>
+        <td class="num mono">${wt(p)}</td></tr>`).join('')}</tbody></table>
+      ${items.length > 1 ? `<div class="inc-pk-acts">${copy(items.map((p) => p.tag).join('\n'), t(L.copyUids))}</div>` : ''}
+    </td></tr>`;
   }
   function renderIncoming() {
     incEl.classList.toggle('closed', !incOpen);
@@ -434,8 +466,8 @@
     show(list, `<div class="tbl-wrap"><table class="tbl">
       <thead><tr><th>${t(L.colStatus)}</th><th>${t(L.colManifest)}</th><th>${t(L.colFrom)}</th><th>${t(L.colTo)}</th>
         <th>${t(L.colLeft)}</th><th>${t(L.colDue)}</th><th class="num">${t(L.colPkgs)}</th><th class="num">${t(L.colAmount)}</th></tr></thead>
-      <tbody>${list.map((x) => `<tr class="${x.level}">
-        <td>${pill(x)}</td>
+      <tbody>${list.map((x) => { const key = incKey(x), open = incExpanded.has(key); return `<tr class="${x.level} inc-row${open ? ' open' : ''}" data-key="${esc(key)}" title="${t(L.incExpand)}">
+        <td><span class="inc-caret">▶</span>${pill(x)}</td>
         <td class="mono">${x.manifest ? `<div class="mf-cell"><span>${esc(x.manifest)}</span><button type="button" class="copy-mini" data-copy="${esc(x.manifest)}">${t(L.copyBtn)}</button></div>` : '—'}</td>
         ${x.intake
           ? `<td>${esc(x.fromName || t(L.outsideFarm))}${x.strains.length ? `<div class="muted-note">${esc(x.strains.join(', '))}</div>` : ''}</td>
@@ -446,13 +478,23 @@
         <td class="mono">${esc(fmtAt(x.due))}</td>
         <td class="num" title="${esc(x.tags.join('\n'))}">${x.packages}</td>
         <td class="num">${x.weightLb ? `${fmtNum(x.weightLb, 0)} lb` : '—'}</td>
-      </tr>`).join('')}</tbody></table></div>`);
-    incEl.querySelectorAll('.inc-intake').forEach((a) => { a.onclick = (e) => { e.preventDefault(); openDetail(a.dataset.id); }; });
+      </tr>${open ? pkgRow(x) : ''}`; }).join('')}</tbody></table></div>`);
+    incEl.querySelectorAll('.inc-intake').forEach((a) => { a.onclick = (e) => { e.preventDefault(); e.stopPropagation(); openDetail(a.dataset.id); }; });
+    incEl.querySelectorAll('tr.inc-row').forEach((tr) => {
+      tr.onclick = (e) => {
+        if (e.target.closest('button, a')) return;
+        const k = tr.dataset.key;
+        if (incExpanded.has(k)) incExpanded.delete(k); else incExpanded.add(k);
+        renderIncoming();
+      };
+    });
     incEl.querySelectorAll('.copy-mini').forEach((cp) => {
-      cp.onclick = async () => {
+      cp.onclick = async (e) => {
+        e.stopPropagation();
         if (!(await writeClipboard(cp.dataset.copy))) return;
+        const label = cp.textContent;
         cp.classList.add('ok'); cp.textContent = t(L.copyDone);
-        setTimeout(() => { cp.classList.remove('ok'); cp.textContent = t(L.copyBtn); }, 1200);
+        setTimeout(() => { cp.classList.remove('ok'); cp.textContent = label; }, 1200);
       };
     });
   }
