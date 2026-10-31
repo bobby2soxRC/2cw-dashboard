@@ -348,6 +348,7 @@ function renderEmail(period, win, hours, ops, siteUrl) {
   const $col = hours.withCost ? [{ t: 'Labor $', num: true, v: (r) => fmtUsd(r.cost) }] : [];
   const trim = ops.trim;
   const buck = ops.rows.find((r) => r.key === 'buck');
+  const smalls = ops.rows.find((r) => r.key === 'smalls_trim' && r.weighed);
   const procs = costPerLb(hours, ops);
   const totalLabor = hours.cost + trim.pay;
   const weekLabel = `since ${prettyDay(hours.weekFrom, { weekday: 'short', month: 'short', day: 'numeric' })}`;
@@ -383,10 +384,13 @@ function renderEmail(period, win, hours, ops, siteUrl) {
     ] : [{ t: 'Lbs / hr', num: true, v: (r) => (r.lb && r.hours ? fmt1(r.lb / r.hours) : '—') }])
   ];
 
-  const trimBox = (trim.lb || trim.smallsLb || buck) ? h2('Trimming & bucking') + box([
+  // Smalls trimmers are hourly (Connecteam "Smalls"): no piece pay.
+  const smallsCost = (hours.processes.smalls_trim || { cost: 0 }).cost;
+  const trimBox = (trim.lb || trim.smallsLb || smalls || buck) ? h2('Trimming & bucking') + box([
     ['Finished flower trimmed', `${fmt1(trim.lb)} lb`, `${trim.trimmers} trimmer${trim.trimmers === 1 ? '' : 's'} weighed in${trim.trimmers ? ` · ${fmt1(trim.lb / trim.trimmers)} lb each` : ''}`],
     ...(hours.withCost && trim.lb ? [['Trimming cost per lb', fmtUsd2((trim.pay + (hours.processes.hand_trim || { cost: 0 }).cost) / trim.lb), `piece pay ${fmtUsd(trim.pay)} + hourly on Trimming ${fmtUsd((hours.processes.hand_trim || { cost: 0 }).cost)}`]] : []),
     ['Unfinished smalls pulled', `${fmt1(trim.smallsLb)} lb`, 'end-of-run weight on Hand Trim lots finished in this period; cleaned later on Smalls Hand Trim'],
+    ...(smalls ? [['Finished smalls trimmed', `${fmt1(smalls.lbShown)} lb`, `Smalls Hand Trim, ${smalls.weighed.people} trimmer${smalls.weighed.people === 1 ? '' : 's'} weighed in${smalls.weighed.people ? ` · ${fmt1(smalls.lbShown / smalls.weighed.people)} lb each` : ''}${hours.withCost && smallsCost ? ` · ${fmtUsd2(smallsCost / smalls.lbShown)}/lb hourly on Smalls` : ''}`]] : []),
     ...(buck ? [['Bucked flower produced', `${fmt1(buck.lbShown)} lb`, `${buck.weighed ? buck.weighed.people : 0} buckers weighed in`]] : [])
   ]) : '';
 
@@ -416,7 +420,7 @@ ${table([
     { t: 'Open now', num: true, v: (r) => (r.open ? String(r.open) : '') },
     { t: 'Strains', v: (r) => r.strains.slice(0, 4).join(', ') + (r.strains.length > 4 ? ` +${r.strains.length - 4}` : '') }
   ], ops.rows)}
-<p style="color:#888;font-size:12px;margin:-12px 0 0">Bucking and hand trim: pounds weighed in this period on every page, finished or still open (the forms' Daily Summary). Other stations: pounds out on submitted forms.</p>
+<p style="color:#888;font-size:12px;margin:-12px 0 0">Bucking, hand trim and smalls hand trim: pounds weighed in this period on every page, finished or still open (the forms' Daily Summary). Other stations: pounds out on submitted forms.</p>
 
 ${h2('Labor by site and activity')}
 ${siteActivityTable(hours.byJob, hours.withCost)}
@@ -452,7 +456,7 @@ ${siteUrl ? `<a href="${escapeHtml(siteUrl)}/operations_dashboard.html" style="c
     ...(hours.nearForty.length ? [`Heading past 40 hrs this week (${weekLabel}):`, ...hours.nearForty.map((r) => `  ${r.name}: ${fmt1(r.week)} hrs`), ''] : []),
     hours.withCost ? 'Cost per pound by process:' : 'Pounds and hours by process:',
     ...procs.map((r) => `  ${r.name}: ${r.lb ? `${fmt1(r.lb)} lb` : '— lb'}, ${fmt1(r.hours)} hrs${hours.withCost ? `, ${fmtUsd(r.total)}${r.perLb != null ? ` = ${fmtUsd2(r.perLb)}/lb` : ''}` : ''}`), '',
-    `Trimming: ${fmt1(trim.lb)} lb finished flower by ${trim.trimmers} trimmers · unfinished smalls pulled ${fmt1(trim.smallsLb)} lb${buck ? ` · bucked ${fmt1(buck.lbShown)} lb` : ''}`, '',
+    `Trimming: ${fmt1(trim.lb)} lb finished flower by ${trim.trimmers} trimmers · unfinished smalls pulled ${fmt1(trim.smallsLb)} lb${smalls ? ` · finished smalls ${fmt1(smalls.lbShown)} lb by ${smalls.weighed.people} trimmers` : ''}${buck ? ` · bucked ${fmt1(buck.lbShown)} lb` : ''}`, '',
     'Operations by station:',
     ...ops.rows.map((r) => `  ${r.title}: ${r.lbShown ? `${fmt1(r.lbShown)} lb, ` : ''}${r.forms} submitted${r.open ? `, ${r.open} open` : ''}`), '',
     'Labor by site and activity:', ...hours.byJob.flatMap((j) => [
