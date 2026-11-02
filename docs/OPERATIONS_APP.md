@@ -60,11 +60,17 @@ form per truck, split per UID on submit — the records look the same):
   locked (`lockStrain` in `ops_form.html`; mapped to the Strain Library
   name by alias). A package Canix doesn't know leaves the strain to pick.
   Not locked on Edit.
-- **Truck #** (`truckPicker`): numbered per day across all farms, one truck
-  per manifest — the first manifest is Truck 1, the next new one Truck 2.
+- **Truck #** (`truckPicker`): numbered per day across all farms — the
+  first manifest is Truck 1, the next farm's Truck 2.
   A picked package's manifest (kept as `incomingManifest`; `manifestNo`
-  stays blank for the Canix sync) puts it on its truck or the next number;
-  a package with no manifest is put on a truck by hand. The day's trucks
+  stays blank for the Canix sync) puts it on its truck. A new manifest from
+  a farm (the part of the Canix shipper name before the colon, "Lucern")
+  that already has a truck today goes on that farm's latest truck — one
+  truck often carries several licenses' manifests (since 2026-11-02, from
+  Lucern's Truck 5 showing as 5 and 6); otherwise the next number. A farm's
+  genuine second truck: pick the new truck by hand, which sticks for that
+  package (`truckManual`) and its manifest's later packages follow it.
+  A package with no manifest is put on a truck by hand. The day's trucks
   come from the submitted intakes and the ones open on other tablets, and
   Submit checks again (`resolveTruckNo`).
 - **Weighmaster**: a dropdown of `weighmasters` in

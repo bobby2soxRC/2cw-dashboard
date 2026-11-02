@@ -68,8 +68,9 @@
 //          their way to us in Canix (incomingPackages in metrc_transfers.js),
 //          plus "Not listed — type the UID". Picking one fills and locks
 //          the `strain` field (see wireIncoming in ops_form.html).
-//   truckPicker (select) Wet Intake's Truck #: numbered per day, one per
-//          manifest — today's trucks plus the next new one (ops_form.html)
+//   truckPicker (select) Wet Intake's Truck #: numbered per day, by manifest,
+//          and a farm's new manifest joins its truck — today's trucks plus
+//          the next new one (ops_form.html)
 //   tare   (lineitems column) a dropdown of bin tares (TARE_PRESETS plus the
 //          ones added with Other — the shared intake_tares row); stores the
 //          weight in the column's key and the name in `tareName`
@@ -478,8 +479,8 @@ const OPERATIONS_STATIONS = [
         l: { en: 'Strain', es: 'Variedad (cepa)' } },
       { k: 'truckNo', t: 'select', truckPicker: true, req: true,
         l: { en: 'Truck #', es: 'N.º de camión' },
-        hint: { en: 'Numbered for the day: the first manifest is Truck 1, the next one Truck 2, across all farms. A package on a manifest already in is put on its truck.',
-                es: 'Numerado por día: el primer manifiesto es el Camión 1, el siguiente el Camión 2, de todos los ranchos. Un paquete de un manifiesto ya recibido va en su camión.' } },
+        hint: { en: 'Numbered for the day across all farms. A package on a manifest already in goes on its truck, and a new manifest from a farm already here today goes on that farm’s truck. A second truck from the same farm? Pick the new truck.',
+                es: 'Numerado por día, de todos los ranchos. Un paquete de un manifiesto ya recibido va en su camión, y un manifiesto nuevo de un rancho que ya llegó hoy va en el camión de ese rancho. ¿Un segundo camión del mismo rancho? Elija el camión nuevo.' } },
       { k: 'pid', t: 'select', ref: 'properties', allowOther: true, fromCanix: true,
         l: { en: 'Farm License', es: 'Licencia del rancho' } },
       { k: 'cid', t: 'select', ref: 'customers', allowOther: true, fromCanix: true, l: { en: 'Customer ID (CID)', es: 'ID de cliente (CID)' } },

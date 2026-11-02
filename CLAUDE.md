@@ -301,7 +301,8 @@ finished flower and smalls packages created in Metrc (Canix
 From Kevin's Material Flow change request. Harvest Intake — Wet is one form
 per package: picked from a dropdown of packages on their way to us in Canix
 (`incomingPackages` in `metrc_transfers.js`) or scanned, strain locked from
-Canix; automatic daily Truck # per manifest (`truckPicker`); Weighmaster
+Canix; automatic daily Truck # per manifest, a farm's later manifests
+joining its truck (`truckPicker`, since 2026-11-02); Weighmaster
 dropdown (`weighmasters` in `data/operations/reference.json`); tare dropdown with presets + Other (`intake_tares`
 shared row). No Fresh Frozen checkbox (location decides), no Project, no
 Completed by (submitter), no Metrc adjustment at the door (`editOnly`). No

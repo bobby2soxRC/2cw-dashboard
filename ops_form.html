@@ -2820,19 +2820,23 @@
   function afterIncoming() { fillTruckPickers(); recompute(); updateVisibility(); markDirty(); }
 
   // ── Truck # (truckPicker — Wet Intake) ────────────────────────────────────
-  // Numbered per day across all farms, one truck per manifest: the day's
-  // other intakes (submitted, or open on another tablet) give the trucks so
-  // far — "Truck 1 — Comstock · manifest …9639 · 2 pkg" — and the next number
-  // is a new truck. A package whose manifest is already in goes on that
-  // truck; a new manifest gets the next number. A package with no manifest
-  // (typed, not in Canix) is picked by hand. Submit checks again
-  // (resolveTruckNo), in case another tablet took the new number meanwhile.
+  // Numbered per day across all farms: the day's other intakes (submitted, or
+  // open on another tablet) give the trucks so far — "Truck 1 — Comstock ·
+  // manifest …9639 · 2 pkg" — and the next number is a new truck. A package
+  // whose manifest is already in goes on that truck. A new manifest from a
+  // farm that already has a truck today goes on that farm's latest truck
+  // (one truck often carries several licenses' manifests — Lucern); else it
+  // gets the next number. Picking a truck by hand (a farm's second truck)
+  // sticks for that package. A package with no manifest (typed, not in
+  // Canix) is picked by hand. Submit checks again (resolveTruckNo), in case
+  // another tablet took the new number meanwhile.
   const truckFields = station.fields.filter((f) => f.truckPicker);
   let dayIntakes = null;   // [{ id, date, truckNo, manifest, from }] — null while loading
+  const farmOf = (from) => String(from || '').split(':')[0].trim();
   const intakeRow = (id, date, f) => ({ id, date, truckNo: String(f.truckNo || '').trim(),
     manifest: String(f.incomingManifest || f.manifestNo || '').trim(),
     // The farm: the transfer's, else the Farm License the Canix sync filled ("Comstock").
-    from: String(f.incomingFrom || '').split(':')[0].trim() ||
+    from: farmOf(f.incomingFrom) ||
       String(((refOptions(reference, 'properties').find((o) => o.v === f.pid)) || {}).label || '').split(/[:(—-]/)[0].trim() });
   async function loadDayIntakes() {
     const [subs, open] = await Promise.all([loadSubmitted(station.key), listOpenDrafts(station.key)]);
@@ -2851,11 +2855,17 @@
     const next = String(Math.max(0, ...[...trucks.keys()].map(Number)) + 1);
     return { trucks, next };
   }
-  function truckFor(list, date, manifest) {
+  function truckFor(list, date, manifest, from) {
     const { trucks, next } = dayTrucks(list, date);
     const hit = manifest && [...trucks].find(([, x]) => x.manifests.has(manifest));
-    return hit ? { no: hit[0], isNew: false } : { no: next, isNew: true };
+    if (hit) return { no: hit[0], isNew: false };
+    const farm = farmOf(from).toLowerCase();
+    const same = farm && [...trucks].filter(([, x]) => x.from.toLowerCase() === farm)
+      .sort((a, b) => Number(b[0]) - Number(a[0]))[0];
+    return same ? { no: same[0], isNew: false } : { no: next, isNew: true };
   }
+  // Auto-set unless this package's truck was picked by hand.
+  const truckAutoOn = () => values.incomingManifest && !editMode && values.truckManual !== values.incomingManifest;
   function fillTruckPickers() {
     truckFields.forEach((f) => {
       const sel = document.getElementById(`f_${f.k}`);
@@ -2865,10 +2875,10 @@
       const { trucks, next } = dayTrucks(dayIntakes, date);
       // A known manifest decides the truck (not on Edit — that's a correction).
       // One it set goes again when the package changes to one with no manifest.
-      if (values.incomingManifest && !editMode) {
-        const x = truckFor(dayIntakes, date, values.incomingManifest);
+      if (truckAutoOn()) {
+        const x = truckFor(dayIntakes, date, values.incomingManifest, values.incomingFrom);
         values[f.k] = x.no; values.truckIsNew = x.isNew; values.truckAuto = true;
-      } else if (values.truckAuto && !editMode) {
+      } else if (values.truckAuto && !editMode && !values.incomingManifest) {
         values[f.k] = ''; values.truckAuto = false;
       }
       const cur = String(values[f.k] || '');
@@ -2891,7 +2901,7 @@
     try { dayIntakes = await loadDayIntakes(); } catch (err) { console.error('trucks', err); return; }
     const date = values.date || todayStr();
     truckFields.forEach((f) => {
-      if (values.incomingManifest) { const x = truckFor(dayIntakes, date, values.incomingManifest); values[f.k] = x.no; return; }
+      if (truckAutoOn()) { const x = truckFor(dayIntakes, date, values.incomingManifest, values.incomingFrom); values[f.k] = x.no; return; }
       // A new truck picked by hand whose number another tablet has used since.
       if (values.truckIsNew && dayTrucks(dayIntakes, date).trucks.has(String(values[f.k]))) values[f.k] = dayTrucks(dayIntakes, date).next;
     });
@@ -2902,7 +2912,8 @@
       .finally(fillTruckPickers);
     truckFields.forEach((f) => {
       const sel = document.getElementById(`f_${f.k}`);
-      sel.addEventListener('change', () => { values.truckIsNew = sel.value === dayTrucks(dayIntakes, values.date || todayStr()).next; values.truckAuto = false; });
+      sel.addEventListener('change', () => { values.truckIsNew = sel.value === dayTrucks(dayIntakes, values.date || todayStr()).next; values.truckAuto = false;
+        values.truckManual = values.incomingManifest || ''; });
     });
     const dateEl = document.getElementById('f_date');
     if (dateEl) dateEl.addEventListener('change', () => fillTruckPickers());
