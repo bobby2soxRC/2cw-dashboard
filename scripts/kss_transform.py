@@ -517,14 +517,56 @@ def parse_product_name(name: str) -> dict:
 # sitting in that warehouse right now; list pricing comes from the DATAV
 # sheet's "List Price Each" column. menu.html just renders this file as-is.
 #
-# LocationID → warehouse, confirmed against inventory.html's existing
-# Van Nuys / Alameda split (see comment in kss_transform's sibling usage).
+# LocationID → warehouse. Same id customers.json uses for the warehouse
+# that serves the account. On the 2026-11-03 sync, LocationID 1 accounts
+# are Northern California (the Alameda warehouse) and LocationID 3 accounts
+# are Southern California (Van Nuys). Encompass LocationID 2 is not in the
+# KSS feed — not on customers, inventory, or batches — so pointing Alameda
+# at 2 or at 3 both hide the real Alameda stock under the wrong name.
 # ─────────────────────────────────────────────────────────────────────────────
 
 LOCATION_LABELS = {
-    1: {"key": "socal",  "label": "SoCal",  "sublabel": "Van Nuys"},
-    3: {"key": "norcal", "label": "NorCal", "sublabel": "Alameda"},
+    1: {"key": "norcal", "label": "NorCal", "sublabel": "Alameda", "column": "al"},
+    3: {"key": "socal",  "label": "SoCal",  "sublabel": "Van Nuys", "column": "vn"},
 }
+
+
+def inventory_warehouse(location_id):
+    """Warehouse label for a KSS LocationID, or None if it isn't one of ours."""
+    if location_id is None or location_id == "":
+        return None
+    loc = LOCATION_LABELS.get(location_id)
+    if loc is None and not isinstance(location_id, int):
+        try:
+            loc = LOCATION_LABELS.get(int(location_id))
+        except (TypeError, ValueError):
+            return None
+    return loc
+
+
+def split_on_floor_by_warehouse(inventory_rows):
+    """On-floor units per product, split into Van Nuys and Alameda.
+
+    Returns (vn_by_sku, al_by_sku, unknown_units_by_location). Unknown
+    locations are reported and left out of both columns so a new id cannot
+    be filed under the wrong warehouse.
+    """
+    vn = defaultdict(int)
+    al = defaultdict(int)
+    unknown = Counter()
+    for row in inventory_rows:
+        sku_id = str(row.get("ProductID") or "")
+        qty = int(float(row.get("OnFloorInventory") or 0))
+        if not sku_id or qty == 0:
+            continue
+        loc = inventory_warehouse(row.get("LocationID"))
+        if not loc:
+            unknown[row.get("LocationID")] += qty
+            continue
+        bucket = vn if loc["column"] == "vn" else al
+        bucket[sku_id] += qty
+    return vn, al, unknown
+
 
 # (category, subcategory) → menu section title. Anything not listed here
 # falls back to "{subcategory} {category}" so a brand-new BSKU still shows up
@@ -600,7 +642,7 @@ def build_menu(product_catalog: dict, products_raw: list, inventory_raw: list,
     for b in batches_raw:
         pid = str(b.get("ProductID") or "")
         loc_id = b.get("LocationID")
-        if not pid or loc_id not in LOCATION_LABELS:
+        if not pid or not inventory_warehouse(loc_id):
             continue
         key = (pid, loc_id)
         units = float(b.get("InventoryUnits") or 0)
@@ -636,7 +678,7 @@ def build_menu(product_catalog: dict, products_raw: list, inventory_raw: list,
         avail = float(row.get("AvailableUnits") or 0)
         if avail <= 0:
             continue
-        loc = LOCATION_LABELS.get(row.get("LocationID"))
+        loc = inventory_warehouse(row.get("LocationID"))
         if not loc:
             continue
         pid = str(row.get("ProductID") or "")
@@ -1575,22 +1617,12 @@ def transform():
         })
 
     # ── Per-ASKU (flavor × type × warehouse) inventory rows ──────────────────
-    # LocationID 1 = Van Nuys, 3 = Alameda
+    # LocationID 1 = Alameda, 3 = Van Nuys (see LOCATION_LABELS).
     print("Building ASKU-level inventory...")
 
-    asku_inv_vn = defaultdict(int)
-    asku_inv_al = defaultdict(int)
-
-    for row in inventory_raw:
-        sku_id = str(row.get("ProductID") or "")
-        qty    = int(float(row.get("OnFloorInventory") or 0))
-        loc    = str(row.get("LocationID") or "")
-        if not sku_id or qty == 0:
-            continue
-        if loc == "1":
-            asku_inv_vn[sku_id] += qty
-        elif loc == "3":
-            asku_inv_al[sku_id] += qty
+    asku_inv_vn, asku_inv_al, unknown_locs = split_on_floor_by_warehouse(inventory_raw)
+    if unknown_locs:
+        print(f"  [WARN] On-floor units with no warehouse label: {dict(unknown_locs)}")
 
     asku_past30 = defaultdict(int)
     for r in sales_rows:
