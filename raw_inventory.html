@@ -92,6 +92,23 @@
 
     .pill.ship{border-color:var(--purple);color:var(--purple)}
 
+    /* Location: ✎ on each on-hand row opens the dialog. */
+    .loc .mini{min-height:26px;padding:2px 7px;margin-left:4px}
+    .loc .set{color:var(--cyan)}
+    dialog.locdlg{margin:auto;max-width:min(440px,calc(100vw - 32px));width:100%;background:var(--surface);color:var(--text);
+      border:1px solid var(--border);border-radius:14px;padding:20px}
+    dialog.locdlg::backdrop{background:rgba(0,0,0,.6)}
+    .locdlg h3{font-size:1rem;margin-bottom:4px}
+    .locdlg .small{display:block;margin-bottom:12px;line-height:1.5}
+    .locdlg input[type=text]{width:100%;min-height:44px;padding:10px 12px;border-radius:9px;border:1px solid var(--border);
+      background:var(--bg);color:var(--text);font-size:1rem}
+    .locdlg .quick{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 4px}
+    .locdlg .quick button{min-height:32px;padding:4px 10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--subtext);
+      font-family:'DM Mono',monospace;font-size:.72rem;cursor:pointer}
+    .locdlg .quick button:hover{border-color:var(--cyan);color:var(--cyan)}
+    .locdlg label.chk{display:flex;gap:8px;align-items:flex-start;margin-top:12px;font-size:.85rem;color:var(--subtext);line-height:1.4}
+    .locdlg .acts{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:18px}
+
     /* On hand / History */
     .viewrow{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
     .views{display:inline-flex;border:1px solid var(--border);border-radius:10px;overflow:hidden}
@@ -180,6 +197,13 @@
 // from it; Return undoes it. Saved in one shared operations_forms row
 // (station_key 'raw_inventory_ownership', raw_stock.js), same people as marking.
 //
+// Location: where each package is now. A row starts with its form's (Wet
+// Intake drying room, Take Down storage location, freezer); ✎ saves a new one
+// for any on-hand row — the only way Bucked, Flower, Smalls and Trim get one.
+// Saved by row key in one shared operations_forms row (station_key
+// 'raw_inventory_locations', raw_stock.js); Clear goes back to the form's.
+// Anyone who can open the page can set it (who and when are kept).
+//
 // History (?view=history) lists every record each stage ever had — every
 // Wet Intake, on-stem package, bucked lot and finished output — linked to
 // what it came from and where it went, down to the customer on an outgoing
@@ -240,6 +264,15 @@
     takeAsk:  { en: 'Take ownership of this client material for 2CW? It and everything made from it count as 2CW’s from now on. Why (e.g. unpaid invoice #)?',
                 es: '¿Tomar propiedad de este material del cliente para 2CW? Este y todo lo que se haga con él cuenta como de 2CW desde ahora. ¿Por qué (p. ej. factura # sin pagar)?' },
     giveBack: { en: 'Return', es: 'Devolver' },
+    locEdit:  { en: 'Set location', es: 'Fijar ubicación' },
+    locHint:  { en: 'Where is this package now? Pick a room or freezer, or type any spot (Vault, Shelf B3…).', es: '¿Dónde está este paquete ahora? Elija un cuarto o congelador, o escriba cualquier lugar (Bóveda, Repisa B3…).' },
+    locPh:    { en: 'Location', es: 'Ubicación' },
+    locForm:  { en: 'From the form', es: 'Del formulario' },
+    locBy:    { en: 'Set by', es: 'Fijada por' },
+    locAlso:  { en: 'Also move the other packages showing in this list', es: 'Mover también los demás paquetes que se ven en esta lista' },
+    locSave:  { en: 'Save', es: 'Guardar' },
+    locClear: { en: 'Use the form’s', es: 'Usar la del formulario' },
+    locCancel:{ en: 'Cancel', es: 'Cancelar' },
     giveAsk:  { en: 'Give this back to the client? It counts as their material again.', es: '¿Devolverlo al cliente? Vuelve a contar como material suyo.' },
     takenBy:  { en: 'Taken over by 2CW', es: 'Tomado por 2CW' },
     took:     { en: 'taken', es: 'usado' },
@@ -371,17 +404,31 @@
     return all;
   }
 
+  // ── Locations ─────────────────────────────────────────────────────────────
+  // updates: row key -> { loc, by, at }, or null to go back to the form's.
+  async function setLocations(updates) {
+    const all = await RawStock.getLocations(client);
+    Object.entries(updates).forEach(([k, v]) => { if (v) all[k] = v; else delete all[k]; });
+    const { error } = await client.from('operations_forms').upsert({
+      id: RawStock.LOCATIONS_ID, station_key: 'raw_inventory_locations', status: 'submitted', owner_user: who || null, updated_by: who || null,
+      submitted_at: new Date().toISOString(), fields: { locations: all, updatedBy: who, updatedAt: new Date().toISOString() }
+    });
+    if (error) throw error;
+    return all;
+  }
+
   // ── Load ──────────────────────────────────────────────────────────────────
   // rows: what's on hand (raw_stock.js). hist: the History view — every
   // package each stage ever had, linked to what it came from and where it went.
   const { CAT_TAB, adder, tracer, finishedRows, takersOf, applyTakers } = RawStock;
-  let rows = [], hist = [], marks = {}, takeovers = {}, recs = new Map();
+  let rows = [], hist = [], marks = {}, takeovers = {}, recs = new Map(), refLocs = [];
   async function load() {
     const res = await RawStock.load(client);
     const { d, paperIds, handPast, ref } = res;
     rows = res.rows;
     marks = res.marks;
     takeovers = res.takeovers || {};
+    refLocs = [...((res.ref && res.ref.dryRooms) || []), ...((res.ref && res.ref.freezers) || [])].filter((x) => x && x.id && x.active !== false);
     recs = new Map(['intakes', 'downs', 'bucks', 'hand', 'machine', 'smallsT', 'frozen', 'prerolls', 'pouches', 'mfg', 'biomass', 'mixed', 'shipped', 'received']
       .flatMap((k) => d[k]).map((r) => [r.id, r]));
     // Estimated A flower from what's drying, on-stem or bucked, from every
@@ -645,6 +692,7 @@
     });
     board.querySelectorAll('.mini[data-key]').forEach((b) => { b.onclick = () => toggleMark(b); });
     board.querySelectorAll('.mini[data-own]').forEach((b) => { b.onclick = () => toggleOwner(b); });
+    board.querySelectorAll('.mini[data-loc]').forEach((b) => { b.onclick = (e) => { e.stopPropagation(); editLocation(b.dataset.loc, list); }; });
     board.querySelectorAll('tr[data-row]').forEach((tr) => {
       tr.onclick = () => { const k = tr.dataset.row; if (openRows.has(k)) openRows.delete(k); else openRows.add(k); render(); };
     });
@@ -707,7 +755,7 @@
       date: esc(fmtDate(r.date))
     };
   }
-  const CLS = { uid: 'mono uid', strain: 'strain', code: 'mono', license: 'mono', cid: 'mono', lb: 'num', est: 'num', startLb: 'num', left: 'num', date: 'mono', days: 'num', to: 'to' };
+  const CLS = { location: 'loc', uid: 'mono uid', strain: 'strain', code: 'mono', license: 'mono', cid: 'mono', lb: 'num', est: 'num', startLb: 'num', left: 'num', date: 'mono', days: 'num', to: 'to' };
 
   // → 2CW on a client row; Return on the row a takeover was saved on.
   function ownBtn(r) {
@@ -723,6 +771,9 @@
       status: `<span class="pill ${used ? 'used' : r.pill}">${esc(statusLabel(r))}</span>${r.used.length ? `<div class="small" title="${esc(r.used.map(usedText).join('\n'))}">${fmtNum(r.startLb, r.pieces ? 0 : 2)} ${r.pieces ? esc(t(L.units)) : 'lb'} − ${esc(t(L.took))}</div>` : ''}`,
       lb: `${fmtNum(r.lb, r.pieces ? 0 : 2)}${r.wet ? ` <span class="small">${esc(t(L.wet))}</span>` : ''}`,
       days: dd == null ? '—' : `<span class="age ${dd >= 30 ? 'old' : ''}">${dd}</span>`,
+      location: `<span class="${r.locSet ? 'set' : ''}" title="${esc(r.locSet ? `${t(L.locBy)} ${r.locSet.by || '—'} · ${r.locSet.at ? new Date(r.locSet.at).toLocaleString() : ''}${
+        r.formLocation ? ` · ${t(L.locForm)}: ${r.formLocation}` : ''}` : r.location ? t(L.locForm) : '')}">${esc(r.location || '—')}</span>${
+        !used ? `<button type="button" class="mini" data-loc="${esc(r.key)}" title="${esc(t(L.locEdit))}">✎</button>` : ''}`,
       est: r.est ? `<span title="${esc(estNote(r.est, r.strain) + (r.doneLb > 0.005 ? ` − ${fmtNum(r.doneLb)} lb ${t(L.estDone)}` : ''))}">≈ ${fmtNum(r.est.lb, 1)}</span> <span class="small">${Math.round(r.est.pct * 100)}%</span>` : ''
     };
     const mark = canMark ? `<td>${marks[r.key]
@@ -789,6 +840,61 @@
       b.disabled = false;
       alert(`${t(L.saveFail)} ${ex.message || ex}`);
     }
+  }
+
+  // ✎ Location: a room / freezer button or anything typed; optionally the
+  // same for every other on-hand package in the list showing (a cart moved
+  // to the vault: search for it, set one, tick the box).
+  const dlg = document.createElement('dialog');
+  dlg.className = 'locdlg';
+  document.body.appendChild(dlg);
+  function editLocation(key, list) {
+    const r = rows.find((x) => x.key === key);
+    if (!r) return;
+    const others = list.filter((x) => x.key !== key && !isUsed(x));
+    const used = uniq([...refLocs.map((x) => x.id), ...rows.filter((x) => !isUsed(x)).map((x) => x.location)]);
+    dlg.innerHTML = `<form method="dialog">
+      <h3>${esc(t(L.locEdit))}</h3>
+      <span class="small">${esc(`${t(L[r.tab])} · ${r.strain || '—'} · ${r.uid || '—'} · ${fmtNum(r.lb, r.pieces ? 0 : 2)} ${r.pieces ? t(L.units) : 'lb'}`)}</span>
+      <span class="small">${esc(t(L.locHint))}</span>
+      <input type="text" id="locIn" list="locList" autocomplete="off" placeholder="${esc(t(L.locPh))}" value="${esc(r.location || '')}">
+      <datalist id="locList">${used.map((v) => `<option value="${esc(v)}">`).join('')}</datalist>
+      <div class="quick">${refLocs.map((x) => `<button type="button" data-v="${esc(x.id)}" title="${esc(x.label || x.id)}">${esc(x.id)}</button>`).join('')}</div>
+      ${r.formLocation ? `<span class="small">${esc(t(L.locForm))}: ${esc(r.formLocation)}</span>` : ''}
+      ${others.length ? `<label class="chk"><input type="checkbox" id="locAll"> <span>${esc(t(L.locAlso))} (${others.length})</span></label>` : ''}
+      <div class="acts">
+        <button type="button" class="btn" value="cancel" id="locCancel">${esc(t(L.locCancel))}</button>
+        ${r.locSet ? `<button type="button" class="btn" id="locClear">${esc(t(L.locClear))}</button>` : ''}
+        <button type="submit" class="btn btn-blue" id="locSave">${esc(t(L.locSave))}</button>
+      </div></form>`;
+    const input = dlg.querySelector('#locIn');
+    dlg.querySelectorAll('.quick button').forEach((b) => { b.onclick = () => { input.value = b.dataset.v; input.focus(); }; });
+    dlg.querySelector('#locCancel').onclick = () => dlg.close();
+    const save = async (loc) => {
+      const all = dlg.querySelector('#locAll');
+      const keys = [key, ...(all && all.checked ? others.map((x) => x.key) : [])];
+      const at = new Date().toISOString();
+      // The same as a row's form location: nothing to save for it (drops an old one).
+      const entryFor = (k) => { const x = rows.find((y) => y.key === k); return loc && loc !== (x && x.formLocation) ? { loc, by: who, at } : null; };
+      dlg.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+      try {
+        const saved = await setLocations(Object.fromEntries(keys.map((k) => [k, entryFor(k)])));
+        RawStock.applyLocations(rows, saved);
+        dlg.close();
+        render();
+      } catch (ex) {
+        dlg.querySelectorAll('button').forEach((b) => { b.disabled = false; });
+        alert(`${t(L.saveFail)} ${ex.message || ex}`);
+      }
+    };
+    const clear = dlg.querySelector('#locClear');
+    if (clear) clear.onclick = () => save(null);
+    dlg.querySelector('form').onsubmit = (e) => {
+      e.preventDefault();
+      save(input.value.trim() || null);
+    };
+    dlg.showModal();
+    input.select();
   }
 
   async function toggleOwner(b) {

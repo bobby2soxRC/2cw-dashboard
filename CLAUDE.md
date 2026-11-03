@@ -107,6 +107,11 @@ Since 2026-10-29 there's no All card (Drying is the default tab); the Drying,
 On-Stem and Bucked cards show their **Est. A flower** (drying now estimated
 too, from Take Down dry-down yields in `flower_yield.js`) and Flower shows
 **If all processed** (flower on hand + those three).
+Since 2026-11-03 every on-hand row has a **Location**: the form's (drying
+room, Take Down storage, freezer) until **✎** sets where it is now — the only
+way Bucked / Flower / Smalls / Trim get one. Saved by row key in the shared
+`operations_forms` row `raw_inventory_locations` (`applyLocations` in
+`raw_stock.js`). No SQL.
 
 ### Hourly people not in Connecteam (started 2026-10-19)
 

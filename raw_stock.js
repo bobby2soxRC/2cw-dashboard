@@ -5,7 +5,7 @@
 // ops_data.js loaded first.
 //
 // RawStock.load(client, { skipId }) loads every form it needs and returns
-// { d, rows, marks, takeovers, paperIds, handPast, ref }: `rows` is what's on hand
+// { d, rows, marks, takeovers, locations, paperIds, handPast, ref }: `rows` is what's on hand
 // (paper-import records left out), one row per package with its tab, uid,
 // lb, strain, farm/code/license, cid, used… `skipId` leaves that form out of
 // what was taken (a transfer being fixed doesn't count against itself).
@@ -39,6 +39,29 @@ const RawStock = (function () {
     if (error) throw error;
     return ((data && data.fields) || {}).takeovers || {};
   }
+  // Where stock is now: one shared operations_forms row (station_key
+  // 'raw_inventory_locations', fixed id), locations keyed by row key ->
+  // { loc, by, at }. A saved location replaces the one from the form (Wet
+  // Intake's drying room, Take Down's storage location, the freezer…) — and
+  // gives one to stages whose forms don't ask (Bucked, Flower, Smalls, Trim).
+  // Raw Inventory writes them; load() applies them (`formLocation` keeps the
+  // form's, `locSet` the saved entry).
+  const LOCATIONS_ID = '72617769-6e76-4000-8000-000000000004';
+  async function getLocations(client) {
+    const { data, error } = await client.from('operations_forms').select('fields').eq('id', LOCATIONS_ID).maybeSingle();
+    if (error) throw error;
+    return ((data && data.fields) || {}).locations || {};
+  }
+  function applyLocations(rows, locations) {
+    rows.forEach((r) => {
+      if (r.formLocation === undefined) r.formLocation = r.location || '';
+      const l = locations[r.key];
+      r.location = l && l.loc ? l.loc : r.formLocation;
+      r.locSet = l && l.loc ? l : null;
+    });
+    return rows;
+  }
+
   // Whose material a row is: a CID decides (AGP, All Good Properties, is
   // 2CW; any other CID is a client); with no CID, a farm license that isn't
   // one of our Canix facilities makes it a client's. Nothing traced at all
@@ -372,7 +395,7 @@ const RawStock = (function () {
   }
 
   async function load(client, opts = {}) {
-    const [intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, pouches, mfg, biomass, mixed, shipped, received, bq, tq, codes, fac, marks, paper, handPast, ref, canix, takeovers] = await Promise.all([
+    const [intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, pouches, mfg, biomass, mixed, shipped, received, bq, tq, codes, fac, marks, paper, handPast, ref, canix, takeovers, locations] = await Promise.all([
       loadSubmitted('intake_wet'), loadSubmitted('dry_check'), loadSubmitted('buck'), loadSubmitted('hand_trim'),
       loadSubmitted('machine_trim'), loadSubmitted('smalls_trim'), loadSubmitted('fresh_frozen'),
       loadSubmitted('preroll_production'), loadSubmitted('pouch_production'), loadSubmitted('mfg_output'), loadSubmitted('biomass_request'),
@@ -382,7 +405,8 @@ const RawStock = (function () {
       getMarks(client),
       client.from('operations_forms').select('id').eq('owner_user', 'paper_import').limit(10000).then((r) => r.data || []),
       loadSubmitted('hand_trim_history'), loadReference(), loadCanix(),
-      getTakeovers(client).catch(() => ({}))
+      getTakeovers(client).catch(() => ({})),
+      getLocations(client).catch(() => ({}))
     ]);
     pidCodes = (codes || []).filter((r) => r.kind === 'pid');
     facilities = fac;
@@ -391,10 +415,10 @@ const RawStock = (function () {
     // Records loaded from the old paper sheets (Aug–Sep 2026, owner_user
     // 'paper_import') still trace lots, but their output isn't stock any more.
     const paperIds = new Set(paper.map((r) => r.id));
-    const rows = build(d).filter((r) => !paperIds.has(r.recId));
-    return { d, rows, marks, takeovers, paperIds, handPast, ref };
+    const rows = applyLocations(build(d).filter((r) => !paperIds.has(r.recId)), locations);
+    return { d, rows, marks, takeovers, locations, paperIds, handPast, ref };
   }
 
-  return { CAT_TAB, MARKS_ID, getMarks, OWN_CIDS, isClientRow, OWNERSHIP_ID, getTakeovers, takeUid, takeoverOf, load, build, tracer, adder, finishedRows, finishedGoodsRows, takersOf, applyTakers };
+  return { CAT_TAB, MARKS_ID, getMarks, LOCATIONS_ID, getLocations, applyLocations, OWN_CIDS, isClientRow, OWNERSHIP_ID, getTakeovers, takeUid, takeoverOf, load, build, tracer, adder, finishedRows, finishedGoodsRows, takersOf, applyTakers };
 })();
 if (typeof module !== 'undefined') module.exports = RawStock;

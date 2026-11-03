@@ -985,6 +985,25 @@ rows count as 2CW; the CID column shows the CID (if any) struck through and **2C
 (hover: reason, who, when). **Return** on the row it was saved on undoes it.
 No SQL.
 
+**Location** (since 2026-11-03): every on-hand row has a Location. It
+starts as the form's — Wet Intake's drying / freezer room, Take Down's
+storage location, Fresh Frozen's site · freezer, an incoming transfer row's
+— and **✎** beside it sets where the package is now: a room / freezer button
+(`dryRooms` + `freezers` in `data/operations/reference.json`) or anything
+typed (Vault, Shelf B3…; earlier ones are suggested). It's the only way
+Bucked, Flower, Smalls, Trim and Pre-Rolls & Pouches get one, since their
+forms don't ask. **Also move the other packages showing in this list** sets
+the same spot on every other on-hand row in the current tab and search (a
+cart moved: search for it, set one, tick the box). **Use the form's** drops
+the saved one. Saved locations (cyan; hover shows who, when and the form's)
+are `{ loc, by, at }` by row key in one shared `operations_forms` row
+(station_key `raw_inventory_locations`, fixed id `…0004`;
+`getLocations` / `applyLocations` in `raw_stock.js`, applied in
+`RawStock.load`, which keeps the form's as `formLocation`). A row key is per
+stage, so material that moves on (on-stem → bucked) starts again from its
+new form. Anyone who can open the page can set it. Search and CSV use the
+current location; History still shows the form's. No SQL.
+
 Search matches every word against strain, UID (the farm UIDs behind it too),
 license, farm name, farm code, CID and location (FRZ, 3A…). Column headers sort. **Export CSV**
 downloads exactly the rows showing (tab, search, Show used up). The tab and
