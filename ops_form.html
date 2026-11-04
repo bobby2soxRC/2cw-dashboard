@@ -354,7 +354,10 @@
   // Harvest Intakes.
   const editId = params.get('edit');
   const fromToday = params.get('from') === 'today';
-  const editBack = (id) => station.recordsHref && !fromToday ? station.recordsHref
+  // `&from=takedowns` (take_downs.html's Edit) returns there.
+  const fromTakeDowns = params.get('from') === 'takedowns';
+  const editBack = (id) => fromTakeDowns ? `/take_downs.html?id=${id}`
+    : station.recordsHref && !fromToday ? station.recordsHref
     : fromToday || station.key !== 'intake_wet'
     ? '/operations_today.html' + (editRec && editRec.work_date && editRec.work_date !== todayStr() ? `?date=${editRec.work_date}` : '')
     : `/harvest_intakes.html?id=${id}`;

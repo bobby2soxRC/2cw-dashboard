@@ -234,6 +234,19 @@ const CARD_DEFS = [
     href: '/harvest_intakes.html'
   },
   {
+    key: 'take_downs',
+    color: 'blue',
+    label: 'Processing',
+    dept: 'operations',
+    subdept: 'processing',
+    // Not a sheet column: shown with Harvest Intakes view (see buildHub in
+    // index.html). Edit / delete follow the station's Fix / Delete
+    // submitted forms access.
+    title: 'Take Downs',
+    desc: 'Every Take Down — dry weights, moisture loss and where each dry package stands with bucking. Open one for the full record.',
+    href: '/take_downs.html'
+  },
+  {
     key: 'metrc_queue',
     color: 'green',
     label: 'Operations',
@@ -404,6 +417,7 @@ const CARD_ES = {
   drying_schedule:     { title: 'Calendario de Secado', desc: 'Granjas externas para las que secamos — granja, licencia, tamaño, fechas estimadas de entrada y peso húmedo, con la carga semanal.' },
   work_orders:         { title: 'Órdenes de Trabajo', desc: 'Las filas de trabajo en un solo lugar — desvarado, corte a mano y prerolls y flor molida — en el orden de trabajo, con Empezar o Abrir para cada uno.' },
   harvest_intakes:     { title: 'Recepciones de Cosecha', desc: 'Todas las recepciones de cosecha húmeda — abre una para ver el registro completo, o corrígela y registra el ajuste en Metrc si tienes acceso de edición.' },
+  take_downs:          { title: 'Bajadas', desc: 'Todas las bajadas — pesos secos, pérdida de humedad y en qué va cada paquete seco con el desvarado. Abre una para ver el registro completo.' },
   metrc_queue:         { title: 'Cola de Metrc', desc: 'Cada recepción húmeda, bajada, desvarado, corte a mano, recorte mixto, preroll y transferencia de salida enviado que espera en Metrc — ábralo, copie sus valores y marque en qué va.' },
   material_flow:       { title: 'Flujo de Material', desc: 'Cómo se mueve el material del rancho al cliente — cada formulario, lo que registra y sus cálculos — con solicitudes de cambio en cualquier paso.' },
   information_hub:     { title: 'Centro de Información', desc: 'Las listas de referencia que usa el resto de la app — variedades, instalaciones de Canix, pronósticos de rendimiento, licencias de ranchos e IDs de clientes.' },

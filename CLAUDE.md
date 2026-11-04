@@ -345,6 +345,14 @@ picks its package from that tab and its finished smalls go on **Smalls**
 smalls tabs (`ALSO_TAB` in `raw_stock.js`) so older forms still balance. No
 SQL. Details: "Unfinished smalls" in `docs/OPERATIONS_APP.md`.
 
+### Take Downs page (started 2026-11-04)
+
+From Kevin: `take_downs.html` (Processing card, shown with Harvest Intakes
+View) lists every Take Down like Harvest Intakes does intakes, with a
+Bucking status per Dry UID (from the Bucking forms) and tabs Waiting for
+bucking / On hold / Bucked. No SQL. Details: "Take
+Downs" in `docs/OPERATIONS_APP.md`.
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)

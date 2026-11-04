@@ -369,7 +369,7 @@ const TOKEN_KEY = '2cw_admin_token';
 // pair per INFO_HUB_SECTIONS entry (hub_config.js), in the
 // editor instead.
 // ops_reports comes from the Reports section (OPS_REPORTS).
-const DERIVED_CARD_KEYS = ['production_dashboard', 'production_today', 'field_forms', 'harvest_intakes', 'metrc_queue', 'material_flow', 'information_hub', 'crew_checkin', 'ops_reports'];
+const DERIVED_CARD_KEYS = ['production_dashboard', 'production_today', 'field_forms', 'harvest_intakes', 'take_downs', 'metrc_queue', 'material_flow', 'information_hub', 'crew_checkin', 'ops_reports'];
 const TOGGLE_CARDS = CARD_DEFS.filter(d => !DERIVED_CARD_KEYS.includes(d.key));
 
 // The Responsibilities tab talks to Supabase directly with the anon key,
@@ -1579,7 +1579,7 @@ function openEditor(id){
 
     <div class="section-hd">Harvest Intakes</div>
     <div class="check-grid">
-      <label class="check-item"><input type="checkbox" data-card="harvest_intakes" id="hi-view" ${(cols['harvest_intakes']||'').toUpperCase()==='TRUE' || (cols['harvest intakes edit']||'').toUpperCase()==='TRUE' ?'checked':''}/> View</label>
+      <label class="check-item"><input type="checkbox" data-card="harvest_intakes" id="hi-view" ${(cols['harvest_intakes']||'').toUpperCase()==='TRUE' || (cols['harvest intakes edit']||'').toUpperCase()==='TRUE' ?'checked':''}/> View (also shows the Take Downs page)</label>
       <label class="check-item"><input type="checkbox" data-card="harvest intakes edit" id="hi-edit" ${(cols['harvest intakes edit']||'').toUpperCase()==='TRUE'?'checked':''}/> Edit (fix submitted intakes, record Metrc adjustments)</label>
       <label class="check-item"><input type="checkbox" data-card="harvest intakes delete" id="hi-delete" ${(cols['harvest intakes delete']||'').toUpperCase()==='TRUE'?'checked':''}/> Delete (requires a reason; a copy is kept in the edit history)</label>
       <label class="check-item"><input type="checkbox" data-card="harvest intakes history" id="hi-history" ${(cols['harvest intakes history']||'').toUpperCase()==='TRUE'?'checked':''}/> See edit history (who changed what, and deleted intakes)</label>

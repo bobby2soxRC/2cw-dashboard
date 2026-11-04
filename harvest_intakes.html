@@ -142,6 +142,7 @@
   <a class="hdr-back" href="/index.html" id="back">← Hub</a>
   <div class="hdr-div"></div>
   <div class="hdr-brand" id="brand">Harvest Intakes</div>
+  <a class="hdr-back" id="xlink" href="/take_downs.html" hidden></a>
   <div class="lang" id="lang"></div>
 </header>
 
@@ -292,6 +293,8 @@
 
   const board = document.getElementById('board');
   if (!access) { board.innerHTML = `<div class="empty">${esc(t(L.noAccess))}</div>`; return; }
+  const xlink = document.getElementById('xlink');
+  xlink.textContent = getLang() === 'es' ? 'Bajadas →' : 'Take Downs →'; xlink.hidden = false;
 
   const [reference, rowsOrNull, takeDowns] = await Promise.all([loadReference(), listStationForms(STATION_KEY), loadSubmitted('dry_check')]);
   if (!rowsOrNull) { board.innerHTML = `<div class="empty">${esc(t(L.noData))}</div>`; return; }

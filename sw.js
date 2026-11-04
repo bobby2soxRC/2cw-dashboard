@@ -33,6 +33,7 @@ const APP_SHELL = [
   '/operations_dashboard.html',
   '/operations_today.html',
   '/harvest_intakes.html',
+  '/take_downs.html',
   '/metrc.html',
   '/material_flow.html',
   '/raw_inventory.html',

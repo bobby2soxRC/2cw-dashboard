@@ -21,9 +21,12 @@
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
 // Which stations this covers, and the app_users column that grants each
-// action there. Only Harvest Intakes has a records page today.
+// action there. Harvest Intakes and Take Downs (take_downs.html) have records
+// pages; Take Downs' history uses the same Harvest Intakes checkbox, and its
+// delete is 'ops delete submitted' below.
 const STATIONS = {
-  intake_wet: { delete: 'harvest intakes delete', history: 'harvest intakes history' }
+  intake_wet: { delete: 'harvest intakes delete', history: 'harvest intakes history' },
+  dry_check: { history: 'harvest intakes history' }
 };
 
 // 'Delete submitted forms': delete on any station form the person can edit

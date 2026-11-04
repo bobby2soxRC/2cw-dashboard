@@ -717,6 +717,25 @@ record who changed it. This is how a second person records the Metrc
 adjustment (`metrcAdjusted` + `metrcAdjustedLb`) after someone else did
 the intake.
 
+**Take Downs** (`take_downs.html`, hub card `take_downs` under Processing;
+asked for by Kevin 2026-11-04) is the same kind of table for Take Down — Dry
+(`dry_check`): date, strain, New Dry UID, intake UID, license, CID, storage,
+a **Bucking** status, boxes, wet / dry lb, moisture loss %;
+sortable, a filter box per column, a dry-lb total in the subtitle, Copy menu
+and the full record on click. Tabs: All (submitted), Waiting for bucking,
+On hold, Bucked, In progress (drafts), Deleted. No Metrc column: nobody sets
+the form's "Weight adjusted in METRC", the Metrc Queue tracks that. The
+Bucking status comes from the Bucking forms on the Dry UID (or a part
+released off a hold, `releases`), matched with `uidTailMatch` like
+`buckablePackages`: Bucked (date, flower lb), Part bucked (lb left on stem),
+Bucking now (open page), Hold — quality / for an order, Released in part,
+or Waiting for bucking (days since). The record shows those Bucking forms.
+No new admin column: the card shows with Harvest Intakes View (`user.take_downs`
+in `index.html`); Edit uses `canFixSubmitted('dry_check')` and returns via
+`&from=takedowns`; Delete uses `canDeleteSubmitted('dry_check')`; edit
+history uses Harvest Intakes → See edit history (`dry_check` in
+`operations-records.js`). Each page links to the other in its header.
+
 **Fixing submitted forms from the Today board.** The admin user editor's
 "Fix submitted forms" checkbox (`ops fix submitted` column, under Processing —
 edit access) puts an Edit button on every submitted form on

@@ -638,6 +638,7 @@ async function buildHub(user){
   const intakeHistory = (user['harvest intakes history'] || '').toUpperCase() === 'TRUE';
   const intakeView = intakeEdit || intakeDelete || intakeHistory || (user['harvest_intakes'] || '').toUpperCase() === 'TRUE';
   user.harvest_intakes = intakeView ? 'TRUE' : 'FALSE';
+  user.take_downs = intakeView ? 'TRUE' : 'FALSE';   // take_downs.html, same audience
   sessionStorage.setItem('2cw_intake_access', intakeEdit ? 'edit' : intakeView ? 'view' : '');
   sessionStorage.setItem('2cw_intake_delete', intakeDelete ? 'true' : 'false');
   sessionStorage.setItem('2cw_intake_history', intakeHistory ? 'true' : 'false');
