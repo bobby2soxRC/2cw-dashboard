@@ -143,5 +143,13 @@ check('incoming: an older intake\'s typed tail does not hide a newer package', M
 check('incoming: a tail typed after it left still hides it', M.incomingPackages(incTr, facilities, [{ uid: '00158', at: '2026-10-28T09:00:00Z' }], incNow).map((p) => p.sourceUid.slice(-3)), ['159']);
 check('incoming: a full UID hides it whenever', M.incomingPackages(incTr, facilities, [{ uid: '1A4060300089ABD000000158', at: '2026-10-01T00:00:00Z' }], incNow).map((p) => p.sourceUid.slice(-3)), ['159']);
 
+// transferForForm: a typed Manifest # never falls back to UID / source-lot
+// matching (Nov 5: a form typed 0011834634 got sibling-lot 0011826931).
+const sibOut = [{ manifest: '0011826931', cover: ['1A406030005E0B2000010336', '1A406030005E0B2000010208'] }];
+const mOf = (x) => (x ? x.manifest : null);
+check('transferForForm: typed manifest not in Canix → none, despite a shared source UID', mOf(M.transferForForm({ manifest: '0011834634', uids: ['1A406030005E0B2000010208'] }, sibOut)), null);
+check('transferForForm: blank manifest → UID / lineage fallback', mOf(M.transferForForm({ manifest: '', uids: ['1A406030005E0B2000010208'] }, sibOut)), '0011826931');
+check('transferForForm: typed manifest once in Canix → exact match wins', mOf(M.transferForForm({ manifest: '0011834634', uids: ['1A406030005E0B2000010208'] }, sibOut.concat([{ manifest: '0011834634', cover: [] }]))), '0011834634');
+
 if (failures) { console.log(`\n${failures} failed`); process.exit(1); }
 console.log('\nAll passed');

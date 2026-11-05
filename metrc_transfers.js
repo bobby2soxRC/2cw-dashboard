@@ -268,15 +268,18 @@
     return uids.some((u) => x.cover.some((tg) => tg === u || tg.endsWith(u)));
   }
 
-  // The outgoing transfer a submitted form is for — the Manifest # first,
-  // else the newest one its package UIDs match — or null. The Metrc Queue
+  // The outgoing transfer a submitted form is for — or null. The Metrc Queue
   // and the Transfers report show its Metrc details (license, sales order,
   // initiated / accepted) from it, so the floor form doesn't ask for them.
+  // A typed Manifest # only ever matches that manifest: if Canix doesn't have
+  // it yet, there's no match (no UID fallback — a shared source lot on an
+  // older manifest isn't the same transfer). Only a form with no Manifest #
+  // falls back to the newest transfer its package UIDs match.
   function transferForForm(form, outgoing) {
     const m = normManifest(form && form.manifest);
     const list = outgoing || [];
-    return (m && list.find((x) => normManifest(x.manifest) === m))
-      || list.slice().reverse().find((x) => formCovers(x, { uids: (form && form.uids) || [] })) || null;
+    if (m) return list.find((x) => normManifest(x.manifest) === m) || null;
+    return list.slice().reverse().find((x) => formCovers(x, { uids: (form && form.uids) || [] })) || null;
   }
 
   function outgoingNeedingForm(transfers, facilities, forms, inventory, since = NEEDS_FORM_SINCE, from = OUTGOING_FROM) {
