@@ -343,6 +343,7 @@ remaining in queue       = starting weight − boxes pulled on open Bucking page
           <li><b>Boxes</b> taken off the dry weight (lbs)</li>
           <li><b>Bucked</b> flower by person (employee # or name, lbs)</li>
           <li><b>Recovered from leaf</b> (lbs, nobody's)</li>
+          <li><b>Smalls — Unfinished</b> set aside while bucking</li>
           <li><b>Trim</b> weighed during the batch</li>
           <li>Close-out: <b>stems</b> log, mold, floor waste, <b>Calculate</b></li>
         </ul></div>
@@ -350,7 +351,8 @@ remaining in queue       = starting weight − boxes pulled on open Bucking page
 <pre class="math">startingDryLb  = Σ boxes
 dryLeftLb      = take-down weight − Σ boxes
 buckedFlowerLb = Σ bucked + Σ recovered
-totalOutputLb  = bucked + trim + stems
+smallsLb       = Σ smalls
+totalOutputLb  = bucked + smalls + trim + stems
                  + mold + floor waste
 lossLb         = startingDryLb − totalOutputLb
 lossPct        = lossLb ÷ startingDryLb
@@ -359,6 +361,7 @@ buckYieldPct   = buckedFlowerLb ÷ startingDryLb
 weighed, the 3rd = boxes − everything else (loss → 0)</span></pre></div>
         <div><h4>Then</h4><ul>
           <li>Bucked flower → Raw Inventory <b>Bucked</b> (the trimming queue), under the on-stem tag, or <code>newBuckedUid</code> from the Metrc Queue when held</li>
+          <li>Bucking smalls → <b>Unfinished Smalls</b> tab, for Smalls Hand Trim</li>
           <li>Bucking trim → <b>Trim</b> tab, later into a Mixed Trim Package</li>
           <li>Stems → stems; mold and floor waste → waste</li>
           <li>Recovered-from-leaf counts in yield, not in per-person pounds</li>

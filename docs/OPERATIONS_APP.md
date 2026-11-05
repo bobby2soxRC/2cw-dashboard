@@ -586,6 +586,14 @@ Other — still take the right stock off. The Metrc Queue's tag for Hand Trim's
 smalls (`newSmallsUid`) is labeled Unfinished Smalls. Reports count both kinds
 as smalls. No SQL.
 
+Since 2026-11-05 **Bucking** has a **Smalls — Unfinished** log too (`smalls`
+→ `smallsLb`, per day like trim): small buds set aside while bucking. They're
+`smalls_unfinished` stock on the Unfinished Smalls tab under the on-stem tag
+("Bucking smalls"), so Smalls Hand Trim can pick them; they count in the
+Bucking balance (`BUCK_OUTPUTS`, Calculate) but not in bucked flower or its
+yield, and get no Metrc tag of their own. UID Flow shows them as a
+"Bucking smalls" byproduct. No SQL.
+
 **Smalls Hand Trim** (`smalls_trim`) is the paper "Work Order Form (Smalls |
 By the Hourly)". Since 2026-10-29 it's built like Hand Trim: one page per
 smalls package (flavor) that stays open across days until it's submitted —

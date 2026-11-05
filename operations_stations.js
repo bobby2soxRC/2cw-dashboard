@@ -211,7 +211,7 @@ function totalsBlock(inputKey, outputKeys) {
 
 // What Bucking's loss is worked out against: everything that comes out of
 // the boxes.
-const BUCK_OUTPUTS = ['buckedFlowerLb', 'trimLb', 'stemLb', 'moldLb', 'floorWasteLb'];
+const BUCK_OUTPUTS = ['buckedFlowerLb', 'smallsLb', 'trimLb', 'stemLb', 'moldLb', 'floorWasteLb'];
 // A Bucking page's bucked flower: everyone's (`bucked`) plus what was
 // recovered from the leaf (`recovered`).
 const buckedLb = (v) => [...(v.bucked || []), ...(v.recovered || [])].reduce((a, r) => a + num(r.weightLb), 0);
@@ -686,7 +686,7 @@ const OPERATIONS_STATIONS = [
     // like Hand Trim and Pre-Roll. Boxes, bucked flower and trim show the
     // picked day and stamp new rows with it (the chips total bucked
     // flower); stems are close-out, so they stay whole-batch.
-    dayTabs: { lines: ['bucked', 'recovered', 'boxes', 'trim'] },
+    dayTabs: { lines: ['bucked', 'recovered', 'boxes', 'smalls', 'trim'] },
     // The daily tally: person × flavor for one day. Each logged row carries
     // the day it was weighed (`day`), so a batch that runs three days shows
     // only that day's pounds.
@@ -775,6 +775,22 @@ const OPERATIONS_STATIONS = [
         hint: { en: 'Only when this lot will sit as bucked flower instead of going to trim. The Metrc Queue then asks for the new bucked-flower tag.',
                 es: 'Solo cuando este lote se quedará como flor desvarada en vez de ir a corte. La Cola de Metrc pedirá la nueva etiqueta de flor desvarada.' } },
 
+      // Small buds that come off while bucking, weighed on their own. They're
+      // unfinished smalls (category smalls_unfinished): Raw Inventory's
+      // Unfinished Smalls tab, under the on-stem tag, for Smalls Hand Trim.
+      // Not bucked flower, so they don't count in the yield or go to Hand Trim.
+      { k: 'smalls', t: 'lineitems', entry: true,
+        l: { en: 'Smalls — Unfinished', es: 'Smalls sin terminar' },
+        hint: { en: 'Small buds set aside while bucking, each bag as it’s weighed. They go to Unfinished Smalls for Smalls Hand Trim.',
+                es: 'Cogollos pequeños apartados al desvarar, cada bolsa al pesarla. Van a Smalls sin terminar para el corte de smalls.' },
+        cols: [
+          { k: 'weightLb', t: 'number', l: { en: 'Weight (lbs)', es: 'Peso (lbs)' }, min: 0, step: 0.01, req: true, dp: 2 }
+        ],
+        totalCol: 'weightLb' },
+      { k: 'smallsLb', t: 'calc',
+        calc: (v) => (v.smalls || []).reduce((a, r) => a + num(r.weightLb), 0),
+        l: { en: 'Total Unfinished Smalls (lbs)', es: 'Smalls sin terminar total (lbs)' } },
+
       { k: 'trim', t: 'lineitems', entry: true,
         l: { en: 'Trim', es: 'Recorte (trim)' },
         hint: { en: 'Each bag of trim as it’s weighed.', es: 'Cada bolsa de recorte al pesarla.' },
@@ -812,10 +828,10 @@ const OPERATIONS_STATIONS = [
         // for the stems log, it's added as one row.
         fill: (v, key) => num(v.startingDryLb) - sum(v, BUCK_OUTPUTS.filter((k) => k !== (key === 'stems' ? 'stemLb' : key))),
         l: { en: 'Calculate', es: 'Calcular' },
-        hint: { en: 'Weighed two of Stems, Mold and Floor Waste? Calculate fills in the third: Total Boxes Taken minus everything else that came out.',
+        hint: { en: 'Weighed two of Stems, Mold and Floor Waste? Calculate fills in the third: Total Boxes Taken minus everything else that came out (bucked, smalls, trim…).',
                 es: '¿Pesó dos de Palo, Moho y Desperdicio del piso? Calcular llena el tercero: total de cajas menos todo lo demás que salió.' } },
       { k: 'totalOutputLb', t: 'calc', calc: (v) => sum(v, BUCK_OUTPUTS),
-        l: { en: 'Total Out — Bucked + Trim + Stems + Mold + Floor Waste (lbs)', es: 'Total — desvarado + recorte + palo + moho + desperdicio (lbs)' } },
+        l: { en: 'Total Out — Bucked + Smalls + Trim + Stems + Mold + Floor Waste (lbs)', es: 'Total — desvarado + smalls + recorte + palo + moho + desperdicio (lbs)' } },
       { k: 'lossLb', t: 'calc', calc: (v) => (num(v.startingDryLb) > 0 ? num(v.startingDryLb) - sum(v, BUCK_OUTPUTS) : null),
         l: { en: 'Loss (lbs)', es: 'Pérdida (lbs)' },
         hint: { en: 'Boxes taken minus the total. A negative number means more came out than was logged going in.',
@@ -843,6 +859,7 @@ const OPERATIONS_STATIONS = [
             input: { field: 'startingDryLb', category: 'dry_whole_plant' },
             outputs: [
               { field: 'buckedFlowerLb', category: 'bucked_flower' },
+              { field: 'smallsLb', category: 'smalls_unfinished' },
               { field: 'trimLb', category: 'trim' },
               { field: 'stemLb', category: 'stems' },
               { field: 'moldLb', category: 'waste' },

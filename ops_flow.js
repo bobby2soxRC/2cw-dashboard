@@ -154,7 +154,8 @@
       if (day(b) > bk.date) bk.date = day(b);
       const trimLb = n(b.trimLb) + n(b.aPlusTrimLb) + n(b.aTrimLb) + n(b.bTrimLb);
       const stems = n(b.stemLb), waste = n(b.moldLb) + n(b.floorWasteLb) + n(b.wasteLb), leaf = n(b.bigLeafLb);
-      const outSum = bucked + trimLb + stems + waste + leaf;
+      const smallsLb = n(b.smallsLb);
+      const outSum = bucked + smallsLb + trimLb + stems + waste + leaf;
       const inLb = n(b.startingDryLb) || outSum;
       const from = os || node(`os?:${src}`, { phase: 1, kind: 'flow', unit: true, uid: src, strain: b.strain || '', date: day(b),
         lb: 0, label: lotLabel(b.strain, src), noRecord: true, recIds: [] });
@@ -164,6 +165,11 @@
         const bt = node(`bt:${b.id}`, { phase: 2, kind: 'byproduct', unit: true, uid: src, lotUid: src, cat: 'trim', strain: bk.strain,
           date: day(b), lb: r2(trimLb), label: L('Bucking trim', 'Recorte de desvarado'), recIds: [b.id] });
         link(from, bt, trimLb);
+      }
+      if (smallsLb > 0.004) {
+        const bs = node(`bs:${b.id}`, { phase: 2, kind: 'byproduct', unit: true, uid: src, lotUid: src, cat: 'smalls_unfinished', strain: bk.strain,
+          date: day(b), lb: r2(smallsLb), label: L('Bucking smalls', 'Smalls de desvarado'), recIds: [b.id] });
+        link(from, bs, smallsLb);
       }
       term(from, 'stems', 'loss', L('Stems', 'Tallos'), stems);
       term(from, 'waste', 'loss', L('Mold & floor waste', 'Moho y desecho del piso'), waste);

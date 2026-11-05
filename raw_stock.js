@@ -198,7 +198,8 @@ const RawStock = (function () {
       ['machineShakeLb', 'shake', { en: 'Shake', es: 'Shake' }]]));
     d.smallsT.forEach((r) => outputs(r, 'tSmalls', [
       ['finishedSmallsLb', 'smalls_b', { en: 'Finished', es: 'Terminados' }], ['shakeLb', 'shake', { en: 'Shake', es: 'Shake' }]], { finishedSmallsLb: 'newFinishedUid' }));
-    d.bucks.forEach((r) => outputs(r, 'tBuck', [['trimLb', 'trim', { en: 'Bucking trim', es: 'Recorte de desvarado' }]]));
+    d.bucks.forEach((r) => outputs(r, 'tBuck', [['smallsLb', 'smalls_unfinished', { en: 'Bucking smalls', es: 'Smalls de desvarado' }],
+      ['trimLb', 'trim', { en: 'Bucking trim', es: 'Recorte de desvarado' }]]));
     // Mixed Trim Packages: one package of many lots' trim, under its new tag
     // (blank until the Metrc Queue fills it in).
     const pkgType = STATION_BY_KEY.trim_package.fields.find((f) => f.k === 'packageType');
