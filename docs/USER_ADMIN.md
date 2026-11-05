@@ -288,6 +288,27 @@ and phone numbers can be read by anyone who opens the site's developer
 tools. Moving the PIN check server-side would close that; it hasn't been
 done yet.
 
+## Staying logged in across tabs (since 2026-11-05)
+
+The login is kept per tab (sessionStorage `2cw_pin` and the access keys
+`buildHub` writes), so a page opened in a new tab used to ask for the PIN and
+then land on the hub. Now:
+
+- `session_share.js`, the first script in `<head>` of every page that checks
+  `2cw_pin`, copies a logged-in tab's `2cw_*` keys to localStorage
+  (`2cw_session`) and copies them into a new tab before the page's own check.
+  The copy only counts if a logged-in tab was in use in the last 15 minutes
+  (`FRESH`; refreshed every minute while a tab is visible and when one is
+  hidden or closed), so closing every tab still logs you out.
+- **Sign Out** (`doLogout` → `TwoCWSession.logout()`) drops the copy and sends
+  every other open tab to the PIN screen.
+- When a page bounces to `index.html` for a PIN, the hub remembers it
+  (`rememberReturn`, from the referrer; `2cw_return`) and goes back there
+  after the PIN or Google sign-in (`goBackIfBounced`).
+
+A new page that checks `2cw_pin` needs `<script src="/session_share.js"></script>`
+at the top of its `<head>`.
+
 ## Google sign-in (moving off PINs)
 
 The plan, over a few weeks: Google sign-in runs alongside the PIN, each

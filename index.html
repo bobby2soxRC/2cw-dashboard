@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="/session_share.js"></script>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>2CW Productions Hub</title>
@@ -436,6 +437,7 @@ async function doLogin(){
   currentUser = user;
   sessionStorage.setItem('2cw_pin', pin);
   await buildHub(user);
+  goBackIfBounced();
 }
 
 // ── GOOGLE SIGN-IN ───────────────────────────────────────
@@ -537,6 +539,7 @@ async function finishGoogleLogin(){
   currentUser = user;
   sessionStorage.setItem('2cw_pin', String(result.pin));
   await buildHub(user);
+  goBackIfBounced();
   return true;
 }
 
@@ -1150,6 +1153,9 @@ async function saveCustomize(){
 
 // ── LOGOUT ───────────────────────────────────────────────
 function doLogout(){
+  // Every tab logs out, and new tabs stop picking up the login (session_share.js).
+  if(window.TwoCWSession) TwoCWSession.logout();
+  sessionStorage.removeItem('2cw_return');
   currentUser = null;
   hubState = null;
   customizeMode = false;
@@ -1186,7 +1192,27 @@ function doLogout(){
   setTimeout(() => document.getElementById('pin-input').focus(), 100);
 }
 
-// Auto-login: if a valid PIN is already in sessionStorage, skip the login screen
+// A page that sent you here to log in (no PIN in this tab) is where you go
+// back to once you have: index.html is the referrer of its
+// location.replace('/index.html'). Kept in the tab across a Google sign-in.
+function rememberReturn(){
+  try{
+    const r = document.referrer ? new URL(document.referrer) : null;
+    if(r && r.origin === location.origin && !/^\/(index\.html)?$/.test(r.pathname))
+      sessionStorage.setItem('2cw_return', r.pathname + r.search + r.hash);
+  }catch(e){ /* no usable referrer: stay on the hub */ }
+}
+function goBackIfBounced(){
+  const r = sessionStorage.getItem('2cw_return');
+  sessionStorage.removeItem('2cw_return');
+  if(!r || r[0] !== '/' || r[1] === '/') return false;
+  if(window.TwoCWSession) TwoCWSession.save();
+  location.replace(r);
+  return true;
+}
+
+// Auto-login: if a valid PIN is already in sessionStorage (this tab's, or
+// another open tab's via session_share.js), skip the login screen
 window.addEventListener('load', async () => {
   // Back from Google: finish that sign-in instead of the saved-PIN check.
   const params = new URLSearchParams(location.search);
@@ -1205,9 +1231,11 @@ window.addEventListener('load', async () => {
         return;
       }
     }
-    // PIN no longer valid — clear it and fall through to login
+    // PIN no longer valid — clear it (and the copy other tabs share) and fall through to login
     sessionStorage.removeItem('2cw_pin');
+    if(window.TwoCWSession) TwoCWSession.logout();
   }
+  rememberReturn();
   // Show login only after check completes (prevents flash when auto-login succeeds)
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('pin-input').focus();
