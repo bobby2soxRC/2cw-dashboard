@@ -388,6 +388,55 @@ const RawStock = (function () {
   }
 
   // The Canix sync's files Pre-Rolls & Pouches needs; a missing one is empty.
+  // ── Airway (Canix) ────────────────────────────────────────────────────────
+  // Raw Inventory's Airway view: what Canix has at Airway (C11-0001652, the
+  // distributor), not the station forms — material there is repacked and sold
+  // outside our forms, so Canix is the only record. Every active package with
+  // weight left, one row each, on a tab by its item:
+  //   air_flower / air_smalls / air_trim (trim, shake, kief) / air_extract
+  //   (extract material, biomass) in pounds (grams and kilos converted);
+  //   air_packaged: packaged flower and pre-rolls, in units ("Each");
+  //   air_other: the rest — samples and R&D lots (GOX_1026_A001, MG_26,
+  //   23-1112-R2…), waste, seeds, vapes, concentrates — in its own unit.
+  // `transit` marks a package Canix shows In Transit (on a manifest leaving
+  // Airway; Canix also still has some from 2022 and early 2025 that never
+  // cleared). The page leaves those out unless asked.
+  const AIRWAY = ['C11-0001652'];
+  const G_PER_LB = 453.59237;
+  const TO_LB = { pounds: 1, grams: 1 / G_PER_LB, kilograms: 1000 / G_PER_LB, ounces: 1 / 16 };
+  function airwayTab(p) {
+    const it = p.item || {}, ty = it.type || {};
+    const name = String(it.name || ''), kind = String(ty.name || '');
+    const each = /^each$/i.test(String(p.weight_unit || ''));
+    if (each) return ty.product_category === 'Buds' ? 'air_packaged' : 'air_other';
+    if (/waste|sample/i.test(name) || /^[A-Z]{2,4}_\d|^\d{2}-\d{4}/.test(name.trim())) return 'air_other';
+    if (/extract|biomass/i.test(name)) return 'air_extract';
+    if (/\btrim\b|kief|shake/i.test(name) || /shake|trim/i.test(kind)) return 'air_trim';
+    if (/smal/i.test(name)) return 'air_smalls';
+    if (ty.product_category === 'Buds' || /flower|bulk/i.test(name)) return 'air_flower';
+    return 'air_other';
+  }
+  function airwayRows(canix, licenses = AIRWAY) {
+    const lic = (p) => String(p._facility_license_number || '');
+    return ((canix && canix.inventory) || [])
+      .filter((p) => p && p.tag && p.is_active !== false && Number(p.weight) > 0 && licenses.some((l) => lic(p).startsWith(l)))
+      .map((p) => {
+        const it = p.item || {}, unit = String(p.weight_unit || '');
+        const toLb = TO_LB[unit.toLowerCase()];
+        const pieces = !toLb;
+        return {
+          key: `air:${p.tag}`, tab: airwayTab(p), uid: normUid(p.tag), item: it.name || '',
+          strain: (it.strain && it.strain.name) || '', kind: (it.type && it.type.name) || '',
+          lb: pieces ? Number(p.weight) : r2(Number(p.weight) * toLb), pieces, unit: pieces ? unit : 'lb',
+          origWeight: Number(p.weight), origUnit: unit,
+          status: p.status || '', transit: p.status === 'In Transit',
+          date: String(p.packaged_date || '').slice(0, 10), received: String(p.received_date || '').slice(0, 10),
+          location: (p.location && (p.location.name || p.location)) || '',
+          source: p.source_facility_name || '', license: lic(p), forSale: !!p.available_for_sale
+        };
+      });
+  }
+
   async function loadCanix() {
     const get = (f) => fetch(`/data/${f}?t=${Date.now()}`).then((r) => (r.ok ? r.json() : [])).catch(() => []);
     const [inventory, recent, transfers, facilities] = await Promise.all(['canix_inventory.json', 'canix_packages_recent.json', 'canix_transfers_recent.json', 'canix_facilities.json'].map(get));
@@ -420,6 +469,6 @@ const RawStock = (function () {
     return { d, rows, marks, takeovers, locations, paperIds, handPast, ref };
   }
 
-  return { CAT_TAB, MARKS_ID, getMarks, LOCATIONS_ID, getLocations, applyLocations, OWN_CIDS, isClientRow, OWNERSHIP_ID, getTakeovers, takeUid, takeoverOf, load, build, tracer, adder, finishedRows, finishedGoodsRows, takersOf, applyTakers };
+  return { CAT_TAB, MARKS_ID, getMarks, LOCATIONS_ID, getLocations, applyLocations, OWN_CIDS, isClientRow, OWNERSHIP_ID, getTakeovers, takeUid, takeoverOf, load, build, tracer, adder, finishedRows, finishedGoodsRows, takersOf, applyTakers, AIRWAY, airwayTab, airwayRows };
 })();
 if (typeof module !== 'undefined') module.exports = RawStock;

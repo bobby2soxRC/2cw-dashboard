@@ -1069,6 +1069,28 @@ allocated (a Smalls Hand Trim or Mixed Trim Package links to the rows it
 made). Status says where it ended: Taken down, Bucked, Trimmed, Shipped,
 Used up, or the On hand status if some is left. CSV adds Came From / Went To.
 
+**Airway** (the third view button, `?view=airway`, since 2026-11-06) is
+what Canix has at Airway (C11-0001652, the distributor), not the station
+forms: material there is repacked and sold outside our forms, so Canix is
+the only record. Every active package at that license with weight left
+(`airwayRows` in `raw_stock.js`, from the Canix sync's
+`canix_inventory.json`), on its own tabs by item (`airwayTab`): **Flower**,
+**Smalls**, **Trim & Shake** (trim, shake, kief), **Extract Material**
+(extract, biomass) in lbs — gram and kilo packages converted, the Canix
+weight shown under it — **Packaged & Pre-Rolls** (packaged flower and
+pre-rolls, in units) and **Other** (samples and R&D lots such as
+GOX_1026_A001 / MG_26 / 23-1112-R2, waste, seeds, vapes, concentrates, in
+their own unit). Columns: Canix status (Available To Sell / In Progress /
+In Transit), UID, item, strain, amount, Canix type, where it came from,
+location, packaged date and days. **In Transit** packages (on a manifest
+leaving Airway — and some from 2022 and Feb 2025 that never cleared in
+Canix, ~400 lb of flower) are left out unless **Show in transit** is ticked;
+the totals line says how much is hidden. The Airway view is kept out of
+Adobe's tabs, the If all processed figure, the 2CW / Client switch, the
+bulk menu and the transfer Batch dropdown; there's no Used up or location
+editing (fix it in Metrc / Canix). CSV exports the tab with Canix's weight
+and unit. It's as fresh as the last Canix sync.
+
 **Bulk menu** (☰ Bulk menu on the On hand view, `bulk_menu.js`) makes a
 priced PDF menu of what's on hand in the Soma Rosa Farms flyer style. It
 opens on the tab you're on (from All: every section with stock but Drying).

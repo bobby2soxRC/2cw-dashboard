@@ -317,6 +317,23 @@
     // History view
     vOnHand:  { en: 'On hand', es: 'Disponible' },
     vHistory: { en: 'History', es: 'Historial' },
+    vAirway:  { en: 'Airway', es: 'Airway' },
+    // Airway view (Canix inventory at the Airway license)
+    air_flower:  { en: 'Flower', es: 'Flor' },
+    air_smalls:  { en: 'Smalls', es: 'Smalls' },
+    air_trim:    { en: 'Trim & Shake', es: 'Recorte y shake' },
+    air_extract: { en: 'Extract Material', es: 'Material para extracto' },
+    air_packaged:{ en: 'Packaged & Pre-Rolls', es: 'Empacado y prerolls' },
+    air_other:   { en: 'Other', es: 'Otro' },
+    colItem:  { en: 'Item', es: 'Artículo' },
+    colKind:  { en: 'Canix type', es: 'Tipo en Canix' },
+    colPkgd:  { en: 'Packaged', es: 'Empacado' },
+    colSource:{ en: 'Came from', es: 'Vino de' },
+    showTransit: { en: 'Show in transit', es: 'Mostrar en tránsito' },
+    transitHid:{ en: 'In transit, not shown', es: 'En tránsito, no mostrado' },
+    airSub:   { en: 'Airway · Canix', es: 'Airway · Canix' },
+    airNote:  { en: 'From Canix, not the station forms: every active package at Airway (C11-0001652) with weight left, as of the last Canix sync. Grams and kilos are shown in pounds; packaged flower, pre-rolls, seeds, vapes and concentrates are in units. Kept apart from Adobe’s tabs, totals and the bulk menu. In Transit packages are on a manifest leaving Airway (Canix also still lists some from 2022 and early 2025 that never cleared) and are hidden unless Show in transit is ticked. To change anything here, change it in Metrc / Canix.',
+                es: 'De Canix, no de los formularios de estación: cada paquete activo en Airway (C11-0001652) con peso, según la última sincronización de Canix. Gramos y kilos se muestran en libras; flor empacada, prerolls, semillas, vapes y concentrados en unidades. Separado de las pestañas, totales y menú a granel de Adobe. Los paquetes En tránsito están en un manifiesto saliendo de Airway (Canix aún tiene algunos de 2022 y principios de 2025 que nunca se cerraron) y se ocultan salvo que marque Mostrar en tránsito. Para cambiar algo aquí, cámbielo en Metrc / Canix.' },
     // Whose material: a Customer ID (CID, traced back to the Wet Intake) is a client's.
     own2cw:   { en: '2CW', es: '2CW' },
     ownClient:{ en: 'Client', es: 'Cliente' },
@@ -363,7 +380,12 @@
   const UNIT_TAB = 'finished';
   // The tabs with an Est. A Flower: material not trimmed yet.
   const EST_TABS = ['drying', 'onstem', 'bucked'];
-  const TAB_COLOR = Object.fromEntries(TABS.map((x) => [x.k, x.c]));
+  // Airway view: Canix inventory at Airway (RawStock.airwayRows), its own tabs.
+  const AIR_TABS = [
+    { k: 'air_flower', c: 'var(--green)' }, { k: 'air_smalls', c: '#8bc34a' }, { k: 'air_trim', c: '#c48b5a' },
+    { k: 'air_extract', c: 'var(--purple)' }, { k: 'air_packaged', c: '#e0864a' }, { k: 'air_other', c: 'var(--muted)' }
+  ];
+  const TAB_COLOR = Object.fromEntries([...TABS, ...AIR_TABS].map((x) => [x.k, x.c]));
 
   document.getElementById('title').textContent = t(L.title);
   document.getElementById('brand').textContent = t(L.title);
@@ -422,7 +444,7 @@
   // rows: what's on hand (raw_stock.js). hist: the History view — every
   // package each stage ever had, linked to what it came from and where it went.
   const { CAT_TAB, adder, tracer, finishedRows, takersOf, applyTakers } = RawStock;
-  let rows = [], hist = [], marks = {}, takeovers = {}, recs = new Map(), refLocs = [];
+  let rows = [], hist = [], airRows = [], marks = {}, takeovers = {}, recs = new Map(), refLocs = [];
   async function load() {
     const res = await RawStock.load(client);
     const { d, paperIds, handPast, ref } = res;
@@ -440,6 +462,7 @@
         startLb: r.tab === 'bucked' ? r.buckedLb : null, doneLb: r.tab === 'bucked' ? r.doneLb : 0 });
     });
     hist = buildHistory(d, rows, paperIds);
+    airRows = RawStock.airwayRows(d.canix);
   }
 
   const usedText = (u) => `${[u.what, u.customer].filter(Boolean).join(' · ')}: ${fmtNum(u.lb)} ${u.tab === 'finished' ? t(L.units) : 'lb'}`;
@@ -504,8 +527,12 @@
 
   // ── View ──────────────────────────────────────────────────────────────────
   const params = new URLSearchParams(location.search);
-  let view = params.get('view') === 'history' ? 'history' : 'onhand';
-  let tab = TABS.some((x) => x.k === params.get('tab')) ? params.get('tab') : 'drying';
+  let view = ['history', 'airway'].includes(params.get('view')) ? params.get('view') : 'onhand';
+  const A = () => view === 'airway';
+  const tabsNow = () => (A() ? AIR_TABS : TABS);
+  const firstTab = () => (A() ? 'air_flower' : 'drying');
+  let tab = tabsNow().some((x) => x.k === params.get('tab')) ? params.get('tab') : firstTab();
+  let showTransit = false;
   let query = params.get('q') || '';
   let owner = ['2cw', 'client'].includes(params.get('own')) ? params.get('own') : 'all';
   let showUsed = false;
@@ -544,7 +571,7 @@
   const visible = (r) => H() || showUsed || !isUsed(r);
   function matches(r) {
     if (!query) return true;
-    const hay = [r.strain, r.uid, r.lotUid, ...(r.farmUids || []), r.license, r.farm, r.code, r.cid, r.location,
+    const hay = [r.strain, r.uid, r.lotUid, ...(r.farmUids || []), r.license, r.farm, r.code, r.cid, r.location, r.item, r.source,
       ...(r.to || []).map((e) => e.customer)].join(' ').toLowerCase();
     // Every word has to be there: "agp gelato" finds AGP's Gelato.
     return query.toLowerCase().split(/\s+/).filter(Boolean).every((w) => hay.includes(w) || normUid(hay).includes(normUid(w)) && normUid(w).length >= 4);
@@ -581,7 +608,33 @@
   const colsFor = () => COLS.filter((c) => (!c.allOnly || tab === 'all') && !(c.onhand && H()) && !(c.hist && !H()) &&
     !(c.estTabs && !EST_TABS.includes(tab)));
 
+  // Airway view columns (rows from RawStock.airwayRows).
+  const airAmt = (r) => (r.pieces ? `${fmtNum(r.lb, 0)} ${r.unit === 'Each' ? t(L.units) : r.unit}` : `${fmtNum(r.lb, 2)} lb`);
+  const AIR_STATUS = { 'Available To Sell': 'go', 'In Progress': 'work', 'In Transit': 'ship' };
+  const AIR_COLS = [
+    { k: 'status', l: L.colStatus, v: (r) => r.status },
+    { k: 'uid', l: { en: 'UID', es: 'UID' }, v: (r) => r.uid },
+    { k: 'item', l: L.colItem, v: (r) => r.item },
+    { k: 'strain', l: L.colStrain, v: (r) => r.strain },
+    { k: 'lb', l: L.colLb, v: (r) => r.lb, num: true },
+    { k: 'kind', l: L.colKind, v: (r) => r.kind },
+    { k: 'source', l: L.colSource, v: (r) => r.source },
+    { k: 'location', l: L.colLoc, v: (r) => r.location },
+    { k: 'date', l: L.colPkgd, v: (r) => r.date },
+    { k: 'days', l: L.colDays, v: days, num: true }
+  ];
+  const airColLabel = () => (tab === 'air_packaged' ? L.colUnits : tab === 'air_other' ? { en: 'Amount', es: 'Cantidad' } : L.colLb);
+  const airOn = (r, k) => r.tab === k && (showTransit || !r.transit);
+
   function current() {
+    if (A()) {
+      const col = AIR_COLS.find((c) => c.k === sortKey) || AIR_COLS.find((c) => c.k === 'date');
+      return airRows.filter((r) => airOn(r, tab) && matches(r)).sort((a, b) => {
+        const x = col.v(a), y = col.v(b);
+        const cmp = col.num ? (Number(x) || 0) - (Number(y) || 0) : String(x || '').localeCompare(String(y || ''), undefined, { numeric: true });
+        return cmp * sortDir || a.item.localeCompare(b.item);
+      });
+    }
     const col = colsFor().find((c) => c.k === sortKey) || COLS.find((c) => c.k === 'date');
     return (H() ? hist : rows).filter((r) => inTab(r, tab) && ownerOk(r) && visible(r) && matches(r)).sort((a, b) => {
       const x = col.v(a), y = col.v(b);
@@ -592,15 +645,21 @@
 
   const viewsEl = document.getElementById('views');
   function renderViews() {
-    viewsEl.innerHTML = [['onhand', L.vOnHand], ['history', L.vHistory]]
+    viewsEl.innerHTML = [['onhand', L.vOnHand], ['history', L.vHistory], ['airway', L.vAirway]]
       .map(([v, l]) => `<button type="button" class="${view === v ? 'on' : ''}" data-v="${v}">${esc(t(l))}</button>`).join('');
     viewsEl.querySelectorAll('button').forEach((b) => {
-      b.onclick = () => { if (view === b.dataset.v) return; view = b.dataset.v; sortKey = 'date'; sortDir = -1; if (H() && tab === UNIT_TAB) tab = 'drying'; syncUrl(); render(); toListTop(); };
+      b.onclick = () => {
+        if (view === b.dataset.v) return;
+        view = b.dataset.v; sortKey = 'date'; sortDir = -1;
+        if (!tabsNow().some((x) => x.k === tab) || (H() && tab === UNIT_TAB)) tab = firstTab();
+        syncUrl(); render(); toListTop();
+      };
     });
   }
 
   const ownersEl = document.getElementById('owners');
   function renderOwners() {
+    ownersEl.style.display = A() ? 'none' : '';
     ownersEl.innerHTML = [['2cw', L.own2cw], ['client', L.ownClient], ['all', L.ownAll]]
       .map(([v, l]) => `<button type="button" class="${owner === v ? 'on' : ''}" data-o="${v}">${esc(t(l))}</button>`).join('');
     ownersEl.querySelectorAll('button').forEach((b) => {
@@ -612,6 +671,7 @@
   // On hand, Drying / On-Stem / Bucked show the A flower they should trim out
   // to, and Flower what there'd be if all of it were processed.
   function renderTabs() {
+    if (A()) return renderAirTabs();
     const onHand = (k) => rows.filter((r) => inTab(r, k) && ownerOk(r) && !isUsed(r));
     const estOf = (k) => r2(onHand(k).reduce((a, r) => a + (r.est ? r.est.lb : 0), 0));
     const estSum = EST_TABS.reduce((a, k) => a + estOf(k), 0);
@@ -626,13 +686,29 @@
     tabsEl.querySelectorAll('.tab').forEach((b) => { b.onclick = () => { tab = b.dataset.k; syncUrl(); render(); toListTop(); }; });
   }
 
+  // Airway: pounds (or units for Packaged), packages; Other shows both.
+  function renderAirTabs() {
+    tabsEl.innerHTML = AIR_TABS.map((x) => {
+      const list = airRows.filter((r) => airOn(r, x.k));
+      const lb = sumLb(list.filter((r) => !r.pieces)), un = sumLb(list.filter((r) => r.pieces));
+      const n = x.k === 'air_packaged' ? `${fmtNum(un, 0)} ${esc(t(L.units))}` : `${fmtNum(lb, 0)} lb`;
+      const extra = x.k === 'air_other' && un ? ` · ${fmtNum(un, 0)} ${esc(t(L.units))}` : '';
+      return `<button type="button" class="tab ${tab === x.k ? 'on' : ''}" data-k="${x.k}" style="--c:${x.c}">
+        <div class="l">${esc(t(L[x.k]))}</div><div class="n">${n}</div>
+        <div class="s">${list.length} ${list.length === 1 ? t(L.pkg) : t(L.pkgs)}${extra}</div></button>`;
+    }).join('');
+    tabsEl.querySelectorAll('.tab').forEach((b) => { b.onclick = () => { tab = b.dataset.k; syncUrl(); render(); toListTop(); }; });
+  }
+
   const filtersEl = document.getElementById('filters');
   filtersEl.innerHTML = `<input type="search" id="q" placeholder="${esc(t(L.search))}" value="${esc(query)}">
     <label class="chk" id="usedWrap"><input type="checkbox" id="used"> ${esc(t(L.showUsed))}</label>
+    <label class="chk" id="transitWrap" style="display:none"><input type="checkbox" id="transit"> ${esc(t(L.showTransit))}</label>
     <button type="button" class="btn" id="menuBtn">${esc(t(L.menu))}</button>
     <button type="button" class="btn btn-blue" id="csv">${esc(t(L.csv))}</button>`;
   document.getElementById('q').addEventListener('input', (e) => { query = e.target.value.trim(); syncUrl(); render(); });
   document.getElementById('used').onchange = (e) => { showUsed = e.target.checked; render(); };
+  document.getElementById('transit').onchange = (e) => { showTransit = e.target.checked; render(); };
   document.getElementById('csv').onclick = exportCsv;
   // Bulk menu (bulk_menu.js): a priced PDF of what's on hand, starting from this tab.
   document.getElementById('menuBtn').onclick = () => BulkMenu.open({
@@ -640,8 +716,8 @@
   });
   function syncUrl() {
     const u = new URL(location.href);
-    if (H()) u.searchParams.set('view', 'history'); else u.searchParams.delete('view');
-    if (tab === 'drying') u.searchParams.delete('tab'); else u.searchParams.set('tab', tab);
+    if (view !== 'onhand') u.searchParams.set('view', view); else u.searchParams.delete('view');
+    if (tab === firstTab()) u.searchParams.delete('tab'); else u.searchParams.set('tab', tab);
     if (query) u.searchParams.set('q', query); else u.searchParams.delete('q');
     if (owner === 'all') u.searchParams.delete('own'); else u.searchParams.set('own', owner);
     history.replaceState(null, '', u);
@@ -659,8 +735,10 @@
     renderViews();
     renderOwners();
     renderTabs();
-    document.getElementById('usedWrap').style.display = H() ? 'none' : '';
-    document.getElementById('menuBtn').style.display = H() ? 'none' : '';
+    document.getElementById('usedWrap').style.display = H() || A() ? 'none' : '';
+    document.getElementById('transitWrap').style.display = A() ? '' : 'none';
+    document.getElementById('menuBtn').style.display = H() || A() ? 'none' : '';
+    if (A()) return renderAirway();
     document.getElementById('note').textContent = t(H() ? L.histNote : units() ? L.fgNote : L.note);
     const list = current();
     document.getElementById('sub').textContent = `${H() ? t(L.vHistory) + ' · ' : ''}${owner === 'all' ? '' : t(owner === 'client' ? L.ownClient : L.own2cw) + ' · '}${t(L[tab])} · ${list.length} ${
@@ -698,6 +776,43 @@
       tr.onclick = () => { const k = tr.dataset.row; if (openRows.has(k)) openRows.delete(k); else openRows.add(k); render(); };
     });
     board.querySelectorAll('a.go').forEach((a) => { a.onclick = (e) => { e.preventDefault(); go(a.dataset.go); }; });
+  }
+
+  function renderAirway() {
+    document.getElementById('note').textContent = t(L.airNote);
+    const list = current();
+    document.getElementById('sub').textContent = `${t(L.airSub)} · ${t(L[tab])} · ${list.length} ${list.length === 1 ? t(L.pkg) : t(L.pkgs)}`;
+    const lb = sumLb(list.filter((r) => !r.pieces)), un = sumLb(list.filter((r) => r.pieces));
+    const hidden = showTransit ? [] : airRows.filter((r) => r.tab === tab && r.transit && matches(r));
+    const hLb = sumLb(hidden.filter((r) => !r.pieces)), hUn = sumLb(hidden.filter((r) => r.pieces));
+    const amt = (l, u) => [l ? `${fmtNum(l)} lb` : '', u ? `${fmtNum(u, 0)} ${t(L.units)}` : ''].filter(Boolean).join(' · ') || '0';
+    document.getElementById('totals').innerHTML = (list.length ? `<span>${esc(t(L.total))}: <b>${esc(amt(lb, un))}</b></span>` : '') +
+      (hidden.length ? `<span>${esc(t(L.transitHid))}: <b>${esc(amt(hLb, hUn))}</b> · ${hidden.length} ${esc(t(hidden.length === 1 ? L.pkg : L.pkgs))}</span>` : '');
+    if (!list.length) { board.innerHTML = `<div class="empty">${esc(t(L.empty))}</div>`; return; }
+    board.innerHTML = `<div class="tbl-wrap"><table class="tbl"><thead><tr>
+        ${AIR_COLS.map((c) => `<th data-k="${c.k}" class="${c.num ? 'num' : ''} ${sortKey === c.k ? 'sorted' : ''}">${esc(t(c.k === 'lb' ? airColLabel() : c.l))}${sortKey === c.k ? (sortDir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('')}
+      </tr></thead><tbody>${list.map(airRowHtml).join('')}</tbody></table></div>`;
+    board.querySelectorAll('th[data-k]').forEach((th) => {
+      th.onclick = () => { if (sortKey === th.dataset.k) sortDir = -sortDir; else { sortKey = th.dataset.k; sortDir = ['lb', 'days', 'date'].includes(th.dataset.k) ? -1 : 1; } render(); };
+    });
+  }
+  function airRowHtml(r) {
+    const dd = days(r);
+    const cells = {
+      status: `<span class="pill ${AIR_STATUS[r.status] || ''}">${esc(r.status || '—')}</span>`,
+      uid: `<span title="${esc(r.uid)}">${esc(r.uid || '—')}</span>`,
+      item: esc(r.item || '—'),
+      strain: esc(r.strain || '—'),
+      lb: `${esc(tab === 'air_other' || r.pieces && tab !== 'air_packaged' ? airAmt(r) : fmtNum(r.lb, r.pieces ? 0 : 2))}${
+        !r.pieces && r.origUnit && r.origUnit !== 'Pounds' ? `<div class="small">${esc(`${fmtNum(r.origWeight, 0)} ${r.origUnit.toLowerCase()}`)}</div>` : ''}`,
+      kind: `<span class="small">${esc(r.kind || '—')}</span>`,
+      source: esc(r.source || '—'),
+      location: esc(r.location || '—'),
+      date: esc(fmtDate(r.date)),
+      days: dd == null ? '—' : `<span class="age ${dd >= 90 ? 'old' : ''}">${dd}</span>`
+    };
+    const CL = { uid: 'mono uid', strain: 'strain', lb: 'num', date: 'mono', days: 'num', location: 'loc' };
+    return `<tr style="--c:${TAB_COLOR[r.tab]}">${AIR_COLS.map((c) => `<td class="${CL[c.k] || ''}">${cells[c.k]}</td>`).join('')}</tr>`;
   }
 
   // Drying, grouped by farm: a header per farm with its packages and pounds
@@ -927,7 +1042,11 @@
       const x = e.key && histByKey(e.key);
       return [e.what, e.customer, e.date, `${fmtNum(e.lb)} lb`, x ? `${t(L[x.tab])} ${x.uid}` : ''].filter(Boolean).join(' ');
     };
-    const table = H()
+    const table = A()
+      ? [['Category', 'Status', 'UID', 'Item', 'Strain', 'Amount', 'Unit', 'Canix Weight', 'Canix Unit', 'Canix Type', 'Came From', 'Location', 'Packaged', 'Days', 'License'],
+        ...list.map((r) => [t(L[r.tab]), r.status, r.uid, r.item, r.strain, r.pieces ? r.lb : r.lb.toFixed(2), r.pieces ? r.unit : 'lb',
+          r.origWeight, r.origUnit, r.kind, r.source, r.location, r.date, days(r) == null ? '' : days(r), r.license])]
+      : H()
       ? [['Category', 'Status', 'UID', 'Lot UID', 'Farm UID(s)', 'Strain', 'Farm', 'Farm Code', 'License', 'CID', 'Lbs In', 'Weight', 'Lbs Left',
           'Shipped Lbs', 'Came From', 'Went To', 'Type', 'Location', 'Date'],
         ...list.map((r) => [t(L[r.tab]), statusLabel(r), r.uid, r.lotUid || '', (r.farmUids || []).join(' '), r.strain, r.farm, r.code, r.license, r.cid,
@@ -944,7 +1063,7 @@
     const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `raw_inventory_${H() ? 'history_' : ''}${owner === 'all' ? '' : owner + '_'}${tab}${query ? '_' + query.replace(/[^\w-]+/g, '_').slice(0, 30) : ''}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `raw_inventory_${H() ? 'history_' : ''}${A() ? '' : owner === 'all' ? '' : owner + '_'}${tab}${query ? '_' + query.replace(/[^\w-]+/g, '_').slice(0, 30) : ''}_${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }

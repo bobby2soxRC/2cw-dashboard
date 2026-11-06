@@ -112,6 +112,10 @@ room, Take Down storage, freezer) until **✎** sets where it is now — the onl
 way Bucked / Flower / Smalls / Trim get one. Saved by row key in the shared
 `operations_forms` row `raw_inventory_locations` (`applyLocations` in
 `raw_stock.js`). No SQL.
+Since 2026-11-06 an **Airway** view (`?view=airway`, `airwayRows` in
+`raw_stock.js`): Canix inventory at Airway (C11-0001652) by tab — Flower,
+Smalls, Trim & Shake, Extract Material, Packaged & Pre-Rolls, Other — with
+In Transit hidden by default; kept out of Adobe's totals and the bulk menu.
 
 ### Hourly people not in Connecteam (started 2026-10-19)
 
