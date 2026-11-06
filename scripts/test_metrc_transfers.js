@@ -94,14 +94,14 @@ const outgoing = [
 ];
 const outForms = [
   { id: 'f1', manifest: '11735201', uids: [] },                     // manifest without its leading zeros
-  { id: 'f2', manifest: '', uids: ['ABD000000401'] }                // the end of a tag
+  { id: 'f2', manifest: '', uids: ['ABD000000401'] }                // a blank manifest covers nothing, even its own tag
 ];
 const outInv = [{ tag: '1A4060300089ABD000000202', item: { name: 'Flower | Smalls | Gelato #41', strain: { name: 'Gelato #41' } } }];
 const nf = M.outgoingNeedingForm(outgoing, facilities, outForms, outInv);
-check('needs a form: from Adobe, raw or pre-rolls, made in Metrc, since the form, no form for it', nf.map((x) => x.manifest), ['0011735203', '0011742700', '0011742507']);
+check('needs a form: from Adobe, raw or pre-rolls, made in Metrc, since the form, no form for its manifest #', nf.map((x) => x.manifest), ['0011735202', '0011735203', '0011742700', '0011742507']);
 const pr = nf.find((x) => x.manifest === '0011742700');
 check('pre-rolls: pieces, type 8', [pr.packages[0].qty, pr.packages[0].productType, pr.pieces, pr.weightLb], [500, '8', 500, 0]);
-nf.splice(1, 1);
+nf.splice(0, 1); nf.splice(1, 1);
 check('needs form: voided packages left out', nf[1].tags, ['1A4060300089ABD000000201', '1A4060300089ABD000000202']);
 check('needs form: item from the sync, else the inventory', nf[1].packages.map((p) => [p.strain, p.productType, p.lb]), [['Blue Dream', '3', 32], ['Gelato #41', '4', 50]]);
 check('needs form: day, destination, weight', [nf[1].date, nf[1].toLicense, nf[1].weightLb], ['2026-10-21', 'C11-0002020-LIC', 82]);
@@ -116,13 +116,13 @@ const lotInv = [
 ];
 const lotTr = [out('0011742507', 'CCL22-0001284', 'C11-0002020-LIC', '2026-10-21T16:25:00.000Z',
   [pkg('1A406030005E0B2000010114', 'Shipped', 50), pkg('1A406030005E0B2000010116', 'Shipped', 24)])];
-check('lot UIDs on the form cover the packages cut from them', M.outgoingNeedingForm(lotTr, facilities, [{ id: 'lalo', uids: ['10005'] }], lotInv).length, 0);
-check('an unrelated short UID does not', M.outgoingNeedingForm(lotTr, facilities, [{ id: 'x', uids: ['10007'] }], lotInv).length, 1);
+check('lot UIDs on a blank-manifest form do not cover the packages cut from them', M.outgoingNeedingForm(lotTr, facilities, [{ id: 'lalo', manifest: '', uids: ['10005'] }], lotInv).length, 1);
+check('its typed Manifest # does', M.outgoingNeedingForm(lotTr, facilities, [{ id: 'lalo', manifest: '11742507', uids: [] }], lotInv).length, 0);
 const lotNf = M.outgoingNeedingForm(lotTr, facilities, [], lotInv)[0];
 check('the package it was cut from, for the Source UID', lotNf.packages.map((p) => p.source), ['1A406030005E0B2000010042', '1A406030005E0B2000010006']);
-check('the sync’s _sources / _source win', M.outgoingNeedingForm([out('0011742508', 'CCL22-0001284', 'C11-0002020-LIC', '2026-10-21T16:25:00.000Z',
+check('a blank-manifest form does not cover through the sync’s _sources', M.outgoingNeedingForm([out('0011742508', 'CCL22-0001284', 'C11-0002020-LIC', '2026-10-21T16:25:00.000Z',
   [{ ...pkg('1A406030005E0B2000010999', 'Accepted', 5), _sources: ['1A406030005E0B2000010888', '1A406030005E0B2000010777'], _source: '1A406030005E0B2000010888' }])],
-  facilities, [{ id: 'y', uids: ['10777'] }], []).length, 0);
+  facilities, [{ id: 'y', uids: ['10777'] }], []).length, 1);
 
 // Wet Intake's package dropdown.
 const incNow = M.pacificTime('2026-10-28T12:00:00.000Z');
@@ -143,12 +143,14 @@ check('incoming: an older intake\'s typed tail does not hide a newer package', M
 check('incoming: a tail typed after it left still hides it', M.incomingPackages(incTr, facilities, [{ uid: '00158', at: '2026-10-28T09:00:00Z' }], incNow).map((p) => p.sourceUid.slice(-3)), ['159']);
 check('incoming: a full UID hides it whenever', M.incomingPackages(incTr, facilities, [{ uid: '1A4060300089ABD000000158', at: '2026-10-01T00:00:00Z' }], incNow).map((p) => p.sourceUid.slice(-3)), ['159']);
 
-// transferForForm: a typed Manifest # never falls back to UID / source-lot
-// matching (Nov 5: a form typed 0011834634 got sibling-lot 0011826931).
+// transferForForm: only the form's own Manifest # matches — never package
+// UIDs or source lots (Nov 5: Madfam got 0011826931, then Evergreen, with
+// no manifest yet, got Madfam's 0011834634).
 const sibOut = [{ manifest: '0011826931', cover: ['1A406030005E0B2000010336', '1A406030005E0B2000010208'] }];
 const mOf = (x) => (x ? x.manifest : null);
 check('transferForForm: typed manifest not in Canix → none, despite a shared source UID', mOf(M.transferForForm({ manifest: '0011834634', uids: ['1A406030005E0B2000010208'] }, sibOut)), null);
-check('transferForForm: blank manifest → UID / lineage fallback', mOf(M.transferForForm({ manifest: '', uids: ['1A406030005E0B2000010208'] }, sibOut)), '0011826931');
+check('transferForForm: blank manifest + shared source UID → none (Evergreen vs Madfam, Nov 5)', mOf(M.transferForForm({ manifest: '', uids: ['1A406030005E0B2000010208', '0316'] }, sibOut.concat([{ manifest: '0011834634', cover: ['1A406030005E0B2000010208', '1A406030005E0B2000000316'] }]))), null);
+check('transferForForm: blank manifest + the transfer\'s own shipped tag → still none', mOf(M.transferForForm({ manifest: '', uids: ['1A406030005E0B2000010336'] }, sibOut)), null);
 check('transferForForm: typed manifest once in Canix → exact match wins', mOf(M.transferForForm({ manifest: '0011834634', uids: ['1A406030005E0B2000010208'] }, sibOut.concat([{ manifest: '0011834634', cover: [] }]))), '0011834634');
 
 if (failures) { console.log(`\n${failures} failed`); process.exit(1); }

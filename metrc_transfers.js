@@ -258,28 +258,21 @@
     return out.sort((a, b) => (a.departure || 0) - (b.departure || 0));
   }
 
-  // Whether a form ({ manifest, uids }) is for this outgoing transfer: same
-  // Manifest #, or one of its UIDs names one of the transfer's tags or a tag
-  // one was made from (a typed tail of 4+ characters counts).
+  // Whether a form ({ manifest, uids }) is for this outgoing transfer: the
+  // same Manifest # only. Package UIDs never link them: outgoing requests
+  // reuse the same source lots across customers (Madfam / Evergreen, Nov 5),
+  // and a request has no manifest until the office marks it done in Metrc.
   function formCovers(x, f) {
-    const m = normManifest(f.manifest);
-    if (m && m === normManifest(x.manifest)) return true;
-    const uids = (f.uids || []).map(normTag).filter((u) => u.length >= 4);
-    return uids.some((u) => x.cover.some((tg) => tg === u || tg.endsWith(u)));
+    const m = normManifest(f && f.manifest);
+    return !!m && m === normManifest(x.manifest);
   }
 
-  // The outgoing transfer a submitted form is for — or null. The Metrc Queue
-  // and the Transfers report show its Metrc details (license, sales order,
+  // The outgoing transfer a submitted form is for — its typed Manifest # in
+  // Canix — or null (blank, or not synced yet). The Metrc Queue and the
+  // Transfers report show its Metrc details (license, sales order,
   // initiated / accepted) from it, so the floor form doesn't ask for them.
-  // A typed Manifest # only ever matches that manifest: if Canix doesn't have
-  // it yet, there's no match (no UID fallback — a shared source lot on an
-  // older manifest isn't the same transfer). Only a form with no Manifest #
-  // falls back to the newest transfer its package UIDs match.
   function transferForForm(form, outgoing) {
-    const m = normManifest(form && form.manifest);
-    const list = outgoing || [];
-    if (m) return list.find((x) => normManifest(x.manifest) === m) || null;
-    return list.slice().reverse().find((x) => formCovers(x, { uids: (form && form.uids) || [] })) || null;
+    return (outgoing || []).find((x) => formCovers(x, form || {})) || null;
   }
 
   function outgoingNeedingForm(transfers, facilities, forms, inventory, since = NEEDS_FORM_SINCE, from = OUTGOING_FROM) {

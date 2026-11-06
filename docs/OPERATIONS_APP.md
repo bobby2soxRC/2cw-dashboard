@@ -460,12 +460,14 @@ office checklist (seven checkboxes) — they're `editOnly`, so the form is
 short enough to actually get done; the office can still fill them in with
 Fix form, and a **Needs form** link still prefills them. Instead the record
 shows them from Canix: `MetrcTransfers.outgoingTransfers` lists Adobe's
-outgoing manifests and `transferForForm` finds the form's (by Manifest #,
-else by package UID — the same match Needs form uses). The Metrc Queue's
+outgoing manifests and `transferForForm` finds the form's by its typed
+Manifest # only — blank or not synced yet means none, never a guess from
+package UIDs (since 2026-11-06). The Metrc Queue's
 opened record has a **From Metrc (Canix sync)** box — manifest #, their
 license, customer and destination (`customers.json` by license), sales
 order #, departure, packages, manifest initiated, and accepted / in transit
-/ rejected — and its row shows the manifest and status; blank office-only
+/ rejected — and its row shows the form's own Manifest # (never Canix's)
+and the status; blank office-only
 fields are left out of the detail. The Transfers report fills manifest,
 license, customer and sales order the same way and has a Metrc status
 column. Customer order #, invoice # and terms aren't in Canix, so they only
@@ -850,14 +852,15 @@ Outgoing form, is listed at the top of the queue as **Needs form** (purple; a
 count and a filter of its own; `outgoingNeedingForm` in `metrc_transfers.js`,
 from `data/canix_transfers_recent.json`). Transfers to our own licenses
 don't count, and only manifests that left on or after `NEEDS_FORM_SINCE`
-(2026-10-20, when the form went live). A form covers the manifest when its
-**Metrc Manifest #** (`manifestNo`, on the form since 2026-10-22) matches, or
-any of its rows' source / transfer package UIDs is one of the manifest's tags
-or a tag one was made from (a package shipped out is often cut from a lot the
-floor knows by its own UID — e.g. 10116 cut from lot 10006): the sync's
-`_sources` (`package_sources`, up to 4 steps back), else the inventory's
-`source_packages`. The end of a tag is enough, 4 characters or more, so the row goes away by itself once the form is
-submitted. It's not a `metrc_queue` row and has no status to set.
+(2026-10-20, when the form went live). A form covers the manifest only when
+its **Metrc Manifest #** (`manifestNo`, on the form since 2026-10-22)
+matches (`formCovers`). Since 2026-11-06 package UIDs never link a form to a
+manifest: outgoing requests reuse the same source lots across customers
+(Evergreen's request got Madfam's manifest through a shared lot), and a
+request has no manifest until the office does it in Metrc and types the #.
+So a manifest whose form has a blank Manifest # stays here until the # is
+typed on that form (Fix form) — don't open a second form for it. It's not a
+`metrc_queue` row and has no status to set.
 **Fill out form →** (or the row) opens a new form through
 `ops_form.html`'s `?set_<field>=` link prefill: Manifest #, Actual Transfer
 Date (departure, Pacific), DCC License # (destination), customer name and

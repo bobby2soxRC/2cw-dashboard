@@ -814,9 +814,10 @@
     const picked = pending.get(r.id) || s;
     const newUid = [...new Set([...newTags(r), val(r, 'newFinishedUid'), val(r, 'newPrerollUid'), val(r, 'newPouchUid')].filter(Boolean))].join(', ');
     const untagged = tagDefs(r).filter((x) => !val(r, x.k)).length;
-    // Wet Intake's, or an outgoing transfer's (typed, else from Canix).
+    // Wet Intake's, or an outgoing transfer's: only what's typed on the form
+    // (Canix's details stay in the From Metrc box).
     const cx = canixOut(r);
-    const manifest = String(val(r, 'manifestNo') || (cx && cx.manifest) || '').trim();
+    const manifest = String(val(r, 'manifestNo') || '').trim();
     const photos = photosOf(r);
     const statusCell = canEdit
       ? `<div class="st-cell"><select class="st-sel ${picked}" aria-label="${esc(t(L.colStatus))}">${STATUSES.map((k) =>
