@@ -427,6 +427,11 @@ including people typed into the Labor Log by name.
   `labor-rates.js` checks it from the PIN before returning any rates.
   Anyone with it can work out each person's rate from the costs shown, so
   give it only to people who could see pay anyway.
+- **Inventory Adjustments** (`inventory adjust`, under Special access;
+  implies Raw Inventory, sets `2cw_inv_adjust` at login and shows the
+  Inventory Adjustments card) lets someone change Raw Inventory's numbers
+  to match Metrc / a physical count, with reasons, and undo lines in its
+  log. See "Inventory Adjustments" in `docs/OPERATIONS_APP.md`.
 - **Pre-Roll Dashboard — see labor cost per pre-roll** (`preroll costs`,
   under Special access; implies the Pre-Roll Dashboard card, sets
   `2cw_preroll_costs` at login) adds labor $ to the dashboard's Submitted

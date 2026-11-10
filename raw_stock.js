@@ -6,6 +6,7 @@
 //
 // RawStock.load(client, { skipId }) loads every form it needs and returns
 // { d, rows, marks, takeovers, locations, paperIds, handPast, ref }: `rows` is what's on hand
+// (after Inventory Adjustments — `adj` on a row lists the ones that touched it)
 // (paper-import records left out), one row per package with its tab, uid,
 // lb, strain, farm/code/license, cid, used… `skipId` leaves that form out of
 // what was taken (a transfer being fixed doesn't count against itself).
@@ -281,7 +282,7 @@ const RawStock = (function () {
       if (!lines.length) return;
       if (out && MetrcTransfers.transferForForm({ manifest: r.manifestNo, uids: lines.map((x) => x.sourceUid) }, out)) return;
       lines.forEach((x) => takers.push({ id: r.id, station: 'transfer_out', what: t(STATION_BY_KEY.transfer_out.title), uid: x.sourceUid, cat: TRANSFER_TYPES[x.productType].cat,
-        tab: 'finished', lb: x.weight, date: String(r.actualDate || r.date || '').slice(0, 10), customer: r.customer || '', sale: true }));
+        tab: 'finished', lb: x.weight, date: String(r.actualDate || r.date || '').slice(0, 10), at: r.submittedAt || r.date || '', customer: r.customer || '', sale: true }));
     });
     return takers;
   }
@@ -289,7 +290,8 @@ const RawStock = (function () {
   // What downstream forms took, and off which UID. A Smalls Hand Trim doesn't
   // take from its own output.
   function takersOf(d) {
-    const run = (key, r, x) => ({ id: r.id, station: key, date: String(r.date || '').slice(0, 10), what: t(STATION_BY_KEY[key].title), ...x });
+    // `at`: when the form went in, for Inventory Adjustments (applyAdjusted).
+    const run = (key, r, x) => ({ id: r.id, station: key, date: String(r.date || '').slice(0, 10), at: r.submittedAt || r.date || '', what: t(STATION_BY_KEY[key].title), ...x });
     return [
       ...d.prerolls.map((r) => run('preroll_production', r, { uid: r.sourceUid, cat: r.inputCategory, lb: r.startingLb })),
       // Ground Flower Pouches: each input row (flower, smalls, trim…) off its own UID.
@@ -326,6 +328,65 @@ const RawStock = (function () {
           r.used.push({ ...c, lb: r2(take) });
         });
     });
+  }
+
+  // ── Inventory Adjustments ─────────────────────────────────────────────────
+  // inventory_adjust.html saves each batch of adjustments (a physical count
+  // matched to Metrc, a single fix) as its own operations_forms row,
+  // station_key 'raw_inventory_adjustment': { title, explanation, by, at,
+  // source, lines: [...] }. A line either changes on-hand rows ('set': `keys`,
+  // `delta` lbs — the difference from what the page showed then) or adds a
+  // package the forms never had ('add': uid, tab, strain, `toLb`). A line with
+  // `undone` is ignored.
+  //
+  // Each batch is a snapshot at its time `at`: the forms submitted before it
+  // take their stock first, then the batch's lines apply, then later forms
+  // take theirs — so a form that was missing (and is entered late) still
+  // counts against the adjusted stock, and an added package isn't eaten by
+  // forms from before the count.
+  const ADJ_STATION = 'raw_inventory_adjustment';
+  function applyLine(out, l, b, i) {
+    const note = { batch: b.id, title: b.title || '', delta: Number(l.delta) || 0, toLb: l.toLb, reason: l.reason || '', note: l.note || '', by: b.by || '', at: b.at || '' };
+    if (l.kind === 'add') {
+      const lb = Number(l.toLb) || 0;
+      if (!(lb > 0.005)) return;
+      out.push({ tab: l.tab, recId: b.id, station: ADJ_STATION, strain: l.strain || '', date: String(b.at || '').slice(0, 10), location: l.location || '',
+        ownUid: true, used: [], key: `adj:${b.id}:${i}`, uid: normUid(l.uid), lb: r2(lb), startLb: r2(lb), cat: l.cat || null, type: 'tAdj',
+        farm: '', code: '', license: '', cid: '', farmUids: [], adj: [note],
+        ...(l.tab === 'drying' || l.tab === 'frozen' ? { wet: true } : {}), ...(l.unit === 'units' ? { pieces: true } : {}) });
+      return;
+    }
+    const rows = (l.keys || []).map((k) => out.find((r) => r.key === k)).filter(Boolean);
+    if (!rows.length) return;
+    rows.forEach((r) => { (r.adj = r.adj || []).push(note); });
+    let d = Number(l.delta) || 0;
+    if (d > 0) {
+      // Found more: on the newest package of the group.
+      const r = [...rows].sort((a, x) => x.date.localeCompare(a.date))[0];
+      r.lb = r2(r.lb + d);
+    } else {
+      // Less than the forms say: off the oldest first, never below zero.
+      [...rows].sort((a, x) => a.date.localeCompare(x.date)).forEach((r) => {
+        if (d >= 0) return;
+        const take = Math.min(-d, Math.max(0, r.lb));
+        r.lb = r2(r.lb - take); d += take;
+      });
+    }
+  }
+  function applyAdjusted(out, takers, batches) {
+    const live = (batches || []).filter((b) => (b.lines || []).some((l) => !l.undone))
+      .sort((a, x) => String(a.at || '').localeCompare(String(x.at || '')));
+    if (!live.length) { applyTakers(out, takers); return out; }
+    const atOf = (c) => String(c.at || c.date || '');
+    let rest = takers;
+    live.forEach((b) => {
+      const T = String(b.at || '');
+      applyTakers(out, rest.filter((c) => atOf(c) <= T));
+      rest = rest.filter((c) => atOf(c) > T);
+      (b.lines || []).forEach((l, i) => { if (!l.undone) applyLine(out, l, b, i); });
+    });
+    applyTakers(out, rest);
+    return out;
   }
 
   function build(d) {
@@ -378,7 +439,7 @@ const RawStock = (function () {
     });
 
     finishedRows(d, tr, add);
-    applyTakers(out, [...takersOf(d), ...finishedGoodsRows(d, add)]);
+    applyAdjusted(out, [...takersOf(d), ...finishedGoodsRows(d, add)], d.adjustments);
     out.forEach((r) => {
       if (r.status) return;
       r.status = r.lb <= 0.005 ? 'usedUp' : r.wip ? 'sWeighed' : r.used.length ? 'sPart' : 'sOnHand';
@@ -396,7 +457,7 @@ const RawStock = (function () {
   }
 
   async function load(client, opts = {}) {
-    const [intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, pouches, mfg, biomass, mixed, shipped, received, bq, tq, codes, fac, marks, paper, handPast, ref, canix, takeovers, locations] = await Promise.all([
+    const [intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, pouches, mfg, biomass, mixed, shipped, received, bq, tq, codes, fac, marks, paper, handPast, ref, canix, takeovers, locations, adjustments] = await Promise.all([
       loadSubmitted('intake_wet'), loadSubmitted('dry_check'), loadSubmitted('buck'), loadSubmitted('hand_trim'),
       loadSubmitted('machine_trim'), loadSubmitted('smalls_trim'), loadSubmitted('fresh_frozen'),
       loadSubmitted('preroll_production'), loadSubmitted('pouch_production'), loadSubmitted('mfg_output'), loadSubmitted('biomass_request'),
@@ -407,12 +468,13 @@ const RawStock = (function () {
       client.from('operations_forms').select('id').eq('owner_user', 'paper_import').limit(10000).then((r) => r.data || []),
       loadSubmitted('hand_trim_history'), loadReference(), loadCanix(),
       getTakeovers(client).catch(() => ({})),
-      getLocations(client).catch(() => ({}))
+      getLocations(client).catch(() => ({})),
+      loadSubmitted(ADJ_STATION)
     ]);
     pidCodes = (codes || []).filter((r) => r.kind === 'pid');
     facilities = fac;
     const d = { intakes, downs, bucks, hand, machine, smallsT, frozen, prerolls, pouches, mfg, biomass, mixed,
-      shipped: shipped.filter((r) => r.id !== opts.skipId), received, bq, tq, canix };
+      shipped: shipped.filter((r) => r.id !== opts.skipId), received, bq, tq, canix, adjustments };
     // Records loaded from the old paper sheets (Aug–Sep 2026, owner_user
     // 'paper_import') still trace lots, but their output isn't stock any more.
     const paperIds = new Set(paper.map((r) => r.id));
@@ -420,6 +482,6 @@ const RawStock = (function () {
     return { d, rows, marks, takeovers, locations, paperIds, handPast, ref };
   }
 
-  return { CAT_TAB, MARKS_ID, getMarks, LOCATIONS_ID, getLocations, applyLocations, OWN_CIDS, isClientRow, OWNERSHIP_ID, getTakeovers, takeUid, takeoverOf, load, build, tracer, adder, finishedRows, finishedGoodsRows, takersOf, applyTakers };
+  return { ADJ_STATION, applyAdjusted, applyLine, CAT_TAB, MARKS_ID, getMarks, LOCATIONS_ID, getLocations, applyLocations, OWN_CIDS, isClientRow, OWNERSHIP_ID, getTakeovers, takeUid, takeoverOf, load, build, tracer, adder, finishedRows, finishedGoodsRows, takersOf, applyTakers };
 })();
 if (typeof module !== 'undefined') module.exports = RawStock;

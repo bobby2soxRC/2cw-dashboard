@@ -173,6 +173,7 @@
 <script src="/ops_data.js"></script>
 <script src="/metrc_transfers.js"></script>
 <script src="/raw_stock.js"></script>
+<script src="/inv_adjust.js"></script>
 <script src="/flower_yield.js"></script>
 <script src="/bulk_menu.js"></script>
 <script>
@@ -298,6 +299,11 @@
     tBuck:    { en: 'Bucking', es: 'Desvarado' },
     tMixed:   { en: 'Mixed Trim Package', es: 'Paquete de recorte mixto' },
     tIn:      { en: 'Incoming transfer', es: 'Transferencia de entrada' },
+    tAdj:     { en: 'Inventory adjustment', es: 'Ajuste de inventario' },
+    // Inventory Adjustments (inventory_adjust.html, raw_stock.js applyAdjusted)
+    adjBtn:   { en: '⚖ Adjustments', es: '⚖ Ajustes' },
+    adjusted: { en: 'adjusted', es: 'ajustado' },
+    markWhy:  { en: 'Why is it used up? (sold, transferred, destroyed… — saved with your name)', es: '¿Por qué está agotado? (vendido, transferido, destruido… — se guarda con su nombre)' },
     tTake:    { en: 'Take Down', es: 'Bajada' },
     // A-flower estimates (flower_yield.js)
     colEst:   { en: 'Est. A Flower', es: 'Flor A est.' },
@@ -375,6 +381,7 @@
   const r2 = (x) => Math.round(x * 100) / 100;
   const uniq = (a) => [...new Set(a.map((x) => String(x == null ? '' : x).trim()).filter(Boolean))];
   const canMark = sessionStorage.getItem('2cw_buck_release') === 'true' || sessionStorage.getItem('2cw_metrc_access') === 'edit';
+  const canAdjust = sessionStorage.getItem('2cw_inv_adjust') === 'true';
   const who = sessionStorage.getItem('2cw_user_name') || '';
 
   const client = getClient();
@@ -630,6 +637,7 @@
   filtersEl.innerHTML = `<input type="search" id="q" placeholder="${esc(t(L.search))}" value="${esc(query)}">
     <label class="chk" id="usedWrap"><input type="checkbox" id="used"> ${esc(t(L.showUsed))}</label>
     <button type="button" class="btn" id="menuBtn">${esc(t(L.menu))}</button>
+    ${canAdjust ? `<a class="btn" id="adjBtn" href="/inventory_adjust.html" style="text-decoration:none;display:inline-flex;align-items:center">${esc(t(L.adjBtn))}</a>` : ''}
     <button type="button" class="btn btn-blue" id="csv">${esc(t(L.csv))}</button>`;
   document.getElementById('q').addEventListener('input', (e) => { query = e.target.value.trim(); syncUrl(); render(); });
   document.getElementById('used').onchange = (e) => { showUsed = e.target.checked; render(); };
@@ -661,6 +669,7 @@
     renderTabs();
     document.getElementById('usedWrap').style.display = H() ? 'none' : '';
     document.getElementById('menuBtn').style.display = H() ? 'none' : '';
+    if (canAdjust) document.getElementById('adjBtn').style.display = H() ? 'none' : 'inline-flex';
     document.getElementById('note').textContent = t(H() ? L.histNote : units() ? L.fgNote : L.note);
     const list = current();
     document.getElementById('sub').textContent = `${H() ? t(L.vHistory) + ' · ' : ''}${owner === 'all' ? '' : t(owner === 'client' ? L.ownClient : L.own2cw) + ' · '}${t(L[tab])} · ${list.length} ${
@@ -765,11 +774,20 @@
     return isClient(r) && !isUsed(r) && uid ? ` <button type="button" class="mini" data-own="${esc(uid)}" data-row-key="${esc(r.key)}" title="${esc(t(L.takeTip))}">${esc(t(L.takeBtn))}</button>` : '';
   }
 
+  // Inventory Adjustments that changed this row: net change, and who / why on hover.
+  function adjNote(r) {
+    if (!r.adj || !r.adj.length) return '';
+    const net = r2(r.adj.reduce((a, x) => a + (x.delta || 0), 0));
+    const why = (x) => [`${x.delta > 0 ? '+' : ''}${fmtNum(x.delta)}`, x.title, typeof InvAdjust !== 'undefined' && InvAdjust.REASON_BY[x.reason] ? t(InvAdjust.REASON_BY[x.reason].l) : x.reason,
+      x.note, x.by, x.at ? new Date(x.at).toLocaleString() : ''].filter(Boolean).join(' · ');
+    return `<div class="small" style="color:var(--gold)" title="${esc(r.adj.map(why).join('\n'))}">⚖ ${esc(t(L.adjusted))}${r.type === 'tAdj' ? '' : ` ${net > 0 ? '+' : ''}${fmtNum(net, r.pieces ? 0 : 2)}`}</div>`;
+  }
+
   function rowHtml(r) {
     const used = isUsed(r), dd = days(r);
     const cells = {
       ...baseCells(r),
-      status: `<span class="pill ${used ? 'used' : r.pill}">${esc(statusLabel(r))}</span>${r.used.length ? `<div class="small" title="${esc(r.used.map(usedText).join('\n'))}">${fmtNum(r.startLb, r.pieces ? 0 : 2)} ${r.pieces ? esc(t(L.units)) : 'lb'} − ${esc(t(L.took))}</div>` : ''}`,
+      status: `<span class="pill ${used ? 'used' : r.pill}">${esc(statusLabel(r))}</span>${r.used.length ? `<div class="small" title="${esc(r.used.map(usedText).join('\n'))}">${fmtNum(r.startLb, r.pieces ? 0 : 2)} ${r.pieces ? esc(t(L.units)) : 'lb'} − ${esc(t(L.took))}</div>` : ''}${adjNote(r)}`,
       lb: `${fmtNum(r.lb, r.pieces ? 0 : 2)}${r.wet ? ` <span class="small">${esc(t(L.wet))}</span>` : ''}`,
       days: dd == null ? '—' : `<span class="age ${dd >= 30 ? 'old' : ''}">${dd}</span>`,
       location: `<span class="${r.locSet ? 'set' : ''}" title="${esc(r.locSet ? `${t(L.locBy)} ${r.locSet.by || '—'} · ${r.locSet.at ? new Date(r.locSet.at).toLocaleString() : ''}${
@@ -778,7 +796,7 @@
       est: r.est ? `<span title="${esc(estNote(r.est, r.strain) + (r.doneLb > 0.005 ? ` − ${fmtNum(r.doneLb)} lb ${t(L.estDone)}` : ''))}">≈ ${fmtNum(r.est.lb, 1)}</span> <span class="small">${Math.round(r.est.pct * 100)}%</span>` : ''
     };
     const mark = canMark ? `<td>${marks[r.key]
-      ? `<button type="button" class="mini" data-key="${esc(r.key)}" data-on="1" title="${esc(`${marks[r.key].by || ''} · ${marks[r.key].at ? new Date(marks[r.key].at).toLocaleString() : ''}`)}">${esc(t(L.restore))}</button>`
+      ? `<button type="button" class="mini" data-key="${esc(r.key)}" data-on="1" title="${esc([marks[r.key].reason, marks[r.key].by, marks[r.key].at ? new Date(marks[r.key].at).toLocaleString() : ''].filter(Boolean).join(' · '))}">${esc(t(L.restore))}</button>`
       : r.lb > 0.005 ? `<button type="button" class="mini" data-key="${esc(r.key)}">${esc(t(L.markUsed))}</button>` : ''}${ownBtn(r)}</td>` : '';
     return `<tr class="${used ? 'used' : ''}" style="--c:${TAB_COLOR[r.tab]}">${colsFor().map((c) => `<td class="${CLS[c.k] || ''}">${cells[c.k]}</td>`).join('')}${mark}</tr>`;
   }
@@ -832,10 +850,16 @@
   async function toggleMark(b) {
     const key = b.dataset.key, on = b.dataset.on === '1';
     const r = rows.find((x) => x.key === key);
-    if (!on && !confirm(`${t(L.markAsk)}\n\n${r ? `${r.strain} · ${r.uid} · ${fmtNum(r.lb)} lb` : ''}`)) return;
+    let reason = '';
+    if (!on) {
+      reason = prompt(`${t(L.markAsk)}\n\n${r ? `${r.strain} · ${r.uid} · ${fmtNum(r.lb)} lb` : ''}\n\n${t(L.markWhy)}`, '');
+      if (reason == null) return;
+      reason = reason.trim();
+      if (!reason) return;
+    }
     b.disabled = true;
     try {
-      marks = await setMark(key, on ? null : { by: who, at: new Date().toISOString(), lb: r ? r.lb : null });
+      marks = await setMark(key, on ? null : { by: who, at: new Date().toISOString(), lb: r ? r.lb : null, reason });
       render();
     } catch (ex) {
       b.disabled = false;

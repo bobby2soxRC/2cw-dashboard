@@ -370,7 +370,7 @@ const TOKEN_KEY = '2cw_admin_token';
 // pair per INFO_HUB_SECTIONS entry (hub_config.js), in the
 // editor instead.
 // ops_reports comes from the Reports section (OPS_REPORTS).
-const DERIVED_CARD_KEYS = ['production_dashboard', 'production_today', 'field_forms', 'harvest_intakes', 'take_downs', 'metrc_queue', 'material_flow', 'information_hub', 'crew_checkin', 'ops_reports'];
+const DERIVED_CARD_KEYS = ['inventory_adjust', 'production_dashboard', 'production_today', 'field_forms', 'harvest_intakes', 'take_downs', 'metrc_queue', 'material_flow', 'information_hub', 'crew_checkin', 'ops_reports'];
 const TOGGLE_CARDS = CARD_DEFS.filter(d => !DERIVED_CARD_KEYS.includes(d.key));
 
 // The Responsibilities tab talks to Supabase directly with the anon key,
@@ -505,6 +505,7 @@ function cardSummary(u){
   if(comm.length) pills.push(comm.length===1 ? 'Commission: '+COMMISSION_REP_MAP[comm[0]] : 'Commission: all reps');
   if((cols['pr access']||'').toUpperCase()==='TRUE') pills.push('Add PR');
   if((cols['labor log costs']||'').toUpperCase()==='TRUE') pills.push('Labor costs');
+  if((cols['inventory adjust']||'').toUpperCase()==='TRUE') pills.push('Inventory adjustments');
   if((cols['preroll costs']||'').toUpperCase()==='TRUE') pills.push('Pre-roll costs');
   const hiExtra = [['harvest intakes delete', 'delete'], ['harvest intakes history', 'history']]
     .filter(([col]) => (cols[col]||'').toUpperCase()==='TRUE').map(([, l]) => l);
@@ -1575,6 +1576,7 @@ function openEditor(id){
     <div class="check-grid">
       <label class="check-item"><input type="checkbox" data-card="pr access" ${(cols['pr access']||'').toUpperCase()==='TRUE'?'checked':''}/> Add PR button (Inventory)</label>
       <label class="check-item"><input type="checkbox" data-card="labor log costs" ${(cols['labor log costs']||'').toUpperCase()==='TRUE'?'checked':''}/> Labor Log — see costs (uses everyone's pay rates; implies Labor Log)</label>
+      <label class="check-item"><input type="checkbox" data-card="inventory adjust" ${(cols['inventory adjust']||'').toUpperCase()==='TRUE'?'checked':''}/> Inventory Adjustments — match Raw Inventory to Metrc / a physical count, with reasons and a log (implies Raw Inventory)</label>
       <label class="check-item"><input type="checkbox" data-card="preroll costs" ${(cols['preroll costs']||'').toUpperCase()==='TRUE'?'checked':''}/> Pre-Roll Dashboard — see labor cost per pre-roll (from pay rates; implies Pre-Roll Dashboard)</label>
     </div>
 

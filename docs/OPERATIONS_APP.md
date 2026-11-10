@@ -19,6 +19,7 @@ the existing Operations Hub — same login, same Netlify deploy.
 | `metrc.html` | Metrc Queue — every submitted Wet Intake, Take Down, Bucking, Hand Trim, Mixed Trim Package, Pre-Roll, Ground Flower Pouches and Outgoing Transfer form, with its Metrc status — see below |
 | `material_flow.html` | Material Flow — a chart of how material moves through the forms, farm to customer, a description of each form with its math, and change requests on any box — see below |
 | `raw_inventory.html` | Raw Materials Inventory — what's on hand at each stage from the station forms, tabbed, searchable, CSV export, plus a History view tracing every record from intake to customer — see below |
+| `inventory_adjust.html` | Inventory Adjustments — match Raw Inventory to Metrc after a physical count (or fix one package), a reason for every line, and a log of who did what — see "Inventory Adjustments" below |
 | `operations_today.html` | Live board — every form in progress or finished today, for anyone with view access; the date picker (or `?date=YYYY-MM-DD`) shows any earlier day the same way; **Range** shows several days at once (`?date=FROM&to=TO`; it starts as the day before through the day showing, for overnight work like a green harvest, and ◀ ▶ step the whole range), with the Daily Summary table hidden. With Wet Intakes showing, a **Wet Intake by farm** table sits above the forms (and in the PDF): net wet lbs per farm (a license's name, so a farm's licenses add up), split into dry rooms vs freezers — freezer when Fresh Frozen is ticked or the Drying / Freezer Location is one of `reference.json`'s `freezers` — and each intake card shows farm → location (❄ for freezer). 📄 Share PDF prints the day or range as a report. People with `labor log costs` also get a **Labor $** box next to it (off each time the page opens): ticked, the PDF adds a Labor section — Labor Log hours and $ by station (only the picked station's with a filter), and, for all stations, Connecteam clocked hours and $ by activity (the shifts file holds the last 14 days) — at each person's rate from Labor Rates via `labor-rates.js`. A page with day tabs (Bucking, Hand Trim, Pre-Roll) is on every day something was logged on it, not only its start date, with that day's amount (the headline calc on that day's rows; label from `dayTabs.headline`, else "— that day"). A **search box** under the station buttons narrows the cards (and the PDF): every word typed must appear in the form's strain, station, person, or any UID / CID / license / room / batch on it, worksheet rows included — so the last digits of a UID find it; with no match it offers **Search the last 14 days**. The station picked and the search stay for the tab (sessionStorage `2cw_today_view`), so they're still there after Edit. Take Down cards show the **Wet UID** they came from (`incomingUid`) beside the Dry UID, plus the drying room (from Kevin, 2026-10-30, to find a take down to add boxes to) |
 | `reports.html` | Reports — operations reports for any date range (yield, throughput, trimmer pay, labor cost, Metrc, transfers, waste, a UID Flow Sankey…) with PDF, Excel and CSV export — see "Reports" below |
 | `operations_dashboard.html` | Pipeline, yields, biomass, labor, requests, exceptions (finished forms only) |
@@ -1075,6 +1076,71 @@ Wet Intake → Take Down (`matchTakeDowns`) → Bucking lot and Bucking trim
 allocated (a Smalls Hand Trim or Mixed Trim Package links to the rows it
 made). Status says where it ended: Taken down, Bucked, Trimmed, Shipped,
 Used up, or the On hand status if some is left. CSV adds Came From / Went To.
+
+**Used up** asks why (sold, transferred, destroyed…) since 2026-11-10; the
+reason is saved on the mark with who and when, and shows on hover over
+Restore.
+
+### Inventory Adjustments
+
+`inventory_adjust.html` (hub card `inventory_adjust`, and **⚖ Adjustments**
+on Raw Inventory; access: `inventory adjust` under Special access in the
+user editor, which also brings Raw Inventory) — added 2026-11-10 after a
+physical count: forms hadn't been filled out (people weren't trained on
+them), so Metrc was updated to the count and Raw Inventory needed to follow,
+with every difference explained.
+
+**New adjustment** — pick a source:
+- **Compare to Metrc (Canix)**: every active package at a license (Adobe by
+  default) from `data/canix_inventory.json`. Run Canix Sync first (Admin →
+  Data Syncs) if Metrc changed since the last sync; the time shows.
+- **Upload a count or Metrc export**: CSV or Excel. Needs a Tag / UID column
+  and a Quantity (or weight / count) column; a title row above the headers,
+  units in their own column or in the cell ("12.5 lb", grams, kg, each), the
+  last 4+ of a tag, and the same tag on two rows (added up) are all fine.
+  Untick **This is the whole count** for a partial count, and packages
+  missing from the file are left alone.
+- **One-off fixes**: an empty list; **+ Add a package** by UID.
+
+The list has one line per UID (`InvAdjust.compare` in `inv_adjust.js`):
+**Different weight**, **Not in Metrc** (→ 0), **Not in Raw Inventory** (→ a
+new package; pick its stage — it's guessed from the Metrc item name, e.g.
+"Unbucked Flower - …" is On-Stem — or, if the forms had it but it was marked
+Used up, the mark is cleared), **On a manifest in Metrc** (In Transit;
+starts unticked — the Outgoing Transfer form normally takes it off), and
+**Same**. Raw Inventory rows under the same UID (a lot's flower, smalls and
+trim with no tags of their own) are one line; hover the Raw Inv. number for
+the rows. Each ticked line needs a **reason** (Physical count, Form never
+filled out, Form filled out wrong, Done in Metrc only, Moisture loss, Scale
+difference, Waste / destroyed, Other — Other needs a note) and the batch an
+**explanation**. The bar above the table sets a reason / note on every
+ticked line, or the new weight to Metrc's. Reasons typed so far are kept in
+this browser (localStorage) until Apply. **Export CSV** gives the whole
+comparison.
+
+**Apply** saves the batch as one `operations_forms` row (station_key
+`raw_inventory_adjustment`; fields `title`, `explanation`, `by`, `at`,
+`source`, `sourceInfo`, `lines`) — the edit-history trigger logs it like any
+form. Each line: `kind` `set` (Raw Inventory row `keys`, `fromLb` → `toLb`,
+`delta`) or `add` (`uid`, `tab`, `strain`, `toLb`), plus `reason`, `note`,
+`metrcLb`, `metrcItem`.
+
+**How Raw Inventory uses them** (`applyAdjusted` in `raw_stock.js`, so the
+outgoing transfer batch picker, the bulk menu and reports see the same
+numbers): each batch applies at its time `at`. Taking forms submitted
+before it come off first, then the batch's deltas (less: off the oldest row
+first, never below 0; more: onto the newest), then forms submitted after
+it. So a late form for work done before the count still takes stock off the
+adjusted number, and an added package isn't eaten by older forms that named
+its UID. Drying / On-Stem / Bucked rows still clear when their next form is
+submitted. Adjusted rows show **⚖ adjusted ±x** under Status (hover for who
+and why); added packages have type "Inventory adjustment". Nothing here
+changes Metrc or any station form.
+
+**Log** — every batch, newest first: title, who, when, source, explanation,
+net change; open one for its lines. **Undo** on a line (asks why) stops it
+applying but keeps it in the log with who undid it. **Export log CSV** has
+every line. Tests: `node scripts/test_inv_adjust.js`. No SQL.
 
 **Bulk menu** (☰ Bulk menu on the On hand view, `bulk_menu.js`) makes a
 priced PDF menu of what's on hand in the Soma Rosa Farms flyer style. It

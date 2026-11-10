@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="/session_share.js"></script>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Inventory Adjustments — 2CW Operations</title>
+  <script>
+    (function(){ if (!sessionStorage.getItem('2cw_pin')) window.location.replace('/index.html'); })();
+  </script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0c0d0f">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0c0d0f;--surface:#13151a;--surface2:#181b21;--border:#1e2129;
+      --green:#3db87a;--gold:#d4a843;--blue:#5a9fd4;--purple:#9b7fd4;--red:#ef5350;--cyan:#4fc3d9;
+      --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;
+    }
+    html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-text-size-adjust:100%}
+
+    .hdr{min-height:calc(54px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:12px;position:sticky;top:0;z-index:20}
+    .hdr-back{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);text-decoration:none;white-space:nowrap}
+    .hdr-div{width:1px;height:18px;background:var(--border)}
+    .hdr-brand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .lang{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;flex:0 0 auto}
+    .lang button{background:transparent;border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:12px;font-weight:600;padding:8px 12px;cursor:pointer;min-height:36px}
+    .lang button.on{background:var(--blue);color:#000}
+
+    main{padding:28px 16px 60px;max-width:1500px;margin:0 auto}
+    .title{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,6vw,46px);letter-spacing:.04em;line-height:1}
+    .sub{margin-top:6px;font-size:.88rem;color:var(--subtext);line-height:1.5;max-width:900px}
+
+    .views{display:inline-flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:18px}
+    .views button{background:var(--surface);border:none;color:var(--subtext);font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;
+      text-transform:uppercase;font-weight:700;padding:10px 18px;cursor:pointer;min-height:40px}
+    .views button.on{background:var(--blue);color:#000}
+
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-top:16px}
+    .card h3{font-size:.95rem;font-weight:700;margin-bottom:4px}
+    .card .hint{font-size:.8rem;color:var(--muted);line-height:1.5}
+    .sources{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:16px}
+    .src{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;border-top:3px solid var(--c,var(--border))}
+    .src h3{font-size:.95rem}
+    .src .hint{font-size:.78rem;color:var(--muted);line-height:1.5;flex:1}
+    .src select,.src input[type=file]{width:100%;min-height:40px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:6px 10px;font-size:.85rem}
+
+    .btn{padding:.65rem 1rem;border:1px solid var(--border);border-radius:10px;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer;background:var(--surface);color:var(--text);min-height:44px}
+    .btn:hover{border-color:var(--blue)}
+    .btn:disabled{opacity:.5;cursor:default}
+    .btn-blue{background:var(--blue);border-color:var(--blue);color:#000}
+    .btn-gold{background:var(--gold);border-color:var(--gold);color:#000}
+    .mini{min-height:30px;padding:4px 10px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--subtext);
+      font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;cursor:pointer}
+    .mini:hover{border-color:var(--blue);color:var(--blue)}
+    .chk{display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--subtext);cursor:pointer}
+
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 10px}
+    .chip{border:1px solid var(--border);background:var(--surface);color:var(--subtext);border-radius:99px;padding:7px 13px;font-size:.78rem;cursor:pointer;min-height:36px}
+    .chip b{color:var(--c,var(--text));font-family:'DM Mono',monospace;font-weight:500;margin-left:4px}
+    .chip.on{border-color:var(--c,var(--blue));background:var(--surface2);color:var(--text)}
+    .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+    .bar input[type=search],.bar input[type=text],.bar select{min-height:40px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:6px 10px;font-size:.85rem}
+    .bar input[type=search]{flex:1 1 240px;min-width:0}
+    .bulk{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;font-size:.82rem;color:var(--subtext)}
+    .bulk select,.bulk input{min-height:36px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:4px 8px;font-size:.82rem}
+    .bulk input{flex:1 1 200px;min-width:0}
+
+    .tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+    .tbl{width:100%;border-collapse:collapse;font-size:.84rem}
+    .tbl th{background:var(--surface2);color:var(--muted);font-family:'DM Mono',monospace;font-size:.63rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;text-align:left;padding:9px 8px;border-bottom:1px solid var(--border);white-space:nowrap}
+    .tbl td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:middle}
+    .tbl tbody tr:last-child td{border-bottom:none}
+    .tbl tbody tr td:first-child{border-left:3px solid var(--c,var(--border))}
+    .tbl tr.off td{opacity:.55}
+    .tbl .num{text-align:right;font-family:'DM Mono',monospace;white-space:nowrap}
+    .tbl .mono{font-family:'DM Mono',monospace;font-size:.78rem;white-space:nowrap}
+    .tbl .small{font-size:.68rem;color:var(--muted);font-family:'DM Mono',monospace}
+    .tbl input[type=number]{width:92px;min-height:34px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:4px 6px;font-family:'DM Mono',monospace;text-align:right}
+    .tbl select,.tbl input[type=text]{min-height:34px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:4px 6px;font-size:.8rem}
+    .tbl input[type=text]{width:100%;min-width:150px}
+    .tbl select.need,.tbl input.need{border-color:var(--red)}
+    .tbl input[type=checkbox]{width:18px;height:18px}
+    .up{color:var(--green)} .down{color:var(--red)}
+    .kind{display:inline-block;font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:99px;border:1px solid var(--c,var(--border));color:var(--c,var(--subtext));white-space:nowrap}
+
+    .explain{display:grid;gap:10px;margin-top:16px}
+    .explain label{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+    .explain input,.explain textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:10px 12px;font:inherit;font-size:.9rem}
+    .explain textarea{min-height:80px;resize:vertical}
+    .actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;align-items:center;margin-top:14px}
+    .actions .sum{flex:1;font-family:'DM Mono',monospace;font-size:.78rem;color:var(--subtext)}
+
+    .batch{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-top:12px;overflow:hidden}
+    .batch .bh{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;padding:14px 16px;cursor:pointer}
+    .batch .bh:hover{background:var(--surface2)}
+    .batch .bt{font-weight:700;font-size:.95rem}
+    .batch .bm{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--subtext)}
+    .batch .bx{width:100%;font-size:.84rem;color:var(--subtext);line-height:1.5}
+    .batch .bd{border-top:1px solid var(--border);padding:12px}
+    .undone td{text-decoration:line-through;opacity:.5}
+    .undone td:last-child{text-decoration:none;opacity:1}
+
+    .empty{color:var(--muted);text-align:center;padding:50px 0;font-size:.9rem;line-height:1.6}
+    .err{color:var(--red);font-size:.85rem;margin-top:10px;line-height:1.5}
+    .note{margin-top:18px;font-size:.8rem;color:var(--muted);line-height:1.55;max-width:900px}
+    .footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:center}
+  </style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="/raw_inventory.html" id="back">← Raw Inventory</a>
+  <div class="hdr-div"></div>
+  <div class="hdr-brand" id="brand">Inventory Adjustments</div>
+  <div class="lang" id="lang"></div>
+</header>
+
+<main>
+  <div class="title" id="title">Inventory Adjustments</div>
+  <div class="sub" id="sub"></div>
+  <div class="views" id="views"></div>
+  <div id="board"><div class="empty">Loading…</div></div>
+  <div class="note" id="note"></div>
+  <footer class="footer">2CW Enterprises &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Not for Distribution</footer>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/config/supabase_config.js"></script>
+<script src="/operations_stations.js"></script>
+<script src="/ops_common.js"></script>
+<script src="/ops_data.js"></script>
+<script src="/metrc_transfers.js"></script>
+<script src="/raw_stock.js"></script>
+<script src="/inv_adjust.js"></script>
+<script>
+// Inventory Adjustments — make Raw Inventory match Metrc (after a physical
+// count, missing forms, untrained staff…) or fix a single package, and keep
+// a log of who changed what and why.
+//
+// New adjustment: pick a source — Metrc from the Canix sync, an uploaded
+// count / Metrc export (CSV or Excel), or blank for one-off fixes — and the
+// page lists every UID where Raw Inventory and the source differ (inv_adjust.js
+// compare). Each line gets a new weight, a reason and a note; the batch gets a
+// title and an explanation. Apply saves the batch as one operations_forms row
+// (station_key 'raw_inventory_adjustment', see raw_stock.js applyAdjusted) —
+// the edit history trigger keeps every change to it — and Raw Inventory, the
+// transfer batch picker, the bulk menu and reports use the adjusted numbers
+// from then on. Lines bringing back stock marked Used up clear those marks.
+//
+// Log: every batch, newest first, with its lines; Undo on a line (with a
+// reason) stops it applying but keeps it in the log.
+//
+// Access: 'inventory adjust' (Admin → user → Special access); index.html sets
+// 2cw_inv_adjust at login.
+(async function () {
+  mountLangToggle('lang');
+  const L = {
+    title:    { en: 'Inventory Adjustments', es: 'Ajustes de inventario' },
+    back:     { en: '← Raw Inventory', es: '← Inventario' },
+    sub:      { en: 'Make Raw Inventory match Metrc — after a physical count, or when forms weren’t filled out — and keep a record of who changed what, and why.',
+                es: 'Haga que el inventario coincida con Metrc — después de un conteo físico, o cuando faltaron formularios — y guarde quién cambió qué, y por qué.' },
+    noAccess: { en: 'You don’t have access to Inventory Adjustments. An admin can turn it on: Admin → your user → Special access → Inventory Adjustments.',
+                es: 'No tiene acceso a Ajustes de inventario. Un administrador puede activarlo: Admin → su usuario → Acceso especial → Ajustes de inventario.' },
+    noData:   { en: 'Could not load the inventory. Check your connection and reload.', es: 'No se pudo cargar el inventario. Revise su conexión y recargue.' },
+    vNew:     { en: 'New adjustment', es: 'Nuevo ajuste' },
+    vLog:     { en: 'Log', es: 'Registro' },
+    // sources
+    srcCanix: { en: 'Compare to Metrc (Canix)', es: 'Comparar con Metrc (Canix)' },
+    srcCanixH:{ en: 'Every active package in Metrc at this license, from the Canix sync, against Raw Inventory. Changed Metrc since the last sync? Run Canix Sync first (Admin → Data Syncs).',
+                es: 'Cada paquete activo en Metrc en esta licencia, de la sincronización de Canix, contra el inventario. ¿Cambió Metrc desde la última sincronización? Corra la sincronización primero (Admin → Data Syncs).' },
+    synced:   { en: 'Canix last synced', es: 'Última sincronización de Canix' },
+    compare:  { en: 'Compare', es: 'Comparar' },
+    srcFile:  { en: 'Upload a count or Metrc export', es: 'Subir un conteo o exportación de Metrc' },
+    srcFileH: { en: 'A CSV or Excel file with a Tag (or UID) column and a Quantity (or weight / count) column — Metrc’s package export works as is. Grams, kg and “12.5 lb” cells are converted.',
+                es: 'Un archivo CSV o Excel con una columna de Etiqueta (o UID) y una de Cantidad (o peso / conteo) — la exportación de paquetes de Metrc sirve tal cual. Se convierten gramos, kg y celdas como “12.5 lb”.' },
+    fullFile: { en: 'This is the whole count — anything not in it is gone', es: 'Es el conteo completo — lo que no está, ya no existe' },
+    srcBlank: { en: 'One-off fixes', es: 'Arreglos sueltos' },
+    srcBlankH:{ en: 'Start with an empty list and add packages by UID: change a weight, zero one out, or add a package the forms never had.',
+                es: 'Empiece con una lista vacía y agregue paquetes por UID: cambie un peso, déjelo en cero, o agregue un paquete que no está en los formularios.' },
+    start:    { en: 'Start', es: 'Empezar' },
+    noTagCol: { en: 'Couldn’t find a Tag / UID column in that file.', es: 'No se encontró una columna de Etiqueta / UID en el archivo.' },
+    noQtyCol: { en: 'Couldn’t find a Quantity / weight column in that file.', es: 'No se encontró una columna de Cantidad / peso en el archivo.' },
+    readFail: { en: 'Couldn’t read that file:', es: 'No se pudo leer el archivo:' },
+    noXlsx:   { en: 'Couldn’t load the Excel reader. Save the file as CSV and try again.', es: 'No se pudo cargar el lector de Excel. Guarde el archivo como CSV e intente de nuevo.' },
+    // review
+    source:   { en: 'Source', es: 'Fuente' },
+    change:   { en: 'Change source', es: 'Cambiar fuente' },
+    kAll:     { en: 'All', es: 'Todo' },
+    k_diff:   { en: 'Different weight', es: 'Peso distinto' },
+    k_only_app:{ en: 'Not in Metrc', es: 'No está en Metrc' },
+    k_only_metrc:{ en: 'Not in Raw Inventory', es: 'No está en el inventario' },
+    k_transit:{ en: 'On a manifest in Metrc', es: 'En un manifiesto en Metrc' },
+    k_match:  { en: 'Same', es: 'Igual' },
+    k_manual: { en: 'Added by hand', es: 'Agregado a mano' },
+    search:   { en: 'Search UID, strain, item…', es: 'Buscar UID, variedad, artículo…' },
+    allStages:{ en: 'All stages', es: 'Todas las etapas' },
+    addLine:  { en: '+ Add a package', es: '+ Agregar paquete' },
+    addAsk:   { en: 'UID (full tag or last 4+):', es: 'UID (etiqueta completa o últimos 4+):' },
+    addMany:  { en: 'More than one package ends in that — type more of the tag.', es: 'Más de un paquete termina así — escriba más de la etiqueta.' },
+    addHad:   { en: 'That package is already in the list.', es: 'Ese paquete ya está en la lista.' },
+    checked:  { en: 'For the ticked lines:', es: 'Para las líneas marcadas:' },
+    setReason:{ en: 'Set reason', es: 'Poner motivo' },
+    toMetrc:  { en: 'Use Metrc’s weight', es: 'Usar el peso de Metrc' },
+    tickAll:  { en: 'Tick all shown', es: 'Marcar todas las visibles' },
+    tickNone: { en: 'Untick all', es: 'Desmarcar todas' },
+    reason:   { en: 'Reason…', es: 'Motivo…' },
+    notePh:   { en: 'Note (what happened)', es: 'Nota (qué pasó)' },
+    colUid:   { en: 'UID', es: 'UID' },
+    colStage: { en: 'Stage', es: 'Etapa' },
+    colStrain:{ en: 'Strain', es: 'Variedad' },
+    colApp:   { en: 'Raw Inv.', es: 'Inventario' },
+    colMetrc: { en: 'Metrc', es: 'Metrc' },
+    colNew:   { en: 'New', es: 'Nuevo' },
+    colDelta: { en: 'Change', es: 'Cambio' },
+    colReason:{ en: 'Reason', es: 'Motivo' },
+    colNote:  { en: 'Note', es: 'Nota' },
+    colWhat:  { en: 'What', es: 'Qué' },
+    usedUpMk: { en: 'marked Used up', es: 'marcado Agotado' },
+    newPkg:   { en: 'new package', es: 'paquete nuevo' },
+    pickStage:{ en: 'Stage…', es: 'Etapa…' },
+    units:    { en: 'units', es: 'unidades' },
+    noUid:    { en: 'packages in Raw Inventory have no UID yet (a Mixed Trim Package waiting for its tag…) and can’t be compared', es: 'paquetes del inventario aún no tienen UID (un paquete de recorte mixto esperando su etiqueta…) y no se pueden comparar' },
+    nothing:  { en: 'No lines here.', es: 'No hay líneas aquí.' },
+    titleL:   { en: 'Title', es: 'Título' },
+    titleDef: { en: 'Physical count', es: 'Conteo físico' },
+    oneOff:   { en: 'Inventory fix', es: 'Arreglo de inventario' },
+    explainL: { en: 'Explanation — why these adjustments are being made (required)', es: 'Explicación — por qué se hacen estos ajustes (obligatorio)' },
+    explainPh:{ en: 'e.g. Forms weren’t being filled out and people weren’t trained on them, so we did a full physical count on Nov 8 and updated Metrc to match. This brings Raw Inventory in line with Metrc.',
+                es: 'p. ej. No se llenaban los formularios y la gente no estaba capacitada, así que hicimos un conteo físico completo el 8 de nov y actualizamos Metrc. Esto alinea el inventario con Metrc.' },
+    csv:      { en: '⇩ Export CSV', es: '⇩ Exportar CSV' },
+    apply:    { en: 'Apply', es: 'Aplicar' },
+    adjN:     { en: 'adjustments', es: 'ajustes' },
+    adj1:     { en: 'adjustment', es: 'ajuste' },
+    sumSel:   { en: 'ticked', es: 'marcadas' },
+    sumNet:   { en: 'net', es: 'neto' },
+    needWhy:  { en: 'Every ticked line needs a reason (and a note when the reason is Other).', es: 'Cada línea marcada necesita un motivo (y una nota si el motivo es Otro).' },
+    needExpl: { en: 'Write the explanation for the batch.', es: 'Escriba la explicación del lote.' },
+    needStage:{ en: 'Pick the stage for each new package.', es: 'Elija la etapa de cada paquete nuevo.' },
+    needAny:  { en: 'Tick at least one line that changes something.', es: 'Marque al menos una línea que cambie algo.' },
+    confirm:  { en: 'Apply these adjustments to Raw Inventory? They are saved with your name and can be undone line by line from the Log.', es: '¿Aplicar estos ajustes al inventario? Se guardan con su nombre y se pueden deshacer línea por línea en el Registro.' },
+    saveFail: { en: 'Could not save:', es: 'No se pudo guardar:' },
+    saved:    { en: 'Saved. Raw Inventory now uses these numbers.', es: 'Guardado. El inventario ya usa estos números.' },
+    draftKept:{ en: 'Your reasons and notes are kept on this device until you apply.', es: 'Sus motivos y notas se guardan en este equipo hasta aplicar.' },
+    // log
+    logEmpty: { en: 'No adjustments yet.', es: 'Aún no hay ajustes.' },
+    logSearch:{ en: 'Search title, UID, strain, reason, person…', es: 'Buscar título, UID, variedad, motivo, persona…' },
+    lines:    { en: 'lines', es: 'líneas' },
+    line:     { en: 'line', es: 'línea' },
+    by:       { en: 'by', es: 'por' },
+    fromCanix:{ en: 'Metrc via Canix', es: 'Metrc vía Canix' },
+    fromFile: { en: 'File', es: 'Archivo' },
+    fromHand: { en: 'One-off fixes', es: 'Arreglos sueltos' },
+    undo:     { en: 'Undo', es: 'Deshacer' },
+    undoAsk:  { en: 'Undo this adjustment? Raw Inventory goes back to what the forms say for it. Why?', es: '¿Deshacer este ajuste? El inventario vuelve a lo que dicen los formularios. ¿Por qué?' },
+    undone:   { en: 'Undone', es: 'Deshecho' },
+    logCsv:   { en: '⇩ Export log CSV', es: '⇩ Exportar registro CSV' },
+    brought:  { en: 'brought back from Used up', es: 'restaurado de Agotado' },
+    note:     { en: 'Adjustments don’t change any station form — they sit on top of them. Raw Inventory applies each batch at the time it was saved: forms submitted before it are already counted in the numbers it fixed, and forms submitted after it (a late form for something done before the count included) take stock off the adjusted numbers. A package added here becomes stock under its UID, so later forms and outgoing transfers take it off as usual. Nothing here changes Metrc.',
+                es: 'Los ajustes no cambian ningún formulario de estación — van encima. El inventario aplica cada lote al momento en que se guardó: los formularios enviados antes ya están contados en los números que corrigió, y los enviados después (un formulario tardío de algo hecho antes del conteo incluido) descuentan de los números ajustados. Un paquete agregado aquí se vuelve existencia bajo su UID, así que los formularios y transferencias siguientes lo descuentan como siempre. Nada aquí cambia Metrc.' }
+  };
+  const STAGES = [
+    ['drying', { en: 'Drying', es: 'Secando' }, 'var(--blue)'], ['onstem', { en: 'On-Stem', es: 'En tallo' }, 'var(--gold)'],
+    ['bucked', { en: 'Bucked', es: 'Desvarado' }, 'var(--purple)'], ['flower', { en: 'Flower', es: 'Flor' }, 'var(--green)'],
+    ['smalls_unf', { en: 'Unfinished Smalls', es: 'Smalls sin terminar' }, '#c0ca33'], ['smalls', { en: 'Smalls', es: 'Smalls' }, '#8bc34a'],
+    ['trim', { en: 'Trim', es: 'Recorte' }, '#c48b5a'], ['frozen', { en: 'Fresh Frozen', es: 'Fresco congelado' }, 'var(--cyan)'],
+    ['finished', { en: 'Pre-Rolls & Pouches', es: 'Prerolls y bolsas' }, '#e0864a']
+  ];
+  const STAGE = Object.fromEntries(STAGES.map(([k, l, c]) => [k, { l, c }]));
+  const KINDS = [['diff', 'var(--gold)'], ['only_app', 'var(--red)'], ['only_metrc', 'var(--blue)'], ['transit', 'var(--purple)'], ['manual', 'var(--cyan)'], ['match', 'var(--green)']];
+  const KIND_C = Object.fromEntries(KINDS);
+  // Lines that change something start ticked; a manifest line waits for its
+  // Outgoing Transfer form, so it starts unticked.
+  const TICK_KINDS = ['diff', 'only_app', 'only_metrc', 'manual'];
+
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const r2 = (x) => Math.round(x * 100) / 100;
+  const stageName = (k) => (STAGE[k] ? t(STAGE[k].l) : k || '—');
+  const reasonName = (v) => (InvAdjust.REASON_BY[v] ? t(InvAdjust.REASON_BY[v].l) : v || '');
+  const fmtWhen = (s) => (s ? new Date(s).toLocaleString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '');
+  const unitOf = (u) => (u === 'units' ? ` ${t(L.units)}` : ' lb');
+  const signed = (x, u) => `${x > 0 ? '+' : ''}${fmtNum(x, u === 'units' ? 0 : 2)}`;
+  const today = () => new Date().toLocaleDateString(getLang() === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  document.getElementById('title').textContent = t(L.title);
+  document.getElementById('brand').textContent = t(L.title);
+  document.getElementById('back').textContent = t(L.back);
+  document.getElementById('sub').textContent = t(L.sub);
+  document.getElementById('note').textContent = t(L.note);
+  document.title = `${t(L.title)} — 2CW`;
+  const board = document.getElementById('board');
+
+  const canAdjust = sessionStorage.getItem('2cw_inv_adjust') === 'true';
+  const who = sessionStorage.getItem('2cw_user_name') || '';
+  if (!canAdjust) { board.innerHTML = `<div class="empty">${esc(t(L.noAccess))}</div>`; return; }
+  const client = getClient();
+  if (!client) { board.innerHTML = `<div class="empty">${esc(t(L.noData))}</div>`; return; }
+
+  // ── Data ──────────────────────────────────────────────────────────────────
+  let stock = null, batches = [], canixInv = [], canixMeta = null, facilities = [];
+  const getJson = (f) => fetch(`/data/${f}?t=${Date.now()}`).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  async function loadAll() {
+    const [res, raw, inv, meta, fac] = await Promise.all([
+      RawStock.load(client),
+      client.from('operations_forms').select('*').eq('station_key', RawStock.ADJ_STATION).eq('status', 'submitted').order('submitted_at', { ascending: false }),
+      getJson('canix_inventory.json'), getJson('canix_meta.json'), getJson('canix_facilities.json')
+    ]);
+    stock = res;
+    if (raw.error) throw raw.error;
+    batches = (raw.data || []).map((row) => ({ ...row.fields, id: row.id }));
+    canixInv = Array.isArray(inv) ? inv : [];
+    canixMeta = meta;
+    facilities = Array.isArray(fac) ? fac : [];
+  }
+
+  // ── State ─────────────────────────────────────────────────────────────────
+  let view = new URLSearchParams(location.search).get('view') === 'log' ? 'log' : 'new';
+  let src = null;          // { kind: 'canix'|'file'|'blank', info, full, pkgs }
+  let lines = [], noUid = [];
+  let filter = 'all', stageFilter = '', query = '', logQuery = '';
+  const openBatches = new Set();
+  let batchTitle = '', batchExpl = '', fileFull = true, facility = (MetrcTransfers.OUTGOING_FROM || ['CCL22-0001284'])[0];
+
+  // Reasons, notes, ticks and new weights typed so far survive a reload, per
+  // line UID (localStorage — this device only; cleared on Apply).
+  const DRAFT_KEY = '2cw_inv_adjust_draft';
+  const readDraft = () => { try { return JSON.parse(localStorage.getItem(DRAFT_KEY) || '{}') || {}; } catch (e) { return {}; } };
+  function saveDraft() {
+    try {
+      const keep = {};
+      lines.forEach((l) => { if (l.touched) keep[l.id] = { on: l.on, toLb: l.toLb, reason: l.reason, note: l.note, tab: l.tab }; });
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ lines: keep, title: batchTitle, expl: batchExpl }));
+    } catch (e) { /* private mode: no draft */ }
+  }
+  function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch (e) { /* ignore */ } }
+
+  function setLines(list) {
+    const d = readDraft();
+    lines = list.map((l) => {
+      const was = (d.lines || {})[l.id];
+      const base = { ...l, on: TICK_KINDS.includes(l.kind), reason: '', note: '' };
+      return was ? { ...base, ...was, touched: true } : base;
+    });
+    if (d.title && !batchTitle) batchTitle = d.title;
+    if (d.expl && !batchExpl) batchExpl = d.expl;
+  }
+
+  // ── Views ─────────────────────────────────────────────────────────────────
+  const viewsEl = document.getElementById('views');
+  function renderViews() {
+    const live = batches.length;
+    viewsEl.innerHTML = [['new', L.vNew], ['log', L.vLog]].map(([v, l]) =>
+      `<button type="button" class="${view === v ? 'on' : ''}" data-v="${v}">${esc(t(l))}${v === 'log' && live ? ` (${live})` : ''}</button>`).join('');
+    viewsEl.querySelectorAll('button').forEach((b) => {
+      b.onclick = () => {
+        view = b.dataset.v;
+        const u = new URL(location.href);
+        if (view === 'log') u.searchParams.set('view', 'log'); else u.searchParams.delete('view');
+        history.replaceState(null, '', u);
+        render();
+      };
+    });
+  }
+  function render() {
+    renderViews();
+    if (view === 'log') renderLog(); else if (!src) renderSources(); else renderReview();
+  }
+
+  // ── Sources ───────────────────────────────────────────────────────────────
+  function renderSources(err) {
+    const ours = facilities.filter((f) => canixInv.some((p) => p._facility_license_number === f.license_number));
+    const facOpts = (ours.length ? ours : [{ license_number: facility, name: facility }])
+      .map((f) => `<option value="${esc(f.license_number)}" ${f.license_number === facility ? 'selected' : ''}>${esc(f.name || f.license_number)}</option>`).join('');
+    const synced = canixMeta && canixMeta.last_sync ? `${t(L.synced)}: ${fmtWhen(canixMeta.last_sync)}` : '';
+    board.innerHTML = `<div class="sources">
+      <div class="src" style="--c:var(--green)"><h3>${esc(t(L.srcCanix))}</h3>
+        <div class="hint">${esc(t(L.srcCanixH))}</div>
+        <select id="fac">${facOpts}</select>
+        <div class="hint" style="flex:0">${esc(synced)}</div>
+        <button type="button" class="btn btn-blue" id="goCanix" ${canixInv.length ? '' : 'disabled'}>${esc(t(L.compare))}</button></div>
+      <div class="src" style="--c:var(--blue)"><h3>${esc(t(L.srcFile))}</h3>
+        <div class="hint">${esc(t(L.srcFileH))}</div>
+        <input type="file" id="file" accept=".csv,.tsv,.txt,.xlsx,.xls">
+        <label class="chk"><input type="checkbox" id="full" ${fileFull ? 'checked' : ''}> ${esc(t(L.fullFile))}</label></div>
+      <div class="src" style="--c:var(--cyan)"><h3>${esc(t(L.srcBlank))}</h3>
+        <div class="hint">${esc(t(L.srcBlankH))}</div>
+        <button type="button" class="btn" id="goBlank">${esc(t(L.start))}</button></div>
+    </div>${err ? `<div class="err">${esc(err)}</div>` : ''}`;
+    document.getElementById('fac').onchange = (e) => { facility = e.target.value; };
+    document.getElementById('full').onchange = (e) => { fileFull = e.target.checked; };
+    document.getElementById('goCanix').onclick = () => {
+      const pkgs = InvAdjust.fromCanix(canixInv, [facility]);
+      const f = facilities.find((x) => x.license_number === facility);
+      start({ kind: 'canix', info: `${f ? f.name : facility}${canixMeta && canixMeta.last_sync ? ` · ${t(L.synced)} ${fmtWhen(canixMeta.last_sync)}` : ''}`,
+        syncedAt: canixMeta ? canixMeta.last_sync : null, facility, full: true, pkgs });
+    };
+    document.getElementById('goBlank').onclick = () => start({ kind: 'blank', info: t(L.fromHand), full: false, pkgs: [] });
+    document.getElementById('file').onchange = async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      try {
+        const grid = await readGrid(file);
+        const res = InvAdjust.fromGrid(grid);
+        if (res.error) { renderSources(t(res.error === 'noTag' ? L.noTagCol : L.noQtyCol)); return; }
+        start({ kind: 'file', info: `${file.name} · ${res.pkgs.length} ${t(L.lines)}`, file: file.name, full: fileFull, pkgs: res.pkgs });
+      } catch (ex) {
+        renderSources(`${t(L.readFail)} ${ex.message || ex}`);
+      }
+    };
+  }
+
+  let xlsxP = null;
+  const loadXlsx = () => window.XLSX ? Promise.resolve() : (xlsxP ||= new Promise((resolve, reject) => {
+    const sc = document.createElement('script');
+    sc.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+    sc.onload = resolve;
+    sc.onerror = () => { xlsxP = null; reject(new Error(t(L.noXlsx))); };
+    document.head.appendChild(sc);
+  }));
+  async function readGrid(file) {
+    if (/\.xlsx?$/i.test(file.name)) {
+      await loadXlsx();
+      const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+      // The sheet with the most rows (a count workbook may have a cover sheet).
+      const grids = wb.SheetNames.map((n) => XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: false, defval: '' }));
+      return grids.sort((a, b) => b.length - a.length)[0] || [];
+    }
+    return InvAdjust.parseCsv(await file.text());
+  }
+
+  function start(source) {
+    src = source;
+    const res = InvAdjust.compare(stock.rows, stock.marks, src.pkgs, { full: src.full });
+    noUid = res.noUid;
+    // A partial count says nothing about what isn't in it.
+    setLines(res.lines.filter((l) => src.full || l.kind !== 'only_app'));
+    filter = lines.some((l) => l.kind !== 'match') ? 'all' : 'match';
+    if (!batchTitle) batchTitle = src.kind === 'blank' ? `${t(L.oneOff)} — ${today()}` : `${t(L.titleDef)} — ${today()}`;
+    render();
+  }
+
+  // ── Review ────────────────────────────────────────────────────────────────
+  const shown = () => lines.filter((l) => (filter === 'all' ? l.kind !== 'match' : l.kind === filter) &&
+    (!stageFilter || l.tab === stageFilter) &&
+    (!query || [l.uid, l.strain, l.pkg && l.pkg.item, stageName(l.tab), l.note].join(' ').toLowerCase().includes(query.toLowerCase())));
+  const deltaOf = (l) => r2((Number(l.toLb) || 0) - (l.unmark && l.unmark.length ? (l.markedLb || 0) : l.appLb));
+  const ticked = () => lines.filter((l) => l.on);
+  const changes = (l) => Math.abs(deltaOf(l)) > 0.005 || (l.unmark && l.unmark.length);
+
+  function renderReview() {
+    const count = (k) => lines.filter((l) => l.kind === k).length;
+    const chips = [['all', 'var(--blue)', lines.filter((l) => l.kind !== 'match').length], ...KINDS.map(([k, c]) => [k, c, count(k)]).filter(([, , n]) => n)];
+    board.innerHTML = `<div class="card">
+        <div class="bar" style="margin:0"><div style="flex:1"><h3>${esc(t(L.source))}: ${esc(src.kind === 'canix' ? t(L.fromCanix) : src.kind === 'file' ? t(L.fromFile) : t(L.fromHand))}</h3>
+          <div class="hint">${esc(src.info)}</div></div>
+          <button type="button" class="btn" id="chg">${esc(t(L.change))}</button></div>
+      </div>
+      <div class="chips" id="chips">${chips.map(([k, c, n]) => `<button type="button" class="chip ${filter === k ? 'on' : ''}" data-k="${k}" style="--c:${c}">${
+        esc(t(k === 'all' ? { en: 'Needs a look', es: 'Por revisar' } : L[`k_${k}`]))}<b>${n}</b></button>`).join('')}</div>
+      <div class="bar">
+        <input type="search" id="q" placeholder="${esc(t(L.search))}" value="${esc(query)}">
+        <select id="stage"><option value="">${esc(t(L.allStages))}</option>${STAGES.map(([k, l]) => `<option value="${k}" ${stageFilter === k ? 'selected' : ''}>${esc(t(l))}</option>`).join('')}</select>
+        <button type="button" class="btn" id="add">${esc(t(L.addLine))}</button>
+      </div>
+      <div class="bulk">${esc(t(L.checked))}
+        <select id="bReason"><option value="">${esc(t(L.reason))}</option>${InvAdjust.REASONS.map((r) => `<option value="${r.v}">${esc(t(r.l))}</option>`).join('')}</select>
+        <input type="text" id="bNote" placeholder="${esc(t(L.notePh))}">
+        <button type="button" class="mini" id="bSet">${esc(t(L.setReason))}</button>
+        <button type="button" class="mini" id="bMetrc">${esc(t(L.toMetrc))}</button>
+        <button type="button" class="mini" id="bAll">${esc(t(L.tickAll))}</button>
+        <button type="button" class="mini" id="bNone">${esc(t(L.tickNone))}</button>
+      </div>
+      <div id="tbl"></div>
+      ${noUid.length ? `<div class="hint" style="margin-top:8px;font-size:.78rem;color:var(--muted)">${noUid.length} ${esc(t(L.noUid))}.</div>` : ''}
+      <div class="card explain">
+        <div><label for="bt">${esc(t(L.titleL))}</label><input type="text" id="bt" value="${esc(batchTitle)}"></div>
+        <div><label for="bx">${esc(t(L.explainL))}</label><textarea id="bx" placeholder="${esc(t(L.explainPh))}">${esc(batchExpl)}</textarea></div>
+        <div class="hint">${esc(t(L.draftKept))}</div>
+      </div>
+      <div class="actions"><div class="sum" id="sum"></div>
+        <button type="button" class="btn" id="csv">${esc(t(L.csv))}</button>
+        <button type="button" class="btn btn-gold" id="apply">${esc(t(L.apply))}</button></div>
+      <div class="err" id="err"></div>`;
+    document.getElementById('chg').onclick = () => { src = null; lines = []; render(); };
+    board.querySelectorAll('.chip').forEach((b) => { b.onclick = () => { filter = b.dataset.k; renderReview(); }; });
+    document.getElementById('q').oninput = (e) => { query = e.target.value.trim(); renderTable(); };
+    document.getElementById('stage').onchange = (e) => { stageFilter = e.target.value; renderTable(); };
+    document.getElementById('add').onclick = addLine;
+    document.getElementById('bSet').onclick = () => {
+      const v = document.getElementById('bReason').value, n = document.getElementById('bNote').value.trim();
+      if (!v && !n) return;
+      ticked().forEach((l) => { if (v) l.reason = v; if (n) l.note = n; l.touched = true; });
+      saveDraft(); renderTable();
+    };
+    document.getElementById('bMetrc').onclick = () => {
+      ticked().forEach((l) => { if (l.metrcLb != null) { l.toLb = l.metrcLb; l.touched = true; } });
+      saveDraft(); renderTable();
+    };
+    document.getElementById('bAll').onclick = () => { shown().forEach((l) => { l.on = true; l.touched = true; }); saveDraft(); renderTable(); };
+    document.getElementById('bNone').onclick = () => { lines.forEach((l) => { if (l.on) { l.on = false; l.touched = true; } }); saveDraft(); renderTable(); };
+    document.getElementById('bt').oninput = (e) => { batchTitle = e.target.value; saveDraft(); };
+    document.getElementById('bx').oninput = (e) => { batchExpl = e.target.value; saveDraft(); };
+    document.getElementById('csv').onclick = exportReview;
+    document.getElementById('apply').onclick = apply;
+    renderTable();
+  }
+
+  function appTitle(l) {
+    return (l.rows || []).map((r) => `${stageName(r.tab)} · ${r.strain || ''} · ${r.date || ''} · ${fmtNum(r.lb, r.pieces ? 0 : 2)}${r.pieces ? ' ' + t(L.units) : ' lb'}`).join('\n');
+  }
+  function renderTable() {
+    const list = shown();
+    const el = document.getElementById('tbl');
+    if (!list.length) { el.innerHTML = `<div class="empty">${esc(t(L.nothing))}</div>`; renderSum(); return; }
+    el.innerHTML = `<div class="tbl-wrap"><table class="tbl"><thead><tr>
+      <th></th><th>${esc(t(L.colUid))}</th><th>${esc(t(L.colStage))}</th><th>${esc(t(L.colStrain))}</th>
+      <th class="num">${esc(t(L.colApp))}</th><th class="num">${esc(t(L.colMetrc))}</th><th class="num">${esc(t(L.colNew))}</th><th class="num">${esc(t(L.colDelta))}</th>
+      <th>${esc(t(L.colReason))}</th><th>${esc(t(L.colNote))}</th></tr></thead><tbody>${list.map((l) => {
+        const i = lines.indexOf(l), d = deltaOf(l), isNew = !l.keys.length && !(l.unmark && l.unmark.length);
+        const needWhy = l.on && changes(l) && (!l.reason || (l.reason === 'other' && !l.note.trim()));
+        return `<tr class="${l.on ? '' : 'off'}" style="--c:${KIND_C[l.kind]}">
+          <td><input type="checkbox" data-i="${i}" data-f="on" ${l.on ? 'checked' : ''}></td>
+          <td><span class="mono" title="${esc(l.uid)}">…${esc(l.uid.slice(-8))}</span> <span class="kind" style="--c:${KIND_C[l.kind]}">${esc(t(L[`k_${l.kind}`]))}</span>
+            ${l.pkg && l.pkg.item ? `<div class="small">${esc(l.pkg.item)}${l.pkg.location ? ` · ${esc(l.pkg.location)}` : ''}</div>` : ''}</td>
+          <td>${isNew ? `<select data-i="${i}" data-f="tab" class="${l.on && !l.tab ? 'need' : ''}"><option value="">${esc(t(L.pickStage))}</option>${
+            STAGES.map(([k, lb]) => `<option value="${k}" ${l.tab === k ? 'selected' : ''}>${esc(t(lb))}</option>`).join('')}</select><div class="small">${esc(t(L.newPkg))}</div>`
+            : `${esc((l.tabs && l.tabs.length ? l.tabs : [l.tab]).map(stageName).join(', '))}`}</td>
+          <td>${esc(l.strain || '—')}</td>
+          <td class="num" title="${esc(appTitle(l))}">${l.unmark && l.unmark.length ? `<span class="small">${fmtNum(l.markedLb)} ${esc(t(L.usedUpMk))}</span>` : fmtNum(l.appLb, l.unit === 'units' ? 0 : 2)}</td>
+          <td class="num">${l.metrcLb == null ? '—' : fmtNum(l.metrcLb, l.unit === 'units' ? 0 : 2)}</td>
+          <td class="num"><input type="number" step="0.01" min="0" data-i="${i}" data-f="toLb" value="${esc(l.toLb)}"></td>
+          <td class="num ${d > 0 ? 'up' : d < 0 ? 'down' : ''}">${Math.abs(d) > 0.005 ? signed(d, l.unit) : '0'}</td>
+          <td><select data-i="${i}" data-f="reason" class="${needWhy && !l.reason ? 'need' : ''}"><option value="">${esc(t(L.reason))}</option>${
+            InvAdjust.REASONS.map((r) => `<option value="${r.v}" ${l.reason === r.v ? 'selected' : ''}>${esc(t(r.l))}</option>`).join('')}</select></td>
+          <td><input type="text" data-i="${i}" data-f="note" value="${esc(l.note)}" placeholder="${esc(t(L.notePh))}" class="${needWhy && l.reason === 'other' ? 'need' : ''}"></td>
+        </tr>`;
+      }).join('')}</tbody></table></div>`;
+    el.querySelectorAll('[data-f]').forEach((inp) => {
+      const l = lines[Number(inp.dataset.i)], f = inp.dataset.f;
+      const set = () => {
+        l.touched = true;
+        if (f === 'on') l.on = inp.checked;
+        else if (f === 'toLb') l.toLb = Math.max(0, Number(inp.value) || 0);
+        else l[f] = inp.value;
+        saveDraft();
+      };
+      if (f === 'note' || f === 'toLb') {
+        inp.oninput = () => { set(); if (f === 'toLb') { const td = inp.closest('td').nextElementSibling; const d = deltaOf(l); td.className = `num ${d > 0 ? 'up' : d < 0 ? 'down' : ''}`; td.textContent = Math.abs(d) > 0.005 ? signed(d, l.unit) : '0'; } renderSum(); };
+        inp.onchange = () => renderTable();
+      } else inp.onchange = () => { set(); renderTable(); };
+    });
+    renderSum();
+  }
+  function renderSum() {
+    const on = ticked().filter(changes);
+    const net = (u) => r2(on.filter((l) => (l.unit === 'units') === (u === 'units')).reduce((a, l) => a + deltaOf(l), 0));
+    const lb = net('lb'), un = net('units');
+    const el = document.getElementById('sum');
+    if (el) el.textContent = `${on.length} ${t(L.sumSel)} · ${t(L.sumNet)} ${signed(lb, 'lb')} lb${un ? ` · ${signed(un, 'units')} ${t(L.units)}` : ''}`;
+    const b = document.getElementById('apply');
+    if (b) b.textContent = `${t(L.apply)} ${on.length} ${t(on.length === 1 ? L.adj1 : L.adjN)}`;
+  }
+
+  // + Add a package: one already in Raw Inventory (by UID, last 4+ is fine)
+  // to change by hand, or a new one.
+  function addLine() {
+    const raw = prompt(t(L.addAsk), '');
+    const u = InvAdjust.norm(raw);
+    if (u.length < 4) return;
+    if (lines.some((l) => InvAdjust.tailMatch(l.uid, u))) {
+      const l = lines.find((x) => InvAdjust.tailMatch(x.uid, u));
+      alert(t(L.addHad)); filter = l.kind; query = l.uid.slice(-6); renderReview(); return;
+    }
+    const live = stock.rows.filter((r) => r.uid && r.lb > 0.005 && !stock.marks[r.key] && InvAdjust.tailMatch(r.uid, u));
+    const uids = [...new Set(live.map((r) => InvAdjust.norm(r.uid)))];
+    if (uids.length > 1) { alert(t(L.addMany)); return; }
+    const rs = uids.length ? live.filter((r) => InvAdjust.norm(r.uid) === uids[0]) : [];
+    const appLb = r2(rs.reduce((a, r) => a + r.lb, 0));
+    lines.unshift({ id: `manual:${uids[0] || u}`, uid: uids[0] || u, kind: 'manual', tab: rs.length ? rs[0].tab : '', tabs: [...new Set(rs.map((r) => r.tab))],
+      strain: rs.length ? rs[0].strain : '', unit: rs.some((r) => r.pieces) ? 'units' : 'lb', appLb, metrcLb: null, toLb: appLb,
+      keys: rs.map((r) => r.key), unmark: [], rows: rs, pkg: null, on: true, reason: '', note: '', touched: true });
+    filter = 'manual'; query = ''; stageFilter = '';
+    saveDraft(); renderReview();
+  }
+
+  function exportReview() {
+    const rows = [['Kind', 'UID', 'Stage', 'Strain', 'Metrc Item', 'Raw Inventory', 'Metrc', 'New', 'Change', 'Unit', 'Ticked', 'Reason', 'Note'],
+      ...lines.map((l) => [t(L[`k_${l.kind}`]), l.uid, (l.tabs && l.tabs.length ? l.tabs : [l.tab]).map(stageName).join(' / '), l.strain, l.pkg ? l.pkg.item : '',
+        l.appLb, l.metrcLb == null ? '' : l.metrcLb, l.toLb, deltaOf(l), l.unit, l.on ? 'yes' : '', reasonName(l.reason), l.note])];
+    download(rows, `inventory_compare_${new Date().toISOString().slice(0, 10)}.csv`);
+  }
+
+  async function apply() {
+    const err = document.getElementById('err');
+    err.textContent = '';
+    const on = ticked().filter(changes);
+    if (!on.length) { err.textContent = t(L.needAny); return; }
+    if (on.some((l) => !l.reason || (l.reason === 'other' && !String(l.note || '').trim()))) { err.textContent = t(L.needWhy); renderTable(); return; }
+    if (on.some((l) => !l.keys.length && !(l.unmark && l.unmark.length) && !l.tab)) { err.textContent = t(L.needStage); renderTable(); return; }
+    if (!batchExpl.trim()) { err.textContent = t(L.needExpl); document.getElementById('bx').focus(); return; }
+    const sum = document.getElementById('sum').textContent;
+    if (!confirm(`${t(L.confirm)}\n\n${batchTitle}\n${sum}`)) return;
+    const btn = document.getElementById('apply');
+    btn.disabled = true;
+    const at = new Date().toISOString();
+    const fields = {
+      title: batchTitle.trim() || `${t(L.titleDef)} — ${today()}`, explanation: batchExpl.trim(), by: who, at,
+      source: src.kind, sourceInfo: src.info, file: src.file || null, facility: src.facility || null, canixSyncedAt: src.syncedAt || null,
+      lines: on.map((l) => InvAdjust.entryOf({ ...l, toLb: l.toLb }))
+    };
+    try {
+      const { error } = await client.from('operations_forms').insert({
+        station_key: RawStock.ADJ_STATION, status: 'submitted', owner_user: who || null, updated_by: who || null,
+        work_date: at.slice(0, 10), submitted_at: at, fields
+      });
+      if (error) throw error;
+      // Stock brought back from Used up: clear those marks (re-read first, so
+      // a mark someone else just made isn't undone).
+      const unmark = on.flatMap((l) => l.unmark || []);
+      if (unmark.length) {
+        const marks = await RawStock.getMarks(client);
+        unmark.forEach((k) => { delete marks[k]; });
+        const { error: e2 } = await client.from('operations_forms').upsert({
+          id: RawStock.MARKS_ID, station_key: 'raw_inventory_marks', status: 'submitted', owner_user: who || null, updated_by: who || null,
+          submitted_at: at, fields: { marks, updatedBy: who, updatedAt: at }
+        });
+        if (e2) throw e2;
+      }
+      clearDraft();
+      src = null; lines = []; batchTitle = ''; batchExpl = '';
+      await loadAll();
+      view = 'log';
+      openBatches.add(batches[0] && batches[0].id);
+      render();
+      alert(t(L.saved));
+    } catch (ex) {
+      btn.disabled = false;
+      err.textContent = `${t(L.saveFail)} ${ex.message || ex}`;
+    }
+  }
+
+  // ── Log ───────────────────────────────────────────────────────────────────
+  function batchMatches(b) {
+    if (!logQuery) return true;
+    const q = logQuery.toLowerCase();
+    return [b.title, b.explanation, b.by, b.sourceInfo, ...(b.lines || []).flatMap((l) => [l.uid, l.strain, reasonName(l.reason), l.note, stageName(l.tab)])]
+      .join(' ').toLowerCase().includes(q);
+  }
+  function renderLog() {
+    const list = batches.filter(batchMatches);
+    board.innerHTML = `<div class="bar" style="margin-top:16px"><input type="search" id="lq" placeholder="${esc(t(L.logSearch))}" value="${esc(logQuery)}">
+      <button type="button" class="btn" id="lcsv" ${batches.length ? '' : 'disabled'}>${esc(t(L.logCsv))}</button></div>
+      ${list.length ? list.map(batchHtml).join('') : `<div class="empty">${esc(t(L.logEmpty))}</div>`}`;
+    const lq = document.getElementById('lq');
+    lq.oninput = (e) => { logQuery = e.target.value.trim(); renderLog(); document.getElementById('lq').focus(); const v = document.getElementById('lq'); v.setSelectionRange(v.value.length, v.value.length); };
+    document.getElementById('lcsv').onclick = exportLog;
+    board.querySelectorAll('.bh').forEach((h) => { h.onclick = () => { const id = h.dataset.id; if (openBatches.has(id)) openBatches.delete(id); else openBatches.add(id); renderLog(); }; });
+    board.querySelectorAll('button[data-undo]').forEach((b) => { b.onclick = () => undoLine(b.dataset.undo, Number(b.dataset.li)); });
+  }
+  function batchHtml(b) {
+    const ls = b.lines || [], live = ls.filter((l) => !l.undone);
+    const net = (units) => r2(live.filter((l) => (l.unit === 'units') === units).reduce((a, l) => a + (Number(l.delta) || 0), 0));
+    const lb = net(false), un = net(true), open = openBatches.has(b.id);
+    const srcName = b.source === 'canix' ? t(L.fromCanix) : b.source === 'file' ? t(L.fromFile) : t(L.fromHand);
+    return `<div class="batch"><div class="bh" data-id="${esc(b.id)}">
+        <span class="bt">${open ? '▾' : '▸'} ${esc(b.title || '—')}</span>
+        <span class="bm">${esc(fmtWhen(b.at))} · ${esc(t(L.by))} ${esc(b.by || '—')}</span>
+        <span class="bm">${ls.length} ${esc(t(ls.length === 1 ? L.line : L.lines))} · ${esc(t(L.sumNet))} ${signed(lb, 'lb')} lb${un ? ` · ${signed(un, 'units')} ${esc(t(L.units))}` : ''}</span>
+        <span class="bm">${esc(srcName)}${b.sourceInfo && b.source !== 'blank' ? ` · ${esc(b.sourceInfo)}` : ''}</span>
+        ${b.explanation ? `<div class="bx">${esc(b.explanation)}</div>` : ''}
+      </div>${open ? `<div class="bd"><div class="tbl-wrap"><table class="tbl"><thead><tr>
+        <th>${esc(t(L.colUid))}</th><th>${esc(t(L.colStage))}</th><th>${esc(t(L.colStrain))}</th><th class="num">${esc(t(L.colApp))}</th><th class="num">${esc(t(L.colMetrc))}</th>
+        <th class="num">${esc(t(L.colNew))}</th><th class="num">${esc(t(L.colDelta))}</th><th>${esc(t(L.colReason))}</th><th>${esc(t(L.colNote))}</th><th></th></tr></thead><tbody>${
+        ls.map((l, i) => `<tr class="${l.undone ? 'undone' : ''}" style="--c:${STAGE[l.tab] ? STAGE[l.tab].c : 'var(--border)'}">
+          <td><span class="mono" title="${esc(l.uid)}">…${esc(String(l.uid || '').slice(-8))}</span>${l.metrcItem ? `<div class="small">${esc(l.metrcItem)}</div>` : ''}</td>
+          <td>${esc(stageName(l.tab))}${l.kind === 'add' ? `<div class="small">${esc(t(L.newPkg))}</div>` : ''}${l.unmark && l.unmark.length ? `<div class="small">${esc(t(L.brought))}</div>` : ''}</td>
+          <td>${esc(l.strain || '—')}</td>
+          <td class="num">${fmtNum(l.fromLb, l.unit === 'units' ? 0 : 2)}</td>
+          <td class="num">${l.metrcLb == null ? '—' : fmtNum(l.metrcLb, l.unit === 'units' ? 0 : 2)}</td>
+          <td class="num">${fmtNum(l.toLb, l.unit === 'units' ? 0 : 2)}</td>
+          <td class="num ${l.delta > 0 ? 'up' : l.delta < 0 ? 'down' : ''}">${signed(l.delta, l.unit)}${esc(unitOf(l.unit))}</td>
+          <td>${esc(reasonName(l.reason))}</td>
+          <td style="white-space:normal;min-width:160px">${esc(l.note || '')}</td>
+          <td>${l.undone ? `<span class="small" title="${esc([l.undone.why, l.undone.by, fmtWhen(l.undone.at)].filter(Boolean).join(' · '))}">${esc(t(L.undone))} · ${esc(l.undone.by || '')}</span>`
+            : `<button type="button" class="mini" data-undo="${esc(b.id)}" data-li="${i}">${esc(t(L.undo))}</button>`}</td>
+        </tr>`).join('')}</tbody></table></div></div>` : ''}</div>`;
+  }
+  async function undoLine(id, i) {
+    const why = prompt(t(L.undoAsk), '');
+    if (why == null || !why.trim()) return;
+    try {
+      const { data, error } = await client.from('operations_forms').select('fields').eq('id', id).maybeSingle();
+      if (error) throw error;
+      const fields = (data && data.fields) || {};
+      const l = (fields.lines || [])[i];
+      if (!l || l.undone) { await loadAll(); renderLog(); return; }
+      l.undone = { by: who, at: new Date().toISOString(), why: why.trim() };
+      const { error: e2 } = await client.from('operations_forms').update({ fields, updated_by: who || null }).eq('id', id);
+      if (e2) throw e2;
+      await loadAll();
+      renderLog();
+    } catch (ex) {
+      alert(`${t(L.saveFail)} ${ex.message || ex}`);
+    }
+  }
+  function exportLog() {
+    const rows = [['Batch', 'Date', 'By', 'Source', 'Explanation', 'UID', 'Stage', 'Strain', 'Metrc Item', 'Raw Inventory Before', 'Metrc', 'New', 'Change', 'Unit',
+      'Reason', 'Note', 'Undone By', 'Undone At', 'Undo Reason'],
+      ...batches.flatMap((b) => (b.lines || []).map((l) => [b.title, b.at, b.by, b.sourceInfo || b.source, b.explanation, l.uid, stageName(l.tab), l.strain, l.metrcItem || '',
+        l.fromLb, l.metrcLb == null ? '' : l.metrcLb, l.toLb, l.delta, l.unit, reasonName(l.reason), l.note,
+        l.undone ? l.undone.by : '', l.undone ? l.undone.at : '', l.undone ? l.undone.why : '']))];
+    download(rows, `inventory_adjustments_log_${new Date().toISOString().slice(0, 10)}.csv`);
+  }
+
+  function download(rows, name) {
+    const cell = (v) => { const s = String(v == null ? '' : v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+    const blob = new Blob(['﻿' + rows.map((r) => r.map(cell).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  try {
+    await loadAll();
+  } catch (ex) {
+    console.error(ex);
+    board.innerHTML = `<div class="empty">${esc(t(L.noData))}</div>`;
+    return;
+  }
+  render();
+})();
+</script>
+</body>
+</html>

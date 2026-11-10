@@ -613,6 +613,13 @@ async function buildHub(user){
   const isTrue = (col) => (user[CARD_SHEET_COLS[col] || col] || '').toUpperCase() === 'TRUE';
   user.crew_checkin = (isTrue('scheduling') || isTrue('labor_log')) ? 'TRUE' : 'FALSE';
 
+  // Inventory Adjustments (inventory_adjust.html): 'inventory adjust' brings
+  // the card and Raw Inventory with it; the page reads 2cw_inv_adjust.
+  const invAdjust = (user['inventory adjust'] || '').toUpperCase() === 'TRUE';
+  if (invAdjust) user[CARD_SHEET_COLS.raw_inventory] = 'TRUE';
+  user.inventory_adjust = invAdjust ? 'TRUE' : 'FALSE';
+  sessionStorage.setItem('2cw_inv_adjust', invAdjust ? 'true' : 'false');
+
   // Work Orders (work_orders.html): the Bucking / Hand Trim / Pre-Roll
   // queues, for anyone who works or manages one of them. The page shows only
   // the tabs a person has: Bucking and Hand Trim by station edit access or

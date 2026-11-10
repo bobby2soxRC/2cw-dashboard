@@ -83,6 +83,17 @@ const CARD_DEFS = [
     href: '/raw_inventory.html'
   },
   {
+    key: 'inventory_adjust',
+    color: 'gold',
+    label: 'Operations',
+    dept: 'operations',
+    // Not a sheet column: shown with 'inventory adjust' (Admin → Special
+    // access), which also brings Raw Inventory (see buildHub in index.html).
+    title: 'Inventory Adjustments',
+    desc: 'Make Raw Inventory match Metrc after a physical count — or fix one package — with a reason for every change and a log of who made it.',
+    href: '/inventory_adjust.html'
+  },
+  {
     key: 'ops_reports',
     color: 'blue',
     label: 'Operations',
@@ -404,6 +415,7 @@ const CARD_ES = {
   inventory:           { title: 'Inventario y Producción', desc: 'Niveles de inventario actuales, días de suministro y recomendaciones de producción por grupo de producto.' },
   ops_reports:         { title: 'Reportes', desc: 'Reportes de operaciones para cualquier rango de fechas — rendimiento y pérdida, producción, pago de cortadores, costo laboral, Metrc, transferencias, desecho y un diagrama del flujo libra por libra — con exportación a PDF, Excel y CSV.' },
   raw_inventory:       { title: 'Inventario de Materia Prima', desc: 'Lo disponible según los formularios de estación — secando, en tallo, desvarado, flor, smalls, recorte y fresco congelado — con búsqueda por variedad, UID, licencia, rancho o CID, y exportación CSV.' },
+  inventory_adjust:    { title: 'Ajustes de Inventario', desc: 'Haga que el inventario coincida con Metrc después de un conteo físico — o arregle un paquete — con un motivo para cada cambio y un registro de quién lo hizo.' },
   canix_inventory:     { title: 'Inventario Canix', desc: 'Inventario en vivo de cultivo/manufactura/distribución en las 16 licencias de Canix, por granja y etapa.' },
   sales:               { title: 'Panel de Ventas', desc: 'Ingresos mensuales por marca, ritmo y tendencia del mes, mezcla de productos y análisis de 12 meses.' },
   mendo:               { title: 'Panel de Mendo', desc: 'Ventas, inventario y producción de la marca Mendo — vista dedicada para el socio.' },

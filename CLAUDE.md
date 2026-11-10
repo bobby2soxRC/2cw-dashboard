@@ -353,6 +353,19 @@ Bucking status per Dry UID (from the Bucking forms) and tabs Waiting for
 bucking / On hold / Bucked. No SQL. Details: "Take
 Downs" in `docs/OPERATIONS_APP.md`.
 
+### Inventory Adjustments (started 2026-11-10)
+
+`inventory_adjust.html` (Operations card, Special access `inventory adjust`,
+also **⚖ Adjustments** on Raw Inventory): after a physical count (forms
+weren't filled out), compare Raw Inventory to Metrc — Canix sync or an
+uploaded CSV / Excel count — per UID, give each change a reason and the batch
+an explanation, and apply. Batches are `operations_forms` rows
+`raw_inventory_adjustment`; `applyAdjusted` in `raw_stock.js` applies each at
+its time (earlier forms first, later forms after). Log with Undo. Logic in
+`inv_adjust.js`; tests: `node scripts/test_inv_adjust.js`. Used up now asks
+for a reason too. No SQL. Details: "Inventory Adjustments" in
+`docs/OPERATIONS_APP.md`.
+
 ## Parked work
 
 ### PIN reset by email (on hold since 2026-10-01)
