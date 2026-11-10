@@ -557,6 +557,13 @@ packages / lots with a page open on that station (`draftId`), Open → goes to
 that page — and below it **Up next**, the rest, which is all ▲ ▼ / Top
 ranks. Saving the order keeps the open ones first.
 
+Since 2026-11-10 the Bucking and Hand Trim tabs, and the stations' own
+Queue tab (`renderQueueTab` in `ops_form.html`), have a **search box**:
+strain (or its abbreviation) or any part of a UID, e.g. its last few digits
+(also a bucked package's farm UIDs). It hides the rows that don't match;
+they keep their queue number, ▲ ▼ / Top still rank within the whole list,
+and the headings show "shown / total".
+
 Bucking rows also have **To buck** — how much of the package this work
 order is for, typed by a 'buck release' manager (blank = all of it;
 `saveBuckTarget`, stored as `targets[uid] = { lb, by, at }` on the same

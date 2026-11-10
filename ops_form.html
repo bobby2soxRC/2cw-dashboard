@@ -67,6 +67,9 @@
     .q-tag{display:inline-block;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:99px;padding:2px 7px;margin-left:6px;vertical-align:middle}
     .q-empty{color:var(--muted);font-size:.9rem}
     .q-note{font-size:.8rem;color:var(--muted);margin-bottom:8px}
+    .q-search{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:1rem;padding:10px 12px;min-height:44px;margin-bottom:6px}
+    .q-search:focus{outline:none;border-color:var(--accent)}
+    .q-nomatch{color:var(--muted);font-size:.9rem;padding:12px 0}
     @media (max-width:520px){ .q-row{flex-wrap:wrap} .q-lbs{flex:1 0 100%;justify-content:flex-end} .q-go{flex:1 0 100%;text-align:center} }
     body.on-queue #form, body.on-queue #summary, body.on-queue #banner, body.on-queue .actions,
     body.on-queue #days, body.on-queue #days-lbl{display:none !important}
@@ -4196,7 +4199,9 @@
     here:    { en: 'This page', es: 'Esta hoja' },
     busy:    { en: 'in progress', es: 'en curso' },
     part:    { en: 'part of …{uid}', es: 'parte de …{uid}' },
-    merged:  { en: '{n} intakes combined', es: '{n} recepciones combinadas' }
+    merged:  { en: '{n} intakes combined', es: '{n} recepciones combinadas' },
+    search:  { en: 'Search strain or UID (last digits)…', es: 'Buscar variedad o UID (últimos dígitos)…' },
+    noMatch: { en: 'Nothing matches the search.', es: 'Nada coincide con la búsqueda.' }
   };
   // Hand Trim's Queue tab: the trimming queue (loadTrimQueue in ops_data.js),
   // ordered on the Work Orders page.
@@ -4226,6 +4231,7 @@
     noStrain:{ en: 'no strain yet', es: 'sin variedad aún' },
     pouch:   { en: 'ground flower', es: 'flor molida' }
   });
+  let queueSearch = '';   // the Queue tab's search box
   const ftabs = document.getElementById('ftabs');
   function showTab(tab) {
     ftabs.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
@@ -4256,7 +4262,31 @@
       : (await loadBuckingQueue()).items.map((p) => (p.draftId && p.draftId === draftId ? withPulled(p, values.boxes) : p));
     queueTabLabel(queueItems.length);
     if (!queueItems.length) { box.innerHTML = `<div class="q-empty">${escapeHtml(t(QT.none))}</div>`; return; }
-    box.innerHTML = `<div class="q-note">${escapeHtml(t(QT.note))}</div>` + queueItems.map((p, i) => {
+    // Search: strain (or its abbreviation) or any part of a UID — e.g. its
+    // last few digits. Rows keep their queue number; non-matches are hidden.
+    const searchKey = (p) => [p.strain, strainAbbr(reference, p.strain), p.sourceUid, p.releasedFrom,
+      ...(p.farmUids || []), p.ref, p.productName, p.brand, p.type].filter(Boolean).join(' ').toLowerCase();
+    box.innerHTML = `<div class="q-note">${escapeHtml(t(QT.note))}</div>` +
+      `<input type="search" class="q-search" id="q-search" autocomplete="off" placeholder="${escapeAttr(t(QT.search))}" value="${escapeAttr(queueSearch)}">` +
+      `<div class="q-nomatch" id="q-nomatch" style="display:none">${escapeHtml(t(QT.noMatch))}</div>` +
+      queueItems.map((p, i) => queueRow(p, i).replace('<div class="q-row"', `<div class="q-row" data-s="${escapeAttr(searchKey(p))}"`)).join('');
+    const searchEl = box.querySelector('#q-search');
+    searchEl.addEventListener('input', () => { queueSearch = searchEl.value; filterQueue(box); });
+    filterQueue(box);
+    const hereBtn = box.querySelector('[data-here]');
+    if (hereBtn) hereBtn.addEventListener('click', (e) => { e.preventDefault(); showTab('form'); });
+  }
+  function filterQueue(box) {
+    const words = queueSearch.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    let shown = 0;
+    box.querySelectorAll('.q-row').forEach((r) => {
+      const ok = words.every((w) => r.dataset.s.includes(w));
+      r.style.display = ok ? '' : 'none';
+      if (ok) shown++;
+    });
+    box.querySelector('#q-nomatch').style.display = shown ? 'none' : 'block';
+  }
+  function queueRow(p, i) {
       const here = p.draftId && p.draftId === draftId;
       const go = here
         ? `<a class="q-go open" href="#" data-here="1">${escapeHtml(t(QT.here))}</a>`
@@ -4296,9 +4326,6 @@
         `<div class="q-lb left${p.leftLb != null && p.leftLb < 0 ? ' neg' : ''}"><span class="k">${escapeHtml(t(QT.leftLb))}</span>${p.leftLb == null ? '—' : fmtNum(p.leftLb, 2) + ' lb'}</div>` +
         `</div>` +
         go + `</div>`;
-    }).join('');
-    const hereBtn = box.querySelector('[data-here]');
-    if (hereBtn) hereBtn.addEventListener('click', (e) => { e.preventDefault(); showTab('form'); });
   }
 
   // ── Boot ─────────────────────────────────────────────────────────────────

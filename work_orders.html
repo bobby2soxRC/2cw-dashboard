@@ -83,6 +83,8 @@
   .q-head:first-child{margin-top:0}
   .q-head.open{color:var(--tc)}
   .q-head span{color:var(--muted);margin-left:4px}
+  .q-search{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:1rem;padding:10px 12px;min-height:44px;margin-bottom:4px}
+  .q-search:focus{outline:none;border-color:var(--tc)}
   .empty-note.small{padding:14px;font-size:.85rem}
   .empty-note{color:var(--subtext);font-size:.9rem;padding:24px;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:12px}
   iframe.embed{width:100%;height:calc(100vh - 260px);min-height:480px;border:none;background:transparent;display:block}
@@ -183,7 +185,9 @@
     bucking: { en: 'bucking', es: 'desvarándose' },
     buckedLb: { en: 'Bucked', es: 'Desvarado' }, trimmedLb: { en: 'Trimmed', es: 'Cortado' },
     // Pre-Roll
-    pDash: { en: 'Pre-Roll Dashboard →', es: 'Tablero de prerolls →' }
+    pDash: { en: 'Pre-Roll Dashboard →', es: 'Tablero de prerolls →' },
+    search: { en: 'Search strain or UID (last digits)…', es: 'Buscar variedad o UID (últimos dígitos)…' },
+    noMatch: { en: 'Nothing matches the search.', es: 'Nada coincide con la búsqueda.' }
   };
   document.getElementById('back').textContent = t(L.backHub);
   document.getElementById('brand').textContent = t(L.title);
@@ -216,6 +220,7 @@
   let savingOrder = false;
   let savingTarget = false;
   let model = null;        // FlowerYield model, for Bucking's A-flower estimates
+  let search = '';         // the search box: strain or any part of a UID
   function show() {
     tabsEl.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
     panel.dataset.tab = tab;
@@ -227,7 +232,10 @@
     }
     panel.innerHTML = head(tab === 'buck' ? L.bHint : L.tHint,
       tab === 'buck' ? [['/ops_form.html?station=buck', L.bForm], ['/buck_hold.html', L.bHold]] : [['/ops_form.html?station=hand_trim', L.tForm]]) +
+      `<input type="search" class="q-search" id="q-search" autocomplete="off" placeholder="${esc(t(L.search))}" value="${esc(search)}">` +
       `<div id="q"><div class="empty-note">${esc(t(L.loading))}</div></div>`;
+    const searchEl = document.getElementById('q-search');
+    searchEl.addEventListener('input', () => { search = searchEl.value; filter(); });
     load();
   }
   function head(hint, links, noOrderHint) {
@@ -266,7 +274,37 @@
     box.innerHTML = `<div class="q-head open">${esc(t(buck ? L.openHead : L.tOpenHead))} <span>${open.length}</span></div>` +
       (open.length ? list(open, false) : `<div class="empty-note small">${esc(t(L.openNone))}</div>`) +
       `<div class="q-head">${esc(t(L.nextHead))} <span>${next.length}</span></div>` +
-      (next.length ? list(next, true) : `<div class="empty-note small">${esc(t(buck ? L.bNone : L.tNoneNext))}</div>`);
+      (next.length ? list(next, true) : `<div class="empty-note small">${esc(t(buck ? L.bNone : L.tNoneNext))}</div>`) +
+      `<div class="empty-note small" id="q-nomatch" style="display:none;margin-top:16px">${esc(t(L.noMatch))}</div>`;
+    filter();
+  }
+  // Search hides the rows that don't match; rows keep their queue number and
+  // ▲ ▼ / Top still move them within the whole ranking. Each heading's count
+  // becomes "shown / total" while searching.
+  function searchKey(p) {
+    return [p.strain, strainAbbr(reference, p.strain), p.sourceUid, p.releasedFrom, ...(p.farmUids || [])]
+      .filter(Boolean).join(' ').toLowerCase();
+  }
+  function filter() {
+    const box = document.getElementById('q');
+    if (!box) return;
+    const words = search.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    let any = false;
+    box.querySelectorAll('.q-list').forEach((listEl) => {
+      const rows = listEl.querySelectorAll('.q-row');
+      let shown = 0;
+      rows.forEach((r) => {
+        const ok = words.every((w) => (r.dataset.s || '').includes(w));
+        r.style.display = ok ? '' : 'none';
+        if (ok) shown++;
+      });
+      listEl.style.display = shown ? '' : 'none';
+      const count = listEl.previousElementSibling && listEl.previousElementSibling.querySelector('span');
+      if (count) count.textContent = words.length ? `${shown} / ${rows.length}` : rows.length;
+      if (shown) any = true;
+    });
+    const none = document.getElementById('q-nomatch');
+    if (none) none.style.display = words.length && !any ? 'block' : 'none';
   }
   function list(rows, ranked) {
     const buck = tab === 'buck';
@@ -295,7 +333,7 @@
            <div class="q-lb left${p.leftLb != null && p.leftLb < 0 ? ' neg' : ''}"><span class="k">${esc(t(L.leftLb))}</span>${p.leftLb == null ? '—' : lbTxt(p.leftLb)}</div>`
         : `<div class="q-lb"><span class="k">${esc(t(L.buckedLb))}</span>${p.buckedFlowerLb == null ? '—' : lbTxt(p.buckedFlowerLb)}</div>
            <div class="q-lb left"><span class="k">${esc(t(L.trimmedLb))}</span>${lbTxt(p.trimmedLb || 0)}</div>`;
-      return `<div class="q-row"><div class="q-n">${ranked ? i + 1 : '●'}</div>
+      return `<div class="q-row" data-s="${esc(searchKey(p))}"><div class="q-n">${ranked ? i + 1 : '●'}</div>
         <div class="q-main"><div class="q-strain">${esc(p.strain || '—')}${abbr ? ` · ${esc(abbr)}` : ''}${tags}</div>
           <div class="q-uid">${sub}</div>${buck ? estLine(p) : ''}</div>
         <div class="q-lbs">${lbs}</div>
