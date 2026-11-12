@@ -247,6 +247,22 @@
     .entry-table tr.fresh td{color:var(--accent)}
     .entry-table .li-del{min-height:40px}
     .entry-empty{color:var(--muted);font-size:.85rem;margin-top:12px}
+    /* The primary log (Bucking's bucked flower, Hand Trim's weighing
+       worksheet): its entry bar tops the form, and on a wide screen its
+       logged rows sit in a column on the right, always in view. */
+    .side-log{display:none}
+    @media (min-width:1100px){
+      main.has-side{max-width:1320px;display:grid;grid-template-columns:minmax(0,720px) minmax(340px,1fr);gap:28px;align-items:start}
+      main.has-side .main-col{min-width:0}
+      main.has-side .side-log{display:block;position:sticky;top:calc(70px + env(safe-area-inset-top));
+        max-height:calc(100vh - 70px - 110px - env(safe-area-inset-top));overflow:auto;
+        background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px 18px}
+      body.on-queue main.has-side .side-log{display:none}
+      main.has-side .side-log .entry-table{margin-top:4px}
+      main.has-side .side-log .li-total{position:sticky;bottom:-16px;background:var(--surface);padding-bottom:12px;margin-bottom:-4px}
+      .actions-inner.has-side{max-width:1320px}
+    }
+    .side-log-hd{font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
 
     /* Crew check (Pre-Roll's attendance): the day's scheduled people, here / not here, plus added. */
     .cc-src{font-family:'DM Mono',monospace;font-size:.78rem;color:var(--muted);margin-bottom:10px}
@@ -1581,11 +1597,14 @@
         `</label>`).join('') +
       `<button type="button" class="entry-add" id="add_${f.k}">${t(EL.add)}</button></div>` +
       `<div class="entry-msg" id="em_${f.k}"></div>` +
+      `<div class="entry-log" id="elog_${f.k}">` +
       `<div class="li-scroll"><table class="li-table entry-table"><tbody id="li_${f.k}"></tbody></table></div>` +
       `<div class="entry-empty" id="ee_${f.k}">${t(EL.none)}</div>` +
-      `<div class="li-total"><span class="k" id="lic_${f.k}"></span><span class="v" id="lit_${f.k}">0</span></div>`;
+      `<div class="li-total"><span class="k" id="lic_${f.k}"></span><span class="v" id="lit_${f.k}">0</span></div></div>`;
 
     const inp = (c) => wrap.querySelector(`#e_${f.k}_${c.k}`);
+    // The logged rows (may move to the side column — placeSideLog).
+    const logEl = wrap.querySelector(`#elog_${f.k}`);
     const msg = wrap.querySelector(`#em_${f.k}`);
     let fresh = new Set();   // ids of the row(s) just added
 
@@ -1593,7 +1612,7 @@
       const rows = values[f.k] || [];
       rows.forEach((r, i) => nums.forEach((c) => { r[c.k] = i + 1; }));
       nums.forEach((c) => { wrap.querySelector(`#en_${f.k}_${c.k}`).textContent = String(rows.length + 1); });
-      const tbody = wrap.querySelector(`#li_${f.k}`);
+      const tbody = logEl.querySelector(`#li_${f.k}`);
       tbody.innerHTML = '';
       // With day tabs, only the picked day's rows (the lot's total is in the
       // calcs below the log).
@@ -1626,13 +1645,13 @@
         };
         tbody.appendChild(tr);
       });
-      wrap.querySelector(`#ee_${f.k}`).style.display = shown.length ? 'none' : 'block';
-      wrap.querySelector(`#lic_${f.k}`).textContent = (byDay(f) ? `${dayLabel(curDay)} · ` : '') +
+      logEl.querySelector(`#ee_${f.k}`).style.display = shown.length ? 'none' : 'block';
+      logEl.querySelector(`#lic_${f.k}`).textContent = (byDay(f) ? `${dayLabel(curDay)} · ` : '') +
         `${shown.length} ${t(shown.length === 1 ? EL.entry : EL.entries)}`;
       if (byDay(f)) {
         const tot = shown.reduce((a, r) => a + (Number(r[f.totalCol]) || 0), 0);
         const tc = f.cols.find((c) => c.k === f.totalCol);
-        wrap.querySelector(`#lit_${f.k}`).textContent = fmtNum(tot, tc && tc.dp !== undefined ? tc.dp : 0);
+        logEl.querySelector(`#lit_${f.k}`).textContent = fmtNum(tot, tc && tc.dp !== undefined ? tc.dp : 0);
       }
       if (byDay(f)) renderDays();
     };
@@ -1866,6 +1885,34 @@
     form.appendChild(wrap);
     els[f.k] = wrap;
   });
+
+  // ── Primary log ───────────────────────────────────────────────────────────
+  // A running log marked `primary` (Bucking's bucked flower, Hand Trim's and
+  // Smalls Hand Trim's weighing worksheet) is what the crew keeps coming
+  // back to between tabs: its entry bar goes to the very top of the form,
+  // and on a wide screen (1100px+) its logged rows move to a column on the
+  // right that stays in view. Narrower, they stay under the entry bar.
+  const primaryField = station.fields.find((f) => f.primary && f.t === 'lineitems' && f.entry);
+  if (primaryField && els[primaryField.k]) {
+    const pWrap = els[primaryField.k];
+    form.prepend(pWrap);
+    const main = document.querySelector('main');
+    const col = document.createElement('div');
+    col.className = 'main-col';
+    [...main.children].forEach((c) => col.appendChild(c));
+    const side = document.createElement('aside');
+    side.className = 'side-log';
+    side.innerHTML = `<div class="side-log-hd">${escapeHtml(t(primaryField.l))}</div>`;
+    main.append(col, side);
+    main.classList.add('has-side');
+    document.querySelector('.actions-inner').classList.add('has-side');
+    const logEl = pWrap.querySelector(`#elog_${primaryField.k}`);
+    const wide = window.matchMedia('(min-width:1100px)');
+    const placeSideLog = () => { (wide.matches ? side : pWrap).appendChild(logEl); };
+    placeSideLog();
+    if (wide.addEventListener) wide.addEventListener('change', placeSideLog);
+    else if (wide.addListener) wide.addListener(placeSideLog);
+  }
 
   // ── Wire inputs ───────────────────────────────────────────────────────────
   station.fields.forEach((f) => {

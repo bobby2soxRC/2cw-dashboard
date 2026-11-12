@@ -46,6 +46,10 @@
 //   legacyTotal (entry log) a record saved with no rows but this key set
 //          (the field was one number before) opens with that number as
 //          its first row (Bucking's stems).
+//   primary (entry log) the log the crew keeps coming back to (Bucking's
+//          bucked flower, Hand Trim's weighing worksheet): its entry bar is
+//          at the very top of the form, and on a wide screen its rows are
+//          in a column on the right (ops_form.html, "Primary log").
 //   group  (lineitems, with `lots`) { k, t, ref, allowOther, req, l, add } —
 //          the rows come in tables, one per value of `k` picked at the
 //          table's top (Harvest's source license); every row carries it, and
@@ -732,16 +736,21 @@ const OPERATIONS_STATIONS = [
       { k: 'dryLeftLb', t: 'calc', flag: (x) => x < 0,
         calc: (v) => (num(v.dryUnbuckedLb) > 0 ? num(v.dryUnbuckedLb) - (v.boxes || []).reduce((a, r) => a + num(r.weightLb), 0) : null),
         l: { en: 'Dry Unbucked Left (lbs)', es: 'Peso seco restante (lbs)' } },
-      // Bucking only part of the package (a work order's amount): submitting
-      // leaves Dry Unbucked Left in the bucking queue and On-Stem inventory
-      // under the same tag, for a later round (buckablePackages). Each round
-      // goes to Hand Trim on its own (buckedLots `chain`).
-      { k: 'restOnStem', t: 'check',
-        l: { en: 'Bucking only part — the rest stays on stem', es: 'Solo se desvara una parte — el resto se queda en tallo' },
-        hint: { en: 'Tick when you stop before the package is done. Submitting puts Dry Unbucked Left back in the bucking queue under the same tag.',
-                es: 'Marque cuando pare antes de terminar el paquete. Al enviar, el peso seco restante vuelve a la fila de desvarado con la misma etiqueta.' } },
+      // Bucking only part of the package (a work order's amount) needs
+      // nothing ticked: whatever the boxes didn't take (Dry Unbucked Left)
+      // stays in the bucking queue and On-Stem inventory under the same tag
+      // for a later round (buckablePackages / buckLeftLb in ops_common.js),
+      // and each round goes to Hand Trim on its own (buckedLots `chain`).
+      // Boxes can weigh in short of the take-down weight (it dried more), so
+      // when weight is left, `lotDone` says the package is finished anyway.
+      { k: 'lotDone', t: 'check', showIf: (v) => Number(v.dryLeftLb) > 0.05,
+        l: { en: 'Package finished — nothing left on stem', es: 'Paquete terminado — no queda nada en tallo' },
+        hint: { en: 'Tick only if the whole package is bucked and the boxes just weighed less than its dry weight. Leave it unticked if there is more to buck: Dry Unbucked Left goes back in the bucking queue under the same tag.',
+                es: 'Marque solo si se desvaró todo el paquete y las cajas pesaron menos que su peso seco. Déjelo sin marcar si queda más por desvarar: el peso seco restante vuelve a la fila de desvarado con la misma etiqueta.' } },
 
-      { k: 'bucked', t: 'lineitems', entry: true, req: true,
+      // `primary`: the log the crew lives in — at the top of the form, its
+      // logged rows in a column on the right on a wide screen (ops_form.html).
+      { k: 'bucked', t: 'lineitems', entry: true, req: true, primary: true,
         l: { en: 'Bucked Flower — by Person', es: 'Flor desvarada — por persona' },
         hint: { en: 'Employee # if they have one, otherwise their name. The same person can be logged many times.',
                 es: 'N.º de empleado si tiene, si no su nombre. La misma persona puede registrarse muchas veces.' },
@@ -818,15 +827,35 @@ const OPERATIONS_STATIONS = [
       { k: 'stemLb', t: 'calc',
         calc: (v) => (v.stems || []).reduce((a, r) => a + num(r.weightLb), 0),
         l: { en: 'Total Stems (lbs)', es: 'Palo total (lbs)' } },
-      { k: 'moldLb', t: 'number', min: 0, step: 0.01,
-        l: { en: 'Mold (lbs)', es: 'Moho (lbs)' } },
-      { k: 'floorWasteLb', t: 'number', min: 0, step: 0.01,
-        l: { en: 'Floor Waste (lbs)', es: 'Desperdicio del piso (lbs)' } },
-      { k: 'closeOutFill', t: 'fill', keys: ['stems', 'moldLb', 'floorWasteLb'],
+      // Mold and floor waste are running logs too (14 lb, then another 2…),
+      // totalled into moldLb / floorWasteLb, which everything downstream
+      // reads. Pages saved when each was one number come back with it as
+      // their first row (`legacyTotal`).
+      { k: 'mold', t: 'lineitems', entry: true, legacyTotal: 'moldLb',
+        l: { en: 'Mold', es: 'Moho' },
+        hint: { en: 'Each weighing of mold. Add more as it comes.', es: 'Cada pesada de moho. Agregue más según salga.' },
+        cols: [
+          { k: 'weightLb', t: 'number', l: { en: 'Weight (lbs)', es: 'Peso (lbs)' }, min: 0, step: 0.01, req: true, dp: 2 }
+        ],
+        totalCol: 'weightLb' },
+      { k: 'moldLb', t: 'calc',
+        calc: (v) => (v.mold || []).reduce((a, r) => a + num(r.weightLb), 0),
+        l: { en: 'Total Mold (lbs)', es: 'Moho total (lbs)' } },
+      { k: 'floorWaste', t: 'lineitems', entry: true, legacyTotal: 'floorWasteLb',
+        l: { en: 'Floor Waste', es: 'Desperdicio del piso' },
+        hint: { en: 'Each weighing of floor waste. Add more as it comes.', es: 'Cada pesada de desperdicio del piso. Agregue más según salga.' },
+        cols: [
+          { k: 'weightLb', t: 'number', l: { en: 'Weight (lbs)', es: 'Peso (lbs)' }, min: 0, step: 0.01, req: true, dp: 2 }
+        ],
+        totalCol: 'weightLb' },
+      { k: 'floorWasteLb', t: 'calc',
+        calc: (v) => (v.floorWaste || []).reduce((a, r) => a + num(r.weightLb), 0),
+        l: { en: 'Total Floor Waste (lbs)', es: 'Desperdicio del piso total (lbs)' } },
+      { k: 'closeOutFill', t: 'fill', keys: ['stems', 'mold', 'floorWaste'],
         // The missing one is what's left of the boxes taken once everything
         // else coming out is counted, so the loss comes to zero. Worked out
-        // for the stems log, it's added as one row.
-        fill: (v, key) => num(v.startingDryLb) - sum(v, BUCK_OUTPUTS.filter((k) => k !== (key === 'stems' ? 'stemLb' : key))),
+        // for a log, it's added as one row.
+        fill: (v, key) => num(v.startingDryLb) - sum(v, BUCK_OUTPUTS.filter((k) => k !== ({ stems: 'stemLb', mold: 'moldLb', floorWaste: 'floorWasteLb' }[key] || key))),
         l: { en: 'Calculate', es: 'Calcular' },
         hint: { en: 'Weighed two of Stems, Mold and Floor Waste? Calculate fills in the third: Total Boxes Taken minus everything else that came out (bucked, smalls, trim…).',
                 es: '¿Pesó dos de Palo, Moho y Desperdicio del piso? Calcular llena el tercero: total de cajas menos todo lo demás que salió.' } },
@@ -994,7 +1023,7 @@ const OPERATIONS_STATIONS = [
 
       // The weighing worksheet from the paper form, as a running log (like
       // Bucking's) so two tablets on one lot merge their bags.
-      { k: 'weights', t: 'lineitems', entry: true, req: true,
+      { k: 'weights', t: 'lineitems', entry: true, req: true, primary: true,
         l: { en: 'Finished Flower — Weighing Worksheet', es: 'Flor terminada — hoja de pesaje' },
         hint: { en: 'Employee #, how many full bags and their grams each (454 = 1 lb), plus any partial bag — Add logs a line for each bag.',
                 es: 'N.º de empleado, cuántas bolsas llenas y sus gramos c/u (454 = 1 lb), más una bolsa parcial — Agregar registra una línea por bolsa.' },
@@ -1127,7 +1156,7 @@ const OPERATIONS_STATIONS = [
 
       // Finished Smalls — Weighing Worksheet, as a running log (like Hand
       // Trim's) so two tablets on one package merge their bags.
-      { k: 'weights', t: 'lineitems', entry: true, req: true,
+      { k: 'weights', t: 'lineitems', entry: true, req: true, primary: true,
         l: { en: 'Finished Smalls — Weighing Worksheet', es: 'Smalls terminados — hoja de pesaje' },
         hint: { en: 'Employee #, how many full bags and their grams each (454 = 1 lb), plus any partial bag — Add logs a line for each bag.',
                 es: 'N.º de empleado, cuántas bolsas llenas y sus gramos c/u (454 = 1 lb), más una bolsa parcial — Agregar registra una línea por bolsa.' },

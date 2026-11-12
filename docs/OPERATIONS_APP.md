@@ -571,8 +571,7 @@ order is for, typed by a 'buck release' manager (blank = all of it;
 `buck_queue` row as the order, each write re-reading the row so order and
 targets don't overwrite each other). A Bucking round submitted on the
 package after it was set uses it up (`buckTargetFor`). The Bucking form
-shows it when the package is picked ("Work order: buck X lb of this, then
-tick 'Bucking only part'") and its Queue tab has a To buck column. Under
+shows it when the package is picked ("Work order: buck X lb of this") and its Queue tab has a To buck column. Under
 each row, **Est. A flower** from that amount (or all of it) — Raw
 Inventory's `FlowerYield.estimate`, on-stem → bucked → A flower — with a
 badge saying what it's based on: **Data: this lot** / **Data: strain · n
@@ -1457,16 +1456,22 @@ follows the picked day, and each day can have its own Project
 (`projectDays`). Rows logged before the tabs already carry their `day`, so
 open pages split into tabs by themselves.
 
-**Bucking only part of a package** (since 2026-10-29). A work order can say
-how much of a package to buck (**To buck** on Work Orders, below); the
-crew stops there, ticks **Bucking only part — the rest stays on stem**
-(`restOnStem`) and submits. That record's **Dry Unbucked Left** (`dryLeftLb`)
-stays in the bucking queue and On-Stem inventory under the same tag
-(`buckablePackages`: a package whose latest Bucking has `restOnStem` is
-still buckable, `unbuckedLb` = what's left, `buckedBeforeLb` = boxes taken
-on earlier rounds). The next round starts a new page on it, filled with
-what's left. A package without `restOnStem` on its latest round is done, as
-before. Each round goes to Hand Trim on its own: `buckedLots(…, trims)`
+**Bucking only part of a package** (since 2026-10-29; by weight since
+2026-11-12). A work order can say how much of a package to buck (**To buck**
+on Work Orders, below); the crew stops there and submits — nothing to tick.
+Whatever the boxes didn't take, the record's **Dry Unbucked Left**
+(`dryLeftLb` = take-down weight − boxes), stays in the bucking queue and
+On-Stem inventory under the same tag (`buckablePackages` /
+`buckLeftLb` in `ops_common.js`: a package whose latest Bucking left over
+0.05 lb is still buckable, `unbuckedLb` = what's left, `buckedBeforeLb` =
+boxes taken on earlier rounds). The next round starts a new page on it,
+filled with what's left. Boxes can come in short of the take-down weight
+(more drying), so while weight is left the form shows **Package finished —
+nothing left on stem** (`lotDone`); ticking it makes the package done
+anyway. A record left in the queue by mistake is fixed by ticking that box
+in Fix form. (Until 2026-11-12 the crew had to tick "Bucking only part"
+(`restOnStem`, no longer on the form) or the package counted as done; old
+records are read by weight now too.) Each round goes to Hand Trim on its own: `buckedLots(…, trims)`
 makes one lot per such package (`chain: true`) from the rounds submitted
 since its last Hand Trim / Machine Trim (by `submittedAt`), plus an open
 page, and the trim queue keeps it while `pending`. Without `trims`
@@ -1523,9 +1528,19 @@ pulled and remaining (this page's own boxes live, as typed) — with **Start →
 new page with that UID, `?set_sourceUid=`) or **Open →** (the page it's
 on), and the package dropdown lists in the same order.
 
-The page has four running logs — `lineitems` with `entry: true`: an entry
+The page has running logs — `lineitems` with `entry: true`: an entry
 bar (the row's boxes plus Add; Enter moves to the next box and adds once
-they're filled), and the rows logged so far underneath, newest first:
+they're filled), and the rows logged so far underneath, newest first.
+
+**Primary log** (since 2026-11-12). The log the crew keeps coming back to
+between tabs — Bucking's `bucked`, and the weighing worksheet (`weights`) on
+Hand Trim, Smalls Hand Trim and Hand Trim — Past Records — is marked
+`primary: true`: its entry bar is the first thing on the form (above Date),
+and on a screen 1100px or wider its logged rows and total move to a column
+on the right that stays in view while the form scrolls ("Primary log" in
+`ops_form.html`; the `.entry-log` block moves between the field and the
+`.side-log` aside as the width changes). Hidden on the Queue tab. Narrower
+screens keep the rows under the entry bar. Bucking's logs:
 - `boxes` — each box taken off the dry unbucked weight: lbs, with Box #
   filled in by itself (a `rownum` column: 1, 2, 3… in the order logged,
   renumbered when one is removed). Totals to `startingDryLb`, and "Dry Unbucked Left" is
@@ -1546,13 +1561,17 @@ they're filled), and the rows logged so far underneath, newest first:
   single number open with that number as the log's first row
   (`legacyTotal: 'stemLb'`, fixed `_id` `legacy-stems` so two tablets don't
   both add it).
+- `mold`, `floorWaste` — mold and floor waste, the same kind of log (since
+  2026-11-12: 14 lb, then another 2 lb later). Total to `moldLb` /
+  `floorWasteLb`, which reports, the flow and Raw Inventory read as before;
+  pages saved when each was one number open with it as the first row
+  (`legacyTotal`).
 
-Then at close-out the stems log, mold (`moldLb`) and floor waste
-(`floorWasteLb`), with a **Calculate** button (a `fill` field): with two of
-the three weighed (stems counts as weighed once it has a row), it fills in
-the third as Total Boxes Taken minus everything else that came out (bucked
-+ trim + the other two), so the loss comes to zero. Worked out for stems,
-it's added to the log as one row. Then the summary: total out
+Then at close-out the stems, mold and floor waste logs, with a
+**Calculate** button (a `fill` field): with two of the three weighed (a log
+counts as weighed once it has a row), it fills in the third as Total Boxes
+Taken minus everything else that came out (bucked + trim + the other two),
+so the loss comes to zero, added to that log as one row. Then the summary: total out
 (bucked + trim + stems + mold + floor waste), loss in lbs and %, and
 bucked yield %. Mold and floor waste count as `waste` in the flow. Submit closes the batch. The record keeps the old field
 names, so Machine Trim's prefill (`buckedFlowerLb`), the yield calc and the

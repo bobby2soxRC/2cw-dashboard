@@ -328,10 +328,11 @@ Details: "Product Transfer — Incoming" in `docs/OPERATIONS_APP.md`.
 
 Work Orders (`work_orders.html`) Bucking rows have **To buck** (manager
 sets lbs; `targets` on the `buck_queue` row) and an **Est. A flower** from
-it, badged as lot / strain data or the average (`flower_yield.js`). The
-Bucking form has **Bucking only part — the rest stays on stem**
-(`restOnStem`): submitting leaves Dry Unbucked Left in the queue under the
-same tag (`buckablePackages`), and Hand Trim gets each round
+it, badged as lot / strain data or the average (`flower_yield.js`). A
+Bucking whose boxes leave Dry Unbucked Left keeps the rest in the queue
+under the same tag (`buckablePackages` / `buckLeftLb`, by weight since
+2026-11-12) unless **Package finished** (`lotDone`) is ticked, and Hand
+Trim gets each round
 (`buckedLots(…, trims)`, `chain`). Both Bucking and Hand Trim tabs have an
 Open table above the ranked Up next list. No SQL. Details: "Bucking only
 part of a package" and "Work Orders" in `docs/OPERATIONS_APP.md`.
