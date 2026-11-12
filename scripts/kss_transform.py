@@ -624,6 +624,8 @@ _MENU_PRICE_FALLBACK = {
     # Indoor Flower 20% promo off too — MENU_PROMOS in menu.html).
     ("Mendo", "Greenhouse Flower", "Bigs", "3.5g"): 11.00,
     ("Mendo", "Greenhouse Flower", "Bigs", "14g"):  30.00,
+    # Robert, 2026-11-12: Howie Roll Pre-Ground 14g pouch, no promo.
+    ("Howie Roll", "Flower", "Pre-Ground", "14g"):  12.50,
 }
 
 _MENU_WITHOUT_BSKU = {("Howie Roll", "Flower", "Pre-Ground"), ("Mendo", "Greenhouse Flower", "Bigs")}
