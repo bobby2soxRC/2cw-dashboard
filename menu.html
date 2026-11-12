@@ -663,7 +663,7 @@ function sheetCardTitle(brand, category, format, kind, size){
     return 'Pre-Roll Multipack';
   }
   if(category === 'Flower'){
-    if(brand === 'Howie Roll') return 'Premium Smalls';
+    if(brand === 'Howie Roll') return /\bground\b/.test(k) ? 'Pre-Ground Pouches' : 'Premium Smalls';
     if(brand === 'Mendo') return k.includes('greenhouse') ? 'Greenhouse Flower' : 'Indoor Flower';
     // collab packs: "Soma Rosa" + "Farms x Nameless Flower"
     if(k.includes(' x ')) return `${brand.replace(/ Farms$/, '')} ${kind.replace(/\s*flower$/i, '')}`;

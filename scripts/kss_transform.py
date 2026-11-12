@@ -352,6 +352,13 @@ _NAME_RULES = [
     (r"howie roll.*(?:preroll|pre-roll).*6pk",
         "Howie Roll", "Preroll", "6pk", "3.5g"),
 
+    # Howie Roll Pre-Ground flower, 14g pouches (2026-11, per Niki) — must come
+    # before Smalls, or "Howie Roll Ground Flower 14g …" lands in Smalls 14g.
+    # Until DATAV has a Flower / Pre-Ground BSKU these have no BSKU: the menu
+    # still lists them (no price), sales/inventory reports show them as Unknown.
+    (r"howie roll.*\bground\b",
+        "Howie Roll", "Flower", "Pre-Ground", None),
+
     # Howie Roll Flower Smalls
     (r"howie roll.*flower",
         "Howie Roll", "Flower", "Smalls", None),
@@ -573,6 +580,7 @@ def split_on_floor_by_warehouse(inventory_rows):
 # under a reasonable label instead of silently vanishing from the menu.
 _SECTION_TITLES = {
     ("Flower", "Smalls"):              "Premium Smalls",
+    ("Flower", "Pre-Ground"):          "Pre-Ground Pouches",
     ("Flower", "Bigs"):                "Flower",
     ("Indoor Flower", "Bigs"):         "Indoor Flower",
     ("Greenhouse Flower", "Bigs"):     "Greenhouse Flower",
@@ -585,6 +593,9 @@ _SECTION_TITLES = {
     ("Concentrate", "Live Rosin Jar"): "Live Rosin",
     ("Vape", "Live Resin AIO"):        "All-In-One Vape",
 }
+
+# New lines listed on the menu even before DATAV has a BSKU row for them.
+_MENU_WITHOUT_BSKU = {("Howie Roll", "Flower", "Pre-Ground")}
 
 _WEIGHT_LABELS = {"1g": "1G", "3.5g": "1/8", "14g": "14G", "28g": "28G", "5g": "5G"}
 _WEIGHT_ORDER  = {"1g": 0, "3.5g": 1, "5g": 2, "14g": 3, "28g": 4}
@@ -654,16 +665,28 @@ def build_menu(product_catalog: dict, products_raw: list, inventory_raw: list,
     # Case pack size per BSKU — case format is a packaging attribute, not a
     # strain-level one, so it should be uniform per BSKU. Mode guards against
     # the rare data-entry outlier in an individual product record.
+    # A new line DATAV may not have a BSKU for yet (_MENU_WITHOUT_BSKU) is
+    # keyed by brand|category|subcategory|weight so it still makes the menu,
+    # unpriced. Other formats without a BSKU stay off, as before.
+    def menu_key(cat):
+        if not cat:
+            return ""
+        if cat.get("bsku"):
+            return cat["bsku"]
+        if (cat.get("brand"), cat.get("category"), cat.get("subcategory")) not in _MENU_WITHOUT_BSKU:
+            return ""
+        return "|".join((cat["brand"], cat["category"], cat["subcategory"], cat.get("weight_unit") or ""))
+
     case_units_votes = defaultdict(Counter)
     for p in products_raw:
         pid = str(p.get("ProductID") or "")
-        cat = product_catalog.get(pid)
-        if not cat or not cat.get("bsku"):
+        key = menu_key(product_catalog.get(pid))
+        if not key:
             continue
         cases = p.get("WholesaleUnitsPerCase")
         if cases:
             try:
-                case_units_votes[cat["bsku"]][int(cases)] += 1
+                case_units_votes[key][int(cases)] += 1
             except (TypeError, ValueError):
                 pass
     case_units_by_bsku = {
@@ -683,10 +706,10 @@ def build_menu(product_catalog: dict, products_raw: list, inventory_raw: list,
             continue
         pid = str(row.get("ProductID") or "")
         cat = product_catalog.get(pid)
-        if not cat or not cat.get("bsku"):
+        bsku = menu_key(cat)
+        if not bsku:
             skipped += 1
             continue
-        bsku = cat["bsku"]
         if STATUS_BY_BSKU.get(bsku, "").strip().lower() in _INACTIVE_STATUSES:
             continue
 
