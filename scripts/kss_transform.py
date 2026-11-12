@@ -617,6 +617,15 @@ _SECTION_TITLES = {
 }
 
 # New lines listed on the menu even before DATAV has a BSKU row for them.
+# Menu list prices (per unit) for formats DATAV has no price for yet;
+# DATAV's "List Price Each" wins once it has one.
+_MENU_PRICE_FALLBACK = {
+    # Robert, 2026-11-12: Mixed Light $11 / 8th, $30 / 14g (menu takes the
+    # Indoor Flower 20% promo off too — MENU_PROMOS in menu.html).
+    ("Mendo", "Greenhouse Flower", "Bigs", "3.5g"): 11.00,
+    ("Mendo", "Greenhouse Flower", "Bigs", "14g"):  30.00,
+}
+
 _MENU_WITHOUT_BSKU = {("Howie Roll", "Flower", "Pre-Ground"), ("Mendo", "Greenhouse Flower", "Bigs")}
 
 _WEIGHT_LABELS = {"1g": "1G", "3.5g": "1/8", "14g": "14G", "28g": "28G", "5g": "5G"}
@@ -795,6 +804,8 @@ def build_menu(product_catalog: dict, products_raw: list, inventory_raw: list,
         ]
 
         unit_price  = PRICE_BY_BSKU.get(bsku_for_pricing)
+        if unit_price is None:
+            unit_price = _MENU_PRICE_FALLBACK.get((brand, category, subcategory, wu))
         case_units  = case_units_by_bsku.get(bsku_for_pricing)
         base_title  = _SECTION_TITLES.get((category, subcategory), f"{subcategory} {category}".strip())
         size_label  = _WEIGHT_LABELS.get(wu, wu)
