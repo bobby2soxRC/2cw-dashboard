@@ -821,15 +821,35 @@ const OPERATIONS_STATIONS = [
       { k: 'stemLb', t: 'calc',
         calc: (v) => (v.stems || []).reduce((a, r) => a + num(r.weightLb), 0),
         l: { en: 'Total Stems (lbs)', es: 'Palo total (lbs)' } },
-      { k: 'moldLb', t: 'number', min: 0, step: 0.01,
-        l: { en: 'Mold (lbs)', es: 'Moho (lbs)' } },
-      { k: 'floorWasteLb', t: 'number', min: 0, step: 0.01,
-        l: { en: 'Floor Waste (lbs)', es: 'Desperdicio del piso (lbs)' } },
-      { k: 'closeOutFill', t: 'fill', keys: ['stems', 'moldLb', 'floorWasteLb'],
+      // Mold and floor waste are running logs too (14 lb, then another 2…),
+      // totalled into moldLb / floorWasteLb, which everything downstream
+      // reads. Pages saved when each was one number come back with it as
+      // their first row (`legacyTotal`).
+      { k: 'mold', t: 'lineitems', entry: true, legacyTotal: 'moldLb',
+        l: { en: 'Mold', es: 'Moho' },
+        hint: { en: 'Each weighing of mold. Add more as it comes.', es: 'Cada pesada de moho. Agregue más según salga.' },
+        cols: [
+          { k: 'weightLb', t: 'number', l: { en: 'Weight (lbs)', es: 'Peso (lbs)' }, min: 0, step: 0.01, req: true, dp: 2 }
+        ],
+        totalCol: 'weightLb' },
+      { k: 'moldLb', t: 'calc',
+        calc: (v) => (v.mold || []).reduce((a, r) => a + num(r.weightLb), 0),
+        l: { en: 'Total Mold (lbs)', es: 'Moho total (lbs)' } },
+      { k: 'floorWaste', t: 'lineitems', entry: true, legacyTotal: 'floorWasteLb',
+        l: { en: 'Floor Waste', es: 'Desperdicio del piso' },
+        hint: { en: 'Each weighing of floor waste. Add more as it comes.', es: 'Cada pesada de desperdicio del piso. Agregue más según salga.' },
+        cols: [
+          { k: 'weightLb', t: 'number', l: { en: 'Weight (lbs)', es: 'Peso (lbs)' }, min: 0, step: 0.01, req: true, dp: 2 }
+        ],
+        totalCol: 'weightLb' },
+      { k: 'floorWasteLb', t: 'calc',
+        calc: (v) => (v.floorWaste || []).reduce((a, r) => a + num(r.weightLb), 0),
+        l: { en: 'Total Floor Waste (lbs)', es: 'Desperdicio del piso total (lbs)' } },
+      { k: 'closeOutFill', t: 'fill', keys: ['stems', 'mold', 'floorWaste'],
         // The missing one is what's left of the boxes taken once everything
         // else coming out is counted, so the loss comes to zero. Worked out
-        // for the stems log, it's added as one row.
-        fill: (v, key) => num(v.startingDryLb) - sum(v, BUCK_OUTPUTS.filter((k) => k !== (key === 'stems' ? 'stemLb' : key))),
+        // for a log, it's added as one row.
+        fill: (v, key) => num(v.startingDryLb) - sum(v, BUCK_OUTPUTS.filter((k) => k !== ({ stems: 'stemLb', mold: 'moldLb', floorWaste: 'floorWasteLb' }[key] || key))),
         l: { en: 'Calculate', es: 'Calcular' },
         hint: { en: 'Weighed two of Stems, Mold and Floor Waste? Calculate fills in the third: Total Boxes Taken minus everything else that came out (bucked, smalls, trim…).',
                 es: '¿Pesó dos de Palo, Moho y Desperdicio del piso? Calcular llena el tercero: total de cajas menos todo lo demás que salió.' } },

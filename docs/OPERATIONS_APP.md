@@ -1551,13 +1551,17 @@ they're filled), and the rows logged so far underneath, newest first:
   single number open with that number as the log's first row
   (`legacyTotal: 'stemLb'`, fixed `_id` `legacy-stems` so two tablets don't
   both add it).
+- `mold`, `floorWaste` — mold and floor waste, the same kind of log (since
+  2026-11-12: 14 lb, then another 2 lb later). Total to `moldLb` /
+  `floorWasteLb`, which reports, the flow and Raw Inventory read as before;
+  pages saved when each was one number open with it as the first row
+  (`legacyTotal`).
 
-Then at close-out the stems log, mold (`moldLb`) and floor waste
-(`floorWasteLb`), with a **Calculate** button (a `fill` field): with two of
-the three weighed (stems counts as weighed once it has a row), it fills in
-the third as Total Boxes Taken minus everything else that came out (bucked
-+ trim + the other two), so the loss comes to zero. Worked out for stems,
-it's added to the log as one row. Then the summary: total out
+Then at close-out the stems, mold and floor waste logs, with a
+**Calculate** button (a `fill` field): with two of the three weighed (a log
+counts as weighed once it has a row), it fills in the third as Total Boxes
+Taken minus everything else that came out (bucked + trim + the other two),
+so the loss comes to zero, added to that log as one row. Then the summary: total out
 (bucked + trim + stems + mold + floor waste), loss in lbs and %, and
 bucked yield %. Mold and floor waste count as `waste` in the flow. Submit closes the batch. The record keeps the old field
 names, so Machine Trim's prefill (`buckedFlowerLb`), the yield calc and the
