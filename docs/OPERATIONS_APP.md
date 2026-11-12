@@ -1528,9 +1528,19 @@ pulled and remaining (this page's own boxes live, as typed) — with **Start →
 new page with that UID, `?set_sourceUid=`) or **Open →** (the page it's
 on), and the package dropdown lists in the same order.
 
-The page has four running logs — `lineitems` with `entry: true`: an entry
+The page has running logs — `lineitems` with `entry: true`: an entry
 bar (the row's boxes plus Add; Enter moves to the next box and adds once
-they're filled), and the rows logged so far underneath, newest first:
+they're filled), and the rows logged so far underneath, newest first.
+
+**Primary log** (since 2026-11-12). The log the crew keeps coming back to
+between tabs — Bucking's `bucked`, and the weighing worksheet (`weights`) on
+Hand Trim, Smalls Hand Trim and Hand Trim — Past Records — is marked
+`primary: true`: its entry bar is the first thing on the form (above Date),
+and on a screen 1100px or wider its logged rows and total move to a column
+on the right that stays in view while the form scrolls ("Primary log" in
+`ops_form.html`; the `.entry-log` block moves between the field and the
+`.side-log` aside as the width changes). Hidden on the Queue tab. Narrower
+screens keep the rows under the entry bar. Bucking's logs:
 - `boxes` — each box taken off the dry unbucked weight: lbs, with Box #
   filled in by itself (a `rownum` column: 1, 2, 3… in the order logged,
   renumbered when one is removed). Totals to `startingDryLb`, and "Dry Unbucked Left" is

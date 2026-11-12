@@ -46,6 +46,10 @@
 //   legacyTotal (entry log) a record saved with no rows but this key set
 //          (the field was one number before) opens with that number as
 //          its first row (Bucking's stems).
+//   primary (entry log) the log the crew keeps coming back to (Bucking's
+//          bucked flower, Hand Trim's weighing worksheet): its entry bar is
+//          at the very top of the form, and on a wide screen its rows are
+//          in a column on the right (ops_form.html, "Primary log").
 //   group  (lineitems, with `lots`) { k, t, ref, allowOther, req, l, add } —
 //          the rows come in tables, one per value of `k` picked at the
 //          table's top (Harvest's source license); every row carries it, and
@@ -744,7 +748,9 @@ const OPERATIONS_STATIONS = [
         hint: { en: 'Tick only if the whole package is bucked and the boxes just weighed less than its dry weight. Leave it unticked if there is more to buck: Dry Unbucked Left goes back in the bucking queue under the same tag.',
                 es: 'Marque solo si se desvaró todo el paquete y las cajas pesaron menos que su peso seco. Déjelo sin marcar si queda más por desvarar: el peso seco restante vuelve a la fila de desvarado con la misma etiqueta.' } },
 
-      { k: 'bucked', t: 'lineitems', entry: true, req: true,
+      // `primary`: the log the crew lives in — at the top of the form, its
+      // logged rows in a column on the right on a wide screen (ops_form.html).
+      { k: 'bucked', t: 'lineitems', entry: true, req: true, primary: true,
         l: { en: 'Bucked Flower — by Person', es: 'Flor desvarada — por persona' },
         hint: { en: 'Employee # if they have one, otherwise their name. The same person can be logged many times.',
                 es: 'N.º de empleado si tiene, si no su nombre. La misma persona puede registrarse muchas veces.' },
@@ -1017,7 +1023,7 @@ const OPERATIONS_STATIONS = [
 
       // The weighing worksheet from the paper form, as a running log (like
       // Bucking's) so two tablets on one lot merge their bags.
-      { k: 'weights', t: 'lineitems', entry: true, req: true,
+      { k: 'weights', t: 'lineitems', entry: true, req: true, primary: true,
         l: { en: 'Finished Flower — Weighing Worksheet', es: 'Flor terminada — hoja de pesaje' },
         hint: { en: 'Employee #, how many full bags and their grams each (454 = 1 lb), plus any partial bag — Add logs a line for each bag.',
                 es: 'N.º de empleado, cuántas bolsas llenas y sus gramos c/u (454 = 1 lb), más una bolsa parcial — Agregar registra una línea por bolsa.' },
@@ -1150,7 +1156,7 @@ const OPERATIONS_STATIONS = [
 
       // Finished Smalls — Weighing Worksheet, as a running log (like Hand
       // Trim's) so two tablets on one package merge their bags.
-      { k: 'weights', t: 'lineitems', entry: true, req: true,
+      { k: 'weights', t: 'lineitems', entry: true, req: true, primary: true,
         l: { en: 'Finished Smalls — Weighing Worksheet', es: 'Smalls terminados — hoja de pesaje' },
         hint: { en: 'Employee #, how many full bags and their grams each (454 = 1 lb), plus any partial bag — Add logs a line for each bag.',
                 es: 'N.º de empleado, cuántas bolsas llenas y sus gramos c/u (454 = 1 lb), más una bolsa parcial — Agregar registra una línea por bolsa.' },
