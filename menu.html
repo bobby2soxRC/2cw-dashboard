@@ -281,6 +281,8 @@ async function probeAllAssets(){
 const MENU_PROMOS = [
   // Niki, 2026-10-26: all indoor flower 20% off for the rest of the year.
   { brand: 'Mendo', title: 'Indoor Flower', pctOff: 20, until: '2026-12-31' },
+  // Robert, 2026-11-12: the same 20% on Mixed Light ($11 → $8.80 an eighth).
+  { brand: 'Mendo', title: 'Mixed Light Flower', pctOff: 20, until: '2026-12-31' },
 ];
 
 function applyPromos(menu){
@@ -663,8 +665,8 @@ function sheetCardTitle(brand, category, format, kind, size){
     return 'Pre-Roll Multipack';
   }
   if(category === 'Flower'){
-    if(brand === 'Howie Roll') return 'Premium Smalls';
-    if(brand === 'Mendo') return k.includes('greenhouse') ? 'Greenhouse Flower' : 'Indoor Flower';
+    if(brand === 'Howie Roll') return /\bground\b/.test(k) ? 'Pre-Ground Pouches' : 'Premium Smalls';
+    if(brand === 'Mendo') return /greenhouse|mixed\s*light/.test(k) ? 'Mixed Light Flower' : 'Indoor Flower';
     // collab packs: "Soma Rosa" + "Farms x Nameless Flower"
     if(k.includes(' x ')) return `${brand.replace(/ Farms$/, '')} ${kind.replace(/\s*flower$/i, '')}`;
     return 'Flower';

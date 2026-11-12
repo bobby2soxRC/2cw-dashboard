@@ -352,6 +352,13 @@ _NAME_RULES = [
     (r"howie roll.*(?:preroll|pre-roll).*6pk",
         "Howie Roll", "Preroll", "6pk", "3.5g"),
 
+    # Howie Roll Pre-Ground flower, 14g pouches (2026-11, per Niki) — must come
+    # before Smalls, or "Howie Roll Ground Flower 14g …" lands in Smalls 14g.
+    # Until DATAV has a Flower / Pre-Ground BSKU these have no BSKU: the menu
+    # still lists them (no price), sales/inventory reports show them as Unknown.
+    (r"howie roll.*\bground\b",
+        "Howie Roll", "Flower", "Pre-Ground", None),
+
     # Howie Roll Flower Smalls
     (r"howie roll.*flower",
         "Howie Roll", "Flower", "Smalls", None),
@@ -389,10 +396,12 @@ _NAME_RULES = [
     (r"\bmendo\b.*(?:preroll|pre-roll)",
         "Mendo", "Preroll", "10pk", "5g"),
 
-    # Mendo Greenhouse Flower — new line 2026-10 ($8.80/unit list, per Niki).
-    # Must come before the indoor catch-all below. Its BSKU and price come
-    # from DATAV rows with Category "Greenhouse Flower" / Subcategory "Bigs".
-    (r"\bmendo\b.*green\s*house.*flower",
+    # Mendo Mixed Light (greenhouse) Flower — new line 2026-10 ($8.80/unit
+    # list, per Niki). Must come before the indoor catch-all below. KSS names
+    # don't say so ("Mendo Flower 3.5g Hybrid Cherryz"): its BrandName does
+    # ("Mendo Mixed Light Flower Cherryz") — see _apply_mixed_light. Its BSKU
+    # and price come from DATAV rows Category "Greenhouse Flower" / "Bigs".
+    (r"\bmendo\b.*(?:green\s*house|mixed\s*light).*flower",
         "Mendo", "Greenhouse Flower", "Bigs", None),
 
     # Mendo Flower (1g, 3.5g, 14g). All current Mendo flower is grown indoors —
@@ -425,6 +434,26 @@ def _canonicalize_size(raw_g: str) -> str:
     if g <= 3.6: return "3.5g"
     if g <= 14:  return "14g"
     return "28g"
+
+def _apply_mixed_light(parsed: dict, product: dict) -> dict:
+    """Mendo's Mixed Light (greenhouse) flower is named like its indoor flower
+    in KSS ("Mendo Flower 3.5g Hybrid Cherryz"); only the BrandName ("Mendo
+    Mixed Light Flower Cherryz") or description ("grown in mixed light") tells
+    them apart. Moves those onto Greenhouse Flower. If DATAV has no Greenhouse
+    Flower BSKU for the size yet, sales/inventory reports keep them on Indoor
+    Flower and only the menu moves them (menu_category), unpriced."""
+    if parsed.get("brand") != "Mendo" or parsed.get("category") != "Indoor Flower":
+        return parsed
+    text = f"{product.get('BrandName') or ''} {product.get('Description') or ''}".lower()
+    if not re.search(r"mixed[\s-]*light|green\s*house", text):
+        return parsed
+    hit = BSKU_LOOKUP.get(("Mendo", "Greenhouse Flower", parsed["subcategory"], parsed["weight_unit"]))
+    if not hit:
+        return {**parsed, "menu_category": "Greenhouse Flower"}
+    pg, bsku = hit
+    return {**parsed, "category": "Greenhouse Flower", "pg": pg, "bsku": bsku,
+            "tsku": make_tsku(bsku, parsed.get("type")), "bsku_concat": BSKU_CONCAT.get(bsku, "")}
+
 
 def parse_product_name(name: str) -> dict:
     """
@@ -573,9 +602,10 @@ def split_on_floor_by_warehouse(inventory_rows):
 # under a reasonable label instead of silently vanishing from the menu.
 _SECTION_TITLES = {
     ("Flower", "Smalls"):              "Premium Smalls",
+    ("Flower", "Pre-Ground"):          "Pre-Ground Pouches",
     ("Flower", "Bigs"):                "Flower",
     ("Indoor Flower", "Bigs"):         "Indoor Flower",
-    ("Greenhouse Flower", "Bigs"):     "Greenhouse Flower",
+    ("Greenhouse Flower", "Bigs"):     "Mixed Light Flower",
     ("Preroll", "Single"):             "Pre-Rolls — Single 1g",
     ("Preroll", "28pk"):               "Pre-Roll Party Packs — 28ct",
     ("Preroll", "6pk"):                "Pre-Rolls — 6-Pack",
@@ -585,6 +615,18 @@ _SECTION_TITLES = {
     ("Concentrate", "Live Rosin Jar"): "Live Rosin",
     ("Vape", "Live Resin AIO"):        "All-In-One Vape",
 }
+
+# New lines listed on the menu even before DATAV has a BSKU row for them.
+# Menu list prices (per unit) for formats DATAV has no price for yet;
+# DATAV's "List Price Each" wins once it has one.
+_MENU_PRICE_FALLBACK = {
+    # Robert, 2026-11-12: Mixed Light $11 / 8th, $30 / 14g (menu takes the
+    # Indoor Flower 20% promo off too — MENU_PROMOS in menu.html).
+    ("Mendo", "Greenhouse Flower", "Bigs", "3.5g"): 11.00,
+    ("Mendo", "Greenhouse Flower", "Bigs", "14g"):  30.00,
+}
+
+_MENU_WITHOUT_BSKU = {("Howie Roll", "Flower", "Pre-Ground"), ("Mendo", "Greenhouse Flower", "Bigs")}
 
 _WEIGHT_LABELS = {"1g": "1G", "3.5g": "1/8", "14g": "14G", "28g": "28G", "5g": "5G"}
 _WEIGHT_ORDER  = {"1g": 0, "3.5g": 1, "5g": 2, "14g": 3, "28g": 4}
@@ -654,16 +696,35 @@ def build_menu(product_catalog: dict, products_raw: list, inventory_raw: list,
     # Case pack size per BSKU — case format is a packaging attribute, not a
     # strain-level one, so it should be uniform per BSKU. Mode guards against
     # the rare data-entry outlier in an individual product record.
+    # A new line DATAV may not have a BSKU for yet (_MENU_WITHOUT_BSKU) is
+    # keyed by brand|category|subcategory|weight so it still makes the menu,
+    # unpriced. Other formats without a BSKU stay off, as before.
+    # Catalog entries the menu files elsewhere than the reports do
+    # (_apply_mixed_light without a DATAV BSKU): no BSKU, so no indoor price.
+    product_catalog = {
+        pid: ({**c, "category": c["menu_category"], "bsku": ""} if c.get("menu_category") else c)
+        for pid, c in product_catalog.items()
+    }
+
+    def menu_key(cat):
+        if not cat:
+            return ""
+        if cat.get("bsku"):
+            return cat["bsku"]
+        if (cat.get("brand"), cat.get("category"), cat.get("subcategory")) not in _MENU_WITHOUT_BSKU:
+            return ""
+        return "|".join((cat["brand"], cat["category"], cat["subcategory"], cat.get("weight_unit") or ""))
+
     case_units_votes = defaultdict(Counter)
     for p in products_raw:
         pid = str(p.get("ProductID") or "")
-        cat = product_catalog.get(pid)
-        if not cat or not cat.get("bsku"):
+        key = menu_key(product_catalog.get(pid))
+        if not key:
             continue
         cases = p.get("WholesaleUnitsPerCase")
         if cases:
             try:
-                case_units_votes[cat["bsku"]][int(cases)] += 1
+                case_units_votes[key][int(cases)] += 1
             except (TypeError, ValueError):
                 pass
     case_units_by_bsku = {
@@ -683,10 +744,10 @@ def build_menu(product_catalog: dict, products_raw: list, inventory_raw: list,
             continue
         pid = str(row.get("ProductID") or "")
         cat = product_catalog.get(pid)
-        if not cat or not cat.get("bsku"):
+        bsku = menu_key(cat)
+        if not bsku:
             skipped += 1
             continue
-        bsku = cat["bsku"]
         if STATUS_BY_BSKU.get(bsku, "").strip().lower() in _INACTIVE_STATUSES:
             continue
 
@@ -743,6 +804,8 @@ def build_menu(product_catalog: dict, products_raw: list, inventory_raw: list,
         ]
 
         unit_price  = PRICE_BY_BSKU.get(bsku_for_pricing)
+        if unit_price is None:
+            unit_price = _MENU_PRICE_FALLBACK.get((brand, category, subcategory, wu))
         case_units  = case_units_by_bsku.get(bsku_for_pricing)
         base_title  = _SECTION_TITLES.get((category, subcategory), f"{subcategory} {category}".strip())
         size_label  = _WEIGHT_LABELS.get(wu, wu)
@@ -1268,6 +1331,7 @@ def transform():
             continue
         parsed = parse_product_name(name)
         if parsed:
+            parsed = _apply_mixed_light(parsed, p)
             product_catalog[sku_id] = {**parsed, "raw_name": name, "sku_id": sku_id}
         else:
             parse_failures.append(name)
