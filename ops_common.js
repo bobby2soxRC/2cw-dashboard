@@ -340,15 +340,26 @@ function combineTakeDowns(uid, members) {
     farmUids: members.map((r) => r.incomingUid).filter(Boolean) };
 }
 
+// What a submitted Bucking record left on stem: its Dry Unbucked Left (the
+// package's dry weight less the boxes taken), unless it's ticked `lotDone`
+// (Package finished — the boxes came up short of the take-down weight, but
+// nothing's left). 0 when nothing's left, or there's no weight to tell by.
+function buckLeftLb(r) {
+  if (!r || r.lotDone === true || r.lotDone === 'true') return 0;
+  const left = Number(r.dryLeftLb);
+  return Number.isFinite(left) && left > 0.05 ? Math.round(left * 100) / 100 : 0;
+}
+
 // What's ready to buck: each on-stem package released to bucking (all its
 // Take Downs combined — combineTakeDowns — counting only the released
 // ones), plus each part released off a held one under its own tag — less
 // any UID that already has a submitted Bucking record. Same shape
 // findUpstream returns (sourceUid, strain, unbuckedLb), so picking one fills
 // the form the way typing its UID would.
-// A Bucking submitted with `restOnStem` ticked (only part of the package
-// bucked) leaves the rest: the package stays, `unbuckedLb` its Dry Unbucked
-// Left, `buckedBeforeLb` the boxes taken on the earlier rounds.
+// A Bucking whose boxes didn't take the whole package (Dry Unbucked Left
+// over 0.05 lb — buckLeftLb) and that isn't ticked `lotDone` leaves the
+// rest: the package stays, `unbuckedLb` its Dry Unbucked Left,
+// `buckedBeforeLb` the boxes taken on the earlier rounds.
 function buckablePackages(downs, bucked) {
   const lb = (x) => (x === undefined || x === null || x === '' ? null : Number(x));
   const r2 = (x) => Math.round(x * 100) / 100;
@@ -357,8 +368,7 @@ function buckablePackages(downs, bucked) {
     const recs = (bucked || []).filter((b) => b.sourceUid && uidTailMatch(b.sourceUid, uid));
     if (!recs.length) return null;
     const last = recs.reduce((a, b) => (String(b.submittedAt || '') > String(a.submittedAt || '') ? b : a));
-    const left = last.restOnStem ? Math.max(0, Number(last.dryLeftLb) || 0) : 0;
-    return { left: left > 0.05 ? r2(left) : 0, before: r2(recs.reduce((a, b) => a + (Number(b.startingDryLb) || 0), 0)) };
+    return { left: buckLeftLb(last), before: r2(recs.reduce((a, b) => a + (Number(b.startingDryLb) || 0), 0)) };
   };
   const out = [];
   const push = (pkg, uid) => {
@@ -385,7 +395,8 @@ function buckablePackages(downs, bucked) {
 // still being bucked that have some flower logged, `inProgress: true`, with
 // `buckedFlowerLb` what's been bucked so far and `buckDraftId` the page.
 //
-// A package bucked in rounds (a Bucking with `restOnStem`) has several
+// A package bucked in rounds (a Bucking that left some on stem —
+// buckLeftLb) has several
 // Bucking records under one UID. Without `trims`, each record is its own
 // lot (invoicing bills every round). With `trims` (submitted Hand Trim and
 // Machine Trim records), it's one lot, `chain: true`: the rounds submitted
@@ -417,7 +428,7 @@ function buckedLots(bucks, downs, intakes, openBucks, trims) {
     .filter((l) => l.buckedFlowerLb > 0);
   const newest = (a, b) => String(b.date || '').localeCompare(String(a.date || '')) || String(b.submittedAt || '').localeCompare(String(a.submittedAt || ''));
   // Packages bucked in rounds.
-  const chainUids = new Set((bucks || []).filter((r) => r.restOnStem).map((r) => normUid(r.sourceUid)).filter(Boolean));
+  const chainUids = new Set((bucks || []).filter((r) => buckLeftLb(r) > 0).map((r) => normUid(r.sourceUid)).filter(Boolean));
   const inChain = (uid) => [...chainUids].some((u) => uidTailMatch(u, uid));
   const chains = [];
   if (chainUids.size) {

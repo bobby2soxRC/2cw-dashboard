@@ -732,14 +732,17 @@ const OPERATIONS_STATIONS = [
       { k: 'dryLeftLb', t: 'calc', flag: (x) => x < 0,
         calc: (v) => (num(v.dryUnbuckedLb) > 0 ? num(v.dryUnbuckedLb) - (v.boxes || []).reduce((a, r) => a + num(r.weightLb), 0) : null),
         l: { en: 'Dry Unbucked Left (lbs)', es: 'Peso seco restante (lbs)' } },
-      // Bucking only part of the package (a work order's amount): submitting
-      // leaves Dry Unbucked Left in the bucking queue and On-Stem inventory
-      // under the same tag, for a later round (buckablePackages). Each round
-      // goes to Hand Trim on its own (buckedLots `chain`).
-      { k: 'restOnStem', t: 'check',
-        l: { en: 'Bucking only part — the rest stays on stem', es: 'Solo se desvara una parte — el resto se queda en tallo' },
-        hint: { en: 'Tick when you stop before the package is done. Submitting puts Dry Unbucked Left back in the bucking queue under the same tag.',
-                es: 'Marque cuando pare antes de terminar el paquete. Al enviar, el peso seco restante vuelve a la fila de desvarado con la misma etiqueta.' } },
+      // Bucking only part of the package (a work order's amount) needs
+      // nothing ticked: whatever the boxes didn't take (Dry Unbucked Left)
+      // stays in the bucking queue and On-Stem inventory under the same tag
+      // for a later round (buckablePackages / buckLeftLb in ops_common.js),
+      // and each round goes to Hand Trim on its own (buckedLots `chain`).
+      // Boxes can weigh in short of the take-down weight (it dried more), so
+      // when weight is left, `lotDone` says the package is finished anyway.
+      { k: 'lotDone', t: 'check', showIf: (v) => Number(v.dryLeftLb) > 0.05,
+        l: { en: 'Package finished — nothing left on stem', es: 'Paquete terminado — no queda nada en tallo' },
+        hint: { en: 'Tick only if the whole package is bucked and the boxes just weighed less than its dry weight. Leave it unticked if there is more to buck: Dry Unbucked Left goes back in the bucking queue under the same tag.',
+                es: 'Marque solo si se desvaró todo el paquete y las cajas pesaron menos que su peso seco. Déjelo sin marcar si queda más por desvarar: el peso seco restante vuelve a la fila de desvarado con la misma etiqueta.' } },
 
       { k: 'bucked', t: 'lineitems', entry: true, req: true,
         l: { en: 'Bucked Flower — by Person', es: 'Flor desvarada — por persona' },

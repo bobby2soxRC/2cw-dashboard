@@ -344,8 +344,8 @@
   // ── Bucking state ──────────────────────────────────────────────────────────
   // From the Bucking forms on this take down's New Dry UID (and on any part
   // released off a hold, `releases`), the same matching buckablePackages
-  // uses: the newest submitted Bucking decides — rest left on stem means
-  // part bucked. An open Bucking page means bucking now. Otherwise a held
+  // uses: the newest submitted Bucking decides — weight left on stem
+  // (buckLeftLb) means part bucked. An open Bucking page means bucking now. Otherwise a held
   // take down is on hold, and a released one is waiting for bucking.
   const uidsOf = (r) => [val(r, 'sourceUid'), ...((val(r, 'releases') || []).map((x) => x.uid))].filter(Boolean);
   const stateCache = new Map();
@@ -358,7 +358,7 @@
     let s;
     if (recs.length) {
       const last = recs.reduce((a, b) => (String(b.submittedAt || '') > String(a.submittedAt || '') ? b : a));
-      const left = last.restOnStem ? Math.max(0, Number(last.dryLeftLb) || 0) : 0;
+      const left = buckLeftLb(last);
       const flower = recs.reduce((a, b) => a + (Number(b.buckedFlowerLb) || 0), 0);
       s = { k: open ? 'bucking' : left > 0.05 ? 'part' : 'done', left, flower, date: last.date, recs };
     } else if (open) s = { k: 'bucking', recs };
@@ -608,7 +608,7 @@
     const recs = [...s.recs].sort((a, b) => String(a.submittedAt || '').localeCompare(String(b.submittedAt || '')));
     const n = (x) => Number.isFinite(Number(x)) && x !== null && x !== '' ? fmtNum(x, 2) : '—';
     return `${hd}<div style="overflow-x:auto"><table class="d-table"><thead><tr><th>${t(L.date)}</th><th>UID</th><th>${t(L.buckStart)}</th><th>${t(L.buckFlower)}</th><th>${t(L.buckLeft)}</th></tr></thead>
-      <tbody>${recs.map((b) => `<tr><td>${esc(fmtDate(b.date))}</td><td>${esc(b.sourceUid || '—')}</td><td>${n(b.startingDryLb)}</td><td>${n(b.buckedFlowerLb)}</td><td>${b.restOnStem ? n(b.dryLeftLb) : '—'}</td></tr>`).join('')}</tbody></table></div>
+      <tbody>${recs.map((b) => `<tr><td>${esc(fmtDate(b.date))}</td><td>${esc(b.sourceUid || '—')}</td><td>${n(b.startingDryLb)}</td><td>${n(b.buckedFlowerLb)}</td><td>${buckLeftLb(b) > 0 ? n(b.dryLeftLb) : '—'}</td></tr>`).join('')}</tbody></table></div>
       ${s.open ? `<div class="muted-note" style="margin-top:6px">${t(L.pBucking)} (${t(L.buckOpen)})</div>` : ''}</div>`;
   }
 
