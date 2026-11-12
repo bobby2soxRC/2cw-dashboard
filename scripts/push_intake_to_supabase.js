@@ -68,7 +68,7 @@ const IMPORT_TAG = 'paper_import';
 // current_date default would handle it fine one row at a time, but not in a
 // batch with rows that do have a date) -- fall back to today, same value the
 // column default would have produced anyway.
-const TODAY_STR = new Date().toISOString().slice(0, 10);
+const TODAY_STR = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
 
 function buckRow(r) {
   return {

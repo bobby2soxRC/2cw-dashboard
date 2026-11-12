@@ -19,13 +19,17 @@ create table if not exists operations_forms (
   owner_user    text,                 -- who started it (from 2cw_user_name)
   updated_by    text,                 -- who last touched it — can differ from owner on a handoff
   strain        text,                 -- surfaced outside `fields` so "switch strain" can filter fast
-  work_date     date not null default current_date,
+  work_date     date not null default ((now() at time zone 'America/Los_Angeles')::date),
   fields        jsonb not null default '{}'::jsonb,
   client_id     text,                 -- ties an offline-queued save back to the browser that made it
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now(),
   submitted_at  timestamptz
 );
+
+-- Dates are Pacific (the database clock is UTC, so current_date would be
+-- tomorrow after 4–5 pm). Re-applied so existing tables pick it up.
+alter table operations_forms alter column work_date set default ((now() at time zone 'America/Los_Angeles')::date);
 
 create index if not exists idx_ops_forms_station_date on operations_forms (station_key, work_date);
 create index if not exists idx_ops_forms_owner_open on operations_forms (owner_user, status) where status = 'draft';
@@ -698,10 +702,12 @@ create table if not exists canix_yield_estimates (
   id                       uuid primary key default gen_random_uuid(),
   farm_group               text not null,      -- matches canix_facilities.farm_group
   estimated_lbs_per_plant  numeric not null check (estimated_lbs_per_plant > 0),
-  effective_date           date not null default current_date,
+  effective_date           date not null default ((now() at time zone 'America/Los_Angeles')::date),
   notes                    text,
   created_at               timestamptz not null default now()
 );
+
+alter table canix_yield_estimates alter column effective_date set default ((now() at time zone 'America/Los_Angeles')::date);
 
 create index if not exists idx_canix_yield_estimates_farm on canix_yield_estimates (farm_group, effective_date desc);
 

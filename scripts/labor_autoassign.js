@@ -29,8 +29,8 @@ const DRY = !!process.env.DRY_RUN;
 const DAYS = Math.max(1, Number(process.env.DAYS) || 2);
 const BY = 'Auto-assign (Crew Check-In)';
 
-const localDay = (d = new Date()) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-const addDays = (iso, n) => { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return localDay(d); };
+const localDay = (d = new Date()) => d.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }); // Pacific, whatever the device's zone
+const addDays = (iso, n) => { const d = new Date(iso + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 
 async function rest(pathQ, opts = {}) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${pathQ}`, {

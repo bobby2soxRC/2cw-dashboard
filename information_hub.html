@@ -316,7 +316,7 @@
       const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `strain_library_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.download = `strain_library_${new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })}.csv`;
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     }
@@ -610,7 +610,7 @@
       }
       await load();
 
-      const today = new Date().toISOString().slice(0, 10);
+      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
       const docsFor = (id, type) => docs.filter((d) => d.ref_code_id === id && (!type || d.doc_type === type));
       // At-a-glance: MSA ✓/✗, licenses count (red if any expired), W-9 ✓/✗.
       function docCell(r) {
@@ -947,7 +947,7 @@
       .reduce((best, e) => (!best || e.effective_date > best.effective_date) ? e : best, null);
     const currentPlan = (farm) => forecastCache.plans.filter((p) => p.farm_group === farm && p.status === 'planned')
       .reduce((best, p) => (!best || p.planned_harvest_date < best.planned_harvest_date) ? p : best, null);
-    const today = () => new Date().toISOString().slice(0, 10);
+    const today = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
 
     function render() {
       const fs = farms();

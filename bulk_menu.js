@@ -508,7 +508,7 @@
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ orientation: w >= h ? 'landscape' : 'portrait', unit: 'px', format: [w, h], hotfixes: ['px_scaling'] });
       doc.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, w, h);
-      const name = `${(s.brand || 'Bulk').replace(/[^\w]+/g, '-')}-${(s.title || 'Menu').replace(/[^\w]+/g, '-')}-${new Date().toISOString().slice(0, 10)}.pdf`;
+      const name = `${(s.brand || 'Bulk').replace(/[^\w]+/g, '-')}-${(s.title || 'Menu').replace(/[^\w]+/g, '-')}-${new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })}.pdf`;
       const file = new File([doc.output('blob')], name, { type: 'application/pdf' });
       if (navigator.canShare && navigator.canShare({ files: [file] }) && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
         await navigator.share({ files: [file], title: `${s.brand} — ${s.title}` });

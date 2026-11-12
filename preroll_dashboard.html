@@ -514,7 +514,7 @@ let editingItem = null; // preroll_queue_items row, or {} for a new one
 let editingProducts = false;
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const todayStr = () => new Date().toISOString().slice(0, 10);
+const todayStr = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
 const fmtDate = (d) => d ? new Date(d + 'T12:00:00').toLocaleDateString(locale(), { month: 'short', day: 'numeric' }) : '';
 // num() comes from operations_stations.js.
 

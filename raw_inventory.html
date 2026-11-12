@@ -968,7 +968,7 @@
     const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `raw_inventory_${H() ? 'history_' : ''}${owner === 'all' ? '' : owner + '_'}${tab}${query ? '_' + query.replace(/[^\w-]+/g, '_').slice(0, 30) : ''}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `raw_inventory_${H() ? 'history_' : ''}${owner === 'all' ? '' : owner + '_'}${tab}${query ? '_' + query.replace(/[^\w-]+/g, '_').slice(0, 30) : ''}_${new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })}.csv`;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }

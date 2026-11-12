@@ -922,7 +922,7 @@
           // defaulting to "Bins" instead of blank).
           const initial = (prefill && prefill[c.k] !== undefined && prefill[c.k] !== null) ? prefill[c.k]
             : (!prefill && c.carry && above && above[c.k] !== undefined && above[c.k] !== null && above[c.k] !== '') ? above[c.k]
-            : (c.t === 'date' && c.today ? new Date().toISOString().slice(0, 10) : c.def);
+            : (c.t === 'date' && c.today ? new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }) : c.def);
           if (!prefill && c.carry && initial !== undefined && initial !== null && initial !== '') carried.add(c.k);
           if (initial !== undefined && initial !== null) {
             inp.value = initial;
@@ -1921,7 +1921,7 @@
     if (!inp) return;
 
     if (f.t === 'date' && f.today !== false) {
-      inp.value = new Date().toISOString().slice(0, 10);
+      inp.value = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
       values[f.k] = inp.value;
     }
     if (f.def) { inp.value = f.def; values[f.k] = f.def; }

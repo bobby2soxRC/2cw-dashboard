@@ -28,8 +28,8 @@
   const toMin = (s) => { const [h, mi] = String(s || '').split(':').map(Number); return Number.isFinite(h) && Number.isFinite(mi) ? h * 60 + mi : null; };
   const personKey = (p) => p.userId ? 'id:' + p.userId : 'name:' + fold(p.name);
   const prevDay = (date) => {
-    const d0 = new Date(date + 'T12:00:00'); d0.setDate(d0.getDate() - 1);
-    return new Date(d0.getTime() - d0.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    const d0 = new Date(date + 'T12:00:00Z'); d0.setUTCDate(d0.getUTCDate() - 1);
+    return d0.toISOString().slice(0, 10);
   };
   // Union of [a,b) minute intervals, merged and sorted.
   const union = (iv) => iv.slice().sort((x, y) => x[0] - y[0]).reduce((o, [a, b]) => {

@@ -336,9 +336,9 @@
     const ts = savedAt(r);
     if (!ts) return '';
     const d = new Date(ts), loc = getLang() === 'es' ? 'es-MX' : 'en-US';
-    const time = d.toLocaleTimeString(loc, { hour: 'numeric', minute: '2-digit' });
-    const day = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-    return day === r.work_date ? time : d.toLocaleDateString(loc, { month: 'short', day: 'numeric' }) + ', ' + time;
+    const time = d.toLocaleTimeString(loc, { timeZone: 'America/Los_Angeles', hour: 'numeric', minute: '2-digit' });
+    const day = d.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+    return day === r.work_date ? time : d.toLocaleDateString(loc, { timeZone: 'America/Los_Angeles', month: 'short', day: 'numeric' }) + ', ' + time;
   };
 
   // ── Bucking state ──────────────────────────────────────────────────────────

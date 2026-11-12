@@ -588,7 +588,7 @@
     const rows = [['Kind', 'UID', 'Stage', 'Strain', 'Metrc Item', 'Raw Inventory', 'Metrc', 'New', 'Change', 'Unit', 'Ticked', 'Reason', 'Note'],
       ...lines.map((l) => [t(L[`k_${l.kind}`]), l.uid, (l.tabs && l.tabs.length ? l.tabs : [l.tab]).map(stageName).join(' / '), l.strain, l.pkg ? l.pkg.item : '',
         l.appLb, l.metrcLb == null ? '' : l.metrcLb, l.toLb, deltaOf(l), l.unit, l.on ? 'yes' : '', reasonName(l.reason), l.note])];
-    download(rows, `inventory_compare_${new Date().toISOString().slice(0, 10)}.csv`);
+    download(rows, `inventory_compare_${new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })}.csv`);
   }
 
   async function apply() {
@@ -710,7 +710,7 @@
       ...batches.flatMap((b) => (b.lines || []).map((l) => [b.title, b.at, b.by, b.sourceInfo || b.source, b.explanation, l.uid, stageName(l.tab), l.strain, l.metrcItem || '',
         l.fromLb, l.metrcLb == null ? '' : l.metrcLb, l.toLb, l.delta, l.unit, reasonName(l.reason), l.note,
         l.undone ? l.undone.by : '', l.undone ? l.undone.at : '', l.undone ? l.undone.why : '']))];
-    download(rows, `inventory_adjustments_log_${new Date().toISOString().slice(0, 10)}.csv`);
+    download(rows, `inventory_adjustments_log_${new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })}.csv`);
   }
 
   function download(rows, name) {

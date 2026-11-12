@@ -117,7 +117,7 @@ exports.handler = async (event) => {
       const body = {
         farm_group: farmGroup,
         estimated_lbs_per_plant: lbs,
-        effective_date: e.effective_date || new Date().toISOString().slice(0, 10),
+        effective_date: e.effective_date || new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }),
         notes: e.notes || null,
       };
       const res = await supaFetch(supaUrl, serviceKey, 'canix_yield_estimates', { method: 'POST', body: JSON.stringify(body) });

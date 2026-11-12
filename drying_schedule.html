@@ -257,7 +257,7 @@ const fmtK = (n) => (n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1) + 'k' : 
 const DAY = 864e5;
 const dayNum = (s) => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d) / DAY; };
 const dayStr = (n) => new Date(n * DAY).toISOString().slice(0, 10);
-const todayNum = () => { const d = new Date(); return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / DAY; };
+const todayNum = () => dayNum(new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })); // today in Pacific
 const mondayOf = (n) => n - ((new Date(n * DAY).getUTCDay() + 6) % 7);
 const fmtDate = (s, year) => s ? new Date(dayNum(s) * DAY).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', ...(year ? { year: 'numeric' } : {}) }) : '';
 const fmtDay = (n, year) => fmtDate(dayStr(n), year);

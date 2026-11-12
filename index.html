@@ -800,7 +800,7 @@ async function buildTree(){
 
   if(visibleStations.length){
     const owner = sessionStorage.getItem('2cw_user_name') || null;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
     await Promise.all(visibleStations.map(async (s) => {
       let n = 0, drafts = [];
       try {

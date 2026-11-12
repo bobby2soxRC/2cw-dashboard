@@ -329,7 +329,7 @@
   // The dates being looked at: one day (from === to) — today unless
   // ?date=YYYY-MM-DD picks another — or, with Range, from..to (?date=&to=),
   // for work that runs past midnight like an overnight green harvest. Same
-  // UTC date the forms save their work_date with (todayStr in ops_data.js).
+  // Pacific date the forms save their work_date with (todayStr in ops_data.js).
   const isDay = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
   const shiftDay = (iso, n) => {
     const d = new Date(iso + 'T00:00:00Z');

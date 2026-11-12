@@ -12,6 +12,11 @@ concurrency:
 permissions:
   contents: write
 
+# Dates the scripts work out (today, yesterday, date.today()) are Pacific.
+# Cron above stays UTC — GitHub only supports UTC.
+env:
+  TZ: America/Los_Angeles
+
 jobs:
   sync:
     runs-on: ubuntu-latest

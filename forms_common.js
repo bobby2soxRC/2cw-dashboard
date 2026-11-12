@@ -56,7 +56,7 @@ async function initCommonFields({ repInputId, storeInputId, storeListId, dateInp
     repInput.insertAdjacentElement('afterend', hint);
   }
 
-  dateInput.value = new Date().toISOString().slice(0, 10);
+  dateInput.value = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
 
   if (storeList) {
     const stores = await loadStoreOptions();

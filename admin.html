@@ -605,7 +605,7 @@ async function ratesLoadAll(){
 }
 function ratesRender(){
   const q = (document.getElementById('rates-search').value || '').trim().toLowerCase();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
   const rowsFor = (id) => rateRows.filter(r => r.employee_id === id).sort((a,b) => b.effective_from.localeCompare(a.effective_from));
   const since = (d) => d === RATE_ALWAYS ? 'from the start' : 'since ' + d;
   const line = (p) => {
@@ -1489,7 +1489,7 @@ function respDownloadCsv(){
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'responsibilities-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.download = 'responsibilities-' + new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }) + '.csv';
   a.click();
   URL.revokeObjectURL(url);
 }

@@ -173,7 +173,7 @@ function buildLots(stages, asOf) {
     });
   });
 
-  const today = asOf || new Date().toISOString().slice(0, 10);
+  const today = asOf || new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
   lots.forEach((lot) => {
     // The furthest stage the lot has reached is where it is sitting now.
     for (let i = PIPELINE_ORDER.length - 1; i >= 0; i--) {
@@ -765,7 +765,7 @@ function crewLaborByEmployee(stages, filter) {
 
 // ── Requests ────────────────────────────────────────────────────────────────
 function requestSummary(stages, asOf) {
-  const today = asOf || new Date().toISOString().slice(0, 10);
+  const today = asOf || new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
   return (stages.biomass_request || []).map((r) => ({
     ...r,
     ageDays: daysBetween(dayOf(r), today),
@@ -778,7 +778,7 @@ function requestSummary(stages, asOf) {
 // batches sitting too long, requests nobody has actioned.
 function exceptions(stages, asOf) {
   const out = [];
-  const today = asOf || new Date().toISOString().slice(0, 10);
+  const today = asOf || new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
 
   // Fresh Plant Intake no longer carries a single farm-reported number to
   // check the scale against — a truck can hold several batches now. A

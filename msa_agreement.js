@@ -72,7 +72,7 @@
     const d = String(p || '').replace(/\D/g, '').replace(/^1(?=\d{10}$)/, '');
     return d.length === 10 ? `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}` : String(p || '').trim();
   };
-  const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  const today = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }); // Pacific
   const windowText = (w) => {
     const days = Math.max(1, Math.round(Number(w.days) || 1));
     return days > 1 ? `${fmtShort(w.start)}–${fmtShort(w.start, days - 1)}` : fmtShort(w.start);

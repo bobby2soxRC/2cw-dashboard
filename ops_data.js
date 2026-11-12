@@ -34,7 +34,7 @@ function getClient() {
 }
 
 const TABLE = 'operations_forms';
-const todayStr = () => new Date().toISOString().slice(0, 10);
+const todayStr = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
 
 // ── Drafts ──────────────────────────────────────────────────────────────────
 

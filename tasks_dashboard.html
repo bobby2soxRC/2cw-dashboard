@@ -206,7 +206,7 @@ let editingId = null;   // task id being edited, or null for new
 let editingSubtasks = []; // working copy of subtasks while the editor is open
 
 function esc(str){ return String(str==null?'':str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function todayStr(){ return new Date().toISOString().slice(0,10); }
+function todayStr(){ return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }); }
 function fmtDate(d){ if(!d) return ''; const dt = new Date(d+'T00:00:00'); return dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
 function isOverdue(due, status){ return due && status !== 'done' && due < todayStr(); }
 

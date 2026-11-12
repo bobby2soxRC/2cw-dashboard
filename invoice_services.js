@@ -81,7 +81,7 @@
   const short = (iso) => (/^\d{4}-\d{2}-\d{2}/.test(iso || '') ? new Date(iso.slice(0, 10) + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '');
   const tail = (u) => String(u || '').slice(-5);
   const me = () => { try { return (sessionStorage.getItem('2cw_user_name') || '').trim(); } catch (e) { return ''; } };
-  const localDay = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  const localDay = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }); // Pacific
 
   // ── Data ───────────────────────────────────────────────────────────────
   async function rowsOf(client, station, narrow) {

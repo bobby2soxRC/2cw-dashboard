@@ -12,6 +12,13 @@ live data. Docs live in `docs/` — `OPERATIONS_APP.md` (station forms,
 - `sw.js` serves the app shell cache-first: bump `CACHE_VERSION` whenever a
   shell file changes (HTML pages, `operations_stations.js`, `ops_*.js`, …)
   or devices keep running the old version.
+- Everything is Pacific time. "Today" is
+  `new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })`,
+  never `toISOString().slice(0, 10)` (that's the UTC date — tomorrow after
+  4–5 pm). Day arithmetic on `YYYY-MM-DD` uses `T12:00:00Z` + `setUTCDate`.
+  Workflows set `TZ: America/Los_Angeles`; SQL date defaults use
+  `(now() at time zone 'America/Los_Angeles')::date`. Cron (GitHub, Netlify)
+  can only be UTC.
 - Schema changes go in `supabase/schema.sql` (idempotent) and must be run in
   the Supabase SQL editor **before** pushing code that reads/writes the new
   columns.

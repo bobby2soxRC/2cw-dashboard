@@ -53,7 +53,7 @@ function uidKey(sourceUid) {
 }
 
 const rows = parseCsv(fs.readFileSync(CSV_PATH, 'utf8'));
-const TODAY_STR = new Date().toISOString().slice(0, 10);
+const TODAY_STR = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
 let idCounter = 1;
 
 const newRecords = rows.map((r) => {
