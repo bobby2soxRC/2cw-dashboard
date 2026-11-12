@@ -396,10 +396,12 @@ _NAME_RULES = [
     (r"\bmendo\b.*(?:preroll|pre-roll)",
         "Mendo", "Preroll", "10pk", "5g"),
 
-    # Mendo Greenhouse Flower — new line 2026-10 ($8.80/unit list, per Niki).
-    # Must come before the indoor catch-all below. Its BSKU and price come
-    # from DATAV rows with Category "Greenhouse Flower" / Subcategory "Bigs".
-    (r"\bmendo\b.*green\s*house.*flower",
+    # Mendo Mixed Light (greenhouse) Flower — new line 2026-10 ($8.80/unit
+    # list, per Niki). Must come before the indoor catch-all below. KSS names
+    # don't say so ("Mendo Flower 3.5g Hybrid Cherryz"): its BrandName does
+    # ("Mendo Mixed Light Flower Cherryz") — see _apply_mixed_light. Its BSKU
+    # and price come from DATAV rows Category "Greenhouse Flower" / "Bigs".
+    (r"\bmendo\b.*(?:green\s*house|mixed\s*light).*flower",
         "Mendo", "Greenhouse Flower", "Bigs", None),
 
     # Mendo Flower (1g, 3.5g, 14g). All current Mendo flower is grown indoors —
@@ -432,6 +434,26 @@ def _canonicalize_size(raw_g: str) -> str:
     if g <= 3.6: return "3.5g"
     if g <= 14:  return "14g"
     return "28g"
+
+def _apply_mixed_light(parsed: dict, product: dict) -> dict:
+    """Mendo's Mixed Light (greenhouse) flower is named like its indoor flower
+    in KSS ("Mendo Flower 3.5g Hybrid Cherryz"); only the BrandName ("Mendo
+    Mixed Light Flower Cherryz") or description ("grown in mixed light") tells
+    them apart. Moves those onto Greenhouse Flower. If DATAV has no Greenhouse
+    Flower BSKU for the size yet, sales/inventory reports keep them on Indoor
+    Flower and only the menu moves them (menu_category), unpriced."""
+    if parsed.get("brand") != "Mendo" or parsed.get("category") != "Indoor Flower":
+        return parsed
+    text = f"{product.get('BrandName') or ''} {product.get('Description') or ''}".lower()
+    if not re.search(r"mixed[\s-]*light|green\s*house", text):
+        return parsed
+    hit = BSKU_LOOKUP.get(("Mendo", "Greenhouse Flower", parsed["subcategory"], parsed["weight_unit"]))
+    if not hit:
+        return {**parsed, "menu_category": "Greenhouse Flower"}
+    pg, bsku = hit
+    return {**parsed, "category": "Greenhouse Flower", "pg": pg, "bsku": bsku,
+            "tsku": make_tsku(bsku, parsed.get("type")), "bsku_concat": BSKU_CONCAT.get(bsku, "")}
+
 
 def parse_product_name(name: str) -> dict:
     """
@@ -583,7 +605,7 @@ _SECTION_TITLES = {
     ("Flower", "Pre-Ground"):          "Pre-Ground Pouches",
     ("Flower", "Bigs"):                "Flower",
     ("Indoor Flower", "Bigs"):         "Indoor Flower",
-    ("Greenhouse Flower", "Bigs"):     "Greenhouse Flower",
+    ("Greenhouse Flower", "Bigs"):     "Mixed Light Flower",
     ("Preroll", "Single"):             "Pre-Rolls — Single 1g",
     ("Preroll", "28pk"):               "Pre-Roll Party Packs — 28ct",
     ("Preroll", "6pk"):                "Pre-Rolls — 6-Pack",
@@ -595,7 +617,7 @@ _SECTION_TITLES = {
 }
 
 # New lines listed on the menu even before DATAV has a BSKU row for them.
-_MENU_WITHOUT_BSKU = {("Howie Roll", "Flower", "Pre-Ground")}
+_MENU_WITHOUT_BSKU = {("Howie Roll", "Flower", "Pre-Ground"), ("Mendo", "Greenhouse Flower", "Bigs")}
 
 _WEIGHT_LABELS = {"1g": "1G", "3.5g": "1/8", "14g": "14G", "28g": "28G", "5g": "5G"}
 _WEIGHT_ORDER  = {"1g": 0, "3.5g": 1, "5g": 2, "14g": 3, "28g": 4}
@@ -668,6 +690,13 @@ def build_menu(product_catalog: dict, products_raw: list, inventory_raw: list,
     # A new line DATAV may not have a BSKU for yet (_MENU_WITHOUT_BSKU) is
     # keyed by brand|category|subcategory|weight so it still makes the menu,
     # unpriced. Other formats without a BSKU stay off, as before.
+    # Catalog entries the menu files elsewhere than the reports do
+    # (_apply_mixed_light without a DATAV BSKU): no BSKU, so no indoor price.
+    product_catalog = {
+        pid: ({**c, "category": c["menu_category"], "bsku": ""} if c.get("menu_category") else c)
+        for pid, c in product_catalog.items()
+    }
+
     def menu_key(cat):
         if not cat:
             return ""
@@ -1291,6 +1320,7 @@ def transform():
             continue
         parsed = parse_product_name(name)
         if parsed:
+            parsed = _apply_mixed_light(parsed, p)
             product_catalog[sku_id] = {**parsed, "raw_name": name, "sku_id": sku_id}
         else:
             parse_failures.append(name)
