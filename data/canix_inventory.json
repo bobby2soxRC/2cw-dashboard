@@ -187640,25 +187640,29 @@
     "_facility_license_number": "CCL22-0001284"
   },
   {
-    "id": 35489585,
-    "tag": "1A406030005E0B2000010438",
+    "id": 35483916,
+    "tag": "1A406030005E0B2000010500",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "In Progress",
     "item": {
-      "id": 3523238,
-      "name": "Shake - Mix",
+      "id": 3468297,
+      "name": "Smalls - Wimbledon",
       "sku": null,
       "is_active": true,
       "facility_id": 4923,
       "type": {
-        "id": 119089,
-        "name": "Shake",
+        "id": 119074,
+        "name": "Flower",
         "quantity_type": "WeightBased",
         "product_category": "Buds"
       },
-      "sub_type": null,
+      "sub_type": {
+        "id": 17600,
+        "name": "Smalls",
+        "updated_at": "2026-09-30T23:03:52.628Z"
+      },
       "brand": null,
       "product_id": null,
       "product_brand": null,
@@ -187666,7 +187670,10 @@
       "current_standard_cost": null,
       "notes": null,
       "accounting_inventory_type": null,
-      "strain": null,
+      "strain": {
+        "id": 733193,
+        "name": "Wimbledon"
+      },
       "weight_unit": "Pounds",
       "unit_weight": null,
       "unit_weight_unit": null,
@@ -187684,11 +187691,11 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-11-13T00:46:01.481Z"
+      "updated_at": "2026-11-13T00:46:06.291Z"
     },
     "facility_id": 4923,
-    "weight": 1739.75,
-    "original_weight": 1739.75,
+    "weight": 12.86,
+    "original_weight": 12.86,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-11-12T00:00:00.000Z",
@@ -187703,467 +187710,354 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": null,
-        "tag": "1A406030005E0B2000003431",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
+        "id": 35454429,
+        "tag": "1A406030005E0B2000003491",
+        "weight": 12.86,
+        "weight_unit": "Pounds",
+        "pulled_weight": 12.86,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3526095,
+          "name": "Unfinished Smalls - Wimbledon",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "AF-073-Glitter Bomb-232-T2, AF-073-Grape Gas-231-T1, AF-073-Lemon Cherry Gelato-233-T4, AF-075-Zoap-224-T2-8-21-26",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-11-12T20:19:03.588Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 35484615,
+    "tag": "1A406030005E0B2000010501",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3527661,
+      "name": "Unfinished Smalls - Apple Tarts",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4923,
+      "type": {
+        "id": 119074,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
       },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000003451",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 649511,
+        "name": "Apple Tarts"
       },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-11-12T20:36:46.046Z"
+    },
+    "facility_id": 4923,
+    "weight": 18.8,
+    "original_weight": 18.8,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-11-12T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
       {
-        "id": null,
-        "tag": "1A406030005E0B2000003453",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
+        "id": 34722864,
+        "tag": "1A406030005E0B2000010003",
+        "weight": 18.8,
+        "weight_unit": "Pounds",
+        "pulled_weight": 18.8,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3486656,
+          "name": "Unbucked Flower - Apple Tartz #6",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "Apple Tartz #6 (HVN) 10-03-26",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-11-12T20:36:45.582Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 35484617,
+    "tag": "1A406030005E0B2000010502",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3527663,
+      "name": "Unfinished Smalls - #13 Grape Lobster",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4923,
+      "type": {
+        "id": 119074,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
       },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010004",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 736176,
+        "name": "#13 Grape Lobster"
       },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-11-12T20:36:46.188Z"
+    },
+    "facility_id": 4923,
+    "weight": 6.8,
+    "original_weight": 6.8,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-11-12T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
       {
-        "id": null,
-        "tag": "1A406030005E0B2000010021",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
+        "id": 34835699,
+        "tag": "1A406030005E0B2000010050",
+        "weight": 6.8,
+        "weight_unit": "Pounds",
+        "pulled_weight": 6.8,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3493302,
+          "name": "Bucked Flower - #13 Grape Loster",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "#13 Grape Lobster (HVN) 10-03-26",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-11-12T20:36:46.225Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 35484619,
+    "tag": "1A406030005E0B2000010503",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3523789,
+      "name": "Unfinished Smalls - RSP",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4923,
+      "type": {
+        "id": 119074,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
       },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010027",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 649117,
+        "name": "RSP"
       },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-11-12T20:36:46.351Z"
+    },
+    "facility_id": 4923,
+    "weight": 30.88,
+    "original_weight": 30.88,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-11-12T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
       {
-        "id": null,
-        "tag": "1A406030005E0B2000010033",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010037",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010038",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010040",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010057",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010060",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010061",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010064",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010068",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010072",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010074",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010081",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010082",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010086",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010098",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010126",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010128",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010129",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010133",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010134",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010148",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010154",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010207",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010208",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010209",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010210",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010213",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010224",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010238",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
+        "id": 35160158,
         "tag": "1A406030005E0B2000010244",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010247",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010351",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A4060300...",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "AF-071-Galactic Warheadz-224-T2., AF-071-Grape Gas-224-T2, AF-071-Lemon Cherry Gelato-224-T2., AF-071-Lemon Cherry Gelato-232-T7, AF-071-Lemon Cherry Gelato-233-T3, AF-071-Lemon Cherry Gelato-233-T4, AF-071-White Runtz-224-T3, AF-071-Zoap-232-T2, AF-071-Zoap-232-T4, AF-071-Zoap-232-T5, AF-071-Zoap-232-T6, AF-073-Galactic Warheads-253-T1, AF-073-Glitter Bomb-232-T2, AF-073-Grape Gas-231-T1, AF-073-Grape Gas-232-T2, AF-073-Ice Cream Cake-243-T1, AF-073-Ice Cream Cake-244-T2, AF-073-It'z Pluto-224-T3-8-25-26, AF-073-Itz Pluto-238-T2, AF-073-Obama Runtz-224-T1-8-21-26, AF-073-Obama Runtz-224-T2-8-21-26, AF-073-Tahiti Twist-224-T5-8-25-26, AF-073-Tahiti Twist-224-T6-8-25-26, AF-075-Galactic Warheadz-224-T3-09-01-26, AF-075-Galactic Warheadz-224-T4-8-25-26, AF-075-Galactic Warheadz-224-T5-8-25-26, AF-075-Grape Gas-224-T6., AF-075-GRP-224-T4-09-01-26, AF-075-Ice Cream Cake-224-T3-09-01-26, AF-075-Lemon Cherry Gelato-233-T5, AF-075-Tahiti Twist-224-T3-09-01-26, AF-075-Tahiti Twist-238-T2, A...",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-13T00:46:01.568Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35488994,
-    "tag": "1A406030005E0B2000010520",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Progress",
-    "item": {
-      "id": 3527876,
-      "name": "Shake - Blue Dream",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119089,
-        "name": "Shake",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": null,
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-12T23:06:48.361Z"
-    },
-    "facility_id": 4923,
-    "weight": 57.9,
-    "original_weight": 57.9,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-12T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 34905460,
-        "tag": "1A406030005E0B2000010097",
-        "weight": 57.9,
+        "weight": 30.88,
         "weight_unit": "Pounds",
-        "pulled_weight": 57.9,
+        "pulled_weight": 30.88,
         "pulled_weight_unit": "Pounds",
         "item": {
-          "id": 3486657,
-          "name": "Unbucked Flower - Blue Dream",
+          "id": 3510642,
+          "name": "Unbucked Flower - RSP",
           "sku": null
         }
       }
     ],
     "destination_packages": [],
-    "source_harvests": "AGP0167-BD-T1-10-07-2026",
+    "source_harvests": "AGP0027-RSP-T5-10-14-26",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -188181,7 +188075,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-11-12T23:06:48.481Z",
+    "updated_at": "2026-11-12T20:36:46.366Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -188194,15 +188088,15 @@
     "_facility_license_number": "CCL22-0001284"
   },
   {
-    "id": 35488966,
-    "tag": "1A406030005E0B2000010435",
+    "id": 35484621,
+    "tag": "1A406030005E0B2000010504",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "In Progress",
     "item": {
-      "id": 3454352,
-      "name": "Unfinished Smalls - Banana Punch",
+      "id": 3523788,
+      "name": "Unfinished Smalls - GC",
       "sku": null,
       "is_active": true,
       "facility_id": 4923,
@@ -188221,8 +188115,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 649513,
-        "name": "Banana Punch"
+        "id": 649077,
+        "name": "GC"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -188241,11 +188135,11 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-11-12T23:01:21.020Z"
+      "updated_at": "2026-11-12T20:36:46.442Z"
     },
     "facility_id": 4923,
-    "weight": 12.84,
-    "original_weight": 12.84,
+    "weight": 2.66,
+    "original_weight": 2.66,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-11-12T00:00:00.000Z",
@@ -188260,21 +188154,21 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": 35142361,
-        "tag": "1A406030005E0B2000010208",
-        "weight": 12.84,
+        "id": 35247081,
+        "tag": "1A406030005E0B2000010238",
+        "weight": 2.66,
         "weight_unit": "Pounds",
-        "pulled_weight": 12.84,
+        "pulled_weight": 2.66,
         "pulled_weight_unit": "Pounds",
         "item": {
-          "id": 3509632,
-          "name": "Unbucked Flower - Banana Punch",
+          "id": 3515053,
+          "name": "Unbucked Flower - GC",
           "sku": null
         }
       }
     ],
     "destination_packages": [],
-    "source_harvests": "AGP0027-BP-T7-10-15-26",
+    "source_harvests": "WC2179-GC-T5-10-15-2026",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -188292,7 +188186,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-11-12T23:01:21.121Z",
+    "updated_at": "2026-11-12T20:36:46.457Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -188305,15 +188199,15 @@
     "_facility_license_number": "CCL22-0001284"
   },
   {
-    "id": 35488965,
-    "tag": "1A406030005E0B2000010434",
+    "id": 35484622,
+    "tag": "1A406030005E0B2000010505",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "In Progress",
     "item": {
-      "id": 2977633,
-      "name": "Flower - Banana Punch",
+      "id": 3523787,
+      "name": "Unfinished Smalls - #100",
       "sku": null,
       "is_active": true,
       "facility_id": 4923,
@@ -188332,8 +188226,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 649513,
-        "name": "Banana Punch"
+        "id": 709097,
+        "name": "#100"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -188352,11 +188246,11 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-11-12T23:01:20.601Z"
+      "updated_at": "2026-11-12T20:36:46.530Z"
     },
     "facility_id": 4923,
-    "weight": 17.6,
-    "original_weight": 17.6,
+    "weight": 48.34,
+    "original_weight": 48.34,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-11-12T00:00:00.000Z",
@@ -188371,1328 +188265,15 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": 35142361,
-        "tag": "1A406030005E0B2000010208",
-        "weight": 17.6,
+        "id": 35142674,
+        "tag": "1A406030005E0B2000010086",
+        "weight": 48.34,
         "weight_unit": "Pounds",
-        "pulled_weight": 17.6,
+        "pulled_weight": 48.34,
         "pulled_weight_unit": "Pounds",
         "item": {
-          "id": 3509632,
-          "name": "Unbucked Flower - Banana Punch",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "AGP0027-BP-T7-10-15-26",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-12T23:01:20.669Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35488892,
-    "tag": "1A4060300047D39000015731",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "Available To Sell",
-    "item": {
-      "id": 3310564,
-      "name": "2CW Bulk Flower",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4929,
-      "type": {
-        "id": 119331,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 703241,
-        "name": "Mixed Flower"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 45.1288,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 45.1288,
-      "updated_at": "2026-11-12T22:51:58.962Z"
-    },
-    "facility_id": 4929,
-    "weight": 28.7589,
-    "original_weight": 28.7589,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-12T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": true,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": null,
-        "tag": "1A4060300047D39000014987",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A4060300047D39000015077",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A4060300047D39000015125",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A4060300047D39000015252",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A4060300047D39000015257",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A4060300047D39000015283",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A4060300047D39000015301",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A4060300047D39000015305",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A4060300047D39000015389",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A4060300047D39000015497",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A4060300047D39000015594",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A4060300047D39000015595",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A4060300047D39000015623",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "101025, 2024-10-12-KPF-24-Flower 1-GGS-SGW-G3C, 2024-10-12-KPF-24-Flower 1-J3N-CYS-63R, 2024-10-12-KPF-24-Flower 1-KCJ-Y5E-ENF, 2024-10-12-KPF-24-Flower 1-LHZ-XKA-DZG, 2024-10-12-KPF-24-Flower 1-ZTZ-NHR-527, 2024-12-02-RC_24-Main-PPG-X4J-D7Z, 449425 Almond Mochi MB1, 449425 Almond Mochi MB1.3, 449425 Banana MB1, 449425 G41 MB1, 449425 G41 MB1.2, 449425 Joker's MB3, 449425 Joker's MB4, 449425 LSL MB1, 449425 Pack Mule 3 MB1, 449425 Pack Mule MB1.3, 449425 Pink Certz MB1, AF-071-Galactic Warheadz-224-T1., AF-071-Galactic Warheadz-224-T2., AF-071-Glitter Bomb-224-T2, AF-071-Glitter Bomb-224-T3, AF-071-Glitter Bomb-224-T4, AF-071-Grape Gas-224-T2, AF-071-White Runtz-224-T3, AF-073-Galactic Warheads-253-T1, AF-073-Glitter Bomb-232-T2, AF-073-Grape Gas-231-T1, AF-073-Grape Gas-232-T2, AF-073-Ice Cream Cake-243-T1, AF-073-Ice Cream Cake-244-T2, AF-073-It'z Pluto-224-T3-8-25-26, AF-073-Lemon Cherry Gelato-233-T4, AF-073-Obama Runtz-224-T1-8-21-26, AF-073-Obama Runtz-224-T2-8-21-26, AF-073-T...",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-12T22:51:59.062Z",
-    "test_results": {
-      "thc": [
-        {
-          "value": null,
-          "measure": "mg"
-        },
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "cbd": [
-        {
-          "value": null,
-          "measure": "mg"
-        },
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 0.0,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "thca": [
-        {
-          "value": 230.609,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 23.0609,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "cbda": [
-        {
-          "value": 0.817,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 0.0817,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "cbn": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "cbg": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "cbc": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        }
-      ],
-      "cbca": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        }
-      ],
-      "cbga": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "delta_8_thc": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "delta_8_thca": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "delta_9_thc": [
-        {
-          "value": 9.780999999999999,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 0.9781,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "delta_9_thca": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "delta_10_thc": [
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "thcv": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "thcva": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "total_cbd": [
-        {
-          "value": 0.717,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 0.0717,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "total_cbg": [
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        }
-      ],
-      "total_delta_9_thc": [
-        {
-          "value": 212.025,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 21.2025,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "total_thc": [
-        {
-          "value": 212.025093,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 21.2025093,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "total_cannabinoid": [
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 24.1207,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "cbdv": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "cbdva": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "test_status": "TestPassed",
-      "tested_package_tag": "1A4060300047D39000015632",
-      "test_date": "2026-11-06",
-      "terpenes": {
-        "measure": "percent",
-        "top_three": {},
-        "values": {}
-      }
-    },
-    "lab_test_url": null,
-    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/3d290078/Package5632_COAfromMetrc_3d290078.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261113%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261113T020207Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=4822fe0a88d368e5ebe307ece068cbd1b4e7c465e39cfede44fb5841c6c5476a",
-    "lab_test_info": {
-      "testing_facility_name": "SC LABORATORIES CALIFORNIA, LLC",
-      "testing_facility_license": "C8-0000013-LIC"
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Airway: C11-0001652-LIC",
-    "_facility_license_number": "C11-0001652-LIC"
-  },
-  {
-    "id": 35488750,
-    "tag": "1A406030005E0B2000010517",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Progress",
-    "item": {
-      "id": 3527852,
-      "name": "Shake - Garlic Juice",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119089,
-        "name": "Shake",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": null,
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-12T22:31:01.128Z"
-    },
-    "facility_id": 4923,
-    "weight": 40.4,
-    "original_weight": 40.4,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-12T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 35399058,
-        "tag": "1A406030005E0B2000010126",
-        "weight": 40.4,
-        "weight_unit": "Pounds",
-        "pulled_weight": 40.4,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3523784,
-          "name": "Unbucked Flower - Garlic Juice",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "AGP0027-GJ-T7-10-19-2026",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-12T22:31:01.141Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35488749,
-    "tag": "1A406030005E0B2000010516",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Progress",
-    "item": {
-      "id": 3527853,
-      "name": "Unfinished Smalls - Garlic Juice",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119074,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 741869,
-        "name": "Garlic Juice"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-12T22:31:01.040Z"
-    },
-    "facility_id": 4923,
-    "weight": 32.45,
-    "original_weight": 32.45,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-12T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 35399058,
-        "tag": "1A406030005E0B2000010126",
-        "weight": 32.45,
-        "weight_unit": "Pounds",
-        "pulled_weight": 32.45,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3523784,
-          "name": "Unbucked Flower - Garlic Juice",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "AGP0027-GJ-T7-10-19-2026",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-12T22:31:01.054Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35488748,
-    "tag": "1A406030005E0B2000010515",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Progress",
-    "item": {
-      "id": 3527851,
-      "name": "Flower - Garlic Juice",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119074,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 741869,
-        "name": "Garlic Juice"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-12T22:31:00.955Z"
-    },
-    "facility_id": 4923,
-    "weight": 33.25,
-    "original_weight": 33.25,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-12T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 35399058,
-        "tag": "1A406030005E0B2000010126",
-        "weight": 33.25,
-        "weight_unit": "Pounds",
-        "pulled_weight": 33.25,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3523784,
-          "name": "Unbucked Flower - Garlic Juice",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "AGP0027-GJ-T7-10-19-2026",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-12T22:31:00.957Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35488334,
-    "tag": "1A4060300047D39000015730",
-    "is_active": true,
-    "is_testing_package": true,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3526258,
-      "name": "2CW | Flower Key Lime Pie",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4929,
-      "type": {
-        "id": 119331,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 742175,
-        "name": "Key Lime Pie"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-12T22:19:01.998Z"
-    },
-    "facility_id": 4929,
-    "weight": 50.0,
-    "original_weight": 50.0,
-    "weight_unit": "Grams",
-    "implied_weight": "",
-    "packaged_date": "2026-11-12T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 35458429,
-        "tag": "1A4060300047D39000015702",
-        "weight": 50.0,
-        "weight_unit": "Grams",
-        "pulled_weight": 50.0,
-        "pulled_weight_unit": "Grams",
-        "item": {
-          "id": 3526258,
-          "name": "2CW | Flower Key Lime Pie",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "AGP0167-HB-T5-10-08-2026",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-12T22:19:04.150Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Airway: C11-0001652-LIC",
-    "_facility_license_number": "C11-0001652-LIC"
-  },
-  {
-    "id": 35488175,
-    "tag": "1A4060300047D39000015729",
-    "is_active": true,
-    "is_testing_package": true,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3526272,
-      "name": "2CW | Flower Lavender Jack",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4929,
-      "type": {
-        "id": 119331,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 710739,
-        "name": "Lavender Jack"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-12T22:09:58.770Z"
-    },
-    "facility_id": 4929,
-    "weight": 43.0,
-    "original_weight": 43.0,
-    "weight_unit": "Grams",
-    "implied_weight": "",
-    "packaged_date": "2026-11-12T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 35458577,
-        "tag": "1A4060300047D39000015706",
-        "weight": 43.0,
-        "weight_unit": "Grams",
-        "pulled_weight": 43.0,
-        "pulled_weight_unit": "Grams",
-        "item": {
-          "id": 3526272,
-          "name": "2CW | Flower Lavender Jack",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "AGP0027-LJ-T5-10-12-2026",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-12T22:19:03.654Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Airway: C11-0001652-LIC",
-    "_facility_license_number": "C11-0001652-LIC"
-  },
-  {
-    "id": 35488160,
-    "tag": "1A4060300047D39000015728",
-    "is_active": true,
-    "is_testing_package": true,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3526425,
-      "name": "2CW | Flower Pineapple Skunk",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4929,
-      "type": {
-        "id": 119331,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 742188,
-        "name": "Pineapple Skunk"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-12T22:06:52.199Z"
-    },
-    "facility_id": 4929,
-    "weight": 43.0,
-    "original_weight": 43.0,
-    "weight_unit": "Grams",
-    "implied_weight": "",
-    "packaged_date": "2026-11-12T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 35460513,
-        "tag": "1A4060300047D39000015719",
-        "weight": 43.0,
-        "weight_unit": "Grams",
-        "pulled_weight": 43.0,
-        "pulled_weight_unit": "Grams",
-        "item": {
-          "id": 3526425,
-          "name": "2CW | Flower Pineapple Skunk",
+          "id": 3509782,
+          "name": "Unbucked Flower - #100",
           "sku": null
         }
       }
@@ -189716,7 +188297,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-11-12T22:19:02.968Z",
+    "updated_at": "2026-11-12T20:36:46.544Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -189725,123 +188306,12 @@
       "testing_facility_license": null
     },
     "_license_key_label": "All Facilities",
-    "_facility_name": "Airway: C11-0001652-LIC",
-    "_facility_license_number": "C11-0001652-LIC"
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
   },
   {
-    "id": 35488159,
-    "tag": "1A4060300047D39000015727",
-    "is_active": true,
-    "is_testing_package": true,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 2980423,
-      "name": "2CW | Flower Tropicanna Cherry",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4929,
-      "type": {
-        "id": 119331,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 650364,
-        "name": "Tropicanna Cherry"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-12T22:06:51.989Z"
-    },
-    "facility_id": 4929,
-    "weight": 49.0,
-    "original_weight": 49.0,
-    "weight_unit": "Grams",
-    "implied_weight": "",
-    "packaged_date": "2026-11-12T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 35458528,
-        "tag": "1A4060300047D39000015709",
-        "weight": 49.0,
-        "weight_unit": "Grams",
-        "pulled_weight": 49.0,
-        "pulled_weight_unit": "Grams",
-        "item": {
-          "id": 2980423,
-          "name": "2CW | Flower Tropicanna Cherry",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "AGP0167-TC-T2-10-07-2026",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-12T22:19:02.147Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Airway: C11-0001652-LIC",
-    "_facility_license_number": "C11-0001652-LIC"
-  },
-  {
-    "id": 35488120,
-    "tag": "1A406030005E0B2000010433",
+    "id": 35484624,
+    "tag": "1A406030005E0B2000010506",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
@@ -189890,8 +188360,8 @@
       "updated_at": "2026-11-12T22:04:06.622Z"
     },
     "facility_id": 4923,
-    "weight": 41.52,
-    "original_weight": 41.52,
+    "weight": 9.54,
+    "original_weight": 9.54,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-11-12T00:00:00.000Z",
@@ -189908,9 +188378,9 @@
       {
         "id": 35142568,
         "tag": "1A406030005E0B2000010081",
-        "weight": 41.52,
+        "weight": 9.54,
         "weight_unit": "Pounds",
-        "pulled_weight": 41.52,
+        "pulled_weight": 9.54,
         "pulled_weight_unit": "Pounds",
         "item": {
           "id": 3509772,
@@ -189938,7 +188408,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-11-12T22:04:06.635Z",
+    "updated_at": "2026-11-12T20:36:46.627Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -189951,15 +188421,15 @@
     "_facility_license_number": "CCL22-0001284"
   },
   {
-    "id": 35488119,
-    "tag": "1A406030005E0B2000010432",
+    "id": 35484625,
+    "tag": "1A406030005E0B2000010507",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "In Progress",
     "item": {
-      "id": 3527817,
-      "name": "Flower - UK Cheese",
+      "id": 3527665,
+      "name": "Unfinished Smalls - Hash Mule #26",
       "sku": null,
       "is_active": true,
       "facility_id": 4923,
@@ -189978,8 +188448,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 740067,
-        "name": "UK Cheese"
+        "id": 740258,
+        "name": "Hash Mule #26"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -189998,11 +188468,11 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-11-12T22:04:06.528Z"
+      "updated_at": "2026-11-12T20:36:46.696Z"
     },
     "facility_id": 4923,
-    "weight": 92.49,
-    "original_weight": 92.49,
+    "weight": 0.46,
+    "original_weight": 0.46,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-11-12T00:00:00.000Z",
@@ -190017,21 +188487,21 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": 35142568,
-        "tag": "1A406030005E0B2000010081",
-        "weight": 92.49,
+        "id": 35159922,
+        "tag": "1A406030005E0B2000010247",
+        "weight": 0.46,
         "weight_unit": "Pounds",
-        "pulled_weight": 92.49,
+        "pulled_weight": 0.46,
         "pulled_weight_unit": "Pounds",
         "item": {
-          "id": 3509772,
-          "name": "Unbucked Flower - UK Cheese",
+          "id": 3510662,
+          "name": "Unbucked Flower - Hash Mule #26",
           "sku": null
         }
       }
     ],
     "destination_packages": [],
-    "source_harvests": "AGP0027-UK-T9-10-17-2026",
+    "source_harvests": "AGP0167-HM-T10-10-13-2026",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -190049,7 +188519,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-11-12T22:04:06.545Z",
+    "updated_at": "2026-11-12T20:36:46.708Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -190062,15 +188532,15 @@
     "_facility_license_number": "CCL22-0001284"
   },
   {
-    "id": 35488118,
-    "tag": "1A406030005E0B2000010430",
+    "id": 35484627,
+    "tag": "1A406030005E0B2000010508",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "In Progress",
     "item": {
-      "id": 3523786,
-      "name": "Flower - GC",
+      "id": 3527668,
+      "name": "Unfinished Smalls - ZxP",
       "sku": null,
       "is_active": true,
       "facility_id": 4923,
@@ -190089,8 +188559,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 649077,
-        "name": "GC"
+        "id": 669980,
+        "name": "ZXP [PH]"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -190109,11 +188579,11 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-11-12T22:04:06.357Z"
+      "updated_at": "2026-11-12T20:36:46.776Z"
     },
     "facility_id": 4923,
-    "weight": 33.8,
-    "original_weight": 33.8,
+    "weight": 3.9,
+    "original_weight": 3.9,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-11-12T00:00:00.000Z",
@@ -190128,21 +188598,21 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": 35247081,
-        "tag": "1A406030005E0B2000010238",
-        "weight": 33.8,
+        "id": 35141071,
+        "tag": "1A406030005E0B2000010210",
+        "weight": 3.9,
         "weight_unit": "Pounds",
-        "pulled_weight": 33.8,
+        "pulled_weight": 3.9,
         "pulled_weight_unit": "Pounds",
         "item": {
-          "id": 3515053,
-          "name": "Unbucked Flower - GC",
+          "id": 3509626,
+          "name": "Unbucked Flower - ZxP",
           "sku": null
         }
       }
     ],
     "destination_packages": [],
-    "source_harvests": "WC2179-GC-T5-10-15-2026",
+    "source_harvests": "AGP0027-ZP-T7-10-14-26",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -190160,7 +188630,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-11-12T22:04:06.419Z",
+    "updated_at": "2026-11-12T20:36:46.787Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -190173,123 +188643,15 @@
     "_facility_license_number": "CCL22-0001284"
   },
   {
-    "id": 35486637,
-    "tag": "1A406030005E0B2000010514",
+    "id": 35484761,
+    "tag": "1A406030005E0B2000010509",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "In Progress",
     "item": {
-      "id": 3527722,
-      "name": "Shake - SWD",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119089,
-        "name": "Shake",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": null,
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-12T21:21:48.577Z"
-    },
-    "facility_id": 4923,
-    "weight": 21.2,
-    "original_weight": 21.2,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-12T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 35063376,
-        "tag": "1A406030005E0B2000010063",
-        "weight": 21.2,
-        "weight_unit": "Pounds",
-        "pulled_weight": 21.2,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3505405,
-          "name": "Unbucked Flower - SWD",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "AGP0027-SWD-T10-10-12-2026",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-12T21:21:48.646Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35485670,
-    "tag": "1A406030005E0B2000010511",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Progress",
-    "item": {
-      "id": 2977826,
-      "name": "Unfinished Smalls - Mix",
+      "id": 3493478,
+      "name": "Smalls - Blue Dream",
       "sku": null,
       "is_active": true,
       "facility_id": 4923,
@@ -190308,8 +188670,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 648716,
-        "name": "Mix"
+        "id": 649020,
+        "name": "Blue Dream"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -190328,11 +188690,11 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-11-12T20:54:53.723Z"
+      "updated_at": "2026-11-12T20:39:47.548Z"
     },
     "facility_id": 4923,
-    "weight": 11.04,
-    "original_weight": 11.04,
+    "weight": 4.0,
+    "original_weight": 4.0,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-11-12T00:00:00.000Z",
@@ -190347,44 +188709,21 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": null,
-        "tag": "1A4060300049C1A000002462",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010022",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010028",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010498",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
+        "id": 34723135,
+        "tag": "1A406030005E0B2000010004",
+        "weight": 4.0,
+        "weight_unit": "Pounds",
+        "pulled_weight": 4.0,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3486657,
+          "name": "Unbucked Flower - Blue Dream",
+          "sku": null
+        }
       }
     ],
     "destination_packages": [],
-    "source_harvests": "AF-071-Galactic Warheadz-224-T2., AF-071-Grape Gas-224-T2, AF-071-Lemon Cherry Gelato-224-T2., AF-071-Lemon Cherry Gelato-232-T7, AF-071-Lemon Cherry Gelato-233-T3, AF-071-Lemon Cherry Gelato-233-T4, AF-071-Zoap-232-T2, AF-071-Zoap-232-T4, AF-071-Zoap-232-T5, AF-071-Zoap-232-T6, AF-073-Galactic Warheads-253-T1, AF-073-Glitter Bomb-232-T2, AF-073-Grape Gas-231-T1, AF-073-Grape Gas-232-T2, AF-073-Ice Cream Cake-243-T1, AF-073-Ice Cream Cake-244-T2, AF-073-It'z Pluto-224-T3-8-25-26, AF-073-Itz Pluto-238-T2, AF-073-Obama Runtz-224-T1-8-21-26, AF-073-Obama Runtz-224-T2-8-21-26, AF-073-Tahiti Twist-224-T5-8-25-26, AF-073-Tahiti Twist-224-T6-8-25-26, AF-075-Galactic Warheadz-224-T3-09-01-26, AF-075-Galactic Warheadz-224-T4-8-25-26, AF-075-Galactic Warheadz-224-T5-8-25-26, AF-075-Grape Gas-224-T6., AF-075-GRP-224-T4-09-01-26, AF-075-Ice Cream Cake-224-T3-09-01-26, AF-075-Lemon Cherry Gelato-233-T5, AF-075-Tahiti Twist-224-T3-09-01-26, AF-075-Tahiti Twist-238-T2, AF-075-Tahiti Twist-244-T2, ...",
+    "source_harvests": "Blue Dream (HVN) 10-03-26",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -190402,7 +188741,118 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-11-12T20:54:53.808Z",
+    "updated_at": "2026-11-12T20:39:47.625Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 35484960,
+    "tag": "1A406030005E0B2000010510",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3527672,
+      "name": "Smalls - GP x CB",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4923,
+      "type": {
+        "id": 119074,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 739087,
+        "name": "GP x CB"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-11-12T20:43:08.453Z"
+    },
+    "facility_id": 4923,
+    "weight": 38.75,
+    "original_weight": 38.75,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-11-12T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": 35005643,
+        "tag": "1A406030005E0B2000010061",
+        "weight": 38.75,
+        "weight_unit": "Pounds",
+        "pulled_weight": 38.75,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3501146,
+          "name": "Unbucked Flower - GP x CB",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "GPxCB-T6-10-06-26",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-11-12T20:43:08.423Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -191065,15 +189515,15 @@
     "_facility_license_number": "C11-0001652-LIC"
   },
   {
-    "id": 35484960,
-    "tag": "1A406030005E0B2000010510",
+    "id": 35485670,
+    "tag": "1A406030005E0B2000010511",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "In Progress",
     "item": {
-      "id": 3527672,
-      "name": "Smalls - GP x CB",
+      "id": 2977826,
+      "name": "Unfinished Smalls - Mix",
       "sku": null,
       "is_active": true,
       "facility_id": 4923,
@@ -191092,8 +189542,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 739087,
-        "name": "GP x CB"
+        "id": 648716,
+        "name": "Mix"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -191112,11 +189562,11 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-11-12T20:43:08.453Z"
+      "updated_at": "2026-11-12T20:54:53.723Z"
     },
     "facility_id": 4923,
-    "weight": 38.75,
-    "original_weight": 38.75,
+    "weight": 11.04,
+    "original_weight": 11.04,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-11-12T00:00:00.000Z",
@@ -191131,21 +189581,44 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": 35005643,
-        "tag": "1A406030005E0B2000010061",
-        "weight": 38.75,
-        "weight_unit": "Pounds",
-        "pulled_weight": 38.75,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3501146,
-          "name": "Unbucked Flower - GP x CB",
-          "sku": null
-        }
+        "id": null,
+        "tag": "1A4060300049C1A000002462",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010022",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010028",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010498",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
       }
     ],
     "destination_packages": [],
-    "source_harvests": "GPxCB-T6-10-06-26",
+    "source_harvests": "AF-071-Galactic Warheadz-224-T2., AF-071-Grape Gas-224-T2, AF-071-Lemon Cherry Gelato-224-T2., AF-071-Lemon Cherry Gelato-232-T7, AF-071-Lemon Cherry Gelato-233-T3, AF-071-Lemon Cherry Gelato-233-T4, AF-071-Zoap-232-T2, AF-071-Zoap-232-T4, AF-071-Zoap-232-T5, AF-071-Zoap-232-T6, AF-073-Galactic Warheads-253-T1, AF-073-Glitter Bomb-232-T2, AF-073-Grape Gas-231-T1, AF-073-Grape Gas-232-T2, AF-073-Ice Cream Cake-243-T1, AF-073-Ice Cream Cake-244-T2, AF-073-It'z Pluto-224-T3-8-25-26, AF-073-Itz Pluto-238-T2, AF-073-Obama Runtz-224-T1-8-21-26, AF-073-Obama Runtz-224-T2-8-21-26, AF-073-Tahiti Twist-224-T5-8-25-26, AF-073-Tahiti Twist-224-T6-8-25-26, AF-075-Galactic Warheadz-224-T3-09-01-26, AF-075-Galactic Warheadz-224-T4-8-25-26, AF-075-Galactic Warheadz-224-T5-8-25-26, AF-075-Grape Gas-224-T6., AF-075-GRP-224-T4-09-01-26, AF-075-Ice Cream Cake-224-T3-09-01-26, AF-075-Lemon Cherry Gelato-233-T5, AF-075-Tahiti Twist-224-T3-09-01-26, AF-075-Tahiti Twist-238-T2, AF-075-Tahiti Twist-244-T2, ...",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -191163,7 +189636,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-11-12T20:43:08.423Z",
+    "updated_at": "2026-11-12T20:54:53.808Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -191176,15 +189649,123 @@
     "_facility_license_number": "CCL22-0001284"
   },
   {
-    "id": 35484761,
-    "tag": "1A406030005E0B2000010509",
+    "id": 35486637,
+    "tag": "1A406030005E0B2000010514",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "In Progress",
     "item": {
-      "id": 3493478,
-      "name": "Smalls - Blue Dream",
+      "id": 3527722,
+      "name": "Shake - SWD",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4923,
+      "type": {
+        "id": 119089,
+        "name": "Shake",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": null,
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-11-12T21:21:48.577Z"
+    },
+    "facility_id": 4923,
+    "weight": 21.2,
+    "original_weight": 21.2,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-11-12T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": 35063376,
+        "tag": "1A406030005E0B2000010063",
+        "weight": 21.2,
+        "weight_unit": "Pounds",
+        "pulled_weight": 21.2,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3505405,
+          "name": "Unbucked Flower - SWD",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "AGP0027-SWD-T10-10-12-2026",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-11-12T21:21:48.646Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 35488118,
+    "tag": "1A406030005E0B2000010430",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3523786,
+      "name": "Flower - GC",
       "sku": null,
       "is_active": true,
       "facility_id": 4923,
@@ -191203,8 +189784,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 649020,
-        "name": "Blue Dream"
+        "id": 649077,
+        "name": "GC"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -191223,11 +189804,11 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-11-12T20:39:47.548Z"
+      "updated_at": "2026-11-12T22:04:06.357Z"
     },
     "facility_id": 4923,
-    "weight": 4.0,
-    "original_weight": 4.0,
+    "weight": 33.8,
+    "original_weight": 33.8,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-11-12T00:00:00.000Z",
@@ -191242,21 +189823,21 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": 34723135,
-        "tag": "1A406030005E0B2000010004",
-        "weight": 4.0,
+        "id": 35247081,
+        "tag": "1A406030005E0B2000010238",
+        "weight": 33.8,
         "weight_unit": "Pounds",
-        "pulled_weight": 4.0,
+        "pulled_weight": 33.8,
         "pulled_weight_unit": "Pounds",
         "item": {
-          "id": 3486657,
-          "name": "Unbucked Flower - Blue Dream",
+          "id": 3515053,
+          "name": "Unbucked Flower - GC",
           "sku": null
         }
       }
     ],
     "destination_packages": [],
-    "source_harvests": "Blue Dream (HVN) 10-03-26",
+    "source_harvests": "WC2179-GC-T5-10-15-2026",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -191274,7 +189855,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-11-12T20:39:47.625Z",
+    "updated_at": "2026-11-12T22:04:06.419Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -191287,15 +189868,15 @@
     "_facility_license_number": "CCL22-0001284"
   },
   {
-    "id": 35484627,
-    "tag": "1A406030005E0B2000010508",
+    "id": 35488119,
+    "tag": "1A406030005E0B2000010432",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "In Progress",
     "item": {
-      "id": 3527668,
-      "name": "Unfinished Smalls - ZxP",
+      "id": 3527817,
+      "name": "Flower - UK Cheese",
       "sku": null,
       "is_active": true,
       "facility_id": 4923,
@@ -191314,8 +189895,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 669980,
-        "name": "ZXP [PH]"
+        "id": 740067,
+        "name": "UK Cheese"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -191334,11 +189915,11 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-11-12T20:36:46.776Z"
+      "updated_at": "2026-11-12T22:04:06.528Z"
     },
     "facility_id": 4923,
-    "weight": 3.9,
-    "original_weight": 3.9,
+    "weight": 92.49,
+    "original_weight": 92.49,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-11-12T00:00:00.000Z",
@@ -191353,21 +189934,21 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": 35141071,
-        "tag": "1A406030005E0B2000010210",
-        "weight": 3.9,
+        "id": 35142568,
+        "tag": "1A406030005E0B2000010081",
+        "weight": 92.49,
         "weight_unit": "Pounds",
-        "pulled_weight": 3.9,
+        "pulled_weight": 92.49,
         "pulled_weight_unit": "Pounds",
         "item": {
-          "id": 3509626,
-          "name": "Unbucked Flower - ZxP",
+          "id": 3509772,
+          "name": "Unbucked Flower - UK Cheese",
           "sku": null
         }
       }
     ],
     "destination_packages": [],
-    "source_harvests": "AGP0027-ZP-T7-10-14-26",
+    "source_harvests": "AGP0027-UK-T9-10-17-2026",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -191385,7 +189966,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-11-12T20:36:46.787Z",
+    "updated_at": "2026-11-12T22:04:06.545Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -191398,119 +189979,8 @@
     "_facility_license_number": "CCL22-0001284"
   },
   {
-    "id": 35484625,
-    "tag": "1A406030005E0B2000010507",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Progress",
-    "item": {
-      "id": 3527665,
-      "name": "Unfinished Smalls - Hash Mule #26",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119074,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 740258,
-        "name": "Hash Mule #26"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-12T20:36:46.696Z"
-    },
-    "facility_id": 4923,
-    "weight": 0.46,
-    "original_weight": 0.46,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-12T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 35159922,
-        "tag": "1A406030005E0B2000010247",
-        "weight": 0.46,
-        "weight_unit": "Pounds",
-        "pulled_weight": 0.46,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3510662,
-          "name": "Unbucked Flower - Hash Mule #26",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "AGP0167-HM-T10-10-13-2026",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-12T20:36:46.708Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35484624,
-    "tag": "1A406030005E0B2000010506",
+    "id": 35488120,
+    "tag": "1A406030005E0B2000010433",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
@@ -191559,8 +190029,8 @@
       "updated_at": "2026-11-12T22:04:06.622Z"
     },
     "facility_id": 4923,
-    "weight": 9.54,
-    "original_weight": 9.54,
+    "weight": 41.52,
+    "original_weight": 41.52,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-11-12T00:00:00.000Z",
@@ -191577,9 +190047,9 @@
       {
         "id": 35142568,
         "tag": "1A406030005E0B2000010081",
-        "weight": 9.54,
+        "weight": 41.52,
         "weight_unit": "Pounds",
-        "pulled_weight": 9.54,
+        "pulled_weight": 41.52,
         "pulled_weight_unit": "Pounds",
         "item": {
           "id": 3509772,
@@ -191607,7 +190077,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-11-12T20:36:46.627Z",
+    "updated_at": "2026-11-12T22:04:06.635Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -191620,20 +190090,20 @@
     "_facility_license_number": "CCL22-0001284"
   },
   {
-    "id": 35484622,
-    "tag": "1A406030005E0B2000010505",
+    "id": 35488159,
+    "tag": "1A4060300047D39000015727",
     "is_active": true,
-    "is_testing_package": false,
+    "is_testing_package": true,
     "is_trade_sample": false,
-    "status": "In Progress",
+    "status": "In Transit",
     "item": {
-      "id": 3523787,
-      "name": "Unfinished Smalls - #100",
+      "id": 2980423,
+      "name": "2CW | Flower Tropicanna Cherry",
       "sku": null,
       "is_active": true,
-      "facility_id": 4923,
+      "facility_id": 4929,
       "type": {
-        "id": 119074,
+        "id": 119331,
         "name": "Flower",
         "quantity_type": "WeightBased",
         "product_category": "Buds"
@@ -191647,8 +190117,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 709097,
-        "name": "#100"
+        "id": 650364,
+        "name": "Tropicanna Cherry"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -191667,12 +190137,12 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-11-12T20:36:46.530Z"
+      "updated_at": "2026-11-12T22:06:51.989Z"
     },
-    "facility_id": 4923,
-    "weight": 48.34,
-    "original_weight": 48.34,
-    "weight_unit": "Pounds",
+    "facility_id": 4929,
+    "weight": 49.0,
+    "original_weight": 49.0,
+    "weight_unit": "Grams",
     "implied_weight": "",
     "packaged_date": "2026-11-12T00:00:00.000Z",
     "expiration_date": null,
@@ -191686,15 +190156,126 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": 35142674,
-        "tag": "1A406030005E0B2000010086",
-        "weight": 48.34,
-        "weight_unit": "Pounds",
-        "pulled_weight": 48.34,
-        "pulled_weight_unit": "Pounds",
+        "id": 35458528,
+        "tag": "1A4060300047D39000015709",
+        "weight": 49.0,
+        "weight_unit": "Grams",
+        "pulled_weight": 49.0,
+        "pulled_weight_unit": "Grams",
         "item": {
-          "id": 3509782,
-          "name": "Unbucked Flower - #100",
+          "id": 2980423,
+          "name": "2CW | Flower Tropicanna Cherry",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "AGP0167-TC-T2-10-07-2026",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-11-12T22:19:02.147Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
+  },
+  {
+    "id": 35488160,
+    "tag": "1A4060300047D39000015728",
+    "is_active": true,
+    "is_testing_package": true,
+    "is_trade_sample": false,
+    "status": "In Transit",
+    "item": {
+      "id": 3526425,
+      "name": "2CW | Flower Pineapple Skunk",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4929,
+      "type": {
+        "id": 119331,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 742188,
+        "name": "Pineapple Skunk"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-11-12T22:06:52.199Z"
+    },
+    "facility_id": 4929,
+    "weight": 43.0,
+    "original_weight": 43.0,
+    "weight_unit": "Grams",
+    "implied_weight": "",
+    "packaged_date": "2026-11-12T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": 35460513,
+        "tag": "1A4060300047D39000015719",
+        "weight": 43.0,
+        "weight_unit": "Grams",
+        "pulled_weight": 43.0,
+        "pulled_weight_unit": "Grams",
+        "item": {
+          "id": 3526425,
+          "name": "2CW | Flower Pineapple Skunk",
           "sku": null
         }
       }
@@ -191718,7 +190299,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-11-12T20:36:46.544Z",
+    "updated_at": "2026-11-12T22:19:02.968Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -191727,24 +190308,24 @@
       "testing_facility_license": null
     },
     "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
   },
   {
-    "id": 35484621,
-    "tag": "1A406030005E0B2000010504",
+    "id": 35488175,
+    "tag": "1A4060300047D39000015729",
     "is_active": true,
-    "is_testing_package": false,
+    "is_testing_package": true,
     "is_trade_sample": false,
-    "status": "In Progress",
+    "status": "In Transit",
     "item": {
-      "id": 3523788,
-      "name": "Unfinished Smalls - GC",
+      "id": 3526272,
+      "name": "2CW | Flower Lavender Jack",
       "sku": null,
       "is_active": true,
-      "facility_id": 4923,
+      "facility_id": 4929,
       "type": {
-        "id": 119074,
+        "id": 119331,
         "name": "Flower",
         "quantity_type": "WeightBased",
         "product_category": "Buds"
@@ -191758,8 +190339,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 649077,
-        "name": "GC"
+        "id": 710739,
+        "name": "Lavender Jack"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -191778,11 +190359,233 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-11-12T20:36:46.442Z"
+      "updated_at": "2026-11-12T22:09:58.770Z"
+    },
+    "facility_id": 4929,
+    "weight": 43.0,
+    "original_weight": 43.0,
+    "weight_unit": "Grams",
+    "implied_weight": "",
+    "packaged_date": "2026-11-12T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": 35458577,
+        "tag": "1A4060300047D39000015706",
+        "weight": 43.0,
+        "weight_unit": "Grams",
+        "pulled_weight": 43.0,
+        "pulled_weight_unit": "Grams",
+        "item": {
+          "id": 3526272,
+          "name": "2CW | Flower Lavender Jack",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "AGP0027-LJ-T5-10-12-2026",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-11-12T22:19:03.654Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
+  },
+  {
+    "id": 35488334,
+    "tag": "1A4060300047D39000015730",
+    "is_active": true,
+    "is_testing_package": true,
+    "is_trade_sample": false,
+    "status": "In Transit",
+    "item": {
+      "id": 3526258,
+      "name": "2CW | Flower Key Lime Pie",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4929,
+      "type": {
+        "id": 119331,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 742175,
+        "name": "Key Lime Pie"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-11-12T22:19:01.998Z"
+    },
+    "facility_id": 4929,
+    "weight": 50.0,
+    "original_weight": 50.0,
+    "weight_unit": "Grams",
+    "implied_weight": "",
+    "packaged_date": "2026-11-12T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": 35458429,
+        "tag": "1A4060300047D39000015702",
+        "weight": 50.0,
+        "weight_unit": "Grams",
+        "pulled_weight": 50.0,
+        "pulled_weight_unit": "Grams",
+        "item": {
+          "id": 3526258,
+          "name": "2CW | Flower Key Lime Pie",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "AGP0167-HB-T5-10-08-2026",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-11-12T22:19:04.150Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
+  },
+  {
+    "id": 35488748,
+    "tag": "1A406030005E0B2000010515",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3527851,
+      "name": "Flower - Garlic Juice",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4923,
+      "type": {
+        "id": 119074,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 741869,
+        "name": "Garlic Juice"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-11-12T22:31:00.955Z"
     },
     "facility_id": 4923,
-    "weight": 2.66,
-    "original_weight": 2.66,
+    "weight": 33.25,
+    "original_weight": 33.25,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-11-12T00:00:00.000Z",
@@ -191797,469 +190600,1666 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": 35247081,
+        "id": 35399058,
+        "tag": "1A406030005E0B2000010126",
+        "weight": 33.25,
+        "weight_unit": "Pounds",
+        "pulled_weight": 33.25,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3523784,
+          "name": "Unbucked Flower - Garlic Juice",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "AGP0027-GJ-T7-10-19-2026",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-11-12T22:31:00.957Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 35488749,
+    "tag": "1A406030005E0B2000010516",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3527853,
+      "name": "Unfinished Smalls - Garlic Juice",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4923,
+      "type": {
+        "id": 119074,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 741869,
+        "name": "Garlic Juice"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-11-12T22:31:01.040Z"
+    },
+    "facility_id": 4923,
+    "weight": 32.45,
+    "original_weight": 32.45,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-11-12T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": 35399058,
+        "tag": "1A406030005E0B2000010126",
+        "weight": 32.45,
+        "weight_unit": "Pounds",
+        "pulled_weight": 32.45,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3523784,
+          "name": "Unbucked Flower - Garlic Juice",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "AGP0027-GJ-T7-10-19-2026",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-11-12T22:31:01.054Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 35488750,
+    "tag": "1A406030005E0B2000010517",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3527852,
+      "name": "Shake - Garlic Juice",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4923,
+      "type": {
+        "id": 119089,
+        "name": "Shake",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": null,
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-11-12T22:31:01.128Z"
+    },
+    "facility_id": 4923,
+    "weight": 40.4,
+    "original_weight": 40.4,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-11-12T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": 35399058,
+        "tag": "1A406030005E0B2000010126",
+        "weight": 40.4,
+        "weight_unit": "Pounds",
+        "pulled_weight": 40.4,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3523784,
+          "name": "Unbucked Flower - Garlic Juice",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "AGP0027-GJ-T7-10-19-2026",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-11-12T22:31:01.141Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 35488892,
+    "tag": "1A4060300047D39000015731",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "Available To Sell",
+    "item": {
+      "id": 3310564,
+      "name": "2CW Bulk Flower",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4929,
+      "type": {
+        "id": 119331,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 703241,
+        "name": "Mixed Flower"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 45.1288,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 45.1288,
+      "updated_at": "2026-11-12T22:51:58.962Z"
+    },
+    "facility_id": 4929,
+    "weight": 28.7589,
+    "original_weight": 28.7589,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-11-12T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": true,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": null,
+        "tag": "1A4060300047D39000014987",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A4060300047D39000015077",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A4060300047D39000015125",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A4060300047D39000015252",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A4060300047D39000015257",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A4060300047D39000015283",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A4060300047D39000015301",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A4060300047D39000015305",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A4060300047D39000015389",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A4060300047D39000015497",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A4060300047D39000015594",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A4060300047D39000015595",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A4060300047D39000015623",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "101025, 2024-10-12-KPF-24-Flower 1-GGS-SGW-G3C, 2024-10-12-KPF-24-Flower 1-J3N-CYS-63R, 2024-10-12-KPF-24-Flower 1-KCJ-Y5E-ENF, 2024-10-12-KPF-24-Flower 1-LHZ-XKA-DZG, 2024-10-12-KPF-24-Flower 1-ZTZ-NHR-527, 2024-12-02-RC_24-Main-PPG-X4J-D7Z, 449425 Almond Mochi MB1, 449425 Almond Mochi MB1.3, 449425 Banana MB1, 449425 G41 MB1, 449425 G41 MB1.2, 449425 Joker's MB3, 449425 Joker's MB4, 449425 LSL MB1, 449425 Pack Mule 3 MB1, 449425 Pack Mule MB1.3, 449425 Pink Certz MB1, AF-071-Galactic Warheadz-224-T1., AF-071-Galactic Warheadz-224-T2., AF-071-Glitter Bomb-224-T2, AF-071-Glitter Bomb-224-T3, AF-071-Glitter Bomb-224-T4, AF-071-Grape Gas-224-T2, AF-071-White Runtz-224-T3, AF-073-Galactic Warheads-253-T1, AF-073-Glitter Bomb-232-T2, AF-073-Grape Gas-231-T1, AF-073-Grape Gas-232-T2, AF-073-Ice Cream Cake-243-T1, AF-073-Ice Cream Cake-244-T2, AF-073-It'z Pluto-224-T3-8-25-26, AF-073-Lemon Cherry Gelato-233-T4, AF-073-Obama Runtz-224-T1-8-21-26, AF-073-Obama Runtz-224-T2-8-21-26, AF-073-T...",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-11-12T22:51:59.062Z",
+    "test_results": {
+      "thc": [
+        {
+          "value": null,
+          "measure": "mg"
+        },
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "cbd": [
+        {
+          "value": null,
+          "measure": "mg"
+        },
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 0.0,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "thca": [
+        {
+          "value": 230.609,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 23.0609,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbda": [
+        {
+          "value": 0.817,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 0.0817,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbn": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbg": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbc": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        }
+      ],
+      "cbca": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        }
+      ],
+      "cbga": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "delta_8_thc": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "delta_8_thca": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "delta_9_thc": [
+        {
+          "value": 9.780999999999999,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 0.9781,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "delta_9_thca": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "delta_10_thc": [
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "thcv": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "thcva": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "total_cbd": [
+        {
+          "value": 0.717,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 0.0717,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "total_cbg": [
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        }
+      ],
+      "total_delta_9_thc": [
+        {
+          "value": 212.025,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 21.2025,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "total_thc": [
+        {
+          "value": 212.025093,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 21.2025093,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "total_cannabinoid": [
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 24.1207,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbdv": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "cbdva": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "test_status": "TestPassed",
+      "tested_package_tag": "1A4060300047D39000015632",
+      "test_date": "2026-11-06",
+      "terpenes": {
+        "measure": "percent",
+        "top_three": {},
+        "values": {}
+      }
+    },
+    "lab_test_url": null,
+    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/3d290078/Package5632_COAfromMetrc_3d290078.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261113%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261113T020207Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=4822fe0a88d368e5ebe307ece068cbd1b4e7c465e39cfede44fb5841c6c5476a",
+    "lab_test_info": {
+      "testing_facility_name": "SC LABORATORIES CALIFORNIA, LLC",
+      "testing_facility_license": "C8-0000013-LIC"
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
+  },
+  {
+    "id": 35488965,
+    "tag": "1A406030005E0B2000010434",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 2977633,
+      "name": "Flower - Banana Punch",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4923,
+      "type": {
+        "id": 119074,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 649513,
+        "name": "Banana Punch"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-11-12T23:01:20.601Z"
+    },
+    "facility_id": 4923,
+    "weight": 17.6,
+    "original_weight": 17.6,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-11-12T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": 35142361,
+        "tag": "1A406030005E0B2000010208",
+        "weight": 17.6,
+        "weight_unit": "Pounds",
+        "pulled_weight": 17.6,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3509632,
+          "name": "Unbucked Flower - Banana Punch",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "AGP0027-BP-T7-10-15-26",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-11-12T23:01:20.669Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 35488966,
+    "tag": "1A406030005E0B2000010435",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3454352,
+      "name": "Unfinished Smalls - Banana Punch",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4923,
+      "type": {
+        "id": 119074,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 649513,
+        "name": "Banana Punch"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-11-12T23:01:21.020Z"
+    },
+    "facility_id": 4923,
+    "weight": 12.84,
+    "original_weight": 12.84,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-11-12T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": 35142361,
+        "tag": "1A406030005E0B2000010208",
+        "weight": 12.84,
+        "weight_unit": "Pounds",
+        "pulled_weight": 12.84,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3509632,
+          "name": "Unbucked Flower - Banana Punch",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "AGP0027-BP-T7-10-15-26",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-11-12T23:01:21.121Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 35488994,
+    "tag": "1A406030005E0B2000010520",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3527876,
+      "name": "Shake - Blue Dream",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4923,
+      "type": {
+        "id": 119089,
+        "name": "Shake",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": null,
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-11-12T23:06:48.361Z"
+    },
+    "facility_id": 4923,
+    "weight": 57.9,
+    "original_weight": 57.9,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-11-12T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": 34905460,
+        "tag": "1A406030005E0B2000010097",
+        "weight": 57.9,
+        "weight_unit": "Pounds",
+        "pulled_weight": 57.9,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3486657,
+          "name": "Unbucked Flower - Blue Dream",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "AGP0167-BD-T1-10-07-2026",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-11-12T23:06:48.481Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 35489585,
+    "tag": "1A406030005E0B2000010438",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3523238,
+      "name": "Shake - Mix",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4923,
+      "type": {
+        "id": 119089,
+        "name": "Shake",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": null,
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-11-13T00:46:01.481Z"
+    },
+    "facility_id": 4923,
+    "weight": 1739.75,
+    "original_weight": 1739.75,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-11-12T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000003431",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000003451",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000003453",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010004",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010021",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010027",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010033",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010037",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010038",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010040",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010057",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010060",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010061",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010064",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010068",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010072",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010074",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010081",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010082",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010086",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010098",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010126",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010128",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010129",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010133",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010134",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010148",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010154",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010207",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010208",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010209",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010210",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010213",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010224",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
         "tag": "1A406030005E0B2000010238",
-        "weight": 2.66,
-        "weight_unit": "Pounds",
-        "pulled_weight": 2.66,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3515053,
-          "name": "Unbucked Flower - GC",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "WC2179-GC-T5-10-15-2026",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-12T20:36:46.457Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35484619,
-    "tag": "1A406030005E0B2000010503",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Progress",
-    "item": {
-      "id": 3523789,
-      "name": "Unfinished Smalls - RSP",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119074,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
       },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 649117,
-        "name": "RSP"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-12T20:36:46.351Z"
-    },
-    "facility_id": 4923,
-    "weight": 30.88,
-    "original_weight": 30.88,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-12T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
       {
-        "id": 35160158,
+        "id": null,
         "tag": "1A406030005E0B2000010244",
-        "weight": 30.88,
-        "weight_unit": "Pounds",
-        "pulled_weight": 30.88,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3510642,
-          "name": "Unbucked Flower - RSP",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "AGP0027-RSP-T5-10-14-26",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-12T20:36:46.366Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35484617,
-    "tag": "1A406030005E0B2000010502",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Progress",
-    "item": {
-      "id": 3527663,
-      "name": "Unfinished Smalls - #13 Grape Lobster",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119074,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
       },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 736176,
-        "name": "#13 Grape Lobster"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-12T20:36:46.188Z"
-    },
-    "facility_id": 4923,
-    "weight": 6.8,
-    "original_weight": 6.8,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-12T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
       {
-        "id": 34835699,
-        "tag": "1A406030005E0B2000010050",
-        "weight": 6.8,
-        "weight_unit": "Pounds",
-        "pulled_weight": 6.8,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3493302,
-          "name": "Bucked Flower - #13 Grape Loster",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "#13 Grape Lobster (HVN) 10-03-26",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-12T20:36:46.225Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35484615,
-    "tag": "1A406030005E0B2000010501",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Progress",
-    "item": {
-      "id": 3527661,
-      "name": "Unfinished Smalls - Apple Tarts",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119074,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
+        "id": null,
+        "tag": "1A406030005E0B2000010247",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
       },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 649511,
-        "name": "Apple Tarts"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-12T20:36:46.046Z"
-    },
-    "facility_id": 4923,
-    "weight": 18.8,
-    "original_weight": 18.8,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-12T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
       {
-        "id": 34722864,
-        "tag": "1A406030005E0B2000010003",
-        "weight": 18.8,
-        "weight_unit": "Pounds",
-        "pulled_weight": 18.8,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3486656,
-          "name": "Unbucked Flower - Apple Tartz #6",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "Apple Tartz #6 (HVN) 10-03-26",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-12T20:36:45.582Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35483916,
-    "tag": "1A406030005E0B2000010500",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Progress",
-    "item": {
-      "id": 3468297,
-      "name": "Smalls - Wimbledon",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119074,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
+        "id": null,
+        "tag": "1A406030005E0B2000010351",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
       },
-      "sub_type": {
-        "id": 17600,
-        "name": "Smalls",
-        "updated_at": "2026-09-30T23:03:52.628Z"
-      },
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 733193,
-        "name": "Wimbledon"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-13T00:46:06.291Z"
-    },
-    "facility_id": 4923,
-    "weight": 12.86,
-    "original_weight": 12.86,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-12T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
       {
-        "id": 35454429,
-        "tag": "1A406030005E0B2000003491",
-        "weight": 12.86,
-        "weight_unit": "Pounds",
-        "pulled_weight": 12.86,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3526095,
-          "name": "Unfinished Smalls - Wimbledon",
-          "sku": null
-        }
+        "id": null,
+        "tag": "1A4060300...",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
       }
     ],
     "destination_packages": [],
-    "source_harvests": "AF-073-Glitter Bomb-232-T2, AF-073-Grape Gas-231-T1, AF-073-Lemon Cherry Gelato-233-T4, AF-075-Zoap-224-T2-8-21-26",
+    "source_harvests": "AF-071-Galactic Warheadz-224-T2., AF-071-Grape Gas-224-T2, AF-071-Lemon Cherry Gelato-224-T2., AF-071-Lemon Cherry Gelato-232-T7, AF-071-Lemon Cherry Gelato-233-T3, AF-071-Lemon Cherry Gelato-233-T4, AF-071-White Runtz-224-T3, AF-071-Zoap-232-T2, AF-071-Zoap-232-T4, AF-071-Zoap-232-T5, AF-071-Zoap-232-T6, AF-073-Galactic Warheads-253-T1, AF-073-Glitter Bomb-232-T2, AF-073-Grape Gas-231-T1, AF-073-Grape Gas-232-T2, AF-073-Ice Cream Cake-243-T1, AF-073-Ice Cream Cake-244-T2, AF-073-It'z Pluto-224-T3-8-25-26, AF-073-Itz Pluto-238-T2, AF-073-Obama Runtz-224-T1-8-21-26, AF-073-Obama Runtz-224-T2-8-21-26, AF-073-Tahiti Twist-224-T5-8-25-26, AF-073-Tahiti Twist-224-T6-8-25-26, AF-075-Galactic Warheadz-224-T3-09-01-26, AF-075-Galactic Warheadz-224-T4-8-25-26, AF-075-Galactic Warheadz-224-T5-8-25-26, AF-075-Grape Gas-224-T6., AF-075-GRP-224-T4-09-01-26, AF-075-Ice Cream Cake-224-T3-09-01-26, AF-075-Lemon Cherry Gelato-233-T5, AF-075-Tahiti Twist-224-T3-09-01-26, AF-075-Tahiti Twist-238-T2, A...",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -192277,7 +192277,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-11-12T20:19:03.588Z",
+    "updated_at": "2026-11-13T00:46:01.568Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
