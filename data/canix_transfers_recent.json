@@ -1,5 +1,1806 @@
 [
   {
+    "id": 3208463,
+    "name": null,
+    "manifest_number": "0011883008",
+    "facility_id": 4923,
+    "is_active": true,
+    "destinations": [
+      {
+        "id": 3561658,
+        "destination_facility": "C12-0000453-LIC",
+        "transfer_type": "Transfer",
+        "route": "Please follow GPS route.",
+        "departure_time": "2026-11-13T16:00:00.000Z",
+        "updated_at": "2026-11-14T00:05:46.508Z",
+        "contents": []
+      }
+    ],
+    "sales_order": null,
+    "updated_at": "2026-11-14T00:20:34.227Z",
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 3205108,
+    "name": null,
+    "manifest_number": "0011870696",
+    "facility_id": 4929,
+    "is_active": true,
+    "destinations": [
+      {
+        "id": 3557207,
+        "destination_facility": "C11-0001255-LIC",
+        "transfer_type": "Transfer",
+        "route": "WEIGHMASTER CERTIFICATE\r\nTHIS IS TO CERTIFY that the following described commodity was weighed,\r\nmeasured, or counted by a weighmaster, whose signature is on this certificate,\r\nwho is a recognized authority of accuracy, as prescribed by Chapter 7\r\n(commencing with Section 12700) of Division 5 of the California Business and\r\nProfessions Code, administered by the Division of Measurement Standards of\r\nthe California Department of Food and Agriculture.\r\nWeighed by: Yali AWI-0481\r\nRoute to be Traveled Notes: details for extenuating circumstances (e.g., road\r\nclosure, flat tire, etc.)\r\nRoute to be Traveled:\r\nLeave Airway Drive and get onto US-101 South.\r\nStay on 101 South through Petaluma and toward San Rafael.\r\nContinue toward the Richmond-San Rafael Bridge.\r\nCross the bridge into the East Bay.\r\nFollow I-580 East toward Oakland.\r\nTake I-880 South toward Alameda/San Jose.\r\nTake the exit for Alameda and follow signs toward Bay Farm Island.\r\nContinue onto Island Drive, then follow the signs/roads toward North Loop Road.\r\nTurn onto N Loop Rd and look for 2300 N Loop Rd",
+        "departure_time": "2026-11-12T11:00:00.000Z",
+        "updated_at": "2026-11-13T23:51:07.304Z",
+        "contents": [
+          {
+            "package": {
+              "id": 35362963,
+              "tag": "1A4060300047D39000015667",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:51:12.823Z",
+            "shipped_weight": 224.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 224.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa | Flower Gumdropz 1 oz",
+            "_strain": "Gumdropz",
+            "_sources": [
+              "1A4060300047D39000015624",
+              "1A406030005E0B2000010278",
+              "1A406030005E0B2000010072",
+              "1A4060300089ABD000000034"
+            ],
+            "_source": "1A4060300047D39000015624"
+          },
+          {
+            "package": {
+              "id": 35389334,
+              "tag": "1A4060300047D39000015680",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:51:13.667Z",
+            "shipped_weight": 190.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 190.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa | Flower Gumdropz 1/2 oz",
+            "_strain": "Gumdropz",
+            "_sources": [
+              "1A4060300047D39000015624",
+              "1A406030005E0B2000010278",
+              "1A406030005E0B2000010072",
+              "1A4060300089ABD000000034"
+            ],
+            "_source": "1A4060300047D39000015624"
+          },
+          {
+            "package": {
+              "id": 35365994,
+              "tag": "1A4060300047D39000015671",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:51:16.591Z",
+            "shipped_weight": 450.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 450.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa | Flower Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e 1/2 oz",
+            "_strain": "Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e",
+            "_sources": [
+              "1A4060300047D39000015623",
+              "1A406030005E0B2000010277",
+              "1A406030005E0B2000010061",
+              "1A4060300089ABD000000007"
+            ],
+            "_source": "1A4060300047D39000015623"
+          },
+          {
+            "package": {
+              "id": 35371006,
+              "tag": "1A4060300047D39000015669",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:51:16.885Z",
+            "shipped_weight": 190.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 190.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa | Flower Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e 1/8 th",
+            "_strain": "Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e",
+            "_sources": [
+              "1A4060300047D39000015670",
+              "1A4060300047D39000015623",
+              "1A406030005E0B2000010277",
+              "1A406030005E0B2000010061"
+            ],
+            "_source": "1A4060300047D39000015670"
+          },
+          {
+            "package": {
+              "id": 35163603,
+              "tag": "1A4060300047D39000015612",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:51:17.377Z",
+            "shipped_weight": 400.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 400.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa | Flower RS11 1/8 th",
+            "_strain": "RS11",
+            "_sources": [
+              "1A4060300047D39000015386",
+              "1A4060300049C1A000002476",
+              "1A4060300049C1C000001663",
+              "1A4060300049C1A000002469",
+              "1A4060300049C1C000001648",
+              "1A4060300049C1A000002394",
+              "1A4060300049C1A000002398",
+              "1A4060300049C1A000002399",
+              "1A4060300049C1A000002401",
+              "1A4060300049C1C000001669"
+            ],
+            "_source": "1A4060300047D39000015386"
+          },
+          {
+            "package": {
+              "id": 35453026,
+              "tag": "1A4060300047D39000015677",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:51:18.313Z",
+            "shipped_weight": 19.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 19.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa .5g Pre-Roll 28pk - Galactic Warheadz",
+            "_strain": "Galactic Warheadz",
+            "_sources": [
+              "1A4060300047D39000015593",
+              "1A406030005E0B2000010045",
+              "1A406030005E0B2000010044",
+              "1A406030005E0B2000010026"
+            ],
+            "_source": "1A4060300047D39000015593"
+          },
+          {
+            "package": {
+              "id": 35453030,
+              "tag": "1A4060300047D39000015678",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:51:18.612Z",
+            "shipped_weight": 35.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 35.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa .5g Pre-Roll 28pk - Blue Dream",
+            "_strain": "Blue Dream",
+            "_sources": [
+              "1A4060300047D39000015592",
+              "1A406030005E0B2000010170",
+              "1A406030005E0B2000010169",
+              "1A406030005E0B2000010004"
+            ],
+            "_source": "1A4060300047D39000015592"
+          },
+          {
+            "package": {
+              "id": 35371005,
+              "tag": "1A4060300047D39000015670",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:51:16.729Z",
+            "shipped_weight": 800.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 800.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa | Flower Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e 1/8 th",
+            "_strain": "Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e",
+            "_sources": [
+              "1A4060300047D39000015623",
+              "1A406030005E0B2000010277",
+              "1A406030005E0B2000010061",
+              "1A4060300089ABD000000007"
+            ],
+            "_source": "1A4060300047D39000015623"
+          },
+          {
+            "package": {
+              "id": 35369956,
+              "tag": "1A4060300047D39000015681",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:51:17.208Z",
+            "shipped_weight": 96.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 96.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa | Flower Apple Tartz 1/8 th",
+            "_strain": "Apple Tartz",
+            "_sources": [
+              "1A4060300047D39000015645",
+              "1A4060300047D39000015642",
+              "1A4060300047D39000015567",
+              "1A4060300047D39000015549",
+              "1A4060300047D39000015561"
+            ],
+            "_source": "1A4060300047D39000015645"
+          },
+          {
+            "package": {
+              "id": 35254710,
+              "tag": "1A4060300047D39000015645",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:51:17.036Z",
+            "shipped_weight": 288.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 288.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa | Flower Apple Tartz 1/8 th",
+            "_strain": "Apple Tartz",
+            "_sources": [
+              "1A4060300047D39000015642",
+              "1A4060300047D39000015567",
+              "1A4060300047D39000015549",
+              "1A4060300047D39000015561",
+              "1A406030005E0B2000010108",
+              "1A4060300047D39000015555"
+            ],
+            "_source": "1A4060300047D39000015642"
+          },
+          {
+            "package": {
+              "id": 35220253,
+              "tag": "1A4060300047D39000015611",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:51:17.577Z",
+            "shipped_weight": 44.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 44.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa | Flower RS11 1/8 th",
+            "_strain": "RS11",
+            "_sources": [
+              "1A4060300047D39000015612",
+              "1A4060300047D39000015386",
+              "1A4060300049C1A000002476",
+              "1A4060300049C1C000001663",
+              "1A4060300049C1A000002469",
+              "1A4060300049C1C000001648"
+            ],
+            "_source": "1A4060300047D39000015612"
+          },
+          {
+            "package": {
+              "id": 35254431,
+              "tag": "1A4060300047D39000015838",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:51:17.826Z",
+            "shipped_weight": 672.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 672.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa | Flower Gelato 41 1/8th",
+            "_strain": "Gelato 41",
+            "_sources": [
+              "1A4060300047D39000015639",
+              "1A4060300047D39000015566",
+              "1A4060300047D39000015548",
+              "1A4060300047D39000015560",
+              "1A406030005E0B2000010105",
+              "1A4060300047D39000015554"
+            ],
+            "_source": "1A4060300047D39000015639"
+          },
+          {
+            "package": {
+              "id": 35365380,
+              "tag": "1A4060300047D39000015661",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:51:16.358Z",
+            "shipped_weight": 232.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 232.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa | Flower Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e 1 oz",
+            "_strain": "Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e",
+            "_sources": [
+              "1A4060300047D39000015623",
+              "1A406030005E0B2000010277",
+              "1A406030005E0B2000010061",
+              "1A4060300089ABD000000007"
+            ],
+            "_source": "1A4060300047D39000015623"
+          },
+          {
+            "package": {
+              "id": 35141745,
+              "tag": "1A4060300047D39000015593",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:51:18.144Z",
+            "shipped_weight": 344.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 344.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa .5g Pre-Roll 28pk - Galactic Warheadz",
+            "_strain": "Galactic Warheadz",
+            "_sources": [
+              "1A406030005E0B2000010045",
+              "1A406030005E0B2000010044",
+              "1A406030005E0B2000010026",
+              "1A4060300065EDD000527762"
+            ],
+            "_source": "1A406030005E0B2000010045"
+          },
+          {
+            "package": {
+              "id": 35163633,
+              "tag": "1A4060300047D39000015619",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:51:18.462Z",
+            "shipped_weight": 960.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 960.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa | Flower Blue Dream 1/8 th",
+            "_strain": "Blue Dream",
+            "_sources": [
+              "1A4060300047D39000015565",
+              "1A4060300047D39000015547",
+              "1A4060300047D39000015559",
+              "1A406030005E0B2000010107",
+              "1A4060300047D39000015553",
+              "1A406030005E0B2000010100"
+            ],
+            "_source": "1A4060300047D39000015565"
+          },
+          {
+            "package": {
+              "id": 35377805,
+              "tag": "1A4060300047D39000015683",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:51:11.939Z",
+            "shipped_weight": 198.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 198.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa | Flower Blueberry Jam 1/8 th",
+            "_strain": "Blueberry Jam",
+            "_sources": [
+              "1A4060300047D39000015682",
+              "1A4060300047D39000015622",
+              "1A406030005E0B2000010276",
+              "1A406030005E0B2000010064"
+            ],
+            "_source": "1A4060300047D39000015682"
+          },
+          {
+            "package": {
+              "id": 35377080,
+              "tag": "1A4060300047D39000015682",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:51:11.023Z",
+            "shipped_weight": 800.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 800.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa | Flower Blueberry Jam 1/8 th",
+            "_strain": "Blueberry Jam",
+            "_sources": [
+              "1A4060300047D39000015622",
+              "1A406030005E0B2000010276",
+              "1A406030005E0B2000010064",
+              "1A4060300089ABD000000002"
+            ],
+            "_source": "1A4060300047D39000015622"
+          },
+          {
+            "package": {
+              "id": 35396912,
+              "tag": "1A4060300047D39000015685",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:51:15.290Z",
+            "shipped_weight": 158.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 158.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa | Flower Gumdropz 1/8 th",
+            "_strain": "Gumdropz",
+            "_sources": [
+              "1A4060300047D39000015686",
+              "1A4060300047D39000015624",
+              "1A406030005E0B2000010278",
+              "1A406030005E0B2000010072"
+            ],
+            "_source": "1A4060300047D39000015686"
+          },
+          {
+            "package": {
+              "id": 35395302,
+              "tag": "1A4060300047D39000015686",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:51:14.390Z",
+            "shipped_weight": 560.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 560.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa | Flower Gumdropz 1/8 th",
+            "_strain": "Gumdropz",
+            "_sources": [
+              "1A4060300047D39000015624",
+              "1A406030005E0B2000010278",
+              "1A406030005E0B2000010072",
+              "1A4060300089ABD000000034"
+            ],
+            "_source": "1A4060300047D39000015624"
+          },
+          {
+            "package": {
+              "id": 35365066,
+              "tag": "1A4060300047D39000015662",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:51:10.193Z",
+            "shipped_weight": 224.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 224.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa | Flower Blueberry Jam 1 oz",
+            "_strain": "Blueberry Jam",
+            "_sources": [
+              "1A4060300047D39000015622",
+              "1A406030005E0B2000010276",
+              "1A406030005E0B2000010064",
+              "1A4060300089ABD000000002"
+            ],
+            "_source": "1A4060300047D39000015622"
+          },
+          {
+            "package": {
+              "id": 35051278,
+              "tag": "1A4060300047D39000015572",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:51:17.996Z",
+            "shipped_weight": 344.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 344.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa .5g Pre-Roll 28pk - It'z Pluto",
+            "_strain": "It'z Pluto",
+            "_sources": [
+              "1A4060300047D39000015551",
+              "1A4060300047D39000015563",
+              "1A406030005E0B2000010104",
+              "1A4060300047D39000015557",
+              "1A406030005E0B2000003434",
+              "1A4060300049C1A000002453"
+            ],
+            "_source": ""
+          },
+          {
+            "package": {
+              "id": 35141744,
+              "tag": "1A4060300047D39000015592",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:51:18.770Z",
+            "shipped_weight": 320.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 320.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa .5g Pre-Roll 28pk - Blue Dream",
+            "_strain": "Blue Dream",
+            "_sources": [
+              "1A406030005E0B2000010170",
+              "1A406030005E0B2000010169",
+              "1A406030005E0B2000010004",
+              "1A406030007975D000000427",
+              "1A406030007975D000000435"
+            ],
+            "_source": "1A406030005E0B2000010170"
+          },
+          {
+            "package": {
+              "id": 35262538,
+              "tag": "1A4060300047D39000015652",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:51:18.907Z",
+            "shipped_weight": 480.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 480.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa | Flower Pack Mule 1/8 th",
+            "_strain": "Pack Mule",
+            "_sources": [
+              "1A4060300047D39000015655",
+              "1A4060300047D39000015594",
+              "1A406030005E0B2000010194",
+              "1A406030005E0B2000010040"
+            ],
+            "_source": "1A4060300047D39000015655"
+          }
+        ]
+      }
+    ],
+    "sales_order": null,
+    "updated_at": "2026-11-13T23:51:06.949Z",
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
+  },
+  {
+    "id": 3205248,
+    "name": null,
+    "manifest_number": "0011871930",
+    "facility_id": 4929,
+    "is_active": true,
+    "destinations": [
+      {
+        "id": 3557398,
+        "destination_facility": "C11-0001255-LIC",
+        "transfer_type": "Transfer",
+        "route": "Route to be Traveled Notes: details for extenuating circumstances (e.g., road closure, flat tire, etc.)\r\nWEIGHMASTER CERTIFICATE\r\nTHIS IS TO CERTIFY that the following described commodity was weighed,\r\nmeasured, or counted by a weighmaster, whose signature is on this certificate,\r\nwho is a recognized authority of accuracy, as prescribed by Chapter 7\r\n(commencing with Section 12700) of Division 5 of the California Business and\r\nProfessions Code, administered by the Division of Measurement Standards of\r\nthe California Department of Food and Agriculture.\r\nWeighed by: Yali AWI-0482\r\nRoute to be Traveled Notes: details for extenuating circumstances (e.g., road\r\nclosure, flat tire, etc.)\r\nRoute to be Traveled:\r\nLeave Airway Drive and get onto US-101 South.\r\nStay on 101 South through Petaluma and toward San Rafael.\r\nContinue toward the Richmond-San Rafael Bridge.\r\nCross the bridge into the East Bay.\r\nFollow I-580 East toward Oakland.\r\nTake I-880 South toward Alameda/San Jose.\r\nTake the exit for Alameda and follow signs toward Bay Farm Island.\r\nContinue onto Island Drive, then follow the signs/roads toward North Loop Road.\r\nTurn onto N Loop Rd and look for 2300 N Loop Rd",
+        "departure_time": "2026-11-12T23:00:00.000Z",
+        "updated_at": "2026-11-13T23:21:10.919Z",
+        "contents": [
+          {
+            "package": {
+              "id": 35399640,
+              "tag": "1A4060300047D39000015688",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:13.479Z",
+            "shipped_weight": 480.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 480.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll - Flower Pack Mule 1/8 th",
+            "_strain": "Pack Mule",
+            "_sources": [
+              "1A4060300047D39000015594",
+              "1A406030005E0B2000010194",
+              "1A406030005E0B2000010040",
+              "1A4060300089ABD000000006"
+            ],
+            "_source": "1A4060300047D39000015594"
+          },
+          {
+            "package": {
+              "id": 35399682,
+              "tag": "1A4060300047D39000015697",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:14.367Z",
+            "shipped_weight": 124.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 124.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll - Flower Pack Mule 1/8 th",
+            "_strain": "Pack Mule",
+            "_sources": [
+              "1A4060300047D39000015688",
+              "1A4060300047D39000015594",
+              "1A406030005E0B2000010194",
+              "1A406030005E0B2000010040"
+            ],
+            "_source": "1A4060300047D39000015688"
+          },
+          {
+            "package": {
+              "id": 35421730,
+              "tag": "1A4060300047D39000015692",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:15.385Z",
+            "shipped_weight": 224.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 224.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll | Flower Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e 1/2 oz",
+            "_strain": "Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e",
+            "_sources": [
+              "1A4060300047D39000015623",
+              "1A406030005E0B2000010277",
+              "1A406030005E0B2000010061",
+              "1A4060300089ABD000000007"
+            ],
+            "_source": "1A4060300047D39000015623"
+          },
+          {
+            "package": {
+              "id": 35398170,
+              "tag": "1A4060300047D39000015687",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:18.941Z",
+            "shipped_weight": 560.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 560.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll | Flower Apple Tartz 1/8 th",
+            "_strain": "Apple Tartz",
+            "_sources": [
+              "1A4060300047D39000015567",
+              "1A4060300047D39000015549",
+              "1A4060300047D39000015561",
+              "1A406030005E0B2000010108",
+              "1A4060300047D39000015555",
+              "1A406030005E0B2000010003"
+            ],
+            "_source": "1A4060300047D39000015567"
+          },
+          {
+            "package": {
+              "id": 35399765,
+              "tag": "1A4060300047D39000015691",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:19.374Z",
+            "shipped_weight": 400.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 400.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll | Flower Gelato 41 1/8 th",
+            "_strain": "Gelato 41",
+            "_sources": [
+              "1A4060300047D39000015566",
+              "1A4060300047D39000015548",
+              "1A4060300047D39000015560",
+              "1A406030005E0B2000010105",
+              "1A4060300047D39000015554",
+              "1A406030005E0B2000010042"
+            ],
+            "_source": "1A4060300047D39000015566"
+          },
+          {
+            "package": {
+              "id": 35142109,
+              "tag": "1A4060300047D39000015589",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:19.663Z",
+            "shipped_weight": 440.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 440.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll 14g Ground Flower Pouch - Zoap",
+            "_strain": "ZOAP",
+            "_sources": [
+              "1A406030005E0B2000010193",
+              "1A406030005E0B2000003443",
+              "1A406030005E0B2000003475",
+              "1A4060300049C1A000002453",
+              "1A4060300049C1A000002455",
+              "1A4060300049C1A000002500",
+              "1A4060300032386000001006",
+              "1A4060300049C1A000001511",
+              "1A4060300049C1A000001577",
+              "1A4060300049C1A000001578",
+              "1A4060300049C1A000001579",
+              "1A4060300049C1A000001580",
+              "1A4060300049C1A000001582",
+              "1A4060300049C1A000001583",
+              "1A4060300049C1A000001584",
+              "1A4060300049C1A000001585",
+              "1A4060300049C1A000001611",
+              "1A4060300049C1A000001612",
+              "1A4060300049C1A000001613",
+              "1A4060300049C1A000001615",
+              "1A4060300049C1A000001622",
+              "1A4060300049C1A000001625",
+              "1A4060300049C1A000001672",
+              "1A4060300049C1A000001673",
+              "1A4060300049C1A000001674",
+              "1A4060300049C1A000001675",
+              "1A4060300049C1A000001676",
+              "1A4060300049C1A000001677",
+              "1A4060300049C1A000001678",
+              "1A4060300049C1A000001679",
+              "1A4060300049C1A000001680",
+              "1A4060300049C1A000001683",
+              "1A4060300049C1A000002393",
+              "1A4060300049C1A000002395",
+              "1A4060300049C1A000002396",
+              "1A4060300049C1A000002397",
+              "1A4060300049C1A000002398",
+              "1A4060300049C1A000002399",
+              "1A4060300049C1A000002401",
+              "1A4060300049C1A000002402",
+              "1A4060300049C1F000000067",
+              "1A406030007286F000000018",
+              "1A406030007286F000000019",
+              "1A406030007286F000000021",
+              "1A4060300",
+              "1A4060300049C1A000001574",
+              "1A4060300049C1A000001575",
+              "1A4060300049C1A000001626",
+              "1A4060300049C1C000001655",
+              "1A4060300049C1C000001656",
+              "1A4060300049C1C000001657",
+              "1A4060300049C1C000001658"
+            ],
+            "_source": "1A406030005E0B2000010193"
+          },
+          {
+            "package": {
+              "id": 35161970,
+              "tag": "1A4060300047D39000015587",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:19.817Z",
+            "shipped_weight": 440.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 440.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll 14g Ground Flower Pouch - Mule Fuel",
+            "_strain": "Mule Fuel",
+            "_sources": [
+              "1A406030005E0B2000010190",
+              "1A406030005E0B2000003443",
+              "1A406030005E0B2000010018",
+              "1A4060300049C1A000002453",
+              "1A4060300065EDD000518802",
+              "1A4060300032386000001006",
+              "1A4060300049C1A000001511",
+              "1A4060300049C1A000001577",
+              "1A4060300049C1A000001578",
+              "1A4060300049C1A000001579",
+              "1A4060300049C1A000001580",
+              "1A4060300049C1A000001582",
+              "1A4060300049C1A000001583",
+              "1A4060300049C1A000001584",
+              "1A4060300049C1A000001585",
+              "1A4060300049C1A000001611",
+              "1A4060300049C1A000001612",
+              "1A4060300049C1A000001613",
+              "1A4060300049C1A000001615",
+              "1A4060300049C1A000001622",
+              "1A4060300049C1A000001625",
+              "1A4060300049C1A000001672",
+              "1A4060300049C1A000001673",
+              "1A4060300049C1A000001674",
+              "1A4060300049C1A000001675",
+              "1A4060300049C1A000001676",
+              "1A4060300049C1A000001677",
+              "1A4060300049C1A000001678",
+              "1A4060300049C1A000001679",
+              "1A4060300049C1A000001680",
+              "1A4060300049C1A000001683",
+              "1A4060300049C1A000002393",
+              "1A4060300049C1A000002395",
+              "1A4060300049C1A000002396",
+              "1A4060300049C1A000002397",
+              "1A4060300049C1A000002398",
+              "1A4060300049C1A000002399",
+              "1A4060300049C1A000002401",
+              "1A4060300049C1A000002402",
+              "1A4060300049C1F000000067",
+              "1A406030007286F000000018",
+              "1A406030007286F000000019",
+              "1A406030007286F000000021",
+              "1A4060300",
+              "1A4060300065EDD000490708"
+            ],
+            "_source": "1A406030005E0B2000010190"
+          },
+          {
+            "package": {
+              "id": 35142035,
+              "tag": "1A4060300047D39000015590",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:20.130Z",
+            "shipped_weight": 440.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 440.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll 14g Ground Flower Pouch - Obama Runtz",
+            "_strain": "Obama Runtz",
+            "_sources": [
+              "1A406030005E0B2000010189",
+              "1A406030005E0B2000003437",
+              "1A406030005E0B2000010012",
+              "1A4060300049C1A000002453",
+              "1A4060300065EDD000507045",
+              "1A4060300032386000001006",
+              "1A4060300049C1A000001511",
+              "1A4060300049C1A000001577",
+              "1A4060300049C1A000001578",
+              "1A4060300049C1A000001579",
+              "1A4060300049C1A000001580",
+              "1A4060300049C1A000001582",
+              "1A4060300049C1A000001583",
+              "1A4060300049C1A000001584",
+              "1A4060300049C1A000001585",
+              "1A4060300049C1A000001611",
+              "1A4060300049C1A000001612",
+              "1A4060300049C1A000001613",
+              "1A4060300049C1A000001615",
+              "1A4060300049C1A000001622",
+              "1A4060300049C1A000001625",
+              "1A4060300049C1A000001672",
+              "1A4060300049C1A000001673",
+              "1A4060300049C1A000001674",
+              "1A4060300049C1A000001675",
+              "1A4060300049C1A000001676",
+              "1A4060300049C1A000001677",
+              "1A4060300049C1A000001678",
+              "1A4060300049C1A000001679",
+              "1A4060300049C1A000001680",
+              "1A4060300049C1A000001683",
+              "1A4060300049C1A000002393",
+              "1A4060300049C1A000002395",
+              "1A4060300049C1A000002396",
+              "1A4060300049C1A000002397",
+              "1A4060300049C1A000002398",
+              "1A4060300049C1A000002399",
+              "1A4060300049C1A000002401",
+              "1A4060300049C1A000002402",
+              "1A4060300049C1F000000067",
+              "1A406030007286F000000018",
+              "1A406030007286F000000019",
+              "1A406030007286F000000021",
+              "1A4060300",
+              "1A4060300065EDD000490710"
+            ],
+            "_source": "1A406030005E0B2000010189"
+          },
+          {
+            "package": {
+              "id": 35416263,
+              "tag": "1A4060300047D39000015695",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:21.195Z",
+            "shipped_weight": 320.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 320.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll - Flower Blue Dream 1/8 th",
+            "_strain": "Blue Dream",
+            "_sources": [
+              "1A4060300047D39000015565",
+              "1A4060300047D39000015547",
+              "1A4060300047D39000015559",
+              "1A406030005E0B2000010107",
+              "1A4060300047D39000015553",
+              "1A406030005E0B2000010100"
+            ],
+            "_source": "1A4060300047D39000015565"
+          },
+          {
+            "package": {
+              "id": 35422382,
+              "tag": "1A4060300047D39000015693",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:16.315Z",
+            "shipped_weight": 480.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 480.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll | Flower Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e 1/8 th",
+            "_strain": "Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e",
+            "_sources": [
+              "1A4060300047D39000015623",
+              "1A406030005E0B2000010277",
+              "1A406030005E0B2000010061",
+              "1A4060300089ABD000000007"
+            ],
+            "_source": "1A4060300047D39000015623"
+          },
+          {
+            "package": {
+              "id": 35265041,
+              "tag": "1A4060300047D39000015656",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:19.244Z",
+            "shipped_weight": 79.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 79.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll - Flower Obama Runtz 1/8 th",
+            "_strain": "Obama Runtz",
+            "_sources": [
+              "1A4060300047D39000015650",
+              "1A4060300047D39000014987",
+              "1A4060300049C1A000001312",
+              "1A4060300049C17000000035"
+            ],
+            "_source": "1A4060300047D39000015650"
+          },
+          {
+            "package": {
+              "id": 35428573,
+              "tag": "1A4060300047D39000015679",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:17.148Z",
+            "shipped_weight": 106.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 106.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll | Flower Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e 1/8 th",
+            "_strain": "Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e",
+            "_sources": [
+              "1A4060300047D39000015693",
+              "1A4060300047D39000015623",
+              "1A406030005E0B2000010277",
+              "1A406030005E0B2000010061"
+            ],
+            "_source": "1A4060300047D39000015693"
+          },
+          {
+            "package": {
+              "id": 35266560,
+              "tag": "1A4060300047D39000015658",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:18.200Z",
+            "shipped_weight": 400.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 400.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll - Flower Pink Certz 1/8 th",
+            "_strain": "Pink Certz",
+            "_sources": [
+              "1A4060300047D39000015657",
+              "1A4060300047D39000015595",
+              "1A406030005E0B2000010196",
+              "1A406030005E0B2000010129"
+            ],
+            "_source": "1A4060300047D39000015657"
+          },
+          {
+            "package": {
+              "id": 35369961,
+              "tag": "1A4060300047D39000015684",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:18.662Z",
+            "shipped_weight": 69.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 69.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll - Flower Pink Certz 1/8 th",
+            "_strain": "Pink Certz",
+            "_sources": [
+              "1A4060300047D39000015658",
+              "1A4060300047D39000015657",
+              "1A4060300047D39000015595",
+              "1A406030005E0B2000010196"
+            ],
+            "_source": "1A4060300047D39000015658"
+          },
+          {
+            "package": {
+              "id": 35399627,
+              "tag": "1A4060300047D39000015689",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:18.799Z",
+            "shipped_weight": 114.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 114.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll | Flower Apple Tartz 1/8 th",
+            "_strain": "Apple Tartz",
+            "_sources": [
+              "1A4060300047D39000015687",
+              "1A4060300047D39000015567",
+              "1A4060300047D39000015549",
+              "1A4060300047D39000015561",
+              "1A406030005E0B2000010108",
+              "1A4060300047D39000015555"
+            ],
+            "_source": "1A4060300047D39000015687"
+          },
+          {
+            "package": {
+              "id": 35163635,
+              "tag": "1A4060300047D39000015616",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:19.107Z",
+            "shipped_weight": 576.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 576.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll - Flower Banana Punch 1/8 th",
+            "_strain": "Banana Punch",
+            "_sources": [
+              "1A4060300047D39000015077",
+              "1A4060300047D39000015013",
+              "1A4060300049C1A000001482",
+              "1A4060300047D39000014853",
+              "1A4060300047D39000014986",
+              "1A4060300049C16000000023",
+              "1A4060300047D39000014767",
+              "1A4060300049C1A000001326"
+            ],
+            "_source": "1A4060300047D39000015077"
+          },
+          {
+            "package": {
+              "id": 35425399,
+              "tag": "1A4060300047D39000015694",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:19.505Z",
+            "shipped_weight": 129.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 129.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll | Flower Gelato 41 1/8 th",
+            "_strain": "Gelato 41",
+            "_sources": [
+              "1A4060300047D39000015691",
+              "1A4060300047D39000015566",
+              "1A4060300047D39000015548",
+              "1A4060300047D39000015560",
+              "1A406030005E0B2000010105",
+              "1A4060300047D39000015554"
+            ],
+            "_source": "1A4060300047D39000015691"
+          },
+          {
+            "package": {
+              "id": 35460495,
+              "tag": "1A4060300047D39000015712",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:19.972Z",
+            "shipped_weight": 80.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 80.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll 14g Ground Flower Pouch - Mule Fuel",
+            "_strain": "Mule Fuel",
+            "_sources": [
+              "1A4060300047D39000015587",
+              "1A406030005E0B2000010190",
+              "1A406030005E0B2000003443",
+              "1A406030005E0B2000010018",
+              "1A4060300049C1A000002453",
+              "1A4060300065EDD000518802"
+            ],
+            "_source": "1A4060300047D39000015587"
+          },
+          {
+            "package": {
+              "id": 35460338,
+              "tag": "1A4060300047D39000015714",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:20.300Z",
+            "shipped_weight": 80.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 80.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll 14g Ground Flower Pouch - Space Runtz",
+            "_strain": "Space Runtz",
+            "_sources": [
+              "1A4060300047D39000015607",
+              "1A406030005E0B2000010191",
+              "1A406030005E0B2000003437",
+              "1A4060300049C1A000002453"
+            ],
+            "_source": "1A4060300047D39000015607"
+          },
+          {
+            "package": {
+              "id": 35475829,
+              "tag": "1A4060300047D39000015721",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:21.329Z",
+            "shipped_weight": 131.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 131.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll - Flower Blue Dream 1/8 th",
+            "_strain": "Blue Dream",
+            "_sources": [
+              "1A4060300047D39000015695",
+              "1A4060300047D39000015565",
+              "1A4060300047D39000015547",
+              "1A4060300047D39000015559",
+              "1A406030005E0B2000010107",
+              "1A4060300047D39000015553"
+            ],
+            "_source": "1A4060300047D39000015695"
+          },
+          {
+            "package": {
+              "id": 35161967,
+              "tag": "1A4060300047D39000015607",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:21.481Z",
+            "shipped_weight": 440.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 440.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll 14g Ground Flower Pouch - Space Runtz",
+            "_strain": "Space Runtz",
+            "_sources": [
+              "1A406030005E0B2000010191",
+              "1A406030005E0B2000003437",
+              "1A4060300049C1A000002453",
+              "1A4060300032386000001006",
+              "1A4060300049C1A000001511",
+              "1A4060300049C1A000001577",
+              "1A4060300049C1A000001578",
+              "1A4060300049C1A000001579",
+              "1A4060300049C1A000001580",
+              "1A4060300049C1A000001582",
+              "1A4060300049C1A000001583",
+              "1A4060300049C1A000001584",
+              "1A4060300049C1A000001585",
+              "1A4060300049C1A000001611",
+              "1A4060300049C1A000001612",
+              "1A4060300049C1A000001613",
+              "1A4060300049C1A000001615",
+              "1A4060300049C1A000001622",
+              "1A4060300049C1A000001625",
+              "1A4060300049C1A000001672",
+              "1A4060300049C1A000001673",
+              "1A4060300049C1A000001674",
+              "1A4060300049C1A000001675",
+              "1A4060300049C1A000001676",
+              "1A4060300049C1A000001677",
+              "1A4060300049C1A000001678",
+              "1A4060300049C1A000001679",
+              "1A4060300049C1A000001680",
+              "1A4060300049C1A000001683",
+              "1A4060300049C1A000002393",
+              "1A4060300049C1A000002395",
+              "1A4060300049C1A000002396",
+              "1A4060300049C1A000002397",
+              "1A4060300049C1A000002398",
+              "1A4060300049C1A000002399",
+              "1A4060300049C1A000002401",
+              "1A4060300049C1A000002402",
+              "1A4060300049C1F000000067",
+              "1A406030007286F000000018",
+              "1A406030007286F000000019",
+              "1A406030007286F000000021",
+              "1A4060300"
+            ],
+            "_source": "1A406030005E0B2000010191"
+          },
+          {
+            "package": {
+              "id": 35460294,
+              "tag": "1A4060300047D39000015716",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:20.456Z",
+            "shipped_weight": 80.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 80.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll 14g Ground Flower Pouch - Obama Runtz",
+            "_strain": "Obama Runtz",
+            "_sources": [
+              "1A4060300047D39000015590",
+              "1A406030005E0B2000010189",
+              "1A406030005E0B2000003437",
+              "1A406030005E0B2000010012",
+              "1A4060300049C1A000002453",
+              "1A4060300065EDD000507045"
+            ],
+            "_source": "1A4060300047D39000015590"
+          },
+          {
+            "package": {
+              "id": 35161966,
+              "tag": "1A4060300047D39000015588",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:20.604Z",
+            "shipped_weight": 440.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 440.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll 14g Ground Flower Pouch - Guava Tartz",
+            "_strain": "Guava Tartz",
+            "_sources": [
+              "1A406030005E0B2000010192",
+              "1A4060300049C1A000002455",
+              "1A406030005E0B2000003440",
+              "1A406030005E0B2000003446",
+              "1A406030005E0B2000010019",
+              "1A4060300049C1A000001574",
+              "1A4060300049C1A000001575",
+              "1A4060300049C1A000001625",
+              "1A4060300049C1A000001626",
+              "1A4060300049C1A000002453",
+              "1A4060300049C1A000002469",
+              "1A4060300065EDD000518802",
+              "1A4060300032386000001006",
+              "1A4060300049C1A000001511",
+              "1A4060300049C1A000001577",
+              "1A4060300049C1A000001578",
+              "1A4060300049C1A000001579",
+              "1A4060300049C1A000001580",
+              "1A4060300049C1A000001582",
+              "1A4060300049C1A000001583",
+              "1A4060300049C1A000001584",
+              "1A4060300049C1A000001585",
+              "1A4060300049C1A000001611",
+              "1A4060300049C1A000001612",
+              "1A4060300049C1A000001613",
+              "1A4060300049C1A000001615",
+              "1A4060300049C1A000001622",
+              "1A4060300049C1A000001672",
+              "1A4060300049C1A000001673",
+              "1A4060300049C1A000001674",
+              "1A4060300049C1A000001675",
+              "1A4060300049C1A000001676",
+              "1A4060300049C1A000001677",
+              "1A4060300049C1A000001678",
+              "1A4060300049C1A000001679",
+              "1A4060300049C1A000001680",
+              "1A4060300049C1A000001683",
+              "1A4060300049C1A000002393",
+              "1A4060300049C1A000002395",
+              "1A4060300049C1A000002396",
+              "1A4060300049C1A000002397",
+              "1A4060300049C1A000002398",
+              "1A4060300049C1A000002399",
+              "1A4060300049C1A000002401",
+              "1A4060300049C1A000002402",
+              "1A4060300049C1F000000067",
+              "1A406030007286F000000018",
+              "1A406030007286F000000019",
+              "1A406030007286F000000021",
+              "1A4060300",
+              "1A4060300049C1A000002394",
+              "1A4060300049C1C000001669",
+              "1A4060300065EDD000490708"
+            ],
+            "_source": "1A406030005E0B2000010192"
+          },
+          {
+            "package": {
+              "id": 35460013,
+              "tag": "1A4060300047D39000015711",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:20.758Z",
+            "shipped_weight": 80.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 80.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll 14g Ground Flower Pouch - Guava Tartz",
+            "_strain": "Guava Tartz",
+            "_sources": [
+              "1A4060300047D39000015588",
+              "1A406030005E0B2000010192",
+              "1A4060300049C1A000002455",
+              "1A406030005E0B2000003440",
+              "1A406030005E0B2000003446",
+              "1A406030005E0B2000010019",
+              "1A4060300049C1A000001574",
+              "1A4060300049C1A000001575",
+              "1A4060300049C1A000001625",
+              "1A4060300049C1A000001626",
+              "1A4060300049C1A000002453",
+              "1A4060300049C1A000002469",
+              "1A4060300065EDD000518802"
+            ],
+            "_source": "1A4060300047D39000015588"
+          },
+          {
+            "package": {
+              "id": 35161968,
+              "tag": "1A4060300047D39000015608",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:20.915Z",
+            "shipped_weight": 440.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 440.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll 14g Ground Flower Pouch - Grape Gas",
+            "_strain": "Grape Gas",
+            "_sources": [
+              "1A406030005E0B2000010171",
+              "1A406030005E0B2000003431",
+              "1A4060300049C1A000002453",
+              "1A4060300032386000001006",
+              "1A4060300049C1A000001511",
+              "1A4060300049C1A000001577",
+              "1A4060300049C1A000001578",
+              "1A4060300049C1A000001579",
+              "1A4060300049C1A000001580",
+              "1A4060300049C1A000001582",
+              "1A4060300049C1A000001583",
+              "1A4060300049C1A000001584",
+              "1A4060300049C1A000001585",
+              "1A4060300049C1A000001611",
+              "1A4060300049C1A000001612",
+              "1A4060300049C1A000001613",
+              "1A4060300049C1A000001615",
+              "1A4060300049C1A000001622",
+              "1A4060300049C1A000001625",
+              "1A4060300049C1A000001672",
+              "1A4060300049C1A000001673",
+              "1A4060300049C1A000001674",
+              "1A4060300049C1A000001675",
+              "1A4060300049C1A000001676",
+              "1A4060300049C1A000001677",
+              "1A4060300049C1A000001678",
+              "1A4060300049C1A000001679",
+              "1A4060300049C1A000001680",
+              "1A4060300049C1A000001683",
+              "1A4060300049C1A000002393",
+              "1A4060300049C1A000002395",
+              "1A4060300049C1A000002396",
+              "1A4060300049C1A000002397",
+              "1A4060300049C1A000002398",
+              "1A4060300049C1A000002399",
+              "1A4060300049C1A000002401",
+              "1A4060300049C1A000002402",
+              "1A4060300049C1F000000067",
+              "1A406030007286F000000018",
+              "1A406030007286F000000019",
+              "1A406030007286F000000021",
+              "1A4060300"
+            ],
+            "_source": "1A406030005E0B2000010171"
+          },
+          {
+            "package": {
+              "id": 35457151,
+              "tag": "1A4060300047D39000015675",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:21:21.061Z",
+            "shipped_weight": 80.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 80.0,
+            "received_weight_unit": "Each",
+            "_item": "Howie Roll 14g Ground Flower Pouch - Grape Gas",
+            "_strain": "Grape Gas",
+            "_sources": [
+              "1A4060300047D39000015608",
+              "1A406030005E0B2000010171",
+              "1A406030005E0B2000003431",
+              "1A4060300049C1A000002453"
+            ],
+            "_source": "1A4060300047D39000015608"
+          }
+        ]
+      }
+    ],
+    "sales_order": null,
+    "updated_at": "2026-11-13T23:21:10.636Z",
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
+  },
+  {
+    "id": 3205645,
+    "name": null,
+    "manifest_number": "0011872817",
+    "facility_id": 4929,
+    "is_active": true,
+    "destinations": [
+      {
+        "id": 3557940,
+        "destination_facility": "C11-0001255-LIC",
+        "transfer_type": "Transfer",
+        "route": "Route to be Traveled Notes: details for extenuating circumstances (e.g., road closure, flat tire, etc.)\r\nWEIGHMASTER CERTIFICATE\r\nTHIS IS TO CERTIFY that the following described commodity was weighed,\r\nmeasured, or counted by a weighmaster, whose signature is on this certificate,\r\nwho is a recognized authority of accuracy, as prescribed by Chapter 7\r\n(commencing with Section 12700) of Division 5 of the California Business and\r\nProfessions Code, administered by the Division of Measurement Standards of\r\nthe California Department of Food and Agriculture.\r\nWeighed by: Yali AWI-0483\r\nRoute to be Traveled Notes: details for extenuating circumstances (e.g., road\r\nclosure, flat tire, etc.)\r\nRoute to be Traveled:\r\nLeave Airway Drive and get onto US-101 South.\r\nStay on 101 South through Petaluma and toward San Rafael.\r\nContinue toward the Richmond-San Rafael Bridge.\r\nCross the bridge into the East Bay.\r\nFollow I-580 East toward Oakland.\r\nTake I-880 South toward Alameda/San Jose.\r\nTake the exit for Alameda and follow signs toward Bay Farm Island.\r\nContinue onto Island Drive, then follow the signs/roads toward North Loop Road.\r\nTurn onto N Loop Rd and look for 2300 N Loop Rd",
+        "departure_time": "2026-11-12T10:00:00.000Z",
+        "updated_at": "2026-11-13T23:01:12.207Z",
+        "contents": [
+          {
+            "package": {
+              "id": 35279529,
+              "tag": "1A4060300047D39000015663",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:01:14.529Z",
+            "shipped_weight": 168.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 168.0,
+            "received_weight_unit": "Each",
+            "_item": "Mendo | Flower Gas Mask 1/2 oz",
+            "_strain": "Gas Mask",
+            "_sources": [
+              "1A4060300047D39000015508",
+              "1A4060300047D39000015342",
+              "1A4060300049C1A000001769",
+              "1A4060300049C1A000001640"
+            ],
+            "_source": "1A4060300047D39000015508"
+          },
+          {
+            "package": {
+              "id": 35279717,
+              "tag": "1A4060300047D39000015666",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:01:14.672Z",
+            "shipped_weight": 432.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 432.0,
+            "received_weight_unit": "Each",
+            "_item": "Mendo | Flower Gas Mask 1/8 th",
+            "_strain": "Gas Mask",
+            "_sources": [
+              "1A4060300047D39000015508",
+              "1A4060300047D39000015342",
+              "1A4060300049C1A000001769",
+              "1A4060300049C1A000001640"
+            ],
+            "_source": "1A4060300047D39000015508"
+          },
+          {
+            "package": {
+              "id": 35476937,
+              "tag": "1A4060300047D39000015722",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:01:15.253Z",
+            "shipped_weight": 48.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 48.0,
+            "received_weight_unit": "Each",
+            "_item": "Mendo | Flower Gas Mask 1/8 th",
+            "_strain": "Gas Mask",
+            "_sources": [
+              "1A4060300047D39000015666",
+              "1A4060300047D39000015508",
+              "1A4060300047D39000015342",
+              "1A4060300049C1A000001769"
+            ],
+            "_source": "1A4060300047D39000015666"
+          },
+          {
+            "package": {
+              "id": 35476707,
+              "tag": "1A4060300047D39000015638",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:01:15.536Z",
+            "shipped_weight": 54.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 54.0,
+            "received_weight_unit": "Each",
+            "_item": "Mendo | Flower Permanent Glue 1/8 th",
+            "_strain": "Permanent Glue",
+            "_sources": [
+              "1A4060300047D39000015615",
+              "1A4060300047D39000015626",
+              "1A406030005E0B2000003460",
+              "1A4060300049C1A000001639"
+            ],
+            "_source": "1A4060300047D39000015615"
+          },
+          {
+            "package": {
+              "id": 35478744,
+              "tag": "1A4060300047D39000015723",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-13T23:01:15.722Z",
+            "shipped_weight": 48.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 48.0,
+            "received_weight_unit": "Each",
+            "_item": "Mendo | Flower Permanent Glue 1/8 th",
+            "_strain": "Permanent Glue",
+            "_sources": [
+              "1A4060300047D39000015638",
+              "1A4060300047D39000015615",
+              "1A4060300047D39000015626",
+              "1A406030005E0B2000003460"
+            ],
+            "_source": "1A4060300047D39000015638"
+          }
+        ]
+      }
+    ],
+    "sales_order": null,
+    "updated_at": "2026-11-13T23:01:11.958Z",
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
+  },
+  {
     "id": 3206286,
     "name": null,
     "manifest_number": "0011874535",
@@ -297,1144 +2098,6 @@
     "_facility_license_number": "C11-0001652-LIC"
   },
   {
-    "id": 3205645,
-    "name": null,
-    "manifest_number": "0011872817",
-    "facility_id": 4929,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3557940,
-        "destination_facility": "C11-0001255-LIC",
-        "transfer_type": "Transfer",
-        "route": "Route to be Traveled Notes: details for extenuating circumstances (e.g., road closure, flat tire, etc.)\r\nWEIGHMASTER CERTIFICATE\r\nTHIS IS TO CERTIFY that the following described commodity was weighed,\r\nmeasured, or counted by a weighmaster, whose signature is on this certificate,\r\nwho is a recognized authority of accuracy, as prescribed by Chapter 7\r\n(commencing with Section 12700) of Division 5 of the California Business and\r\nProfessions Code, administered by the Division of Measurement Standards of\r\nthe California Department of Food and Agriculture.\r\nWeighed by: Yali AWI-0483\r\nRoute to be Traveled Notes: details for extenuating circumstances (e.g., road\r\nclosure, flat tire, etc.)\r\nRoute to be Traveled:\r\nLeave Airway Drive and get onto US-101 South.\r\nStay on 101 South through Petaluma and toward San Rafael.\r\nContinue toward the Richmond-San Rafael Bridge.\r\nCross the bridge into the East Bay.\r\nFollow I-580 East toward Oakland.\r\nTake I-880 South toward Alameda/San Jose.\r\nTake the exit for Alameda and follow signs toward Bay Farm Island.\r\nContinue onto Island Drive, then follow the signs/roads toward North Loop Road.\r\nTurn onto N Loop Rd and look for 2300 N Loop Rd",
-        "departure_time": "2026-11-12T10:00:00.000Z",
-        "updated_at": "2026-11-12T18:58:18.414Z",
-        "contents": [
-          {
-            "package": {
-              "id": 35279529,
-              "tag": "1A4060300047D39000015663",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T18:58:20.261Z",
-            "shipped_weight": 168.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Mendo | Flower Gas Mask 1/2 oz",
-            "_strain": "Gas Mask",
-            "_sources": [
-              "1A4060300047D39000015508",
-              "1A4060300047D39000015342",
-              "1A4060300049C1A000001769",
-              "1A4060300049C1A000001640"
-            ],
-            "_source": "1A4060300047D39000015508"
-          },
-          {
-            "package": {
-              "id": 35279717,
-              "tag": "1A4060300047D39000015666",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T18:58:21.013Z",
-            "shipped_weight": 432.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Mendo | Flower Gas Mask 1/8 th",
-            "_strain": "Gas Mask",
-            "_sources": [
-              "1A4060300047D39000015508",
-              "1A4060300047D39000015342",
-              "1A4060300049C1A000001769",
-              "1A4060300049C1A000001640"
-            ],
-            "_source": "1A4060300047D39000015508"
-          },
-          {
-            "package": {
-              "id": 35476937,
-              "tag": "1A4060300047D39000015722",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T18:58:21.792Z",
-            "shipped_weight": 48.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Mendo | Flower Gas Mask 1/8 th",
-            "_strain": "Gas Mask",
-            "_sources": [
-              "1A4060300047D39000015666",
-              "1A4060300047D39000015508",
-              "1A4060300047D39000015342",
-              "1A4060300049C1A000001769"
-            ],
-            "_source": "1A4060300047D39000015666"
-          },
-          {
-            "package": {
-              "id": 35476707,
-              "tag": "1A4060300047D39000015638",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T18:58:22.699Z",
-            "shipped_weight": 54.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Mendo | Flower Permanent Glue 1/8 th",
-            "_strain": "Permanent Glue",
-            "_sources": [
-              "1A4060300047D39000015615",
-              "1A4060300047D39000015626",
-              "1A406030005E0B2000003460",
-              "1A4060300049C1A000001639"
-            ],
-            "_source": "1A4060300047D39000015615"
-          },
-          {
-            "package": {
-              "id": 35478744,
-              "tag": "1A4060300047D39000015723",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T18:58:23.509Z",
-            "shipped_weight": 48.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Mendo | Flower Permanent Glue 1/8 th",
-            "_strain": "Permanent Glue",
-            "_sources": [
-              "1A4060300047D39000015638",
-              "1A4060300047D39000015615",
-              "1A4060300047D39000015626",
-              "1A406030005E0B2000003460"
-            ],
-            "_source": "1A4060300047D39000015638"
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-11-12T18:58:18.080Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Airway: C11-0001652-LIC",
-    "_facility_license_number": "C11-0001652-LIC"
-  },
-  {
-    "id": 3205248,
-    "name": null,
-    "manifest_number": "0011871930",
-    "facility_id": 4929,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3557398,
-        "destination_facility": "C11-0001255-LIC",
-        "transfer_type": "Transfer",
-        "route": "Route to be Traveled Notes: details for extenuating circumstances (e.g., road closure, flat tire, etc.)\r\nWEIGHMASTER CERTIFICATE\r\nTHIS IS TO CERTIFY that the following described commodity was weighed,\r\nmeasured, or counted by a weighmaster, whose signature is on this certificate,\r\nwho is a recognized authority of accuracy, as prescribed by Chapter 7\r\n(commencing with Section 12700) of Division 5 of the California Business and\r\nProfessions Code, administered by the Division of Measurement Standards of\r\nthe California Department of Food and Agriculture.\r\nWeighed by: Yali AWI-0482\r\nRoute to be Traveled Notes: details for extenuating circumstances (e.g., road\r\nclosure, flat tire, etc.)\r\nRoute to be Traveled:\r\nLeave Airway Drive and get onto US-101 South.\r\nStay on 101 South through Petaluma and toward San Rafael.\r\nContinue toward the Richmond-San Rafael Bridge.\r\nCross the bridge into the East Bay.\r\nFollow I-580 East toward Oakland.\r\nTake I-880 South toward Alameda/San Jose.\r\nTake the exit for Alameda and follow signs toward Bay Farm Island.\r\nContinue onto Island Drive, then follow the signs/roads toward North Loop Road.\r\nTurn onto N Loop Rd and look for 2300 N Loop Rd",
-        "departure_time": "2026-11-12T23:00:00.000Z",
-        "updated_at": "2026-11-12T17:33:47.660Z",
-        "contents": [
-          {
-            "package": {
-              "id": 35266560,
-              "tag": "1A4060300047D39000015658",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:33:55.501Z",
-            "shipped_weight": 400.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll - Flower Pink Certz 1/8 th",
-            "_strain": "Pink Certz",
-            "_sources": [
-              "1A4060300047D39000015657",
-              "1A4060300047D39000015595",
-              "1A406030005E0B2000010196",
-              "1A406030005E0B2000010129"
-            ],
-            "_source": "1A4060300047D39000015657"
-          },
-          {
-            "package": {
-              "id": 35399640,
-              "tag": "1A4060300047D39000015688",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:33:51.996Z",
-            "shipped_weight": 480.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll - Flower Pack Mule 1/8 th",
-            "_strain": "Pack Mule",
-            "_sources": [
-              "1A4060300047D39000015594",
-              "1A406030005E0B2000010194",
-              "1A406030005E0B2000010040",
-              "1A4060300089ABD000000006"
-            ],
-            "_source": "1A4060300047D39000015594"
-          },
-          {
-            "package": {
-              "id": 35399682,
-              "tag": "1A4060300047D39000015697",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:33:53.914Z",
-            "shipped_weight": 124.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll - Flower Pack Mule 1/8 th",
-            "_strain": "Pack Mule",
-            "_sources": [
-              "1A4060300047D39000015688",
-              "1A4060300047D39000015594",
-              "1A406030005E0B2000010194",
-              "1A406030005E0B2000010040"
-            ],
-            "_source": "1A4060300047D39000015688"
-          },
-          {
-            "package": {
-              "id": 35421730,
-              "tag": "1A4060300047D39000015692",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:33:52.223Z",
-            "shipped_weight": 224.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll | Flower Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e 1/2 oz",
-            "_strain": "Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e",
-            "_sources": [
-              "1A4060300047D39000015623",
-              "1A406030005E0B2000010277",
-              "1A406030005E0B2000010061",
-              "1A4060300089ABD000000007"
-            ],
-            "_source": "1A4060300047D39000015623"
-          },
-          {
-            "package": {
-              "id": 35422382,
-              "tag": "1A4060300047D39000015693",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:33:52.959Z",
-            "shipped_weight": 480.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll | Flower Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e 1/8 th",
-            "_strain": "Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e",
-            "_sources": [
-              "1A4060300047D39000015623",
-              "1A406030005E0B2000010277",
-              "1A406030005E0B2000010061",
-              "1A4060300089ABD000000007"
-            ],
-            "_source": "1A4060300047D39000015623"
-          },
-          {
-            "package": {
-              "id": 35428573,
-              "tag": "1A4060300047D39000015679",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:33:53.724Z",
-            "shipped_weight": 106.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll | Flower Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e 1/8 th",
-            "_strain": "Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e",
-            "_sources": [
-              "1A4060300047D39000015693",
-              "1A4060300047D39000015623",
-              "1A406030005E0B2000010277",
-              "1A406030005E0B2000010061"
-            ],
-            "_source": "1A4060300047D39000015693"
-          },
-          {
-            "package": {
-              "id": 35369961,
-              "tag": "1A4060300047D39000015684",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:33:54.704Z",
-            "shipped_weight": 69.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll - Flower Pink Certz 1/8 th",
-            "_strain": "Pink Certz",
-            "_sources": [
-              "1A4060300047D39000015658",
-              "1A4060300047D39000015657",
-              "1A4060300047D39000015595",
-              "1A406030005E0B2000010196"
-            ],
-            "_source": "1A4060300047D39000015658"
-          },
-          {
-            "package": {
-              "id": 35399627,
-              "tag": "1A4060300047D39000015689",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:33:55.039Z",
-            "shipped_weight": 114.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll | Flower Apple Tartz 1/8 th",
-            "_strain": "Apple Tartz",
-            "_sources": [
-              "1A4060300047D39000015687",
-              "1A4060300047D39000015567",
-              "1A4060300047D39000015549",
-              "1A4060300047D39000015561",
-              "1A406030005E0B2000010108",
-              "1A4060300047D39000015555"
-            ],
-            "_source": "1A4060300047D39000015687"
-          },
-          {
-            "package": {
-              "id": 35398170,
-              "tag": "1A4060300047D39000015687",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:33:55.457Z",
-            "shipped_weight": 560.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll | Flower Apple Tartz 1/8 th",
-            "_strain": "Apple Tartz",
-            "_sources": [
-              "1A4060300047D39000015567",
-              "1A4060300047D39000015549",
-              "1A4060300047D39000015561",
-              "1A406030005E0B2000010108",
-              "1A4060300047D39000015555",
-              "1A406030005E0B2000010003"
-            ],
-            "_source": "1A4060300047D39000015567"
-          },
-          {
-            "package": {
-              "id": 35163635,
-              "tag": "1A4060300047D39000015616",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:33:56.372Z",
-            "shipped_weight": 576.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll - Flower Banana Punch 1/8 th",
-            "_strain": "Banana Punch",
-            "_sources": [
-              "1A4060300047D39000015077",
-              "1A4060300047D39000015013",
-              "1A4060300049C1A000001482",
-              "1A4060300047D39000014853",
-              "1A4060300047D39000014986",
-              "1A4060300049C16000000023",
-              "1A4060300047D39000014767",
-              "1A4060300049C1A000001326"
-            ],
-            "_source": "1A4060300047D39000015077"
-          },
-          {
-            "package": {
-              "id": 35265041,
-              "tag": "1A4060300047D39000015656",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:33:57.506Z",
-            "shipped_weight": 79.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll - Flower Obama Runtz 1/8 th",
-            "_strain": "Obama Runtz",
-            "_sources": [
-              "1A4060300047D39000015650",
-              "1A4060300047D39000014987",
-              "1A4060300049C1A000001312",
-              "1A4060300049C17000000035"
-            ],
-            "_source": "1A4060300047D39000015650"
-          },
-          {
-            "package": {
-              "id": 35399765,
-              "tag": "1A4060300047D39000015691",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:33:57.946Z",
-            "shipped_weight": 400.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll | Flower Gelato 41 1/8 th",
-            "_strain": "Gelato 41",
-            "_sources": [
-              "1A4060300047D39000015566",
-              "1A4060300047D39000015548",
-              "1A4060300047D39000015560",
-              "1A406030005E0B2000010105",
-              "1A4060300047D39000015554",
-              "1A406030005E0B2000010042"
-            ],
-            "_source": "1A4060300047D39000015566"
-          },
-          {
-            "package": {
-              "id": 35425399,
-              "tag": "1A4060300047D39000015694",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:33:58.305Z",
-            "shipped_weight": 129.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll | Flower Gelato 41 1/8 th",
-            "_strain": "Gelato 41",
-            "_sources": [
-              "1A4060300047D39000015691",
-              "1A4060300047D39000015566",
-              "1A4060300047D39000015548",
-              "1A4060300047D39000015560",
-              "1A406030005E0B2000010105",
-              "1A4060300047D39000015554"
-            ],
-            "_source": "1A4060300047D39000015691"
-          },
-          {
-            "package": {
-              "id": 35142109,
-              "tag": "1A4060300047D39000015589",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:33:58.741Z",
-            "shipped_weight": 440.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll 14g Ground Flower Pouch - Zoap",
-            "_strain": "ZOAP",
-            "_sources": [
-              "1A406030005E0B2000010193",
-              "1A406030005E0B2000003443",
-              "1A406030005E0B2000003475",
-              "1A4060300049C1A000002453",
-              "1A4060300049C1A000002455",
-              "1A4060300049C1A000002500",
-              "1A4060300032386000001006",
-              "1A4060300049C1A000001511",
-              "1A4060300049C1A000001577",
-              "1A4060300049C1A000001578",
-              "1A4060300049C1A000001579",
-              "1A4060300049C1A000001580",
-              "1A4060300049C1A000001582",
-              "1A4060300049C1A000001583",
-              "1A4060300049C1A000001584",
-              "1A4060300049C1A000001585",
-              "1A4060300049C1A000001611",
-              "1A4060300049C1A000001612",
-              "1A4060300049C1A000001613",
-              "1A4060300049C1A000001615",
-              "1A4060300049C1A000001622",
-              "1A4060300049C1A000001625",
-              "1A4060300049C1A000001672",
-              "1A4060300049C1A000001673",
-              "1A4060300049C1A000001674",
-              "1A4060300049C1A000001675",
-              "1A4060300049C1A000001676",
-              "1A4060300049C1A000001677",
-              "1A4060300049C1A000001678",
-              "1A4060300049C1A000001679",
-              "1A4060300049C1A000001680",
-              "1A4060300049C1A000001683",
-              "1A4060300049C1A000002393",
-              "1A4060300049C1A000002395",
-              "1A4060300049C1A000002396",
-              "1A4060300049C1A000002397",
-              "1A4060300049C1A000002398",
-              "1A4060300049C1A000002399",
-              "1A4060300049C1A000002401",
-              "1A4060300049C1A000002402",
-              "1A4060300049C1F000000067",
-              "1A406030007286F000000018",
-              "1A406030007286F000000019",
-              "1A406030007286F000000021",
-              "1A4060300",
-              "1A4060300049C1A000001574",
-              "1A4060300049C1A000001575",
-              "1A4060300049C1A000001626",
-              "1A4060300049C1C000001655",
-              "1A4060300049C1C000001656",
-              "1A4060300049C1C000001657",
-              "1A4060300049C1C000001658"
-            ],
-            "_source": "1A406030005E0B2000010193"
-          },
-          {
-            "package": {
-              "id": 35161970,
-              "tag": "1A4060300047D39000015587",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:33:59.342Z",
-            "shipped_weight": 440.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll 14g Ground Flower Pouch - Mule Fuel",
-            "_strain": "Mule Fuel",
-            "_sources": [
-              "1A406030005E0B2000010190",
-              "1A406030005E0B2000003443",
-              "1A406030005E0B2000010018",
-              "1A4060300049C1A000002453",
-              "1A4060300065EDD000518802",
-              "1A4060300032386000001006",
-              "1A4060300049C1A000001511",
-              "1A4060300049C1A000001577",
-              "1A4060300049C1A000001578",
-              "1A4060300049C1A000001579",
-              "1A4060300049C1A000001580",
-              "1A4060300049C1A000001582",
-              "1A4060300049C1A000001583",
-              "1A4060300049C1A000001584",
-              "1A4060300049C1A000001585",
-              "1A4060300049C1A000001611",
-              "1A4060300049C1A000001612",
-              "1A4060300049C1A000001613",
-              "1A4060300049C1A000001615",
-              "1A4060300049C1A000001622",
-              "1A4060300049C1A000001625",
-              "1A4060300049C1A000001672",
-              "1A4060300049C1A000001673",
-              "1A4060300049C1A000001674",
-              "1A4060300049C1A000001675",
-              "1A4060300049C1A000001676",
-              "1A4060300049C1A000001677",
-              "1A4060300049C1A000001678",
-              "1A4060300049C1A000001679",
-              "1A4060300049C1A000001680",
-              "1A4060300049C1A000001683",
-              "1A4060300049C1A000002393",
-              "1A4060300049C1A000002395",
-              "1A4060300049C1A000002396",
-              "1A4060300049C1A000002397",
-              "1A4060300049C1A000002398",
-              "1A4060300049C1A000002399",
-              "1A4060300049C1A000002401",
-              "1A4060300049C1A000002402",
-              "1A4060300049C1F000000067",
-              "1A406030007286F000000018",
-              "1A406030007286F000000019",
-              "1A406030007286F000000021",
-              "1A4060300",
-              "1A4060300065EDD000490708"
-            ],
-            "_source": "1A406030005E0B2000010190"
-          },
-          {
-            "package": {
-              "id": 35460495,
-              "tag": "1A4060300047D39000015712",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:33:59.806Z",
-            "shipped_weight": 80.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll 14g Ground Flower Pouch - Mule Fuel",
-            "_strain": "Mule Fuel",
-            "_sources": [
-              "1A4060300047D39000015587",
-              "1A406030005E0B2000010190",
-              "1A406030005E0B2000003443",
-              "1A406030005E0B2000010018",
-              "1A4060300049C1A000002453",
-              "1A4060300065EDD000518802"
-            ],
-            "_source": "1A4060300047D39000015587"
-          },
-          {
-            "package": {
-              "id": 35161967,
-              "tag": "1A4060300047D39000015607",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:34:00.341Z",
-            "shipped_weight": 520.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll 14g Ground Flower Pouch - Space Runtz",
-            "_strain": "Space Runtz",
-            "_sources": [
-              "1A406030005E0B2000010191",
-              "1A406030005E0B2000003437",
-              "1A4060300049C1A000002453",
-              "1A4060300032386000001006",
-              "1A4060300049C1A000001511",
-              "1A4060300049C1A000001577",
-              "1A4060300049C1A000001578",
-              "1A4060300049C1A000001579",
-              "1A4060300049C1A000001580",
-              "1A4060300049C1A000001582",
-              "1A4060300049C1A000001583",
-              "1A4060300049C1A000001584",
-              "1A4060300049C1A000001585",
-              "1A4060300049C1A000001611",
-              "1A4060300049C1A000001612",
-              "1A4060300049C1A000001613",
-              "1A4060300049C1A000001615",
-              "1A4060300049C1A000001622",
-              "1A4060300049C1A000001625",
-              "1A4060300049C1A000001672",
-              "1A4060300049C1A000001673",
-              "1A4060300049C1A000001674",
-              "1A4060300049C1A000001675",
-              "1A4060300049C1A000001676",
-              "1A4060300049C1A000001677",
-              "1A4060300049C1A000001678",
-              "1A4060300049C1A000001679",
-              "1A4060300049C1A000001680",
-              "1A4060300049C1A000001683",
-              "1A4060300049C1A000002393",
-              "1A4060300049C1A000002395",
-              "1A4060300049C1A000002396",
-              "1A4060300049C1A000002397",
-              "1A4060300049C1A000002398",
-              "1A4060300049C1A000002399",
-              "1A4060300049C1A000002401",
-              "1A4060300049C1A000002402",
-              "1A4060300049C1F000000067",
-              "1A406030007286F000000018",
-              "1A406030007286F000000019",
-              "1A406030007286F000000021",
-              "1A4060300"
-            ],
-            "_source": "1A406030005E0B2000010191"
-          },
-          {
-            "package": {
-              "id": 35142035,
-              "tag": "1A4060300047D39000015590",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:34:00.841Z",
-            "shipped_weight": 440.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll 14g Ground Flower Pouch - Obama Runtz",
-            "_strain": "Obama Runtz",
-            "_sources": [
-              "1A406030005E0B2000010189",
-              "1A406030005E0B2000003437",
-              "1A406030005E0B2000010012",
-              "1A4060300049C1A000002453",
-              "1A4060300065EDD000507045",
-              "1A4060300032386000001006",
-              "1A4060300049C1A000001511",
-              "1A4060300049C1A000001577",
-              "1A4060300049C1A000001578",
-              "1A4060300049C1A000001579",
-              "1A4060300049C1A000001580",
-              "1A4060300049C1A000001582",
-              "1A4060300049C1A000001583",
-              "1A4060300049C1A000001584",
-              "1A4060300049C1A000001585",
-              "1A4060300049C1A000001611",
-              "1A4060300049C1A000001612",
-              "1A4060300049C1A000001613",
-              "1A4060300049C1A000001615",
-              "1A4060300049C1A000001622",
-              "1A4060300049C1A000001625",
-              "1A4060300049C1A000001672",
-              "1A4060300049C1A000001673",
-              "1A4060300049C1A000001674",
-              "1A4060300049C1A000001675",
-              "1A4060300049C1A000001676",
-              "1A4060300049C1A000001677",
-              "1A4060300049C1A000001678",
-              "1A4060300049C1A000001679",
-              "1A4060300049C1A000001680",
-              "1A4060300049C1A000001683",
-              "1A4060300049C1A000002393",
-              "1A4060300049C1A000002395",
-              "1A4060300049C1A000002396",
-              "1A4060300049C1A000002397",
-              "1A4060300049C1A000002398",
-              "1A4060300049C1A000002399",
-              "1A4060300049C1A000002401",
-              "1A4060300049C1A000002402",
-              "1A4060300049C1F000000067",
-              "1A406030007286F000000018",
-              "1A406030007286F000000019",
-              "1A406030007286F000000021",
-              "1A4060300",
-              "1A4060300065EDD000490710"
-            ],
-            "_source": "1A406030005E0B2000010189"
-          },
-          {
-            "package": {
-              "id": 35460338,
-              "tag": "1A4060300047D39000015714",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:34:01.155Z",
-            "shipped_weight": 80.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll 14g Ground Flower Pouch - Space Runtz",
-            "_strain": "Space Runtz",
-            "_sources": [
-              "1A4060300047D39000015607",
-              "1A406030005E0B2000010191",
-              "1A406030005E0B2000003437",
-              "1A4060300049C1A000002453"
-            ],
-            "_source": "1A4060300047D39000015607"
-          },
-          {
-            "package": {
-              "id": 35460294,
-              "tag": "1A4060300047D39000015716",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:34:01.656Z",
-            "shipped_weight": 80.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll 14g Ground Flower Pouch - Obama Runtz",
-            "_strain": "Obama Runtz",
-            "_sources": [
-              "1A4060300047D39000015590",
-              "1A406030005E0B2000010189",
-              "1A406030005E0B2000003437",
-              "1A406030005E0B2000010012",
-              "1A4060300049C1A000002453",
-              "1A4060300065EDD000507045"
-            ],
-            "_source": "1A4060300047D39000015590"
-          },
-          {
-            "package": {
-              "id": 35161966,
-              "tag": "1A4060300047D39000015588",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:34:02.159Z",
-            "shipped_weight": 440.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll 14g Ground Flower Pouch - Guava Tartz",
-            "_strain": "Guava Tartz",
-            "_sources": [
-              "1A406030005E0B2000010192",
-              "1A4060300049C1A000002455",
-              "1A406030005E0B2000003440",
-              "1A406030005E0B2000003446",
-              "1A406030005E0B2000010019",
-              "1A4060300049C1A000001574",
-              "1A4060300049C1A000001575",
-              "1A4060300049C1A000001625",
-              "1A4060300049C1A000001626",
-              "1A4060300049C1A000002453",
-              "1A4060300049C1A000002469",
-              "1A4060300065EDD000518802",
-              "1A4060300032386000001006",
-              "1A4060300049C1A000001511",
-              "1A4060300049C1A000001577",
-              "1A4060300049C1A000001578",
-              "1A4060300049C1A000001579",
-              "1A4060300049C1A000001580",
-              "1A4060300049C1A000001582",
-              "1A4060300049C1A000001583",
-              "1A4060300049C1A000001584",
-              "1A4060300049C1A000001585",
-              "1A4060300049C1A000001611",
-              "1A4060300049C1A000001612",
-              "1A4060300049C1A000001613",
-              "1A4060300049C1A000001615",
-              "1A4060300049C1A000001622",
-              "1A4060300049C1A000001672",
-              "1A4060300049C1A000001673",
-              "1A4060300049C1A000001674",
-              "1A4060300049C1A000001675",
-              "1A4060300049C1A000001676",
-              "1A4060300049C1A000001677",
-              "1A4060300049C1A000001678",
-              "1A4060300049C1A000001679",
-              "1A4060300049C1A000001680",
-              "1A4060300049C1A000001683",
-              "1A4060300049C1A000002393",
-              "1A4060300049C1A000002395",
-              "1A4060300049C1A000002396",
-              "1A4060300049C1A000002397",
-              "1A4060300049C1A000002398",
-              "1A4060300049C1A000002399",
-              "1A4060300049C1A000002401",
-              "1A4060300049C1A000002402",
-              "1A4060300049C1F000000067",
-              "1A406030007286F000000018",
-              "1A406030007286F000000019",
-              "1A406030007286F000000021",
-              "1A4060300",
-              "1A4060300049C1A000002394",
-              "1A4060300049C1C000001669",
-              "1A4060300065EDD000490708"
-            ],
-            "_source": "1A406030005E0B2000010192"
-          },
-          {
-            "package": {
-              "id": 35460013,
-              "tag": "1A4060300047D39000015711",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:34:02.544Z",
-            "shipped_weight": 80.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll 14g Ground Flower Pouch - Guava Tartz",
-            "_strain": "Guava Tartz",
-            "_sources": [
-              "1A4060300047D39000015588",
-              "1A406030005E0B2000010192",
-              "1A4060300049C1A000002455",
-              "1A406030005E0B2000003440",
-              "1A406030005E0B2000003446",
-              "1A406030005E0B2000010019",
-              "1A4060300049C1A000001574",
-              "1A4060300049C1A000001575",
-              "1A4060300049C1A000001625",
-              "1A4060300049C1A000001626",
-              "1A4060300049C1A000002453",
-              "1A4060300049C1A000002469",
-              "1A4060300065EDD000518802"
-            ],
-            "_source": "1A4060300047D39000015588"
-          },
-          {
-            "package": {
-              "id": 35161968,
-              "tag": "1A4060300047D39000015608",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:34:03.044Z",
-            "shipped_weight": 440.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll 14g Ground Flower Pouch - Grape Gas",
-            "_strain": "Grape Gas",
-            "_sources": [
-              "1A406030005E0B2000010171",
-              "1A406030005E0B2000003431",
-              "1A4060300049C1A000002453",
-              "1A4060300032386000001006",
-              "1A4060300049C1A000001511",
-              "1A4060300049C1A000001577",
-              "1A4060300049C1A000001578",
-              "1A4060300049C1A000001579",
-              "1A4060300049C1A000001580",
-              "1A4060300049C1A000001582",
-              "1A4060300049C1A000001583",
-              "1A4060300049C1A000001584",
-              "1A4060300049C1A000001585",
-              "1A4060300049C1A000001611",
-              "1A4060300049C1A000001612",
-              "1A4060300049C1A000001613",
-              "1A4060300049C1A000001615",
-              "1A4060300049C1A000001622",
-              "1A4060300049C1A000001625",
-              "1A4060300049C1A000001672",
-              "1A4060300049C1A000001673",
-              "1A4060300049C1A000001674",
-              "1A4060300049C1A000001675",
-              "1A4060300049C1A000001676",
-              "1A4060300049C1A000001677",
-              "1A4060300049C1A000001678",
-              "1A4060300049C1A000001679",
-              "1A4060300049C1A000001680",
-              "1A4060300049C1A000001683",
-              "1A4060300049C1A000002393",
-              "1A4060300049C1A000002395",
-              "1A4060300049C1A000002396",
-              "1A4060300049C1A000002397",
-              "1A4060300049C1A000002398",
-              "1A4060300049C1A000002399",
-              "1A4060300049C1A000002401",
-              "1A4060300049C1A000002402",
-              "1A4060300049C1F000000067",
-              "1A406030007286F000000018",
-              "1A406030007286F000000019",
-              "1A406030007286F000000021",
-              "1A4060300"
-            ],
-            "_source": "1A406030005E0B2000010171"
-          },
-          {
-            "package": {
-              "id": 35457151,
-              "tag": "1A4060300047D39000015675",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:34:03.398Z",
-            "shipped_weight": 80.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll 14g Ground Flower Pouch - Grape Gas",
-            "_strain": "Grape Gas",
-            "_sources": [
-              "1A4060300047D39000015608",
-              "1A406030005E0B2000010171",
-              "1A406030005E0B2000003431",
-              "1A4060300049C1A000002453"
-            ],
-            "_source": "1A4060300047D39000015608"
-          },
-          {
-            "package": {
-              "id": 35475829,
-              "tag": "1A4060300047D39000015721",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:34:04.156Z",
-            "shipped_weight": 131.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll - Flower Blue Dream 1/8 th",
-            "_strain": "Blue Dream",
-            "_sources": [
-              "1A4060300047D39000015695",
-              "1A4060300047D39000015565",
-              "1A4060300047D39000015547",
-              "1A4060300047D39000015559",
-              "1A406030005E0B2000010107",
-              "1A4060300047D39000015553"
-            ],
-            "_source": "1A4060300047D39000015695"
-          },
-          {
-            "package": {
-              "id": 35416263,
-              "tag": "1A4060300047D39000015695",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T17:34:03.774Z",
-            "shipped_weight": 320.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Howie Roll - Flower Blue Dream 1/8 th",
-            "_strain": "Blue Dream",
-            "_sources": [
-              "1A4060300047D39000015565",
-              "1A4060300047D39000015547",
-              "1A4060300047D39000015559",
-              "1A406030005E0B2000010107",
-              "1A4060300047D39000015553",
-              "1A406030005E0B2000010100"
-            ],
-            "_source": "1A4060300047D39000015565"
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-11-12T17:33:47.466Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Airway: C11-0001652-LIC",
-    "_facility_license_number": "C11-0001652-LIC"
-  },
-  {
     "id": 3203984,
     "name": null,
     "manifest_number": "0011867745",
@@ -1517,646 +2180,6 @@
     "_license_key_label": "All Facilities",
     "_facility_name": "Sulphur Bank: CCL28-0000167",
     "_facility_license_number": "CCL25-0000167"
-  },
-  {
-    "id": 3205108,
-    "name": null,
-    "manifest_number": "0011870696",
-    "facility_id": 4929,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3557207,
-        "destination_facility": "C11-0001255-LIC",
-        "transfer_type": "Transfer",
-        "route": "WEIGHMASTER CERTIFICATE\r\nTHIS IS TO CERTIFY that the following described commodity was weighed,\r\nmeasured, or counted by a weighmaster, whose signature is on this certificate,\r\nwho is a recognized authority of accuracy, as prescribed by Chapter 7\r\n(commencing with Section 12700) of Division 5 of the California Business and\r\nProfessions Code, administered by the Division of Measurement Standards of\r\nthe California Department of Food and Agriculture.\r\nWeighed by: Yali AWI-0481\r\nRoute to be Traveled Notes: details for extenuating circumstances (e.g., road\r\nclosure, flat tire, etc.)\r\nRoute to be Traveled:\r\nLeave Airway Drive and get onto US-101 South.\r\nStay on 101 South through Petaluma and toward San Rafael.\r\nContinue toward the Richmond-San Rafael Bridge.\r\nCross the bridge into the East Bay.\r\nFollow I-580 East toward Oakland.\r\nTake I-880 South toward Alameda/San Jose.\r\nTake the exit for Alameda and follow signs toward Bay Farm Island.\r\nContinue onto Island Drive, then follow the signs/roads toward North Loop Road.\r\nTurn onto N Loop Rd and look for 2300 N Loop Rd",
-        "departure_time": "2026-11-12T11:00:00.000Z",
-        "updated_at": "2026-11-12T16:54:56.242Z",
-        "contents": [
-          {
-            "package": {
-              "id": 35365066,
-              "tag": "1A4060300047D39000015662",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T16:54:58.249Z",
-            "shipped_weight": 224.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa | Flower Blueberry Jam 1 oz",
-            "_strain": "Blueberry Jam",
-            "_sources": [
-              "1A4060300047D39000015622",
-              "1A406030005E0B2000010276",
-              "1A406030005E0B2000010064",
-              "1A4060300089ABD000000002"
-            ],
-            "_source": "1A4060300047D39000015622"
-          },
-          {
-            "package": {
-              "id": 35377080,
-              "tag": "1A4060300047D39000015682",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T16:54:58.714Z",
-            "shipped_weight": 800.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa | Flower Blueberry Jam 1/8 th",
-            "_strain": "Blueberry Jam",
-            "_sources": [
-              "1A4060300047D39000015622",
-              "1A406030005E0B2000010276",
-              "1A406030005E0B2000010064",
-              "1A4060300089ABD000000002"
-            ],
-            "_source": "1A4060300047D39000015622"
-          },
-          {
-            "package": {
-              "id": 35377805,
-              "tag": "1A4060300047D39000015683",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T16:54:59.056Z",
-            "shipped_weight": 198.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa | Flower Blueberry Jam 1/8 th",
-            "_strain": "Blueberry Jam",
-            "_sources": [
-              "1A4060300047D39000015682",
-              "1A4060300047D39000015622",
-              "1A406030005E0B2000010276",
-              "1A406030005E0B2000010064"
-            ],
-            "_source": "1A4060300047D39000015682"
-          },
-          {
-            "package": {
-              "id": 35362963,
-              "tag": "1A4060300047D39000015667",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T16:54:59.440Z",
-            "shipped_weight": 224.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa | Flower Gumdropz 1 oz",
-            "_strain": "Gumdropz",
-            "_sources": [
-              "1A4060300047D39000015624",
-              "1A406030005E0B2000010278",
-              "1A406030005E0B2000010072",
-              "1A4060300089ABD000000034"
-            ],
-            "_source": "1A4060300047D39000015624"
-          },
-          {
-            "package": {
-              "id": 35389334,
-              "tag": "1A4060300047D39000015680",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T16:55:00.471Z",
-            "shipped_weight": 190.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa | Flower Gumdropz 1/2 oz",
-            "_strain": "Gumdropz",
-            "_sources": [
-              "1A4060300047D39000015624",
-              "1A406030005E0B2000010278",
-              "1A406030005E0B2000010072",
-              "1A4060300089ABD000000034"
-            ],
-            "_source": "1A4060300047D39000015624"
-          },
-          {
-            "package": {
-              "id": 35395302,
-              "tag": "1A4060300047D39000015686",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T16:55:01.320Z",
-            "shipped_weight": 560.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa | Flower Gumdropz 1/8 th",
-            "_strain": "Gumdropz",
-            "_sources": [
-              "1A4060300047D39000015624",
-              "1A406030005E0B2000010278",
-              "1A406030005E0B2000010072",
-              "1A4060300089ABD000000034"
-            ],
-            "_source": "1A4060300047D39000015624"
-          },
-          {
-            "package": {
-              "id": 35396912,
-              "tag": "1A4060300047D39000015685",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T16:55:02.170Z",
-            "shipped_weight": 158.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa | Flower Gumdropz 1/8 th",
-            "_strain": "Gumdropz",
-            "_sources": [
-              "1A4060300047D39000015686",
-              "1A4060300047D39000015624",
-              "1A406030005E0B2000010278",
-              "1A406030005E0B2000010072"
-            ],
-            "_source": "1A4060300047D39000015686"
-          },
-          {
-            "package": {
-              "id": 35365380,
-              "tag": "1A4060300047D39000015661",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T16:55:03.134Z",
-            "shipped_weight": 232.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa | Flower Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e 1 oz",
-            "_strain": "Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e",
-            "_sources": [
-              "1A4060300047D39000015623",
-              "1A406030005E0B2000010277",
-              "1A406030005E0B2000010061",
-              "1A4060300089ABD000000007"
-            ],
-            "_source": "1A4060300047D39000015623"
-          },
-          {
-            "package": {
-              "id": 35365994,
-              "tag": "1A4060300047D39000015671",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T16:55:04.135Z",
-            "shipped_weight": 450.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa | Flower Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e 1/2 oz",
-            "_strain": "Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e",
-            "_sources": [
-              "1A4060300047D39000015623",
-              "1A406030005E0B2000010277",
-              "1A406030005E0B2000010061",
-              "1A4060300089ABD000000007"
-            ],
-            "_source": "1A4060300047D39000015623"
-          },
-          {
-            "package": {
-              "id": 35371005,
-              "tag": "1A4060300047D39000015670",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T16:55:05.022Z",
-            "shipped_weight": 800.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa | Flower Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e 1/8 th",
-            "_strain": "Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e",
-            "_sources": [
-              "1A4060300047D39000015623",
-              "1A406030005E0B2000010277",
-              "1A406030005E0B2000010061",
-              "1A4060300089ABD000000007"
-            ],
-            "_source": "1A4060300047D39000015623"
-          },
-          {
-            "package": {
-              "id": 35371006,
-              "tag": "1A4060300047D39000015669",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T16:55:05.955Z",
-            "shipped_weight": 190.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa | Flower Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e 1/8 th",
-            "_strain": "Gary Payton x Cr\u00e8me Br\u00fbl\u00e9e",
-            "_sources": [
-              "1A4060300047D39000015670",
-              "1A4060300047D39000015623",
-              "1A406030005E0B2000010277",
-              "1A406030005E0B2000010061"
-            ],
-            "_source": "1A4060300047D39000015670"
-          },
-          {
-            "package": {
-              "id": 35254710,
-              "tag": "1A4060300047D39000015645",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T16:55:06.886Z",
-            "shipped_weight": 288.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa | Flower Apple Tartz 1/8 th",
-            "_strain": "Apple Tartz",
-            "_sources": [
-              "1A4060300047D39000015642",
-              "1A4060300047D39000015567",
-              "1A4060300047D39000015549",
-              "1A4060300047D39000015561",
-              "1A406030005E0B2000010108",
-              "1A4060300047D39000015555"
-            ],
-            "_source": "1A4060300047D39000015642"
-          },
-          {
-            "package": {
-              "id": 35369956,
-              "tag": "1A4060300047D39000015681",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T16:55:07.657Z",
-            "shipped_weight": 96.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa | Flower Apple Tartz 1/8 th",
-            "_strain": "Apple Tartz",
-            "_sources": [
-              "1A4060300047D39000015645",
-              "1A4060300047D39000015642",
-              "1A4060300047D39000015567",
-              "1A4060300047D39000015549",
-              "1A4060300047D39000015561"
-            ],
-            "_source": "1A4060300047D39000015645"
-          },
-          {
-            "package": {
-              "id": 35163603,
-              "tag": "1A4060300047D39000015612",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T16:55:08.194Z",
-            "shipped_weight": 400.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa | Flower RS11 1/8 th",
-            "_strain": "RS11",
-            "_sources": [
-              "1A4060300047D39000015386",
-              "1A4060300049C1A000002476",
-              "1A4060300049C1C000001663",
-              "1A4060300049C1A000002469",
-              "1A4060300049C1C000001648",
-              "1A4060300049C1A000002394",
-              "1A4060300049C1A000002398",
-              "1A4060300049C1A000002399",
-              "1A4060300049C1A000002401",
-              "1A4060300049C1C000001669"
-            ],
-            "_source": "1A4060300047D39000015386"
-          },
-          {
-            "package": {
-              "id": 35220253,
-              "tag": "1A4060300047D39000015611",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T16:55:08.590Z",
-            "shipped_weight": 44.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa | Flower RS11 1/8 th",
-            "_strain": "RS11",
-            "_sources": [
-              "1A4060300047D39000015612",
-              "1A4060300047D39000015386",
-              "1A4060300049C1A000002476",
-              "1A4060300049C1C000001663",
-              "1A4060300049C1A000002469",
-              "1A4060300049C1C000001648"
-            ],
-            "_source": "1A4060300047D39000015612"
-          },
-          {
-            "package": {
-              "id": 35254431,
-              "tag": "1A4060300047D39000015838",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T16:55:08.925Z",
-            "shipped_weight": 672.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa | Flower Gelato 41 1/8th",
-            "_strain": "Gelato 41",
-            "_sources": [
-              "1A4060300047D39000015639",
-              "1A4060300047D39000015566",
-              "1A4060300047D39000015548",
-              "1A4060300047D39000015560",
-              "1A406030005E0B2000010105",
-              "1A4060300047D39000015554"
-            ],
-            "_source": "1A4060300047D39000015639"
-          },
-          {
-            "package": {
-              "id": 35051278,
-              "tag": "1A4060300047D39000015572",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T16:55:09.355Z",
-            "shipped_weight": 344.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa .5g Pre-Roll 28pk - It'z Pluto",
-            "_strain": "It'z Pluto",
-            "_sources": [
-              "1A4060300047D39000015551",
-              "1A4060300047D39000015563",
-              "1A406030005E0B2000010104",
-              "1A4060300047D39000015557",
-              "1A406030005E0B2000003434",
-              "1A4060300049C1A000002453"
-            ],
-            "_source": ""
-          },
-          {
-            "package": {
-              "id": 35141745,
-              "tag": "1A4060300047D39000015593",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T16:55:09.990Z",
-            "shipped_weight": 344.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa .5g Pre-Roll 28pk - Galactic Warheadz",
-            "_strain": "Galactic Warheadz",
-            "_sources": [
-              "1A406030005E0B2000010045",
-              "1A406030005E0B2000010044",
-              "1A406030005E0B2000010026",
-              "1A4060300065EDD000527762"
-            ],
-            "_source": "1A406030005E0B2000010045"
-          },
-          {
-            "package": {
-              "id": 35453026,
-              "tag": "1A4060300047D39000015677",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T16:55:10.437Z",
-            "shipped_weight": 19.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa .5g Pre-Roll 28pk - Galactic Warheadz",
-            "_strain": "Galactic Warheadz",
-            "_sources": [
-              "1A4060300047D39000015593",
-              "1A406030005E0B2000010045",
-              "1A406030005E0B2000010044",
-              "1A406030005E0B2000010026"
-            ],
-            "_source": "1A4060300047D39000015593"
-          },
-          {
-            "package": {
-              "id": 35163633,
-              "tag": "1A4060300047D39000015619",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T16:55:10.785Z",
-            "shipped_weight": 960.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa | Flower Blue Dream 1/8 th",
-            "_strain": "Blue Dream",
-            "_sources": [
-              "1A4060300047D39000015565",
-              "1A4060300047D39000015547",
-              "1A4060300047D39000015559",
-              "1A406030005E0B2000010107",
-              "1A4060300047D39000015553",
-              "1A406030005E0B2000010100"
-            ],
-            "_source": "1A4060300047D39000015565"
-          },
-          {
-            "package": {
-              "id": 35453030,
-              "tag": "1A4060300047D39000015678",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T16:55:11.126Z",
-            "shipped_weight": 35.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa .5g Pre-Roll 28pk - Blue Dream",
-            "_strain": "Blue Dream",
-            "_sources": [
-              "1A4060300047D39000015592",
-              "1A406030005E0B2000010170",
-              "1A406030005E0B2000010169",
-              "1A406030005E0B2000010004"
-            ],
-            "_source": "1A4060300047D39000015592"
-          },
-          {
-            "package": {
-              "id": 35141744,
-              "tag": "1A4060300047D39000015592",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T16:55:11.613Z",
-            "shipped_weight": 320.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa .5g Pre-Roll 28pk - Blue Dream",
-            "_strain": "Blue Dream",
-            "_sources": [
-              "1A406030005E0B2000010170",
-              "1A406030005E0B2000010169",
-              "1A406030005E0B2000010004",
-              "1A406030007975D000000427",
-              "1A406030007975D000000435"
-            ],
-            "_source": "1A406030005E0B2000010170"
-          },
-          {
-            "package": {
-              "id": 35262538,
-              "tag": "1A4060300047D39000015652",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-12T16:55:11.971Z",
-            "shipped_weight": 480.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa | Flower Pack Mule 1/8 th",
-            "_strain": "Pack Mule",
-            "_sources": [
-              "1A4060300047D39000015655",
-              "1A4060300047D39000015594",
-              "1A406030005E0B2000010194",
-              "1A406030005E0B2000010040"
-            ],
-            "_source": "1A4060300047D39000015655"
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-11-12T16:54:56.117Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Airway: C11-0001652-LIC",
-    "_facility_license_number": "C11-0001652-LIC"
   },
   {
     "id": 3203789,
@@ -19426,565 +19449,5 @@
     "_license_key_label": "All Facilities",
     "_facility_name": "Airway: C11-0001652-LIC",
     "_facility_license_number": "C11-0001652-LIC"
-  },
-  {
-    "id": 3140228,
-    "name": null,
-    "manifest_number": "0011691754",
-    "facility_id": 5095,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3473827,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "Please follow GPS route.",
-        "departure_time": "2026-10-13T17:40:00.000Z",
-        "updated_at": "2026-10-15T01:22:14.243Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34704563,
-              "tag": "1A4060300089ABD000000058",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-15T01:22:16.115Z",
-            "shipped_weight": 1680.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 1680.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - Grape Gas",
-            "_strain": "Grape Gas",
-            "_source": ""
-          },
-          {
-            "package": {
-              "id": 34704564,
-              "tag": "1A4060300089ABD000000059",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-15T01:22:16.770Z",
-            "shipped_weight": 278.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 278.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - GB",
-            "_strain": "GB",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-15T01:22:13.981Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
-    "_facility_license_number": "CCL26-0000027"
-  },
-  {
-    "id": 3140202,
-    "name": null,
-    "manifest_number": "0011691639",
-    "facility_id": 4924,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3473788,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "Please follow GPS route",
-        "departure_time": "2026-10-13T16:55:00.000Z",
-        "updated_at": "2026-10-15T01:16:00.886Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34703894,
-              "tag": "1A406030007975D000000467",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-15T01:16:03.727Z",
-            "shipped_weight": 65.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 65.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - #9 Crusher Claw",
-            "_strain": "#9 Crusher Claw (HVN)",
-            "_source": ""
-          },
-          {
-            "package": {
-              "id": 34703825,
-              "tag": "1A406030007975D000000465",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-15T01:16:02.853Z",
-            "shipped_weight": 1333.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 1333.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - Permanent Marker",
-            "_strain": "Permanent Marker",
-            "_source": ""
-          },
-          {
-            "package": {
-              "id": 34703893,
-              "tag": "1A406030007975D000000466",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-15T01:16:03.446Z",
-            "shipped_weight": 420.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 420.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - Goji Razz Biker",
-            "_strain": "Goji Razz Biker (HVN)",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-15T01:16:00.646Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Sulphur Bank: CCL28-0000167",
-    "_facility_license_number": "CCL25-0000167"
-  },
-  {
-    "id": 3139817,
-    "name": null,
-    "manifest_number": "0011688599",
-    "facility_id": 4924,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3473247,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "Please follow GPS route",
-        "departure_time": "2026-10-13T13:30:00.000Z",
-        "updated_at": "2026-10-15T01:10:04.155Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34700644,
-              "tag": "1A406030007975D000000461",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-15T01:10:06.629Z",
-            "shipped_weight": 183.5,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 183.5,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - Hashburger",
-            "_strain": "Hashburger (HVN)",
-            "_source": ""
-          },
-          {
-            "package": {
-              "id": 34700673,
-              "tag": "1A406030007975D000000462",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-15T01:10:06.817Z",
-            "shipped_weight": 1698.5,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 1698.5,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - Permanent Marker",
-            "_strain": "Permanent Marker",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-15T01:10:04.019Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Sulphur Bank: CCL28-0000167",
-    "_facility_license_number": "CCL25-0000167"
-  },
-  {
-    "id": 3139985,
-    "name": null,
-    "manifest_number": "0011689469",
-    "facility_id": 4924,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3473492,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "Please follow GPS route",
-        "departure_time": "2026-10-13T14:20:00.000Z",
-        "updated_at": "2026-10-15T01:10:02.357Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34701974,
-              "tag": "1A406030007975D000000463",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-15T01:10:04.002Z",
-            "shipped_weight": 1964.5,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 1964.5,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - Permanent Marker",
-            "_strain": "Permanent Marker",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-15T01:10:02.200Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Sulphur Bank: CCL28-0000167",
-    "_facility_license_number": "CCL25-0000167"
-  },
-  {
-    "id": 3140099,
-    "name": null,
-    "manifest_number": "0011690553",
-    "facility_id": 4924,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3473652,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "Please follow GPS route",
-        "departure_time": "2026-10-13T15:30:00.000Z",
-        "updated_at": "2026-10-15T01:10:00.810Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34702979,
-              "tag": "1A406030007975D000000464",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-15T01:10:02.186Z",
-            "shipped_weight": 2155.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 2155.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - Permanent Marker",
-            "_strain": "Permanent Marker",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-15T01:10:00.557Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Sulphur Bank: CCL28-0000167",
-    "_facility_license_number": "CCL25-0000167"
-  },
-  {
-    "id": 3139624,
-    "name": null,
-    "manifest_number": "0011688330",
-    "facility_id": 4924,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3472987,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "Please follow GPS route",
-        "departure_time": "2026-10-13T12:45:00.000Z",
-        "updated_at": "2026-10-15T01:03:35.274Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34698690,
-              "tag": "1A406030007975D000000460",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-15T01:03:37.278Z",
-            "shipped_weight": 1893.5,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 1893.5,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - Hashburger",
-            "_strain": "Hashburger (HVN)",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-15T01:03:34.984Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Sulphur Bank: CCL28-0000167",
-    "_facility_license_number": "CCL25-0000167"
-  },
-  {
-    "id": 3139357,
-    "name": null,
-    "manifest_number": "0011687648",
-    "facility_id": 4924,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3472660,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "Please follow GPS route",
-        "departure_time": "2026-10-13T11:30:00.000Z",
-        "updated_at": "2026-10-15T00:36:50.099Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34695023,
-              "tag": "1A406030007975D000000459",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-15T00:36:51.946Z",
-            "shipped_weight": 2180.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 2180.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - Hashburger",
-            "_strain": "Hashburger (HVN)",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-15T00:36:49.933Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Sulphur Bank: CCL28-0000167",
-    "_facility_license_number": "CCL25-0000167"
-  },
-  {
-    "id": 3138958,
-    "name": null,
-    "manifest_number": "0011687030",
-    "facility_id": 4924,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3472110,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "Please follow GPS route",
-        "departure_time": "2026-10-13T10:40:00.000Z",
-        "updated_at": "2026-10-15T00:21:33.359Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34692220,
-              "tag": "1A406030007975D000000458",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-15T00:21:35.879Z",
-            "shipped_weight": 1986.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 1986.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - Hashburger",
-            "_strain": "Hashburger (HVN)",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-15T00:21:33.098Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Sulphur Bank: CCL28-0000167",
-    "_facility_license_number": "CCL25-0000167"
-  },
-  {
-    "id": 3138721,
-    "name": null,
-    "manifest_number": "0011685434",
-    "facility_id": 4924,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3471777,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "Please follow GPS route",
-        "departure_time": "2026-10-13T09:40:00.000Z",
-        "updated_at": "2026-10-15T00:12:49.346Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34689568,
-              "tag": "1A406030007975D000000457",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-15T00:12:50.986Z",
-            "shipped_weight": 48.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 48.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - Canal St Runtz",
-            "_strain": "Canal St Runtz",
-            "_source": ""
-          },
-          {
-            "package": {
-              "id": 34689566,
-              "tag": "1A406030007975D000000455",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-15T00:12:50.616Z",
-            "shipped_weight": 1649.5,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 1649.5,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - Hashburger",
-            "_strain": "Hashburger (HVN)",
-            "_source": ""
-          },
-          {
-            "package": {
-              "id": 34689567,
-              "tag": "1A406030007975D000000456",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-15T00:12:50.800Z",
-            "shipped_weight": 232.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 232.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - LS21",
-            "_strain": "LS21[ESN]",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-15T00:12:49.006Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Sulphur Bank: CCL28-0000167",
-    "_facility_license_number": "CCL25-0000167"
-  },
-  {
-    "id": 3138221,
-    "name": null,
-    "manifest_number": "0011684932",
-    "facility_id": 4924,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3471097,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "Please follow GPS route",
-        "departure_time": "2026-10-13T08:10:00.000Z",
-        "updated_at": "2026-10-15T00:09:31.747Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34684307,
-              "tag": "1A406030007975D000000454",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-15T00:09:33.234Z",
-            "shipped_weight": 1902.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 1902.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - Hashburger",
-            "_strain": "Hashburger (HVN)",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-15T00:09:31.502Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Sulphur Bank: CCL28-0000167",
-    "_facility_license_number": "CCL25-0000167"
   }
 ]
