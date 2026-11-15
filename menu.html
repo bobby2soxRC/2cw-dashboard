@@ -390,6 +390,9 @@ async function uploadSheet(file){
     wb.SheetNames.forEach(name => {
       tabs[name] = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, raw: false, defval: '' });
     });
+    if(!LIVE_MENU){ // only for its Mixed Light list (mixedLightKeys)
+      try{ const r = await fetch('/data/menu.json?t=' + Date.now()); if(r.ok){ LIVE_MENU = await r.json(); applyPromos(LIVE_MENU); } }catch(e){}
+    }
     const uploaded = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD, same as menu.json
     const menu = buildMenuFromSheet(tabs, uploaded);
     menu.fileName = file.name;
@@ -674,7 +677,23 @@ function sheetCardTitle(brand, category, format, kind, size){
   return `${format} ${category}`.trim();
 }
 
+// Mendo Mixed Light is named like indoor in KSS ("Mendo Flower 3.5g Hybrid
+// Cherryz"), so the spreadsheet line can't say which it is. The live menu
+// lists every Mixed Light product as "size|strain" (mixedLight, from
+// kss_transform.py); its Mixed Light cards' strains count too.
+function strainKey(s){ return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, ''); }
+function mixedLightKeys(){
+  const keys = new Set((LIVE_MENU && LIVE_MENU.mixedLight) || []);
+  const mendo = LIVE_MENU && LIVE_MENU.brands.find(b => b.brand === 'Mendo');
+  for(const c of (mendo ? mendo.cards : [])){
+    if(!c.title.startsWith('Mixed Light Flower')) continue;
+    c.groups.forEach(g => g.strains.forEach(s => keys.add(c.size + '|' + strainKey(s.strain))));
+  }
+  return keys;
+}
+
 function buildMenuFromSheet(tabs, uploadedLabel){
+  const mixedLight = mixedLightKeys();
   // cards[cardKey] = {brand, title, size, unitPrice, casePrice, caseUnits, strains: {type|strain: {...}}}
   const cards = new Map();
   let matched = 0;
@@ -699,7 +718,8 @@ function buildMenuFromSheet(tabs, uploadedLabel){
         const unitPrice = +m[8].replace(/,/g, '');
         const casePrice = +m[9].replace(/,/g, '');
         const size = sheetSizeLabel(d.grams);
-        const title = sheetCardTitle(brand, category, m[3], d.kind, size);
+        let title = sheetCardTitle(brand, category, m[3], d.kind, size);
+        if(title === 'Indoor Flower' && mixedLight.has(size + '|' + strainKey(d.strain))) title = 'Mixed Light Flower';
         // collab packs like "Soma Rosa Farms x Nameless" have no strain after the type
         const strain = d.strain || title;
 

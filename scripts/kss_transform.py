@@ -836,11 +836,27 @@ def build_menu(product_catalog: dict, products_raw: list, inventory_raw: list,
     brand_order = ["Soma Rosa Farms", "Howie Roll", "Mendo"]
     out_brands.sort(key=lambda b: brand_order.index(b["brand"]) if b["brand"] in brand_order else 99)
 
+    # Mendo Mixed Light is named like indoor in KSS's storefront too, so the
+    # menu page's spreadsheet source can't tell them apart from the line text.
+    # It looks each Mendo flower up here by "size|strain" (strain lowercased,
+    # letters and digits only) — every Mixed Light product, stocked or not.
+    mixed_light = set()
+    for pid, cat in product_catalog.items():
+        if cat.get("brand") != "Mendo" or cat.get("category") != "Greenhouse Flower":
+            continue
+        size = _WEIGHT_LABELS.get(cat.get("weight_unit"), cat.get("weight_unit") or "")
+        p = products_by_id.get(pid, {})
+        for name in (p.get("StrainName"), cat.get("flavor")):
+            norm = re.sub(r"[^a-z0-9]", "", (name or "").lower())
+            if norm:
+                mixed_light.add(f"{size}|{norm}")
+
     return {
         "updated": today,
         "locations": {loc["key"]: {"label": loc["label"], "sublabel": loc["sublabel"]}
                        for loc in LOCATION_LABELS.values()},
         "brands": out_brands,
+        "mixedLight": sorted(mixed_light),
     }
 
 
