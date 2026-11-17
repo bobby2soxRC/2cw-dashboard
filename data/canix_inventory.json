@@ -96837,10 +96837,10 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-10-24T14:18:50.534Z"
+      "updated_at": "2026-11-17T15:48:50.436Z"
     },
     "facility_id": 4923,
-    "weight": 1072.0,
+    "weight": 920.0,
     "original_weight": 1072.0,
     "weight_unit": "Pounds",
     "implied_weight": "",
@@ -96855,7 +96855,19 @@
     "cannabis_cogs": null,
     "non_cannabis_inventory_cogs": null,
     "source_packages": [],
-    "destination_packages": [],
+    "destination_packages": [
+      {
+        "id": 35563242,
+        "tag": "1A406030005E0B2000010668",
+        "weight": 152.0,
+        "weight_unit": "Pounds",
+        "item": {
+          "id": 3500124,
+          "name": "Fresh Frozen - LA Kush Cake",
+          "sku": null
+        }
+      }
+    ],
     "source_harvests": "AGP0027-LAKC-T1-10-23-2026",
     "source_facility": "CCL26-0000027",
     "source_facility_name": "ALL GOOD PROPERTIES, INC.",
@@ -96874,7 +96886,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-10-24T14:18:50.717Z",
+    "updated_at": "2026-11-17T15:48:50.411Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -147498,7 +147510,7 @@
       }
     },
     "lab_test_url": null,
-    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/e9d3eba6/Package5727_COAfromMetrc_e9d3eba6.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261117%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261117T040623Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=f9846e9fc0b2ab0fba097b6ee0c787ba0fe6b9b889cccbc8562db9f4bff30e55",
+    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/e9d3eba6/Package5727_COAfromMetrc_e9d3eba6.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261117%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261117T162253Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=3eb23fd0193624df9b668d59089cd5299fe70fe4e6f99aa7459f422fc374e337",
     "lab_test_info": {
       "testing_facility_name": "SC LABORATORIES CALIFORNIA, LLC",
       "testing_facility_license": "C8-0000013-LIC"
@@ -164590,6 +164602,113 @@
     "_facility_license_number": "C11-0001652-LIC"
   },
   {
+    "id": 35538686,
+    "tag": "1A406030005E0B2000010642",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3523382,
+      "name": "Flower - Hashburger",
+      "sku": null,
+      "is_active": false,
+      "facility_id": 4929,
+      "type": {
+        "id": 119331,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 650638,
+        "name": "Hash Burger"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": "CCL22-0001284",
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-11-17T02:39:47.830Z"
+    },
+    "facility_id": 4929,
+    "weight": 26.14,
+    "original_weight": 26.14,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-11-16T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": "2026-11-17T02:37:04.000Z",
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": null,
+        "tag": "1A406030005E0B2000010456",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "AGP0167-HB-T1-10-13-2026",
+    "source_facility": "CCL22-0001284",
+    "source_facility_name": "2 Cw Productions, Inc.",
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-11-17T02:39:47.936Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
+  },
+  {
     "id": 35542343,
     "tag": "1A4060300047D39000015748",
     "is_active": true,
@@ -167024,692 +167143,21 @@
     "_facility_license_number": "C11-0001652-LIC"
   },
   {
-    "id": 35553031,
-    "tag": "1A406030005E0B2000010536",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Progress",
-    "item": {
-      "id": 3531815,
-      "name": "Dry Flower - Glad Candi",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119074,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 742903,
-        "name": "Glad Candi"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-17T00:51:43.461Z"
-    },
-    "facility_id": 4923,
-    "weight": 19.0,
-    "original_weight": 19.0,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-16T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 35062862,
-        "tag": "1A406030008640E000000025",
-        "weight": 19.0,
-        "weight_unit": "Pounds",
-        "pulled_weight": 19.0,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3505392,
-          "name": "Glass Candy - Fresh Plant",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "2026 GP 2CW",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-17T00:51:43.435Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35553030,
-    "tag": "1A406030005E0B2000010535",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Progress",
-    "item": {
-      "id": 3531789,
-      "name": "Dry Flower - Honey Papaya",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119074,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 649233,
-        "name": "Honey Papaya"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-17T00:51:42.995Z"
-    },
-    "facility_id": 4923,
-    "weight": 508.0,
-    "original_weight": 508.0,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-16T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 34987093,
-        "tag": "1A406030008640E000000023",
-        "weight": 508.0,
-        "weight_unit": "Pounds",
-        "pulled_weight": 508.0,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3492590,
-          "name": "Honey Papaya Fresh Plants",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "2026 FS 2CW",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-17T00:51:42.965Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35553028,
-    "tag": "1A406030005E0B2000010534",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Progress",
-    "item": {
-      "id": 3531818,
-      "name": "Dry Flower - Papaya Smoothie",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119074,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 742904,
-        "name": "Papaya Smoothie"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-17T00:51:42.618Z"
-    },
-    "facility_id": 4923,
-    "weight": 313.0,
-    "original_weight": 313.0,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-16T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 35062568,
-        "tag": "1A40603000769A9000000122",
-        "weight": 313.0,
-        "weight_unit": "Pounds",
-        "pulled_weight": 313.0,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3500250,
-          "name": "Papaya Smothie FP",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "2026 FS 2CW",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-17T00:51:42.582Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35553027,
-    "tag": "1A406030005E0B2000010378",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Progress",
-    "item": {
-      "id": 3531816,
-      "name": "Dry Flower - Honey Banana",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119074,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 648689,
-        "name": "Honey Banana"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-17T00:51:42.273Z"
-    },
-    "facility_id": 4923,
-    "weight": 945.5,
-    "original_weight": 945.5,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-16T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 35062604,
-        "tag": "1A40603000769A9000000121",
-        "weight": 945.5,
-        "weight_unit": "Pounds",
-        "pulled_weight": 945.5,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3500249,
-          "name": "Honey Banana Fresh Plants",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "2026 FS 2CW",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-17T00:51:42.248Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35552695,
-    "tag": "1A406030005E0B2000010513",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Progress",
-    "item": {
-      "id": 3531790,
-      "name": "Dry Flower - Grape Papaya",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119074,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 740022,
-        "name": "Grape Papaya"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-16T23:57:40.732Z"
-    },
-    "facility_id": 4923,
-    "weight": 862.5,
-    "original_weight": 1285.79,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-16T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010234",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030008640E000000024",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "2026 FS Honey Papaya, 2026 GP 2CW",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-16T23:57:40.712Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35552693,
-    "tag": "1A406030005E0B2000010512",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Progress",
-    "item": {
-      "id": 3531789,
-      "name": "Dry Flower - Honey Papaya",
-      "sku": null,
-      "is_active": true,
-      "facility_id": 4923,
-      "type": {
-        "id": 119074,
-        "name": "Flower",
-        "quantity_type": "WeightBased",
-        "product_category": "Buds"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 649233,
-        "name": "Honey Papaya"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": null,
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-17T00:51:42.995Z"
-    },
-    "facility_id": 4923,
-    "weight": 774.5,
-    "original_weight": 774.5,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-16T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 35416877,
-        "tag": "1A406030005E0B2000010233",
-        "weight": 774.5,
-        "weight_unit": "Pounds",
-        "pulled_weight": 774.5,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3509575,
-          "name": "Unbucked Flower - Grape Papaya",
-          "sku": null
-        }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "2026 FS Honey Papaya",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-16T23:54:33.770Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35551501,
-    "tag": "1A4060300047D39000015751",
+    "id": 35545439,
+    "tag": "1A4060300047D39000015746",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "Available To Sell",
     "item": {
-      "id": 3353129,
-      "name": "Soma Rosa | Flower Ice Cream Cake 1/8 th",
+      "id": 3363054,
+      "name": "Soma Rosa | Flower Lavender Jack 1/2 oz",
       "sku": null,
       "is_active": true,
       "facility_id": 4929,
       "type": {
-        "id": 119333,
-        "name": "Flower (packaged eighth - each)",
+        "id": 119335,
+        "name": "Flower (packaged half ounce - each)",
         "quantity_type": "CountBased",
         "product_category": "Buds"
       },
@@ -167722,11 +167170,11 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 649892,
-        "name": "Ice Cream Cake"
+        "id": 710739,
+        "name": "Lavender Jack"
       },
       "weight_unit": "Each",
-      "unit_weight": 3.5,
+      "unit_weight": 14.0,
       "unit_weight_unit": "Grams",
       "case_quantity": null,
       "case_quantity_unit": null,
@@ -167738,17 +167186,17 @@
       "dutchie_product": null,
       "bills_of_materials": [],
       "phenotype": null,
-      "total_for_sale": 485.0,
+      "total_for_sale": 190.0,
       "ordered": 0.0,
       "backordered": 0.0,
-      "unordered": 485.0,
-      "updated_at": "2026-11-16T22:28:17.683Z"
+      "unordered": 190.0,
+      "updated_at": "2026-11-16T19:48:29.833Z"
     },
     "facility_id": 4929,
-    "weight": 85.0,
-    "original_weight": 85.0,
+    "weight": 190.0,
+    "original_weight": 190.0,
     "weight_unit": "Each",
-    "implied_weight": "297.5",
+    "implied_weight": "2660.0",
     "packaged_date": "2026-11-16T00:00:00.000Z",
     "expiration_date": null,
     "location": null,
@@ -167761,21 +167209,21 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": 35547288,
-        "tag": "1A4060300047D39000015749",
-        "weight": 85.0,
+        "id": 35458577,
+        "tag": "1A4060300047D39000015706",
+        "weight": 190.0,
         "weight_unit": "Each",
-        "pulled_weight": 85.0,
+        "pulled_weight": 190.0,
         "pulled_weight_unit": "Each",
         "item": {
-          "id": 3353129,
-          "name": "Soma Rosa | Flower Ice Cream Cake 1/8 th",
+          "id": 3526272,
+          "name": "2CW | Flower Lavender Jack",
           "sku": null
         }
       }
     ],
     "destination_packages": [],
-    "source_harvests": "AGP0027-GW-T1-10-12-2026",
+    "source_harvests": "AGP0027-LJ-T5-10-12-2026",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -167793,7 +167241,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-11-16T22:28:17.770Z",
+    "updated_at": "2026-11-16T22:06:36.614Z",
     "test_results": {
       "thc": [
         {
@@ -167841,7 +167289,7 @@
       ],
       "thca": [
         {
-          "value": 304.42,
+          "value": 229.147,
           "measure": "mg/g"
         },
         {
@@ -167849,7 +167297,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 30.442,
+          "value": 22.9147,
           "measure": "percent"
         },
         {
@@ -167863,7 +167311,7 @@
       ],
       "cbda": [
         {
-          "value": 0.993,
+          "value": 0.882,
           "measure": "mg/g"
         },
         {
@@ -167871,7 +167319,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 0.0993,
+          "value": 0.0882,
           "measure": "percent"
         },
         {
@@ -168011,7 +167459,7 @@
       ],
       "delta_9_thc": [
         {
-          "value": 6.513,
+          "value": 7.645999999999999,
           "measure": "mg/g"
         },
         {
@@ -168019,7 +167467,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 0.6513,
+          "value": 0.7646,
           "measure": "percent"
         },
         {
@@ -168097,7 +167545,7 @@
       ],
       "total_cbd": [
         {
-          "value": 0.871,
+          "value": 0.774,
           "measure": "mg/g"
         },
         {
@@ -168105,7 +167553,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 0.0871,
+          "value": 0.0774,
           "measure": "percent"
         },
         {
@@ -168129,7 +167577,7 @@
       ],
       "total_delta_9_thc": [
         {
-          "value": 273.489,
+          "value": 208.608,
           "measure": "mg/g"
         },
         {
@@ -168137,7 +167585,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 27.3489,
+          "value": 20.8608,
           "measure": "percent"
         },
         {
@@ -168147,7 +167595,7 @@
       ],
       "total_thc": [
         {
-          "value": 273.48934,
+          "value": 208.607919,
           "measure": "mg/g"
         },
         {
@@ -168155,7 +167603,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 27.348934,
+          "value": 20.8607919,
           "measure": "percent"
         },
         {
@@ -168173,7 +167621,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 31.1926,
+          "value": 23.7675,
           "measure": "percent"
         },
         {
@@ -168222,8 +167670,8 @@
         }
       ],
       "test_status": "TestPassed",
-      "tested_package_tag": "1A4060300047D39000015631",
-      "test_date": "2026-11-06",
+      "tested_package_tag": "1A4060300047D39000015729",
+      "test_date": "2026-11-16",
       "terpenes": {
         "measure": "percent",
         "top_three": {},
@@ -168231,7 +167679,7 @@
       }
     },
     "lab_test_url": null,
-    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/953100ea/Package5631_COAfromMetrc_953100ea.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261117%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261117T040623Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=a82103099fe96bbdf9941c983e968a1336ff3fb7d5ce547fdbda875e3985654a",
+    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/f79b2401/Package5729_COAfromMetrc_f79b2401.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261117%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261117T040623Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=63a8c513b5ad1f8e254621884bd4108c0da5a2f729b8a2782ecf3d81e25a3513",
     "lab_test_info": {
       "testing_facility_name": "SC LABORATORIES CALIFORNIA, LLC",
       "testing_facility_license": "C8-0000013-LIC"
@@ -168241,60 +167689,60 @@
     "_facility_license_number": "C11-0001652-LIC"
   },
   {
-    "id": 35548020,
-    "tag": "1A406030005E0B2000010667",
+    "id": 35546444,
+    "tag": "1A4060300047D39000015747",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
-    "status": "In Transit",
+    "status": "Available To Sell",
     "item": {
-      "id": 3526484,
-      "name": "Fresh Frozen - AF",
+      "id": 3363055,
+      "name": "Soma Rosa | Flower Lavender Jack 1/8 th",
       "sku": null,
-      "is_active": false,
-      "facility_id": 4923,
+      "is_active": true,
+      "facility_id": 4929,
       "type": {
-        "id": 119081,
-        "name": "Fresh Cannabis Plant",
-        "quantity_type": "WeightBased",
-        "product_category": "Plants"
+        "id": 119333,
+        "name": "Flower (packaged eighth - each)",
+        "quantity_type": "CountBased",
+        "product_category": "Buds"
       },
       "sub_type": null,
       "brand": null,
       "product_id": null,
       "product_brand": null,
-      "quantity_type": "WeightBased",
+      "quantity_type": "CountBased",
       "current_standard_cost": null,
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 742212,
-        "name": "AF"
+        "id": 710739,
+        "name": "Lavender Jack"
       },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
+      "weight_unit": "Each",
+      "unit_weight": 3.5,
+      "unit_weight_unit": "Grams",
       "case_quantity": null,
       "case_quantity_unit": null,
       "description": "",
       "allergens": "",
-      "transfer_source_license": "CCL25-0000167",
+      "transfer_source_license": null,
       "sage_item": null,
       "leaflink_item": null,
       "dutchie_product": null,
       "bills_of_materials": [],
       "phenotype": null,
-      "total_for_sale": 0.0,
+      "total_for_sale": 401.0,
       "ordered": 0.0,
       "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-16T20:52:00.091Z"
+      "unordered": 401.0,
+      "updated_at": "2026-11-16T20:12:28.629Z"
     },
-    "facility_id": 4923,
-    "weight": 88.0,
-    "original_weight": 88.0,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
+    "facility_id": 4929,
+    "weight": 401.0,
+    "original_weight": 401.0,
+    "weight_unit": "Each",
+    "implied_weight": "1403.5",
     "packaged_date": "2026-11-16T00:00:00.000Z",
     "expiration_date": null,
     "location": null,
@@ -168302,26 +167750,26 @@
     "production_batch": null,
     "lot_id": null,
     "cultivation_tax": null,
-    "available_for_sale": false,
+    "available_for_sale": true,
     "cannabis_cogs": null,
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": 35460780,
-        "tag": "1A406030007975D000000516",
-        "weight": 88.0,
-        "weight_unit": "Pounds",
-        "pulled_weight": 88.0,
-        "pulled_weight_unit": "Pounds",
+        "id": 35458577,
+        "tag": "1A4060300047D39000015706",
+        "weight": 401.0,
+        "weight_unit": "Each",
+        "pulled_weight": 401.0,
+        "pulled_weight_unit": "Each",
         "item": {
-          "id": 3526484,
-          "name": "Fresh Frozen - AF",
+          "id": 3526272,
+          "name": "2CW | Flower Lavender Jack",
           "sku": null
         }
       }
     ],
     "destination_packages": [],
-    "source_harvests": "AGP0167-AF-T1-11-11-2026",
+    "source_harvests": "AGP0027-LJ-T5-10-12-2026",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -168339,1349 +167787,452 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-11-16T20:55:10.180Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35548019,
-    "tag": "1A406030005E0B2000010666",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3526483,
-      "name": "Fresh Frozen - Wedding Cake x CA",
-      "sku": null,
-      "is_active": false,
-      "facility_id": 4923,
-      "type": {
-        "id": 119081,
-        "name": "Fresh Cannabis Plant",
-        "quantity_type": "WeightBased",
-        "product_category": "Plants"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 742211,
-        "name": "Wedding Cake x CA"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": "CCL25-0000167",
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-16T20:51:59.270Z"
-    },
-    "facility_id": 4923,
-    "weight": 152.0,
-    "original_weight": 152.0,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-16T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 35460779,
-        "tag": "1A406030007975D000000515",
-        "weight": 152.0,
-        "weight_unit": "Pounds",
-        "pulled_weight": 152.0,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3526483,
-          "name": "Fresh Frozen - Wedding Cake x CA",
-          "sku": null
+    "updated_at": "2026-11-16T22:06:36.885Z",
+    "test_results": {
+      "thc": [
+        {
+          "value": null,
+          "measure": "mg"
+        },
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
         }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "AGP0167-WC-T1-11-11-2026",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-16T20:55:09.805Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35548018,
-    "tag": "1A406030005E0B2000010665",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3526482,
-      "name": "Fresh Frozen - Honey Buns x HB",
-      "sku": null,
-      "is_active": false,
-      "facility_id": 4923,
-      "type": {
-        "id": 119081,
-        "name": "Fresh Cannabis Plant",
-        "quantity_type": "WeightBased",
-        "product_category": "Plants"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 742210,
-        "name": "Honey Buns x HB"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": "CCL25-0000167",
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-16T20:51:59.223Z"
-    },
-    "facility_id": 4923,
-    "weight": 152.0,
-    "original_weight": 152.0,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-16T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 35460778,
-        "tag": "1A406030007975D000000514",
-        "weight": 152.0,
-        "weight_unit": "Pounds",
-        "pulled_weight": 152.0,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3526482,
-          "name": "Fresh Frozen - Honey Buns x HB",
-          "sku": null
+      ],
+      "cbd": [
+        {
+          "value": null,
+          "measure": "mg"
+        },
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 0.0,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
         }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "AGP0167-HB-T1-11-11-2026",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-16T20:55:09.426Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35548017,
-    "tag": "1A406030005E0B2000010664",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3503895,
-      "name": "Fresh Frozen - Moroccan Peaches",
-      "sku": null,
-      "is_active": false,
-      "facility_id": 4923,
-      "type": {
-        "id": 119081,
-        "name": "Fresh Cannabis Plant",
-        "quantity_type": "WeightBased",
-        "product_category": "Plants"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 649588,
-        "name": "Moroccan Peaches"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": "CCL26-0000027",
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-16T20:51:59.400Z"
-    },
-    "facility_id": 4923,
-    "weight": 152.0,
-    "original_weight": 152.0,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-16T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 35028573,
-        "tag": "1A4060300089ABD000000172",
-        "weight": 152.0,
-        "weight_unit": "Pounds",
-        "pulled_weight": 152.0,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3503895,
-          "name": "Fresh Frozen - Moroccan Peaches",
-          "sku": null
+      ],
+      "thca": [
+        {
+          "value": 229.147,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 22.9147,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
         }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "AGP0027-MP-T8-10-26-2026",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-16T20:55:09.068Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35548016,
-    "tag": "1A406030005E0B2000010663",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3503894,
-      "name": "Fresh Frozen - Motor Breath 15",
-      "sku": null,
-      "is_active": false,
-      "facility_id": 4923,
-      "type": {
-        "id": 119081,
-        "name": "Fresh Cannabis Plant",
-        "quantity_type": "WeightBased",
-        "product_category": "Plants"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 739616,
-        "name": "Motor Breath 15"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": "CCL26-0000027",
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-16T20:51:59.370Z"
-    },
-    "facility_id": 4923,
-    "weight": 152.0,
-    "original_weight": 152.0,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-16T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 35028572,
-        "tag": "1A4060300089ABD000000171",
-        "weight": 152.0,
-        "weight_unit": "Pounds",
-        "pulled_weight": 152.0,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3503894,
-          "name": "Fresh Frozen - Motor Breath 15",
-          "sku": null
+      ],
+      "cbda": [
+        {
+          "value": 0.882,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 0.0882,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
         }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "AGP0027-MB-T8-10-26-2026",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-16T20:55:08.569Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35548015,
-    "tag": "1A406030005E0B2000010662",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3500602,
-      "name": "Fresh Frozen - AJ Sour Diesel",
-      "sku": null,
-      "is_active": false,
-      "facility_id": 4923,
-      "type": {
-        "id": 119081,
-        "name": "Fresh Cannabis Plant",
-        "quantity_type": "WeightBased",
-        "product_category": "Plants"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 738963,
-        "name": "AJ Sour Diesel"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": "CCL26-0000027",
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-16T20:51:59.445Z"
-    },
-    "facility_id": 4923,
-    "weight": 152.0,
-    "original_weight": 152.0,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-16T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 34989547,
-        "tag": "1A4060300089ABD000000158",
-        "weight": 152.0,
-        "weight_unit": "Pounds",
-        "pulled_weight": 152.0,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3500602,
-          "name": "Fresh Frozen - AJ Sour Diesel",
-          "sku": null
+      ],
+      "cbn": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
         }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "AGP0027-SD-T1-10-25-2026",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-16T20:55:07.897Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35548014,
-    "tag": "1A406030005E0B2000010661",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3505881,
-      "name": "Wet Flower - La Kush Cake",
-      "sku": null,
-      "is_active": false,
-      "facility_id": 4923,
-      "type": {
-        "id": 119081,
-        "name": "Fresh Cannabis Plant",
-        "quantity_type": "WeightBased",
-        "product_category": "Plants"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 649571,
-        "name": "LA Kush Cake"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": "CCL26-0000027",
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-16T20:51:59.319Z"
-    },
-    "facility_id": 4923,
-    "weight": 152.0,
-    "original_weight": 152.0,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-16T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 35086100,
-        "tag": "1A4060300089ABD000000152",
-        "weight": 152.0,
-        "weight_unit": "Pounds",
-        "pulled_weight": 152.0,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3505881,
-          "name": "Wet Flower - La Kush Cake",
-          "sku": null
+      ],
+      "cbg": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
         }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "AGP0027-KC-T4-10-28-2026",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-16T20:55:07.110Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35548013,
-    "tag": "1A406030005E0B2000010660",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3500123,
-      "name": "Fresh Frozen - The Big Easy #9",
-      "sku": null,
-      "is_active": false,
-      "facility_id": 4923,
-      "type": {
-        "id": 119081,
-        "name": "Fresh Cannabis Plant",
-        "quantity_type": "WeightBased",
-        "product_category": "Plants"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 709103,
-        "name": "The BIG Easy #9"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": "CCL26-0000027",
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-16T20:51:59.656Z"
-    },
-    "facility_id": 4923,
-    "weight": 152.0,
-    "original_weight": 152.0,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-16T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 34984508,
-        "tag": "1A4060300089ABD000000156",
-        "weight": 152.0,
-        "weight_unit": "Pounds",
-        "pulled_weight": 152.0,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3500123,
-          "name": "Fresh Frozen - The Big Easy #9",
-          "sku": null
+      ],
+      "cbc": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
         }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "AGP0027-TBE-T1-10-23-2026",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-16T20:55:05.097Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35548012,
-    "tag": "1A406030005E0B2000010659",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3492565,
-      "name": "Fresh Frozen - Toad Venom",
-      "sku": null,
-      "is_active": false,
-      "facility_id": 4923,
-      "type": {
-        "id": 119081,
-        "name": "Fresh Cannabis Plant",
-        "quantity_type": "WeightBased",
-        "product_category": "Plants"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 737332,
-        "name": "Toad Venom"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": "CCL25-0000167",
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-16T20:51:59.509Z"
-    },
-    "facility_id": 4923,
-    "weight": 152.0,
-    "original_weight": 152.0,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-16T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 34975628,
-        "tag": "1A406030005E0B2000010039",
-        "weight": 152.0,
-        "weight_unit": "Pounds",
-        "pulled_weight": 152.0,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3492565,
-          "name": "Fresh Frozen - Toad Venom",
-          "sku": null
+      ],
+      "cbca": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
         }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "AGP0167-TV-T1-10-16-2026, AGP0167-TV-T1-10-19-2026, AGP0167-TV-T1-10-20-2026",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-16T20:55:04.191Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35548011,
-    "tag": "1A406030005E0B2000010658",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3496643,
-      "name": "Fresh Frozen - BH",
-      "sku": null,
-      "is_active": false,
-      "facility_id": 4923,
-      "type": {
-        "id": 119081,
-        "name": "Fresh Cannabis Plant",
-        "quantity_type": "WeightBased",
-        "product_category": "Plants"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 649061,
-        "name": "BH"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": "CCL26-0000027",
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-16T20:51:59.692Z"
-    },
-    "facility_id": 4923,
-    "weight": 152.0,
-    "original_weight": 152.0,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-16T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 34908773,
-        "tag": "1A4060300089ABD000000146",
-        "weight": 152.0,
-        "weight_unit": "Pounds",
-        "pulled_weight": 152.0,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3496643,
-          "name": "Fresh Frozen - BH",
-          "sku": null
+      ],
+      "cbga": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
         }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "AGP0027-BH-T1-10-21-2026",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-16T20:55:03.202Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35548010,
-    "tag": "1A406030005E0B2000010657",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3496642,
-      "name": "Fresh Frozen - Canal St Runtz",
-      "sku": null,
-      "is_active": false,
-      "facility_id": 4923,
-      "type": {
-        "id": 119081,
-        "name": "Fresh Cannabis Plant",
-        "quantity_type": "WeightBased",
-        "product_category": "Plants"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 709098,
-        "name": "Canal St. Runtz"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": "CCL26-0000027",
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-16T20:51:59.750Z"
-    },
-    "facility_id": 4923,
-    "weight": 152.0,
-    "original_weight": 152.0,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-16T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 34908772,
-        "tag": "1A4060300089ABD000000147",
-        "weight": 152.0,
-        "weight_unit": "Pounds",
-        "pulled_weight": 152.0,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3496642,
-          "name": "Fresh Frozen - Canal St Runtz",
-          "sku": null
+      ],
+      "delta_8_thc": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
         }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "AGP0027-CSR-T1-10-21-2026",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-16T20:55:02.640Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35548008,
-    "tag": "1A406030005E0B2000010656",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3486222,
-      "name": "Fresh Frozen - BBJ",
-      "sku": null,
-      "is_active": false,
-      "facility_id": 4923,
-      "type": {
-        "id": 119081,
-        "name": "Fresh Cannabis Plant",
-        "quantity_type": "WeightBased",
-        "product_category": "Plants"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 735907,
-        "name": "Garlic & Bananas"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": "CCL21-0002182",
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-16T20:51:59.785Z"
-    },
-    "facility_id": 4923,
-    "weight": 152.0,
-    "original_weight": 152.0,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-16T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 34639840,
-        "tag": "1A4060300049C18000000035",
-        "weight": 152.0,
-        "weight_unit": "Pounds",
-        "pulled_weight": 152.0,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3486222,
-          "name": "Fresh Frozen - BBJ",
-          "sku": null
+      ],
+      "delta_8_thca": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
         }
-      }
-    ],
-    "destination_packages": [],
-    "source_harvests": "WLD2182-BBJ-T1-10-10-26",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
-    },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-16T20:55:02.144Z",
-    "test_results": null,
-    "lab_test_url": null,
-    "coa_url": null,
-    "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
-    },
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 35548006,
-    "tag": "1A406030005E0B2000010655",
-    "is_active": true,
-    "is_testing_package": false,
-    "is_trade_sample": false,
-    "status": "In Transit",
-    "item": {
-      "id": 3481187,
-      "name": "Fresh Frozen - Tropicana Cherry",
-      "sku": null,
-      "is_active": false,
-      "facility_id": 4923,
-      "type": {
-        "id": 119081,
-        "name": "Fresh Cannabis Plant",
-        "quantity_type": "WeightBased",
-        "product_category": "Plants"
-      },
-      "sub_type": null,
-      "brand": null,
-      "product_id": null,
-      "product_brand": null,
-      "quantity_type": "WeightBased",
-      "current_standard_cost": null,
-      "notes": null,
-      "accounting_inventory_type": null,
-      "strain": {
-        "id": 666568,
-        "name": "Tropicana Cherry"
-      },
-      "weight_unit": "Pounds",
-      "unit_weight": null,
-      "unit_weight_unit": null,
-      "case_quantity": null,
-      "case_quantity_unit": null,
-      "description": "",
-      "allergens": "",
-      "transfer_source_license": "CCL25-0000167",
-      "sage_item": null,
-      "leaflink_item": null,
-      "dutchie_product": null,
-      "bills_of_materials": [],
-      "phenotype": null,
-      "total_for_sale": 0.0,
-      "ordered": 0.0,
-      "backordered": 0.0,
-      "unordered": 0.0,
-      "updated_at": "2026-11-16T20:51:59.825Z"
-    },
-    "facility_id": 4923,
-    "weight": 152.0,
-    "original_weight": 152.0,
-    "weight_unit": "Pounds",
-    "implied_weight": "",
-    "packaged_date": "2026-11-16T00:00:00.000Z",
-    "expiration_date": null,
-    "location": null,
-    "received_date": null,
-    "production_batch": null,
-    "lot_id": null,
-    "cultivation_tax": null,
-    "available_for_sale": false,
-    "cannabis_cogs": null,
-    "non_cannabis_inventory_cogs": null,
-    "source_packages": [
-      {
-        "id": 34551265,
-        "tag": "1A406030007975D000000436",
-        "weight": 152.0,
-        "weight_unit": "Pounds",
-        "pulled_weight": 152.0,
-        "pulled_weight_unit": "Pounds",
-        "item": {
-          "id": 3481187,
-          "name": "Fresh Frozen - Tropicana Cherry",
-          "sku": null
+      ],
+      "delta_9_thc": [
+        {
+          "value": 7.645999999999999,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 0.7646,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
         }
+      ],
+      "delta_9_thca": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "delta_10_thc": [
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "thcv": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "thcva": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "total_cbd": [
+        {
+          "value": 0.774,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 0.0774,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "total_cbg": [
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        }
+      ],
+      "total_delta_9_thc": [
+        {
+          "value": 208.608,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 20.8608,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "total_thc": [
+        {
+          "value": 208.607919,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 20.8607919,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "total_cannabinoid": [
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": 23.7675,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        },
+        {
+          "value": null,
+          "measure": "mg"
+        }
+      ],
+      "cbdv": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "cbdva": [
+        {
+          "value": 0.0,
+          "measure": "mg/g"
+        },
+        {
+          "value": null,
+          "measure": "mg/dose"
+        },
+        {
+          "value": null,
+          "measure": "percent"
+        },
+        {
+          "value": null,
+          "measure": "mg/serving"
+        }
+      ],
+      "test_status": "TestPassed",
+      "tested_package_tag": "1A4060300047D39000015729",
+      "test_date": "2026-11-16",
+      "terpenes": {
+        "measure": "percent",
+        "top_three": {},
+        "values": {}
       }
-    ],
-    "destination_packages": [],
-    "source_harvests": "TC-T1-10-06-26",
-    "source_facility": null,
-    "source_facility_name": null,
-    "notes": null,
-    "brand": null,
-    "cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": 0.0
     },
-    "original_cogs": {
-      "labor": null,
-      "non_cannabis": null,
-      "cannabis": null,
-      "total": null
-    },
-    "harvests": [],
-    "updated_at": "2026-11-16T20:55:01.348Z",
-    "test_results": null,
     "lab_test_url": null,
-    "coa_url": null,
+    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/f79b2401/Package5729_COAfromMetrc_f79b2401.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261117%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261117T040623Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=63a8c513b5ad1f8e254621884bd4108c0da5a2f729b8a2782ecf3d81e25a3513",
     "lab_test_info": {
-      "testing_facility_name": null,
-      "testing_facility_license": null
+      "testing_facility_name": "SC LABORATORIES CALIFORNIA, LLC",
+      "testing_facility_license": "C8-0000013-LIC"
     },
     "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
   },
   {
     "id": 35547288,
@@ -170242,15 +168793,15 @@
     "_facility_license_number": "C11-0001652-LIC"
   },
   {
-    "id": 35546444,
-    "tag": "1A4060300047D39000015747",
+    "id": 35551501,
+    "tag": "1A4060300047D39000015751",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "Available To Sell",
     "item": {
-      "id": 3363055,
-      "name": "Soma Rosa | Flower Lavender Jack 1/8 th",
+      "id": 3353129,
+      "name": "Soma Rosa | Flower Ice Cream Cake 1/8 th",
       "sku": null,
       "is_active": true,
       "facility_id": 4929,
@@ -170269,8 +168820,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 710739,
-        "name": "Lavender Jack"
+        "id": 649892,
+        "name": "Ice Cream Cake"
       },
       "weight_unit": "Each",
       "unit_weight": 3.5,
@@ -170285,17 +168836,17 @@
       "dutchie_product": null,
       "bills_of_materials": [],
       "phenotype": null,
-      "total_for_sale": 401.0,
+      "total_for_sale": 485.0,
       "ordered": 0.0,
       "backordered": 0.0,
-      "unordered": 401.0,
-      "updated_at": "2026-11-16T20:12:28.629Z"
+      "unordered": 485.0,
+      "updated_at": "2026-11-16T22:28:17.683Z"
     },
     "facility_id": 4929,
-    "weight": 401.0,
-    "original_weight": 401.0,
+    "weight": 85.0,
+    "original_weight": 85.0,
     "weight_unit": "Each",
-    "implied_weight": "1403.5",
+    "implied_weight": "297.5",
     "packaged_date": "2026-11-16T00:00:00.000Z",
     "expiration_date": null,
     "location": null,
@@ -170308,21 +168859,21 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": 35458577,
-        "tag": "1A4060300047D39000015706",
-        "weight": 401.0,
+        "id": 35547288,
+        "tag": "1A4060300047D39000015749",
+        "weight": 85.0,
         "weight_unit": "Each",
-        "pulled_weight": 401.0,
+        "pulled_weight": 85.0,
         "pulled_weight_unit": "Each",
         "item": {
-          "id": 3526272,
-          "name": "2CW | Flower Lavender Jack",
+          "id": 3353129,
+          "name": "Soma Rosa | Flower Ice Cream Cake 1/8 th",
           "sku": null
         }
       }
     ],
     "destination_packages": [],
-    "source_harvests": "AGP0027-LJ-T5-10-12-2026",
+    "source_harvests": "AGP0027-GW-T1-10-12-2026",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -170340,7 +168891,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-11-16T22:06:36.885Z",
+    "updated_at": "2026-11-16T22:28:17.770Z",
     "test_results": {
       "thc": [
         {
@@ -170388,7 +168939,7 @@
       ],
       "thca": [
         {
-          "value": 229.147,
+          "value": 304.42,
           "measure": "mg/g"
         },
         {
@@ -170396,7 +168947,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 22.9147,
+          "value": 30.442,
           "measure": "percent"
         },
         {
@@ -170410,7 +168961,7 @@
       ],
       "cbda": [
         {
-          "value": 0.882,
+          "value": 0.993,
           "measure": "mg/g"
         },
         {
@@ -170418,7 +168969,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 0.0882,
+          "value": 0.0993,
           "measure": "percent"
         },
         {
@@ -170558,7 +169109,7 @@
       ],
       "delta_9_thc": [
         {
-          "value": 7.645999999999999,
+          "value": 6.513,
           "measure": "mg/g"
         },
         {
@@ -170566,7 +169117,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 0.7646,
+          "value": 0.6513,
           "measure": "percent"
         },
         {
@@ -170644,7 +169195,7 @@
       ],
       "total_cbd": [
         {
-          "value": 0.774,
+          "value": 0.871,
           "measure": "mg/g"
         },
         {
@@ -170652,7 +169203,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 0.0774,
+          "value": 0.0871,
           "measure": "percent"
         },
         {
@@ -170676,7 +169227,7 @@
       ],
       "total_delta_9_thc": [
         {
-          "value": 208.608,
+          "value": 273.489,
           "measure": "mg/g"
         },
         {
@@ -170684,7 +169235,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 20.8608,
+          "value": 27.3489,
           "measure": "percent"
         },
         {
@@ -170694,7 +169245,7 @@
       ],
       "total_thc": [
         {
-          "value": 208.607919,
+          "value": 273.48934,
           "measure": "mg/g"
         },
         {
@@ -170702,7 +169253,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 20.8607919,
+          "value": 27.348934,
           "measure": "percent"
         },
         {
@@ -170720,7 +169271,7 @@
           "measure": "mg/dose"
         },
         {
-          "value": 23.7675,
+          "value": 31.1926,
           "measure": "percent"
         },
         {
@@ -170769,8 +169320,8 @@
         }
       ],
       "test_status": "TestPassed",
-      "tested_package_tag": "1A4060300047D39000015729",
-      "test_date": "2026-11-16",
+      "tested_package_tag": "1A4060300047D39000015631",
+      "test_date": "2026-11-06",
       "terpenes": {
         "measure": "percent",
         "top_three": {},
@@ -170778,7 +169329,7 @@
       }
     },
     "lab_test_url": null,
-    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/f79b2401/Package5729_COAfromMetrc_f79b2401.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261117%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261117T040623Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=63a8c513b5ad1f8e254621884bd4108c0da5a2f729b8a2782ecf3d81e25a3513",
+    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/953100ea/Package5631_COAfromMetrc_953100ea.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261117%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261117T040623Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=a82103099fe96bbdf9941c983e968a1336ff3fb7d5ce547fdbda875e3985654a",
     "lab_test_info": {
       "testing_facility_name": "SC LABORATORIES CALIFORNIA, LLC",
       "testing_facility_license": "C8-0000013-LIC"
@@ -170788,39 +169339,39 @@
     "_facility_license_number": "C11-0001652-LIC"
   },
   {
-    "id": 35545439,
-    "tag": "1A4060300047D39000015746",
+    "id": 35552693,
+    "tag": "1A406030005E0B2000010512",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
-    "status": "Available To Sell",
+    "status": "In Progress",
     "item": {
-      "id": 3363054,
-      "name": "Soma Rosa | Flower Lavender Jack 1/2 oz",
+      "id": 3531789,
+      "name": "Dry Flower - Honey Papaya",
       "sku": null,
       "is_active": true,
-      "facility_id": 4929,
+      "facility_id": 4923,
       "type": {
-        "id": 119335,
-        "name": "Flower (packaged half ounce - each)",
-        "quantity_type": "CountBased",
+        "id": 119074,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
         "product_category": "Buds"
       },
       "sub_type": null,
       "brand": null,
       "product_id": null,
       "product_brand": null,
-      "quantity_type": "CountBased",
+      "quantity_type": "WeightBased",
       "current_standard_cost": null,
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 710739,
-        "name": "Lavender Jack"
+        "id": 649233,
+        "name": "Honey Papaya"
       },
-      "weight_unit": "Each",
-      "unit_weight": 14.0,
-      "unit_weight_unit": "Grams",
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
       "case_quantity": null,
       "case_quantity_unit": null,
       "description": "",
@@ -170831,17 +169382,17 @@
       "dutchie_product": null,
       "bills_of_materials": [],
       "phenotype": null,
-      "total_for_sale": 190.0,
+      "total_for_sale": 0.0,
       "ordered": 0.0,
       "backordered": 0.0,
-      "unordered": 190.0,
-      "updated_at": "2026-11-16T19:48:29.833Z"
+      "unordered": 0.0,
+      "updated_at": "2026-11-17T00:51:42.995Z"
     },
-    "facility_id": 4929,
-    "weight": 190.0,
-    "original_weight": 190.0,
-    "weight_unit": "Each",
-    "implied_weight": "2660.0",
+    "facility_id": 4923,
+    "weight": 774.5,
+    "original_weight": 774.5,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
     "packaged_date": "2026-11-16T00:00:00.000Z",
     "expiration_date": null,
     "location": null,
@@ -170849,26 +169400,26 @@
     "production_batch": null,
     "lot_id": null,
     "cultivation_tax": null,
-    "available_for_sale": true,
+    "available_for_sale": false,
     "cannabis_cogs": null,
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": 35458577,
-        "tag": "1A4060300047D39000015706",
-        "weight": 190.0,
-        "weight_unit": "Each",
-        "pulled_weight": 190.0,
-        "pulled_weight_unit": "Each",
+        "id": 35416877,
+        "tag": "1A406030005E0B2000010233",
+        "weight": 774.5,
+        "weight_unit": "Pounds",
+        "pulled_weight": 774.5,
+        "pulled_weight_unit": "Pounds",
         "item": {
-          "id": 3526272,
-          "name": "2CW | Flower Lavender Jack",
+          "id": 3509575,
+          "name": "Unbucked Flower - Grape Papaya",
           "sku": null
         }
       }
     ],
     "destination_packages": [],
-    "source_harvests": "AGP0027-LJ-T5-10-12-2026",
+    "source_harvests": "2026 FS Honey Papaya",
     "source_facility": null,
     "source_facility_name": null,
     "notes": null,
@@ -170886,468 +169437,33 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-11-16T22:06:36.614Z",
-    "test_results": {
-      "thc": [
-        {
-          "value": null,
-          "measure": "mg"
-        },
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "cbd": [
-        {
-          "value": null,
-          "measure": "mg"
-        },
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 0.0,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "thca": [
-        {
-          "value": 229.147,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 22.9147,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "cbda": [
-        {
-          "value": 0.882,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 0.0882,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "cbn": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "cbg": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "cbc": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        }
-      ],
-      "cbca": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        }
-      ],
-      "cbga": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "delta_8_thc": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "delta_8_thca": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "delta_9_thc": [
-        {
-          "value": 7.645999999999999,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 0.7646,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "delta_9_thca": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "delta_10_thc": [
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "thcv": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "thcva": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "total_cbd": [
-        {
-          "value": 0.774,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 0.0774,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "total_cbg": [
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        }
-      ],
-      "total_delta_9_thc": [
-        {
-          "value": 208.608,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 20.8608,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "total_thc": [
-        {
-          "value": 208.607919,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 20.8607919,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "total_cannabinoid": [
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": 23.7675,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        },
-        {
-          "value": null,
-          "measure": "mg"
-        }
-      ],
-      "cbdv": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "cbdva": [
-        {
-          "value": 0.0,
-          "measure": "mg/g"
-        },
-        {
-          "value": null,
-          "measure": "mg/dose"
-        },
-        {
-          "value": null,
-          "measure": "percent"
-        },
-        {
-          "value": null,
-          "measure": "mg/serving"
-        }
-      ],
-      "test_status": "TestPassed",
-      "tested_package_tag": "1A4060300047D39000015729",
-      "test_date": "2026-11-16",
-      "terpenes": {
-        "measure": "percent",
-        "top_three": {},
-        "values": {}
-      }
-    },
+    "updated_at": "2026-11-16T23:54:33.770Z",
+    "test_results": null,
     "lab_test_url": null,
-    "coa_url": "https://canix-uploads-prod.s3.amazonaws.com/public/coa/4929/f79b2401/Package5729_COAfromMetrc_f79b2401.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA25IPVBO2FCW7RBJE%2F20261117%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261117T040623Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=63a8c513b5ad1f8e254621884bd4108c0da5a2f729b8a2782ecf3d81e25a3513",
+    "coa_url": null,
     "lab_test_info": {
-      "testing_facility_name": "SC LABORATORIES CALIFORNIA, LLC",
-      "testing_facility_license": "C8-0000013-LIC"
+      "testing_facility_name": null,
+      "testing_facility_license": null
     },
     "_license_key_label": "All Facilities",
-    "_facility_name": "Airway: C11-0001652-LIC",
-    "_facility_license_number": "C11-0001652-LIC"
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
   },
   {
-    "id": 35538686,
-    "tag": "1A406030005E0B2000010642",
+    "id": 35552695,
+    "tag": "1A406030005E0B2000010513",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "In Progress",
     "item": {
-      "id": 3523382,
-      "name": "Flower - Hashburger",
+      "id": 3531790,
+      "name": "Dry Flower - Grape Papaya",
       "sku": null,
-      "is_active": false,
-      "facility_id": 4929,
+      "is_active": true,
+      "facility_id": 4923,
       "type": {
-        "id": 119331,
+        "id": 119074,
         "name": "Flower",
         "quantity_type": "WeightBased",
         "product_category": "Buds"
@@ -171361,8 +169477,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 650638,
-        "name": "Hash Burger"
+        "id": 740022,
+        "name": "Grape Papaya"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -171371,7 +169487,7 @@
       "case_quantity_unit": null,
       "description": "",
       "allergens": "",
-      "transfer_source_license": "CCL22-0001284",
+      "transfer_source_license": null,
       "sage_item": null,
       "leaflink_item": null,
       "dutchie_product": null,
@@ -171381,17 +169497,17 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-11-17T02:39:47.830Z"
+      "updated_at": "2026-11-16T23:57:40.732Z"
     },
-    "facility_id": 4929,
-    "weight": 26.14,
-    "original_weight": 26.14,
+    "facility_id": 4923,
+    "weight": 862.5,
+    "original_weight": 1285.79,
     "weight_unit": "Pounds",
     "implied_weight": "",
     "packaged_date": "2026-11-16T00:00:00.000Z",
     "expiration_date": null,
     "location": null,
-    "received_date": "2026-11-17T02:37:04.000Z",
+    "received_date": null,
     "production_batch": null,
     "lot_id": null,
     "cultivation_tax": null,
@@ -171401,7 +169517,16 @@
     "source_packages": [
       {
         "id": null,
-        "tag": "1A406030005E0B2000010456",
+        "tag": "1A406030005E0B2000010234",
+        "weight": null,
+        "weight_unit": null,
+        "pulled_weight": null,
+        "pulled_weight_unit": null,
+        "item": null
+      },
+      {
+        "id": null,
+        "tag": "1A406030008640E000000024",
         "weight": null,
         "weight_unit": null,
         "pulled_weight": null,
@@ -171410,9 +169535,9 @@
       }
     ],
     "destination_packages": [],
-    "source_harvests": "AGP0167-HB-T1-10-13-2026",
-    "source_facility": "CCL22-0001284",
-    "source_facility_name": "2 Cw Productions, Inc.",
+    "source_harvests": "2026 FS Honey Papaya, 2026 GP 2CW",
+    "source_facility": null,
+    "source_facility_name": null,
     "notes": null,
     "brand": null,
     "cogs": {
@@ -171428,7 +169553,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-11-17T02:39:47.936Z",
+    "updated_at": "2026-11-16T23:57:40.712Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -171437,21 +169562,576 @@
       "testing_facility_license": null
     },
     "_license_key_label": "All Facilities",
-    "_facility_name": "Airway: C11-0001652-LIC",
-    "_facility_license_number": "C11-0001652-LIC"
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
   },
   {
-    "id": 35538683,
-    "tag": "1A406030005E0B2000010641",
+    "id": 35553027,
+    "tag": "1A406030005E0B2000010378",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "In Progress",
     "item": {
-      "id": 3531025,
-      "name": "Flower - #13 Grape Lobster",
+      "id": 3531816,
+      "name": "Dry Flower - Honey Banana",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4923,
+      "type": {
+        "id": 119074,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 648689,
+        "name": "Honey Banana"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-11-17T00:51:42.273Z"
+    },
+    "facility_id": 4923,
+    "weight": 945.5,
+    "original_weight": 945.5,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-11-16T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": 35062604,
+        "tag": "1A40603000769A9000000121",
+        "weight": 945.5,
+        "weight_unit": "Pounds",
+        "pulled_weight": 945.5,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3500249,
+          "name": "Honey Banana Fresh Plants",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "2026 FS 2CW",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-11-17T00:51:42.248Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 35553028,
+    "tag": "1A406030005E0B2000010534",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3531818,
+      "name": "Dry Flower - Papaya Smoothie",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4923,
+      "type": {
+        "id": 119074,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 742904,
+        "name": "Papaya Smoothie"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-11-17T00:51:42.618Z"
+    },
+    "facility_id": 4923,
+    "weight": 313.0,
+    "original_weight": 313.0,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-11-16T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": 35062568,
+        "tag": "1A40603000769A9000000122",
+        "weight": 313.0,
+        "weight_unit": "Pounds",
+        "pulled_weight": 313.0,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3500250,
+          "name": "Papaya Smothie FP",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "2026 FS 2CW",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-11-17T00:51:42.582Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 35553030,
+    "tag": "1A406030005E0B2000010535",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3531789,
+      "name": "Dry Flower - Honey Papaya",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4923,
+      "type": {
+        "id": 119074,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 649233,
+        "name": "Honey Papaya"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-11-17T00:51:42.995Z"
+    },
+    "facility_id": 4923,
+    "weight": 508.0,
+    "original_weight": 508.0,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-11-16T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": 34987093,
+        "tag": "1A406030008640E000000023",
+        "weight": 508.0,
+        "weight_unit": "Pounds",
+        "pulled_weight": 508.0,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3492590,
+          "name": "Honey Papaya Fresh Plants",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "2026 FS 2CW",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-11-17T00:51:42.965Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 35553031,
+    "tag": "1A406030005E0B2000010536",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3531815,
+      "name": "Dry Flower - Glad Candi",
+      "sku": null,
+      "is_active": true,
+      "facility_id": 4923,
+      "type": {
+        "id": 119074,
+        "name": "Flower",
+        "quantity_type": "WeightBased",
+        "product_category": "Buds"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 742903,
+        "name": "Glad Candi"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": null,
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-11-17T00:51:43.461Z"
+    },
+    "facility_id": 4923,
+    "weight": 19.0,
+    "original_weight": 19.0,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-11-16T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": 35062862,
+        "tag": "1A406030008640E000000025",
+        "weight": 19.0,
+        "weight_unit": "Pounds",
+        "pulled_weight": 19.0,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3505392,
+          "name": "Glass Candy - Fresh Plant",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "2026 GP 2CW",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-11-17T00:51:43.435Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 35563242,
+    "tag": "1A406030005E0B2000010668",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3500124,
+      "name": "Fresh Frozen - LA Kush Cake",
       "sku": null,
       "is_active": false,
+      "facility_id": 4923,
+      "type": {
+        "id": 119081,
+        "name": "Fresh Cannabis Plant",
+        "quantity_type": "WeightBased",
+        "product_category": "Plants"
+      },
+      "sub_type": null,
+      "brand": null,
+      "product_id": null,
+      "product_brand": null,
+      "quantity_type": "WeightBased",
+      "current_standard_cost": null,
+      "notes": null,
+      "accounting_inventory_type": null,
+      "strain": {
+        "id": 649571,
+        "name": "LA Kush Cake"
+      },
+      "weight_unit": "Pounds",
+      "unit_weight": null,
+      "unit_weight_unit": null,
+      "case_quantity": null,
+      "case_quantity_unit": null,
+      "description": "",
+      "allergens": "",
+      "transfer_source_license": "CCL26-0000027",
+      "sage_item": null,
+      "leaflink_item": null,
+      "dutchie_product": null,
+      "bills_of_materials": [],
+      "phenotype": null,
+      "total_for_sale": 0.0,
+      "ordered": 0.0,
+      "backordered": 0.0,
+      "unordered": 0.0,
+      "updated_at": "2026-11-17T15:48:50.436Z"
+    },
+    "facility_id": 4923,
+    "weight": 152.0,
+    "original_weight": 152.0,
+    "weight_unit": "Pounds",
+    "implied_weight": "",
+    "packaged_date": "2026-11-17T00:00:00.000Z",
+    "expiration_date": null,
+    "location": null,
+    "received_date": null,
+    "production_batch": null,
+    "lot_id": null,
+    "cultivation_tax": null,
+    "available_for_sale": false,
+    "cannabis_cogs": null,
+    "non_cannabis_inventory_cogs": null,
+    "source_packages": [
+      {
+        "id": 34984509,
+        "tag": "1A4060300089ABD000000157",
+        "weight": 152.0,
+        "weight_unit": "Pounds",
+        "pulled_weight": 152.0,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3500124,
+          "name": "Fresh Frozen - LA Kush Cake",
+          "sku": null
+        }
+      }
+    ],
+    "destination_packages": [],
+    "source_harvests": "AGP0027-LAKC-T1-10-23-2026",
+    "source_facility": null,
+    "source_facility_name": null,
+    "notes": null,
+    "brand": null,
+    "cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": 0.0
+    },
+    "original_cogs": {
+      "labor": null,
+      "non_cannabis": null,
+      "cannabis": null,
+      "total": null
+    },
+    "harvests": [],
+    "updated_at": "2026-11-17T15:48:50.027Z",
+    "test_results": null,
+    "lab_test_url": null,
+    "coa_url": null,
+    "lab_test_info": {
+      "testing_facility_name": null,
+      "testing_facility_license": null
+    },
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 35557393,
+    "tag": "1A4060300047D39000015763",
+    "is_active": true,
+    "is_testing_package": false,
+    "is_trade_sample": false,
+    "status": "In Progress",
+    "item": {
+      "id": 3531946,
+      "name": "2CW Flower Grape Lobster",
+      "sku": null,
+      "is_active": true,
       "facility_id": 4929,
       "type": {
         "id": 119331,
@@ -171468,8 +170148,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 742906,
-        "name": "#13 Grape Lobster"
+        "id": 742907,
+        "name": "Grape Lobster"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -171478,7 +170158,7 @@
       "case_quantity_unit": null,
       "description": "",
       "allergens": "",
-      "transfer_source_license": "CCL22-0001284",
+      "transfer_source_license": null,
       "sage_item": null,
       "leaflink_item": null,
       "dutchie_product": null,
@@ -171488,18 +170168,18 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-11-17T02:39:47.508Z"
+      "updated_at": "2026-11-17T13:48:43.317Z"
     },
     "facility_id": 4929,
     "weight": 30.72,
     "original_weight": 30.72,
     "weight_unit": "Pounds",
     "implied_weight": "",
-    "packaged_date": "2026-11-16T00:00:00.000Z",
+    "packaged_date": "2026-11-17T00:00:00.000Z",
     "expiration_date": null,
     "location": null,
-    "received_date": "2026-11-17T02:37:04.000Z",
-    "production_batch": null,
+    "received_date": null,
+    "production_batch": "23-1269-R2",
     "lot_id": null,
     "cultivation_tax": null,
     "available_for_sale": false,
@@ -171507,19 +170187,23 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": null,
-        "tag": "1A406030005E0B2000010050",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
+        "id": 35538683,
+        "tag": "1A406030005E0B2000010641",
+        "weight": 30.72,
+        "weight_unit": "Pounds",
+        "pulled_weight": 30.72,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3531025,
+          "name": "Flower - #13 Grape Lobster",
+          "sku": null
+        }
       }
     ],
     "destination_packages": [],
     "source_harvests": "#13 Grape Lobster (HVN) 10-03-26",
-    "source_facility": "CCL22-0001284",
-    "source_facility_name": "2 Cw Productions, Inc.",
+    "source_facility": null,
+    "source_facility_name": null,
     "notes": null,
     "brand": null,
     "cogs": {
@@ -171535,7 +170219,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-11-17T02:39:47.593Z",
+    "updated_at": "2026-11-17T13:48:43.353Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -171548,17 +170232,17 @@
     "_facility_license_number": "C11-0001652-LIC"
   },
   {
-    "id": 35538681,
-    "tag": "1A406030005E0B2000010640",
+    "id": 35557326,
+    "tag": "1A4060300047D39000015762",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "In Progress",
     "item": {
-      "id": 3531024,
-      "name": "Flower - GC",
+      "id": 3531928,
+      "name": "2CW Flower GC",
       "sku": null,
-      "is_active": false,
+      "is_active": true,
       "facility_id": 4929,
       "type": {
         "id": 119331,
@@ -171575,7 +170259,7 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 660857,
+        "id": 742909,
         "name": "GC"
       },
       "weight_unit": "Pounds",
@@ -171585,7 +170269,7 @@
       "case_quantity_unit": null,
       "description": "",
       "allergens": "",
-      "transfer_source_license": "CCL22-0001284",
+      "transfer_source_license": null,
       "sage_item": null,
       "leaflink_item": null,
       "dutchie_product": null,
@@ -171595,18 +170279,18 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-11-17T02:39:47.152Z"
+      "updated_at": "2026-11-17T13:45:51.823Z"
     },
     "facility_id": 4929,
     "weight": 33.86,
     "original_weight": 33.86,
     "weight_unit": "Pounds",
     "implied_weight": "",
-    "packaged_date": "2026-11-16T00:00:00.000Z",
+    "packaged_date": "2026-11-17T00:00:00.000Z",
     "expiration_date": null,
     "location": null,
-    "received_date": "2026-11-17T02:37:04.000Z",
-    "production_batch": null,
+    "received_date": null,
+    "production_batch": "23-1268-R2",
     "lot_id": null,
     "cultivation_tax": null,
     "available_for_sale": false,
@@ -171614,28 +170298,23 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": null,
-        "tag": "1A406030005E0B2000010238",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
-      },
-      {
-        "id": null,
-        "tag": "1A406030005E0B2000010430",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
+        "id": 35538681,
+        "tag": "1A406030005E0B2000010640",
+        "weight": 33.86,
+        "weight_unit": "Pounds",
+        "pulled_weight": 33.86,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3531024,
+          "name": "Flower - GC",
+          "sku": null
+        }
       }
     ],
     "destination_packages": [],
     "source_harvests": "WC2179-GC-T5-10-15-2026",
-    "source_facility": "CCL22-0001284",
-    "source_facility_name": "2 Cw Productions, Inc.",
+    "source_facility": null,
+    "source_facility_name": null,
     "notes": null,
     "brand": null,
     "cogs": {
@@ -171651,7 +170330,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-11-17T02:39:47.249Z",
+    "updated_at": "2026-11-17T13:45:51.912Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -171664,17 +170343,17 @@
     "_facility_license_number": "C11-0001652-LIC"
   },
   {
-    "id": 35538678,
-    "tag": "1A406030005E0B2000010639",
+    "id": 35557234,
+    "tag": "1A4060300047D39000015753",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "In Progress",
     "item": {
-      "id": 3531023,
-      "name": "Flower - BH",
+      "id": 3531925,
+      "name": "2CW Flower BH",
       "sku": null,
-      "is_active": false,
+      "is_active": true,
       "facility_id": 4929,
       "type": {
         "id": 119331,
@@ -171691,7 +170370,7 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 651116,
+        "id": 742914,
         "name": "BH"
       },
       "weight_unit": "Pounds",
@@ -171701,7 +170380,7 @@
       "case_quantity_unit": null,
       "description": "",
       "allergens": "",
-      "transfer_source_license": "CCL22-0001284",
+      "transfer_source_license": null,
       "sage_item": null,
       "leaflink_item": null,
       "dutchie_product": null,
@@ -171711,18 +170390,18 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-11-17T02:39:46.871Z"
+      "updated_at": "2026-11-17T13:42:51.680Z"
     },
     "facility_id": 4929,
     "weight": 39.79,
     "original_weight": 39.79,
     "weight_unit": "Pounds",
     "implied_weight": "",
-    "packaged_date": "2026-11-16T00:00:00.000Z",
+    "packaged_date": "2026-11-17T00:00:00.000Z",
     "expiration_date": null,
     "location": null,
-    "received_date": "2026-11-17T02:37:04.000Z",
-    "production_batch": null,
+    "received_date": null,
+    "production_batch": "23-1267-R2",
     "lot_id": null,
     "cultivation_tax": null,
     "available_for_sale": false,
@@ -171730,19 +170409,23 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": null,
-        "tag": "1A406030005E0B2000010365",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
+        "id": 35538678,
+        "tag": "1A406030005E0B2000010639",
+        "weight": 39.79,
+        "weight_unit": "Pounds",
+        "pulled_weight": 39.79,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3531023,
+          "name": "Flower - BH",
+          "sku": null
+        }
       }
     ],
     "destination_packages": [],
     "source_harvests": "AGP0027-BH-T14-10-19-2026",
-    "source_facility": "CCL22-0001284",
-    "source_facility_name": "2 Cw Productions, Inc.",
+    "source_facility": null,
+    "source_facility_name": null,
     "notes": null,
     "brand": null,
     "cogs": {
@@ -171758,7 +170441,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-11-17T02:39:46.966Z",
+    "updated_at": "2026-11-17T13:42:51.670Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -171771,17 +170454,17 @@
     "_facility_license_number": "C11-0001652-LIC"
   },
   {
-    "id": 35538676,
-    "tag": "1A406030005E0B2000010638",
+    "id": 35556880,
+    "tag": "1A4060300047D39000015754",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "In Progress",
     "item": {
-      "id": 3531022,
-      "name": "Flower - Zoap",
+      "id": 3531933,
+      "name": "2CW Flower | Zoap",
       "sku": null,
-      "is_active": false,
+      "is_active": true,
       "facility_id": 4929,
       "type": {
         "id": 119331,
@@ -171798,8 +170481,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 651033,
-        "name": "ZOAP"
+        "id": 718901,
+        "name": "Zoap"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -171808,7 +170491,7 @@
       "case_quantity_unit": null,
       "description": "",
       "allergens": "",
-      "transfer_source_license": "CCL22-0001284",
+      "transfer_source_license": null,
       "sage_item": null,
       "leaflink_item": null,
       "dutchie_product": null,
@@ -171818,18 +170501,18 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-11-17T02:39:46.566Z"
+      "updated_at": "2026-11-17T13:37:19.019Z"
     },
     "facility_id": 4929,
     "weight": 34.46,
     "original_weight": 34.46,
     "weight_unit": "Pounds",
     "implied_weight": "",
-    "packaged_date": "2026-11-16T00:00:00.000Z",
+    "packaged_date": "2026-11-17T00:00:00.000Z",
     "expiration_date": null,
     "location": null,
-    "received_date": "2026-11-17T02:37:04.000Z",
-    "production_batch": null,
+    "received_date": null,
+    "production_batch": "23-1266-R2",
     "lot_id": null,
     "cultivation_tax": null,
     "available_for_sale": false,
@@ -171837,19 +170520,23 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": null,
-        "tag": "1A406030005E0B2000010353",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
+        "id": 35538676,
+        "tag": "1A406030005E0B2000010638",
+        "weight": 34.46,
+        "weight_unit": "Pounds",
+        "pulled_weight": 34.46,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3531022,
+          "name": "Flower - Zoap",
+          "sku": null
+        }
       }
     ],
     "destination_packages": [],
     "source_harvests": "AGP0027-ZP-T7-10-14-26",
-    "source_facility": "CCL22-0001284",
-    "source_facility_name": "2 Cw Productions, Inc.",
+    "source_facility": null,
+    "source_facility_name": null,
     "notes": null,
     "brand": null,
     "cogs": {
@@ -171865,7 +170552,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-11-17T02:39:46.670Z",
+    "updated_at": "2026-11-17T13:37:19.024Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
@@ -171878,17 +170565,17 @@
     "_facility_license_number": "C11-0001652-LIC"
   },
   {
-    "id": 35538674,
-    "tag": "1A406030005E0B2000010637",
+    "id": 35556680,
+    "tag": "1A4060300047D39000015755",
     "is_active": true,
     "is_testing_package": false,
     "is_trade_sample": false,
     "status": "In Progress",
     "item": {
-      "id": 3531021,
-      "name": "Flower - UK Cheese",
+      "id": 3531922,
+      "name": "2CW UK Cheese",
       "sku": null,
-      "is_active": false,
+      "is_active": true,
       "facility_id": 4929,
       "type": {
         "id": 119331,
@@ -171905,8 +170592,8 @@
       "notes": null,
       "accounting_inventory_type": null,
       "strain": {
-        "id": 742905,
-        "name": "UK Cheese"
+        "id": 742911,
+        "name": "Uk Cheese"
       },
       "weight_unit": "Pounds",
       "unit_weight": null,
@@ -171915,7 +170602,7 @@
       "case_quantity_unit": null,
       "description": "",
       "allergens": "",
-      "transfer_source_license": "CCL22-0001284",
+      "transfer_source_license": null,
       "sage_item": null,
       "leaflink_item": null,
       "dutchie_product": null,
@@ -171925,18 +170612,18 @@
       "ordered": 0.0,
       "backordered": 0.0,
       "unordered": 0.0,
-      "updated_at": "2026-11-17T02:39:45.860Z"
+      "updated_at": "2026-11-17T13:31:12.661Z"
     },
     "facility_id": 4929,
     "weight": 44.39,
     "original_weight": 44.39,
     "weight_unit": "Pounds",
     "implied_weight": "",
-    "packaged_date": "2026-11-16T00:00:00.000Z",
+    "packaged_date": "2026-11-17T00:00:00.000Z",
     "expiration_date": null,
     "location": null,
-    "received_date": "2026-11-17T02:37:04.000Z",
-    "production_batch": null,
+    "received_date": null,
+    "production_batch": "23-1265-R2",
     "lot_id": null,
     "cultivation_tax": null,
     "available_for_sale": false,
@@ -171944,19 +170631,23 @@
     "non_cannabis_inventory_cogs": null,
     "source_packages": [
       {
-        "id": null,
-        "tag": "1A406030005E0B2000010432",
-        "weight": null,
-        "weight_unit": null,
-        "pulled_weight": null,
-        "pulled_weight_unit": null,
-        "item": null
+        "id": 35538674,
+        "tag": "1A406030005E0B2000010637",
+        "weight": 44.39,
+        "weight_unit": "Pounds",
+        "pulled_weight": 44.39,
+        "pulled_weight_unit": "Pounds",
+        "item": {
+          "id": 3531021,
+          "name": "Flower - UK Cheese",
+          "sku": null
+        }
       }
     ],
     "destination_packages": [],
     "source_harvests": "AGP0027-UK-T9-10-17-2026",
-    "source_facility": "CCL22-0001284",
-    "source_facility_name": "2 Cw Productions, Inc.",
+    "source_facility": null,
+    "source_facility_name": null,
     "notes": null,
     "brand": null,
     "cogs": {
@@ -171972,7 +170663,7 @@
       "total": null
     },
     "harvests": [],
-    "updated_at": "2026-11-17T02:39:46.035Z",
+    "updated_at": "2026-11-17T13:31:12.723Z",
     "test_results": null,
     "lab_test_url": null,
     "coa_url": null,
