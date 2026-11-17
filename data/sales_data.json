@@ -1,81 +1,77 @@
 {
-  "ref_date": "2026-11-16",
+  "ref_date": "2026-11-17",
   "current_month": "Nov 2026",
-  "days_elapsed": 16,
-  "days_remaining": 14,
+  "days_elapsed": 17,
+  "days_remaining": 13,
   "days_in_month": 30,
   "mtd": {
-    "total": 204010.05,
+    "total": 239406.94,
     "brands": {
       "": {
-        "rev": 0.0,
-        "units": 0
+        "rev": 0.03,
+        "units": 3
       },
       "Som": {
-        "rev": 159149.06,
-        "units": 11404
+        "rev": 186101.58,
+        "units": 14382
       },
       "How": {
-        "rev": 39999.65,
-        "units": 5501
+        "rev": 45697.22,
+        "units": 6570
       },
       "Men": {
-        "rev": 4861.34,
-        "units": 442
+        "rev": 7608.11,
+        "units": 683
       }
     },
     "bskus": {
       "SRF010105": {
-        "rev": 79464.16,
-        "units": 1824
+        "rev": 89208.16,
+        "units": 2080
       },
       "SRF010104": {
-        "rev": 33914.04,
-        "units": 1324
-      },
-      "SRF010102": {
-        "rev": 20795.83,
-        "units": 3189
+        "rev": 39848.04,
+        "units": 1574
       },
       "HWR010202": {
-        "rev": 16403.64,
-        "units": 3684
+        "rev": 21245.1,
+        "units": 4718
       },
       "HWR010204": {
-        "rev": 22514.21,
-        "units": 1525
+        "rev": 23850.23,
+        "units": 1599
       },
       "MDO050102": {
-        "rev": 384.81,
-        "units": 105
+        "rev": 2087.47,
+        "units": 259
+      },
+      "SRF010102": {
+        "rev": 27542.36,
+        "units": 4314
       },
       "HWR030401": {
-        "rev": 1081.8,
-        "units": 292
+        "rev": 601.89,
+        "units": 253
       },
       "MDO040601": {
-        "rev": 1200.18,
-        "units": 98
+        "rev": 1950.27,
+        "units": 157
       },
       "SRF020701": {
-        "rev": 8122.61,
-        "units": 4321
+        "rev": 10558.6,
+        "units": 5580
       },
       "SRF021004": {
-        "rev": 16852.41,
-        "units": 745
+        "rev": 18944.41,
+        "units": 833
       },
       "MDO021107": {
-        "rev": 2700.3,
-        "units": 210
-      },
-      "MDO050101": {
-        "rev": 0.05,
-        "units": 5
+        "rev": 2850.37,
+        "units": 227
       },
       "MDO050104": {
-        "rev": 576.0,
-        "units": 24
+        "rev": 720.0,
+        "units": 40
       },
       "SRF010101": {
         "rev": 0.01,
@@ -87,8 +83,8 @@
       }
     }
   },
-  "daily_run_rate": 12750.63,
-  "projected_eom": 382518.9,
+  "daily_run_rate": 14082.76,
+  "projected_eom": 422482.8,
   "monthly": [
     {
       "month": "Nov 2025",
@@ -101,39 +97,51 @@
           "rev": 71825.26,
           "units": 8036
         },
-        "Men": {
-          "rev": 16546.49,
-          "units": 1217
-        },
         "": {
           "rev": 8830.27,
           "units": 147
+        },
+        "Men": {
+          "rev": 16546.49,
+          "units": 1217
         }
       },
       "bskus": {
-        "SRF010104": {
-          "rev": 37534.11,
-          "units": 1571
-        },
         "SRF010105": {
           "rev": 111008.01,
           "units": 2553
-        },
-        "SRF010102": {
-          "rev": 24879.29,
-          "units": 3825
-        },
-        "HWR010202": {
-          "rev": 23688.23,
-          "units": 5047
         },
         "HWR010204": {
           "rev": 36832.07,
           "units": 2007
         },
-        "MDO050101": {
-          "rev": 0.6,
-          "units": 60
+        "SRF010102": {
+          "rev": 24879.29,
+          "units": 3825
+        },
+        "HWR030401": {
+          "rev": 3784.4,
+          "units": 456
+        },
+        "HWR010202": {
+          "rev": 23688.23,
+          "units": 5047
+        },
+        "SRF010104": {
+          "rev": 37534.11,
+          "units": 1571
+        },
+        "SRF020701": {
+          "rev": 8023.69,
+          "units": 4481
+        },
+        "SRF030301": {
+          "rev": 7784.43,
+          "units": 531
+        },
+        "MDO050102": {
+          "rev": 9504.42,
+          "units": 570
         },
         "MDO021107": {
           "rev": 2240.56,
@@ -143,25 +151,13 @@
           "rev": 4800.91,
           "units": 391
         },
-        "MDO050102": {
-          "rev": 9504.42,
-          "units": 570
-        },
-        "HWR030401": {
-          "rev": 3784.4,
-          "units": 456
-        },
-        "SRF030301": {
-          "rev": 7784.43,
-          "units": 531
-        },
-        "SRF020701": {
-          "rev": 8023.69,
-          "units": 4481
-        },
         "HWR040601": {
           "rev": 7520.56,
           "units": 526
+        },
+        "MDO050101": {
+          "rev": 0.6,
+          "units": 60
         },
         "SRF010101": {
           "rev": 0.54,
@@ -169,29 +165,41 @@
         }
       },
       "subcats": {
-        "SRF Flower 14g": {
-          "rev": 37534.11,
-          "units": 1571
-        },
         "SRF Flower Oz": {
           "rev": 111008.01,
           "units": 2553
-        },
-        "SRF Flower 8th": {
-          "rev": 24879.29,
-          "units": 3825
-        },
-        "HWR Smalls 8th": {
-          "rev": 23688.23,
-          "units": 5047
         },
         "HWR Smalls 14g": {
           "rev": 36832.07,
           "units": 2007
         },
-        "MDO Indoor Flower 1g": {
-          "rev": 0.6,
-          "units": 60
+        "SRF Flower 8th": {
+          "rev": 24879.29,
+          "units": 3825
+        },
+        "HWR Live Resin Jar": {
+          "rev": 3784.4,
+          "units": 456
+        },
+        "HWR Smalls 8th": {
+          "rev": 23688.23,
+          "units": 5047
+        },
+        "SRF Flower 14g": {
+          "rev": 37534.11,
+          "units": 1571
+        },
+        "SRF Preroll 1g": {
+          "rev": 8023.69,
+          "units": 4481
+        },
+        "SRF Live Rosin Jar": {
+          "rev": 7784.43,
+          "units": 531
+        },
+        "MDO Indoor Flower 8th": {
+          "rev": 9504.42,
+          "units": 570
         },
         "MDO Preroll 10pk": {
           "rev": 2240.56,
@@ -201,25 +209,13 @@
           "rev": 4800.91,
           "units": 391
         },
-        "MDO Indoor Flower 8th": {
-          "rev": 9504.42,
-          "units": 570
-        },
-        "HWR Live Resin Jar": {
-          "rev": 3784.4,
-          "units": 456
-        },
-        "SRF Live Rosin Jar": {
-          "rev": 7784.43,
-          "units": 531
-        },
-        "SRF Preroll 1g": {
-          "rev": 8023.69,
-          "units": 4481
-        },
         "HWR Live Resin AIO": {
           "rev": 7520.56,
           "units": 526
+        },
+        "MDO Indoor Flower 1g": {
+          "rev": 0.6,
+          "units": 60
         },
         "SRF Bigs 1g": {
           "rev": 0.54,
@@ -253,29 +249,25 @@
           "rev": 242209.87,
           "units": 5915
         },
-        "HWR010204": {
-          "rev": 93448.85,
-          "units": 5317
-        },
         "HWR010202": {
           "rev": 105574.56,
           "units": 23568
         },
-        "SRF010104": {
-          "rev": 78698.61,
-          "units": 3251
-        },
-        "SRF010102": {
-          "rev": 107468.25,
-          "units": 17598
+        "HWR010204": {
+          "rev": 93448.85,
+          "units": 5317
         },
         "HWR030401": {
           "rev": 5227.86,
           "units": 938
         },
-        "MDO040601": {
-          "rev": 5750.68,
-          "units": 438
+        "SRF010102": {
+          "rev": 107468.25,
+          "units": 17598
+        },
+        "SRF010104": {
+          "rev": 78698.61,
+          "units": 3251
         },
         "SRF020701": {
           "rev": 5860.84,
@@ -285,17 +277,21 @@
           "rev": 8320.82,
           "units": 562
         },
+        "MDO040601": {
+          "rev": 5750.68,
+          "units": 438
+        },
         "MDO021107": {
           "rev": 5831.05,
           "units": 475
         },
-        "SRF030301": {
-          "rev": 21498.95,
-          "units": 1679
-        },
         "MDO050101": {
           "rev": 5.48,
           "units": 548
+        },
+        "SRF030301": {
+          "rev": 21498.95,
+          "units": 1679
         },
         "HWR040601": {
           "rev": 27201.58,
@@ -307,29 +303,25 @@
           "rev": 242209.87,
           "units": 5915
         },
-        "HWR Smalls 14g": {
-          "rev": 93448.85,
-          "units": 5317
-        },
         "HWR Smalls 8th": {
           "rev": 105574.56,
           "units": 23568
         },
-        "SRF Flower 14g": {
-          "rev": 78698.61,
-          "units": 3251
-        },
-        "SRF Flower 8th": {
-          "rev": 107468.25,
-          "units": 17598
+        "HWR Smalls 14g": {
+          "rev": 93448.85,
+          "units": 5317
         },
         "HWR Live Resin Jar": {
           "rev": 5227.86,
           "units": 938
         },
-        "MDO Live Resin AIO": {
-          "rev": 5750.68,
-          "units": 438
+        "SRF Flower 8th": {
+          "rev": 107468.25,
+          "units": 17598
+        },
+        "SRF Flower 14g": {
+          "rev": 78698.61,
+          "units": 3251
         },
         "SRF Preroll 1g": {
           "rev": 5860.84,
@@ -339,17 +331,21 @@
           "rev": 8320.82,
           "units": 562
         },
+        "MDO Live Resin AIO": {
+          "rev": 5750.68,
+          "units": 438
+        },
         "MDO Preroll 10pk": {
           "rev": 5831.05,
           "units": 475
         },
-        "SRF Live Rosin Jar": {
-          "rev": 21498.95,
-          "units": 1679
-        },
         "MDO Indoor Flower 1g": {
           "rev": 5.48,
           "units": 548
+        },
+        "SRF Live Rosin Jar": {
+          "rev": 21498.95,
+          "units": 1679
         },
         "HWR Live Resin AIO": {
           "rev": 27201.58,
@@ -369,24 +365,16 @@
           "rev": 139843.35,
           "units": 18559
         },
-        "Men": {
-          "rev": 27435.25,
-          "units": 2151
-        },
         "": {
           "rev": 13379.36,
           "units": 67
+        },
+        "Men": {
+          "rev": 27435.25,
+          "units": 2151
         }
       },
       "bskus": {
-        "SRF010104": {
-          "rev": 50488.88,
-          "units": 2038
-        },
-        "SRF010102": {
-          "rev": 72717.75,
-          "units": 11711
-        },
         "SRF010105": {
           "rev": 149592.52,
           "units": 3451
@@ -395,13 +383,29 @@
           "rev": 62000.72,
           "units": 3440
         },
-        "HWR030401": {
-          "rev": 3252.69,
-          "units": 597
+        "SRF010102": {
+          "rev": 72717.75,
+          "units": 11711
+        },
+        "SRF010104": {
+          "rev": 50488.88,
+          "units": 2038
+        },
+        "HWR010202": {
+          "rev": 61268.46,
+          "units": 13534
         },
         "HWR040601": {
           "rev": 13321.48,
           "units": 988
+        },
+        "SRF020701": {
+          "rev": 16430.96,
+          "units": 8848
+        },
+        "HWR030401": {
+          "rev": 3252.69,
+          "units": 597
         },
         "SRF030301": {
           "rev": 6666.97,
@@ -415,17 +419,9 @@
           "rev": 8475.88,
           "units": 728
         },
-        "SRF020701": {
-          "rev": 16430.96,
-          "units": 8848
-        },
         "MDO050101": {
           "rev": 0.81,
           "units": 81
-        },
-        "HWR010202": {
-          "rev": 61268.46,
-          "units": 13534
         },
         "MDO040601": {
           "rev": 5504.63,
@@ -433,14 +429,6 @@
         }
       },
       "subcats": {
-        "SRF Flower 14g": {
-          "rev": 50488.88,
-          "units": 2038
-        },
-        "SRF Flower 8th": {
-          "rev": 72717.75,
-          "units": 11711
-        },
         "SRF Flower Oz": {
           "rev": 149592.52,
           "units": 3451
@@ -449,13 +437,29 @@
           "rev": 62000.72,
           "units": 3440
         },
-        "HWR Live Resin Jar": {
-          "rev": 3252.69,
-          "units": 597
+        "SRF Flower 8th": {
+          "rev": 72717.75,
+          "units": 11711
+        },
+        "SRF Flower 14g": {
+          "rev": 50488.88,
+          "units": 2038
+        },
+        "HWR Smalls 8th": {
+          "rev": 61268.46,
+          "units": 13534
         },
         "HWR Live Resin AIO": {
           "rev": 13321.48,
           "units": 988
+        },
+        "SRF Preroll 1g": {
+          "rev": 16430.96,
+          "units": 8848
+        },
+        "HWR Live Resin Jar": {
+          "rev": 3252.69,
+          "units": 597
         },
         "SRF Live Rosin Jar": {
           "rev": 6666.97,
@@ -469,17 +473,9 @@
           "rev": 8475.88,
           "units": 728
         },
-        "SRF Preroll 1g": {
-          "rev": 16430.96,
-          "units": 8848
-        },
         "MDO Indoor Flower 1g": {
           "rev": 0.81,
           "units": 81
-        },
-        "HWR Smalls 8th": {
-          "rev": 61268.46,
-          "units": 13534
         },
         "MDO Live Resin AIO": {
           "rev": 5504.63,
@@ -491,13 +487,13 @@
     {
       "month": "Feb 2026",
       "brands": {
-        "Som": {
-          "rev": 330510.86,
-          "units": 26188
-        },
         "How": {
           "rev": 114728.19,
           "units": 15623
+        },
+        "Som": {
+          "rev": 330510.86,
+          "units": 26188
         },
         "Men": {
           "rev": 27667.56,
@@ -509,25 +505,25 @@
         }
       },
       "bskus": {
-        "SRF010105": {
-          "rev": 146544.16,
-          "units": 3232
-        },
         "HWR010204": {
           "rev": 52384.38,
           "units": 2934
         },
-        "SRF010102": {
-          "rev": 49272.22,
-          "units": 7750
+        "SRF010105": {
+          "rev": 146544.16,
+          "units": 3232
+        },
+        "SRF010104": {
+          "rev": 102786.01,
+          "units": 3891
         },
         "HWR010202": {
           "rev": 48844.85,
           "units": 10537
         },
-        "SRF010104": {
-          "rev": 102786.01,
-          "units": 3891
+        "SRF010102": {
+          "rev": 49272.22,
+          "units": 7750
         },
         "SRF030301": {
           "rev": 12024.29,
@@ -536,10 +532,6 @@
         "MDO050101": {
           "rev": 392.79,
           "units": 135
-        },
-        "SRF020701": {
-          "rev": 19884.18,
-          "units": 10358
         },
         "HWR040601": {
           "rev": 7322.91,
@@ -553,35 +545,39 @@
           "rev": 4768.24,
           "units": 324
         },
-        "MDO050102": {
-          "rev": 11136.32,
-          "units": 688
+        "SRF020701": {
+          "rev": 19884.18,
+          "units": 10358
         },
         "HWR030401": {
           "rev": 6176.05,
           "units": 1381
+        },
+        "MDO050102": {
+          "rev": 11136.32,
+          "units": 688
         }
       },
       "subcats": {
-        "SRF Flower Oz": {
-          "rev": 146544.16,
-          "units": 3232
-        },
         "HWR Smalls 14g": {
           "rev": 52384.38,
           "units": 2934
         },
-        "SRF Flower 8th": {
-          "rev": 49272.22,
-          "units": 7750
+        "SRF Flower Oz": {
+          "rev": 146544.16,
+          "units": 3232
+        },
+        "SRF Flower 14g": {
+          "rev": 102786.01,
+          "units": 3891
         },
         "HWR Smalls 8th": {
           "rev": 48844.85,
           "units": 10537
         },
-        "SRF Flower 14g": {
-          "rev": 102786.01,
-          "units": 3891
+        "SRF Flower 8th": {
+          "rev": 49272.22,
+          "units": 7750
         },
         "SRF Live Rosin Jar": {
           "rev": 12024.29,
@@ -590,10 +586,6 @@
         "MDO Indoor Flower 1g": {
           "rev": 392.79,
           "units": 135
-        },
-        "SRF Preroll 1g": {
-          "rev": 19884.18,
-          "units": 10358
         },
         "HWR Live Resin AIO": {
           "rev": 7322.91,
@@ -607,13 +599,17 @@
           "rev": 4768.24,
           "units": 324
         },
-        "MDO Indoor Flower 8th": {
-          "rev": 11136.32,
-          "units": 688
+        "SRF Preroll 1g": {
+          "rev": 19884.18,
+          "units": 10358
         },
         "HWR Live Resin Jar": {
           "rev": 6176.05,
           "units": 1381
+        },
+        "MDO Indoor Flower 8th": {
+          "rev": 11136.32,
+          "units": 688
         }
       },
       "total": 485510.92
@@ -621,10 +617,6 @@
     {
       "month": "Mar 2026",
       "brands": {
-        "": {
-          "rev": 17336.15,
-          "units": 3
-        },
         "Som": {
           "rev": 324422.04,
           "units": 29267
@@ -633,23 +625,19 @@
           "rev": 86791.79,
           "units": 10287
         },
+        "": {
+          "rev": 17336.15,
+          "units": 3
+        },
         "Men": {
           "rev": 19720.12,
           "units": 1560
         }
       },
       "bskus": {
-        "SRF030301": {
-          "rev": 4056.62,
-          "units": 318
-        },
         "SRF010105": {
           "rev": 179496.48,
           "units": 4104
-        },
-        "SRF020701": {
-          "rev": 21526.4,
-          "units": 12460
         },
         "HWR010204": {
           "rev": 51128.59,
@@ -659,29 +647,33 @@
           "rev": 32109.58,
           "units": 6914
         },
-        "SRF010104": {
-          "rev": 39565.54,
-          "units": 1533
-        },
         "SRF021004": {
           "rev": 16794.75,
           "units": 963
         },
-        "MDO021107": {
-          "rev": 6652.15,
-          "units": 445
+        "SRF010104": {
+          "rev": 39565.54,
+          "units": 1533
         },
         "SRF010102": {
           "rev": 62979.25,
           "units": 9589
         },
-        "HWR040601": {
-          "rev": 2840.42,
-          "units": 222
+        "SRF020701": {
+          "rev": 21526.4,
+          "units": 12460
         },
-        "MDO050102": {
-          "rev": 7936.4,
-          "units": 536
+        "MDO021107": {
+          "rev": 6652.15,
+          "units": 445
+        },
+        "SRF030301": {
+          "rev": 4056.62,
+          "units": 318
+        },
+        "SRF010101": {
+          "rev": 3.0,
+          "units": 300
         },
         "MDO050101": {
           "rev": 681.13,
@@ -691,9 +683,13 @@
           "rev": 4450.44,
           "units": 334
         },
-        "SRF010101": {
-          "rev": 3.0,
-          "units": 300
+        "HWR040601": {
+          "rev": 2840.42,
+          "units": 222
+        },
+        "MDO050102": {
+          "rev": 7936.4,
+          "units": 536
         },
         "HWR030401": {
           "rev": 713.2,
@@ -701,17 +697,9 @@
         }
       },
       "subcats": {
-        "SRF Live Rosin Jar": {
-          "rev": 4056.62,
-          "units": 318
-        },
         "SRF Flower Oz": {
           "rev": 179496.48,
           "units": 4104
-        },
-        "SRF Preroll 1g": {
-          "rev": 21526.4,
-          "units": 12460
         },
         "HWR Smalls 14g": {
           "rev": 51128.59,
@@ -721,29 +709,33 @@
           "rev": 32109.58,
           "units": 6914
         },
-        "SRF Flower 14g": {
-          "rev": 39565.54,
-          "units": 1533
-        },
         "SRF Preroll 28pk": {
           "rev": 16794.75,
           "units": 963
         },
-        "MDO Preroll 10pk": {
-          "rev": 6652.15,
-          "units": 445
+        "SRF Flower 14g": {
+          "rev": 39565.54,
+          "units": 1533
         },
         "SRF Flower 8th": {
           "rev": 62979.25,
           "units": 9589
         },
-        "HWR Live Resin AIO": {
-          "rev": 2840.42,
-          "units": 222
+        "SRF Preroll 1g": {
+          "rev": 21526.4,
+          "units": 12460
         },
-        "MDO Indoor Flower 8th": {
-          "rev": 7936.4,
-          "units": 536
+        "MDO Preroll 10pk": {
+          "rev": 6652.15,
+          "units": 445
+        },
+        "SRF Live Rosin Jar": {
+          "rev": 4056.62,
+          "units": 318
+        },
+        "SRF Bigs 1g": {
+          "rev": 3.0,
+          "units": 300
         },
         "MDO Indoor Flower 1g": {
           "rev": 681.13,
@@ -753,9 +745,13 @@
           "rev": 4450.44,
           "units": 334
         },
-        "SRF Bigs 1g": {
-          "rev": 3.0,
-          "units": 300
+        "HWR Live Resin AIO": {
+          "rev": 2840.42,
+          "units": 222
+        },
+        "MDO Indoor Flower 8th": {
+          "rev": 7936.4,
+          "units": 536
         },
         "HWR Live Resin Jar": {
           "rev": 713.2,
@@ -767,13 +763,13 @@
     {
       "month": "Apr 2026",
       "brands": {
-        "How": {
-          "rev": 72513.38,
-          "units": 8478
-        },
         "Som": {
           "rev": 331786.67,
           "units": 35102
+        },
+        "How": {
+          "rev": 72513.38,
+          "units": 8478
         },
         "Men": {
           "rev": 38305.11,
@@ -785,10 +781,6 @@
         }
       },
       "bskus": {
-        "HWR010202": {
-          "rev": 27663.3,
-          "units": 5770
-        },
         "SRF010105": {
           "rev": 171634.45,
           "units": 4125
@@ -801,17 +793,33 @@
           "rev": 20531.15,
           "units": 1155
         },
-        "SRF010102": {
-          "rev": 50664.02,
-          "units": 8386
-        },
         "SRF010104": {
           "rev": 55263.86,
           "units": 2546
         },
+        "SRF030301": {
+          "rev": 9997.21,
+          "units": 833
+        },
+        "HWR010202": {
+          "rev": 27663.3,
+          "units": 5770
+        },
+        "SRF010102": {
+          "rev": 50664.02,
+          "units": 8386
+        },
         "SRF020701": {
           "rev": 23661.8,
           "units": 14639
+        },
+        "MDO050102": {
+          "rev": 14266.73,
+          "units": 1041
+        },
+        "MDO050101": {
+          "rev": 512.79,
+          "units": 369
         },
         "MDO021107": {
           "rev": 11445.31,
@@ -821,40 +829,24 @@
           "rev": 9632.28,
           "units": 808
         },
-        "MDO050102": {
-          "rev": 14266.73,
-          "units": 1041
-        },
         "SRF010101": {
           "rev": 34.18,
           "units": 3418
         },
-        "SRF030301": {
-          "rev": 9997.21,
-          "units": 833
-        },
-        "MDO050101": {
-          "rev": 512.79,
-          "units": 369
-        },
-        "MDO050104": {
-          "rev": 2448.0,
-          "units": 72
+        "HWR040601": {
+          "rev": 961.3,
+          "units": 190
         },
         "HWR030401": {
           "rev": 1024.24,
           "units": 128
         },
-        "HWR040601": {
-          "rev": 961.3,
-          "units": 190
+        "MDO050104": {
+          "rev": 2448.0,
+          "units": 72
         }
       },
       "subcats": {
-        "HWR Smalls 8th": {
-          "rev": 27663.3,
-          "units": 5770
-        },
         "SRF Flower Oz": {
           "rev": 171634.45,
           "units": 4125
@@ -867,17 +859,33 @@
           "rev": 20531.15,
           "units": 1155
         },
-        "SRF Flower 8th": {
-          "rev": 50664.02,
-          "units": 8386
-        },
         "SRF Flower 14g": {
           "rev": 55263.86,
           "units": 2546
         },
+        "SRF Live Rosin Jar": {
+          "rev": 9997.21,
+          "units": 833
+        },
+        "HWR Smalls 8th": {
+          "rev": 27663.3,
+          "units": 5770
+        },
+        "SRF Flower 8th": {
+          "rev": 50664.02,
+          "units": 8386
+        },
         "SRF Preroll 1g": {
           "rev": 23661.8,
           "units": 14639
+        },
+        "MDO Indoor Flower 8th": {
+          "rev": 14266.73,
+          "units": 1041
+        },
+        "MDO Indoor Flower 1g": {
+          "rev": 512.79,
+          "units": 369
         },
         "MDO Preroll 10pk": {
           "rev": 11445.31,
@@ -887,33 +895,21 @@
           "rev": 9632.28,
           "units": 808
         },
-        "MDO Indoor Flower 8th": {
-          "rev": 14266.73,
-          "units": 1041
-        },
         "SRF Bigs 1g": {
           "rev": 34.18,
           "units": 3418
         },
-        "SRF Live Rosin Jar": {
-          "rev": 9997.21,
-          "units": 833
-        },
-        "MDO Indoor Flower 1g": {
-          "rev": 512.79,
-          "units": 369
-        },
-        "MDO Indoor Flower 14g": {
-          "rev": 2448.0,
-          "units": 72
+        "HWR Live Resin AIO": {
+          "rev": 961.3,
+          "units": 190
         },
         "HWR Live Resin Jar": {
           "rev": 1024.24,
           "units": 128
         },
-        "HWR Live Resin AIO": {
-          "rev": 961.3,
-          "units": 190
+        "MDO Indoor Flower 14g": {
+          "rev": 2448.0,
+          "units": 72
         }
       },
       "total": 447853.87
@@ -921,6 +917,10 @@
     {
       "month": "May 2026",
       "brands": {
+        "Men": {
+          "rev": 42550.52,
+          "units": 3718
+        },
         "Som": {
           "rev": 315745.69,
           "units": 25025
@@ -929,59 +929,47 @@
           "rev": 68429.93,
           "units": 7387
         },
-        "Men": {
-          "rev": 42550.52,
-          "units": 3718
-        },
         "": {
           "rev": 5929.74,
           "units": 3
         }
       },
       "bskus": {
-        "SRF010105": {
-          "rev": 170976.18,
-          "units": 3850
-        },
-        "HWR010204": {
-          "rev": 41392.15,
-          "units": 2223
-        },
-        "SRF020701": {
-          "rev": 16212.83,
-          "units": 8791
-        },
-        "SRF010102": {
-          "rev": 57736.95,
-          "units": 8887
-        },
-        "MDO050102": {
-          "rev": 13887.31,
-          "units": 1371
+        "MDO050101": {
+          "rev": 541.68,
+          "units": 348
         },
         "SRF010104": {
           "rev": 43874.8,
           "units": 1780
         },
-        "MDO021107": {
-          "rev": 11954.95,
-          "units": 875
+        "SRF010105": {
+          "rev": 170976.18,
+          "units": 3850
         },
-        "MDO050101": {
-          "rev": 541.68,
-          "units": 348
+        "SRF010102": {
+          "rev": 57736.95,
+          "units": 8887
         },
-        "SRF021004": {
-          "rev": 21116.98,
-          "units": 954
+        "HWR010202": {
+          "rev": 24877.67,
+          "units": 5015
+        },
+        "HWR010204": {
+          "rev": 41392.15,
+          "units": 2223
         },
         "HWR030401": {
           "rev": 80.0,
           "units": 8
         },
-        "HWR010202": {
-          "rev": 24877.67,
-          "units": 5015
+        "SRF020701": {
+          "rev": 16212.83,
+          "units": 8791
+        },
+        "MDO021107": {
+          "rev": 11954.95,
+          "units": 875
         },
         "SRF030301": {
           "rev": 5827.54,
@@ -991,9 +979,17 @@
           "rev": 2080.11,
           "units": 141
         },
+        "SRF021004": {
+          "rev": 21116.98,
+          "units": 954
+        },
         "MDO040601": {
           "rev": 11815.94,
           "units": 964
+        },
+        "MDO050102": {
+          "rev": 13887.31,
+          "units": 1371
         },
         "MDO050104": {
           "rev": 4350.64,
@@ -1005,49 +1001,41 @@
         }
       },
       "subcats": {
-        "SRF Flower Oz": {
-          "rev": 170976.18,
-          "units": 3850
-        },
-        "HWR Smalls 14g": {
-          "rev": 41392.15,
-          "units": 2223
-        },
-        "SRF Preroll 1g": {
-          "rev": 16212.83,
-          "units": 8791
-        },
-        "SRF Flower 8th": {
-          "rev": 57736.95,
-          "units": 8887
-        },
-        "MDO Indoor Flower 8th": {
-          "rev": 13887.31,
-          "units": 1371
+        "MDO Indoor Flower 1g": {
+          "rev": 541.68,
+          "units": 348
         },
         "SRF Flower 14g": {
           "rev": 43874.8,
           "units": 1780
         },
-        "MDO Preroll 10pk": {
-          "rev": 11954.95,
-          "units": 875
+        "SRF Flower Oz": {
+          "rev": 170976.18,
+          "units": 3850
         },
-        "MDO Indoor Flower 1g": {
-          "rev": 541.68,
-          "units": 348
+        "SRF Flower 8th": {
+          "rev": 57736.95,
+          "units": 8887
         },
-        "SRF Preroll 28pk": {
-          "rev": 21116.98,
-          "units": 954
+        "HWR Smalls 8th": {
+          "rev": 24877.67,
+          "units": 5015
+        },
+        "HWR Smalls 14g": {
+          "rev": 41392.15,
+          "units": 2223
         },
         "HWR Live Resin Jar": {
           "rev": 80.0,
           "units": 8
         },
-        "HWR Smalls 8th": {
-          "rev": 24877.67,
-          "units": 5015
+        "SRF Preroll 1g": {
+          "rev": 16212.83,
+          "units": 8791
+        },
+        "MDO Preroll 10pk": {
+          "rev": 11954.95,
+          "units": 875
         },
         "SRF Live Rosin Jar": {
           "rev": 5827.54,
@@ -1057,9 +1045,17 @@
           "rev": 2080.11,
           "units": 141
         },
+        "SRF Preroll 28pk": {
+          "rev": 21116.98,
+          "units": 954
+        },
         "MDO Live Resin AIO": {
           "rev": 11815.94,
           "units": 964
+        },
+        "MDO Indoor Flower 8th": {
+          "rev": 13887.31,
+          "units": 1371
         },
         "MDO Indoor Flower 14g": {
           "rev": 4350.64,
@@ -1075,10 +1071,6 @@
     {
       "month": "Jun 2026",
       "brands": {
-        "Men": {
-          "rev": 38868.11,
-          "units": 3207
-        },
         "Som": {
           "rev": 335745.38,
           "units": 28724
@@ -1087,20 +1079,16 @@
           "rev": 70777.32,
           "units": 8178
         },
+        "Men": {
+          "rev": 38868.11,
+          "units": 3207
+        },
         "": {
           "rev": 7570.45,
           "units": 3
         }
       },
       "bskus": {
-        "MDO050101": {
-          "rev": 1105.5,
-          "units": 364
-        },
-        "MDO021107": {
-          "rev": 16318.95,
-          "units": 1215
-        },
         "SRF010105": {
           "rev": 144520.16,
           "units": 3328
@@ -1141,9 +1129,17 @@
           "rev": 7111.08,
           "units": 618
         },
+        "MDO021107": {
+          "rev": 16318.95,
+          "units": 1215
+        },
         "MDO050102": {
           "rev": 12212.26,
           "units": 890
+        },
+        "MDO050101": {
+          "rev": 1105.5,
+          "units": 364
         },
         "HWR030401": {
           "rev": 1040.08,
@@ -1159,14 +1155,6 @@
         }
       },
       "subcats": {
-        "MDO Indoor Flower 1g": {
-          "rev": 1105.5,
-          "units": 364
-        },
-        "MDO Preroll 10pk": {
-          "rev": 16318.95,
-          "units": 1215
-        },
         "SRF Flower Oz": {
           "rev": 144520.16,
           "units": 3328
@@ -1207,9 +1195,17 @@
           "rev": 7111.08,
           "units": 618
         },
+        "MDO Preroll 10pk": {
+          "rev": 16318.95,
+          "units": 1215
+        },
         "MDO Indoor Flower 8th": {
           "rev": 12212.26,
           "units": 890
+        },
+        "MDO Indoor Flower 1g": {
+          "rev": 1105.5,
+          "units": 364
         },
         "HWR Live Resin Jar": {
           "rev": 1040.08,
@@ -1267,18 +1263,6 @@
           "rev": 3672.41,
           "units": 441
         },
-        "HWR010202": {
-          "rev": 26853.64,
-          "units": 5412
-        },
-        "SRF020701": {
-          "rev": 10749.18,
-          "units": 5629
-        },
-        "MDO021107": {
-          "rev": 14692.29,
-          "units": 1009
-        },
         "SRF010105": {
           "rev": 136788.0,
           "units": 3112
@@ -1291,21 +1275,33 @@
           "rev": 1.94,
           "units": 194
         },
-        "MDO040601": {
-          "rev": 9220.19,
-          "units": 639
+        "HWR010202": {
+          "rev": 26853.64,
+          "units": 5412
         },
         "HWR040601": {
           "rev": 781.7,
           "units": 230
         },
-        "SRF030301": {
-          "rev": 1641.81,
-          "units": 285
+        "SRF020701": {
+          "rev": 10749.18,
+          "units": 5629
         },
         "MDO050104": {
           "rev": 1200.0,
           "units": 40
+        },
+        "MDO021107": {
+          "rev": 14692.29,
+          "units": 1009
+        },
+        "MDO040601": {
+          "rev": 9220.19,
+          "units": 639
+        },
+        "SRF030301": {
+          "rev": 1641.81,
+          "units": 285
         },
         "MDO050101": {
           "rev": 180.06,
@@ -1333,18 +1329,6 @@
           "rev": 3672.41,
           "units": 441
         },
-        "HWR Smalls 8th": {
-          "rev": 26853.64,
-          "units": 5412
-        },
-        "SRF Preroll 1g": {
-          "rev": 10749.18,
-          "units": 5629
-        },
-        "MDO Preroll 10pk": {
-          "rev": 14692.29,
-          "units": 1009
-        },
         "SRF Flower Oz": {
           "rev": 136788.0,
           "units": 3112
@@ -1357,21 +1341,33 @@
           "rev": 1.94,
           "units": 194
         },
-        "MDO Live Resin AIO": {
-          "rev": 9220.19,
-          "units": 639
+        "HWR Smalls 8th": {
+          "rev": 26853.64,
+          "units": 5412
         },
         "HWR Live Resin AIO": {
           "rev": 781.7,
           "units": 230
         },
-        "SRF Live Rosin Jar": {
-          "rev": 1641.81,
-          "units": 285
+        "SRF Preroll 1g": {
+          "rev": 10749.18,
+          "units": 5629
         },
         "MDO Indoor Flower 14g": {
           "rev": 1200.0,
           "units": 40
+        },
+        "MDO Preroll 10pk": {
+          "rev": 14692.29,
+          "units": 1009
+        },
+        "MDO Live Resin AIO": {
+          "rev": 9220.19,
+          "units": 639
+        },
+        "SRF Live Rosin Jar": {
+          "rev": 1641.81,
+          "units": 285
         },
         "MDO Indoor Flower 1g": {
           "rev": 180.06,
@@ -1401,41 +1397,25 @@
         }
       },
       "bskus": {
-        "SRF010104": {
-          "rev": 63236.86,
-          "units": 2665
-        },
-        "HWR010204": {
-          "rev": 24280.72,
-          "units": 1360
-        },
-        "HWR010202": {
-          "rev": 21312.29,
-          "units": 4597
-        },
-        "SRF010102": {
-          "rev": 52363.65,
-          "units": 8325
-        },
         "SRF010105": {
           "rev": 136192.56,
           "units": 3176
-        },
-        "MDO040601": {
-          "rev": 8537.0,
-          "units": 670
         },
         "SRF020701": {
           "rev": 13810.58,
           "units": 7602
         },
-        "SRF030301": {
-          "rev": 3040.78,
-          "units": 1070
-        },
         "HWR030401": {
           "rev": 3298.45,
           "units": 597
+        },
+        "SRF010102": {
+          "rev": 52363.65,
+          "units": 8325
+        },
+        "SRF010104": {
+          "rev": 63236.86,
+          "units": 2665
         },
         "SRF021004": {
           "rev": 32572.76,
@@ -1449,13 +1429,29 @@
           "rev": 9310.74,
           "units": 694
         },
-        "MDO050101": {
-          "rev": 240.25,
-          "units": 65
+        "MDO040601": {
+          "rev": 8537.0,
+          "units": 670
+        },
+        "SRF030301": {
+          "rev": 3040.78,
+          "units": 1070
+        },
+        "HWR010204": {
+          "rev": 24280.72,
+          "units": 1360
+        },
+        "HWR010202": {
+          "rev": 21312.29,
+          "units": 4597
         },
         "HWR040601": {
           "rev": 4.9,
           "units": 490
+        },
+        "MDO050101": {
+          "rev": 240.25,
+          "units": 65
         },
         "SRF010101": {
           "rev": 0.04,
@@ -1467,41 +1463,25 @@
         }
       },
       "subcats": {
-        "SRF Flower 14g": {
-          "rev": 63236.86,
-          "units": 2665
-        },
-        "HWR Smalls 14g": {
-          "rev": 24280.72,
-          "units": 1360
-        },
-        "HWR Smalls 8th": {
-          "rev": 21312.29,
-          "units": 4597
-        },
-        "SRF Flower 8th": {
-          "rev": 52363.65,
-          "units": 8325
-        },
         "SRF Flower Oz": {
           "rev": 136192.56,
           "units": 3176
-        },
-        "MDO Live Resin AIO": {
-          "rev": 8537.0,
-          "units": 670
         },
         "SRF Preroll 1g": {
           "rev": 13810.58,
           "units": 7602
         },
-        "SRF Live Rosin Jar": {
-          "rev": 3040.78,
-          "units": 1070
-        },
         "HWR Live Resin Jar": {
           "rev": 3298.45,
           "units": 597
+        },
+        "SRF Flower 8th": {
+          "rev": 52363.65,
+          "units": 8325
+        },
+        "SRF Flower 14g": {
+          "rev": 63236.86,
+          "units": 2665
         },
         "SRF Preroll 28pk": {
           "rev": 32572.76,
@@ -1515,13 +1495,29 @@
           "rev": 9310.74,
           "units": 694
         },
-        "MDO Indoor Flower 1g": {
-          "rev": 240.25,
-          "units": 65
+        "MDO Live Resin AIO": {
+          "rev": 8537.0,
+          "units": 670
+        },
+        "SRF Live Rosin Jar": {
+          "rev": 3040.78,
+          "units": 1070
+        },
+        "HWR Smalls 14g": {
+          "rev": 24280.72,
+          "units": 1360
+        },
+        "HWR Smalls 8th": {
+          "rev": 21312.29,
+          "units": 4597
         },
         "HWR Live Resin AIO": {
           "rev": 4.9,
           "units": 490
+        },
+        "MDO Indoor Flower 1g": {
+          "rev": 240.25,
+          "units": 65
         },
         "SRF Bigs 1g": {
           "rev": 0.04,
@@ -1541,13 +1537,13 @@
           "rev": 298799.89,
           "units": 27475
         },
-        "Men": {
-          "rev": 20696.58,
-          "units": 1420
-        },
         "How": {
           "rev": 63463.5,
           "units": 8086
+        },
+        "Men": {
+          "rev": 20696.58,
+          "units": 1420
         },
         "": {
           "rev": 4963.43,
@@ -1555,53 +1551,49 @@
         }
       },
       "bskus": {
-        "SRF010104": {
-          "rev": 55610.07,
-          "units": 2469
+        "SRF010102": {
+          "rev": 56228.12,
+          "units": 8620
         },
         "SRF010105": {
           "rev": 149496.88,
           "units": 3448
         },
-        "MDO040601": {
-          "rev": 10214.47,
-          "units": 727
-        },
-        "HWR010204": {
-          "rev": 36176.71,
-          "units": 1999
-        },
-        "SRF010102": {
-          "rev": 56228.12,
-          "units": 8620
+        "SRF010104": {
+          "rev": 55610.07,
+          "units": 2469
         },
         "SRF021004": {
           "rev": 18634.12,
           "units": 996
         },
-        "SRF020701": {
-          "rev": 18451.81,
-          "units": 11629
+        "HWR010204": {
+          "rev": 36176.71,
+          "units": 1999
         },
         "HWR010202": {
           "rev": 24881.77,
           "units": 5321
         },
+        "SRF020701": {
+          "rev": 18451.81,
+          "units": 11629
+        },
         "MDO021107": {
           "rev": 6190.05,
           "units": 425
         },
-        "MDO050102": {
-          "rev": 3152.03,
-          "units": 195
+        "MDO040601": {
+          "rev": 10214.47,
+          "units": 727
         },
         "HWR030401": {
           "rev": 2405.02,
           "units": 766
         },
-        "SRF030301": {
-          "rev": 378.89,
-          "units": 313
+        "MDO050102": {
+          "rev": 3152.03,
+          "units": 195
         },
         "MDO050101": {
           "rev": 180.03,
@@ -1614,56 +1606,56 @@
         "HWR040601": {
           "rev": 0.0,
           "units": 0
+        },
+        "SRF030301": {
+          "rev": 378.89,
+          "units": 313
         }
       },
       "subcats": {
-        "SRF Flower 14g": {
-          "rev": 55610.07,
-          "units": 2469
+        "SRF Flower 8th": {
+          "rev": 56228.12,
+          "units": 8620
         },
         "SRF Flower Oz": {
           "rev": 149496.88,
           "units": 3448
         },
-        "MDO Live Resin AIO": {
-          "rev": 10214.47,
-          "units": 727
-        },
-        "HWR Smalls 14g": {
-          "rev": 36176.71,
-          "units": 1999
-        },
-        "SRF Flower 8th": {
-          "rev": 56228.12,
-          "units": 8620
+        "SRF Flower 14g": {
+          "rev": 55610.07,
+          "units": 2469
         },
         "SRF Preroll 28pk": {
           "rev": 18634.12,
           "units": 996
         },
-        "SRF Preroll 1g": {
-          "rev": 18451.81,
-          "units": 11629
+        "HWR Smalls 14g": {
+          "rev": 36176.71,
+          "units": 1999
         },
         "HWR Smalls 8th": {
           "rev": 24881.77,
           "units": 5321
         },
+        "SRF Preroll 1g": {
+          "rev": 18451.81,
+          "units": 11629
+        },
         "MDO Preroll 10pk": {
           "rev": 6190.05,
           "units": 425
         },
-        "MDO Indoor Flower 8th": {
-          "rev": 3152.03,
-          "units": 195
+        "MDO Live Resin AIO": {
+          "rev": 10214.47,
+          "units": 727
         },
         "HWR Live Resin Jar": {
           "rev": 2405.02,
           "units": 766
         },
-        "SRF Live Rosin Jar": {
-          "rev": 378.89,
-          "units": 313
+        "MDO Indoor Flower 8th": {
+          "rev": 3152.03,
+          "units": 195
         },
         "MDO Indoor Flower 1g": {
           "rev": 180.03,
@@ -1676,6 +1668,10 @@
         "HWR Live Resin AIO": {
           "rev": 0.0,
           "units": 0
+        },
+        "SRF Live Rosin Jar": {
+          "rev": 378.89,
+          "units": 313
         }
       },
       "total": 387923.4
@@ -1683,13 +1679,13 @@
     {
       "month": "Oct 2026",
       "brands": {
-        "Men": {
-          "rev": 15600.52,
-          "units": 1088
-        },
         "Som": {
           "rev": 317003.95,
           "units": 29445
+        },
+        "Men": {
+          "rev": 15600.52,
+          "units": 1088
         },
         "How": {
           "rev": 71229.52,
@@ -1701,13 +1697,13 @@
         }
       },
       "bskus": {
-        "MDO040601": {
-          "rev": 9422.39,
-          "units": 669
-        },
         "SRF010102": {
           "rev": 56822.84,
           "units": 8700
+        },
+        "SRF010105": {
+          "rev": 139476.08,
+          "units": 3160
         },
         "SRF020701": {
           "rev": 22981.68,
@@ -1717,59 +1713,59 @@
           "rev": 71677.06,
           "units": 3036
         },
-        "HWR010204": {
-          "rev": 36233.07,
-          "units": 2059
-        },
-        "HWR010202": {
-          "rev": 32370.27,
-          "units": 7435
-        },
-        "SRF010105": {
-          "rev": 139476.08,
-          "units": 3160
-        },
         "MDO021107": {
           "rev": 5110.01,
           "units": 341
+        },
+        "MDO040601": {
+          "rev": 9422.39,
+          "units": 669
+        },
+        "HWR010204": {
+          "rev": 36233.07,
+          "units": 2059
         },
         "SRF021004": {
           "rev": 26046.29,
           "units": 1125
         },
-        "MDO050102": {
-          "rev": 768.03,
-          "units": 51
+        "HWR010202": {
+          "rev": 32370.27,
+          "units": 7435
         },
         "HWR030401": {
           "rev": 2626.18,
           "units": 530
         },
-        "MDO050104": {
-          "rev": 240.08,
-          "units": 16
+        "MDO050102": {
+          "rev": 768.03,
+          "units": 51
         },
         "MDO050101": {
           "rev": 60.01,
           "units": 11
         },
-        "SRF030301": {
+        "MDO050104": {
+          "rev": 240.08,
+          "units": 16
+        },
+        "HWR040601": {
           "rev": 0.0,
           "units": 0
         },
-        "HWR040601": {
+        "SRF030301": {
           "rev": 0.0,
           "units": 0
         }
       },
       "subcats": {
-        "MDO Live Resin AIO": {
-          "rev": 9422.39,
-          "units": 669
-        },
         "SRF Flower 8th": {
           "rev": 56822.84,
           "units": 8700
+        },
+        "SRF Flower Oz": {
+          "rev": 139476.08,
+          "units": 3160
         },
         "SRF Preroll 1g": {
           "rev": 22981.68,
@@ -1779,47 +1775,47 @@
           "rev": 71677.06,
           "units": 3036
         },
-        "HWR Smalls 14g": {
-          "rev": 36233.07,
-          "units": 2059
-        },
-        "HWR Smalls 8th": {
-          "rev": 32370.27,
-          "units": 7435
-        },
-        "SRF Flower Oz": {
-          "rev": 139476.08,
-          "units": 3160
-        },
         "MDO Preroll 10pk": {
           "rev": 5110.01,
           "units": 341
+        },
+        "MDO Live Resin AIO": {
+          "rev": 9422.39,
+          "units": 669
+        },
+        "HWR Smalls 14g": {
+          "rev": 36233.07,
+          "units": 2059
         },
         "SRF Preroll 28pk": {
           "rev": 26046.29,
           "units": 1125
         },
-        "MDO Indoor Flower 8th": {
-          "rev": 768.03,
-          "units": 51
+        "HWR Smalls 8th": {
+          "rev": 32370.27,
+          "units": 7435
         },
         "HWR Live Resin Jar": {
           "rev": 2626.18,
           "units": 530
         },
-        "MDO Indoor Flower 14g": {
-          "rev": 240.08,
-          "units": 16
+        "MDO Indoor Flower 8th": {
+          "rev": 768.03,
+          "units": 51
         },
         "MDO Indoor Flower 1g": {
           "rev": 60.01,
           "units": 11
         },
-        "SRF Live Rosin Jar": {
+        "MDO Indoor Flower 14g": {
+          "rev": 240.08,
+          "units": 16
+        },
+        "HWR Live Resin AIO": {
           "rev": 0.0,
           "units": 0
         },
-        "HWR Live Resin AIO": {
+        "SRF Live Rosin Jar": {
           "rev": 0.0,
           "units": 0
         }
@@ -1830,74 +1826,70 @@
       "month": "Nov 2026",
       "brands": {
         "": {
-          "rev": 0.0,
-          "units": 0
+          "rev": 0.03,
+          "units": 3
         },
         "Som": {
-          "rev": 159149.06,
-          "units": 11404
+          "rev": 186101.58,
+          "units": 14382
         },
         "How": {
-          "rev": 39999.65,
-          "units": 5501
+          "rev": 45697.22,
+          "units": 6570
         },
         "Men": {
-          "rev": 4861.34,
-          "units": 442
+          "rev": 7608.11,
+          "units": 683
         }
       },
       "bskus": {
         "SRF010105": {
-          "rev": 79464.16,
-          "units": 1824
+          "rev": 89208.16,
+          "units": 2080
         },
         "SRF010104": {
-          "rev": 33914.04,
-          "units": 1324
-        },
-        "SRF010102": {
-          "rev": 20795.83,
-          "units": 3189
+          "rev": 39848.04,
+          "units": 1574
         },
         "HWR010202": {
-          "rev": 16403.64,
-          "units": 3684
+          "rev": 21245.1,
+          "units": 4718
         },
         "HWR010204": {
-          "rev": 22514.21,
-          "units": 1525
+          "rev": 23850.23,
+          "units": 1599
         },
         "MDO050102": {
-          "rev": 384.81,
-          "units": 105
+          "rev": 2087.47,
+          "units": 259
+        },
+        "SRF010102": {
+          "rev": 27542.36,
+          "units": 4314
         },
         "HWR030401": {
-          "rev": 1081.8,
-          "units": 292
+          "rev": 601.89,
+          "units": 253
         },
         "MDO040601": {
-          "rev": 1200.18,
-          "units": 98
+          "rev": 1950.27,
+          "units": 157
         },
         "SRF020701": {
-          "rev": 8122.61,
-          "units": 4321
+          "rev": 10558.6,
+          "units": 5580
         },
         "SRF021004": {
-          "rev": 16852.41,
-          "units": 745
+          "rev": 18944.41,
+          "units": 833
         },
         "MDO021107": {
-          "rev": 2700.3,
-          "units": 210
-        },
-        "MDO050101": {
-          "rev": 0.05,
-          "units": 5
+          "rev": 2850.37,
+          "units": 227
         },
         "MDO050104": {
-          "rev": 576.0,
-          "units": 24
+          "rev": 720.0,
+          "units": 40
         },
         "SRF010101": {
           "rev": 0.01,
@@ -1910,56 +1902,56 @@
       },
       "subcats": {
         "SRF Flower Oz": {
-          "rev": 79464.16,
-          "units": 1824
+          "rev": 89208.16,
+          "units": 2080
         },
         "SRF Flower 14g": {
-          "rev": 33914.04,
-          "units": 1324
-        },
-        "SRF Flower 8th": {
-          "rev": 20795.83,
-          "units": 3189
+          "rev": 39848.04,
+          "units": 1574
         },
         "HWR Smalls 8th": {
-          "rev": 16403.64,
-          "units": 3684
+          "rev": 21245.1,
+          "units": 4718
         },
         "HWR Smalls 14g": {
-          "rev": 22514.21,
-          "units": 1525
+          "rev": 23850.23,
+          "units": 1599
         },
         "MDO Indoor Flower 8th": {
-          "rev": 384.81,
-          "units": 105
+          "rev": 2087.47,
+          "units": 259
+        },
+        "SRF Flower 8th": {
+          "rev": 27542.36,
+          "units": 4314
         },
         "HWR Live Resin Jar": {
-          "rev": 1081.8,
-          "units": 292
+          "rev": 601.89,
+          "units": 253
         },
         "MDO Live Resin AIO": {
-          "rev": 1200.18,
-          "units": 98
+          "rev": 1950.27,
+          "units": 157
         },
         "SRF Preroll 1g": {
-          "rev": 8122.61,
-          "units": 4321
+          "rev": 10558.6,
+          "units": 5580
         },
         "SRF Preroll 28pk": {
-          "rev": 16852.41,
-          "units": 745
+          "rev": 18944.41,
+          "units": 833
         },
         "MDO Preroll 10pk": {
-          "rev": 2700.3,
-          "units": 210
-        },
-        "MDO Indoor Flower 1g": {
-          "rev": 0.05,
-          "units": 5
+          "rev": 2850.37,
+          "units": 227
         },
         "MDO Indoor Flower 14g": {
-          "rev": 576.0,
-          "units": 24
+          "rev": 720.0,
+          "units": 40
+        },
+        "Unknown": {
+          "rev": 0.03,
+          "units": 3
         },
         "SRF Bigs 1g": {
           "rev": 0.01,
@@ -1970,7 +1962,7 @@
           "units": 0
         }
       },
-      "total": 204010.05
+      "total": 239406.94
     }
   ]
 }
