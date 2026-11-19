@@ -1,5 +1,511 @@
 [
   {
+    "id": 3220352,
+    "name": null,
+    "manifest_number": "0011920504",
+    "facility_id": 4929,
+    "is_active": true,
+    "destinations": [
+      {
+        "id": 3577639,
+        "destination_facility": "C8-0000013-LIC",
+        "transfer_type": "Transfer",
+        "route": "Route to be Traveled Notes: details for extenuating circumstances (e.g., road closure, flat tire, etc.)\r\nRoute to be Traveled Notes: details for extenuating circumstances (e.g., road\r\nclosure, flat tire, etc.)\r\nWEIGHMASTER CERTIFICATE\r\nTHIS IS TO CERTIFY that the following described commodity was\r\nweighed,measured, or counted by a weighmaster, whose signature is on this\r\ncertificate, who is a recognized authority of accuracy, as prescribed by Chapter\r\n7 (commencing with Section 12700) of Division 5 of the California Business and\r\nProfessions Code, administered by the Division of Measurement Standards of\r\nthe California Department of Food and Agriculture.\r\nWeighed by: Yali AWI-0490\r\nGet on US-101 S from Airway Dr and Hopper Ave 2 min (0.6 mi)\r\nFollow US-101 S, I-580 E and I-880 S to CA-17 S in Campbell 1 hr 42 min (105\r\nmi)\r\nKeep left to stay on CA-17 S 27 min (25.2 mi)\r\nContinue onto CA-1 N 55 sec (0.5 mi)\r\nContinue on River St. Take Encinal St to Pioneer St 2 min (0.5 mi)",
+        "departure_time": "2026-11-19T12:39:00.000Z",
+        "updated_at": "2026-11-19T20:45:41.234Z",
+        "contents": [
+          {
+            "package": {
+              "id": 35648601,
+              "tag": "1A4060300047D39000015801",
+              "is_active": true,
+              "is_testing_package": true,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T20:45:42.910Z",
+            "shipped_weight": 55.0,
+            "shipped_weight_unit": "Grams",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "2CW Flower GC",
+            "_strain": "GC",
+            "_sources": [
+              "1A4060300047D39000015762",
+              "1A406030005E0B2000010640",
+              "1A406030005E0B2000010238",
+              "1A406030005E0B2000010430",
+              "1A4060300049C15000000107"
+            ],
+            "_source": "1A4060300047D39000015762"
+          },
+          {
+            "package": {
+              "id": 35648603,
+              "tag": "1A4060300047D39000015802",
+              "is_active": true,
+              "is_testing_package": true,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T20:45:43.357Z",
+            "shipped_weight": 50.0,
+            "shipped_weight_unit": "Grams",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "2CW Flower Grape Lobster",
+            "_strain": "Grape Lobster",
+            "_sources": [
+              "1A4060300047D39000015763",
+              "1A406030005E0B2000010641",
+              "1A406030005E0B2000010050",
+              "1A406030005E0B2000010002"
+            ],
+            "_source": "1A4060300047D39000015763"
+          },
+          {
+            "package": {
+              "id": 35648981,
+              "tag": "1A4060300047D39000015803",
+              "is_active": true,
+              "is_testing_package": true,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T20:45:44.055Z",
+            "shipped_weight": 43.0,
+            "shipped_weight_unit": "Grams",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "AGP | Flower Hashburger",
+            "_strain": "Hashburger",
+            "_sources": [
+              "1A4060300047D39000015769",
+              "1A406030005E0B2000010642",
+              "1A406030005E0B2000010456",
+              "1A406030005E0B2000010134"
+            ],
+            "_source": "1A4060300047D39000015769"
+          }
+        ]
+      }
+    ],
+    "sales_order": null,
+    "updated_at": "2026-11-19T20:45:41.044Z",
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
+  },
+  {
+    "id": 3210762,
+    "name": null,
+    "manifest_number": "0011891108",
+    "facility_id": 4923,
+    "is_active": true,
+    "destinations": [
+      {
+        "id": 3564656,
+        "destination_facility": "C12-0000453-LIC",
+        "transfer_type": "Transfer",
+        "route": "Please follow GPS route.",
+        "departure_time": "2026-11-16T11:35:00.000Z",
+        "updated_at": "2026-11-19T20:36:24.811Z",
+        "contents": [
+          {
+            "package": {
+              "id": 35544795,
+              "tag": "1A406030005E0B2000010646",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-19T20:36:27.783Z",
+            "shipped_weight": 10.0,
+            "shipped_weight_unit": "Pounds",
+            "received_weight": 10.0,
+            "received_weight_unit": "Pounds",
+            "_item": "Flower - Cereal Milk",
+            "_strain": "Cereal Milk",
+            "_sources": [
+              "1A406030005E0B2000010037",
+              "1A406030007975D000000444"
+            ],
+            "_source": "1A406030005E0B2000010037"
+          },
+          {
+            "package": {
+              "id": 35544796,
+              "tag": "1A406030005E0B2000010647",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-19T20:36:27.994Z",
+            "shipped_weight": 5.0,
+            "shipped_weight_unit": "Pounds",
+            "received_weight": 5.0,
+            "received_weight_unit": "Pounds",
+            "_item": "Flower - BBJ",
+            "_strain": "BBJ",
+            "_sources": [
+              "1A406030005E0B2000010312",
+              "1A406030005E0B2000010064",
+              "1A4060300089ABD000000002"
+            ],
+            "_source": "1A406030005E0B2000010312"
+          },
+          {
+            "package": {
+              "id": 35544791,
+              "tag": "1A406030005E0B2000010643",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-19T20:36:26.825Z",
+            "shipped_weight": 19.0,
+            "shipped_weight_unit": "Pounds",
+            "received_weight": 19.0,
+            "received_weight_unit": "Pounds",
+            "_item": "Flower - Canal St Runtz",
+            "_strain": "Canal St. Runtz",
+            "_sources": [
+              "1A406030005E0B2000010320",
+              "1A406030005E0B2000010033",
+              "1A406030007975D000000453"
+            ],
+            "_source": "1A406030005E0B2000010320"
+          },
+          {
+            "package": {
+              "id": 35544793,
+              "tag": "1A406030005E0B2000010644",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-19T20:36:27.378Z",
+            "shipped_weight": 22.0,
+            "shipped_weight_unit": "Pounds",
+            "received_weight": 22.0,
+            "received_weight_unit": "Pounds",
+            "_item": "Flower - Pack Mule",
+            "_strain": "Pack Mule",
+            "_sources": [
+              "1A406030005E0B2000010322",
+              "1A406030005E0B2000010148",
+              "1A4060300089ABD000000011"
+            ],
+            "_source": "1A406030005E0B2000010322"
+          },
+          {
+            "package": {
+              "id": 35544794,
+              "tag": "1A406030005E0B2000010645",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-19T20:36:27.606Z",
+            "shipped_weight": 10.0,
+            "shipped_weight_unit": "Pounds",
+            "received_weight": 10.0,
+            "received_weight_unit": "Pounds",
+            "_item": "Flower - UK Cheese",
+            "_strain": "UK Cheese",
+            "_sources": [
+              "1A406030005E0B2000010432",
+              "1A406030005E0B2000010081",
+              "1A4060300089ABD000000098"
+            ],
+            "_source": "1A406030005E0B2000010432"
+          },
+          {
+            "package": {
+              "id": 35544798,
+              "tag": "1A406030005E0B2000010650",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-19T20:36:28.502Z",
+            "shipped_weight": 22.0,
+            "shipped_weight_unit": "Pounds",
+            "received_weight": 22.0,
+            "received_weight_unit": "Pounds",
+            "_item": "Flower - Banana Punch",
+            "_strain": "Banana Punch",
+            "_sources": [
+              "1A406030005E0B2000010208",
+              "1A406030005E0B2000010434",
+              "1A4060300089ABD000000085"
+            ],
+            "_source": ""
+          },
+          {
+            "package": {
+              "id": 35544799,
+              "tag": "1A406030005E0B2000010651",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-19T20:36:28.645Z",
+            "shipped_weight": 4.0,
+            "shipped_weight_unit": "Pounds",
+            "received_weight": 4.0,
+            "received_weight_unit": "Pounds",
+            "_item": "Flower - Tropicana Cherry",
+            "_strain": "Tropicana Cherry",
+            "_sources": [
+              "1A406030005E0B2000010318",
+              "1A406030005E0B2000010098",
+              "1A406030007975D000000441"
+            ],
+            "_source": "1A406030005E0B2000010318"
+          },
+          {
+            "package": {
+              "id": 35544800,
+              "tag": "1A406030005E0B2000010652",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-19T20:36:28.790Z",
+            "shipped_weight": 18.0,
+            "shipped_weight_unit": "Pounds",
+            "received_weight": 18.0,
+            "received_weight_unit": "Pounds",
+            "_item": "Flower - Garlic Juice",
+            "_strain": "Garlic Juice",
+            "_sources": [
+              "1A406030005E0B2000010515",
+              "1A406030005E0B2000010126",
+              "1A4060300089ABD000000109"
+            ],
+            "_source": "1A406030005E0B2000010515"
+          },
+          {
+            "package": {
+              "id": 35544877,
+              "tag": "1A406030005E0B2000010648",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-19T20:36:28.175Z",
+            "shipped_weight": 7.0,
+            "shipped_weight_unit": "Pounds",
+            "received_weight": 7.0,
+            "received_weight_unit": "Pounds",
+            "_item": "Flower - Glitter Bomb",
+            "_strain": "GBM",
+            "_sources": [
+              "1A406030005E0B2000010209",
+              "1A406030005E0B2000010341",
+              "1A4060300089ABD000000063"
+            ],
+            "_source": ""
+          },
+          {
+            "package": {
+              "id": 35544801,
+              "tag": "1A406030005E0B2000010653",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-19T20:36:28.961Z",
+            "shipped_weight": 1.0,
+            "shipped_weight_unit": "Pounds",
+            "received_weight": 1.0,
+            "received_weight_unit": "Pounds",
+            "_item": "Flower - Gelato #41",
+            "_strain": "Gelato 41",
+            "_sources": [
+              "1A406030005E0B2000010636",
+              "1A406030005E0B2000010005",
+              "1A406030007975D000000428",
+              "1A406030007975D000000429",
+              "1A406030007975D000000430",
+              "1A406030007975D000000431"
+            ],
+            "_source": "1A406030005E0B2000010636"
+          },
+          {
+            "package": {
+              "id": 35544797,
+              "tag": "1A406030005E0B2000010649",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-19T20:36:28.347Z",
+            "shipped_weight": 22.0,
+            "shipped_weight_unit": "Pounds",
+            "received_weight": 22.0,
+            "received_weight_unit": "Pounds",
+            "_item": "Flower - Permanent Marker",
+            "_strain": "P.Marker",
+            "_sources": [
+              "1A406030005E0B2000010343",
+              "1A406030005E0B2000010207",
+              "1A406030007975D000000462"
+            ],
+            "_source": "1A406030005E0B2000010343"
+          }
+        ]
+      }
+    ],
+    "sales_order": null,
+    "updated_at": "2026-11-19T20:36:24.600Z",
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 3220124,
+    "name": null,
+    "manifest_number": "0011919368",
+    "facility_id": 4929,
+    "is_active": true,
+    "destinations": [
+      {
+        "id": 3577359,
+        "destination_facility": "C11-0001255-LIC",
+        "transfer_type": "Transfer",
+        "route": "Route to be Traveled Notes: details for extenuating circumstances (e.g., road closure, flat tire, etc.)\r\nRoute to be Traveled Notes: details for extenuating circumstances (e.g., road\r\nclosure, flat tire, etc.)\r\nWEIGHMASTER CERTIFICATE\r\nTHIS IS TO CERTIFY that the following described commodity was weighed,\r\nmeasured, or counted by a weighmaster, whose signature is on this certificate,\r\nwho is a recognized authority of accuracy, as prescribed by Chapter 7\r\n(commencing with Section 12700) of Division 5 of the California Business and\r\nProfessions Code, administered by the Division of Measurement Standards of\r\nthe California Department of Food and Agriculture.\r\nWeighed by: Yali AWI-0489\r\nRoute to be Traveled Notes: details for extenuating circumstances (e.g., road\r\nclosure, flat tire, etc.)\r\nRoute to be Traveled:\r\nLeave Airway Drive and get onto US-101 South.\r\nStay on 101 South through Petaluma and toward San Rafael.\r\nContinue toward the Richmond-San Rafael Bridge.\r\nCross the bridge into the East Bay.\r\nFollow I-580 East toward Oakland.\r\nTake I-880 South toward Alameda/San Jose.\r\nTake the exit for Alameda and follow signs toward Bay Farm Island.\r\nContinue onto Island Drive, then follow the signs/roads toward North Loop Road.\r\nTurn onto N Loop Rd and look for 2300 N Loop Rd",
+        "departure_time": "2026-11-19T11:52:00.000Z",
+        "updated_at": "2026-11-19T20:06:40.181Z",
+        "contents": [
+          {
+            "package": {
+              "id": 35193331,
+              "tag": "1A4060300047D39000015615",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T20:06:43.361Z",
+            "shipped_weight": 368.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Mendo | Flower Permanent Glue 1/8 th",
+            "_strain": "Permanent Glue",
+            "_sources": [
+              "1A4060300047D39000015626",
+              "1A406030005E0B2000003460",
+              "1A4060300049C1A000001639",
+              "1A4060300002FAE000000285"
+            ],
+            "_source": "1A4060300047D39000015626"
+          },
+          {
+            "package": {
+              "id": 35193321,
+              "tag": "1A4060300047D39000015636",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T20:06:42.527Z",
+            "shipped_weight": 168.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Mendo | Flower Permanent Glue 1/2 oz",
+            "_strain": "Permanent Glue",
+            "_sources": [
+              "1A4060300047D39000015626",
+              "1A406030005E0B2000003460",
+              "1A4060300049C1A000001639",
+              "1A4060300002FAE000000285"
+            ],
+            "_source": "1A4060300047D39000015626"
+          },
+          {
+            "package": {
+              "id": 35270305,
+              "tag": "1A4060300047D39000015665",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T20:06:44.027Z",
+            "shipped_weight": 160.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Mendo | Flower Milk N Cookies 1/8 th",
+            "_strain": "Milk N Cookies",
+            "_sources": [
+              "1A4060300047D39000015609",
+              "1A4060300047D39000015507",
+              "1A4060300047D39000015341",
+              "1A4060300049C1A000001772"
+            ],
+            "_source": "1A4060300047D39000015609"
+          }
+        ]
+      }
+    ],
+    "sales_order": null,
+    "updated_at": "2026-11-19T20:06:39.987Z",
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
+  },
+  {
     "id": 3217959,
     "name": null,
     "manifest_number": "0011913385",
@@ -12,49 +518,24 @@
         "transfer_type": "Transfer",
         "route": "Please follow GPS route.",
         "departure_time": "2026-11-18T17:50:00.000Z",
-        "updated_at": "2026-11-19T01:51:54.590Z",
+        "updated_at": "2026-11-19T18:00:51.402Z",
         "contents": [
-          {
-            "package": {
-              "id": 35624447,
-              "tag": "1A406030005E0B2000010813",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-19T02:27:50.299Z",
-            "shipped_weight": 5.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Smalls - Super Runtz",
-            "_strain": "Super Runtz",
-            "_sources": [
-              "1A406030005E0B2000010011",
-              "1A4060300065EDD000507045",
-              "1A4060300065EDD000490710"
-            ],
-            "_source": "1A406030005E0B2000010011"
-          },
           {
             "package": {
               "id": 35458811,
               "tag": "1A406030005E0B2000010480",
-              "is_active": true,
+              "is_active": false,
               "is_testing_package": false,
               "is_trade_sample": false,
-              "status": "In Transit"
+              "status": "Transferred"
             },
-            "status": "Shipped",
+            "status": "Accepted",
             "sale_price": null,
-            "updated_at": "2026-11-19T02:27:49.955Z",
+            "updated_at": "2026-11-19T18:01:27.058Z",
             "shipped_weight": 15.0,
             "shipped_weight_unit": "Pounds",
-            "received_weight": null,
-            "received_weight_unit": null,
+            "received_weight": 15.0,
+            "received_weight_unit": "Pounds",
             "_item": "Smalls - Lemon Cherry Gelato",
             "_strain": "Lemon Cherry Gelato",
             "_sources": [
@@ -104,20 +585,45 @@
           },
           {
             "package": {
-              "id": 35624448,
-              "tag": "1A406030005E0B2000010814",
-              "is_active": true,
+              "id": 35624447,
+              "tag": "1A406030005E0B2000010813",
+              "is_active": false,
               "is_testing_package": false,
               "is_trade_sample": false,
-              "status": "In Transit"
+              "status": "Transferred"
             },
-            "status": "Shipped",
+            "status": "Accepted",
             "sale_price": null,
-            "updated_at": "2026-11-19T02:27:50.632Z",
+            "updated_at": "2026-11-19T18:01:27.261Z",
+            "shipped_weight": 5.0,
+            "shipped_weight_unit": "Pounds",
+            "received_weight": 5.0,
+            "received_weight_unit": "Pounds",
+            "_item": "Smalls - Super Runtz",
+            "_strain": "Super Runtz",
+            "_sources": [
+              "1A406030005E0B2000010011",
+              "1A4060300065EDD000507045",
+              "1A4060300065EDD000490710"
+            ],
+            "_source": "1A406030005E0B2000010011"
+          },
+          {
+            "package": {
+              "id": 35624448,
+              "tag": "1A406030005E0B2000010814",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-19T18:01:27.423Z",
             "shipped_weight": 16.0,
             "shipped_weight_unit": "Pounds",
-            "received_weight": null,
-            "received_weight_unit": null,
+            "received_weight": 16.0,
+            "received_weight_unit": "Pounds",
             "_item": "Smalls - Total Eclipse",
             "_strain": "Total Eclipse",
             "_sources": [
@@ -135,18 +641,18 @@
             "package": {
               "id": 35624462,
               "tag": "1A406030005E0B2000010815",
-              "is_active": true,
+              "is_active": false,
               "is_testing_package": false,
               "is_trade_sample": false,
-              "status": "In Transit"
+              "status": "Transferred"
             },
-            "status": "Shipped",
+            "status": "Accepted",
             "sale_price": null,
-            "updated_at": "2026-11-19T02:27:51.022Z",
+            "updated_at": "2026-11-19T18:01:27.620Z",
             "shipped_weight": 21.0,
             "shipped_weight_unit": "Pounds",
-            "received_weight": null,
-            "received_weight_unit": null,
+            "received_weight": 21.0,
+            "received_weight_unit": "Pounds",
             "_item": "Smalls - White Runtz",
             "_strain": "White Runtz",
             "_sources": [
@@ -163,18 +669,18 @@
             "package": {
               "id": 35624463,
               "tag": "1A406030005E0B2000010816",
-              "is_active": true,
+              "is_active": false,
               "is_testing_package": false,
               "is_trade_sample": false,
-              "status": "In Transit"
+              "status": "Transferred"
             },
-            "status": "Shipped",
+            "status": "Accepted",
             "sale_price": null,
-            "updated_at": "2026-11-19T02:27:51.348Z",
+            "updated_at": "2026-11-19T18:01:27.883Z",
             "shipped_weight": 17.0,
             "shipped_weight_unit": "Pounds",
-            "received_weight": null,
-            "received_weight_unit": null,
+            "received_weight": 17.0,
+            "received_weight_unit": "Pounds",
             "_item": "Smalls - Obama Runtz",
             "_strain": "Obama Runtz",
             "_sources": [
@@ -188,18 +694,18 @@
             "package": {
               "id": 35624464,
               "tag": "1A406030005E0B2000010817",
-              "is_active": true,
+              "is_active": false,
               "is_testing_package": false,
               "is_trade_sample": false,
-              "status": "In Transit"
+              "status": "Transferred"
             },
-            "status": "Shipped",
+            "status": "Accepted",
             "sale_price": null,
-            "updated_at": "2026-11-19T02:27:51.631Z",
+            "updated_at": "2026-11-19T18:01:31.403Z",
             "shipped_weight": 13.0,
             "shipped_weight_unit": "Pounds",
-            "received_weight": null,
-            "received_weight_unit": null,
+            "received_weight": 13.0,
+            "received_weight_unit": "Pounds",
             "_item": "Smalls - Glitter Bomb",
             "_strain": "Glitter Bomb",
             "_sources": [
@@ -213,18 +719,18 @@
             "package": {
               "id": 35458916,
               "tag": "1A406030005E0B2000010482",
-              "is_active": true,
+              "is_active": false,
               "is_testing_package": false,
               "is_trade_sample": false,
-              "status": "In Transit"
+              "status": "Transferred"
             },
-            "status": "Shipped",
+            "status": "Accepted",
             "sale_price": null,
-            "updated_at": "2026-11-19T02:27:51.943Z",
+            "updated_at": "2026-11-19T18:01:31.660Z",
             "shipped_weight": 12.0,
             "shipped_weight_unit": "Pounds",
-            "received_weight": null,
-            "received_weight_unit": null,
+            "received_weight": 12.0,
+            "received_weight_unit": "Pounds",
             "_item": "Smalls - Zoap",
             "_strain": "ZOAP",
             "_sources": [
@@ -284,20 +790,47 @@
           },
           {
             "package": {
-              "id": 35624427,
-              "tag": "1A406030005E0B2000010821",
-              "is_active": true,
+              "id": 35624580,
+              "tag": "1A406030005E0B2000010818",
+              "is_active": false,
               "is_testing_package": false,
               "is_trade_sample": false,
-              "status": "In Transit"
+              "status": "Transferred"
             },
-            "status": "Shipped",
+            "status": "Accepted",
             "sale_price": null,
-            "updated_at": "2026-11-19T02:27:52.265Z",
+            "updated_at": "2026-11-19T18:01:32.609Z",
+            "shipped_weight": 8.0,
+            "shipped_weight_unit": "Pounds",
+            "received_weight": 8.0,
+            "received_weight_unit": "Pounds",
+            "_item": "Smalls - It'z Pluto",
+            "_strain": "It'z Pluto",
+            "_sources": [
+              "1A406030005E0B2000010014",
+              "1A406030005E0B2000010126",
+              "1A4060300065EDD000507045",
+              "1A4060300089ABD000000109",
+              "1A4060300065EDD000490710"
+            ],
+            "_source": ""
+          },
+          {
+            "package": {
+              "id": 35624427,
+              "tag": "1A406030005E0B2000010821",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-19T18:01:31.804Z",
             "shipped_weight": 15.0,
             "shipped_weight_unit": "Pounds",
-            "received_weight": null,
-            "received_weight_unit": null,
+            "received_weight": 15.0,
+            "received_weight_unit": "Pounds",
             "_item": "Smalls - Canal St Runtz",
             "_strain": "Canal St. Runtz",
             "_sources": [
@@ -314,18 +847,18 @@
             "package": {
               "id": 35624485,
               "tag": "1A406030005E0B2000010819",
-              "is_active": true,
+              "is_active": false,
               "is_testing_package": false,
               "is_trade_sample": false,
-              "status": "In Transit"
+              "status": "Transferred"
             },
-            "status": "Shipped",
+            "status": "Accepted",
             "sale_price": null,
-            "updated_at": "2026-11-19T02:27:52.591Z",
+            "updated_at": "2026-11-19T18:01:32.436Z",
             "shipped_weight": 14.0,
             "shipped_weight_unit": "Pounds",
-            "received_weight": null,
-            "received_weight_unit": null,
+            "received_weight": 14.0,
+            "received_weight_unit": "Pounds",
             "_item": "Smalls - Galactic Warheadz",
             "_strain": "Galactic Warheadz",
             "_sources": [
@@ -334,11 +867,35 @@
               "1A4060300089ABD000000041"
             ],
             "_source": "1A406030005E0B2000010297"
-          },
+          }
+        ]
+      }
+    ],
+    "sales_order": null,
+    "updated_at": "2026-11-19T18:00:51.144Z",
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Adobe: CCL22-0001284",
+    "_facility_license_number": "CCL22-0001284"
+  },
+  {
+    "id": 3219232,
+    "name": null,
+    "manifest_number": "0011917542",
+    "facility_id": 4929,
+    "is_active": true,
+    "destinations": [
+      {
+        "id": 3576160,
+        "destination_facility": "C11-0001255-LIC",
+        "transfer_type": "Transfer",
+        "route": "Route to be Traveled Notes: details for extenuating circumstances (e.g., road closure, flat tire, etc.)\r\nRoute to be Traveled Notes: details for extenuating circumstances (e.g., road\r\nclosure, flat tire, etc.)\r\nWEIGHMASTER CERTIFICATE\r\nTHIS IS TO CERTIFY that the following described commodity was weighed,\r\nmeasured, or counted by a weighmaster, whose signature is on this certificate,\r\nwho is a recognized authority of accuracy, as prescribed by Chapter 7\r\n(commencing with Section 12700) of Division 5 of the California Business and\r\nProfessions Code, administered by the Division of Measurement Standards of\r\nthe California Department of Food and Agriculture.\r\nWeighed by: Yali AWI-0487\r\nRoute to be Traveled Notes: details for extenuating circumstances (e.g., road\r\nclosure, flat tire, etc.)\r\nRoute to be Traveled:\r\nLeave Airway Drive and get onto US-101 South.\r\nStay on 101 South through Petaluma and toward San Rafael.\r\nContinue toward the Richmond-San Rafael Bridge.\r\nCross the bridge into the East Bay.\r\nFollow I-580 East toward Oakland.\r\nTake I-880 South toward Alameda/San Jose.\r\nTake the exit for Alameda and follow signs toward Bay Farm Island.\r\nContinue onto Island Drive, then follow the signs/roads toward North Loop Road.\r\nTurn onto N Loop Rd and look for 2300 N Loop Rd",
+        "departure_time": "2026-11-19T09:00:00.000Z",
+        "updated_at": "2026-11-19T17:09:26.262Z",
+        "contents": [
           {
             "package": {
-              "id": 35624580,
-              "tag": "1A406030005E0B2000010818",
+              "id": 35587237,
+              "tag": "1A4060300047D39000015765",
               "is_active": true,
               "is_testing_package": false,
               "is_trade_sample": false,
@@ -346,30 +903,1098 @@
             },
             "status": "Shipped",
             "sale_price": null,
-            "updated_at": "2026-11-19T02:27:53.346Z",
-            "shipped_weight": 8.0,
-            "shipped_weight_unit": "Pounds",
+            "updated_at": "2026-11-19T17:30:54.048Z",
+            "shipped_weight": 368.0,
+            "shipped_weight_unit": "Each",
             "received_weight": null,
             "received_weight_unit": null,
-            "_item": "Smalls - It'z Pluto",
-            "_strain": "It'z Pluto",
+            "_item": "Soma Rosa | Flower Pineapple Skunk 1/8 th",
+            "_strain": "Pineapple Skunk",
             "_sources": [
-              "1A406030005E0B2000010014",
-              "1A406030005E0B2000010126",
-              "1A4060300065EDD000507045",
-              "1A4060300089ABD000000109",
-              "1A4060300065EDD000490710"
+              "1A4060300047D39000015719",
+              "1A406030005E0B2000010442",
+              "1A406030005E0B2000010086",
+              "1A4060300089ABD000000107"
             ],
-            "_source": ""
+            "_source": "1A4060300047D39000015719"
+          },
+          {
+            "package": {
+              "id": 35547288,
+              "tag": "1A4060300047D39000015749",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:30:54.618Z",
+            "shipped_weight": 400.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Ice Cream Cake 1/8 th",
+            "_strain": "Ice Cream Cake",
+            "_sources": [
+              "1A4060300047D39000015625",
+              "1A406030005E0B2000010279",
+              "1A406030005E0B2000010074",
+              "1A4060300089ABD000000041"
+            ],
+            "_source": "1A4060300047D39000015625"
+          },
+          {
+            "package": {
+              "id": 35585677,
+              "tag": "1A4060300047D39000015766",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:30:52.797Z",
+            "shipped_weight": 240.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Pineapple Skunk 1 oz",
+            "_strain": "Pineapple Skunk",
+            "_sources": [
+              "1A4060300047D39000015719",
+              "1A406030005E0B2000010442",
+              "1A406030005E0B2000010086",
+              "1A4060300089ABD000000107"
+            ],
+            "_source": "1A4060300047D39000015719"
+          },
+          {
+            "package": {
+              "id": 35585795,
+              "tag": "1A4060300047D39000015767",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:30:53.498Z",
+            "shipped_weight": 190.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Pineapple Skunk 1/2 oz",
+            "_strain": "Pineapple Skunk",
+            "_sources": [
+              "1A4060300047D39000015719",
+              "1A406030005E0B2000010442",
+              "1A406030005E0B2000010086",
+              "1A4060300089ABD000000107"
+            ],
+            "_source": "1A4060300047D39000015719"
+          },
+          {
+            "package": {
+              "id": 35551501,
+              "tag": "1A4060300047D39000015751",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:30:55.177Z",
+            "shipped_weight": 85.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Ice Cream Cake 1/8 th",
+            "_strain": "Ice Cream Cake",
+            "_sources": [
+              "1A4060300047D39000015749",
+              "1A4060300047D39000015625",
+              "1A406030005E0B2000010279",
+              "1A406030005E0B2000010074"
+            ],
+            "_source": "1A4060300047D39000015749"
+          },
+          {
+            "package": {
+              "id": 35514561,
+              "tag": "1A4060300047D39000015735",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:30:56.022Z",
+            "shipped_weight": 280.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Ice Cream Cake 1/2 oz",
+            "_strain": "Ice Cream Cake",
+            "_sources": [
+              "1A4060300047D39000015625",
+              "1A406030005E0B2000010279",
+              "1A406030005E0B2000010074",
+              "1A4060300089ABD000000041"
+            ],
+            "_source": "1A4060300047D39000015625"
+          },
+          {
+            "package": {
+              "id": 35514231,
+              "tag": "1A4060300047D39000015737",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:30:56.927Z",
+            "shipped_weight": 248.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Ice Cream Cake 1 oz",
+            "_strain": "Ice Cream Cake",
+            "_sources": [
+              "1A4060300047D39000015625",
+              "1A406030005E0B2000010279",
+              "1A406030005E0B2000010074",
+              "1A4060300089ABD000000041"
+            ],
+            "_source": "1A4060300047D39000015625"
+          },
+          {
+            "package": {
+              "id": 35514560,
+              "tag": "1A4060300047D39000015734",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:30:57.893Z",
+            "shipped_weight": 200.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Lava Cake 1 oz",
+            "_strain": "Lava Cake",
+            "_sources": [
+              "1A4060300047D39000015596",
+              "1A406030005E0B2000010195",
+              "1A406030005E0B2000010074",
+              "1A4060300089ABD000000041"
+            ],
+            "_source": "1A4060300047D39000015596"
+          },
+          {
+            "package": {
+              "id": 35531684,
+              "tag": "1A4060300047D39000015744",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:30:59.445Z",
+            "shipped_weight": 220.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Lava Cake 1/2 oz",
+            "_strain": "Lava Cake",
+            "_sources": [
+              "1A4060300047D39000015596",
+              "1A406030005E0B2000010195",
+              "1A406030005E0B2000010074",
+              "1A4060300089ABD000000041"
+            ],
+            "_source": "1A4060300047D39000015596"
+          },
+          {
+            "package": {
+              "id": 35542343,
+              "tag": "1A4060300047D39000015748",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:31:00.357Z",
+            "shipped_weight": 320.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Lava Cake 1/8 th",
+            "_strain": "Lava Cake",
+            "_sources": [
+              "1A4060300047D39000015596",
+              "1A406030005E0B2000010195",
+              "1A406030005E0B2000010074",
+              "1A4060300089ABD000000041"
+            ],
+            "_source": "1A4060300047D39000015596"
+          },
+          {
+            "package": {
+              "id": 35544924,
+              "tag": "1A4060300047D39000015745",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:31:01.298Z",
+            "shipped_weight": 200.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Lavender Jack 1 oz",
+            "_strain": "Lavender Jack",
+            "_sources": [
+              "1A4060300047D39000015706",
+              "1A406030005E0B2000010446",
+              "1A406030005E0B2000010314",
+              "1A406030005E0B2000010128"
+            ],
+            "_source": "1A4060300047D39000015706"
+          },
+          {
+            "package": {
+              "id": 35546444,
+              "tag": "1A4060300047D39000015747",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:31:02.941Z",
+            "shipped_weight": 320.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Lavender Jack 1/8 th",
+            "_strain": "Lavender Jack",
+            "_sources": [
+              "1A4060300047D39000015706",
+              "1A406030005E0B2000010446",
+              "1A406030005E0B2000010314",
+              "1A406030005E0B2000010128"
+            ],
+            "_source": "1A4060300047D39000015706"
+          },
+          {
+            "package": {
+              "id": 35577620,
+              "tag": "1A4060300047D39000015760",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:31:03.320Z",
+            "shipped_weight": 81.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Lavender Jack 1/8 th",
+            "_strain": "Lavender Jack",
+            "_sources": [
+              "1A4060300047D39000015747",
+              "1A4060300047D39000015706",
+              "1A406030005E0B2000010446",
+              "1A406030005E0B2000010314"
+            ],
+            "_source": "1A4060300047D39000015747"
+          },
+          {
+            "package": {
+              "id": 35582632,
+              "tag": "1A4060300047D39000015768",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:31:03.708Z",
+            "shipped_weight": 264.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Tropicana Cherry 1 oz",
+            "_strain": "Tropicana Cherry",
+            "_sources": [
+              "1A4060300047D39000015709",
+              "1A406030005E0B2000010444",
+              "1A406030005E0B2000010318",
+              "1A406030005E0B2000010098"
+            ],
+            "_source": "1A4060300047D39000015709"
+          },
+          {
+            "package": {
+              "id": 35584874,
+              "tag": "1A4060300047D39000015752",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:31:04.064Z",
+            "shipped_weight": 210.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Tropicana Cherry 1/2 oz",
+            "_strain": "Tropicana Cherry",
+            "_sources": [
+              "1A4060300047D39000015709",
+              "1A406030005E0B2000010444",
+              "1A406030005E0B2000010318",
+              "1A406030005E0B2000010098"
+            ],
+            "_source": "1A4060300047D39000015709"
+          },
+          {
+            "package": {
+              "id": 35585239,
+              "tag": "1A4060300047D39000015764",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:31:04.759Z",
+            "shipped_weight": 480.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Tropicana Cherry 1/8 th",
+            "_strain": "Tropicana Cherry",
+            "_sources": [
+              "1A4060300047D39000015709",
+              "1A406030005E0B2000010444",
+              "1A406030005E0B2000010318",
+              "1A406030005E0B2000010098"
+            ],
+            "_source": "1A4060300047D39000015709"
+          },
+          {
+            "package": {
+              "id": 35620778,
+              "tag": "1A4060300047D39000015778",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:31:05.563Z",
+            "shipped_weight": 90.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Tropicana Cherry 1/8 th",
+            "_strain": "Tropicana Cherry",
+            "_sources": [
+              "1A4060300047D39000015764",
+              "1A4060300047D39000015709",
+              "1A406030005E0B2000010444",
+              "1A406030005E0B2000010318"
+            ],
+            "_source": "1A4060300047D39000015764"
+          },
+          {
+            "package": {
+              "id": 35587466,
+              "tag": "1A4060300047D39000015781",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:31:06.556Z",
+            "shipped_weight": 264.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Key Lime Pie 1 oz",
+            "_strain": "Key Lime Pie",
+            "_sources": [
+              "1A4060300047D39000015702",
+              "1A406030005E0B2000010440",
+              "1A406030005E0B2000010060",
+              "1A406030007975D000000449"
+            ],
+            "_source": "1A4060300047D39000015702"
+          },
+          {
+            "package": {
+              "id": 35587465,
+              "tag": "1A4060300047D39000015780",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:31:07.249Z",
+            "shipped_weight": 210.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Key Lime Pie 1/2 oz",
+            "_strain": "Key Lime Pie",
+            "_sources": [
+              "1A4060300047D39000015702",
+              "1A406030005E0B2000010440",
+              "1A406030005E0B2000010060",
+              "1A406030007975D000000449"
+            ],
+            "_source": "1A4060300047D39000015702"
+          },
+          {
+            "package": {
+              "id": 35587464,
+              "tag": "1A4060300047D39000015779",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:31:07.732Z",
+            "shipped_weight": 640.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Key Lime Pie 1/8 th",
+            "_strain": "Key Lime Pie",
+            "_sources": [
+              "1A4060300047D39000015702",
+              "1A406030005E0B2000010440",
+              "1A406030005E0B2000010060",
+              "1A406030007975D000000449"
+            ],
+            "_source": "1A4060300047D39000015702"
+          },
+          {
+            "package": {
+              "id": 35366781,
+              "tag": "1A4060300047D39000015672",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:31:09.481Z",
+            "shipped_weight": 300.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Blueberry Jam 1/2 oz",
+            "_strain": "Blueberry Jam",
+            "_sources": [
+              "1A4060300047D39000015622",
+              "1A406030005E0B2000010276",
+              "1A406030005E0B2000010064",
+              "1A4060300089ABD000000002"
+            ],
+            "_source": "1A4060300047D39000015622"
+          },
+          {
+            "package": {
+              "id": 35545439,
+              "tag": "1A4060300047D39000015746",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:31:02.262Z",
+            "shipped_weight": 190.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Lavender Jack 1/2 oz",
+            "_strain": "Lavender Jack",
+            "_sources": [
+              "1A4060300047D39000015706",
+              "1A406030005E0B2000010446",
+              "1A406030005E0B2000010314",
+              "1A406030005E0B2000010128"
+            ],
+            "_source": "1A4060300047D39000015706"
+          },
+          {
+            "package": {
+              "id": 35624133,
+              "tag": "1A4060300047D39000015786",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:31:08.373Z",
+            "shipped_weight": 115.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Key Lime Pie 1/8 th",
+            "_strain": "Key Lime Pie",
+            "_sources": [
+              "1A4060300047D39000015779",
+              "1A4060300047D39000015702",
+              "1A406030005E0B2000010440",
+              "1A406030005E0B2000010060"
+            ],
+            "_source": "1A4060300047D39000015779"
           }
         ]
       }
     ],
     "sales_order": null,
-    "updated_at": "2026-11-19T02:27:48.042Z",
+    "updated_at": "2026-11-19T17:30:49.090Z",
     "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
+  },
+  {
+    "id": 3219340,
+    "name": null,
+    "manifest_number": "0011917961",
+    "facility_id": 4929,
+    "is_active": true,
+    "destinations": [
+      {
+        "id": 3576321,
+        "destination_facility": "C11-0001255-LIC",
+        "transfer_type": "Transfer",
+        "route": "Route to be Traveled Notes: details for extenuating circumstances (e.g., road closure, flat tire, etc.)\r\nRoute to be Traveled Notes: details for extenuating circumstances (e.g., road\r\nclosure, flat tire, etc.)\r\nWEIGHMASTER CERTIFICATE\r\nTHIS IS TO CERTIFY that the following described commodity was weighed,\r\nmeasured, or counted by a weighmaster, whose signature is on this certificate,\r\nwho is a recognized authority of accuracy, as prescribed by Chapter 7\r\n(commencing with Section 12700) of Division 5 of the California Business and\r\nProfessions Code, administered by the Division of Measurement Standards of\r\nthe California Department of Food and Agriculture.\r\nWeighed by: Yali AWI-0488\r\nRoute to be Traveled Notes: details for extenuating circumstances (e.g., road\r\nclosure, flat tire, etc.)\r\nRoute to be Traveled:\r\nLeave Airway Drive and get onto US-101 South.\r\nStay on 101 South through Petaluma and toward San Rafael.\r\nContinue toward the Richmond-San Rafael Bridge.\r\nCross the bridge into the East Bay.\r\nFollow I-580 East toward Oakland.\r\nTake I-880 South toward Alameda/San Jose.\r\nTake the exit for Alameda and follow signs toward Bay Farm Island.\r\nContinue onto Island Drive, then follow the signs/roads toward North Loop Road.\r\nTurn onto N Loop Rd and look for 2300 N Loop Rd",
+        "departure_time": "2026-11-19T09:08:00.000Z",
+        "updated_at": "2026-11-19T17:27:21.416Z",
+        "contents": [
+          {
+            "package": {
+              "id": 35624535,
+              "tag": "1A4060300047D39000015783",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:27:27.163Z",
+            "shipped_weight": 160.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Howie Roll | Flower Lava Cake 1/2 oz",
+            "_strain": "Lava Cake",
+            "_sources": [
+              "1A4060300047D39000015596",
+              "1A406030005E0B2000010195",
+              "1A406030005E0B2000010074",
+              "1A4060300089ABD000000041"
+            ],
+            "_source": "1A4060300047D39000015596"
+          },
+          {
+            "package": {
+              "id": 35624404,
+              "tag": "1A4060300047D39000015790",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:27:27.844Z",
+            "shipped_weight": 336.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Howie Roll - Flower Ice Cream Cake 1/8 th",
+            "_strain": "Ice Cream Cake",
+            "_sources": [
+              "1A4060300047D39000015625",
+              "1A406030005E0B2000010279",
+              "1A406030005E0B2000010074",
+              "1A4060300089ABD000000041"
+            ],
+            "_source": "1A4060300047D39000015625"
+          },
+          {
+            "package": {
+              "id": 35514673,
+              "tag": "1A4060300047D39000015733",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:27:28.911Z",
+            "shipped_weight": 240.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Howie Roll | Flower Blueberry Jam 1/2 oz",
+            "_strain": "Blueberry Jam",
+            "_sources": [
+              "1A4060300047D39000015622",
+              "1A406030005E0B2000010276",
+              "1A406030005E0B2000010064",
+              "1A4060300089ABD000000002"
+            ],
+            "_source": "1A4060300047D39000015622"
+          },
+          {
+            "package": {
+              "id": 35574767,
+              "tag": "1A4060300047D39000015761",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:27:30.232Z",
+            "shipped_weight": 20.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Howie Roll | Flower Blueberry Jam 1/2 oz",
+            "_strain": "Blueberry Jam",
+            "_sources": [
+              "1A4060300047D39000015733",
+              "1A4060300047D39000015622",
+              "1A406030005E0B2000010276",
+              "1A406030005E0B2000010064"
+            ],
+            "_source": "1A4060300047D39000015733"
+          },
+          {
+            "package": {
+              "id": 35514672,
+              "tag": "1A4060300047D39000015732",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:27:31.255Z",
+            "shipped_weight": 640.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Howie Roll | Flower Gumdropz 1/8 th",
+            "_strain": "Gumdropz",
+            "_sources": [
+              "1A4060300047D39000015624",
+              "1A406030005E0B2000010278",
+              "1A406030005E0B2000010072",
+              "1A4060300089ABD000000034"
+            ],
+            "_source": "1A4060300047D39000015624"
+          },
+          {
+            "package": {
+              "id": 35578076,
+              "tag": "1A4060300047D39000015756",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:27:32.530Z",
+            "shipped_weight": 165.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Howie Roll | Flower Gumdropz 1/8 th",
+            "_strain": "Gumdropz",
+            "_sources": [
+              "1A4060300047D39000015732",
+              "1A4060300047D39000015624",
+              "1A406030005E0B2000010278",
+              "1A406030005E0B2000010072"
+            ],
+            "_source": "1A4060300047D39000015732"
+          },
+          {
+            "package": {
+              "id": 35514703,
+              "tag": "1A4060300047D39000015743",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:27:33.975Z",
+            "shipped_weight": 272.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Howie Roll | Flower Gumdropz 1/2 oz",
+            "_strain": "Gumdropz",
+            "_sources": [
+              "1A4060300047D39000015624",
+              "1A406030005E0B2000010278",
+              "1A406030005E0B2000010072",
+              "1A4060300089ABD000000034"
+            ],
+            "_source": "1A4060300047D39000015624"
+          },
+          {
+            "package": {
+              "id": 35460283,
+              "tag": "1A4060300047D39000015717",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:27:34.855Z",
+            "shipped_weight": 360.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Howie Roll 14g Ground Flower Pouch - Obama Runtz",
+            "_strain": "Obama Runtz",
+            "_sources": [
+              "1A4060300047D39000015590",
+              "1A406030005E0B2000010189",
+              "1A406030005E0B2000003437",
+              "1A406030005E0B2000010012",
+              "1A4060300049C1A000002453",
+              "1A4060300065EDD000507045"
+            ],
+            "_source": "1A4060300047D39000015590"
+          },
+          {
+            "package": {
+              "id": 35623126,
+              "tag": "1A4060300047D39000015787",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:27:35.843Z",
+            "shipped_weight": 752.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Howie Roll | Flower Blueberry Jam 1/8 oz",
+            "_strain": "Blueberry Jam",
+            "_sources": [
+              "1A4060300047D39000015622",
+              "1A406030005E0B2000010276",
+              "1A406030005E0B2000010064",
+              "1A4060300089ABD000000002"
+            ],
+            "_source": "1A4060300047D39000015622"
+          },
+          {
+            "package": {
+              "id": 35623483,
+              "tag": "1A4060300047D39000015782",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:27:36.771Z",
+            "shipped_weight": 146.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Howie Roll | Flower Blueberry Jam 1/8 oz",
+            "_strain": "Blueberry Jam",
+            "_sources": [
+              "1A4060300047D39000015787",
+              "1A4060300047D39000015622",
+              "1A406030005E0B2000010276",
+              "1A406030005E0B2000010064"
+            ],
+            "_source": "1A4060300047D39000015787"
+          },
+          {
+            "package": {
+              "id": 35640456,
+              "tag": "1A4060300047D39000015789",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:27:37.669Z",
+            "shipped_weight": 15.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Howie Roll - Flower Ice Cream Cake 1/2 oz",
+            "_strain": "Ice Cream Cake",
+            "_sources": [
+              "1A4060300047D39000015788",
+              "1A4060300047D39000015625",
+              "1A406030005E0B2000010279",
+              "1A406030005E0B2000010074"
+            ],
+            "_source": "1A4060300047D39000015788"
+          },
+          {
+            "package": {
+              "id": 35624461,
+              "tag": "1A4060300047D39000015788",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:27:38.606Z",
+            "shipped_weight": 152.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Howie Roll - Flower Ice Cream Cake 1/2 oz",
+            "_strain": "Ice Cream Cake",
+            "_sources": [
+              "1A4060300047D39000015625",
+              "1A406030005E0B2000010279",
+              "1A406030005E0B2000010074",
+              "1A4060300089ABD000000041"
+            ],
+            "_source": "1A4060300047D39000015625"
+          },
+          {
+            "package": {
+              "id": 35460370,
+              "tag": "1A4060300047D39000015713",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:27:40.119Z",
+            "shipped_weight": 448.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Howie Roll 14g Ground Flower Pouch - Mule Fuel",
+            "_strain": "Mule Fuel",
+            "_sources": [
+              "1A4060300047D39000015587",
+              "1A406030005E0B2000010190",
+              "1A406030005E0B2000003443",
+              "1A406030005E0B2000010018",
+              "1A4060300049C1A000002453",
+              "1A4060300065EDD000518802"
+            ],
+            "_source": "1A4060300047D39000015587"
+          },
+          {
+            "package": {
+              "id": 35622155,
+              "tag": "1A4060300047D39000015792",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:27:40.974Z",
+            "shipped_weight": 59.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Howie Roll 14g Ground Flower Pouch - Obama Runtz",
+            "_strain": "Obama Runtz",
+            "_sources": [
+              "1A4060300047D39000015717",
+              "1A4060300047D39000015590",
+              "1A406030005E0B2000010189",
+              "1A406030005E0B2000003437",
+              "1A406030005E0B2000010012"
+            ],
+            "_source": "1A4060300047D39000015717"
+          },
+          {
+            "package": {
+              "id": 35399648,
+              "tag": "1A4060300047D39000015690",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:27:27.112Z",
+            "shipped_weight": 224.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Howie Roll | Flower Pack Mule 1/2 oz",
+            "_strain": "Pack Mule",
+            "_sources": [
+              "1A4060300047D39000015594",
+              "1A406030005E0B2000010194",
+              "1A406030005E0B2000010040",
+              "1A4060300089ABD000000006"
+            ],
+            "_source": "1A4060300047D39000015594"
+          },
+          {
+            "package": {
+              "id": 35624602,
+              "tag": "1A4060300047D39000015805",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:27:24.480Z",
+            "shipped_weight": 105.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Howie Roll | Flower Lavender Jack 1/8 th",
+            "_strain": "Lavender Jack",
+            "_sources": [
+              "1A4060300047D39000015784",
+              "1A4060300047D39000015706",
+              "1A406030005E0B2000010446",
+              "1A406030005E0B2000010314"
+            ],
+            "_source": "1A4060300047D39000015784"
+          },
+          {
+            "package": {
+              "id": 35587660,
+              "tag": "1A4060300047D39000015777",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:27:25.012Z",
+            "shipped_weight": 272.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Howie Roll | Flower Tropicana Cherry 1/8 th",
+            "_strain": "AGP | Flower Tropicana Cherry",
+            "_sources": [
+              "1A4060300047D39000015709",
+              "1A406030005E0B2000010444",
+              "1A406030005E0B2000010318",
+              "1A406030005E0B2000010098"
+            ],
+            "_source": "1A4060300047D39000015709"
+          },
+          {
+            "package": {
+              "id": 35624572,
+              "tag": "1A4060300047D39000015785",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-19T17:27:25.375Z",
+            "shipped_weight": 336.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Howie Roll | Flower Lava cake 1/8 th",
+            "_strain": "Lava Cake",
+            "_sources": [
+              "1A4060300047D39000015596",
+              "1A406030005E0B2000010195",
+              "1A406030005E0B2000010074",
+              "1A4060300089ABD000000041"
+            ],
+            "_source": "1A4060300047D39000015596"
+          }
+        ]
+      }
+    ],
+    "sales_order": null,
+    "updated_at": "2026-11-19T17:27:20.926Z",
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
   },
   {
     "id": 3217799,
@@ -647,307 +2272,6 @@
     ],
     "sales_order": null,
     "updated_at": "2026-11-18T22:57:48.099Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Adobe: CCL22-0001284",
-    "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 3210762,
-    "name": null,
-    "manifest_number": "0011891108",
-    "facility_id": 4923,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3564656,
-        "destination_facility": "C12-0000453-LIC",
-        "transfer_type": "Transfer",
-        "route": "Please follow GPS route.",
-        "departure_time": "2026-11-16T11:35:00.000Z",
-        "updated_at": "2026-11-18T21:27:39.741Z",
-        "contents": [
-          {
-            "package": {
-              "id": 35544795,
-              "tag": "1A406030005E0B2000010646",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Rejected",
-            "sale_price": null,
-            "updated_at": "2026-11-18T21:27:47.240Z",
-            "shipped_weight": 10.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Flower - Cereal Milk",
-            "_strain": "Cereal Milk",
-            "_sources": [
-              "1A406030005E0B2000010037",
-              "1A406030007975D000000444"
-            ],
-            "_source": "1A406030005E0B2000010037"
-          },
-          {
-            "package": {
-              "id": 35544796,
-              "tag": "1A406030005E0B2000010647",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Rejected",
-            "sale_price": null,
-            "updated_at": "2026-11-18T21:27:47.967Z",
-            "shipped_weight": 5.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Flower - BBJ",
-            "_strain": "BBJ",
-            "_sources": [
-              "1A406030005E0B2000010312",
-              "1A406030005E0B2000010064",
-              "1A4060300089ABD000000002"
-            ],
-            "_source": "1A406030005E0B2000010312"
-          },
-          {
-            "package": {
-              "id": 35544877,
-              "tag": "1A406030005E0B2000010648",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Rejected",
-            "sale_price": null,
-            "updated_at": "2026-11-18T21:27:48.311Z",
-            "shipped_weight": 7.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Flower - Glitter Bomb",
-            "_strain": "GBM",
-            "_sources": [
-              "1A406030005E0B2000010209",
-              "1A406030005E0B2000010341",
-              "1A4060300089ABD000000063"
-            ],
-            "_source": ""
-          },
-          {
-            "package": {
-              "id": 35544797,
-              "tag": "1A406030005E0B2000010649",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Rejected",
-            "sale_price": null,
-            "updated_at": "2026-11-18T21:27:48.677Z",
-            "shipped_weight": 22.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Flower - Permanent Marker",
-            "_strain": "P.Marker",
-            "_sources": [
-              "1A406030005E0B2000010343",
-              "1A406030005E0B2000010207",
-              "1A406030007975D000000462"
-            ],
-            "_source": "1A406030005E0B2000010343"
-          },
-          {
-            "package": {
-              "id": 35544791,
-              "tag": "1A406030005E0B2000010643",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Rejected",
-            "sale_price": null,
-            "updated_at": "2026-11-18T21:27:44.069Z",
-            "shipped_weight": 19.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Flower - Canal St Runtz",
-            "_strain": "Canal St. Runtz",
-            "_sources": [
-              "1A406030005E0B2000010320",
-              "1A406030005E0B2000010033",
-              "1A406030007975D000000453"
-            ],
-            "_source": "1A406030005E0B2000010320"
-          },
-          {
-            "package": {
-              "id": 35544793,
-              "tag": "1A406030005E0B2000010644",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Rejected",
-            "sale_price": null,
-            "updated_at": "2026-11-18T21:27:45.127Z",
-            "shipped_weight": 22.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Flower - Pack Mule",
-            "_strain": "Pack Mule",
-            "_sources": [
-              "1A406030005E0B2000010322",
-              "1A406030005E0B2000010148",
-              "1A4060300089ABD000000011"
-            ],
-            "_source": "1A406030005E0B2000010322"
-          },
-          {
-            "package": {
-              "id": 35544794,
-              "tag": "1A406030005E0B2000010645",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Rejected",
-            "sale_price": null,
-            "updated_at": "2026-11-18T21:27:46.321Z",
-            "shipped_weight": 10.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Flower - UK Cheese",
-            "_strain": "UK Cheese",
-            "_sources": [
-              "1A406030005E0B2000010432",
-              "1A406030005E0B2000010081",
-              "1A4060300089ABD000000098"
-            ],
-            "_source": "1A406030005E0B2000010432"
-          },
-          {
-            "package": {
-              "id": 35544798,
-              "tag": "1A406030005E0B2000010650",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Rejected",
-            "sale_price": null,
-            "updated_at": "2026-11-18T21:27:49.000Z",
-            "shipped_weight": 22.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Flower - Banana Punch",
-            "_strain": "Banana Punch",
-            "_sources": [
-              "1A406030005E0B2000010208",
-              "1A406030005E0B2000010434",
-              "1A4060300089ABD000000085"
-            ],
-            "_source": ""
-          },
-          {
-            "package": {
-              "id": 35544799,
-              "tag": "1A406030005E0B2000010651",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Rejected",
-            "sale_price": null,
-            "updated_at": "2026-11-18T21:27:49.320Z",
-            "shipped_weight": 4.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Flower - Tropicana Cherry",
-            "_strain": "Tropicana Cherry",
-            "_sources": [
-              "1A406030005E0B2000010318",
-              "1A406030005E0B2000010098",
-              "1A406030007975D000000441"
-            ],
-            "_source": "1A406030005E0B2000010318"
-          },
-          {
-            "package": {
-              "id": 35544800,
-              "tag": "1A406030005E0B2000010652",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Rejected",
-            "sale_price": null,
-            "updated_at": "2026-11-18T21:27:49.642Z",
-            "shipped_weight": 18.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Flower - Garlic Juice",
-            "_strain": "Garlic Juice",
-            "_sources": [
-              "1A406030005E0B2000010515",
-              "1A406030005E0B2000010126",
-              "1A4060300089ABD000000109"
-            ],
-            "_source": "1A406030005E0B2000010515"
-          },
-          {
-            "package": {
-              "id": 35544801,
-              "tag": "1A406030005E0B2000010653",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Rejected",
-            "sale_price": null,
-            "updated_at": "2026-11-18T21:27:50.013Z",
-            "shipped_weight": 1.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Flower - Gelato #41",
-            "_strain": "Gelato 41",
-            "_sources": [
-              "1A406030005E0B2000010636",
-              "1A406030005E0B2000010005",
-              "1A406030007975D000000428",
-              "1A406030007975D000000429",
-              "1A406030007975D000000430",
-              "1A406030007975D000000431"
-            ],
-            "_source": "1A406030005E0B2000010636"
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-11-18T21:27:39.000Z",
     "_license_key_label": "All Facilities",
     "_facility_name": "Adobe: CCL22-0001284",
     "_facility_license_number": "CCL22-0001284"
@@ -17115,609 +18439,5 @@
     "_license_key_label": "All Facilities",
     "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
     "_facility_license_number": "CCL26-0000027"
-  },
-  {
-    "id": 3148881,
-    "name": null,
-    "manifest_number": "0011721647",
-    "facility_id": 5095,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3485399,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "See Google Maps for Route",
-        "departure_time": "2026-10-19T10:12:00.000Z",
-        "updated_at": "2026-10-20T20:45:56.863Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34824590,
-              "tag": "1A4060300089ABD000000110",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-20T20:45:59.679Z",
-            "shipped_weight": 1812.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 1812.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - Garlic Juice",
-            "_strain": "Garlic Juice",
-            "_source": ""
-          },
-          {
-            "package": {
-              "id": 34824592,
-              "tag": "1A4060300089ABD000000111",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-20T20:46:00.277Z",
-            "shipped_weight": 244.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 244.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - S/N",
-            "_strain": "S/N",
-            "_source": ""
-          },
-          {
-            "package": {
-              "id": 34824682,
-              "tag": "1A4060300089ABD000000112",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-20T20:46:00.716Z",
-            "shipped_weight": 140.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 140.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - GG",
-            "_strain": "GG",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-20T20:45:56.672Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
-    "_facility_license_number": "CCL26-0000027"
-  },
-  {
-    "id": 3149959,
-    "name": null,
-    "manifest_number": "0011724377",
-    "facility_id": 5095,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3486796,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "See Google Maps for Route",
-        "departure_time": "2026-10-19T15:30:00.000Z",
-        "updated_at": "2026-10-20T20:43:12.043Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34840027,
-              "tag": "1A4060300089ABD000000117",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-20T20:43:13.891Z",
-            "shipped_weight": 2037.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 2037.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - ZxP",
-            "_strain": "ZxP",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-20T20:43:11.879Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
-    "_facility_license_number": "CCL26-0000027"
-  },
-  {
-    "id": 3150109,
-    "name": null,
-    "manifest_number": "0011725938",
-    "facility_id": 5095,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3486999,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "See Google Maps for Route",
-        "departure_time": "2026-10-19T17:50:00.000Z",
-        "updated_at": "2026-10-20T20:43:09.888Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34841165,
-              "tag": "1A4060300089ABD000000121",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-20T20:43:11.752Z",
-            "shipped_weight": 1949.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 1949.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - BH",
-            "_strain": "BH",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-20T20:43:09.648Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
-    "_facility_license_number": "CCL26-0000027"
-  },
-  {
-    "id": 3150107,
-    "name": null,
-    "manifest_number": "0011724986",
-    "facility_id": 5095,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3486996,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "See Google Maps for Route",
-        "departure_time": "2026-10-19T17:32:00.000Z",
-        "updated_at": "2026-10-20T20:39:53.851Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34840824,
-              "tag": "1A4060300089ABD000000118",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-20T20:39:55.785Z",
-            "shipped_weight": 954.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 954.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - Grape Gas",
-            "_strain": "Grape Gas",
-            "_source": ""
-          },
-          {
-            "package": {
-              "id": 34840825,
-              "tag": "1A4060300089ABD000000119",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-20T20:39:56.516Z",
-            "shipped_weight": 1267.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 1267.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - Grapes and Cream",
-            "_strain": "Grapes and Cream",
-            "_source": ""
-          },
-          {
-            "package": {
-              "id": 34840833,
-              "tag": "1A4060300089ABD000000120",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-20T20:39:56.925Z",
-            "shipped_weight": 218.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 218.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - STJ",
-            "_strain": "STJ",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-20T20:39:53.563Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
-    "_facility_license_number": "CCL26-0000027"
-  },
-  {
-    "id": 3148222,
-    "name": null,
-    "manifest_number": "0011719684",
-    "facility_id": 5095,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3484515,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "See Google Maps for Route",
-        "departure_time": "2026-10-19T07:36:00.000Z",
-        "updated_at": "2026-10-20T20:37:00.190Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34817897,
-              "tag": "1A4060300089ABD000000106",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-20T20:37:01.876Z",
-            "shipped_weight": 531.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 531.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - GB",
-            "_strain": "GB",
-            "_source": ""
-          },
-          {
-            "package": {
-              "id": 34817898,
-              "tag": "1A4060300089ABD000000107",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-20T20:37:02.062Z",
-            "shipped_weight": 1263.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 1263.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - #100",
-            "_strain": "#100",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-20T20:36:55.974Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
-    "_facility_license_number": "CCL26-0000027"
-  },
-  {
-    "id": 3149358,
-    "name": null,
-    "manifest_number": "0011722094",
-    "facility_id": 5095,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3486031,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "See Google Maps for Route",
-        "departure_time": "2026-10-19T11:50:00.000Z",
-        "updated_at": "2026-10-20T20:27:53.737Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34831658,
-              "tag": "1A4060300089ABD000000113",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-20T20:27:55.789Z",
-            "shipped_weight": 1530.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 1530.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - MP",
-            "_strain": "MP",
-            "_source": ""
-          },
-          {
-            "package": {
-              "id": 34831660,
-              "tag": "1A4060300089ABD000000114",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-20T20:27:56.671Z",
-            "shipped_weight": 282.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 282.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - LS",
-            "_strain": "LS",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-20T20:27:53.517Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
-    "_facility_license_number": "CCL26-0000027"
-  },
-  {
-    "id": 3149531,
-    "name": null,
-    "manifest_number": "0011722644",
-    "facility_id": 5095,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3486255,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "See Google Maps for Route",
-        "departure_time": "2026-10-19T12:23:00.000Z",
-        "updated_at": "2026-10-20T20:21:58.836Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34834652,
-              "tag": "1A4060300089ABD000000115",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-20T20:22:01.389Z",
-            "shipped_weight": 2069.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 2069.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - Grape Gas",
-            "_strain": "Grape Gas",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-20T20:21:58.649Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
-    "_facility_license_number": "CCL26-0000027"
-  },
-  {
-    "id": 3150112,
-    "name": null,
-    "manifest_number": "0011726326",
-    "facility_id": 5095,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3487003,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "See Google Maps for Route",
-        "departure_time": "2026-10-19T18:15:00.000Z",
-        "updated_at": "2026-10-20T20:21:56.561Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34841185,
-              "tag": "1A4060300089ABD000000122",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-20T20:21:58.547Z",
-            "shipped_weight": 2124.5,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 2124.5,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - ZxP",
-            "_strain": "ZxP",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-20T20:21:56.337Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
-    "_facility_license_number": "CCL26-0000027"
-  },
-  {
-    "id": 3149714,
-    "name": null,
-    "manifest_number": "0011723068",
-    "facility_id": 5095,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3486483,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "See Google Maps for Route",
-        "departure_time": "2026-10-19T13:27:00.000Z",
-        "updated_at": "2026-10-20T20:15:53.984Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34837439,
-              "tag": "1A4060300089ABD000000116",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-20T20:15:55.717Z",
-            "shipped_weight": 2228.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 2228.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - Grape Gas",
-            "_strain": "Grape Gas",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-20T20:15:53.817Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
-    "_facility_license_number": "CCL26-0000027"
-  },
-  {
-    "id": 3147336,
-    "name": null,
-    "manifest_number": "0011716345",
-    "facility_id": 4924,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3483311,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "Please follow GPS route",
-        "departure_time": "2026-10-16T16:40:00.000Z",
-        "updated_at": "2026-10-20T17:46:04.050Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34790876,
-              "tag": "1A406030007975D000009572",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-20T17:46:06.139Z",
-            "shipped_weight": 1340.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 1340.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Fresh Frozen - Toad Venom",
-            "_strain": "Toad Venom",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-20T17:46:03.906Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Sulphur Bank: CCL28-0000167",
-    "_facility_license_number": "CCL25-0000167"
-  },
-  {
-    "id": 3150113,
-    "name": null,
-    "manifest_number": "0011726255",
-    "facility_id": 4924,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3487004,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "Please follow GPS route",
-        "departure_time": "2026-10-19T18:20:00.000Z",
-        "updated_at": "2026-10-20T17:46:01.767Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34841224,
-              "tag": "1A406030007975D000009573",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-20T17:46:03.825Z",
-            "shipped_weight": 2592.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 2592.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Fresh Frozen - Toad Venom",
-            "_strain": "Toad Venom",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-20T17:46:01.347Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Sulphur Bank: CCL28-0000167",
-    "_facility_license_number": "CCL25-0000167"
   }
 ]
