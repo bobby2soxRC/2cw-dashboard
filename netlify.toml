@@ -1,6 +1,12 @@
 [functions]
   directory = "netlify/functions"
 
+# The Esensia function reads the Canix sync files itself and returns only
+# that partner's strains. Included so a deploy has them even before it
+# can fetch its own site.
+[functions."esensia-inventory"]
+  included_files = ["data/canix_inventory.json", "data/canix_harvests.json", "data/canix_meta.json", "config/canix_facility_config.json", "data/operations/reference.json"]
+
 # Emailed reports (netlify/lib/ops_report.js). Cron is UTC: 14:00 UTC is
 # 7am PDT / 6am PST.
 [functions."ops-report-daily"]
