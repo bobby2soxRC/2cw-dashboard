@@ -389,6 +389,65 @@ Check who's linked with
   get nothing. The link is what grants access.
 - Tested offline by `node scripts/test_google_login.js`.
 
+## Esensia partner dashboard
+
+`esensia.html` (Partners card, column `esensia`) is Ben's view of the
+Esensia strains: BBJ, EBD, Grapes & Cream, LJ, LS, Magic Wand (also a
+strain named MW), PDST, SAN #10 (Canix `San #10` and `SAN#10`), SWD, OC,
+STJ, MAR, and RSP. It follows the Mendo card — a hub checkbox, a partner
+page — and the inventory itself is loaded from
+`netlify/functions/esensia-inventory.js`, which checks the PIN against
+`app_users` and only returns those strains. Tests:
+`node scripts/test_esensia.js`.
+
+**Create Ben's login** (Admin → Users → add):
+
+1. Name him so the order sheet shows the right "prepared by" (the hub
+   stores `2cw_user_name`). Put his Google address in Email.
+2. Set a PIN (4+ digits), the same way as every other user.
+3. Tick **only** Esensia Dashboard. Leave sales, inventory, labor,
+   commissions, and the other partner cards off. A person with any other
+   card is not limited to this page.
+4. Save. He can sign in with the PIN immediately.
+
+**Google sign-in** already works for any linked user (the button on
+`index.html` and `google-login.js`). There is no self-serve link yet, and
+server functions still take the PIN, which is what this one checks. To
+turn Google on for him: he clicks Sign in with Google once (it will say
+the account isn't linked, and that creates his Supabase Auth user), then
+in the SQL editor:
+
+```sql
+update app_users
+   set auth_user_id = (select id from auth.users where email = 'his.google@email.com')
+ where name = 'Ben' and active;
+```
+
+The next Google sign-in lands him in the hub, and with only this card the
+hub opens the Esensia dashboard. His Google address has to be the one he
+actually signs in with. Nothing else is required in Netlify.
+
+**What the page does.** Inventory is current Canix packages for those
+strains (tag, item, stage, status, pounds), plus the harvest farm and
+plant count when the source harvest name matches one Canix harvest.
+Finished flower on the package is labeled ACTUAL. An additional finished
+flower figure is shown only when submitted take-down, bucking, and trim
+forms can be read, and it is labeled ESTIMATED (same yield model as Raw
+Inventory's Est. A flower — not the unshrunk rates in the Nov 20, 2026
+yield report). The Order tab builds a table, a CSV, a PNG, and a
+`mailto:` draft. It does not send mail and it does not write to Metrc,
+Canix, or Supabase.
+
+**What is actually enforced.** The function refuses a missing PIN, an
+unknown PIN, and a user without `esensia`, and the JSON it returns has no
+other strains and no costs. An Esensia-only login is also sent back to
+`esensia.html` from other app pages (`session_share.js`). That redirect
+is the browser only. These stay public, the same as before this page
+existed: `data/customers.json`, `data/invoices.json`, `data/canix_*.json`,
+and the Mendo / sales pages that fetch them. `app_users` is still
+anon-readable, so PINs are too. The Esensia page does not request those
+files. Do not point it at them.
+
 ## Labor rates
 
 The **Labor Rates** tab sets each person's loaded hourly cost for the Labor

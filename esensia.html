@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="/session_share.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0, viewport-fit=cover">
+<title>Esensia — Partner Dashboard</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0B0D10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="2CW Ops">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+  if (!sessionStorage.getItem('2cw_pin')) window.location.replace('/index.html');
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0B0D10;--bg2:#111418;--bg3:#181C21;--bg4:#1F242B;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);
+  --text:#EAE6DC;--text2:#9B9790;--text3:#575450;
+  --accent:#8fbf7f;--accent2:rgba(143,191,127,0.14);
+  --green:#5BBF7E;--yellow:#e6c15a;--blue:#7eb6d6;
+  --font:'Barlow',sans-serif;--font-c:'Barlow Condensed',sans-serif;--r:6px;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh}
+.nav{min-height:calc(50px + env(safe-area-inset-top));background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:0;position:sticky;top:0;z-index:20}
+.nav-back{display:flex;align-items:center;height:50px;padding-right:14px;font-family:var(--font-c);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);text-decoration:none;border-right:1px solid var(--border2);margin-right:14px}
+.nav-back:hover{color:var(--accent)}
+.nav-logo{font-family:var(--font-c);font-size:16px;font-weight:800;letter-spacing:.08em;color:var(--accent);margin-right:8px}
+.nav-sub{font-family:var(--font-c);font-size:11px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-right:16px}
+.nav-tabs{display:flex;flex:1;overflow-x:auto}
+.nav-tab{padding:0 16px;height:50px;display:flex;align-items:center;font-family:var(--font-c);font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.nav-refresh{background:var(--bg3);border:1px solid var(--border2);color:var(--text3);font-family:var(--font-c);font-size:11px;padding:6px 12px;border-radius:4px;cursor:pointer;min-height:32px}
+.nav-refresh:hover{color:var(--accent);border-color:var(--accent)}
+.page{display:none;padding:18px 16px 48px;max-width:1200px;margin:0 auto}
+.page.active{display:block}
+.loading,.err{padding:28px 4px;color:var(--text3);font-family:var(--font-c);font-size:13px;letter-spacing:.04em}
+.err{color:#e07a7a}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:14px}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;border-top:2px solid var(--accent)}
+.kpi.est{border-top-color:var(--yellow)}
+.kpi-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+.kpi-val{font-family:var(--font-c);font-size:22px;font-weight:700;line-height:1}
+.kpi-sub{font-size:11px;color:var(--text3);margin-top:4px}
+.note{font-size:12px;color:var(--text2);line-height:1.5;margin:0 0 14px}
+.note b{color:var(--yellow);font-weight:600}
+.strain{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:14px;overflow:hidden}
+.strain-hd{padding:12px 14px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline;border-bottom:1px solid var(--border)}
+.strain-name{font-family:var(--font-c);font-size:20px;font-weight:700;letter-spacing:.04em}
+.strain-meta{font-family:var(--font-c);font-size:12px;color:var(--text3)}
+.pills{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px 0}
+.pill{font-family:var(--font-c);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:99px;background:var(--bg3);color:var(--text2)}
+.yields{display:flex;flex-wrap:wrap;gap:14px;padding:10px 14px 12px;font-size:13px}
+.yields .k{display:block;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-weight:700}
+.yields .est{color:var(--yellow)}
+.est-note{padding:0 14px 12px;font-size:12px;color:var(--text3);line-height:1.45}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:760px}
+th{text-align:left;font-family:var(--font-c);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:8px 10px;background:var(--bg3);white-space:nowrap}
+td{padding:8px 10px;border-top:1px solid var(--border);vertical-align:top}
+.num{font-family:var(--font-c);font-size:13px;white-space:nowrap}
+.tag{font-family:var(--font-c);font-size:12px;letter-spacing:.02em}
+.muted{color:var(--text3)}
+.empty{padding:8px 14px 14px;color:var(--text3);font-size:13px}
+.order-strain{font-family:var(--font-c);font-size:16px;font-weight:700;letter-spacing:.06em;margin:16px 0 8px}
+.qty{width:88px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;color:var(--text);font-family:var(--font-c);font-size:16px;padding:8px;min-height:44px}
+.qty:focus{outline:none;border-color:var(--accent)}
+textarea{width:100%;min-height:88px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;color:var(--text);font-family:var(--font);font-size:14px;padding:10px;margin:8px 0 12px}
+textarea:focus{outline:none;border-color:var(--accent)}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 16px}
+button.btn,a.btn{background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:var(--font-c);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:10px 14px;border-radius:4px;cursor:pointer;text-decoration:none;min-height:44px;display:inline-flex;align-items:center}
+button.btn.primary{background:var(--accent);border-color:var(--accent);color:#142016}
+button.btn:disabled,a.btn.disabled{opacity:.4;pointer-events:none}
+.summary{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-top:8px}
+.summary h2{font-family:var(--font-c);font-size:16px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+.summary table{min-width:640px}
+.shot{max-width:100%;height:auto;border:1px solid var(--border);border-radius:4px;margin-top:12px;background:#f7f4ee}
+.foot{margin-top:22px;font-family:var(--font-c);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);text-align:center}
+@media (max-width:700px){
+  .nav-sub{display:none}
+  .nav-logo{font-size:14px;margin-right:4px}
+  .nav-back{padding-right:8px;margin-right:8px;font-size:10px}
+  .nav-tab{padding:0 12px;font-size:12px}
+  #page-order table{min-width:0}
+  #page-order thead{display:none}
+  #page-order tr{display:block;border-top:1px solid var(--border);padding:8px 0}
+  #page-order td{display:block;border:none;padding:2px 12px}
+  #page-order td::before{content:attr(data-label);display:block;font-family:var(--font-c);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)}
+  #page-order .qty{width:100%;max-width:160px}
+}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a class="nav-back" href="/index.html">← Hub</a>
+  <div class="nav-logo">ESENSIA</div>
+  <div class="nav-sub">Partner</div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" id="tab-inventory" onclick="showTab('inventory',this)">Inventory</div>
+    <div class="nav-tab" id="tab-order" onclick="showTab('order',this)">Order</div>
+  </div>
+  <button class="nav-refresh" type="button" onclick="loadInventory()">Refresh</button>
+</nav>
+<div id="page-inventory" class="page active">
+  <div class="loading" id="loading">Loading Esensia inventory…</div>
+  <div id="inv"></div>
+</div>
+<div id="page-order" class="page">
+  <div id="order"></div>
+</div>
+<div class="foot">2CW · Esensia strains only · Draft orders are not sent to Metrc or Canix</div>
+<script>
+const $ = (id) => document.getElementById(id);
+let VIEW = null;
+const qty = {};
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function lb(n) {
+  if (n == null || n === '') return '—';
+  const x = Number(n);
+  return x.toLocaleString('en-US', { maximumFractionDigits: 2 });
+}
+function todayPT() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+}
+function whenPT(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return String(iso);
+  return d.toLocaleString('en-US', { timeZone: 'America/Los_Angeles', dateStyle: 'medium', timeStyle: 'short' });
+}
+function showTab(id, el) {
+  document.querySelectorAll('.page').forEach((p) => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach((t) => t.classList.remove('active'));
+  $('page-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  if (id === 'order') renderOrder();
+}
+
+async function loadInventory() {
+  $('loading').style.display = 'block';
+  $('loading').className = 'loading';
+  $('loading').textContent = 'Loading Esensia inventory…';
+  $('inv').innerHTML = '';
+  try {
+    const res = await fetch('/.netlify/functions/esensia-inventory', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: sessionStorage.getItem('2cw_pin') || '' })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401) { window.location.replace('/index.html'); return; }
+    if (!res.ok || !data.ok) throw new Error(data.error || ('Could not load inventory (' + res.status + ')'));
+    VIEW = data.view;
+    $('loading').style.display = 'none';
+    renderInventory();
+    if ($('page-order').classList.contains('active')) renderOrder();
+  } catch (err) {
+    $('loading').className = 'err';
+    $('loading').textContent = err.message || 'Could not load inventory.';
+  }
+}
+
+function renderInventory() {
+  const v = VIEW;
+  const withStock = v.strains.filter((s) => s.packageCount);
+  const none = v.strains.filter((s) => !s.packageCount).map((s) => s.label);
+  const est = v.estimatedAdditionalFlowerLb;
+  $('inv').innerHTML = `
+    <div class="kpis">
+      <div class="kpi"><div class="kpi-lbl">Packages</div><div class="kpi-val">${v.packageCount}</div><div class="kpi-sub">${withStock.length} strains on hand</div></div>
+      <div class="kpi"><div class="kpi-lbl">On hand</div><div class="kpi-val">${lb(v.lb)}</div><div class="kpi-sub">ACTUAL lb</div></div>
+      <div class="kpi"><div class="kpi-lbl">ACTUAL finished flower</div><div class="kpi-val">${lb(v.actualFlowerLb)}</div><div class="kpi-sub">weighed packages</div></div>
+      <div class="kpi"><div class="kpi-lbl">ACTUAL smalls</div><div class="kpi-val">${lb(v.actualSmallsLb)}</div><div class="kpi-sub">includes unfinished</div></div>
+      <div class="kpi"><div class="kpi-lbl">ACTUAL trim</div><div class="kpi-val">${lb(v.actualTrimLb)}</div><div class="kpi-sub">lb on hand</div></div>
+      ${est == null ? '' : `<div class="kpi est"><div class="kpi-lbl">ESTIMATED additional flower</div><div class="kpi-val">${lb(est)}</div><div class="kpi-sub">not a weighed total</div></div>`}
+    </div>
+    <p class="note">${esc(v.disclaimer)}${v.asOf ? ' Canix sync ' + esc(whenPT(v.asOf)) + ' Pacific.' : ''}</p>
+    ${withStock.map(strainCard).join('')}
+    ${none.length ? `<p class="note">No packages on hand: ${esc(none.join(', '))}.</p>` : ''}
+  `;
+}
+
+function strainCard(s) {
+  const stages = Object.keys(s.byStage).map((k) => {
+    const row = s.packages.find((p) => p.stage === k);
+    return `<span class="pill">${esc(row ? row.stageLabel.replace(/ \(.*\)/, '') : k)} ${lb(s.byStage[k])} lb</span>`;
+  }).join('');
+  const est = s.estimatedAdditionalFlowerLb;
+  return `<section class="strain">
+    <div class="strain-hd">
+      <div class="strain-name">${esc(s.label)}</div>
+      <div class="strain-meta">${s.packageCount} packages · ${lb(s.lb)} lb ACTUAL${s.farms.length ? ' · ' + esc(s.farms.join(', ')) : ''}${s.plantCount ? ' · ' + s.plantCount.toLocaleString('en-US') + ' plants on the harvests' : ''}</div>
+    </div>
+    <div class="pills">${stages}</div>
+    <div class="yields">
+      <div><span class="k">ACTUAL finished flower</span>${lb(s.actualFlowerLb)} lb</div>
+      <div><span class="k">ACTUAL smalls</span>${lb(s.actualSmallsLb)} lb</div>
+      <div><span class="k">ACTUAL trim</span>${lb(s.actualTrimLb)} lb</div>
+      ${est == null ? '' : `<div><span class="k est">ESTIMATED additional flower</span><span class="est">${lb(est)} lb</span></div>`}
+    </div>
+    ${s.estimateNote ? `<div class="est-note">${esc(s.estimateNote)}</div>` : ''}
+    <div class="scroll"><table>
+      <thead><tr><th>Tag</th><th>Item</th><th>Stage</th><th>Status</th><th>Weight</th><th>Farm</th><th>Plants</th><th>Harvest</th><th>Held at</th></tr></thead>
+      <tbody>${s.packages.map((p) => `<tr>
+        <td class="tag">${esc(p.tag)}</td>
+        <td>${esc(p.item)}</td>
+        <td>${esc(p.stageLabel)}</td>
+        <td>${esc(p.status)}</td>
+        <td class="num">${lb(p.lb)} lb <span class="muted">ACTUAL</span></td>
+        <td>${esc(p.farm || '—')}</td>
+        <td class="num">${p.plantCount ? p.plantCount.toLocaleString('en-US') : '—'}${p.plantNote ? `<div class="muted">${esc(p.plantNote)}</div>` : ''}</td>
+        <td>${esc(p.harvestDate || '—')}</td>
+        <td>${esc(p.heldAt || '—')}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>
+  </section>`;
+}
+
+function orderLines() {
+  if (!VIEW) return [];
+  const rows = [];
+  VIEW.strains.forEach((s) => s.packages.forEach((p) => {
+    if (!p.orderable) return;
+    const q = Math.min(p.lb, Math.max(0, Number(qty[p.tag]) || 0));
+    rows.push({ strain: s.label, stage: p.stageLabel, item: p.item, tag: p.tag, onHand: p.lb, requested: Math.round(q * 100) / 100 });
+  }));
+  return rows;
+}
+
+function renderOrder() {
+  if (!VIEW) { $('order').innerHTML = '<div class="loading">Open Inventory first — the order list uses that load.</div>'; return; }
+  const groups = [];
+  VIEW.strains.forEach((s) => {
+    const rows = s.packages.filter((p) => p.orderable);
+    if (rows.length) groups.push({ label: s.label, rows });
+  });
+  if (!groups.length) {
+    $('order').innerHTML = '<p class="note">No flower, smalls, or trim packages are on hand to order. Wet, on-stem, and shake stay on the Inventory tab.</p>';
+    return;
+  }
+  $('order').innerHTML = `
+    <p class="note">Choose pounds of <b>flower</b>, <b>smalls</b> (including unfinished smalls), or <b>trim</b>. The summary is yours to copy, download, or attach. This page does not email 2CW and does not write to Metrc or Canix.</p>
+    ${groups.map((g) => `<div class="order-strain">${esc(g.label)}</div>
+      <div class="scroll"><table>
+        <thead><tr><th>Stage</th><th>Item</th><th>Tag</th><th>On hand</th><th>Order lb</th></tr></thead>
+        <tbody>${g.rows.map((p) => `<tr>
+          <td data-label="Stage">${esc(p.stageLabel)}</td>
+          <td data-label="Item">${esc(p.item)}</td>
+          <td class="tag" data-label="Tag">${esc(p.tag)}</td>
+          <td class="num" data-label="On hand">${lb(p.lb)} <span class="muted">ACTUAL</span></td>
+          <td data-label="Order lb"><input class="qty" type="number" inputmode="decimal" min="0" max="${p.lb}" step="0.01" data-tag="${esc(p.tag)}" value="${qty[p.tag] != null && qty[p.tag] !== '' ? esc(String(qty[p.tag])) : ''}" aria-label="Pounds of ${esc(p.item)}"></td>
+        </tr>`).join('')}</tbody>
+      </table></div>`).join('')}
+    <div class="order-strain">Notes</div>
+    <textarea id="notes" placeholder="Anything the 2CW team should know — timing, lots to hold, who to call."></textarea>
+    <div class="actions"><button class="btn primary" type="button" id="build">Build order summary</button></div>
+    <div id="summary"></div>
+  `;
+  $('order').querySelectorAll('.qty').forEach((input) => {
+    input.addEventListener('input', () => { qty[input.dataset.tag] = input.value; });
+  });
+  $('build').addEventListener('click', buildSummary);
+}
+
+function orderText(picked, notes) {
+  const who = sessionStorage.getItem('2cw_user_name') || 'Esensia';
+  const lines = [
+    'Esensia order',
+    todayPT() + ' Pacific · ' + who,
+    'Draft only — not sent to Metrc or Canix. Requested pounds, not a new weight.',
+    '',
+    ['Strain', 'Stage', 'Item', 'Tag', 'On hand lb', 'Requested lb'].join('\t'),
+    ...picked.map((r) => [r.strain, r.stage, r.item, r.tag, r.onHand, r.requested].join('\t'))
+  ];
+  const total = picked.reduce((a, r) => a + r.requested, 0);
+  lines.push('', 'Requested total lb\t' + (Math.round(total * 100) / 100));
+  if (notes) lines.push('', 'Notes', notes);
+  return lines.join('\n');
+}
+
+function buildSummary() {
+  $('order').querySelectorAll('.qty').forEach((input) => { qty[input.dataset.tag] = input.value; });
+  const notes = ($('notes') && $('notes').value || '').trim();
+  const picked = orderLines().filter((r) => r.requested > 0);
+  const box = $('summary');
+  if (!picked.length) {
+    box.innerHTML = '<p class="note">Enter a quantity on at least one package.</p>';
+    return;
+  }
+  const text = orderText(picked, notes);
+  const total = Math.round(picked.reduce((a, r) => a + r.requested, 0) * 100) / 100;
+  const mailtoOk = text.length < 1800;
+  const href = 'mailto:?subject=' + encodeURIComponent('Esensia order ' + todayPT()) + '&body=' + encodeURIComponent(text);
+  box.innerHTML = `
+    <div class="summary">
+      <h2>Order summary · ${lb(total)} lb requested</h2>
+      <p class="note">ACTUAL on-hand pounds are the Canix weight. Requested pounds are what you are asking for. ${mailtoOk ? '' : 'This order is too long for an email link — copy the table or attach the image.'}</p>
+      <div class="scroll"><table>
+        <thead><tr><th>Strain</th><th>Stage</th><th>Item</th><th>Tag</th><th>On hand lb</th><th>Requested lb</th></tr></thead>
+        <tbody>${picked.map((r) => `<tr>
+          <td>${esc(r.strain)}</td><td>${esc(r.stage)}</td><td>${esc(r.item)}</td><td class="tag">${esc(r.tag)}</td>
+          <td class="num">${lb(r.onHand)} ACTUAL</td><td class="num">${lb(r.requested)}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>
+      ${notes ? `<p class="note"><b>Notes.</b> ${esc(notes)}</p>` : ''}
+      <div class="actions">
+        <button class="btn" type="button" id="copy">Copy table</button>
+        <button class="btn" type="button" id="csv">Download CSV</button>
+        <button class="btn" type="button" id="png">Download image</button>
+        <a class="btn ${mailtoOk ? '' : 'disabled'}" id="mail" href="${mailtoOk ? href : '#'}">Email draft</a>
+      </div>
+      <img class="shot" id="shot" alt="Esensia order image">
+    </div>
+  `;
+  const png = orderImage(picked, notes, total);
+  $('shot').src = png;
+  $('copy').onclick = async () => {
+    try { await navigator.clipboard.writeText(text); $('copy').textContent = 'Copied'; }
+    catch (e) { $('copy').textContent = 'Select the table to copy'; }
+  };
+  $('csv').onclick = () => download('esensia-order-' + todayPT() + '.csv', csv(picked, notes), 'text/csv');
+  $('png').onclick = () => download('esensia-order-' + todayPT() + '.png', png, 'image/png');
+}
+
+function csv(picked, notes) {
+  const cell = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const head = ['Strain', 'Stage', 'Item', 'Tag', 'On hand lb (ACTUAL)', 'Requested lb'];
+  const lines = [head.map(cell).join(',')];
+  picked.forEach((r) => lines.push([r.strain, r.stage, r.item, r.tag, r.onHand, r.requested].map(cell).join(',')));
+  if (notes) lines.push(cell('Notes') + ',' + cell(notes));
+  return lines.join('\n');
+}
+
+function download(name, data, type) {
+  const a = document.createElement('a');
+  a.href = data.startsWith('data:') ? data : URL.createObjectURL(new Blob([data], { type }));
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+function orderImage(picked, notes, total) {
+  const who = sessionStorage.getItem('2cw_user_name') || 'Esensia';
+  const width = 1100;
+  const rowH = 34;
+  const noteLines = wrap(notes || '', 92);
+  const height = 168 + (picked.length + 1) * rowH + 36 + noteLines.length * 18 + 48;
+  const canvas = document.createElement('canvas');
+  const scale = 2;
+  canvas.width = width * scale;
+  canvas.height = height * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(scale, scale);
+  ctx.fillStyle = '#f7f4ee';
+  ctx.fillRect(0, 0, width, height);
+  ctx.fillStyle = '#1c3a30';
+  ctx.fillRect(0, 0, width, 92);
+  ctx.fillStyle = '#f7f4ee';
+  ctx.font = '700 28px Barlow, sans-serif';
+  ctx.fillText('Esensia order', 28, 40);
+  ctx.font = '15px Barlow, sans-serif';
+  ctx.fillText(todayPT() + ' Pacific  ·  ' + who + '  ·  Draft — not sent to Metrc or Canix', 28, 68);
+  const cols = [28, 150, 300, 560, 860, 980];
+  const heads = ['Strain', 'Stage', 'Item', 'Tag', 'On hand', 'Requested'];
+  ctx.fillStyle = '#1c3a30';
+  ctx.font = '700 12px Barlow, sans-serif';
+  ctx.fillText('On-hand pounds are ACTUAL Canix weights. Requested pounds are the ask.', 28, 124);
+  let y = 156;
+  ctx.font = '700 12px Barlow, sans-serif';
+  heads.forEach((h, i) => ctx.fillText(h, cols[i], y));
+  y += 10;
+  ctx.strokeStyle = '#d9d3c7';
+  ctx.beginPath(); ctx.moveTo(28, y); ctx.lineTo(width - 28, y); ctx.stroke();
+  ctx.font = '14px Barlow, sans-serif';
+  ctx.fillStyle = '#1a1a1a';
+  picked.forEach((r) => {
+    y += rowH;
+    const vals = [r.strain, clip(r.stage, 18), clip(r.item, 32), r.tag, lb(r.onHand), lb(r.requested)];
+    vals.forEach((v, i) => ctx.fillText(v, cols[i], y));
+  });
+  y += 28;
+  ctx.font = '700 16px Barlow, sans-serif';
+  ctx.fillText('Requested total  ' + lb(total) + ' lb', 28, y);
+  if (noteLines.length) {
+    y += 28;
+    ctx.font = '700 12px Barlow, sans-serif';
+    ctx.fillStyle = '#1c3a30';
+    ctx.fillText('NOTES', 28, y);
+    ctx.font = '14px Barlow, sans-serif';
+    ctx.fillStyle = '#1a1a1a';
+    noteLines.forEach((line) => { y += 18; ctx.fillText(line, 28, y); });
+  }
+  y += 32;
+  ctx.font = '12px Barlow, sans-serif';
+  ctx.fillStyle = '#6b675f';
+  ctx.fillText('Attach this image to your email to 2CW. It does not change inventory.', 28, y);
+  return canvas.toDataURL('image/png');
+}
+function clip(s, n) { s = String(s || ''); return s.length > n ? s.slice(0, n - 1) + '…' : s; }
+function wrap(s, n) {
+  if (!s) return [];
+  const out = [];
+  s.split('\n').forEach((para) => {
+    let line = '';
+    para.split(/\s+/).forEach((word) => {
+      const next = line ? line + ' ' + word : word;
+      if (next.length > n) { if (line) out.push(line); line = word; }
+      else line = next;
+    });
+    if (line) out.push(line);
+  });
+  return out.slice(0, 8);
+}
+
+loadInventory();
+</script>
+</body>
+</html>

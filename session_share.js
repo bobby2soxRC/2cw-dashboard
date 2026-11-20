@@ -45,6 +45,16 @@
   }
 
   save();
+
+  // Esensia-only logins (set in index.html's buildHub) stay on their
+  // dashboard. The hub itself stays reachable. This is a browser redirect;
+  // it does not lock the public JSON files.
+  var partner = ss.getItem('2cw_partner');
+  var path = (location.pathname || '/').replace(/\/+$/, '') || '/';
+  if (partner === 'esensia' && path !== '/' && path !== '/index.html' && path !== '/esensia.html') {
+    location.replace('/esensia.html');
+  }
+
   setInterval(function () { if (document.visibilityState === 'visible') save(); }, 60 * 1000);
   document.addEventListener('visibilitychange', save);
   window.addEventListener('pagehide', save);

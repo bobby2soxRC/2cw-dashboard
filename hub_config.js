@@ -124,6 +124,15 @@ const CARD_DEFS = [
     href: '/mendo.html'
   },
   {
+    key: 'esensia',
+    color: 'esensia',
+    label: 'Partners',
+    dept: 'partners',
+    title: 'Esensia Dashboard',
+    desc: 'Esensia strains only — on-hand packages by stage, and a draft order sheet to send to 2CW. No other strains, customers, or prices.',
+    href: '/esensia.html'
+  },
+  {
     key: 'executive',
     color: 'purple',
     label: 'Executive',
@@ -419,6 +428,7 @@ const CARD_ES = {
   canix_inventory:     { title: 'Inventario Canix', desc: 'Inventario en vivo de cultivo/manufactura/distribución en las 16 licencias de Canix, por granja y etapa.' },
   sales:               { title: 'Panel de Ventas', desc: 'Ingresos mensuales por marca, ritmo y tendencia del mes, mezcla de productos y análisis de 12 meses.' },
   mendo:               { title: 'Panel de Mendo', desc: 'Ventas, inventario y producción de la marca Mendo — vista dedicada para el socio.' },
+  esensia:             { title: 'Panel de Esensia', desc: 'Solo las variedades de Esensia — paquetes disponibles por etapa, y un borrador de pedido para enviar a 2CW. Sin otras variedades, clientes ni precios.' },
   executive:           { title: 'Panel Ejecutivo', desc: 'Ritmo de ventas, salud del inventario y clasificación de vendedores — la vista de una página para la dirección.' },
   field_forms:         { title: 'Formularios de Campo', desc: 'Registra capacitaciones de budtenders, reuniones con compradores, muestras al personal y visitas a tiendas.' },
   menu_health:         { title: 'Salud del Menú', desc: 'Puntajes de mezcla, frescura y volumen de T-SKU a B-SKU a Marca — con la tendencia en el tiempo.' },

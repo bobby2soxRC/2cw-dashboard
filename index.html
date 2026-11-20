@@ -23,6 +23,7 @@
       --purple:#9b7fd4;--purple2:rgba(155,127,212,.12);
       --red:#ef5350;
       --mendo:#a78bfa;--mendo2:rgba(167,139,250,.12);--mendo-dim:#5a3a90;
+      --esensia:#8fbf7f;--esensia2:rgba(143,191,127,.14);--esensia-dim:#4d6b43;
       --text:#e8eaf0;--muted:#5a6070;--subtext:#9aa0b0;
     }
     html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden}
@@ -106,6 +107,7 @@
     .card.blue:hover{border-color:var(--blue);box-shadow:0 0 40px rgba(90,159,212,.1)}
     .card.purple:hover{border-color:var(--purple);box-shadow:0 0 40px rgba(155,127,212,.1)}
     .card.mendo:hover{border-color:var(--mendo);box-shadow:0 0 40px rgba(167,139,250,.15)}
+    .card.esensia:hover{border-color:var(--esensia);box-shadow:0 0 40px rgba(143,191,127,.15)}
     .card.red:hover{border-color:var(--red);box-shadow:0 0 40px rgba(239,83,80,.1)}
     .card-dot{width:8px;height:8px;border-radius:50%;margin-bottom:16px;animation:pulse 2.5s ease-in-out infinite}
     .green .card-dot{background:var(--green);box-shadow:0 0 8px var(--green)}
@@ -113,14 +115,16 @@
     .blue .card-dot{background:var(--blue);box-shadow:0 0 8px var(--blue)}
     .purple .card-dot{background:var(--purple);box-shadow:0 0 8px var(--purple)}
     .mendo .card-dot{background:var(--mendo);box-shadow:0 0 8px var(--mendo)}
+    .esensia .card-dot{background:var(--esensia);box-shadow:0 0 8px var(--esensia)}
     .red .card-dot{background:var(--red);box-shadow:0 0 8px var(--red)}
     .card-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.25em;text-transform:uppercase;margin-bottom:5px}
-    .green .card-label{color:var(--green-dim)}.gold .card-label{color:#8a6a22}.blue .card-label{color:#2a5a80}.purple .card-label{color:#5a3a90}.mendo .card-label{color:var(--mendo-dim)}.red .card-label{color:#8a3230}
+    .green .card-label{color:var(--green-dim)}.gold .card-label{color:#8a6a22}.blue .card-label{color:#2a5a80}.purple .card-label{color:#5a3a90}.mendo .card-label{color:var(--mendo-dim)}.esensia .card-label{color:var(--esensia-dim)}.red .card-label{color:#8a3230}
     .card-title{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:.04em;line-height:1;margin-bottom:10px}
     .card-desc{font-size:13px;color:var(--subtext);line-height:1.6;margin-bottom:22px}
     .card-badge{display:inline-flex;align-items:center;gap:5px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;padding:4px 10px;border-radius:20px}
     .badge-open{background:var(--green2);color:var(--green);border:1px solid rgba(61,184,122,.25)}
     .badge-mendo{background:rgba(167,139,250,.15);color:var(--mendo);border:1px solid rgba(167,139,250,.3)}
+    .badge-esensia{background:var(--esensia2);color:var(--esensia);border:1px solid rgba(143,191,127,.35)}
     .badge-folder{background:rgba(255,255,255,.06);color:var(--subtext);border:1px solid var(--border2)}
     .card-today{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
     .card-drafts{margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:8px}
@@ -722,6 +726,13 @@ async function buildHub(user){
     defaultOrder.push('commission');
   }
 
+  // A person whose only card is Esensia is kept on that dashboard. The flag
+  // is read by session_share.js. Anyone with another card is unchanged.
+  const esensiaOnly = Object.keys(defsByKey).length === 1 && !!defsByKey.esensia;
+  if (esensiaOnly) sessionStorage.setItem('2cw_partner', 'esensia');
+  else sessionStorage.removeItem('2cw_partner');
+  if (window.TwoCWSession) TwoCWSession.save();
+
   const savedPrefs = await loadPrefs(userName);
   hubState = { userName, defaultOrder, defsByKey, savedPrefs };
 
@@ -1027,7 +1038,7 @@ function todayText(n){
 
 function makeLeafCard(child, idx){
   const delays = ['.08s','.16s','.24s','.32s','.40s','.48s'];
-  const badgeClass = child.color === 'mendo' ? 'badge-mendo' : 'badge-open';
+  const badgeClass = child.color === 'mendo' ? 'badge-mendo' : child.color === 'esensia' ? 'badge-esensia' : 'badge-open';
   const a = document.createElement('a');
   a.className = `card ${child.color || 'blue'}`;
   a.href = child.href;

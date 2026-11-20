@@ -39,6 +39,18 @@ the user's PIN session (`app_users.auth_user_id`). Still to do: self-serve
 linking, server functions accepting the Google login instead of `2cw_pin`,
 then cutover. Plan and setup: "Google sign-in" in `docs/USER_ADMIN.md`.
 
+### Esensia partner dashboard (started 2026-11-20)
+
+`esensia.html` (Partners card, column `esensia`): Ben's strains only
+(BBJ, EBD, Grapes & Cream, LJ, LS, Magic Wand / MW, PDST, SAN #10 /
+San #10 / SAN#10, SWD, OC, STJ, MAR, RSP). Inventory comes from
+`netlify/functions/esensia-inventory.js`, which checks the PIN and
+returns only those strains — not from the public Canix JSON. The Order
+tab makes a table and a PNG; it does not send email or write Metrc.
+Google sign-in works once his `auth_user_id` is linked (no self-serve
+link yet). How to add him, and what is and isn't enforced:
+"Esensia partner dashboard" in `docs/USER_ADMIN.md`.
+
 ### Emailed reports (started 2026-10-15)
 
 Operations & Staff Hours report: daily, weekly (Mondays) and on demand
