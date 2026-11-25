@@ -12,24 +12,49 @@
         "transfer_type": "Transfer",
         "route": "Please follow GPS route.",
         "departure_time": "2026-11-24T15:25:00.000Z",
-        "updated_at": "2026-11-24T23:27:56.748Z",
+        "updated_at": "2026-11-25T02:24:59.210Z",
         "contents": [
+          {
+            "package": {
+              "id": 35750814,
+              "tag": "1A406030005E0B2000009257",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-25T02:25:01.318Z",
+            "shipped_weight": 15.0,
+            "shipped_weight_unit": "Pounds",
+            "received_weight": 15.0,
+            "received_weight_unit": "Pounds",
+            "_item": "Flower - Toad Venom",
+            "_strain": "Toad Venom",
+            "_sources": [
+              "1A406030005E0B2000010601",
+              "1A406030005E0B2000010521",
+              "1A406030007975D000000481"
+            ],
+            "_source": "1A406030005E0B2000010601"
+          },
           {
             "package": {
               "id": 35750811,
               "tag": "1A406030005E0B2000009254",
-              "is_active": true,
+              "is_active": false,
               "is_testing_package": false,
               "is_trade_sample": false,
-              "status": "In Transit"
+              "status": "Transferred"
             },
-            "status": "Shipped",
+            "status": "Accepted",
             "sale_price": null,
-            "updated_at": "2026-11-24T23:34:00.002Z",
+            "updated_at": "2026-11-25T02:25:00.401Z",
             "shipped_weight": 7.0,
             "shipped_weight_unit": "Pounds",
-            "received_weight": null,
-            "received_weight_unit": null,
+            "received_weight": 7.0,
+            "received_weight_unit": "Pounds",
             "_item": "Flower - Banana Punch",
             "_strain": "Banana Punch",
             "_sources": [
@@ -43,18 +68,18 @@
             "package": {
               "id": 35750812,
               "tag": "1A406030005E0B2000009255",
-              "is_active": true,
+              "is_active": false,
               "is_testing_package": false,
               "is_trade_sample": false,
-              "status": "In Transit"
+              "status": "Transferred"
             },
-            "status": "Shipped",
+            "status": "Accepted",
             "sale_price": null,
-            "updated_at": "2026-11-24T23:34:01.114Z",
+            "updated_at": "2026-11-25T02:25:00.569Z",
             "shipped_weight": 3.0,
             "shipped_weight_unit": "Pounds",
-            "received_weight": null,
-            "received_weight_unit": null,
+            "received_weight": 3.0,
+            "received_weight_unit": "Pounds",
             "_item": "Flower - Banana Punch",
             "_strain": "Banana Punch",
             "_sources": [
@@ -68,18 +93,18 @@
             "package": {
               "id": 35750813,
               "tag": "1A406030005E0B2000009256",
-              "is_active": true,
+              "is_active": false,
               "is_testing_package": false,
               "is_trade_sample": false,
-              "status": "In Transit"
+              "status": "Transferred"
             },
-            "status": "Shipped",
+            "status": "Accepted",
             "sale_price": null,
-            "updated_at": "2026-11-24T23:34:01.404Z",
+            "updated_at": "2026-11-25T02:25:00.697Z",
             "shipped_weight": 14.0,
             "shipped_weight_unit": "Pounds",
-            "received_weight": null,
-            "received_weight_unit": null,
+            "received_weight": 14.0,
+            "received_weight_unit": "Pounds",
             "_item": "Flower - Pack Mule",
             "_strain": "Pack Mule",
             "_sources": [
@@ -89,37 +114,12 @@
               "1A4060300089ABD000000011"
             ],
             "_source": "1A406030005E0B2000010691"
-          },
-          {
-            "package": {
-              "id": 35750814,
-              "tag": "1A406030005E0B2000009257",
-              "is_active": true,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-24T23:34:01.717Z",
-            "shipped_weight": 15.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Flower - Toad Venom",
-            "_strain": "Toad Venom",
-            "_sources": [
-              "1A406030005E0B2000010601",
-              "1A406030005E0B2000010521",
-              "1A406030007975D000000481"
-            ],
-            "_source": "1A406030005E0B2000010601"
           }
         ]
       }
     ],
     "sales_order": null,
-    "updated_at": "2026-11-24T23:33:56.522Z",
+    "updated_at": "2026-11-25T02:24:58.973Z",
     "_license_key_label": "All Facilities",
     "_facility_name": "Adobe: CCL22-0001284",
     "_facility_license_number": "CCL22-0001284"
