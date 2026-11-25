@@ -1,5 +1,947 @@
 [
   {
+    "id": 3230855,
+    "name": null,
+    "manifest_number": "0011958330",
+    "facility_id": 4929,
+    "is_active": true,
+    "destinations": [
+      {
+        "id": 3591959,
+        "destination_facility": "C8-0000013-LIC",
+        "transfer_type": "Transfer",
+        "route": "Get on US-101 S from Airway Dr and Hopper Ave 2 min (0.6 mi)\r\nContinue on US-101 S. Take I-880 S and CA-17 S to River St in Santa Cruz 2 hr\r\n10 min (131 mi)\r\nContinue on River St to your destination 3 min (0.6 mi)\r\nWEIGHMASTER CERTIFICATE\r\nTHIS IS TO CERTIFY that the following described commodity was weighed,\r\nmeasured, or counted by a weighmaster, whose signature is on this certificate,\r\nwho is a recognized authority of accuracy, as prescribed by Chapter 7\r\n(commencing with Section 12700) of Division 5 of the California Business and\r\nProfessions Code, administered by the Division of Measurement Standards of\r\nthe California Department of Food and Agriculture.\r\nWeighed by: Ashley Oldham#AWI-0394",
+        "departure_time": "2026-11-25T11:06:00.000Z",
+        "updated_at": "2026-11-25T19:12:35.369Z",
+        "contents": [
+          {
+            "package": {
+              "id": 35767103,
+              "tag": "1A4060300047D39000015888",
+              "is_active": true,
+              "is_testing_package": true,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T19:12:37.426Z",
+            "shipped_weight": 14.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa 1g Pre-Roll - Lavender Jack",
+            "_strain": "Lavender Jack [HVN]",
+            "_sources": [
+              "1A4060300047D39000015798",
+              "1A406030005E0B2000010876",
+              "1A406030005E0B2000010315",
+              "1A406030005E0B2000010128"
+            ],
+            "_source": "1A4060300047D39000015798"
+          }
+        ]
+      }
+    ],
+    "sales_order": null,
+    "updated_at": "2026-11-25T19:12:35.136Z",
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
+  },
+  {
+    "id": 3230582,
+    "name": null,
+    "manifest_number": "0011956984",
+    "facility_id": 4929,
+    "is_active": true,
+    "destinations": [
+      {
+        "id": 3591587,
+        "destination_facility": "C11-0001255-LIC",
+        "transfer_type": "Transfer",
+        "route": "Route to be Traveled Notes: details for extenuating circumstances (e.g., road closure, flat tire, etc.)\r\nRoute to be Traveled Notes: details for extenuating circumstances (e.g., road\r\nclosure, flat tire, etc.)\r\nRoute to be Traveled Notes: details for extenuating circumstances (e.g., road\r\nclosure, flat tire, etc.)\r\nWEIGHMASTER CERTIFICATE\r\nTHIS IS TO CERTIFY that the following described commodity was weighed,\r\nmeasured, or counted by a weighmaster, whose signature is on this certificate,\r\nwho is a recognized authority of accuracy, as prescribed by Chapter 7\r\n(commencing with Section 12700) of Division 5 of the California Business and\r\nProfessions Code, administered by the Division of Measurement Standards of\r\nthe California Department of Food and Agriculture.\r\nWeighed by: Yali AWI-0493\r\nRoute to be Traveled Notes: details for extenuating circumstances (e.g., road\r\nclosure, flat tire, etc.)\r\nRoute to be Traveled:\r\nLeave Airway Drive and get onto US-101 South.\r\nStay on 101 South through Petaluma and toward San Rafael.\r\nContinue toward the Richmond-San Rafael Bridge.\r\nCross the bridge into the East Bay.\r\nFollow I-580 East toward Oakland.\r\nTake I-880 South toward Alameda/San Jose.\r\nTake the exit for Alameda and follow signs toward Bay Farm Island.\r\nContinue onto Island Drive, then follow the signs/roads toward North Loop Road.\r\nTurn onto N Loop Rd and look for 2300 N Loop Rd",
+        "departure_time": "2026-11-25T09:24:00.000Z",
+        "updated_at": "2026-11-25T17:33:34.051Z",
+        "contents": [
+          {
+            "package": {
+              "id": 35624587,
+              "tag": "1A4060300047D39000015784",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:33:36.522Z",
+            "shipped_weight": 400.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Howie Roll | Flower Lavender Jack 1/8 th",
+            "_strain": "Lavender Jack",
+            "_sources": [
+              "1A4060300047D39000015706",
+              "1A406030005E0B2000010446",
+              "1A406030005E0B2000010314",
+              "1A406030005E0B2000010128"
+            ],
+            "_source": "1A4060300047D39000015706"
+          },
+          {
+            "package": {
+              "id": 35587300,
+              "tag": "1A4060300047D39000015750",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:33:36.987Z",
+            "shipped_weight": 208.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Howie Roll | Flower Pineapple Skunk 1/8 th",
+            "_strain": "Pineapple Skunk",
+            "_sources": [
+              "1A4060300047D39000015719",
+              "1A406030005E0B2000010442",
+              "1A406030005E0B2000010086",
+              "1A4060300089ABD000000107"
+            ],
+            "_source": "1A4060300047D39000015719"
+          },
+          {
+            "package": {
+              "id": 35652866,
+              "tag": "1A4060300047D39000015799",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:33:37.296Z",
+            "shipped_weight": 69.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Howie Roll | Flower Pineapple Skunk 1/8 th",
+            "_strain": "Pineapple Skunk",
+            "_sources": [
+              "1A4060300047D39000015750",
+              "1A4060300047D39000015719",
+              "1A406030005E0B2000010442",
+              "1A406030005E0B2000010086"
+            ],
+            "_source": "1A4060300047D39000015750"
+          },
+          {
+            "package": {
+              "id": 35693265,
+              "tag": "1A4060300047D39000015866",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:33:37.703Z",
+            "shipped_weight": 79.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Howie Roll | Super Boof 1/8 th",
+            "_strain": "Super Boof",
+            "_sources": [
+              "1A4060300047D39000015796",
+              "1A4060300047D39000015718",
+              "1A406030005E0B2000010445",
+              "1A406030005E0B2000010038"
+            ],
+            "_source": "1A4060300047D39000015796"
+          },
+          {
+            "package": {
+              "id": 35682285,
+              "tag": "1A4060300047D39000015863",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:33:38.024Z",
+            "shipped_weight": 160.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Howie Roll | Flower Uk Cheese 1/2 oz",
+            "_strain": "Uk Cheese",
+            "_sources": [
+              "1A4060300047D39000015755",
+              "1A406030005E0B2000010637",
+              "1A406030005E0B2000010432",
+              "1A406030005E0B2000010081"
+            ],
+            "_source": "1A4060300047D39000015755"
+          },
+          {
+            "package": {
+              "id": 35682284,
+              "tag": "1A4060300047D39000015862",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:33:38.350Z",
+            "shipped_weight": 432.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Howie Roll | Flower Uk Cheese 1/8 th",
+            "_strain": "Uk Cheese",
+            "_sources": [
+              "1A4060300047D39000015755",
+              "1A406030005E0B2000010637",
+              "1A406030005E0B2000010432",
+              "1A406030005E0B2000010081"
+            ],
+            "_source": "1A4060300047D39000015755"
+          }
+        ]
+      }
+    ],
+    "sales_order": null,
+    "updated_at": "2026-11-25T17:33:33.786Z",
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
+  },
+  {
+    "id": 3230552,
+    "name": null,
+    "manifest_number": "0011957234",
+    "facility_id": 4929,
+    "is_active": true,
+    "destinations": [
+      {
+        "id": 3591545,
+        "destination_facility": "C11-0001255-LIC",
+        "transfer_type": "Transfer",
+        "route": "Route to be Traveled Notes: details for extenuating circumstances (e.g., road closure, flat tire, etc.)\r\nRoute to be Traveled Notes: details for extenuating circumstances (e.g., road\r\nclosure, flat tire, etc.)\r\nRoute to be Traveled Notes: details for extenuating circumstances (e.g., road\r\nclosure, flat tire, etc.)\r\nWEIGHMASTER CERTIFICATE\r\nTHIS IS TO CERTIFY that the following described commodity was weighed,\r\nmeasured, or counted by a weighmaster, whose signature is on this certificate,\r\nwho is a recognized authority of accuracy, as prescribed by Chapter 7\r\n(commencing with Section 12700) of Division 5 of the California Business and\r\nProfessions Code, administered by the Division of Measurement Standards of\r\nthe California Department of Food and Agriculture.\r\nWeighed by: Yali AWI-0492\r\nRoute to be Traveled Notes: details for extenuating circumstances (e.g., road\r\nclosure, flat tire, etc.)\r\nRoute to be Traveled:\r\nLeave Airway Drive and get onto US-101 South.\r\nStay on 101 South through Petaluma and toward San Rafael.\r\nContinue toward the Richmond-San Rafael Bridge.\r\nCross the bridge into the East Bay.\r\nFollow I-580 East toward Oakland.\r\nTake I-880 South toward Alameda/San Jose.\r\nTake the exit for Alameda and follow signs toward Bay Farm Island.\r\nContinue onto Island Drive, then follow the signs/roads toward North Loop Road.\r\nTurn onto N Loop Rd and look for 2300 N Loop Rd",
+        "departure_time": "2026-11-25T09:10:00.000Z",
+        "updated_at": "2026-11-25T17:24:26.518Z",
+        "contents": [
+          {
+            "package": {
+              "id": 35660432,
+              "tag": "1A4060300047D39000015980",
+              "is_active": false,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:24:28.737Z",
+            "shipped_weight": 160.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Rose Petal 1oz",
+            "_strain": "Rose Petal",
+            "_sources": [
+              "1A4060300047D39000015703",
+              "1A406030005E0B2000010441",
+              "1A406030005E0B2000010244",
+              "1A4060300089ABD000000073"
+            ],
+            "_source": "1A4060300047D39000015703"
+          },
+          {
+            "package": {
+              "id": 35738139,
+              "tag": "1A4060300047D39000015880",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:24:28.466Z",
+            "shipped_weight": 92.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Grape Lobste 1/8 th",
+            "_strain": "Grape Lobster",
+            "_sources": [
+              "1A4060300047D39000015878",
+              "1A4060300047D39000015763",
+              "1A406030005E0B2000010641",
+              "1A406030005E0B2000010050"
+            ],
+            "_source": "1A4060300047D39000015878"
+          },
+          {
+            "package": {
+              "id": 35736194,
+              "tag": "1A4060300047D39000015878",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:24:28.802Z",
+            "shipped_weight": 720.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Grape Lobste 1/8 th",
+            "_strain": "Grape Lobster",
+            "_sources": [
+              "1A4060300047D39000015763",
+              "1A406030005E0B2000010641",
+              "1A406030005E0B2000010050",
+              "1A406030005E0B2000010002"
+            ],
+            "_source": "1A4060300047D39000015763"
+          },
+          {
+            "package": {
+              "id": 35736056,
+              "tag": "1A4060300047D39000015883",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:24:29.146Z",
+            "shipped_weight": 250.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Grape Lobste 1/2 oz",
+            "_strain": "Grape Lobster",
+            "_sources": [
+              "1A4060300047D39000015763",
+              "1A406030005E0B2000010641",
+              "1A406030005E0B2000010050",
+              "1A406030005E0B2000010002"
+            ],
+            "_source": "1A4060300047D39000015763"
+          },
+          {
+            "package": {
+              "id": 35660157,
+              "tag": "1A4060300047D39000015854",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:24:30.226Z",
+            "shipped_weight": 232.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Super Boof 1 oz",
+            "_strain": "Super Boof",
+            "_sources": [
+              "1A4060300047D39000015718",
+              "1A406030005E0B2000010445",
+              "1A406030005E0B2000010038",
+              "1A406030007975D000000450",
+              "1A406030007975D000000451"
+            ],
+            "_source": "1A4060300047D39000015718"
+          },
+          {
+            "package": {
+              "id": 35673028,
+              "tag": "1A4060300047D39000015861",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:24:29.513Z",
+            "shipped_weight": 240.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Grape Lobster 1 oz",
+            "_strain": "Grape Lobster",
+            "_sources": [
+              "1A4060300047D39000015763",
+              "1A406030005E0B2000010641",
+              "1A406030005E0B2000010050",
+              "1A406030005E0B2000010002"
+            ],
+            "_source": "1A4060300047D39000015763"
+          },
+          {
+            "package": {
+              "id": 35660221,
+              "tag": "1A4060300047D39000015794",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:24:29.901Z",
+            "shipped_weight": 310.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Super Boof 1/2 oz",
+            "_strain": "Super Boof",
+            "_sources": [
+              "1A4060300047D39000015718",
+              "1A406030005E0B2000010445",
+              "1A406030005E0B2000010038",
+              "1A406030007975D000000450",
+              "1A406030007975D000000451"
+            ],
+            "_source": "1A4060300047D39000015718"
+          },
+          {
+            "package": {
+              "id": 35660222,
+              "tag": "1A4060300047D39000015795",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:24:30.549Z",
+            "shipped_weight": 320.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Super Boof 1/8 th",
+            "_strain": "Super Boof",
+            "_sources": [
+              "1A4060300047D39000015718",
+              "1A406030005E0B2000010445",
+              "1A406030005E0B2000010038",
+              "1A406030007975D000000450",
+              "1A406030007975D000000451"
+            ],
+            "_source": "1A4060300047D39000015718"
+          },
+          {
+            "package": {
+              "id": 35693264,
+              "tag": "1A4060300047D39000015867",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:24:31.022Z",
+            "shipped_weight": 83.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Super Boof 1/8 th",
+            "_strain": "Super Boof",
+            "_sources": [
+              "1A4060300047D39000015795",
+              "1A4060300047D39000015718",
+              "1A406030005E0B2000010445",
+              "1A406030005E0B2000010038"
+            ],
+            "_source": "1A4060300047D39000015795"
+          },
+          {
+            "package": {
+              "id": 35659902,
+              "tag": "1A4060300047D39000015852",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:24:31.743Z",
+            "shipped_weight": 250.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Purple Train Wreck 1/2 oz",
+            "_strain": "Purple Train Wreck",
+            "_sources": [
+              "1A4060300047D39000015754",
+              "1A406030005E0B2000010638",
+              "1A406030005E0B2000010353",
+              "1A406030005E0B2000010210"
+            ],
+            "_source": "1A4060300047D39000015754"
+          },
+          {
+            "package": {
+              "id": 35674981,
+              "tag": "1A4060300047D39000015859",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:24:36.264Z",
+            "shipped_weight": 310.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower UK Cheese 1/2 oz",
+            "_strain": "Uk Cheese",
+            "_sources": [
+              "1A4060300047D39000015755",
+              "1A406030005E0B2000010637",
+              "1A406030005E0B2000010432",
+              "1A406030005E0B2000010081"
+            ],
+            "_source": "1A4060300047D39000015755"
+          },
+          {
+            "package": {
+              "id": 35659901,
+              "tag": "1A4060300047D39000015851",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:24:32.831Z",
+            "shipped_weight": 320.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Purple Train Wreck 1 oz",
+            "_strain": "Purple Train Wreck",
+            "_sources": [
+              "1A4060300047D39000015707",
+              "1A406030005E0B2000010443",
+              "1A406030005E0B2000010347",
+              "1A406030005E0B2000010154"
+            ],
+            "_source": "1A4060300047D39000015707"
+          },
+          {
+            "package": {
+              "id": 35675031,
+              "tag": "1A4060300047D39000015858",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:24:33.744Z",
+            "shipped_weight": 640.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower UK Cheese 1/8 th",
+            "_strain": "Uk Cheese",
+            "_sources": [
+              "1A4060300047D39000015755",
+              "1A406030005E0B2000010637",
+              "1A406030005E0B2000010432",
+              "1A406030005E0B2000010081"
+            ],
+            "_source": "1A4060300047D39000015755"
+          },
+          {
+            "package": {
+              "id": 35693268,
+              "tag": "1A4060300047D39000015865",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:24:34.615Z",
+            "shipped_weight": 84.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower UK Cheese 1/8 th",
+            "_strain": "Uk Cheese",
+            "_sources": [
+              "1A4060300047D39000015858",
+              "1A4060300047D39000015755",
+              "1A406030005E0B2000010637",
+              "1A406030005E0B2000010432"
+            ],
+            "_source": "1A4060300047D39000015858"
+          },
+          {
+            "package": {
+              "id": 35659429,
+              "tag": "1A4060300047D39000015849",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:24:35.514Z",
+            "shipped_weight": 256.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Zoap 1 oz",
+            "_strain": "The Zoap",
+            "_sources": [
+              "1A4060300047D39000015754",
+              "1A406030005E0B2000010638",
+              "1A406030005E0B2000010353",
+              "1A406030005E0B2000010210"
+            ],
+            "_source": "1A4060300047D39000015754"
+          },
+          {
+            "package": {
+              "id": 35674837,
+              "tag": "1A4060300047D39000015860",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:24:37.141Z",
+            "shipped_weight": 304.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Uk Cheese 1 oz",
+            "_strain": "Uk Cheese",
+            "_sources": [
+              "1A4060300047D39000015755",
+              "1A406030005E0B2000010637",
+              "1A406030005E0B2000010432",
+              "1A406030005E0B2000010081"
+            ],
+            "_source": "1A4060300047D39000015755"
+          },
+          {
+            "package": {
+              "id": 35659706,
+              "tag": "1A4060300047D39000015848",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:24:37.970Z",
+            "shipped_weight": 260.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Zoap 1/2 oz",
+            "_strain": "Zoap",
+            "_sources": [
+              "1A4060300047D39000015754",
+              "1A406030005E0B2000010638",
+              "1A406030005E0B2000010353",
+              "1A406030005E0B2000010210"
+            ],
+            "_source": "1A4060300047D39000015754"
+          },
+          {
+            "package": {
+              "id": 35720157,
+              "tag": "1A4060300047D39000015869",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:24:38.792Z",
+            "shipped_weight": 240.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Buddha's Hand 1 oz",
+            "_strain": "Buddha's Hand",
+            "_sources": [
+              "1A4060300047D39000015753",
+              "1A406030005E0B2000010639",
+              "1A406030005E0B2000010365",
+              "1A406030005E0B2000010352"
+            ],
+            "_source": "1A4060300047D39000015753"
+          },
+          {
+            "package": {
+              "id": 35721232,
+              "tag": "1A4060300047D39000015868",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:24:39.765Z",
+            "shipped_weight": 320.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Buddha's Hand 1/2 oz",
+            "_strain": "Buddha's Hand",
+            "_sources": [
+              "1A4060300047D39000015753",
+              "1A406030005E0B2000010639",
+              "1A406030005E0B2000010365",
+              "1A406030005E0B2000010352"
+            ],
+            "_source": "1A4060300047D39000015753"
+          },
+          {
+            "package": {
+              "id": 35461041,
+              "tag": "1A4060300047D39000015720",
+              "is_active": true,
+              "is_testing_package": false,
+              "is_trade_sample": false,
+              "status": "In Transit"
+            },
+            "status": "Shipped",
+            "sale_price": null,
+            "updated_at": "2026-11-25T17:24:40.226Z",
+            "shipped_weight": 800.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": null,
+            "received_weight_unit": null,
+            "_item": "Soma Rosa | Flower Biscotti 1/8 th",
+            "_strain": "Biscotti",
+            "_sources": [
+              "1A4060300047D39000015696",
+              "1A4060300047D39000015391",
+              "1A4060300047D39000015389",
+              "1A4060300047D39000015379",
+              "1A4060300049C1C000001665"
+            ],
+            "_source": "1A4060300047D39000015696"
+          }
+        ]
+      }
+    ],
+    "sales_order": null,
+    "updated_at": "2026-11-25T17:24:26.398Z",
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
+  },
+  {
+    "id": 3229034,
+    "name": null,
+    "manifest_number": "0011951125",
+    "facility_id": 4929,
+    "is_active": true,
+    "destinations": [
+      {
+        "id": 3589511,
+        "destination_facility": "C8-0000013-LIC",
+        "transfer_type": "Transfer",
+        "route": "Route to be Traveled Notes: details for extenuating circumstances (e.g., road\r\nclosure, flat tire, etc.)\r\nRoute to be Traveled Notes: details for extenuating circumstances (e.g., road\r\nclosure, flat tire, etc.)\r\nWEIGHMASTER CERTIFICATE\r\nTHIS IS TO CERTIFY that the following described commodity was\r\nweighed,measured, or counted by a weighmaster, whose signature is on this\r\ncertificate, who is a recognized authority of accuracy, as prescribed by Chapter\r\n7 (commencing with Section 12700) of Division 5 of the California Business and\r\nProfessions Code, administered by the Division of Measurement Standards of\r\nthe California Department of Food and Agriculture.\r\nWeighed by: Yali AWI-0491\r\nGet on US-101 S from Airway Dr and Hopper Ave 2 min (0.6 mi)\r\nFollow US-101 S, I-580 E and I-880 S to CA-17 S in Campbell 1 hr 42 min (105\r\nmi)\r\nKeep left to stay on CA-17 S 27 min (25.2 mi)\r\nContinue onto CA-1 N 55 sec (0.5 mi)\r\nContinue on River St. Take Encinal St to Pioneer St 2 min (0.5 mi)",
+        "departure_time": "2026-11-24T12:09:00.000Z",
+        "updated_at": "2026-11-25T15:39:33.187Z",
+        "contents": [
+          {
+            "package": {
+              "id": 35745514,
+              "tag": "1A4060300047D39000015879",
+              "is_active": false,
+              "is_testing_package": true,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-25T15:39:35.494Z",
+            "shipped_weight": 80.0,
+            "shipped_weight_unit": "Grams",
+            "received_weight": 80.0,
+            "received_weight_unit": "Grams",
+            "_item": "2CW | Flower Pack Mule",
+            "_strain": "Pack Mule",
+            "_sources": [
+              "1A4060300047D39000015873",
+              "1A406030005E0B2000010881",
+              "1A406030005E0B2000010885",
+              "1A406030005E0B2000010691",
+              "1A406030005E0B2000010721",
+              "1A406030005E0B2000010148",
+              "1A406030005E0B2000010322",
+              "1A406030005E0B2000010323"
+            ],
+            "_source": "1A4060300047D39000015873"
+          },
+          {
+            "package": {
+              "id": 35745515,
+              "tag": "1A4060300047D39000015884",
+              "is_active": false,
+              "is_testing_package": true,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-25T15:39:35.723Z",
+            "shipped_weight": 80.0,
+            "shipped_weight_unit": "Grams",
+            "received_weight": 80.0,
+            "received_weight_unit": "Grams",
+            "_item": "2 CW Flower | Super Runtz",
+            "_strain": "Super Runtz",
+            "_sources": [
+              "1A4060300047D39000015882",
+              "1A406030005E0B2000010880",
+              "1A406030005E0B2000010884",
+              "1A406030005E0B2000010320",
+              "1A406030005E0B2000010011",
+              "1A406030005E0B2000010033",
+              "1A4060300065EDD000507045"
+            ],
+            "_source": "1A4060300047D39000015882"
+          },
+          {
+            "package": {
+              "id": 35745594,
+              "tag": "1A4060300047D39000015886",
+              "is_active": false,
+              "is_testing_package": true,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-25T15:39:36.079Z",
+            "shipped_weight": 14.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 16.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa 1g Pre-Roll - Ice Cream Cake",
+            "_strain": "Ice Cream Cake",
+            "_sources": [
+              "1A4060300047D39000015872",
+              "1A406030005E0B2000010879",
+              "1A406030005E0B2000010462",
+              "1A406030005E0B2000003433"
+            ],
+            "_source": "1A4060300047D39000015872"
+          },
+          {
+            "package": {
+              "id": 35745732,
+              "tag": "1A4060300047D39000015887",
+              "is_active": false,
+              "is_testing_package": true,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-25T15:39:36.240Z",
+            "shipped_weight": 14.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 16.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa 1g Pre-Roll - Grape Lobster ( Pre-Roll Flower)",
+            "_strain": "Grape Lobster",
+            "_sources": [
+              "1A4060300047D39000015877",
+              "1A406030005E0B2000010877",
+              "1A406030005E0B2000010050",
+              "1A406030005E0B2000010002"
+            ],
+            "_source": "1A4060300047D39000015877"
+          },
+          {
+            "package": {
+              "id": 35745516,
+              "tag": "1A4060300047D39000015885",
+              "is_active": false,
+              "is_testing_package": true,
+              "is_trade_sample": false,
+              "status": "Transferred"
+            },
+            "status": "Accepted",
+            "sale_price": null,
+            "updated_at": "2026-11-25T15:39:35.929Z",
+            "shipped_weight": 14.0,
+            "shipped_weight_unit": "Each",
+            "received_weight": 16.0,
+            "received_weight_unit": "Each",
+            "_item": "Soma Rosa 1g Pre-Roll - Obama Runtz",
+            "_strain": "Obama Runtz",
+            "_sources": [
+              "1A4060300047D39000015776",
+              "1A406030005E0B2000010878",
+              "1A406030005E0B2000010493",
+              "1A406030005E0B2000003437",
+              "1A406030005E0B2000010283",
+              "1A406030005E0B2000010287",
+              "1A406030005E0B2000010344"
+            ],
+            "_source": "1A4060300047D39000015776"
+          }
+        ]
+      }
+    ],
+    "sales_order": null,
+    "updated_at": "2026-11-25T15:39:32.886Z",
+    "_license_key_label": "All Facilities",
+    "_facility_name": "Airway: C11-0001652-LIC",
+    "_facility_license_number": "C11-0001652-LIC"
+  },
+  {
     "id": 3229564,
     "name": null,
     "manifest_number": "0011952437",
@@ -123,170 +1065,6 @@
     "_license_key_label": "All Facilities",
     "_facility_name": "Adobe: CCL22-0001284",
     "_facility_license_number": "CCL22-0001284"
-  },
-  {
-    "id": 3229034,
-    "name": null,
-    "manifest_number": "0011951125",
-    "facility_id": 4929,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3589511,
-        "destination_facility": "C8-0000013-LIC",
-        "transfer_type": "Transfer",
-        "route": "Route to be Traveled Notes: details for extenuating circumstances (e.g., road\r\nclosure, flat tire, etc.)\r\nRoute to be Traveled Notes: details for extenuating circumstances (e.g., road\r\nclosure, flat tire, etc.)\r\nWEIGHMASTER CERTIFICATE\r\nTHIS IS TO CERTIFY that the following described commodity was\r\nweighed,measured, or counted by a weighmaster, whose signature is on this\r\ncertificate, who is a recognized authority of accuracy, as prescribed by Chapter\r\n7 (commencing with Section 12700) of Division 5 of the California Business and\r\nProfessions Code, administered by the Division of Measurement Standards of\r\nthe California Department of Food and Agriculture.\r\nWeighed by: Yali AWI-0491\r\nGet on US-101 S from Airway Dr and Hopper Ave 2 min (0.6 mi)\r\nFollow US-101 S, I-580 E and I-880 S to CA-17 S in Campbell 1 hr 42 min (105\r\nmi)\r\nKeep left to stay on CA-17 S 27 min (25.2 mi)\r\nContinue onto CA-1 N 55 sec (0.5 mi)\r\nContinue on River St. Take Encinal St to Pioneer St 2 min (0.5 mi)",
-        "departure_time": "2026-11-24T12:09:00.000Z",
-        "updated_at": "2026-11-24T20:15:58.535Z",
-        "contents": [
-          {
-            "package": {
-              "id": 35745514,
-              "tag": "1A4060300047D39000015879",
-              "is_active": true,
-              "is_testing_package": true,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-24T20:16:01.248Z",
-            "shipped_weight": 80.0,
-            "shipped_weight_unit": "Grams",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "2CW | Flower Pack Mule",
-            "_strain": "Pack Mule",
-            "_sources": [
-              "1A4060300047D39000015873",
-              "1A406030005E0B2000010881",
-              "1A406030005E0B2000010885",
-              "1A406030005E0B2000010691",
-              "1A406030005E0B2000010721",
-              "1A406030005E0B2000010148",
-              "1A406030005E0B2000010322",
-              "1A406030005E0B2000010323"
-            ],
-            "_source": "1A4060300047D39000015873"
-          },
-          {
-            "package": {
-              "id": 35745515,
-              "tag": "1A4060300047D39000015884",
-              "is_active": true,
-              "is_testing_package": true,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-24T20:16:02.409Z",
-            "shipped_weight": 80.0,
-            "shipped_weight_unit": "Grams",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "2 CW Flower | Super Runtz",
-            "_strain": "Super Runtz",
-            "_sources": [
-              "1A4060300047D39000015882",
-              "1A406030005E0B2000010880",
-              "1A406030005E0B2000010884",
-              "1A406030005E0B2000010320",
-              "1A406030005E0B2000010011",
-              "1A406030005E0B2000010033",
-              "1A4060300065EDD000507045"
-            ],
-            "_source": "1A4060300047D39000015882"
-          },
-          {
-            "package": {
-              "id": 35745516,
-              "tag": "1A4060300047D39000015885",
-              "is_active": true,
-              "is_testing_package": true,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-24T20:16:03.287Z",
-            "shipped_weight": 14.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa 1g Pre-Roll - Obama Runtz",
-            "_strain": "Obama Runtz",
-            "_sources": [
-              "1A4060300047D39000015776",
-              "1A406030005E0B2000010878",
-              "1A406030005E0B2000010493",
-              "1A406030005E0B2000003437",
-              "1A406030005E0B2000010283",
-              "1A406030005E0B2000010287",
-              "1A406030005E0B2000010344"
-            ],
-            "_source": "1A4060300047D39000015776"
-          },
-          {
-            "package": {
-              "id": 35745594,
-              "tag": "1A4060300047D39000015886",
-              "is_active": true,
-              "is_testing_package": true,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-24T20:16:04.150Z",
-            "shipped_weight": 14.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa 1g Pre-Roll - Ice Cream Cake",
-            "_strain": "Ice Cream Cake",
-            "_sources": [
-              "1A4060300047D39000015872",
-              "1A406030005E0B2000010879",
-              "1A406030005E0B2000010462",
-              "1A406030005E0B2000003433"
-            ],
-            "_source": "1A4060300047D39000015872"
-          },
-          {
-            "package": {
-              "id": 35745732,
-              "tag": "1A4060300047D39000015887",
-              "is_active": true,
-              "is_testing_package": true,
-              "is_trade_sample": false,
-              "status": "In Transit"
-            },
-            "status": "Shipped",
-            "sale_price": null,
-            "updated_at": "2026-11-24T20:16:05.061Z",
-            "shipped_weight": 14.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": null,
-            "received_weight_unit": null,
-            "_item": "Soma Rosa 1g Pre-Roll - Grape Lobster ( Pre-Roll Flower)",
-            "_strain": "Grape Lobster",
-            "_sources": [
-              "1A4060300047D39000015877",
-              "1A406030005E0B2000010877",
-              "1A406030005E0B2000010050",
-              "1A406030005E0B2000010002"
-            ],
-            "_source": "1A4060300047D39000015877"
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-11-24T20:15:58.170Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Airway: C11-0001652-LIC",
-    "_facility_license_number": "C11-0001652-LIC"
   },
   {
     "id": 3219340,
@@ -18506,718 +19284,5 @@
     "_license_key_label": "All Facilities",
     "_facility_name": "Comstock: CCL26-0000027 - All Good Properties, Inc",
     "_facility_license_number": "CCL26-0000027"
-  },
-  {
-    "id": 3157142,
-    "name": null,
-    "manifest_number": "0011745515",
-    "facility_id": 4929,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3496493,
-        "destination_facility": "C11-0001255-LIC",
-        "transfer_type": "Wholesale Manifest",
-        "route": "WEIGHMASTER CERTIFICATE\r\nTHIS IS TO CERTIFY that the following described commodity was weighed, measured, or counted by a weighmaster, whose signature is on this certificate, who is a recognized authority of accuracy, as prescribed by Chapter 7\r\n(commencing with Section 12700) of Division 5 of the California Business and Professions Code, administered by the Division of Measurement Standards of the California Department of Food and Agriculture.\r\n\r\nWeighed by: Yali AWI-0456\r\nRoute to be Traveled Notes: details for extenuating circumstances (e.g., road\r\nclosure, flat tire, etc.)\r\nRoute to be Traveled:\r\nLeave Airway Drive and get onto US-101 South.\r\nStay on 101 South through Petaluma and toward San Rafael.\r\nContinue toward the Richmond-San Rafael Bridge.\r\nCross the bridge into the East Bay.\r\nFollow I-580 East toward Oakland.\r\nTake I-880 South toward Alameda/San Jose.\r\nTake the exit for Alameda and follow signs toward Bay Farm Island.\r\nContinue onto Island Drive, then follow the signs/roads toward North Loop Road.\r\nTurn onto N Loop Rd and look for 2300 N Loop Rd",
-        "departure_time": "2026-10-22T10:00:00.000Z",
-        "updated_at": "2026-10-26T17:57:48.251Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34310489,
-              "tag": "1A4060300047D39000015457",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": 4644.0,
-            "updated_at": "2026-10-26T17:57:51.462Z",
-            "shipped_weight": 720.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": 720.0,
-            "received_weight_unit": "Each",
-            "_item": "Soma Rosa | Flower Space Runtz 1/8 th",
-            "_strain": "Space Runtz",
-            "_sources": [
-              "1A4060300047D39000015304",
-              "1A4060300049C1A000002428",
-              "1A4060300049C1A000001672"
-            ],
-            "_source": "1A4060300047D39000015304"
-          },
-          {
-            "package": {
-              "id": 34267026,
-              "tag": "1A4060300047D39000015431",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": 7740.0,
-            "updated_at": "2026-10-26T17:57:52.136Z",
-            "shipped_weight": 360.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": 360.0,
-            "received_weight_unit": "Each",
-            "_item": "Soma Rosa | .5g Pre-Roll 28pk - Mimosa",
-            "_strain": "Mimosa",
-            "_sources": [
-              "1A406030005E0B2000003425",
-              "1A4060300049C1A000002461",
-              "1A4060300049C1A000002504",
-              "1A4060300049C1C000001669",
-              "1A4060300049C1A000001652"
-            ],
-            "_source": "1A406030005E0B2000003425"
-          },
-          {
-            "package": {
-              "id": 34752337,
-              "tag": "1A4060300047D39000015536",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": 0.15,
-            "updated_at": "2026-10-26T17:57:52.343Z",
-            "shipped_weight": 15.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": 15.0,
-            "received_weight_unit": "Each",
-            "_item": "Soma Rosa | .5g Pre-Roll 28pk - Mimosa",
-            "_strain": "Mimosa",
-            "_sources": [
-              "1A4060300047D39000015431",
-              "1A406030005E0B2000003425",
-              "1A4060300049C1A000002461",
-              "1A4060300049C1A000002504",
-              "1A4060300049C1C000001669",
-              "1A4060300049C1A000001652"
-            ],
-            "_source": "1A4060300047D39000015431"
-          },
-          {
-            "package": {
-              "id": 34760421,
-              "tag": "1A4060300047D39000015539",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": 11696.0,
-            "updated_at": "2026-10-26T17:57:52.488Z",
-            "shipped_weight": 272.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": 272.0,
-            "received_weight_unit": "Each",
-            "_item": "Soma Rosa | Flower Triangle Kush 1 oz",
-            "_strain": "Triangle Kush",
-            "_sources": [
-              "1A4060300047D39000015385",
-              "1A4060300049C1A000002476",
-              "1A4060300049C1C000001662",
-              "1A4060300049C1A000002469",
-              "1A4060300049C1C000001642",
-              "1A4060300049C1A000002394",
-              "1A4060300049C1A000002398",
-              "1A4060300049C1A000002399",
-              "1A4060300049C1A000002401",
-              "1A4060300049C1C000001669"
-            ],
-            "_source": "1A4060300047D39000015385"
-          },
-          {
-            "package": {
-              "id": 34315338,
-              "tag": "1A4060300047D39000015462",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": 7705.6,
-            "updated_at": "2026-10-26T17:57:51.969Z",
-            "shipped_weight": 320.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": 320.0,
-            "received_weight_unit": "Each",
-            "_item": "Soma Rosa | Flower Strawberry Cough 1/2 oz",
-            "_strain": "Strawberry Cough",
-            "_sources": [
-              "1A4060300047D39000015381",
-              "1A4060300049C1A000002476",
-              "1A4060300049C1C000001664",
-              "1A4060300049C1A000002469",
-              "1A4060300049C1C000001646",
-              "1A4060300049C1A000002394",
-              "1A4060300049C1A000002398",
-              "1A4060300049C1A000002399",
-              "1A4060300049C1A000002401",
-              "1A4060300049C1C000001669"
-            ],
-            "_source": "1A4060300047D39000015381"
-          },
-          {
-            "package": {
-              "id": 34583750,
-              "tag": "1A4060300047D39000015496",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": 0.08,
-            "updated_at": "2026-10-26T17:57:51.776Z",
-            "shipped_weight": 8.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": 8.0,
-            "received_weight_unit": "Each",
-            "_item": "Soma Rosa .5g Pre-Roll 28pk - Cherry Lemonade",
-            "_strain": "Cherry Lemonade",
-            "_sources": [
-              "1A4060300047D39000015306",
-              "1A4060300049C1A000001364",
-              "1A4060300049C1A000001614"
-            ],
-            "_source": "1A4060300047D39000015306"
-          },
-          {
-            "package": {
-              "id": 34850871,
-              "tag": "1A4060300047D39000015540",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": 7224.0,
-            "updated_at": "2026-10-26T17:57:52.656Z",
-            "shipped_weight": 1120.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": 1120.0,
-            "received_weight_unit": "Each",
-            "_item": "Soma Rosa | Flower Triangle Kush 1/8 th",
-            "_strain": "Triangle Kush",
-            "_sources": [
-              "1A4060300047D39000015385",
-              "1A4060300049C1A000002476",
-              "1A4060300049C1C000001662",
-              "1A4060300049C1A000002469",
-              "1A4060300049C1C000001642",
-              "1A4060300049C1A000002394",
-              "1A4060300049C1A000002398",
-              "1A4060300049C1A000002399",
-              "1A4060300049C1A000002401",
-              "1A4060300049C1C000001669"
-            ],
-            "_source": "1A4060300047D39000015385"
-          },
-          {
-            "package": {
-              "id": 34853952,
-              "tag": "1A4060300047D39000015541",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": 0.71,
-            "updated_at": "2026-10-26T17:57:52.791Z",
-            "shipped_weight": 71.0,
-            "shipped_weight_unit": "Each",
-            "received_weight": 71.0,
-            "received_weight_unit": "Each",
-            "_item": "Soma Rosa | Flower Triangle Kush 1/8 th",
-            "_strain": "Triangle Kush",
-            "_sources": [
-              "1A4060300047D39000015540",
-              "1A4060300047D39000015385",
-              "1A4060300049C1A000002476",
-              "1A4060300049C1C000001662",
-              "1A4060300049C1A000002469",
-              "1A4060300049C1C000001642"
-            ],
-            "_source": "1A4060300047D39000015540"
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-26T17:57:47.946Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Airway: C11-0001652-LIC",
-    "_facility_license_number": "C11-0001652-LIC"
-  },
-  {
-    "id": 3160164,
-    "name": null,
-    "manifest_number": "0011758409",
-    "facility_id": 5008,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3500438,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "Please follow GPS route.",
-        "departure_time": "2026-10-24T13:55:00.000Z",
-        "updated_at": "2026-10-26T16:42:34.790Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34986691,
-              "tag": "1A4060300049C15000001046",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-26T16:42:36.071Z",
-            "shipped_weight": 658.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 658.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - #7",
-            "_strain": "#7",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-26T16:42:34.700Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Wildcat: CCL21-0002179",
-    "_facility_license_number": "CCL21-0002179"
-  },
-  {
-    "id": 3160161,
-    "name": "to Adobe",
-    "manifest_number": "0011758506",
-    "facility_id": 5008,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3500435,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "Please follow GPS route.",
-        "departure_time": "2026-10-24T13:55:00.000Z",
-        "updated_at": "2026-10-26T16:39:39.295Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34986692,
-              "tag": "1A4060300049C15000001047",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-26T16:39:41.485Z",
-            "shipped_weight": 164.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 164.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - #7",
-            "_strain": "#7",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-26T16:39:39.080Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Wildcat: CCL21-0002179",
-    "_facility_license_number": "CCL21-0002179"
-  },
-  {
-    "id": 3160124,
-    "name": null,
-    "manifest_number": "0011758142",
-    "facility_id": 5011,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3500392,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "Please follow GPS route.",
-        "departure_time": "2026-10-24T10:55:00.000Z",
-        "updated_at": "2026-10-26T16:31:12.359Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34986049,
-              "tag": "1A4060300049C18000000040",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-26T16:31:14.220Z",
-            "shipped_weight": 1175.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 1175.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - PGR",
-            "_strain": "PGR",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-26T16:31:12.251Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Wildcat: CCL21-0002182",
-    "_facility_license_number": "CCL21-0002182"
-  },
-  {
-    "id": 3160146,
-    "name": null,
-    "manifest_number": "0011758501",
-    "facility_id": 5011,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3500420,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "Please follow GPS route.",
-        "departure_time": "2026-10-24T12:00:00.000Z",
-        "updated_at": "2026-10-26T16:31:10.741Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34986462,
-              "tag": "1A4060300049C18000000041",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-26T16:31:12.237Z",
-            "shipped_weight": 733.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 733.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - PGR",
-            "_strain": "PGR",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-26T16:31:10.515Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Wildcat: CCL21-0002182",
-    "_facility_license_number": "CCL21-0002182"
-  },
-  {
-    "id": 3160123,
-    "name": null,
-    "manifest_number": "0011758141",
-    "facility_id": 5010,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3500391,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "Please follow GPS route.",
-        "departure_time": "2026-10-24T10:55:00.000Z",
-        "updated_at": "2026-10-26T16:24:56.295Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34986046,
-              "tag": "1A4060300049C17000000118",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-26T16:24:58.203Z",
-            "shipped_weight": 1215.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 1215.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - Pineapple Skunk",
-            "_strain": "Pineapple Skunk",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-26T16:24:56.087Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Wildcat: CCL21-0002181",
-    "_facility_license_number": "CCL21-0002181"
-  },
-  {
-    "id": 3160147,
-    "name": null,
-    "manifest_number": "0011758502",
-    "facility_id": 5010,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3500421,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "Please follow GPS route.",
-        "departure_time": "2026-10-24T12:00:00.000Z",
-        "updated_at": "2026-10-26T16:24:53.949Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34986463,
-              "tag": "1A4060300049C17000000119",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-26T16:24:55.934Z",
-            "shipped_weight": 1097.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 1097.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - #7",
-            "_strain": "#7",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-26T16:24:53.633Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Wildcat: CCL21-0002181",
-    "_facility_license_number": "CCL21-0002181"
-  },
-  {
-    "id": 3160156,
-    "name": null,
-    "manifest_number": "0011757886",
-    "facility_id": 5010,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3500430,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "Please follow GPS route.",
-        "departure_time": "2026-10-24T13:35:00.000Z",
-        "updated_at": "2026-10-26T16:24:51.834Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34986663,
-              "tag": "1A4060300049C17000000120",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-26T16:24:53.527Z",
-            "shipped_weight": 259.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 259.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - #7",
-            "_strain": "#7",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-26T16:24:51.587Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Wildcat: CCL21-0002181",
-    "_facility_license_number": "CCL21-0002181"
-  },
-  {
-    "id": 3160095,
-    "name": "to Adobe",
-    "manifest_number": "0011757460",
-    "facility_id": 5010,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3500350,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "Please follow GPS route.",
-        "departure_time": "2026-10-24T08:55:00.000Z",
-        "updated_at": "2026-10-26T16:21:48.048Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34985412,
-              "tag": "1A4060300049C17000000117",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-26T16:21:49.938Z",
-            "shipped_weight": 371.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 371.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - Pineapple Skunk",
-            "_strain": "Pineapple Skunk",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-26T16:21:46.895Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Wildcat: CCL21-0002181",
-    "_facility_license_number": "CCL21-0002181"
-  },
-  {
-    "id": 3160157,
-    "name": null,
-    "manifest_number": "0011758602",
-    "facility_id": 5009,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3500431,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "Please follow GPS route.",
-        "departure_time": "2026-10-24T13:45:00.000Z",
-        "updated_at": "2026-10-26T16:18:52.671Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34986671,
-              "tag": "1A4060300049C16000000050",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-26T16:18:54.450Z",
-            "shipped_weight": 583.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 583.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - GC",
-            "_strain": "GC",
-            "_source": ""
-          },
-          {
-            "package": {
-              "id": 34986670,
-              "tag": "1A4060300049C16000000049",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-26T16:18:54.244Z",
-            "shipped_weight": 525.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 525.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - #7",
-            "_strain": "#7",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-26T16:18:52.407Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Wildcat: CCL21-0002180",
-    "_facility_license_number": "CCL21-0002180"
-  },
-  {
-    "id": 3160090,
-    "name": "to Adobe",
-    "manifest_number": "0011757459",
-    "facility_id": 5009,
-    "is_active": true,
-    "destinations": [
-      {
-        "id": 3500344,
-        "destination_facility": "CCL22-0001284",
-        "transfer_type": "Transfer",
-        "route": "Please follow GPS route.",
-        "departure_time": "2026-10-24T08:50:00.000Z",
-        "updated_at": "2026-10-26T16:15:49.365Z",
-        "contents": [
-          {
-            "package": {
-              "id": 34985363,
-              "tag": "1A4060300049C16000000048",
-              "is_active": false,
-              "is_testing_package": false,
-              "is_trade_sample": false,
-              "status": "Transferred"
-            },
-            "status": "Accepted",
-            "sale_price": null,
-            "updated_at": "2026-10-26T16:15:51.094Z",
-            "shipped_weight": 1499.0,
-            "shipped_weight_unit": "Pounds",
-            "received_weight": 1499.0,
-            "received_weight_unit": "Pounds",
-            "_item": "Wet Flower - Pineapple Skunk",
-            "_strain": "Pineapple Skunk",
-            "_source": ""
-          }
-        ]
-      }
-    ],
-    "sales_order": null,
-    "updated_at": "2026-10-26T16:15:49.116Z",
-    "_license_key_label": "All Facilities",
-    "_facility_name": "Wildcat: CCL21-0002180",
-    "_facility_license_number": "CCL21-0002180"
   }
 ]
