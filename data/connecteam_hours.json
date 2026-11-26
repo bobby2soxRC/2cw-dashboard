@@ -1,7 +1,21 @@
 {
-  "last_sync": "2026-11-26T00:44:23.200299+00:00",
-  "clocked_in": [],
-  "today": [],
+  "last_sync": "2026-11-26T08:58:02.482336+00:00",
+  "clocked_in": [
+    {
+      "userId": "14917345",
+      "name": "Juan Carlos Lopez",
+      "clockIn": "2026-11-26T01:56:37+00:00",
+      "elapsedHours": 7.02
+    }
+  ],
+  "today": [
+    {
+      "userId": "14917345",
+      "name": "Juan Carlos Lopez",
+      "hoursToday": 7.02,
+      "shiftsToday": 1
+    }
+  ],
   "week": [
     {
       "userId": "31210484",
@@ -13,6 +27,12 @@
       "userId": "5386883",
       "name": "Antonio Rivas",
       "hoursWeek": 37.48,
+      "overtime": false
+    },
+    {
+      "userId": "14917345",
+      "name": "Juan Carlos Lopez",
+      "hoursWeek": 31.27,
       "overtime": false
     },
     {
@@ -205,12 +225,6 @@
       "userId": "18996506",
       "name": "Abraham Garcia",
       "hoursWeek": 24.25,
-      "overtime": false
-    },
-    {
-      "userId": "14917345",
-      "name": "Juan Carlos Lopez",
-      "hoursWeek": 24.24,
       "overtime": false
     },
     {
